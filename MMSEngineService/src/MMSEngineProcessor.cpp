@@ -2181,6 +2181,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     throw runtime_error(errorMessage);
                                 }
 
+								/*
 								// threads check is done inside localCopyContentTask
                                 localCopyContentTask(
                                         ingestionJobKey,
@@ -2188,10 +2189,51 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage localCopyContent, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+									thread localCopyContentThread(&MMSEngineProcessor::localCopyContentThread,
+										this, _processorsThreadsNumber, ingestionJobKey, 
+										workspace, parametersRoot,
+										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+									);
+                                    localCopyContentThread.detach();
+                                }
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                                _logger->error(__FILEREF__ + "localCopyContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2235,7 +2277,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                                _logger->error(__FILEREF__ + "localCopyContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2284,6 +2326,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								/*
 								// threads check is done inside httpCallbackTask
                                 httpCallbackTask(
                                         ingestionJobKey,
@@ -2291,10 +2334,51 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage http callback, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+									thread httpCallbackThread(&MMSEngineProcessor::httpCallbackThread,
+										this, _processorsThreadsNumber, ingestionJobKey, 
+										workspace, parametersRoot,
+										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+									);
+                                    httpCallbackThread.detach();
+                                }
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "httpCallbackTask failed"
+                                _logger->error(__FILEREF__ + "httpCallbackThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2338,7 +2422,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "httpCallbackTask failed"
+                                _logger->error(__FILEREF__ + "httpCallbackThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2801,6 +2885,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
                                     || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
                                 {
+									// adds an encoding job
                                     manageGenerateFramesTask(
                                         ingestionJobKey,
                                         workspace,
@@ -2845,12 +2930,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 									else
 									{
-										thread generateAndIngestFramesThread(&MMSEngineProcessor::generateAndIngestFramesThread,
-												this, _processorsThreadsNumber, ingestionJobKey, workspace,
-												ingestionType,
-												parametersRoot,
-												// it cannot be passed as reference because it will change soon by the parent thread
-												dependencies
+										thread generateAndIngestFramesThread(
+											&MMSEngineProcessor::generateAndIngestFramesThread,
+											this, _processorsThreadsNumber, ingestionJobKey, workspace,
+											ingestionType,
+											parametersRoot,
+											// it cannot be passed as reference because it will change soon by the parent thread
+											dependencies
 										);
 										generateAndIngestFramesThread.detach();
 										/*
@@ -3240,13 +3326,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread generateAndIngestCutMediaThread(&MMSEngineProcessor::generateAndIngestCutMediaThread, this, 
+									thread generateAndIngestCutMediaThread(
+										&MMSEngineProcessor::generateAndIngestCutMediaThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
-                                            workspace, 
-                                            parametersRoot,
-                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
-                                            );
-                                    generateAndIngestCutMediaThread.detach();
+										workspace, 
+										parametersRoot,
+										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+									);
+									generateAndIngestCutMediaThread.detach();
                                 }
                             }
                             catch(runtime_error e)
@@ -3475,12 +3562,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread extractTracksContentThread(&MMSEngineProcessor::extractTracksContentThread, this, 
+                                    thread extractTracksContentThread(
+										&MMSEngineProcessor::extractTracksContentThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
-                                            workspace, 
-                                            parametersRoot,
-                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
-                                            );
+										workspace, 
+										parametersRoot,
+										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+									);
                                     extractTracksContentThread.detach();
                                 }
                             }
@@ -3790,7 +3878,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
                                 if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
-                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage email notification, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -4029,17 +4117,58 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-								// threads check is done inside postOnFacebookTask
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage post on facebook, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread postOnFacebookThread(&MMSEngineProcessor::postOnFacebookThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    postOnFacebookThread.detach();
+                                }
+								/*
                                 postOnFacebookTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "postOnFacebookTask failed"
+                                _logger->error(__FILEREF__ + "postOnFacebookThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -4083,7 +4212,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "postOnFacebookTask failed"
+                                _logger->error(__FILEREF__ + "postOnFacebookThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -4132,13 +4261,54 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-								// threads check is done inside postOnYouTubeTask
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage post on youtube, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread postOnYouTubeThread(&MMSEngineProcessor::postOnYouTubeThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    postOnYouTubeThread.detach();
+                                }
+								/*
                                 postOnYouTubeTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
                             }
                             catch(runtime_error e)
                             {
@@ -8137,9 +8307,9 @@ void MMSEngineProcessor::removeContentThread(
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			_logger->warn(errorMessage);
 
-			throw runtime_error(errorMessage);
+			// throw runtime_error(errorMessage);
         }
 
 		int dependencyIndex = 0;
@@ -8391,9 +8561,9 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+            _logger->warn(errorMessage);
 
-            throw runtime_error(errorMessage);
+            // throw runtime_error(errorMessage);
         }
 
         string configurationLabel;
@@ -8616,66 +8786,29 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
     }
 }
 
-void MMSEngineProcessor::postOnFacebookTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies
+void MMSEngineProcessor::localCopyContentThread(
+	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>> dependencies
 )
 {
     try
     {
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be posted on Facebook"
+            string errorMessage = __FILEREF__ + "No configured any media to be copied"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+            _logger->warn(errorMessage);
 
-            throw runtime_error(errorMessage);
+            // throw runtime_error(errorMessage);
         }
 
-		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
-		* 2021-06-19: we still have to check the thread limit because,
-		*		in case handleCheckIngestionEvent gets 20 events,
-		*		we have still to postpone all the events overcoming the thread limit
-		*/
-        if (_processorsThreadsNumber.use_count() + dependencies.size() >
-				_processorThreads + _maxAdditionalProcessorThreads)
+        string localPath;
+        string localFileName;
         {
-            _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnFacebookTask, activity is postponed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-            );
-
-            string errorMessage = "";
-            string processorMMS = "";
-
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    ingestionStatus, 
-                    errorMessage,
-                    processorMMS
-                    );
-            
-            return;
-        }
-
-        string facebookConfigurationLabel;
-        string facebookNodeId;
-        {
-            string field = "ConfigurationLabel";
+            string field = "LocalPath";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -8685,474 +8818,550 @@ void MMSEngineProcessor::postOnFacebookTask(
 
                 throw runtime_error(errorMessage);
             }
-            facebookConfigurationLabel = parametersRoot.get(field, "XXX").asString();
+            localPath = parametersRoot.get(field, "XXX").asString();
 
-            field = "NodeId";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            field = "LocalFileName";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
+                localFileName = parametersRoot.get(field, "XXX").asString();
             }
-            facebookNodeId = parametersRoot.get(field, "XXX").asString();
         }
         
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType: dependencies)
-        {
-			string mmsAssetPathName;
-            int64_t sizeInBytes;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            string deliveryFileName;
-			*/
-            MMSEngineDBFacade::ContentType contentType;
-            
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-                int64_t encodingProfileKey = -1;
-                
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                int64_t physicalPathKey;
-                shared_ptr<Workspace> workspace;
-                string title;
-                
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-
-                {
-                    bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
-                        _mmsEngineDBFacade->getMediaItemKeyDetails(
-                            workspace->_workspaceKey, key, warningIfMissing);
-
-                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-                }
-            }
-            else
-            {
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
-
-                shared_ptr<Workspace> workspace;
-                string title;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-                
-                {
-                    bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                            workspace->_workspaceKey, key, warningIfMissing);
-
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-                }
-            }
-
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-
-            // check on thread availability was done at the beginning in this method
-            if (contentType == MMSEngineDBFacade::ContentType::Video)
-            {
-                thread postOnFacebook(&MMSEngineProcessor::postVideoOnFacebookThread, this,
-                    _processorsThreadsNumber, mmsAssetPathName, 
-                    sizeInBytes, ingestionJobKey, workspace,
-                    facebookNodeId, facebookConfigurationLabel);
-                postOnFacebook.detach();
-            }
-            else // if (contentType == ContentType::Audio)
-            {
-                /*
-                thread postOnFacebook(&MMSEngineProcessor::postVideoOnFacebookThread, this,
-                    _processorsThreadsNumber, mmsAssetPathName, 
-                    sizeInBytes, ingestionJobKey, workspace,
-                    facebookNodeId, facebookAccessToken);
-                postOnFacebook.detach();
-                */
-            }
-        }
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
- 
-        // Update IngestionJob done in the calling method
-        
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-        
-        // Update IngestionJob done in the calling method
-
-        throw e;
-    }
-}
-
-void MMSEngineProcessor::postOnYouTubeTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies
-)
-{
-    try
-    {
-        if (dependencies.size() == 0)
-        {
-            string errorMessage = __FILEREF__ + "No configured any media to be posted on YouTube"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
-		* 2021-06-19: we still have to check the thread limit because,
-		*		in case handleCheckIngestionEvent gets 20 events,
-		*		we have still to postpone all the events overcoming the thread limit
-		*/
-        if (_processorsThreadsNumber.use_count() + dependencies.size() >
-				_processorThreads + _maxAdditionalProcessorThreads)
-        {
-            _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnYouTubeTask, activity is postponed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-            );
-
-            string errorMessage = "";
-            string processorMMS = "";
-
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    ingestionStatus, 
-                    errorMessage,
-                    processorMMS
-                    );
-            
-            return;
-        }
-
-        string youTubeConfigurationLabel;
-        string youTubeTitle;
-        string youTubeDescription;
-        Json::Value youTubeTags = Json::nullValue;
-        int youTubeCategoryId = -1;
-        string youTubePrivacy;
-        {
-            string field = "ConfigurationLabel";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            youTubeConfigurationLabel = parametersRoot.get(field, "XXX").asString();
-
-            field = "Title";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeTitle = parametersRoot.get(field, "XXX").asString();
-
-            field = "Description";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeDescription = parametersRoot.get(field, "XXX").asString();
-            
-            field = "Tags";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeTags = parametersRoot[field];
-            
-            field = "CategoryId";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, 0);
-
-            field = "Privacy";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubePrivacy = parametersRoot.get(field, "XXX").asString();
-            else
-                youTubePrivacy = "private";
-        }
-        
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
+		int dependencyIndex = 0;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 			keyAndDependencyType: dependencies)
         {
-			string mmsAssetPathName;
-            int64_t sizeInBytes;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            string deliveryFileName;
-			*/
-            MMSEngineDBFacade::ContentType contentType;
-            string title;
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
             
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-            
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-                int64_t encodingProfileKey = -1;
+				string mmsAssetPathName;
+				string fileFormat;
+				int64_t physicalPathKey;
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
                 
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string>
+						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				}
+				else
+				{
+					physicalPathKey = key;
 
-                int64_t physicalPathKey;
-                shared_ptr<Workspace> workspace;
-                
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				}
 
-                {
-                    bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
-                        _mmsEngineDBFacade->getMediaItemKeyDetails(
-                            workspace->_workspaceKey, key, warningIfMissing);
+				copyContent(ingestionJobKey, mmsAssetPathName, localPath, localFileName);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "local copy Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-                }
-            }
-            else
-            {
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "local copy Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
 
-                shared_ptr<Workspace> workspace;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-                
-                {
-                    bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                            workspace->_workspaceKey, key, warningIfMissing);
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
 
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-                }
-            }
-            
-            if (youTubeTitle == "")
-                youTubeTitle = title;
-
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-
-            // check on thread availability was done at the beginning in this method
-            thread postOnYouTube(&MMSEngineProcessor::postVideoOnYouTubeThread, this,
-                _processorsThreadsNumber, mmsAssetPathName, 
-                sizeInBytes, ingestionJobKey, workspace,
-                youTubeConfigurationLabel, youTubeTitle,
-                youTubeDescription, youTubeTags,
-                youTubeCategoryId, youTubePrivacy);
-            postOnYouTube.detach();
+			dependencyIndex++;
         }
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
+        _logger->error(__FILEREF__ + "localCopyContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
- 
-        // Update IngestionJob done in the calling method
-        
-        throw e;
+                
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
+        _logger->error(__FILEREF__ + "localCopyContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
 }
 
-void MMSEngineProcessor::httpCallbackTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+void MMSEngineProcessor::extractTracksContentThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies)
+{
+    try 
+    {
+		_logger->info(__FILEREF__ + "extractTracksContentThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured media to be used to extract a track"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->warn(errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+
+        vector<pair<string,int>> tracksToBeExtracted;
+        string outputFileFormat;
+        {
+            {
+                string field = "Tracks";
+                Json::Value tracksToot = parametersRoot[field];
+                if (tracksToot.size() == 0)
+                {
+                    string errorMessage = __FILEREF__ + "No correct number of Tracks"
+                            + ", tracksToot.size: " + to_string(tracksToot.size());
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                for (int trackIndex = 0; trackIndex < tracksToot.size(); trackIndex++)
+                {
+                    Json::Value trackRoot = tracksToot[trackIndex];
+
+                    field = "TrackType";
+                    if (!JSONUtils::isMetadataPresent(trackRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sTrackRoot = Json::writeString(wbuilder, trackRoot);
+
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field
+                                + ", sTrackRoot: " + sTrackRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    string trackType = trackRoot.get(field, "XXX").asString();
+
+                    int trackNumber = 0;
+                    field = "TrackNumber";
+                    if (JSONUtils::isMetadataPresent(trackRoot, field))
+                        trackNumber = JSONUtils::asInt(trackRoot, field, 0);
+
+                    tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
+                }
+            }
+
+            string field = "OutputFileFormat";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+        }
+
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
+        {
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
+            
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				string mmsAssetPathName;
+            
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
+                
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+							warningIfMissing);
+					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathDetails;
+				}
+				else
+				{
+					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathDetails;
+				}
+
+				{
+					string localSourceFileName;
+					string extractTrackMediaPathName;
+					{
+						localSourceFileName = to_string(ingestionJobKey)
+                            + "_" + to_string(key)
+                            + "_extractTrack"
+                            + "." + outputFileFormat
+                            ;
+
+						string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+							workspace);
+						extractTrackMediaPathName = workspaceIngestionRepository + "/" 
+                            + localSourceFileName;
+					}
+
+					FFMpeg ffmpeg (_configuration, _logger);
+
+					ffmpeg.extractTrackMediaToIngest(
+						ingestionJobKey,
+						mmsAssetPathName,
+						tracksToBeExtracted,
+						extractTrackMediaPathName);
+
+					_logger->info(__FILEREF__ + "extractTrackMediaToIngest done"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", extractTrackMediaPathName: " + extractTrackMediaPathName
+					);
+
+					string title;
+					int64_t imageOfVideoMediaItemKey = -1;
+					int64_t cutOfVideoMediaItemKey = -1;
+					int64_t cutOfAudioMediaItemKey = -1;
+					double startTimeInSeconds = 0.0;
+					double endTimeInSeconds = 0.0;
+					string mediaMetaDataContent = generateMediaMetadataToIngest(
+						ingestionJobKey,
+						outputFileFormat,
+						title,
+						imageOfVideoMediaItemKey,
+						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+						parametersRoot
+					);
+
+					{
+						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
+							= make_shared<LocalAssetIngestionEvent>();
+						/*
+						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent
+							= _multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(
+								MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+						*/
+
+						localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
+						localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+						localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+						localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
+						localAssetIngestionEvent->setWorkspace(workspace);
+						localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
+						localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+							/* it + 1 == dependencies.end() ? true : */ false);
+
+						// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+						// force the concat file to have the same avgFrameRate of the source media
+						// Uncomment next statements in case the problem is still present event in case of the ExtractTracks task
+						// if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+						//    localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+
+						localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+						handleLocalAssetIngestionEventThread (
+							processorsThreadsNumber, *localAssetIngestionEvent);
+						/*
+						shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+						_multiEventsSet->addEvent(event);
+
+						_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+							+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+						*/
+					}
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "extract track failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "extract track failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+        }
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+    }
+    catch (runtime_error& e) 
+    {
+        _logger->error(__FILEREF__ + "Extracting tracks failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+        
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Extracting tracks failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        return;
+    }
+}
+
+void MMSEngineProcessor::httpCallbackThread(
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+		dependencies
 )
 {
     try
     {
-        /*
-         * dependencies could be even empty
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured any media to be notified (HTTP Callback)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+            _logger->warn(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-         */
-
-		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
-		* 2021-06-19: we still have to check the thread limit because,
-		*		in case handleCheckIngestionEvent gets 20 events,
-		*		we have still to postpone all the events overcoming the thread limit
-		*/
-        if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
-        {
-            _logger->warn(__FILEREF__
-				+ "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: "
-					+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
-            );
-
-            string errorMessage = "";
-            string processorMMS = "";
-
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    ingestionStatus, 
-                    errorMessage,
-                    processorMMS
-                    );
-            
-            return;
+            // throw runtime_error(errorMessage);
         }
 
         string httpProtocol;
@@ -9280,212 +9489,259 @@ void MMSEngineProcessor::httpCallbackTask(
             );
         }
 
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
-		// 2021-02: we do not have a requirement to send data in case of GET
-        Json::Value callbackMedatada;
-		if (httpMethod == "POST")
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
         {
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType: dependencies)
-            {
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
-				bool stopIfReferenceProcessingError;
 
                 tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
 					= keyAndDependencyType;
 
-				callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
+				Json::Value callbackMedatada;
+				if (httpMethod == "POST")
+				{
+					callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
 
-				MMSEngineDBFacade::ContentType contentType;
-				int64_t physicalPathKey;
-				int64_t mediaItemKey;
+					MMSEngineDBFacade::ContentType contentType;
+					int64_t physicalPathKey;
+					int64_t mediaItemKey;
 
-                if (dependencyType == Validator::DependencyType::MediaItemKey)
-                {
-					mediaItemKey = key;
-
-                    callbackMedatada["mediaItemKey"] = mediaItemKey;
-
+					if (dependencyType == Validator::DependencyType::MediaItemKey)
 					{
-						bool warningIfMissing = false;
-						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
-							_mmsEngineDBFacade->getMediaItemKeyDetails(
-								workspace->_workspaceKey, mediaItemKey, warningIfMissing);
-
-						string localTitle;
-						string userData;
-						tie(contentType, localTitle, userData, ignore, ignore, ignore)
-							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-
-						callbackMedatada["title"] = localTitle;
-
-						if (userData == "")
-							callbackMedatada["userData"] = Json::nullValue;
-						else
-						{
-							Json::Value userDataRoot;
-							{
-								Json::CharReaderBuilder builder;
-								Json::CharReader* reader = builder.newCharReader();
-								string errors;
-
-								bool parsingSuccessful = reader->parse(userData.c_str(),
-                                    userData.c_str() + userData.size(), 
-                                    &userDataRoot, &errors);
-								delete reader;
-
-								if (!parsingSuccessful)
-								{
-									string errorMessage = __FILEREF__ + "failed to parse the userData"
-                                        + ", errors: " + errors
-                                        + ", userData: " + userData
-                                        ;
-									_logger->error(errorMessage);
-
-									throw runtime_error(errors);
-								}
-							}
-
-							callbackMedatada["userData"] = userDataRoot;
-						}
-					}
-
-					{
-						int64_t encodingProfileKey = -1;
-						bool warningIfMissing = false;
-						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-
-						string physicalPath;
-						string fileName;
-						int64_t sizeInBytes;
-						string deliveryFileName;
-
-						tie(physicalPathKey, physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
-
-						callbackMedatada["physicalPathKey"] = physicalPathKey;
-						callbackMedatada["fileName"] = fileName;
-						// callbackMedatada["physicalPath"] = physicalPath;
-					}
-                }
-                else
-                {
-					physicalPathKey = key;
-
-                    callbackMedatada["physicalPathKey"] = physicalPathKey;
-
-					{
-						bool warningIfMissing = false;
-						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, physicalPathKey, warningIfMissing);
-
-						string localTitle;
-						string userData;
-						tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+						mediaItemKey = key;
 
 						callbackMedatada["mediaItemKey"] = mediaItemKey;
-						callbackMedatada["title"] = localTitle;
 
-						if (userData == "")
-							callbackMedatada["userData"] = Json::nullValue;
-						else
 						{
-							Json::Value userDataRoot;
+							bool warningIfMissing = false;
+							tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+								contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+								_mmsEngineDBFacade->getMediaItemKeyDetails(
+									workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+
+							string localTitle;
+							string userData;
+							tie(contentType, localTitle, userData, ignore, ignore, ignore)
+								= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+
+							callbackMedatada["title"] = localTitle;
+
+							if (userData == "")
+								callbackMedatada["userData"] = Json::nullValue;
+							else
 							{
-								Json::CharReaderBuilder builder;
-								Json::CharReader* reader = builder.newCharReader();
-								string errors;
-
-								bool parsingSuccessful = reader->parse(userData.c_str(),
-                                    userData.c_str() + userData.size(), 
-                                    &userDataRoot, &errors);
-								delete reader;
-
-								if (!parsingSuccessful)
+								Json::Value userDataRoot;
 								{
-									string errorMessage = __FILEREF__ + "failed to parse the userData"
-                                        + ", errors: " + errors
-                                        + ", userData: " + userData
-                                        ;
-									_logger->error(errorMessage);
+									Json::CharReaderBuilder builder;
+									Json::CharReader* reader = builder.newCharReader();
+									string errors;
 
-									throw runtime_error(errors);
+									bool parsingSuccessful = reader->parse(userData.c_str(),
+										userData.c_str() + userData.size(), 
+										&userDataRoot, &errors);
+									delete reader;
+
+									if (!parsingSuccessful)
+									{
+										string errorMessage = __FILEREF__ + "failed to parse the userData"
+											+ ", errors: " + errors
+											+ ", userData: " + userData
+											;
+										_logger->error(errorMessage);
+
+										throw runtime_error(errors);
+									}
 								}
-							}
 
-							callbackMedatada["userData"] = userDataRoot;
+								callbackMedatada["userData"] = userDataRoot;
+							}
+						}
+
+						{
+							int64_t encodingProfileKey = -1;
+							bool warningIfMissing = false;
+							tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+								_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+								warningIfMissing);
+
+							string physicalPath;
+							string fileName;
+							int64_t sizeInBytes;
+							string deliveryFileName;
+
+							tie(physicalPathKey, physicalPath, ignore, ignore, fileName, ignore, ignore)
+								= physicalPathDetails;
+
+							callbackMedatada["physicalPathKey"] = physicalPathKey;
+							callbackMedatada["fileName"] = fileName;
+							// callbackMedatada["physicalPath"] = physicalPath;
+						}
+					}
+					else
+					{
+						physicalPathKey = key;
+
+						callbackMedatada["physicalPathKey"] = physicalPathKey;
+
+						{
+							bool warningIfMissing = false;
+							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+								mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+									workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+
+							string localTitle;
+							string userData;
+							tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore)
+								= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+
+							callbackMedatada["mediaItemKey"] = mediaItemKey;
+							callbackMedatada["title"] = localTitle;
+
+							if (userData == "")
+								callbackMedatada["userData"] = Json::nullValue;
+							else
+							{
+								Json::Value userDataRoot;
+								{
+									Json::CharReaderBuilder builder;
+									Json::CharReader* reader = builder.newCharReader();
+									string errors;
+
+									bool parsingSuccessful = reader->parse(userData.c_str(),
+										userData.c_str() + userData.size(), 
+										&userDataRoot, &errors);
+									delete reader;
+
+									if (!parsingSuccessful)
+									{
+										string errorMessage = __FILEREF__ + "failed to parse the userData"
+											+ ", errors: " + errors
+											+ ", userData: " + userData
+											;
+										_logger->error(errorMessage);
+
+										throw runtime_error(errors);
+									}
+								}
+
+								callbackMedatada["userData"] = userDataRoot;
+							}
+						}
+
+						{
+							int64_t encodingProfileKey = -1;
+							tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+								_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
+
+							string physicalPath;
+							string fileName;
+							int64_t sizeInBytes;
+							string deliveryFileName;
+
+							tie(physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
+
+							callbackMedatada["fileName"] = fileName;
+							// callbackMedatada["physicalPath"] = physicalPath;
 						}
 					}
 
+					if (contentType == MMSEngineDBFacade::ContentType::Video
+						|| contentType == MMSEngineDBFacade::ContentType::Audio)
 					{
-						int64_t encodingProfileKey = -1;
-						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
+						try
+						{
+							int64_t durationInMilliSeconds =
+								_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+								mediaItemKey, physicalPathKey);
 
-						string physicalPath;
-						string fileName;
-						int64_t sizeInBytes;
-						string deliveryFileName;
+							float durationInSeconds = durationInMilliSeconds / 1000;
 
-						tie(physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
-
-						callbackMedatada["fileName"] = fileName;
-						// callbackMedatada["physicalPath"] = physicalPath;
-					}
-                }
-
-				if (contentType == MMSEngineDBFacade::ContentType::Video
-					|| contentType == MMSEngineDBFacade::ContentType::Audio)
-				{
-					try
-					{
-						int64_t durationInMilliSeconds =
-							_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-							mediaItemKey, physicalPathKey);
-
-						float durationInSeconds = durationInMilliSeconds / 1000;
-
-						callbackMedatada["durationInSeconds"] = durationInSeconds;
-					}
-					catch(runtime_error e)
-					{
-						_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", exception: " + e.what()
-						);
-					}
-					catch(exception e)
-					{
-						_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", physicalPathKey: " + to_string(physicalPathKey)
-						);
+							callbackMedatada["durationInSeconds"] = durationInSeconds;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", physicalPathKey: " + to_string(physicalPathKey)
+								+ ", exception: " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", physicalPathKey: " + to_string(physicalPathKey)
+							);
+						}
 					}
 				}
-			}
-        }
-		else
-			callbackMedatada = Json::nullValue;
+				else
+					callbackMedatada = Json::nullValue;
 
-        // check on thread availability was done at the beginning in this method
-        thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
-            _processorsThreadsNumber, ingestionJobKey, httpProtocol, httpHostName, 
-            httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeoutInSeconds,
-            httpHeadersRoot, callbackMedatada, maxRetries);
-        httpCallbackThread.detach();
+				userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
+					httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeoutInSeconds,
+					httpHeadersRoot, callbackMedatada, maxRetries);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "http callback failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "http callback failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
     }
     catch(runtime_error e)
     {
@@ -9495,9 +9751,38 @@ void MMSEngineProcessor::httpCallbackTask(
             + ", e.what(): " + e.what()
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
     catch(exception e)
     {
@@ -9506,72 +9791,67 @@ void MMSEngineProcessor::httpCallbackTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
 }
 
-void MMSEngineProcessor::localCopyContentTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies
+void MMSEngineProcessor::postOnFacebookThread(
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+		dependencies
 )
 {
     try
     {
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be copied"
+            string errorMessage = __FILEREF__ + "No configured any media to be posted on Facebook"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+            _logger->warn(errorMessage);
 
-            throw runtime_error(errorMessage);
+            // throw runtime_error(errorMessage);
         }
 
-		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
-		* 2021-06-19: we still have to check the thread limit because,
-		*		in case handleCheckIngestionEvent gets 20 events,
-		*		we have still to postpone all the events overcoming the thread limit
-		*/
-        if (_processorsThreadsNumber.use_count() + dependencies.size() >
-				_processorThreads + _maxAdditionalProcessorThreads)
+        string facebookConfigurationLabel;
+        string facebookNodeId;
         {
-            _logger->warn(__FILEREF__ + "Not enough available threads to manage copyContentThread, activity is postponed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-            );
-
-            string errorMessage = "";
-            string processorMMS = "";
-
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    ingestionStatus, 
-                    errorMessage,
-                    processorMMS
-                    );
-            
-            return;
-        }
-
-        string localPath;
-        string localFileName;
-        {
-            string field = "LocalPath";
+            string field = "ConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9581,132 +9861,1559 @@ void MMSEngineProcessor::localCopyContentTask(
 
                 throw runtime_error(errorMessage);
             }
-            localPath = parametersRoot.get(field, "XXX").asString();
+            facebookConfigurationLabel = parametersRoot.get(field, "XXX").asString();
 
-            field = "LocalFileName";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            field = "NodeId";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                localFileName = parametersRoot.get(field, "XXX").asString();
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
             }
+            facebookNodeId = parametersRoot.get(field, "XXX").asString();
         }
         
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
+		int dependencyIndex = 0;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 			keyAndDependencyType: dependencies)
         {
-			string mmsAssetPathName;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            int64_t sizeInBytes;
-            string deliveryFileName;
-			*/
-			string fileFormat;
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				string mmsAssetPathName;
+				int64_t sizeInBytes;
+				MMSEngineDBFacade::ContentType contentType;
             
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-            
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			int64_t physicalPathKey;
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-                int64_t encodingProfileKey = -1;
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
                 
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string>
+						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
+						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
-                shared_ptr<Workspace> workspace;
-                string title;
+					{
+						bool warningIfMissing = false;
+						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+							_mmsEngineDBFacade->getMediaItemKeyDetails(
+								workspace->_workspaceKey, key, warningIfMissing);
+
+						tie(contentType, ignore, ignore, ignore, ignore, ignore)
+							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+					}
+				}
+				else
+				{
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-            }
-            else
-            {
-				physicalPathKey = key;
+					{
+						bool warningIfMissing = false;
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+								workspace->_workspaceKey, key, warningIfMissing);
 
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
+						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+					}
+				}
 
-                shared_ptr<Workspace> workspace;
-                string title;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-            }
+				// check on thread availability was done at the beginning in this method
+				if (contentType == MMSEngineDBFacade::ContentType::Video)
+				{
+					postVideoOnFacebook(mmsAssetPathName, 
+						sizeInBytes, ingestionJobKey, workspace,
+						facebookNodeId, facebookConfigurationLabel);
+				}
+				else // if (contentType == ContentType::Audio)
+				{
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "post on facebook failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName to be copied"
-                + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-            
-            // check on thread availability was done at the beginning in this method
-            thread copyContentThread(&MMSEngineProcessor::copyContentThread, this, 
-                _processorsThreadsNumber, ingestionJobKey, mmsAssetPathName,
-				localPath, localFileName);
-            copyContentThread.detach();
-        }
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "post on facebook failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
-                
-        // Update IngestionJob done in the calling method
+ 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
+    }
+}
+
+void MMSEngineProcessor::postOnYouTubeThread(
+        shared_ptr<long> processorsThreadsNumber,
+		int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be posted on YouTube"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->warn(errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+
+        string youTubeConfigurationLabel;
+        string youTubeTitle;
+        string youTubeDescription;
+        Json::Value youTubeTags = Json::nullValue;
+        int youTubeCategoryId = -1;
+        string youTubePrivacy;
+        {
+            string field = "ConfigurationLabel";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            youTubeConfigurationLabel = parametersRoot.get(field, "XXX").asString();
+
+            field = "Title";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubeTitle = parametersRoot.get(field, "XXX").asString();
+
+            field = "Description";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubeDescription = parametersRoot.get(field, "XXX").asString();
+            
+            field = "Tags";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubeTags = parametersRoot[field];
+            
+            field = "CategoryId";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, 0);
+
+            field = "Privacy";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubePrivacy = parametersRoot.get(field, "XXX").asString();
+            else
+                youTubePrivacy = "private";
+        }
+        
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
+        {
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				string mmsAssetPathName;
+				int64_t sizeInBytes;
+				MMSEngineDBFacade::ContentType contentType;
+				string title;
+            
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
+                
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+							warningIfMissing);
+					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
+						= physicalPathDetails;
+
+					{
+						bool warningIfMissing = false;
+						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+							_mmsEngineDBFacade->getMediaItemKeyDetails(
+								workspace->_workspaceKey, key, warningIfMissing);
+
+						tie(contentType, ignore, ignore, ignore, ignore, ignore)
+							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+					}
+				}
+				else
+				{
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+                
+					{
+						bool warningIfMissing = false;
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+								workspace->_workspaceKey, key, warningIfMissing);
+
+						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+								= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+					}
+				}
+            
+				if (youTubeTitle == "")
+					youTubeTitle = title;
+
+				postVideoOnYouTube(mmsAssetPathName, 
+					sizeInBytes, ingestionJobKey, workspace,
+					youTubeConfigurationLabel, youTubeTitle,
+					youTubeDescription, youTubeTags,
+					youTubeCategoryId, youTubePrivacy);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "post on youtube failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "post on youtube failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
+    }
+}
+
+void MMSEngineProcessor::changeFileFormatThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies)
+
+{
+    try 
+    {
+		_logger->info(__FILEREF__ + "changeFileFormatThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured media to be used to changeFileFormat"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->warn(errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+
+        string outputFileFormat;
+        {
+            string field = "OutputFileFormat";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            outputFileFormat = parametersRoot.get(field, "").asString();
+        }
+
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
+        {
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				int64_t mediaItemKey;
+				int64_t physicalPathKey;
+				string mmsSourceAssetPathName;
+				string relativePath;
+
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					mediaItemKey = key;
+					int64_t encodingProfileKey = -1;
+                
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string>
+						physicalPathDetails
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, mediaItemKey,
+							encodingProfileKey, warningIfMissing);
+					tie(physicalPathKey, mmsSourceAssetPathName, ignore, relativePath,
+						ignore, ignore, ignore) = physicalPathDetails;
+				}
+				else
+				{
+					physicalPathKey = key;
+
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathDetails =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
+					tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
+						= physicalPathDetails;
+
+					bool warningIfMissing = false;
+					tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string,
+						int64_t, string, string> mediaItemDetails =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+							workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+						= mediaItemDetails;
+				}
+
+				vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
+					string>> videoTracks;
+				vector<tuple<int64_t, int, int64_t, long, string, long, int,
+					string>> audioTracks;
+
+				_mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey,
+					videoTracks, audioTracks);
+
+				// add the new file as a new variant of the MIK
+				{
+					string changeFormatFileName = to_string(ingestionJobKey)
+						+ "_" + to_string(mediaItemKey)
+						+ "_changeFileFormat"
+					;
+					if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
+						changeFormatFileName +=	".m3u8";
+					else
+						changeFormatFileName +=	(string(".") + outputFileFormat);
+
+					string stagingChangeFileFormatAssetPathName;
+					{
+						bool removeLinuxPathIfExist = true;
+						bool neededForTranscoder = false;
+						stagingChangeFileFormatAssetPathName = _mmsStorage->getStagingAssetPathName(
+							neededForTranscoder,
+							workspace->_directoryName,
+							to_string(ingestionJobKey),
+							"/",
+							changeFormatFileName,
+							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+							removeLinuxPathIfExist);
+					}
+
+					try
+					{
+						_logger->info(__FILEREF__ + "Calling ffmpeg.changeFileFormat"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", changeFormatFileName: " + changeFormatFileName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						);
+
+						FFMpeg ffmpeg (_configuration, _logger);
+
+						ffmpeg.changeFileFormat(
+							ingestionJobKey,
+							physicalPathKey,
+							mmsSourceAssetPathName, videoTracks, audioTracks,
+							stagingChangeFileFormatAssetPathName,
+							outputFileFormat);
+
+						_logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", changeFormatFileName: " + changeFormatFileName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", e.what(): " + e.what()
+						);
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", e.what(): " + e.what()
+						);
+
+						throw e;
+					}
+
+					pair<int64_t, long> mediaInfoDetails;
+					vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+					vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+
+					int imageWidth = -1;
+					int imageHeight = -1;
+					string imageFormat;
+					int imageQuality = -1;
+					try
+					{
+						_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						);
+						FFMpeg ffmpeg (_configuration, _logger);
+						// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+						mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
+							stagingChangeFileFormatAssetPathName,
+							videoTracks, audioTracks);
+
+						// tie(durationInMilliSeconds, bitRate, 
+						// 	videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+						// 	audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "getMediaInfo failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", _workspace->_directoryName: " + workspace->_directoryName
+							+ ", e.what(): " + e.what()
+						);
+
+						{
+							string directoryPathName;
+							try
+							{
+								size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+								if (endOfDirectoryIndex != string::npos)
+								{
+									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+									_logger->info(__FILEREF__ + "removeDirectory"
+										+ ", directoryPathName: " + directoryPathName
+									);
+									Boolean_t bRemoveRecursively = true;
+									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "removeDirectory failed"
+									+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+									+ ", directoryPathName: " + directoryPathName
+									+ ", exception: " + e.what()
+								);
+							}
+						}
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "getMediaInfo failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", workspace->_directoryName: " + workspace->_directoryName
+						);
+
+						{
+							string directoryPathName;
+							try
+							{
+								size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+								if (endOfDirectoryIndex != string::npos)
+								{
+									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+									_logger->info(__FILEREF__ + "removeDirectory"
+										+ ", directoryPathName: " + directoryPathName
+									);
+									Boolean_t bRemoveRecursively = true;
+									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "removeDirectory failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+									+ ", directoryPathName: " + directoryPathName
+									+ ", exception: " + e.what()
+								);
+							}
+						}
+
+						throw e;
+					}
+
+					string mmsChangeFileFormatAssetPathName;
+					unsigned long mmsPartitionIndexUsed;
+					FileIO::DirectoryEntryType_t sourceFileType;
+					try
+					{
+						bool partitionIndexToBeCalculated = true;
+						bool deliveryRepositoriesToo = true;
+
+						mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+							ingestionJobKey,
+							stagingChangeFileFormatAssetPathName,
+							workspace->_directoryName,
+							changeFormatFileName,
+							relativePath,
+
+							partitionIndexToBeCalculated,
+							&mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+							&sourceFileType,
+
+							deliveryRepositoriesToo,
+							workspace->_territories
+						);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", e.what(): " + e.what()
+						);
+
+						{
+							string directoryPathName;
+							try
+							{
+								size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+								if (endOfDirectoryIndex != string::npos)
+								{
+									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+									_logger->info(__FILEREF__ + "removeDirectory"
+										+ ", directoryPathName: " + directoryPathName
+									);
+									Boolean_t bRemoveRecursively = true;
+									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "removeDirectory failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+									+ ", directoryPathName: " + directoryPathName
+									+ ", exception: " + e.what()
+								);
+							}
+						}
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", e.what(): " + e.what()
+						);
+
+						{
+							string directoryPathName;
+							try
+							{
+								size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+								if (endOfDirectoryIndex != string::npos)
+								{
+									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+									_logger->info(__FILEREF__ + "removeDirectory"
+										+ ", directoryPathName: " + directoryPathName
+									);
+									Boolean_t bRemoveRecursively = true;
+									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "removeDirectory failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+									+ ", directoryPathName: " + directoryPathName
+									+ ", exception: " + e.what()
+								);
+							}
+						}
+
+						throw e;
+					}
+
+					// remove staging directory
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0,
+									endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					try
+					{
+						int64_t physicalItemRetentionInMinutes = -1;
+						{
+							string field = "PhysicalItemRetention";
+							if (JSONUtils::isMetadataPresent(parametersRoot, field))
+							{
+								string retention = parametersRoot.get(field, "1d").asString();
+								physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+							}
+						}
+
+						unsigned long long mmsAssetSizeInBytes;
+						{
+							bool inCaseOfLinkHasItToBeRead = false;
+							mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsChangeFileFormatAssetPathName,
+								inCaseOfLinkHasItToBeRead);   
+						}
+
+						bool externalReadOnlyStorage = false;
+						string externalDeliveryTechnology;
+						string externalDeliveryURL;
+						int64_t liveRecordingIngestionJobKey = -1;
+						int64_t changeFormatPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
+							workspace->_workspaceKey,
+							ingestionJobKey,
+							liveRecordingIngestionJobKey,
+							mediaItemKey,
+							externalReadOnlyStorage,
+							externalDeliveryTechnology,
+							externalDeliveryURL,
+							changeFormatFileName,
+							relativePath,
+							mmsPartitionIndexUsed,
+							mmsAssetSizeInBytes,
+							-1,	// encodingProfileKey,
+							physicalItemRetentionInMinutes,
+
+							mediaInfoDetails,
+							videoTracks,
+							audioTracks,
+
+							imageWidth,
+							imageHeight,
+							imageFormat,
+							imageQuality
+						);
+
+						_logger->info(__FILEREF__ + "Saved the Encoded content"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", changeFormatPhysicalPathKey: " + to_string(changeFormatPhysicalPathKey)
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+						);
+
+						if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+						{
+							if (FileIO::directoryExisting(mmsChangeFileFormatAssetPathName))
+							{
+								_logger->info(__FILEREF__ + "Remove directory"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
+								);
+
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(mmsChangeFileFormatAssetPathName, bRemoveRecursively);
+							}
+						}
+						else
+						{
+							if (FileIO::fileExisting(mmsChangeFileFormatAssetPathName))
+							{
+								_logger->info(__FILEREF__ + "Remove"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
+								);
+
+								FileIO::remove(mmsChangeFileFormatAssetPathName);
+							}
+
+							throw e;
+						}
+					}
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "change file format failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "change file format failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+    }
+    catch (runtime_error& e) 
+    {
+        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+        
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        return;
+    }
+}
+
+
+// this is to generate one Frame
+void MMSEngineProcessor::generateAndIngestFramesThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        MMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
+)
+{
+    try
+    {
+		_logger->info(__FILEREF__ + "generateAndIngestFramesThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
+        string field;
+        
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No video found"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
+            _logger->warn(errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+			workspace);
+
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
+        {
+			bool stopIfReferenceProcessingError = false;
+
+			try
+			{
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
+
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+				{
+					string errorMessage = __FILEREF__ + "ContentTpe is not a Video"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				int64_t sourceMediaItemKey;
+				int64_t sourcePhysicalPathKey;
+				string sourcePhysicalPath;
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+							warningIfMissing);
+					tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathDetails;
+
+					sourceMediaItemKey = key;
+				}
+				else
+				{
+					sourcePhysicalPathKey = key;
+
+					bool warningIfMissing = false;
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+							= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+
+					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourcePhysicalPathKey);
+					tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathDetails;
+				}
+
+				int periodInSeconds;
+				double startTimeInSeconds;
+				int maxFramesNumber;
+				string videoFilter;
+				bool mjpeg;
+				int imageWidth;
+				int imageHeight;
+				int64_t durationInMilliSeconds;
+				fillGenerateFramesParameters(
+					workspace,
+					ingestionJobKey,
+					ingestionType,
+					parametersRoot,
+					sourceMediaItemKey, sourcePhysicalPathKey,
+                
+					periodInSeconds, startTimeInSeconds,
+					maxFramesNumber, videoFilter,
+					mjpeg, imageWidth, imageHeight,
+					durationInMilliSeconds);
+        
+				pid_t childPid;
+				FFMpeg ffmpeg (_configuration, _logger);
+				vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
+					ingestionJobKey,
+					0,  // encodingJobKey
+					workspaceIngestionRepository,
+					to_string(ingestionJobKey),    // imageBaseFileName,
+					startTimeInSeconds,
+					maxFramesNumber,
+					videoFilter,
+					periodInSeconds,
+					mjpeg,
+					imageWidth, 
+					imageHeight,
+					sourcePhysicalPath,
+					durationInMilliSeconds,
+					&childPid
+				);
+
+				_logger->info(__FILEREF__ + "generateFramesToIngest done"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", generatedFramesFileNames.size: " + to_string(generatedFramesFileNames.size())
+				);
+       
+				bool generatedFrameIngestionFailures = false;
+
+				for(string generatedFrameFileName: generatedFramesFileNames) 
+				{
+					_logger->info(__FILEREF__ + "Generated Frame to ingest"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", generatedFrameFileName: " + generatedFrameFileName
+					);
+
+					string fileFormat;
+					size_t extensionIndex = generatedFrameFileName.find_last_of(".");
+					if (extensionIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__
+							+ "No fileFormat (extension of the file) found in generatedFileName"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", generatedFrameFileName: " + generatedFrameFileName
+						;
+						_logger->error(errorMessage);
+
+						generatedFrameIngestionFailures = true;
+
+						{
+							string workspaceIngestionBinaryPathName
+								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
+								+ "/" + generatedFrameFileName;
+
+							_logger->info(__FILEREF__ + "Remove file"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+							);
+							FileIO::remove(workspaceIngestionBinaryPathName);
+						}
+
+						continue;
+					}
+					fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
+
+					_logger->info(__FILEREF__ + "Generated Frame to ingest"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", new generatedFrameFileName: " + generatedFrameFileName
+						+ ", fileFormat: " + fileFormat
+					);
+
+					string title;
+					int64_t imageOfVideoMediaItemKey = sourceMediaItemKey;
+					int64_t cutOfVideoMediaItemKey = -1;
+					int64_t cutOfAudioMediaItemKey = -1;
+					double startTimeInSeconds = 0.0;
+					double endTimeInSeconds = 0.0;
+					string imageMetaDataContent = generateMediaMetadataToIngest(
+						ingestionJobKey,
+						fileFormat,
+						title,
+						imageOfVideoMediaItemKey,
+						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+						parametersRoot
+					);
+
+					try
+					{
+						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
+							= make_shared<LocalAssetIngestionEvent>();
+
+						localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
+						localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+						localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
+						// localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
+						localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
+						localAssetIngestionEvent->setWorkspace(workspace);
+						localAssetIngestionEvent->setIngestionType(
+							MMSEngineDBFacade::IngestionType::AddContent);
+						localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+							/* it + 1 == generatedFramesFileNames.end() ? true : */ false);
+
+						localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
+
+						handleLocalAssetIngestionEventThread (
+							processorsThreadsNumber, *localAssetIngestionEvent);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", exception: " + e.what()
+						);
+
+						generatedFrameIngestionFailures = true;
+
+						{
+							string workspaceIngestionBinaryPathName
+								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
+								+ "/" + generatedFrameFileName;
+
+							_logger->info(__FILEREF__ + "Remove file"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+							);
+							FileIO::remove(workspaceIngestionBinaryPathName);
+						}
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", exception: " + e.what()
+						);
+
+						generatedFrameIngestionFailures = true;
+
+						{
+							string workspaceIngestionBinaryPathName
+								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
+								+ "/" + generatedFrameFileName;
+
+							_logger->info(__FILEREF__ + "Remove file"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+							);
+							FileIO::remove(workspaceIngestionBinaryPathName);
+						}
+					}
+				}
+
+				if (generatedFrameIngestionFailures)
+				{
+					string errorMessage = __FILEREF__
+						+ "generateAndIngest frame, we had failures"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "generate and ingest frame failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "generate and ingest frame failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
+
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+        }
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+        
+		// it's a thread, no throw
+        // throw e;
+        return;
     }
 }
 
@@ -9788,23 +11495,11 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			}
         }
         
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	l'encoding dovrebbe eseguire il processing in modo sequenziale e utilizzare il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
 
 			string mmsAssetPathName;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            int64_t sizeInBytes;
-            string deliveryFileName;
-			*/
             MMSEngineDBFacade::ContentType contentType;
             string title;
 			int64_t sourceMediaItemKey;
@@ -9831,18 +11526,6 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 				sourceMediaItemKey = key;
 
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                shared_ptr<Workspace> workspace;
-                
-                tie(sourcePhysicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-
                 {
                     bool warningIfMissing = false;
                     tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
@@ -9864,17 +11547,6 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 				sourcePhysicalPathKey = key;
 
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
-
-                shared_ptr<Workspace> workspace;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-                
                 {
                     bool warningIfMissing = false;
                     tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
@@ -9887,20 +11559,6 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 }
             }
             
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
                 sourceMediaItemKey, sourcePhysicalPathKey, mmsAssetPathName,
 				faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority,
@@ -9995,23 +11653,11 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             deepLearnedModelTagsCommaSeparated = parametersRoot.get(field, "XXX").asString();
         }
         
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	l'encoding dovrebbe eseguire il processing in modo sequenziale e utilizzare il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
 
 			string mmsAssetPathName;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            int64_t sizeInBytes;
-            string deliveryFileName;
-			*/
             MMSEngineDBFacade::ContentType contentType;
             string title;
             
@@ -10033,18 +11679,6 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                int64_t physicalPathKey;
-                shared_ptr<Workspace> workspace;
-                
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
 
                 {
                     bool warningIfMissing = false;
@@ -10064,17 +11698,6 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t, int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
-
-                shared_ptr<Workspace> workspace;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-                
                 {
                     bool warningIfMissing = false;
                     tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
@@ -10087,20 +11710,6 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 }
             }
             
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-
 			_mmsEngineDBFacade->addEncoding_FaceIdentificationJob(workspace, ingestionJobKey,
                 mmsAssetPathName, faceIdentificationCascadeName, deepLearnedModelTagsCommaSeparated,
 				encodingPriority);
@@ -14363,657 +15972,15 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
     }
 }
 
-void MMSEngineProcessor::changeFileFormatThread(
-        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
-			dependencies)
-
-{
-    try 
-    {
-		_logger->info(__FILEREF__ + "changeFileFormatThread"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-		);
-
-        if (dependencies.size() == 0)
-        {
-            string errorMessage = __FILEREF__ + "No configured media to be used to changeFileFormat"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        string outputFileFormat;
-        {
-            string field = "OutputFileFormat";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            outputFileFormat = parametersRoot.get(field, "").asString();
-        }
-
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue il processing in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
-        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
-			Validator::DependencyType, bool>>::iterator it = dependencies.begin(); 
-			it != dependencies.end(); ++it) 
-        {
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = *it;
-
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			int64_t mediaItemKey;
-			int64_t physicalPathKey;
-			string mmsSourceAssetPathName;
-			string relativePath;
-
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-				mediaItemKey = key;
-                int64_t encodingProfileKey = -1;
-                
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathDetails
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, mediaItemKey,
-						encodingProfileKey, warningIfMissing);
-				tie(physicalPathKey, mmsSourceAssetPathName, ignore, relativePath,
-					ignore, ignore, ignore) = physicalPathDetails;
-            }
-            else
-            {
-				physicalPathKey = key;
-
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
-				tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
-					= physicalPathDetails;
-
-				bool warningIfMissing = false;
-				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string,
-					int64_t, string, string> mediaItemDetails =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, physicalPathKey, warningIfMissing);
-				tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-					= mediaItemDetails;
-            }
-
-			vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
-				string>> videoTracks;
-			vector<tuple<int64_t, int, int64_t, long, string, long, int,
-				string>> audioTracks;
-
-			_mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey,
-				videoTracks, audioTracks);
-
-			// add the new file as a new variant of the MIK
-			{
-				string changeFormatFileName = to_string(ingestionJobKey)
-					+ "_" + to_string(mediaItemKey)
-					+ "_changeFileFormat"
-				;
-				if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
-					changeFormatFileName +=	".m3u8";
-				else
-					changeFormatFileName +=	(string(".") + outputFileFormat);
-
-				string stagingChangeFileFormatAssetPathName;
-				{
-					bool removeLinuxPathIfExist = true;
-					bool neededForTranscoder = false;
-					stagingChangeFileFormatAssetPathName = _mmsStorage->getStagingAssetPathName(
-						neededForTranscoder,
-						workspace->_directoryName,
-						to_string(ingestionJobKey),
-						"/",
-						changeFormatFileName,
-						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-						removeLinuxPathIfExist);
-				}
-
-				try
-				{
-					_logger->info(__FILEREF__ + "Calling ffmpeg.changeFileFormat"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", changeFormatFileName: " + changeFormatFileName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-					);
-
-					FFMpeg ffmpeg (_configuration, _logger);
-
-					ffmpeg.changeFileFormat(
-						ingestionJobKey,
-						physicalPathKey,
-						mmsSourceAssetPathName, videoTracks, audioTracks,
-						stagingChangeFileFormatAssetPathName,
-						outputFileFormat);
-
-					_logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", changeFormatFileName: " + changeFormatFileName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-					);
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", e.what(): " + e.what()
-					);
-
-					throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", e.what(): " + e.what()
-					);
-
-					throw e;
-				}
-
-				/*
-				int64_t durationInMilliSeconds = -1;
-				long bitRate = -1;
-				string videoCodecName;
-				string videoProfile;
-				int videoWidth = -1;
-				int videoHeight = -1;
-				string videoAvgFrameRate;
-				long videoBitRate = -1;
-				string audioCodecName;
-				long audioSampleRate = -1;
-				int audioChannels = -1;
-				long audioBitRate = -1;
-				*/
-				pair<int64_t, long> mediaInfoDetails;
-				vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
-				vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-
-				int imageWidth = -1;
-				int imageHeight = -1;
-				string imageFormat;
-				int imageQuality = -1;
-				try
-				{
-					_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-					);
-					FFMpeg ffmpeg (_configuration, _logger);
-					// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-					mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
-						stagingChangeFileFormatAssetPathName,
-						videoTracks, audioTracks);
-
-					// tie(durationInMilliSeconds, bitRate, 
-					// 	videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-					// 	audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "getMediaInfo failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", _workspace->_directoryName: " + workspace->_directoryName
-						+ ", e.what(): " + e.what()
-					);
-
-					{
-						string directoryPathName;
-						try
-						{
-							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-							if (endOfDirectoryIndex != string::npos)
-							{
-								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
-
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", directoryPathName: " + directoryPathName
-								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "removeDirectory failed"
-								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-								+ ", directoryPathName: " + directoryPathName
-								+ ", exception: " + e.what()
-							);
-						}
-					}
-
-					throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "getMediaInfo failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", workspace->_directoryName: " + workspace->_directoryName
-					);
-
-					{
-						string directoryPathName;
-						try
-						{
-							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-							if (endOfDirectoryIndex != string::npos)
-							{
-								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
-
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", directoryPathName: " + directoryPathName
-								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "removeDirectory failed"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-								+ ", directoryPathName: " + directoryPathName
-								+ ", exception: " + e.what()
-							);
-						}
-					}
-
-					throw e;
-				}
-
-				string mmsChangeFileFormatAssetPathName;
-				unsigned long mmsPartitionIndexUsed;
-				FileIO::DirectoryEntryType_t sourceFileType;
-				try
-				{
-					bool partitionIndexToBeCalculated = true;
-					bool deliveryRepositoriesToo = true;
-
-					mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(
-						ingestionJobKey,
-						stagingChangeFileFormatAssetPathName,
-						workspace->_directoryName,
-						changeFormatFileName,
-						relativePath,
-
-						partitionIndexToBeCalculated,
-						&mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
-						&sourceFileType,
-
-						deliveryRepositoriesToo,
-						workspace->_territories
-					);
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", e.what(): " + e.what()
-					);
-
-					{
-						string directoryPathName;
-						try
-						{
-							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-							if (endOfDirectoryIndex != string::npos)
-							{
-								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
-
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", directoryPathName: " + directoryPathName
-								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "removeDirectory failed"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-								+ ", directoryPathName: " + directoryPathName
-								+ ", exception: " + e.what()
-							);
-						}
-					}
-
-					throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-						+ ", e.what(): " + e.what()
-					);
-
-					{
-						string directoryPathName;
-						try
-						{
-							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-							if (endOfDirectoryIndex != string::npos)
-							{
-								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
-
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", directoryPathName: " + directoryPathName
-								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "removeDirectory failed"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-								+ ", directoryPathName: " + directoryPathName
-								+ ", exception: " + e.what()
-							);
-						}
-					}
-
-					throw e;
-				}
-
-				// remove staging directory
-				{
-					string directoryPathName;
-					try
-					{
-						size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-						if (endOfDirectoryIndex != string::npos)
-						{
-							directoryPathName = stagingChangeFileFormatAssetPathName.substr(0,
-									endOfDirectoryIndex);
-
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", directoryPathName: " + directoryPathName
-							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-						}
-					}
-					catch(runtime_error e)
-					{
-						_logger->error(__FILEREF__ + "removeDirectory failed"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-							+ ", directoryPathName: " + directoryPathName
-							+ ", exception: " + e.what()
-						);
-					}
-				}
-
-				try
-				{
-					int64_t physicalItemRetentionInMinutes = -1;
-					{
-						string field = "PhysicalItemRetention";
-						if (JSONUtils::isMetadataPresent(parametersRoot, field))
-						{
-							string retention = parametersRoot.get(field, "1d").asString();
-							physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
-						}
-					}
-
-					unsigned long long mmsAssetSizeInBytes;
-					{
-						bool inCaseOfLinkHasItToBeRead = false;
-						mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsChangeFileFormatAssetPathName,
-							inCaseOfLinkHasItToBeRead);   
-					}
-
-					bool externalReadOnlyStorage = false;
-					string externalDeliveryTechnology;
-					string externalDeliveryURL;
-					int64_t liveRecordingIngestionJobKey = -1;
-					int64_t changeFormatPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
-						workspace->_workspaceKey,
-						ingestionJobKey,
-						liveRecordingIngestionJobKey,
-						mediaItemKey,
-						externalReadOnlyStorage,
-						externalDeliveryTechnology,
-						externalDeliveryURL,
-						changeFormatFileName,
-						relativePath,
-						mmsPartitionIndexUsed,
-						mmsAssetSizeInBytes,
-						-1,	// encodingProfileKey,
-						physicalItemRetentionInMinutes,
-
-						mediaInfoDetails,
-						videoTracks,
-						audioTracks,
-						/*
-						durationInMilliSeconds,
-						bitRate,
-						videoCodecName,
-						videoProfile,
-						videoWidth,
-						videoHeight,
-						videoAvgFrameRate,
-						videoBitRate,
-						audioCodecName,
-						audioSampleRate,
-						audioChannels,
-						audioBitRate,
-						*/
-
-						imageWidth,
-						imageHeight,
-						imageFormat,
-						imageQuality
-					);
-
-					_logger->info(__FILEREF__ + "Saved the Encoded content"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", changeFormatPhysicalPathKey: " + to_string(changeFormatPhysicalPathKey)
-					);
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-					);
-
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						if (FileIO::directoryExisting(mmsChangeFileFormatAssetPathName))
-						{
-							_logger->info(__FILEREF__ + "Remove directory"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
-							);
-
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(mmsChangeFileFormatAssetPathName, bRemoveRecursively);
-						}
-					}
-					else
-					{
-						if (FileIO::fileExisting(mmsChangeFileFormatAssetPathName))
-						{
-							_logger->info(__FILEREF__ + "Remove"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
-							);
-
-							FileIO::remove(mmsChangeFileFormatAssetPathName);
-						}
-
-						throw e;
-					}
-				}
-			}
-        }
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
-        );
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
-        );
-    }
-    catch (runtime_error& e) 
-    {
-        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", exception: " + e.what()
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-        
-        return;
-    }
-    catch (exception e)
-    {
-        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", exception: " + e.what()
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
-}
-
-void MMSEngineProcessor::copyContentThread(
-        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string mmsAssetPathName, 
-        string localPath, string localFileName)
+void MMSEngineProcessor::copyContent(
+	int64_t ingestionJobKey, string mmsAssetPathName, string localPath, string localFileName)
 {
 
     try 
     {
-		_logger->info(__FILEREF__ + "copyContentThread"
+		_logger->info(__FILEREF__ + "copyContent"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
         string localPathName = localPath;
@@ -15078,432 +16045,34 @@ void MMSEngineProcessor::copyContentThread(
         );
 
         FileIO::copyFile(mmsAssetPathName, localPathName);
-            
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
-        );
     }
     catch (runtime_error& e) 
     {
-        _logger->error(__FILEREF__ + "Coping failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", mmsAssetPathName: " + mmsAssetPathName 
-            + ", localPath: " + localPath
-            + ", localFileName: " + localFileName
-            + ", exception: " + e.what()
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-        
-        return;
-    }
-    catch (exception e)
-    {
-        _logger->error(__FILEREF__ + "Coping failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", mmsAssetPathName: " + mmsAssetPathName 
-            + ", localPath: " + localPath
-            + ", localFileName: " + localFileName
-            + ", exception: " + e.what()
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
-}
-
-void MMSEngineProcessor::extractTracksContentThread(
-        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
-			dependencies)
-{
-    try 
-    {
-		_logger->info(__FILEREF__ + "extractTracksContentThread"
+		string errorMessage = __FILEREF__ + "Coping failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-		);
-
-        if (dependencies.size() == 0)
-        {
-            string errorMessage = __FILEREF__ + "No configured media to be used to extract a track"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        vector<pair<string,int>> tracksToBeExtracted;
-        string outputFileFormat;
-        {
-            {
-                string field = "Tracks";
-                Json::Value tracksToot = parametersRoot[field];
-                if (tracksToot.size() == 0)
-                {
-                    string errorMessage = __FILEREF__ + "No correct number of Tracks"
-                            + ", tracksToot.size: " + to_string(tracksToot.size());
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                for (int trackIndex = 0; trackIndex < tracksToot.size(); trackIndex++)
-                {
-                    Json::Value trackRoot = tracksToot[trackIndex];
-
-                    field = "TrackType";
-                    if (!JSONUtils::isMetadataPresent(trackRoot, field))
-                    {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sTrackRoot = Json::writeString(wbuilder, trackRoot);
-
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + field
-                                + ", sTrackRoot: " + sTrackRoot
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                    string trackType = trackRoot.get(field, "XXX").asString();
-
-                    int trackNumber = 0;
-                    field = "TrackNumber";
-                    if (JSONUtils::isMetadataPresent(trackRoot, field))
-                        trackNumber = JSONUtils::asInt(trackRoot, field, 0);
-
-                    tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
-                }
-            }
-
-            string field = "OutputFileFormat";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            outputFileFormat = parametersRoot.get(field, "XXX").asString();
-        }
-
-//	si dovrebbe lanciare un thread che esegue il processing in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
-        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
-			Validator::DependencyType, bool>>::iterator it = dependencies.begin(); 
-			it != dependencies.end(); ++it) 
-        {
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = *it;
-
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			string mmsAssetPathName;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            shared_ptr<Workspace> workspace;
-			*/
-            
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-                int64_t encodingProfileKey = -1;
-                
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                int64_t physicalPathKey;
-                string deliveryFileName;
-                string title;
-                int64_t sizeInBytes;
-                
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-            }
-            else
-            {
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
-
-                string deliveryFileName;
-                string title;
-                int64_t sizeInBytes;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
-            }
-
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-            
-            {
-                string localSourceFileName;
-                string extractTrackMediaPathName;
-                {
-                    localSourceFileName = to_string(ingestionJobKey)
-                            + "_" + to_string(key)
-                            + "_extractTrack"
-                            + "." + outputFileFormat
-                            ;
-
-                    string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-                        workspace);
-                    extractTrackMediaPathName = workspaceIngestionRepository + "/" 
-                            + localSourceFileName;
-                }
-
-                FFMpeg ffmpeg (_configuration, _logger);
-
-                ffmpeg.extractTrackMediaToIngest(
-                    ingestionJobKey,
-                    mmsAssetPathName,
-                    tracksToBeExtracted,
-                    extractTrackMediaPathName);
-
-                _logger->info(__FILEREF__ + "extractTrackMediaToIngest done"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", extractTrackMediaPathName: " + extractTrackMediaPathName
-                );
-
-                string title;
-				int64_t imageOfVideoMediaItemKey = -1;
-				int64_t cutOfVideoMediaItemKey = -1;
-				int64_t cutOfAudioMediaItemKey = -1;
-				double startTimeInSeconds = 0.0;
-				double endTimeInSeconds = 0.0;
-                string mediaMetaDataContent = generateMediaMetadataToIngest(
-					ingestionJobKey,
-					outputFileFormat,
-					title,
-					imageOfVideoMediaItemKey,
-					cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-					parametersRoot
-				);
-
-                {
-                    shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                            ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-                    localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-                    localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-                    localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-                    localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                    localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-                    localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
-                    localAssetIngestionEvent->setWorkspace(workspace);
-                    localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
-                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-                        it + 1 == dependencies.end() ? true : false);
-
-                    // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-                    // force the concat file to have the same avgFrameRate of the source media
-                    // Uncomment next statements in case the problem is still present event in case of the ExtractTracks task
-                    // if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
-                    //    localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
-
-                    localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
-
-                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-                    _multiEventsSet->addEvent(event);
-
-                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
-                }
-            }
-        }
-    }
-    catch (runtime_error& e) 
-    {
-        _logger->error(__FILEREF__ + "Extracting tracks failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", localPath: " + localPath
+            + ", localFileName: " + localFileName
             + ", exception: " + e.what()
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-        
-        return;
+        throw runtime_error(errorMessage);
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Extracting tracks failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+		string errorMessage = __FILEREF__ + "Coping failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", localPath: " + localPath
+            + ", localFileName: " + localFileName
             + ", exception: " + e.what()
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
 }
 
@@ -15877,334 +16446,6 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
     
 }
 
-// this is to generate one Frame
-void MMSEngineProcessor::generateAndIngestFramesThread(
-        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
-			dependencies
-)
-{
-    try
-    {
-		_logger->info(__FILEREF__ + "generateAndIngestFramesThread"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-		);
-
-        string field;
-        
-        if (dependencies.size() != 1)
-        {
-            string errorMessage = __FILEREF__ + "No video found"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        int periodInSeconds;
-        double startTimeInSeconds;
-        int maxFramesNumber;
-        string videoFilter;
-        bool mjpeg;
-        int imageWidth;
-        int imageHeight;
-        int64_t sourcePhysicalPathKey;
-        string sourcePhysicalPath;
-        int64_t durationInMilliSeconds;
-        int64_t sourceVideoMediaItemKey = fillGenerateFramesParameters(
-                workspace,
-                ingestionJobKey,
-                ingestionType,
-                parametersRoot,
-                dependencies,
-                
-                periodInSeconds, startTimeInSeconds,
-                maxFramesNumber, videoFilter,
-                mjpeg, imageWidth, imageHeight,
-                sourcePhysicalPathKey, sourcePhysicalPath, durationInMilliSeconds);
-        
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-                workspace);
-
-		pid_t childPid;
-        FFMpeg ffmpeg (_configuration, _logger);
-
-        vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
-                ingestionJobKey,
-                0,  // encodingJobKey
-                workspaceIngestionRepository,
-                to_string(ingestionJobKey),    // imageBaseFileName,
-                startTimeInSeconds,
-                maxFramesNumber,
-                videoFilter,
-                periodInSeconds,
-                mjpeg,
-                imageWidth, 
-                imageHeight,
-                sourcePhysicalPath,
-                durationInMilliSeconds,
-				&childPid
-        );
-
-        _logger->info(__FILEREF__ + "generateFramesToIngest done"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", generatedFramesFileNames.size: " + to_string(generatedFramesFileNames.size())
-        );
-        
-        if (generatedFramesFileNames.size() == 0)
-        {
-            MMSEngineDBFacade::IngestionStatus newIngestionStatus 
-                    = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
-
-            string errorMessage;
-            string processorMMS;
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );
-            _mmsEngineDBFacade->updateIngestionJob (
-                ingestionJobKey, 
-                newIngestionStatus, errorMessage);
-        }
-        else
-        {
-            // we have one ingestion job row and many generatd frames to be ingested
-            // We want to update the ingestion row just once at the end in case of success
-            // or when an error happens.
-            // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
-            // and we will set it to false but the last frame that we will set to true
-            // In case of error, handleLocalAssetIngestionEvent will update ingestion row
-            // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
-            // When I say 'update the ingestion row', it's not just the update but it is also
-            // manageIngestionJobStatusUpdate
-            bool generatedFrameIngestionFailed = false;
-
-            for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
-                    it != generatedFramesFileNames.end(); ++it) 
-            {
-                string generatedFrameFileName = *it;
-
-                if (generatedFrameIngestionFailed)
-                {
-                    string workspaceIngestionBinaryPathName;
-
-                    workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-                    workspaceIngestionBinaryPathName
-                            .append("/")
-                            .append(generatedFrameFileName)
-                            ;
-
-                    _logger->info(__FILEREF__ + "Remove file"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-                    );
-                    FileIO::remove(workspaceIngestionBinaryPathName);
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Generated Frame to ingest"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", generatedFrameFileName: " + generatedFrameFileName
-                        // + ", textToBeReplaced: " + textToBeReplaced
-                        // + ", textToReplace: " + textToReplace
-                    );
-
-                    string fileFormat;
-                    size_t extensionIndex = generatedFrameFileName.find_last_of(".");
-                    if (extensionIndex == string::npos)
-                    {
-                        string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", generatedFrameFileName: " + generatedFrameFileName
-                        ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                    fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
-
-        //            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
-        //                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
-
-                    _logger->info(__FILEREF__ + "Generated Frame to ingest"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", new generatedFrameFileName: " + generatedFrameFileName
-                        + ", fileFormat: " + fileFormat
-                    );
-
-                    string title;
-					int64_t imageOfVideoMediaItemKey = sourceVideoMediaItemKey;
-					int64_t cutOfVideoMediaItemKey = -1;
-					int64_t cutOfAudioMediaItemKey = -1;
-					double startTimeInSeconds = 0.0;
-					double endTimeInSeconds = 0.0;
-                    string imageMetaDataContent = generateMediaMetadataToIngest(
-                        ingestionJobKey,
-                        fileFormat,
-                        title,
-						imageOfVideoMediaItemKey,
-						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-                        parametersRoot
-                    );
-
-                    {
-                        // shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                        //        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-                        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
-                                = make_shared<LocalAssetIngestionEvent>();
-
-                        localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-                        localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-                        localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-                        localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                        localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
-                        // localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
-                        localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
-                        localAssetIngestionEvent->setWorkspace(workspace);
-                        localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-                        localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-                            it + 1 == generatedFramesFileNames.end() ? true : false);
-
-                        localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
-
-                        try
-                        {
-                            handleLocalAssetIngestionEventThread (
-									processorsThreadsNumber, *localAssetIngestionEvent);
-                        }
-                        catch(runtime_error e)
-                        {
-                            generatedFrameIngestionFailed = true;
-
-                            _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
-                                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", exception: " + e.what()
-                            );
-                        }
-                        catch(exception e)
-                        {
-                            generatedFrameIngestionFailed = true;
-
-                            _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
-                                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", exception: " + e.what()
-                            );
-                        }
-
-                        /*
-                        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-                        _multiEventsSet->addEvent(event);
-
-                        _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                            + ", getEventKey().second: " + to_string(event->getEventKey().second));
-                        */
-                    }
-                }
-            }
-        }
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-        
-		// it's a thread, no throw
-        // throw e;
-        return;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-        
-		// it's a thread, no throw
-        // throw e;
-        return;
-    }
-}
-
 void MMSEngineProcessor::manageGenerateFramesTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -16240,6 +16481,57 @@ void MMSEngineProcessor::manageGenerateFramesTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+        {
+			tuple<int64_t,MMSEngineDBFacade::ContentType,
+				Validator::DependencyType, bool> keyAndDependencyType = dependencies[0];
+
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
+
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
+
+			if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+			{
+				string errorMessage = __FILEREF__ + "ContentTpe is not a Video"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+						warningIfMissing);
+				tie(sourcePhysicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+
+				sourceMediaItemKey = key;
+			}
+			else
+			{
+				sourcePhysicalPathKey = key;
+
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+			}
+		}
+
         int periodInSeconds;
         double startTimeInSeconds;
         int maxFramesNumber;
@@ -16247,36 +16539,33 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         bool mjpeg;
         int imageWidth;
         int imageHeight;
-        int64_t sourcePhysicalPathKey;
-        string sourcePhysicalPath;
         int64_t durationInMilliSeconds;
         fillGenerateFramesParameters(
-                workspace,
-                ingestionJobKey,
-                ingestionType,
-                parametersRoot,
-                dependencies,
-                
-                periodInSeconds, startTimeInSeconds,
-                maxFramesNumber, videoFilter,
-                mjpeg, imageWidth, imageHeight,
-                sourcePhysicalPathKey, sourcePhysicalPath,
-                durationInMilliSeconds);
+			workspace,
+			ingestionJobKey,
+			ingestionType,
+			parametersRoot,
+			sourceMediaItemKey, sourcePhysicalPathKey,
 
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+			periodInSeconds, startTimeInSeconds,
+			maxFramesNumber, videoFilter,
+			mjpeg, imageWidth, imageHeight,
+			durationInMilliSeconds);
+
+		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
-        _mmsEngineDBFacade->addEncoding_GenerateFramesJob (
-                workspace,
-                ingestionJobKey, encodingPriority,
-                workspaceIngestionRepository, 
-                startTimeInSeconds, maxFramesNumber, 
-                videoFilter, periodInSeconds, 
-                mjpeg, imageWidth, imageHeight,
-                sourcePhysicalPathKey,
-                durationInMilliSeconds
-                );
-    }
+		_mmsEngineDBFacade->addEncoding_GenerateFramesJob (
+			workspace,
+			ingestionJobKey, encodingPriority,
+			workspaceIngestionRepository, 
+			startTimeInSeconds, maxFramesNumber, 
+			videoFilter, periodInSeconds, 
+			mjpeg, imageWidth, imageHeight,
+			sourcePhysicalPathKey,
+			durationInMilliSeconds
+		);
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "manageGenerateFramesTask failed"
@@ -16302,205 +16591,139 @@ void MMSEngineProcessor::manageGenerateFramesTask(
     }
 }
 
-int64_t MMSEngineProcessor::fillGenerateFramesParameters(
+void MMSEngineProcessor::fillGenerateFramesParameters(
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     MMSEngineDBFacade::IngestionType ingestionType,
     Json::Value parametersRoot,
-    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-		dependencies,
+	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
         
     int& periodInSeconds, double& startTimeInSeconds,
     int& maxFramesNumber, string& videoFilter,
     bool& mjpeg, int& imageWidth, int& imageHeight,
-    int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
     int64_t& durationInMilliSeconds
 )
 {
-	int64_t		sourceMediaItemKey;
-
     try
     {
         string field;
         
         periodInSeconds = -1;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+		{
+			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+			{
+			}
+			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
-        {
-            field = "PeriodInSeconds";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			{
+				field = "PeriodInSeconds";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", Field: " + field;
-                _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            periodInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-        }
-        else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            
-        }
+					throw runtime_error(errorMessage);
+				}
+				periodInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+			}
+			else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+			{
+
+			}
+		}
             
         startTimeInSeconds = 0;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-            field = "InstantInSeconds";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
-            }
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+		{
+			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+			{
+				field = "InstantInSeconds";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
+				}
+			}
+			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            field = "StartTimeInSeconds";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
-            }
-        }
+			{
+				field = "StartTimeInSeconds";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
+				}
+			}
+		}
 
         maxFramesNumber = -1;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-            maxFramesNumber = 1;
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+		{
+			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+			{
+				maxFramesNumber = 1;
+			}
+			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            field = "MaxFramesNumber";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                maxFramesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-            }
-        }
+			{
+				field = "MaxFramesNumber";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					maxFramesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+				}
+			}
+		}
 
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
-        {
-            videoFilter = "PeriodicFrame";
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
-        {
-            videoFilter = "All-I-Frames";
-        }
+		{
+			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+			{
+			}
+			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
+			{
+				videoFilter = "PeriodicFrame";
+			}
+			else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+			{
+				videoFilter = "All-I-Frames";
+			}
+		}
 
-        if (ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+		{
+			if (ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            mjpeg = true;
-        }
-        else
-        {
-            mjpeg = false;
-        }
+			{
+				mjpeg = true;
+			}
+			else
+			{
+				mjpeg = false;
+			}
+		}
 
         int width = -1;
-        field = "Width";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            width = JSONUtils::asInt64(parametersRoot, field, 0);
-        }
+		{
+			field = "Width";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				width = JSONUtils::asInt64(parametersRoot, field, 0);
+			}
+		}
 
         int height = -1;
-        field = "Height";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            height = JSONUtils::asInt(parametersRoot, field, 0);
-        }
-
-        // int64_t sourcePhysicalPathKey;
-        // string sourcePhysicalPath;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType = dependencies.back();
-
-        int64_t key;
-        MMSEngineDBFacade::ContentType referenceContentType;
-        Validator::DependencyType dependencyType;
-		bool stopIfReferenceProcessingError;
-
-        tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-			= keyAndDependencyType;
-
-        if (dependencyType == Validator::DependencyType::MediaItemKey)
-        {
-            int64_t encodingProfileKey = -1;
-			bool warningIfMissing = false;
-			tuple<int64_t, string, int, string, string, int64_t, string>
-				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
-				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-            sourceMediaItemKey = key;
-        }
-        else
-        {
-			tuple<string, int, string, string, int64_t, string>
-				physicalPathFileNameSizeInBytesAndDeliveryFileName =
-				_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
-				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-
-            sourcePhysicalPathKey = key;
-            
-
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-        }
-        
-        /*
-        _logger->info(__FILEREF__ + "fillGenerateFramesParameters. Looking for the media key"
-            + ", key: " + to_string(key)
-            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-            + ", key: " + to_string(key)
-            + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-            + ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-            + ", sourcePhysicalPath: " + sourcePhysicalPath
-        );
-         */
+		{
+			field = "Height";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				height = JSONUtils::asInt(parametersRoot, field, 0);
+			}
+		}
 
         int videoWidth;
         int videoHeight;
         try
         {
-			/*
-            long bitRate;
-            string videoCodecName;
-            string videoProfile;
-            string videoAvgFrameRate;
-            long videoBitRate;
-            string audioCodecName;
-            long audioSampleRate;
-            int audioChannels;
-            long audioBitRate;
-        
-            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
-            
-            tie(durationInMilliSeconds, bitRate,
-                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-			*/
 			vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
 			vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
@@ -16520,7 +16743,8 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
 			tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
 
-			tie(ignore, ignore, durationInMilliSeconds, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
+			tie(ignore, ignore, durationInMilliSeconds, videoWidth, videoHeight, ignore, ignore,
+				ignore, ignore) = videoTrack;
 
 			if (durationInMilliSeconds <= 0)
 			{
@@ -16569,22 +16793,6 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
             throw runtime_error(errorMessage);
         }
-
-        /*
-        string sourceFileName;
-        field = "SourceFileName";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            sourceFileName = parametersRoot.get(field, "XXX").asString();
-        }
-
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-                workspace);
-        */
-
-        {
-            // imageFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
-        }    
     }
     catch(runtime_error e)
     {
@@ -16605,8 +16813,6 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         
         throw e;
     }
-
-	return sourceMediaItemKey;
 }
 
 void MMSEngineProcessor::manageSlideShowTask(
@@ -17861,10 +18067,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputFileFormat = parametersRoot.get(field, "").asString();
 
-		_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		);
+			_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+
 			// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
 			// force the cut file to have the same avgFrameRate of the source media
 			string forcedAvgFrameRate;
@@ -17920,6 +18127,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 			}
+
 			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread frame rate"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17954,6 +18162,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				fileFormat = outputFileFormat;
 			}
+
 			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread file format"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17990,6 +18199,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				field = "UserData";
 				parametersRoot[field] = destUserDataRoot;
 			}
+
 			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread usr data management"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -18165,6 +18375,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
+
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
@@ -19622,18 +19833,16 @@ void MMSEngineProcessor::emailNotificationThread(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		/*
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured any IngestionJobKey in order to send an email"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+            _logger->warn(errorMessage);
 
-            throw runtime_error(errorMessage);
+            // throw runtime_error(errorMessage);
         }
-		*/
         
         string sIngestionJobKeyDependency;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
@@ -20226,7 +20435,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         );
         
         // Update IngestionJob done in the calling method
-        
+
         throw e;
     }
     catch(exception e)
@@ -22360,8 +22569,7 @@ size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, v
     return charsRead;        
 };
 
-void MMSEngineProcessor::postVideoOnFacebookThread(
-        shared_ptr<long> processorsThreadsNumber,
+void MMSEngineProcessor::postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string facebookNodeId, string facebookConfigurationLabel
@@ -22373,9 +22581,8 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
     
     try
     {
-        _logger->info(__FILEREF__ + "postVideoOnFacebookThread"
+        _logger->info(__FILEREF__ + "postVideoOnFacebook"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
@@ -23063,172 +23270,50 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 throw runtime_error(errorMessage);
             }
         }        
-        
-        {
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + "End_TaskSuccess"
-                + ", errorMessage: " + ""
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                    MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                    "" // errorMessage
-            );
-        }
     }
     catch (curlpp::LogicError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on Facebook failed (LogicError)"
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (LogicError)"
             + ", facebookURL: " + facebookURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
     catch (curlpp::RuntimeError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on Facebook failed (RuntimeError)"
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (RuntimeError)"
             + ", facebookURL: " + facebookURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
     catch (runtime_error e)
     {
-        _logger->error(__FILEREF__ + "Post Video on Facebook failed (runtime_error)"
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (runtime_error)"
+            + ", facebookURL: " + facebookURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Post Video on Facebook failed (exception)"
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (exception)"
+            + ", facebookURL: " + facebookURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
 }
 
@@ -23259,8 +23344,7 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
     return charsRead;        
 };
 
-void MMSEngineProcessor::postVideoOnYouTubeThread(
-        shared_ptr<long> processorsThreadsNumber,
+void MMSEngineProcessor::postVideoOnYouTube(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeConfigurationLabel, string youTubeTitle,
@@ -23879,174 +23963,54 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 }
             }
         }
-                
-        {
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + "End_TaskSuccess"
-                + ", errorMessage: " + ""
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                    MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                    "" // errorMessage
-            );
-        }
     }
     catch (curlpp::LogicError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on YouTube failed (LogicError)"
+        string errorMessage = __FILEREF__ + "Post video on YouTube failed (LogicError)"
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+		throw runtime_error(errorMessage);
     }
     catch (curlpp::RuntimeError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on YouTube failed (RuntimeError)"
+        string errorMessage = __FILEREF__ + "Post video on YouTube failed (RuntimeError)"
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+		throw runtime_error(errorMessage);
     }
     catch (runtime_error e)
     {
-        _logger->error(__FILEREF__ + "Post Video on YouTube failed (runtime_error)"
+        string errorMessage = __FILEREF__ + "Post video on YouTube failed (runtime_error)"
+            + ", youTubeURL: " + youTubeURL
+            + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+		throw runtime_error(errorMessage);
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Post Video on YouTube failed (exception)"
+        string errorMessage = __FILEREF__ + "Post video on YouTube failed (exception)"
+            + ", youTubeURL: " + youTubeURL
+            + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
-        );
+        ;
+        _logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+		throw runtime_error(errorMessage);
     }
 }
 
@@ -24260,40 +24224,35 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     }
 }
 
-void MMSEngineProcessor::userHttpCallbackThread(
-        shared_ptr<long> processorsThreadsNumber,
-        int64_t ingestionJobKey, string httpProtocol, string httpHostName,
-        int httpPort, string httpURI, string httpURLParameters,
-        string httpMethod, long callbackTimeoutInSeconds,
-        Json::Value userHeadersRoot, 
-        Json::Value callbackMedatada, int maxRetries
-        )
+void MMSEngineProcessor::userHttpCallback(
+	int64_t ingestionJobKey, string httpProtocol, string httpHostName,
+	int httpPort, string httpURI, string httpURLParameters,
+	string httpMethod, long callbackTimeoutInSeconds,
+	Json::Value userHeadersRoot, 
+	Json::Value callbackMedatada, int maxRetries
+)
 {
-	int currentRetries = 0;
-	bool callbackSuccessful = false;
-	string errorMessage;
-	string sResponse;
 
-	_logger->info(__FILEREF__ + "userHttpCallbackThread"
+	_logger->info(__FILEREF__ + "userHttpCallback"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 	);
 
+	string errorMessage;
+
+	int currentRetries = 0;
+	bool callbackSuccessful = false;
 	while (!callbackSuccessful && currentRetries < maxRetries)
 	{
-		callbackSuccessful = true;
-		errorMessage = "";
 		currentRetries++;
 
 		string userURL;
 
 		try
 		{
-			userURL		= "";
-			sResponse	= "";
+			errorMessage = "";
 
-			_logger->info(__FILEREF__ + "userHttpCallbackThread"
+			_logger->info(__FILEREF__ + "userHttpCallback"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", httpProtocol: " + httpProtocol
@@ -24437,7 +24396,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 			);
 			request.perform();
 
-			sResponse = response.str();
+			string sResponse = response.str();
 			_logger->info(__FILEREF__ + "Called user callback"
                 + ", userURL: " + userURL
                 + ", data: " + data
@@ -24449,7 +24408,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode != 200)
 			{
-				string errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
+				errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
 					+ ", userURL: " + userURL
 					+ ", responseCode: " + to_string(responseCode)
 					+ ", data: " + data
@@ -24462,245 +24421,60 @@ void MMSEngineProcessor::userHttpCallbackThread(
 				throw runtime_error(errorMessage);
 			}
 
-			/*
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_TaskSuccess"
-				+ ", errorMessage: " + ""
-			);                            
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
-			);
-			*/
+			callbackSuccessful = true;
 		}
 		catch (curlpp::LogicError & e) 
 		{
-			_logger->error(__FILEREF__ + "User Callback URL failed (LogicError)"
+			errorMessage = __FILEREF__ + "User Callback URL failed (LogicError)"
 				+ ", userURL: " + userURL
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
 				+ ", exception: " + e.what()
-				+ ", sResponse: " + sResponse
-			);
+			;
+			_logger->error(errorMessage);
 
-			callbackSuccessful = false;
-			errorMessage = e.what();
-
-			/*
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_IngestionFailure"
-				+ ", errorMessage: " + e.what()
-			);
-			try
-			{
-				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-					e.what());
-			}
-			catch(runtime_error& re)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + re.what()
-				);
-			}
-			catch(exception ex)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + ex.what()
-				);
-			}
-
-			return;
-			*/
+			// throw runtime_error(errorMessage);
 		}
 		catch (curlpp::RuntimeError & e) 
 		{
-			_logger->error(__FILEREF__ + "User Callback URL failed (RuntimeError)"
+			errorMessage = __FILEREF__ + "User Callback URL failed (RuntimeError)"
 				+ ", userURL: " + userURL
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
 				+ ", exception: " + e.what()
-				+ ", sResponse: " + sResponse
-			);
+			;
+			_logger->error(errorMessage);
 
-			callbackSuccessful = false;
-			errorMessage = e.what();
-
-			/*
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_IngestionFailure"
-				+ ", errorMessage: " + e.what()
-			);                            
-			try
-			{
-				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-					e.what());
-			}
-			catch(runtime_error& re)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + re.what()
-				);
-			}
-			catch(exception ex)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + ex.what()
-				);
-			}
-
-			return;
-			*/
+			// throw runtime_error(errorMessage);
 		}
 		catch (runtime_error e)
 		{
-			_logger->error(__FILEREF__ + "User Callback URL failed (runtime_error)"
+			errorMessage = __FILEREF__ + "User Callback URL failed (runtime_error)"
 				+ ", userURL: " + userURL
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
 				+ ", exception: " + e.what()
-				+ ", sResponse: " + sResponse
-			);
+			;
+			_logger->error(errorMessage);
 
-			callbackSuccessful = false;
-			errorMessage = e.what();
-
-			/*
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_IngestionFailure"
-				+ ", errorMessage: " + e.what()
-			);                            
-			try
-			{
-				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-					e.what());
-			}
-			catch(runtime_error& re)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + re.what()
-				);
-			}
-			catch(exception ex)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + ex.what()
-				);
-			}
-
-			return;
-			*/
+			// throw runtime_error(errorMessage);
 		}
 		catch (exception e)
 		{
-			_logger->error(__FILEREF__ + "User Callback URL failed (exception)"
+			errorMessage = __FILEREF__ + "User Callback URL failed (exception)"
 				+ ", userURL: " + userURL
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
 				+ ", exception: " + e.what()
-				+ ", sResponse: " + sResponse
-			);
+			;
+			_logger->error(errorMessage);
 
-			callbackSuccessful = false;
-			errorMessage = e.what();
-
-			/*
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_IngestionFailure"
-				+ ", errorMessage: " + e.what()
-			);                            
-			try
-			{
-				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-					e.what());
-			}
-			catch(runtime_error& re)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + re.what()
-				);
-			}
-			catch(exception ex)
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errorMessage: " + ex.what()
-				);
-			}
-
-			return;
-			*/
+			// throw runtime_error(errorMessage);
 		}
 	}
 
 	if (!callbackSuccessful)
-	{
-		_logger->info(__FILEREF__ + "Update IngestionJob"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", IngestionStatus: " + "End_IngestionFailure"
-			+ ", errorMessage: " + errorMessage
-			+ ", currentRetries: " + to_string(currentRetries)
-			+ ", maxRetries: " + to_string(maxRetries)
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-				errorMessage);
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-			);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-			);
-		}
-	}
-	else
-	{
-		_logger->info(__FILEREF__ + "Update IngestionJob"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", IngestionStatus: " + "End_TaskSuccess"
-			+ ", errorMessage: " + "HTTP successful response: " + sResponse
-			+ ", currentRetries: " + to_string(currentRetries)
-			+ ", maxRetries: " + to_string(maxRetries)
-		);                            
-		// 2020-06-18: in case of success, the response will be saved as 'errorMessage' of the ingestion job
-		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-			// "" // errorMessage
-			"HTTP successful response: " + sResponse // errorMessage
-		);
-	}
+		throw runtime_error(errorMessage);
 }
 
 void MMSEngineProcessor::moveMediaSourceFileThread(

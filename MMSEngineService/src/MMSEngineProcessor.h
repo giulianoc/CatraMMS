@@ -172,48 +172,43 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
-    void postOnFacebookTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+    void postOnFacebookThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
-    void postOnYouTubeTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+    void postOnYouTubeThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
-    void httpCallbackTask(
+    void httpCallbackThread(
+		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
-    void userHttpCallbackThread(
-        shared_ptr<long> processorsThreadsNumber,
+    void userHttpCallback(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
         Json::Value callbackMedatada, int maxRetries);
 
-    void localCopyContentTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+    void localCopyContentThread(
+		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
-    void copyContentThread(
-        shared_ptr<long> processorsThreadsNumber,
+    void copyContent(
         int64_t ingestionJobKey, string mmsAssetPathName, 
         string localPath, string localFileName);
 
@@ -359,18 +354,16 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
-    int64_t fillGenerateFramesParameters(
+    void fillGenerateFramesParameters(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies,
-        
+		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
+
         int& periodInSeconds, double& startTimeInSeconds,
         int& maxFramesNumber, string& videoFilter,
         bool& mjpeg, int& imageWidth, int& imageHeight,
-        int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
         int64_t& durationInMilliSeconds);
 
     void manageSlideShowTask(
@@ -463,15 +456,13 @@ private:
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
         string ftpRemoteDirectory, string ftpRemoteFileName);
 
-    void postVideoOnFacebookThread(
-        shared_ptr<long> processorsThreadsNumber,
+    void postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string facebookNodeId, string facebookConfigurationLabel
         );
 
-    void postVideoOnYouTubeThread(
-        shared_ptr<long> processorsThreadsNumber,
+    void postVideoOnYouTube(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeConfigurationLabel, string youTubeTitle,
