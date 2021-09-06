@@ -10,12 +10,22 @@
 		"FrameRate": 25,
 		"TwoPasses" : false,
 		"KBitRate" : 2000,
-		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"BitRates": [
+			{
+				"KBitRate" : 2000
+			}
+		]
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
 		"KBitRate" : 92,
-		"ChannelsNumber": 2
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 92
+			}
+		]
 	}
 }

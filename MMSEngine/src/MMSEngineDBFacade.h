@@ -2304,6 +2304,21 @@ public:
 	void removeEncodersPool(
 		int64_t encodersPoolKey);
 
+	void addUpdatePartitionInfo(
+		int partitionKey,
+		string partitionName,
+		int64_t currentFreeSizeInBytes,
+		int64_t freeSpaceToLeaveInMB);
+
+	pair<int, int64_t> getPartitionToBeUsedAndUpdateFreeSpace(
+		int64_t ullFSEntrySizeInBytes);
+
+	string getPartitionPathName(int partitionKey);
+
+	int64_t updatePartitionBecauseOfDeletion(int partitionKey, int64_t ullFSEntrySizeInBytes);
+
+	void getPartitionsInfo(vector<pair<int, int64_t>>& partitionsInfo);
+
 	static int64_t parseRetention(string retention);
 
 private:

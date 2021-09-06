@@ -238,8 +238,34 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
         
+		try
+		{
+			lastSQLCommand = 
+				"create table if not exists MMS_PartitionInfo ("
+					"partitionKey			INT UNSIGNED NOT NULL,"
+					"partitionPathName		VARCHAR (512) NOT NULL,"
+					"currentFreeSizeInBytes	BIGINT UNSIGNED NOT NULL,"
+					"freeSpaceToLeaveInMB	BIGINT UNSIGNED NOT NULL,"
+					"lastUpdateFreeSize		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+					"constraint MMS_PartitionInfo_PK PRIMARY KEY (partitionKey)) "
+					"ENGINE=InnoDB";
+			statement->execute(lastSQLCommand);    
+		}
+		catch(sql::SQLException se)
+		{
+			if (isRealDBError(se.what()))
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+				);
+
+				throw se;
+			}
+		}
+
         try
         {
             // maxEncodingPriority (0: low, 1: default, 2: high)
@@ -591,7 +617,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label				VARCHAR (64) NOT NULL,"
                     "contentType			VARCHAR (32) NOT NULL,"
                     "deliveryTechnology			VARCHAR (32) NOT NULL,"
-                    "jsonProfile    			VARCHAR (512) NOT NULL,"
+                    "jsonProfile    			VARCHAR (2048) NOT NULL,"
                     "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
                     "constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

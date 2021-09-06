@@ -10,12 +10,22 @@
 		"FrameRate": 25,
 		"TwoPasses" : false,
 		"KBitRate" : 2500,
-		"OtherOutputParameters": "-pix_fmt yuv422p"
+		"OtherOutputParameters": "-pix_fmt yuv422p",
+		"BitRates": [
+			{
+				"KBitRate" : 2500
+			}
+		]
 	},
 	"Audio" : 
 	{
 		"Codec" : "pcm_s32le",
 		"KBitRate" : 160,
-		"ChannelsNumber": 2
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 160
+			}
+		]
 	}
 }

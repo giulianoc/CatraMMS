@@ -25,13 +25,14 @@ SET (SOURCES
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
-	MMSEngineDBFacade_EncodersPool.cpp
 	MMSEngineDBFacade_CreateTables.cpp
+	MMSEngineDBFacade_EncodersPool.cpp
 	MMSEngineDBFacade_EncodingJobs.cpp
 	MMSEngineDBFacade_EncodingProfiles.cpp
 	MMSEngineDBFacade_IngestionJobs.cpp
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
+	MMSEngineDBFacade_PartitionInfo.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp

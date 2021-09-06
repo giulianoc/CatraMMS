@@ -10,12 +10,22 @@
 		"FrameRate": 25,
 		"TwoPasses" : false,
 		"KBitRate" : 6000,
-		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
+		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22",
+		"BitRates": [
+			{
+				"KBitRate" : 6000
+			}
+		]
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
 		"KBitRate" : 192,
-		"ChannelsNumber": 2
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 192
+			}
+		]
 	}
 }

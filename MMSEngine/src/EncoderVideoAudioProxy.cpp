@@ -1925,7 +1925,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 	
 				encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-				bool partitionIndexToBeCalculated = true;
 				bool deliveryRepositoriesToo = true;
 
 				mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
@@ -1935,8 +1934,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					encodedFileName,
 					sourceRelativePath,
 	
-					partitionIndexToBeCalculated,
-					&mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+					&mmsPartitionIndexUsed, // OUT
 					&sourceFileType,
 
 					deliveryRepositoriesToo,
@@ -3509,7 +3507,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
 		encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
@@ -3519,8 +3516,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             encodedFileName,
             sourceRelativePath,
 
-            partitionIndexToBeCalculated,
-            &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+            &mmsPartitionIndexUsed, // OUT
 			&sourceFileType,
 
             deliveryRepositoriesToo,
@@ -3918,12 +3914,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 				// stagingEncodedAssetPathName preparation
 				{        
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_video =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourceVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
 					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_video;
 
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_image =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourceImagePhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourceImagePhysicalPathKey);
 					tie(mmsSourceImageAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_image;
 
@@ -4955,7 +4951,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourceVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
 					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -5973,7 +5969,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourceVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
 					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -6774,12 +6770,12 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_main =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, mainVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(mainVideoPhysicalPathKey);
 					tie(mmsMainVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_main;
 
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, overlayVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(overlayVideoPhysicalPathKey);
 					tie(mmsOverlayVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay;
 
@@ -9052,7 +9048,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourceVideoPhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
 					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11260,7 +11256,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 					tuple<string, int, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(physicalPathKey);
 					string mmsImagePathName;
 					tie(mmsImagePathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
@@ -12197,6 +12193,15 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									warningIfMissing);
 
 								tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
+							}
+							catch (MediaItemKeyNotFound e)
+							{
+								_logger->error(__FILEREF__ + "No associated VirtualVODImage to the Workspace"
+									+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
+									+ ", exception: " + e.what()
+								);
+
+								liveRecorderVirtualVODImageMediaItemKey = -1;
 							}
 							catch (exception e)
 							{

@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 		logger->info(__FILEREF__ + "Creating MMSStorage"
 			);
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			configuration, logger);
+			mmsEngineDBFacade, configuration, logger);
 
 		FCGX_Init();
 
@@ -2325,7 +2325,7 @@ void API::createDeliveryAuthorization(
 				if (physicalPathKey != -1)
 				{
 					pair<string, string> deliveryFileNameAndDeliveryURI =
-						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, physicalPathKey, save, requestWorkspace);
+						_mmsStorage->getVODDeliveryURI(physicalPathKey, save, requestWorkspace);
 
 					tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
 				}
@@ -2367,7 +2367,7 @@ void API::createDeliveryAuthorization(
 					}
 
 					tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
-						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, mediaItemKey,
+						_mmsStorage->getVODDeliveryURI(mediaItemKey,
 							encodingProfileKey, save, requestWorkspace);
 					tie(physicalPathKey, deliveryFileName, deliveryURI) =
 						physicalPathKeyDeliveryFileNameAndDeliveryURI;
@@ -2618,7 +2618,7 @@ void API::createDeliveryAuthorization(
 
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(deliveryCode),
+						to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -2809,7 +2809,7 @@ void API::createDeliveryAuthorization(
 					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(deliveryCode),
+						to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -2936,7 +2936,7 @@ void API::createDeliveryAuthorization(
 					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(deliveryCode),
+						to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -3015,7 +3015,7 @@ void API::createDeliveryAuthorization(
 					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(deliveryCode),
+						to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;

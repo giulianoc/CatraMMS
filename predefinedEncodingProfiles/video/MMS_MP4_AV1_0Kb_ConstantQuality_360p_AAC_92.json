@@ -10,12 +10,22 @@
 		"FrameRate": 0,
 		"TwoPasses" : false,
 		"KBitRate" : 0,
-		"OtherOutputParameters": "-crf 30 -strict experimental -movflags +faststart"
+		"OtherOutputParameters": "-crf 30 -strict experimental -movflags +faststart",
+		"BitRates": [
+			{
+				"KBitRate" : 0
+			}
+		]
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
 		"KBitRate" : 92,
-		"ChannelsNumber": 2
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 92
+			}
+		]
 	}
 }

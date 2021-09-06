@@ -27,8 +27,9 @@ public:
 
 public:
     MMSStorage (
-            Json::Value configuration,
-            shared_ptr<spdlog::logger> logger);
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		Json::Value configuration,
+		shared_ptr<spdlog::logger> logger);
 
     ~MMSStorage (void);
 
@@ -67,42 +68,35 @@ public:
 
 	tuple<int64_t, string, int, string, string, int64_t, string>
 		getPhysicalPathDetails(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		int64_t mediaItemKey, int64_t encodingProfileKey,
 		bool warningIfMissing);
 
 	tuple<string, int, string, string, int64_t, string> getPhysicalPathDetails(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);
+		int64_t physicalPathKey);
 
 	pair<string, string> getVODDeliveryURI(
-			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 			int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
 
 	tuple<int64_t, string, string> getVODDeliveryURI(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey,
+		int64_t mediaItemKey,
 		int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace);
 
 	string getLiveDeliveryAssetPath(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		string directoryId,
 		shared_ptr<Workspace> requestWorkspace);
 
 	string getLiveDeliveryAssetPathName(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		string directoryId,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
 	tuple<string, string, string> getLiveDeliveryDetails(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		string directoryId, string liveFileExtension,
 		shared_ptr<Workspace> requestWorkspace);
 
-    void removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t physicalPathKey);
+    void removePhysicalPath(int64_t physicalPathKey);
     
-    void removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t mediaItemKey);
+    void removeMediaItem(int64_t mediaItemKey);
 
     void refreshPartitionsFreeSizes();
 
@@ -125,8 +119,7 @@ public:
         string destinationFileName,
         string relativePath,
 
-        bool isPartitionIndexToBeCalculated,
-        unsigned long *pulMMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+        unsigned long *pulMMSPartitionIndexUsed,	// OUT
 		FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
 
         bool deliveryRepositoriesToo,
@@ -135,7 +128,7 @@ public:
 
     string getMMSAssetPathName (
 		bool externalReadOnlyStorage,
-		unsigned long ulPartitionNumber,
+		int partitionKey,
 		string workspaceDirectoryName,
 		string relativePath,		// using '/'
 		string fileName);
@@ -197,6 +190,7 @@ public:
 		shared_ptr<Workspace> workspace);
 
 private:
+	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
     shared_ptr<spdlog::logger>  _logger;
 	Json::Value					_configuration;
 
@@ -217,44 +211,23 @@ private:
 	int						_waitingNFSSync_maxMillisecondsToWait;
 	int						_freeSpaceToLeaveInEachPartitionInMB;
 
-	struct PartitionInfo {
-		// it is without / at the end
-		string			_partitionPathName;
 
-		// getFileSystemInfo (default and more performance) or getDirectoryUsage (less performance)
-		string			_partitionUsageType;
+	void contentInRepository (unsigned long ulIsCopyOrMove,
+		string contentPathName,
+		RepositoryType rtRepositoryType,
+		string workspaceDirectoryName,
+		bool addDateTimeToFileName);
 
-		// this is in case we have to use a subset of the partition
-		int64_t			_maxStorageUsageInKB;
+	string getRepository(RepositoryType rtRepositoryType);
 
-
-		// real free size got from file system
-		int64_t			_currentFreeSizeInBytes;
-
-		chrono::system_clock::time_point	_lastUpdateFreeSize;
-	};
-    recursive_mutex                 _mtMMSPartitions;
-    vector<PartitionInfo>			_mmsPartitionsInfo;
-    unsigned long                   _ulCurrentMMSPartitionIndex;
-
-    
-    void contentInRepository (
-	unsigned long ulIsCopyOrMove,
-	string contentPathName,
-	RepositoryType rtRepositoryType,
-	string workspaceDirectoryName,
-	bool addDateTimeToFileName);
-
-    string getRepository(RepositoryType rtRepositoryType);
-
-    string creatingDirsUsingTerritories (
+	string creatingDirsUsingTerritories (
 		unsigned long ulCurrentMMSPartitionIndex,
 		string relativePath,
 		string workspaceDirectoryName,
 		bool deliveryRepositoriesToo,
 		Workspace::TerritoriesHashMap& phmTerritories);
 
-	void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
+	// void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
 
 	void removePhysicalPathFile(
 		int64_t mediaItemKey,

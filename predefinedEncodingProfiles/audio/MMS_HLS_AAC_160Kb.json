@@ -9,6 +9,11 @@
 	{
 		"Codec" : "aac",
 		"KBitRate" : 92,
-		"ChannelsNumber": 2
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 92
+			}
+		]
 	}
 }
