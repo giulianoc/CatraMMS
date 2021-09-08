@@ -329,23 +329,23 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						string tasksNotInvolvingMMSEngineThreadsList =
 							"'GroupOfTask'"
 							", 'Encode'"
-							", 'VideoSpeed'"
-							", 'PictureInPicture'"
-							", 'IntroOutroOverlay'"
-							", 'PeriodicalFrames'"
-							", 'IFrames'"
-							", 'MotionJPEGByPeriodicalFrames'"
-							", 'MotionJPEGByIFrames'"
+							", 'Video-Speed'"
+							", 'Picture-InPicture'"
+							", 'Intro-Outro-Overlay'"
+							", 'Periodical-Frames'"
+							", 'I-Frames'"
+							", 'Motion-JPEG-by-Periodical-Frames'"
+							", 'Motion-JPEG-by-I-Frames'"
 							", 'Slideshow'"
-							", 'OverlayImageOnVideo'"
-							", 'OverlayTextOnVideo'"
-							", 'MediaCrossReference'"
-							", 'FaceRecognition'"
-							", 'FaceIdentification'"
-							// ", 'LiveRecorder'"	already asked before
-							// ", 'LiveProxy'"	already asked before
-							", 'AwaitingTheBeginning'"
-							", 'LiveGrid'"
+							", 'Overlay-Image-On-Video'"
+							", 'Overlay-Text-On-Video'"
+							", 'Media-Cross-Reference'"
+							", 'Face-Recognition'"
+							", 'Face-Identification'"
+							// ", 'Live-Recorder'"	already asked before
+							// ", 'Live-Proxy'"	already asked before
+							", 'Awaiting-The-Beginning'"
+							", 'Live-Grid'"
 						;
 						lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
 					}
@@ -392,6 +392,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 						+ ", mysqlRowCount: " + to_string(mysqlRowCount)
 						+ ", mysqlOffset: " + to_string(mysqlOffset)
+						+ ", onlyTasksNotInvolvingMMSEngineThreads: " + to_string(onlyTasksNotInvolvingMMSEngineThreads)
 						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"

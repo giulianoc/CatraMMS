@@ -13,6 +13,8 @@
 		"OtherOutputParameters": "-crf 30 -strict experimental -movflags +faststart",
 		"BitRates": [
 			{
+				"Width" : 640,
+				"Height" : 360,
 				"KBitRate" : 0
 			}
 		]

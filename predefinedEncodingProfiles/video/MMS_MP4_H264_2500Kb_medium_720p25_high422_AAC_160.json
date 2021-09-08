@@ -13,6 +13,8 @@
 		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22",
 		"BitRates": [
 			{
+				"Width" : 1280,
+				"Height" : 720,
 				"KBitRate" : 2500
 			}
 		]
