@@ -560,12 +560,14 @@ private:
         string& ffmpegVideoBufSizeParameter,
         string& ffmpegVideoFrameRateParameter,
         string& ffmpegVideoKeyFramesRateParameter,
+		vector<tuple<string, string, string, string>>& videoBitRatesInfo,
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioBitRateParameter,
         string& ffmpegAudioOtherParameters,
         string& ffmpegAudioChannelsParameter,
-        string& ffmpegAudioSampleRateParameter
+        string& ffmpegAudioSampleRateParameter,
+		vector<string>& audioBitRatesInfo
     );
 	void addToArguments(string parameter, vector<string>& argumentList);
     

@@ -146,12 +146,14 @@ void FFMpeg::encodeContent(
         string ffmpegVideoBufSizeParameter = "";
         string ffmpegVideoFrameRateParameter = "";
         string ffmpegVideoKeyFramesRateParameter = "";
+		vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
         string ffmpegAudioCodecParameter = "";
         string ffmpegAudioBitRateParameter = "";
         string ffmpegAudioOtherParameters = "";
         string ffmpegAudioChannelsParameter = "";
         string ffmpegAudioSampleRateParameter = "";
+		vector<string> audioBitRatesInfo;
 
 
         // _currentDurationInMilliSeconds      = durationInMilliSeconds;
@@ -186,12 +188,14 @@ void FFMpeg::encodeContent(
             ffmpegVideoBufSizeParameter,
             ffmpegVideoFrameRateParameter,
             ffmpegVideoKeyFramesRateParameter,
+			videoBitRatesInfo,
 
             ffmpegAudioCodecParameter,
             ffmpegAudioBitRateParameter,
             ffmpegAudioOtherParameters,
             ffmpegAudioChannelsParameter,
-            ffmpegAudioSampleRateParameter
+            ffmpegAudioSampleRateParameter,
+			audioBitRatesInfo
         );
 
         _outputFfmpegPathFileName =
@@ -2971,12 +2975,14 @@ void FFMpeg::awaitingTheBegining(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
+				vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
 				string ffmpegAudioOtherParameters = "";
 				string ffmpegAudioChannelsParameter = "";
 				string ffmpegAudioSampleRateParameter = "";
+				vector<string> audioBitRatesInfo;
 
 
 				settingFfmpegParameters(
@@ -2999,12 +3005,14 @@ void FFMpeg::awaitingTheBegining(
 					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
 					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
-					ffmpegAudioSampleRateParameter
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
 				);
 
 				/*
@@ -4494,12 +4502,14 @@ void FFMpeg::introOutroOverlay(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
+				vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
 				string ffmpegAudioOtherParameters = "";
 				string ffmpegAudioChannelsParameter = "";
 				string ffmpegAudioSampleRateParameter = "";
+				vector<string> audioBitRatesInfo;
 
 
 				settingFfmpegParameters(
@@ -4522,12 +4532,14 @@ void FFMpeg::introOutroOverlay(
 					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
 					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
-					ffmpegAudioSampleRateParameter
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
 				);
 
 				/*
@@ -7686,12 +7698,14 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
+				vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
 				string ffmpegAudioOtherParameters = "";
 				string ffmpegAudioChannelsParameter = "";
 				string ffmpegAudioSampleRateParameter = "";
+				vector<string> audioBitRatesInfo;
 
 
 				settingFfmpegParameters(
@@ -7714,12 +7728,14 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
 					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
-					ffmpegAudioSampleRateParameter
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
 				);
 
 				/*
@@ -8995,12 +9011,14 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
+						vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
 						string ffmpegAudioOtherParameters = "";
 						string ffmpegAudioChannelsParameter = "";
 						string ffmpegAudioSampleRateParameter = "";
+						vector<string> audioBitRatesInfo;
 
 
 						settingFfmpegParameters(
@@ -9023,12 +9041,14 @@ void FFMpeg::liveRecorder(
 							ffmpegVideoBufSizeParameter,
 							ffmpegVideoFrameRateParameter,
 							ffmpegVideoKeyFramesRateParameter,
+							videoBitRatesInfo,
 
 							ffmpegAudioCodecParameter,
 							ffmpegAudioBitRateParameter,
 							ffmpegAudioOtherParameters,
 							ffmpegAudioChannelsParameter,
-							ffmpegAudioSampleRateParameter
+							ffmpegAudioSampleRateParameter,
+							audioBitRatesInfo
 						);
 
 						/*
@@ -9246,12 +9266,14 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
+						vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
 						string ffmpegAudioOtherParameters = "";
 						string ffmpegAudioChannelsParameter = "";
 						string ffmpegAudioSampleRateParameter = "";
+						vector<string> audioBitRatesInfo;
 
 	
 						settingFfmpegParameters(
@@ -9274,12 +9296,14 @@ void FFMpeg::liveRecorder(
 							ffmpegVideoBufSizeParameter,
 							ffmpegVideoFrameRateParameter,
 							ffmpegVideoKeyFramesRateParameter,
+							videoBitRatesInfo,
 
 							ffmpegAudioCodecParameter,
 							ffmpegAudioBitRateParameter,
 							ffmpegAudioOtherParameters,
 							ffmpegAudioChannelsParameter,
-							ffmpegAudioSampleRateParameter
+							ffmpegAudioSampleRateParameter,
+							audioBitRatesInfo
 						);
 
 						/*
@@ -10501,12 +10525,14 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
+					vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
 					string ffmpegAudioOtherParameters = "";
 					string ffmpegAudioChannelsParameter = "";
 					string ffmpegAudioSampleRateParameter = "";
+					vector<string> audioBitRatesInfo;
 
 
 					settingFfmpegParameters(
@@ -10529,12 +10555,14 @@ void FFMpeg::liveProxy(
 						ffmpegVideoBufSizeParameter,
 						ffmpegVideoFrameRateParameter,
 						ffmpegVideoKeyFramesRateParameter,
+						videoBitRatesInfo,
 
 						ffmpegAudioCodecParameter,
 						ffmpegAudioBitRateParameter,
 						ffmpegAudioOtherParameters,
 						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter
+						ffmpegAudioSampleRateParameter,
+						audioBitRatesInfo
 					);
 
 					/*
@@ -10754,12 +10782,14 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
+					vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
 					string ffmpegAudioOtherParameters = "";
 					string ffmpegAudioChannelsParameter = "";
 					string ffmpegAudioSampleRateParameter = "";
+					vector<string> audioBitRatesInfo;
 
 
 					settingFfmpegParameters(
@@ -10782,12 +10812,14 @@ void FFMpeg::liveProxy(
 						ffmpegVideoBufSizeParameter,
 						ffmpegVideoFrameRateParameter,
 						ffmpegVideoKeyFramesRateParameter,
+						videoBitRatesInfo,
 
 						ffmpegAudioCodecParameter,
 						ffmpegAudioBitRateParameter,
 						ffmpegAudioOtherParameters,
 						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter
+						ffmpegAudioSampleRateParameter,
+						audioBitRatesInfo
 					);
 
 					/*
@@ -11358,12 +11390,14 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
+			vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
 			string ffmpegAudioOtherParameters = "";
 			string ffmpegAudioChannelsParameter = "";
 			string ffmpegAudioSampleRateParameter = "";
+			vector<string> audioBitRatesInfo;
 
 
 			settingFfmpegParameters(
@@ -11386,12 +11420,14 @@ void FFMpeg::liveProxyByHTTPStreaming(
 				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
+				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
 				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
-				ffmpegAudioSampleRateParameter
+				ffmpegAudioSampleRateParameter,
+				audioBitRatesInfo
 			);
 
 			/*
@@ -11965,12 +12001,14 @@ void FFMpeg::liveProxyByStream(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
+			vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
 			string ffmpegAudioOtherParameters = "";
 			string ffmpegAudioChannelsParameter = "";
 			string ffmpegAudioSampleRateParameter = "";
+			vector<string> audioBitRatesInfo;
 
 
 			settingFfmpegParameters(
@@ -11993,12 +12031,14 @@ void FFMpeg::liveProxyByStream(
 				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
+				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
 				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
-				ffmpegAudioSampleRateParameter
+				ffmpegAudioSampleRateParameter,
+				audioBitRatesInfo
 			);
 
 			/*
@@ -12636,12 +12676,14 @@ void FFMpeg::liveGrid(
 			string ffmpegVideoBufSizeParameter = "";
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
+			vector<tuple<string, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
 			string ffmpegAudioOtherParameters = "";
 			string ffmpegAudioChannelsParameter = "";
 			string ffmpegAudioSampleRateParameter = "";
+			vector<string> audioBitRatesInfo;
 
 
 			_currentlyAtSecondPass = false;
@@ -12670,12 +12712,14 @@ void FFMpeg::liveGrid(
 				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
+				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
 				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
-				ffmpegAudioSampleRateParameter
+				ffmpegAudioSampleRateParameter,
+				audioBitRatesInfo
 			);
 
 			// -map for video and audio
@@ -13995,12 +14039,14 @@ void FFMpeg::settingFfmpegParameters(
         string& ffmpegVideoBufSizeParameter,
         string& ffmpegVideoFrameRateParameter,
         string& ffmpegVideoKeyFramesRateParameter,
+		vector<tuple<string, string, string, string>>& videoBitRatesInfo,
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioBitRateParameter,
         string& ffmpegAudioOtherParameters,
         string& ffmpegAudioChannelsParameter,
-        string& ffmpegAudioSampleRateParameter
+        string& ffmpegAudioSampleRateParameter,
+		vector<string>& audioBitRatesInfo
 )
 {
     string field;
@@ -14328,6 +14374,125 @@ void FFMpeg::settingFfmpegParameters(
 				}
             }
         }
+
+		field = "BitRates";
+		if (!isMetadataPresent(videoRoot, field))
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value bitRatesRoot = videoRoot[field];
+
+		videoBitRatesInfo.clear();
+		{
+			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
+			{
+				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
+
+				// resolution
+				string ffmpegVideoResolution;
+				{
+					field = "Width";
+					if (!isMetadataPresent(bitRateInfo, field))
+					{
+						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					int width = asInt(bitRateInfo, field, 0);
+					if (width == -1 && codec == "libx264")
+						width   = -2;     // h264 requires always a even width/height
+
+					field = "Height";
+					if (!isMetadataPresent(bitRateInfo, field))
+					{
+						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					int height = asInt(bitRateInfo, field, 0);
+					if (height == -1 && codec == "libx264")
+						height   = -2;     // h264 requires always a even width/height
+
+					string forceOriginalAspectRatio;
+					field = "ForceOriginalAspectRatio";
+					if (isMetadataPresent(bitRateInfo, field))
+						forceOriginalAspectRatio = bitRateInfo.get(field, "").asString();
+
+					bool pad = false;
+					if (forceOriginalAspectRatio != "")
+					{
+						field = "Pad";
+						if (isMetadataPresent(bitRateInfo, field))
+							pad = asBool(bitRateInfo, field, false);
+					}
+
+					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
+
+					ffmpegVideoResolution = "-vf scale=w=" + to_string(width) + ":h=" + to_string(height);
+					if (forceOriginalAspectRatio != "")
+					{
+						ffmpegVideoResolution += (":1080:force_original_aspect_ratio=" + forceOriginalAspectRatio);
+						if (pad)
+							ffmpegVideoResolution += (",pad=" + to_string(width) + ":" + to_string(height)
+								+ ":(ow-iw)/2:(oh-ih)/2");
+					}
+
+					ffmpegVideoResolution += " ";
+				}
+
+				string ffmpegVideoBitRate;
+				{
+					field = "KBitRate";
+					if (isMetadataPresent(bitRateInfo, field))
+					{
+						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					int kBitRate = asInt(bitRateInfo, field, 0);
+
+					ffmpegVideoBitRate = "-b:v " + to_string(kBitRate) + "k ";
+				}
+
+				// maxRate
+				string ffmpegVideoMaxRate;
+				{
+					field = "KMaxRate";
+					if (isMetadataPresent(bitRateInfo, field))
+					{
+						int maxRate = asInt(bitRateInfo, field, 0);
+
+						ffmpegVideoMaxRate = "-maxrate " + to_string(maxRate) + "k ";
+					}
+				}
+
+				// bufSize
+				string ffmpegVideoBufSize;
+				{
+					field = "KBufferSize";
+					if (isMetadataPresent(bitRateInfo, field))
+					{
+						int bufferSize = asInt(bitRateInfo, field, 0);
+
+						ffmpegVideoBufSize = "-bufsize " + to_string(bufferSize) + "k ";
+					}
+				}
+
+				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, ffmpegVideoBitRate,
+					ffmpegVideoMaxRate, ffmpegVideoBufSize));
+			}
+		}
     }
     
     // if (contentType == "video" || contentType == "audio")
@@ -14415,6 +14580,44 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
+
+		field = "BitRates";
+		if (!isMetadataPresent(audioRoot, field))
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value bitRatesRoot = audioRoot[field];
+
+		audioBitRatesInfo.clear();
+		{
+			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
+			{
+				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
+
+				string ffmpegAudioBitRate;
+				{
+					field = "KBitRate";
+					if (isMetadataPresent(bitRateInfo, field))
+					{
+						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					int kBitRate = asInt(bitRateInfo, field, 0);
+
+					ffmpegAudioBitRate = "-b:a " + to_string(kBitRate) + "k ";
+				}
+
+				audioBitRatesInfo.push_back(ffmpegAudioBitRate);
+			}
+		}
     }
 }
 
