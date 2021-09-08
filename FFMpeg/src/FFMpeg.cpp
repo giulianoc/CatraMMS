@@ -146,7 +146,7 @@ void FFMpeg::encodeContent(
         string ffmpegVideoBufSizeParameter = "";
         string ffmpegVideoFrameRateParameter = "";
         string ffmpegVideoKeyFramesRateParameter = "";
-		vector<tuple<string, string, string, string>> videoBitRatesInfo;
+		vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
         string ffmpegAudioCodecParameter = "";
         string ffmpegAudioBitRateParameter = "";
@@ -179,19 +179,13 @@ void FFMpeg::encodeContent(
 
             ffmpegVideoCodecParameter,
             ffmpegVideoProfileParameter,
-            ffmpegVideoResolutionParameter,
-			videoBitRateInKbps,
-            ffmpegVideoBitRateParameter,
             ffmpegVideoOtherParameters,
             _twoPasses,
-            ffmpegVideoMaxRateParameter,
-            ffmpegVideoBufSizeParameter,
             ffmpegVideoFrameRateParameter,
             ffmpegVideoKeyFramesRateParameter,
 			videoBitRatesInfo,
 
             ffmpegAudioCodecParameter,
-            ffmpegAudioBitRateParameter,
             ffmpegAudioOtherParameters,
             ffmpegAudioChannelsParameter,
             ffmpegAudioSampleRateParameter,
@@ -259,6 +253,18 @@ void FFMpeg::encodeContent(
 			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
 
 			*/
+
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 			_logger->info(__FILEREF__ + "Special encoding in order to allow audio/language selection by the player"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -984,6 +990,19 @@ void FFMpeg::encodeContent(
         {
 			// hls or dash output
 
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
+
+
 			vector<string> ffmpegArgumentList;
 
 			{
@@ -1507,6 +1526,18 @@ void FFMpeg::encodeContent(
         }
         else
         {
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
+
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
 
@@ -2975,7 +3006,7 @@ void FFMpeg::awaitingTheBegining(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -2996,24 +3027,30 @@ void FFMpeg::awaitingTheBegining(
 
 					ffmpegVideoCodecParameter,
 					ffmpegVideoProfileParameter,
-					ffmpegVideoResolutionParameter,
-					videoBitRateInKbps,
-					ffmpegVideoBitRateParameter,
 					ffmpegVideoOtherParameters,
 					twoPasses,
-					ffmpegVideoMaxRateParameter,
-					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
 					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
-					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
 					ffmpegAudioSampleRateParameter,
 					audioBitRatesInfo
 				);
+
+				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -4502,7 +4539,7 @@ void FFMpeg::introOutroOverlay(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -4523,24 +4560,30 @@ void FFMpeg::introOutroOverlay(
 
 					ffmpegVideoCodecParameter,
 					ffmpegVideoProfileParameter,
-					ffmpegVideoResolutionParameter,
-					videoBitRateInKbps,
-					ffmpegVideoBitRateParameter,
 					ffmpegVideoOtherParameters,
 					twoPasses,
-					ffmpegVideoMaxRateParameter,
-					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
 					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
-					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
 					ffmpegAudioSampleRateParameter,
 					audioBitRatesInfo
 				);
+
+				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -7698,7 +7741,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -7719,24 +7762,30 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 					ffmpegVideoCodecParameter,
 					ffmpegVideoProfileParameter,
-					ffmpegVideoResolutionParameter,
-					videoBitRateInKbps,
-					ffmpegVideoBitRateParameter,
 					ffmpegVideoOtherParameters,
 					twoPasses,
-					ffmpegVideoMaxRateParameter,
-					ffmpegVideoBufSizeParameter,
 					ffmpegVideoFrameRateParameter,
 					ffmpegVideoKeyFramesRateParameter,
 					videoBitRatesInfo,
 
 					ffmpegAudioCodecParameter,
-					ffmpegAudioBitRateParameter,
 					ffmpegAudioOtherParameters,
 					ffmpegAudioChannelsParameter,
 					ffmpegAudioSampleRateParameter,
 					audioBitRatesInfo
 				);
+
+				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -9011,7 +9060,7 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
-						vector<tuple<string, string, string, string>> videoBitRatesInfo;
+						vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
@@ -9032,24 +9081,30 @@ void FFMpeg::liveRecorder(
 
 							ffmpegVideoCodecParameter,
 							ffmpegVideoProfileParameter,
-							ffmpegVideoResolutionParameter,
-							videoBitRateInKbps,
-							ffmpegVideoBitRateParameter,
 							ffmpegVideoOtherParameters,
 							twoPasses,
-							ffmpegVideoMaxRateParameter,
-							ffmpegVideoBufSizeParameter,
 							ffmpegVideoFrameRateParameter,
 							ffmpegVideoKeyFramesRateParameter,
 							videoBitRatesInfo,
 
 							ffmpegAudioCodecParameter,
-							ffmpegAudioBitRateParameter,
 							ffmpegAudioOtherParameters,
 							ffmpegAudioChannelsParameter,
 							ffmpegAudioSampleRateParameter,
 							audioBitRatesInfo
 						);
+
+						tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+							ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 						/*
 						if (httpStreamingFileFormat != "")
@@ -9266,7 +9321,7 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
-						vector<tuple<string, string, string, string>> videoBitRatesInfo;
+						vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
@@ -9287,24 +9342,30 @@ void FFMpeg::liveRecorder(
 
 							ffmpegVideoCodecParameter,
 							ffmpegVideoProfileParameter,
-							ffmpegVideoResolutionParameter,
-							videoBitRateInKbps,
-							ffmpegVideoBitRateParameter,
 							ffmpegVideoOtherParameters,
 							twoPasses,
-							ffmpegVideoMaxRateParameter,
-							ffmpegVideoBufSizeParameter,
 							ffmpegVideoFrameRateParameter,
 							ffmpegVideoKeyFramesRateParameter,
 							videoBitRatesInfo,
 
 							ffmpegAudioCodecParameter,
-							ffmpegAudioBitRateParameter,
 							ffmpegAudioOtherParameters,
 							ffmpegAudioChannelsParameter,
 							ffmpegAudioSampleRateParameter,
 							audioBitRatesInfo
 						);
+
+						tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+							ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 						/*
 						if (httpStreamingFileFormat != "")
@@ -10525,7 +10586,7 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
-					vector<tuple<string, string, string, string>> videoBitRatesInfo;
+					vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
@@ -10546,24 +10607,30 @@ void FFMpeg::liveProxy(
 
 						ffmpegVideoCodecParameter,
 						ffmpegVideoProfileParameter,
-						ffmpegVideoResolutionParameter,
-						videoBitRateInKbps,
-						ffmpegVideoBitRateParameter,
 						ffmpegVideoOtherParameters,
 						twoPasses,
-						ffmpegVideoMaxRateParameter,
-						ffmpegVideoBufSizeParameter,
 						ffmpegVideoFrameRateParameter,
 						ffmpegVideoKeyFramesRateParameter,
 						videoBitRatesInfo,
 
 						ffmpegAudioCodecParameter,
-						ffmpegAudioBitRateParameter,
 						ffmpegAudioOtherParameters,
 						ffmpegAudioChannelsParameter,
 						ffmpegAudioSampleRateParameter,
 						audioBitRatesInfo
 					);
+
+					tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 					/*
 					if (httpStreamingFileFormat != "")
@@ -10782,7 +10849,7 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
-					vector<tuple<string, string, string, string>> videoBitRatesInfo;
+					vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
@@ -10803,24 +10870,30 @@ void FFMpeg::liveProxy(
 
 						ffmpegVideoCodecParameter,
 						ffmpegVideoProfileParameter,
-						ffmpegVideoResolutionParameter,
-						videoBitRateInKbps,
-						ffmpegVideoBitRateParameter,
 						ffmpegVideoOtherParameters,
 						twoPasses,
-						ffmpegVideoMaxRateParameter,
-						ffmpegVideoBufSizeParameter,
 						ffmpegVideoFrameRateParameter,
 						ffmpegVideoKeyFramesRateParameter,
 						videoBitRatesInfo,
 
 						ffmpegAudioCodecParameter,
-						ffmpegAudioBitRateParameter,
 						ffmpegAudioOtherParameters,
 						ffmpegAudioChannelsParameter,
 						ffmpegAudioSampleRateParameter,
 						audioBitRatesInfo
 					);
+
+					tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
+			);
 
 					/*
 					if (httpStreamingFileFormat != "")
@@ -11390,7 +11463,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
-			vector<tuple<string, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -11411,23 +11484,29 @@ void FFMpeg::liveProxyByHTTPStreaming(
 
 				ffmpegVideoCodecParameter,
 				ffmpegVideoProfileParameter,
-				ffmpegVideoResolutionParameter,
-				videoBitRateInKbps,
-				ffmpegVideoBitRateParameter,
 				ffmpegVideoOtherParameters,
 				twoPasses,
-				ffmpegVideoMaxRateParameter,
-				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
 				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
-				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
 				ffmpegAudioSampleRateParameter,
 				audioBitRatesInfo
+			);
+
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
 			);
 
 			/*
@@ -12001,7 +12080,7 @@ void FFMpeg::liveProxyByStream(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
-			vector<tuple<string, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -12022,23 +12101,29 @@ void FFMpeg::liveProxyByStream(
 
 				ffmpegVideoCodecParameter,
 				ffmpegVideoProfileParameter,
-				ffmpegVideoResolutionParameter,
-				videoBitRateInKbps,
-				ffmpegVideoBitRateParameter,
 				ffmpegVideoOtherParameters,
 				twoPasses,
-				ffmpegVideoMaxRateParameter,
-				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
 				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
-				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
 				ffmpegAudioSampleRateParameter,
 				audioBitRatesInfo
+			);
+
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
 			);
 
 			/*
@@ -12676,7 +12761,7 @@ void FFMpeg::liveGrid(
 			string ffmpegVideoBufSizeParameter = "";
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
-			vector<tuple<string, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -12703,23 +12788,29 @@ void FFMpeg::liveGrid(
 
 				ffmpegVideoCodecParameter,
 				ffmpegVideoProfileParameter,
-				ffmpegVideoResolutionParameter,
-				videoBitRateInKbps,
-				ffmpegVideoBitRateParameter,
 				ffmpegVideoOtherParameters,
 				_twoPasses,
-				ffmpegVideoMaxRateParameter,
-				ffmpegVideoBufSizeParameter,
 				ffmpegVideoFrameRateParameter,
 				ffmpegVideoKeyFramesRateParameter,
 				videoBitRatesInfo,
 
 				ffmpegAudioCodecParameter,
-				ffmpegAudioBitRateParameter,
 				ffmpegAudioOtherParameters,
 				ffmpegAudioChannelsParameter,
 				ffmpegAudioSampleRateParameter,
 				audioBitRatesInfo
+			);
+
+			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+			_logger->info(__FILEREF__ + "CHECK ENC"
+				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
+				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
+				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
+				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
 			);
 
 			// -map for video and audio
@@ -14030,19 +14121,13 @@ void FFMpeg::settingFfmpegParameters(
 
         string& ffmpegVideoCodecParameter,
         string& ffmpegVideoProfileParameter,
-        string& ffmpegVideoResolutionParameter,
-		int& videoBitRateInKbps,
-        string& ffmpegVideoBitRateParameter,
         string& ffmpegVideoOtherParameters,
         bool& twoPasses,
-        string& ffmpegVideoMaxRateParameter,
-        string& ffmpegVideoBufSizeParameter,
         string& ffmpegVideoFrameRateParameter,
         string& ffmpegVideoKeyFramesRateParameter,
-		vector<tuple<string, string, string, string>>& videoBitRatesInfo,
+		vector<tuple<string, int, string, string, string>>& videoBitRatesInfo,
 
         string& ffmpegAudioCodecParameter,
-        string& ffmpegAudioBitRateParameter,
         string& ffmpegAudioOtherParameters,
         string& ffmpegAudioChannelsParameter,
         string& ffmpegAudioSampleRateParameter,
@@ -14246,6 +14331,7 @@ void FFMpeg::settingFfmpegParameters(
         }
 
         // resolution
+		/*
         {
             field = "Width";
             if (!isMetadataPresent(videoRoot, field))
@@ -14277,8 +14363,10 @@ void FFMpeg::settingFfmpegParameters(
                     "-vf scale=" + to_string(width) + ":" + to_string(height) + " "
             ;
         }
+		*/
 
         // bitRate
+		/*
 		videoBitRateInKbps = -1;
         {
             field = "KBitRate";
@@ -14291,6 +14379,7 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
+		*/
 
         // OtherOutputParameters
         {
@@ -14320,6 +14409,7 @@ void FFMpeg::settingFfmpegParameters(
         }
 
         // maxRate
+		/*
         {
             field = "MaxRate";
             if (isMetadataPresent(videoRoot, field))
@@ -14331,8 +14421,10 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
+		*/
 
         // bufSize
+		/*
         {
             field = "BufSize";
             if (isMetadataPresent(videoRoot, field))
@@ -14344,6 +14436,7 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
+		*/
 
         // frameRate
         {
@@ -14449,6 +14542,7 @@ void FFMpeg::settingFfmpegParameters(
 				}
 
 				string ffmpegVideoBitRate;
+				int kBitRate;
 				{
 					field = "KBitRate";
 					if (isMetadataPresent(bitRateInfo, field))
@@ -14460,7 +14554,7 @@ void FFMpeg::settingFfmpegParameters(
 						throw runtime_error(errorMessage);
 					}
 
-					int kBitRate = asInt(bitRateInfo, field, 0);
+					kBitRate = asInt(bitRateInfo, field, 0);
 
 					ffmpegVideoBitRate = "-b:v " + to_string(kBitRate) + "k ";
 				}
@@ -14489,7 +14583,7 @@ void FFMpeg::settingFfmpegParameters(
 					}
 				}
 
-				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, ffmpegVideoBitRate,
+				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate, ffmpegVideoBitRate,
 					ffmpegVideoMaxRate, ffmpegVideoBufSize));
 			}
 		}
@@ -14530,6 +14624,7 @@ void FFMpeg::settingFfmpegParameters(
         }
 
         // kBitRate
+		/*
         {
             field = "KBitRate";
             if (isMetadataPresent(audioRoot, field))
@@ -14541,6 +14636,7 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
+		*/
         
         // OtherOutputParameters
         {
