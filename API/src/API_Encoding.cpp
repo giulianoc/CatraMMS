@@ -1073,7 +1073,29 @@ void API::addEncodingProfile(
             }
             string profileLabel = encodingProfileRoot.get(field, "XXX").asString();
 
-            MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+            MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
+			{
+				field = "FileFormat";
+				string fileFormat = encodingProfileRoot.get(field, "").asString();
+
+				string fileFormatLowerCase;
+				fileFormatLowerCase.resize(fileFormat.size());
+				transform(fileFormat.begin(), fileFormat.end(),
+					fileFormatLowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+				if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
+					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
+				else if (fileFormatLowerCase == "mp4")
+					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
+				else
+					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+
+				_logger->info(__FILEREF__ + "deliveryTechnology"
+					+ ", fileFormat: " + fileFormat
+					+ ", fileFormatLowerCase: " + fileFormatLowerCase
+					+ ", deliveryTechnology: " + MMSEngineDBFacade::toString(deliveryTechnology)
+				);
+			}
 
             string jsonEncodingProfile;
             {

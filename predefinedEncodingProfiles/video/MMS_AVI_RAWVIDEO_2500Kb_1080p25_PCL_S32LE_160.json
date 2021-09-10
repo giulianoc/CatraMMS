@@ -5,11 +5,8 @@
 	{
 		"Codec" : "rawvideo",
 		"Profile" : "",
-		"Width" : 1920,
-		"Height" : 1080,
 		"FrameRate": 25,
 		"TwoPasses" : false,
-		"KBitRate" : 2500,
 		"OtherOutputParameters": "-pix_fmt yuv422p",
 		"BitRates": [
 			{
@@ -22,7 +19,6 @@
 	"Audio" : 
 	{
 		"Codec" : "pcm_s32le",
-		"KBitRate" : 160,
 		"ChannelsNumber": 2,
 		"BitRates": [
 			{

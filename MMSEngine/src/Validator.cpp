@@ -6507,15 +6507,15 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         }
     }
     
+	Json::Value encodingProfileVideoRoot;
     {
         string field = "Video";
-        Json::Value encodingProfileVideoRoot = encodingProfileRoot[field];
+        encodingProfileVideoRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
             "Codec",
-            "Width",
-            "Height",
-            "TwoPasses"
+            "TwoPasses",
+            "BitRates"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -6535,25 +6535,111 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
 
     {
-        string field = "Audio";
-        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+        string field = "BitRates";
+		Json::Value videoBitRatesRoot = encodingProfileVideoRoot[field];
+
+		if (videoBitRatesRoot.size() == 0)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+
+			string errorMessage = __FILEREF__ + "No video bit rates are present"
+				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 
         vector<string> mandatoryFields = {
-            "Codec"
+            "Width",
+            "Height",
+            "KBitRate"
         };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+		for(int bitRateIndex = 0; bitRateIndex < videoBitRatesRoot.size(); bitRateIndex++)
+		{
+			Json::Value bitRateRoot = videoBitRatesRoot[bitRateIndex];
+
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+        }
+    }
+
+	Json::Value encodingProfileAudioRoot;
+    {
+        string field = "Audio";
+        encodingProfileAudioRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Codec",
+            "BitRates"
+        };
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+               
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                       + ", Field: " + mandatoryField
+                       + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+    }
+
+    {
+        string field = "BitRates";
+		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
+
+		if (audioBitRatesRoot.size() == 0)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+
+			string errorMessage = __FILEREF__ + "No audio bit rates are present"
+				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        vector<string> mandatoryFields = {
+            "KBitRate"
+        };
+		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
+		{
+			Json::Value bitRateRoot = audioBitRatesRoot[bitRateIndex];
+
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
                 
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
                         + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
+					throw runtime_error(errorMessage);
+				}
             }
         }
     }
@@ -6599,12 +6685,14 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         }
     }
     
+	Json::Value encodingProfileAudioRoot;
     {
         string field = "Audio";
-        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+        encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec"
+            "Codec",
+            "BitRates"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -6619,6 +6707,47 @@ void Validator::validateEncodingProfileRootAudioMetadata(
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
+            }
+        }
+    }
+
+    {
+        string field = "BitRates";
+		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
+
+		if (audioBitRatesRoot.size() == 0)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+
+			string errorMessage = __FILEREF__ + "No audio bit rates are present"
+				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        vector<string> mandatoryFields = {
+            "KBitRate"
+        };
+		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
+		{
+			Json::Value bitRateRoot = audioBitRatesRoot[bitRateIndex];
+
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
             }
         }
     }

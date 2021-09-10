@@ -138,18 +138,12 @@ void FFMpeg::encodeContent(
 
         string ffmpegVideoCodecParameter = "";
         string ffmpegVideoProfileParameter = "";
-        string ffmpegVideoResolutionParameter = "";
-		int videoBitRateInKbps = -1;
-        string ffmpegVideoBitRateParameter = "";
         string ffmpegVideoOtherParameters = "";
-        string ffmpegVideoMaxRateParameter = "";
-        string ffmpegVideoBufSizeParameter = "";
         string ffmpegVideoFrameRateParameter = "";
         string ffmpegVideoKeyFramesRateParameter = "";
-		vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+		vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
         string ffmpegAudioCodecParameter = "";
-        string ffmpegAudioBitRateParameter = "";
         string ffmpegAudioOtherParameters = "";
         string ffmpegAudioChannelsParameter = "";
         string ffmpegAudioSampleRateParameter = "";
@@ -254,17 +248,20 @@ void FFMpeg::encodeContent(
 
 			*/
 
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+			string ffmpegVideoResolutionParameter = "";
+			int videoBitRateInKbps = -1;
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
 				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 			_logger->info(__FILEREF__ + "Special encoding in order to allow audio/language selection by the player"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -990,19 +987,6 @@ void FFMpeg::encodeContent(
         {
 			// hls or dash output
 
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
-				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
-
-
 			vector<string> ffmpegArgumentList;
 
 			{
@@ -1026,14 +1010,20 @@ void FFMpeg::encodeContent(
 
             if (_twoPasses)
             {
-                string passlogFileName = 
-                    to_string(_currentIngestionJobKey)
-                    + "_"
-                    + to_string(_currentEncodingJobKey) + ".passlog";
-                string ffmpegPassLogPathFileName = _ffmpegTempDir // string(stagingEncodedAssetPath)
-                    + "/"
-                    + passlogFileName
-                    ;
+				string templateVariable = "__HEIGHT__";
+				string templatePart = templateVariable + "p";
+
+				// used as prefix to remove the temporary files
+				string passlogFileName = 
+					to_string(_currentIngestionJobKey)
+					+ "_"
+					+ to_string(_currentEncodingJobKey)
+				;
+                string ffmpegTemplatePassLogPathFileName = _ffmpegTempDir
+					+ "/"
+					+ passlogFileName
+					+ "_" + templatePart + ".passlog";
+				;
 
                 // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 				ffmpegArgumentList.push_back("ffmpeg");
@@ -1042,56 +1032,88 @@ void FFMpeg::encodeContent(
 				// input options
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
-				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				ffmpegArgumentList.push_back("-pass");
-				ffmpegArgumentList.push_back("1");
-				ffmpegArgumentList.push_back("-passlogfile");
-				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				// It should be useless to add the audio parameters in phase 1 but,
-				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
-				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
-				//  So, this is the reason, I'm adding phase 2 as well
-				// + "-an "    // disable audio
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
 
-				// 2020-01-20: I removed the hls file format parameter because it was not working
-				//	and added -f mp4. At the end it has to generate just the log file
-				//	to be used in the second step
-				// addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
-				//
-				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-f");
-				// 2020-08-21: changed from mp4 to null
-				ffmpegArgumentList.push_back("null");
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
 
-				ffmpegArgumentList.push_back("/dev/null");
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+
+					// It should be useless to add the audio parameters in phase 1 but,
+					// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+					//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+					//  So, this is the reason, I'm adding phase 2 as well
+					// + "-an "    // disable audio
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					ffmpegArgumentList.push_back("-pass");
+					ffmpegArgumentList.push_back("1");
+					ffmpegArgumentList.push_back("-passlogfile");
+					{
+						string ffmpegPassLogPathFileName =
+							regex_replace(ffmpegTemplatePassLogPathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+					}
+
+					// 2020-01-20: I removed the hls file format parameter
+					//	because it was not working and added -f mp4.
+					//	At the end it has to generate just the log file
+					//	to be used in the second step
+					// addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+					//
+					// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-f");
+					// 2020-08-21: changed from mp4 to null
+					ffmpegArgumentList.push_back("null");
+
+					ffmpegArgumentList.push_back("/dev/null");
+				}
 
 				ostringstream ffmpegArgumentListStreamFirstStep;
 				try
@@ -1167,7 +1189,7 @@ void FFMpeg::encodeContent(
 					_logger->error(errorMessage);
 
 					bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -1179,20 +1201,27 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				string segmentPathFileName;
+				string segmentTemplateDirectory;
+				string segmentTemplatePathFileName;
 				if (httpStreamingFileFormat == "hls")
-					segmentPathFileName =
-						stagingEncodedAssetPathName 
+				{
+					segmentTemplateDirectory =
+						stagingEncodedAssetPathName + "/" + templatePart;
+
+					segmentTemplatePathFileName =
+						segmentTemplateDirectory 
 						+ "/"
 						+ to_string(_currentIngestionJobKey)
 						+ "_"
 						+ to_string(_currentEncodingJobKey)
 						+ "_%04d.ts"
 					;
+				}
 
-				string stagingManifestAssetPathName =
-					stagingEncodedAssetPathName
-					+ "/" + manifestFileName;
+				string stagingTemplateManifestAssetPathName =
+					segmentTemplateDirectory
+					+ "/"
+					+ manifestFileName;
 
 				ffmpegArgumentList.clear();
 
@@ -1202,50 +1231,104 @@ void FFMpeg::encodeContent(
 				// input options
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
-				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				ffmpegArgumentList.push_back("-pass");
-				ffmpegArgumentList.push_back("2");
-				ffmpegArgumentList.push_back("-passlogfile");
-				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
 
-				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
 
-				if (httpStreamingFileFormat == "hls")
-				{
-					ffmpegArgumentList.push_back("-hls_segment_filename");
-					ffmpegArgumentList.push_back(segmentPathFileName);
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					{
+						string segmentDirectory =
+							regex_replace(segmentTemplateDirectory,
+								regex(templateVariable), to_string(videoHeight));
+
+						bool noErrorIfExists = true;
+						bool recursive = true;
+						_logger->info(__FILEREF__ + "Creating directory"
+							+ ", : " + segmentDirectory
+						);
+						FileIO::createDirectory(segmentDirectory,
+							S_IRUSR | S_IWUSR | S_IXUSR |
+							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					}
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+					if (httpStreamingFileFormat == "hls")
+					{
+						string segmentPathFileName =
+							regex_replace(segmentTemplatePathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+					}
+
+					{
+						string stagingManifestAssetPathName =
+							regex_replace(stagingTemplateManifestAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+					}
+
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					ffmpegArgumentList.push_back("-pass");
+					ffmpegArgumentList.push_back("2");
+					ffmpegArgumentList.push_back("-passlogfile");
+					{
+						string ffmpegPassLogPathFileName =
+							regex_replace(ffmpegTemplatePassLogPathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+					}
 				}
-
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 
 				ostringstream ffmpegArgumentListStreamSecondStep;
                 _currentlyAtSecondPass = true;
@@ -1303,8 +1386,8 @@ void FFMpeg::encodeContent(
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -1312,8 +1395,8 @@ void FFMpeg::encodeContent(
 						;
 					else
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -1335,28 +1418,103 @@ void FFMpeg::encodeContent(
 				}
 
 				bool exceptionInCaseOfError = false;
-				removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+				removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				// create the master playlist
+				{
+					/*
+						#EXTM3U
+						#EXT-X-VERSION:3
+						#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
+						360p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
+						480p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+						720p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+						1080p.m3u8
+					 */
+					string endLine = "\n";
+					string masterManifest =
+						"#EXTM3U" + endLine
+						+ "#EXT-X-VERSION:3" + endLine
+					;
+
+					for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
+					{
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo [videoIndex];
+
+						int videoBitRateInKbps = -1;
+						int videoWidth = -1;
+						int videoHeight = -1;
+
+						tie(ignore, videoBitRateInKbps, videoWidth, videoHeight,
+							ignore, ignore,
+							ignore) = videoBitRateInfo;
+
+						masterManifest +=
+							"#EXT-X-STREAM-INF:BANDWIDTH="
+								+ to_string(videoBitRateInKbps * 1000)
+								+ ",RESOLUTION=" + to_string(videoWidth)
+								+ "x" + to_string(videoHeight) + endLine
+							;
+
+						string manifestRelativePathName;
+						{
+							manifestRelativePathName = templatePart
+								+ "/" + manifestFileName;
+							manifestRelativePathName =
+								regex_replace(manifestRelativePathName,
+									regex(templateVariable), to_string(videoHeight));
+						}
+						masterManifest +=
+							manifestRelativePathName + endLine;
+					}
+
+					string masterManifestPathFileName = stagingEncodedAssetPathName + "/"
+						+ manifestFileName;
+
+					_logger->info(__FILEREF__ + "Writing Master Manifest File"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", masterManifestPathFileName: " + masterManifestPathFileName
+						+ ", masterManifest: " + masterManifest
+					);
+					ofstream ofMasterManifestFile(masterManifestPathFileName);
+					ofMasterManifestFile << masterManifest;
+				}
 			}
 			else
             {
-				string segmentPathFileName;
+				string templateVariable = "__HEIGHT__";
+				string templatePart = templateVariable + "p";
+
+				string segmentTemplateDirectory;
+				string segmentTemplatePathFileName;
 				if (httpStreamingFileFormat == "hls")
-					segmentPathFileName =
-						stagingEncodedAssetPathName 
+				{
+					segmentTemplateDirectory =
+						stagingEncodedAssetPathName + "/" + templatePart;
+
+					segmentTemplatePathFileName =
+						segmentTemplateDirectory 
 						+ "/"
 						+ to_string(_currentIngestionJobKey)
 						+ "_"
 						+ to_string(_currentEncodingJobKey)
 						+ "_%04d.ts"
 					;
+				}
 
-				string stagingManifestAssetPathName =
-					stagingEncodedAssetPathName
-					+ "/" + manifestFileName;
+				string stagingTemplateManifestAssetPathName =
+					segmentTemplateDirectory
+					+ "/"
+					+ manifestFileName;
 
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -1365,45 +1523,91 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
-				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
 
-				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
 
-				if (httpStreamingFileFormat == "hls")
-				{
-					ffmpegArgumentList.push_back("-hls_segment_filename");
-					ffmpegArgumentList.push_back(segmentPathFileName);
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					{
+						string segmentDirectory =
+							regex_replace(segmentTemplateDirectory,
+								regex(templateVariable), to_string(videoHeight));
+
+						bool noErrorIfExists = true;
+						bool recursive = true;
+						_logger->info(__FILEREF__ + "Creating directory"
+							+ ", : " + segmentDirectory
+						);
+						FileIO::createDirectory(segmentDirectory,
+							S_IRUSR | S_IWUSR | S_IXUSR |
+							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					}
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+					if (httpStreamingFileFormat == "hls")
+					{
+						string segmentPathFileName =
+							regex_replace(segmentTemplatePathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+					}
+
+					{
+						string stagingManifestAssetPathName =
+							regex_replace(stagingTemplateManifestAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+					}
 				}
-
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 
 				ostringstream ffmpegArgumentListStream;
 				try
@@ -1493,6 +1697,71 @@ void FFMpeg::encodeContent(
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				// create the master playlist
+				{
+					/*
+						#EXTM3U
+						#EXT-X-VERSION:3
+						#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
+						360p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
+						480p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+						720p.m3u8
+						#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+						1080p.m3u8
+					 */
+					string endLine = "\n";
+					string masterManifest =
+						"#EXTM3U" + endLine
+						+ "#EXT-X-VERSION:3" + endLine
+					;
+
+					for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
+					{
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo [videoIndex];
+
+						int videoBitRateInKbps = -1;
+						int videoWidth = -1;
+						int videoHeight = -1;
+
+						tie(ignore, videoBitRateInKbps, videoWidth, videoHeight,
+							ignore, ignore,
+							ignore) = videoBitRateInfo;
+
+						masterManifest +=
+							"#EXT-X-STREAM-INF:BANDWIDTH="
+								+ to_string(videoBitRateInKbps * 1000)
+								+ ",RESOLUTION=" + to_string(videoWidth)
+								+ "x" + to_string(videoHeight) + endLine
+							;
+
+						string manifestRelativePathName;
+						{
+							manifestRelativePathName = templatePart
+								+ "/" + manifestFileName;
+							manifestRelativePathName =
+								regex_replace(manifestRelativePathName,
+									regex(templateVariable), to_string(videoHeight));
+						}
+						masterManifest +=
+							manifestRelativePathName + endLine;
+					}
+
+					string masterManifestPathFileName = stagingEncodedAssetPathName + "/"
+						+ manifestFileName;
+
+					_logger->info(__FILEREF__ + "Writing Master Manifest File"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", masterManifestPathFileName: " + masterManifestPathFileName
+						+ ", masterManifest: " + masterManifest
+					);
+					ofstream ofMasterManifestFile(masterManifestPathFileName);
+					ofMasterManifestFile << masterManifest;
+				}
 			}
 
 			long long llDirSize = -1;
@@ -1526,31 +1795,31 @@ void FFMpeg::encodeContent(
         }
         else
         {
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
-				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
+			/* 2021-09-10: In case videoBitRatesInfo has more than one bitrates,
+			 *	it has to be created one file for each bit rate and than
+			 *	merge all in the last file with a copy command, i.e.:
+			 *		- ffmpeg -i ./1.mp4 -i ./2.mp4 -c copy -map 0 -map 1 ./3.mp4
+			*/
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
 
             if (_twoPasses)
             {
-                string passlogFileName = 
-                    to_string(_currentIngestionJobKey)
-                    + "_"
-                    + to_string(_currentEncodingJobKey) + ".passlog";
-                string ffmpegPassLogPathFileName = _ffmpegTempDir // string(stagingEncodedAssetPath)
-                    + "/"
-                    + passlogFileName
-                    ;
+				string templateVariable = "__HEIGHT__";
+				string templatePart = templateVariable + "p";
+
+				// used as prefix to remove the temporary files
+				string passlogFileName = 
+					to_string(_currentIngestionJobKey)
+					+ "_"
+					+ to_string(_currentEncodingJobKey)
+				;
+                string ffmpegTemplatePassLogPathFileName = _ffmpegTempDir
+					+ "/"
+					+ passlogFileName
+					+ "_" + templatePart + ".passlog";
+				;
 
                 // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 
@@ -1561,51 +1830,78 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
+
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
+
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					ffmpegArgumentList.push_back("-pass");
+					ffmpegArgumentList.push_back("1");
+					ffmpegArgumentList.push_back("-passlogfile");
+					{
+						string ffmpegPassLogPathFileName =
+							regex_replace(ffmpegTemplatePassLogPathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+					}
+					// It should be useless to add the audio parameters in phase 1 but,
+					// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+					//	it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+					//	So, this is the reason, I'm adding phase 2 as well
+					// + "-an "    // disable audio
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					// 2020-08-21: changed from ffmpegFileFormatParameter to -f null
+					// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-f");
+					ffmpegArgumentList.push_back("null");
+
+					ffmpegArgumentList.push_back("/dev/null");
 				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				ffmpegArgumentList.push_back("-pass");
-				ffmpegArgumentList.push_back("1");
-				ffmpegArgumentList.push_back("-passlogfile");
-				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				// It should be useless to add the audio parameters in phase 1 but,
-				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
-				//	it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
-				//	So, this is the reason, I'm adding phase 2 as well
-                // + "-an "    // disable audio
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-
-				// 2020-08-21: changed from ffmpegFileFormatParameter to -f null
-				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("null");
-
-				ffmpegArgumentList.push_back("/dev/null");
-
 
                 try
                 {
@@ -1691,6 +1987,26 @@ void FFMpeg::encodeContent(
 						throw e;
                 }
 
+				string stagingTemplateEncodedAssetPathName;
+				{
+					size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+					if (extensionIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__ + "No extension found"
+							+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// I tried the string::insert method but it did not work
+					stagingTemplateEncodedAssetPathName =
+						stagingEncodedAssetPathName.substr(0, extensionIndex)
+						+ "_" + templatePart
+						+ stagingEncodedAssetPathName.substr(extensionIndex)
+					;
+				}
+
 				ffmpegArgumentList.clear();
 				ffmpegArgumentListStream.clear();
 
@@ -1701,40 +2017,77 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
+
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
+
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					ffmpegArgumentList.push_back("-pass");
+					ffmpegArgumentList.push_back("2");
+					ffmpegArgumentList.push_back("-passlogfile");
+					{
+						string ffmpegPassLogPathFileName =
+							regex_replace(ffmpegTemplatePassLogPathFileName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+					}
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					if (videoBitRatesInfo.size() > 1)
+					{
+						string newStagingEncodedAssetPathName =
+							regex_replace(stagingTemplateEncodedAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+					}
+					else
+						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				ffmpegArgumentList.push_back("-pass");
-				ffmpegArgumentList.push_back("2");
-				ffmpegArgumentList.push_back("-passlogfile");
-				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 
                 _currentlyAtSecondPass = true;
                 try
@@ -1822,13 +2175,96 @@ void FFMpeg::encodeContent(
                 }
 
                 bool exceptionInCaseOfError = false;
-                removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				if (videoBitRatesInfo.size() > 1)
+				{
+					// all the tracks generated in different files have to be copied
+					// into the stagingEncodedAssetPathName file
+					// The command willl be:
+					//		ffmpeg -i ... -i ... -c copy -map 0 -map 1 ... <dest file>
+
+					vector<string> sourcesPathName;
+					for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
+					{
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo [videoIndex];
+
+						int videoHeight = -1;
+
+						tie(ignore, ignore,
+							ignore, videoHeight,
+							ignore, ignore,
+							ignore) = videoBitRateInfo;
+
+						string newStagingEncodedAssetPathName =
+							regex_replace(stagingTemplateEncodedAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						sourcesPathName.push_back(newStagingEncodedAssetPathName);
+					}
+
+					try
+					{
+						muxAllFiles(ingestionJobKey, sourcesPathName,
+							stagingEncodedAssetPathName);
+
+						for (string sourcePathName: sourcesPathName)
+						{
+							bool exceptionInCaseOfError = false;
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", sourcePathName: " + sourcePathName);
+							FileIO::remove(sourcePathName, exceptionInCaseOfError);
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "muxAllFiles failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						for (string sourcePathName: sourcesPathName)
+						{
+							bool exceptionInCaseOfError = false;
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", sourcePathName: " + sourcePathName);
+							FileIO::remove(sourcePathName, exceptionInCaseOfError);
+						}
+
+						throw e;
+					}
+				}
             }
             else
             {
+				string templateVariable = "__HEIGHT__";
+				string templatePart = templateVariable + "p";
+
+				string stagingTemplateEncodedAssetPathName;
+				{
+					size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+					if (extensionIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__ + "No extension found"
+							+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// I tried the string::insert method but it did not work
+					stagingTemplateEncodedAssetPathName =
+						stagingEncodedAssetPathName.substr(0, extensionIndex)
+						+ "_" + templatePart
+						+ stagingEncodedAssetPathName.substr(extensionIndex)
+					;
+				}
+
 				ffmpegArgumentList.clear();
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -1837,36 +2273,68 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
-				if (videoTrackIndexToBeUsed >= 0)
+				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
 				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo [videoIndex];
+
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					int videoHeight = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegAudioBitRateParameter = "";
+
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
+						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+					if (videoTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:v:") + to_string(videoTrackIndexToBeUsed));
+					}
+					if (audioTrackIndexToBeUsed >= 0)
+					{
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:a:") + to_string(audioTrackIndexToBeUsed));
+					}
+					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					ffmpegArgumentList.push_back("-threads");
+					ffmpegArgumentList.push_back("0");
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					if (audioBitRatesInfo.size() > videoIndex)
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+					else 
+						ffmpegAudioBitRateParameter = audioBitRatesInfo[
+							audioBitRatesInfo.size() - 1];
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					if (videoBitRatesInfo.size() > 1)
+					{
+						string newStagingEncodedAssetPathName =
+							regex_replace(stagingTemplateEncodedAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+					}
+					else
+						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 				}
-				if (audioTrackIndexToBeUsed >= 0)
-				{
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:a:") + to_string(audioTrackIndexToBeUsed));
-				}
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 
                 try
                 {
@@ -1954,6 +2422,66 @@ void FFMpeg::encodeContent(
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				if (videoBitRatesInfo.size() > 1)
+				{
+					// all the tracks generated in different files have to be copied
+					// into the stagingEncodedAssetPathName file
+					// The command willl be:
+					//		ffmpeg -i ... -i ... -c copy -map 0 -map 1 ... <dest file>
+
+					vector<string> sourcesPathName;
+					for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
+					{
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo [videoIndex];
+
+						int videoHeight = -1;
+
+						tie(ignore, ignore,
+							ignore, videoHeight,
+							ignore, ignore,
+							ignore) = videoBitRateInfo;
+
+						string newStagingEncodedAssetPathName =
+							regex_replace(stagingTemplateEncodedAssetPathName,
+								regex(templateVariable), to_string(videoHeight));
+						sourcesPathName.push_back(newStagingEncodedAssetPathName);
+					}
+
+					try
+					{
+						muxAllFiles(ingestionJobKey, sourcesPathName,
+							stagingEncodedAssetPathName);
+
+						for (string sourcePathName: sourcesPathName)
+						{
+							bool exceptionInCaseOfError = false;
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", sourcePathName: " + sourcePathName);
+							FileIO::remove(sourcePathName, exceptionInCaseOfError);
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "muxAllFiles failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						for (string sourcePathName: sourcesPathName)
+						{
+							bool exceptionInCaseOfError = false;
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", sourcePathName: " + sourcePathName);
+							FileIO::remove(sourcePathName, exceptionInCaseOfError);
+						}
+
+						throw e;
+					}
+				}
             }
 
 			long long llFileSize = -1;
@@ -3006,7 +3534,7 @@ void FFMpeg::awaitingTheBegining(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -3040,17 +3568,13 @@ void FFMpeg::awaitingTheBegining(
 					audioBitRatesInfo
 				);
 
-				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
 					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -4539,7 +5063,7 @@ void FFMpeg::introOutroOverlay(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -4573,17 +5097,13 @@ void FFMpeg::introOutroOverlay(
 					audioBitRatesInfo
 				);
 
-				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
 					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -6337,6 +6857,91 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 	return make_pair(durationInMilliSeconds, bitRate);
 }
 
+void FFMpeg::muxAllFiles(
+	int64_t ingestionJobKey,
+	vector<string> sourcesPathName,
+	string destinationPathName
+)
+{
+	_currentApiName = "muxAllFiles";
+
+	_logger->info(__FILEREF__ + _currentApiName
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", destinationPathName: " + destinationPathName
+			);
+
+	for (string sourcePathName: sourcesPathName)
+	{
+		// milli secs to wait in case of nfs delay
+		if (!FileIO::fileExisting(sourcePathName,
+			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourcePathName: " + sourcePathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    string ffmpegExecuteCommand = 
+		_ffmpegPath + "/ffmpeg "
+	;
+	for (string sourcePathName: sourcesPathName)
+		ffmpegExecuteCommand += "-i " + sourcePathName + " ";
+	ffmpegExecuteCommand += "-c copy ";
+	for (int sourceIndex = 0; sourceIndex < sourcesPathName.size(); sourceIndex++)
+		ffmpegExecuteCommand += "-map " + to_string(sourceIndex) + " ";
+	ffmpegExecuteCommand += destinationPathName;
+
+    try
+    {
+		_logger->info(__FILEREF__ + _currentApiName + ": Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		);
+
+		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+		if (executeCommandStatus != 0)
+		{
+			string errorMessage = __FILEREF__
+				+ _currentApiName + ": ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + _currentApiName + ": Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			+ ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        throw e;
+    }
+}
+
 void FFMpeg::getLiveStreamingInfo(
 	string liveURL,
 	string userAgent,
@@ -7741,7 +8346,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				string ffmpegVideoFrameRateParameter = "";
 				string ffmpegVideoKeyFramesRateParameter = "";
 				bool twoPasses;
-				vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 				string ffmpegAudioCodecParameter = "";
 				string ffmpegAudioBitRateParameter = "";
@@ -7775,17 +8380,13 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					audioBitRatesInfo
 				);
 
-				tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
 					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 				/*
 				if (httpStreamingFileFormat != "")
@@ -9060,7 +9661,8 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
-						vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+						vector<tuple<string, int, int, int, string, string, string>>
+							videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
@@ -9094,17 +9696,14 @@ void FFMpeg::liveRecorder(
 							audioBitRatesInfo
 						);
 
-						tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
-							ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo[0];
+						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+							ffmpegVideoBitRateParameter,
+							ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter)
+							= videoBitRateInfo;
 
 						ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 						/*
 						if (httpStreamingFileFormat != "")
@@ -9321,7 +9920,8 @@ void FFMpeg::liveRecorder(
 						string ffmpegVideoFrameRateParameter = "";
 						string ffmpegVideoKeyFramesRateParameter = "";
 						bool twoPasses;
-						vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+						vector<tuple<string, int, int, int, string, string, string>>
+							videoBitRatesInfo;
 
 						string ffmpegAudioCodecParameter = "";
 						string ffmpegAudioBitRateParameter = "";
@@ -9355,17 +9955,13 @@ void FFMpeg::liveRecorder(
 							audioBitRatesInfo
 						);
 
-						tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo[0];
+						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+							ffmpegVideoBitRateParameter, 
 							ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 						ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 						/*
 						if (httpStreamingFileFormat != "")
@@ -10586,7 +11182,7 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
-					vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+					vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
@@ -10620,17 +11216,14 @@ void FFMpeg::liveProxy(
 						audioBitRatesInfo
 					);
 
-					tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
-						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo[0];
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+						ffmpegVideoBitRateParameter,
+						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter)
+						= videoBitRateInfo;
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 					/*
 					if (httpStreamingFileFormat != "")
@@ -10849,7 +11442,7 @@ void FFMpeg::liveProxy(
 					string ffmpegVideoFrameRateParameter = "";
 					string ffmpegVideoKeyFramesRateParameter = "";
 					bool twoPasses;
-					vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+					vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 					string ffmpegAudioCodecParameter = "";
 					string ffmpegAudioBitRateParameter = "";
@@ -10883,17 +11476,13 @@ void FFMpeg::liveProxy(
 						audioBitRatesInfo
 					);
 
-					tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+					tuple<string, int, int, int, string, string, string> videoBitRateInfo
+						= videoBitRatesInfo[0];
+					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+						ffmpegVideoBitRateParameter,
 						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 					/*
 					if (httpStreamingFileFormat != "")
@@ -11463,7 +12052,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
-			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -11497,17 +12086,13 @@ void FFMpeg::liveProxyByHTTPStreaming(
 				audioBitRatesInfo
 			);
 
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
 				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 			/*
 			if (httpStreamingFileFormat != "")
@@ -12080,7 +12665,7 @@ void FFMpeg::liveProxyByStream(
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
 			bool twoPasses;
-			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -12114,17 +12699,13 @@ void FFMpeg::liveProxyByStream(
 				audioBitRatesInfo
 			);
 
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
 				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 			/*
 			if (httpStreamingFileFormat != "")
@@ -12761,7 +13342,7 @@ void FFMpeg::liveGrid(
 			string ffmpegVideoBufSizeParameter = "";
 			string ffmpegVideoFrameRateParameter = "";
 			string ffmpegVideoKeyFramesRateParameter = "";
-			vector<tuple<string, int, string, string, string>> videoBitRatesInfo;
+			vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
 
 			string ffmpegAudioCodecParameter = "";
 			string ffmpegAudioBitRateParameter = "";
@@ -12801,17 +13382,13 @@ void FFMpeg::liveGrid(
 				audioBitRatesInfo
 			);
 
-			tuple<string, int, string, string, string> videoBitRateInfo = videoBitRatesInfo[0];
-			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ffmpegVideoBitRateParameter,
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
 				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
 			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-			_logger->info(__FILEREF__ + "CHECK ENC"
-				+ ", ffmpegVideoResolutionParameter: " + ffmpegVideoResolutionParameter
-				+ ", videoBitRateInKbps: " + to_string(videoBitRateInKbps)
-				+ ", ffmpegVideoBitRateParameter: " + ffmpegVideoBitRateParameter
-				+ ", ffmpegAudioBitRateParameter: " + ffmpegAudioBitRateParameter
-			);
 
 			// -map for video and audio
 			{
@@ -14125,7 +14702,7 @@ void FFMpeg::settingFfmpegParameters(
         bool& twoPasses,
         string& ffmpegVideoFrameRateParameter,
         string& ffmpegVideoKeyFramesRateParameter,
-		vector<tuple<string, int, string, string, string>>& videoBitRatesInfo,
+		vector<tuple<string, int, int, int, string, string, string>>& videoBitRatesInfo,
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioOtherParameters,
@@ -14487,6 +15064,8 @@ void FFMpeg::settingFfmpegParameters(
 
 				// resolution
 				string ffmpegVideoResolution;
+				int videoWidth;
+				int videoHeight;
 				{
 					field = "Width";
 					if (!isMetadataPresent(bitRateInfo, field))
@@ -14497,9 +15076,9 @@ void FFMpeg::settingFfmpegParameters(
 
 						throw runtime_error(errorMessage);
 					}
-					int width = asInt(bitRateInfo, field, 0);
-					if (width == -1 && codec == "libx264")
-						width   = -2;     // h264 requires always a even width/height
+					videoWidth = asInt(bitRateInfo, field, 0);
+					if (videoWidth == -1 && codec == "libx264")
+						videoWidth   = -2;     // h264 requires always a even width/height
 
 					field = "Height";
 					if (!isMetadataPresent(bitRateInfo, field))
@@ -14510,9 +15089,9 @@ void FFMpeg::settingFfmpegParameters(
 
 						throw runtime_error(errorMessage);
 					}
-					int height = asInt(bitRateInfo, field, 0);
-					if (height == -1 && codec == "libx264")
-						height   = -2;     // h264 requires always a even width/height
+					videoHeight = asInt(bitRateInfo, field, 0);
+					if (videoHeight == -1 && codec == "libx264")
+						videoHeight   = -2;     // h264 requires always a even width/height
 
 					string forceOriginalAspectRatio;
 					field = "ForceOriginalAspectRatio";
@@ -14529,12 +15108,14 @@ void FFMpeg::settingFfmpegParameters(
 
 					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
 
-					ffmpegVideoResolution = "-vf scale=w=" + to_string(width) + ":h=" + to_string(height);
+					ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
+						+ ":h=" + to_string(videoHeight);
 					if (forceOriginalAspectRatio != "")
 					{
-						ffmpegVideoResolution += (":1080:force_original_aspect_ratio=" + forceOriginalAspectRatio);
+						ffmpegVideoResolution += (":force_original_aspect_ratio=" + forceOriginalAspectRatio);
 						if (pad)
-							ffmpegVideoResolution += (",pad=" + to_string(width) + ":" + to_string(height)
+							ffmpegVideoResolution += (",pad=" + to_string(videoWidth)
+								+ ":" + to_string(videoHeight)
 								+ ":(ow-iw)/2:(oh-ih)/2");
 					}
 
@@ -14545,7 +15126,7 @@ void FFMpeg::settingFfmpegParameters(
 				int kBitRate;
 				{
 					field = "KBitRate";
-					if (isMetadataPresent(bitRateInfo, field))
+					if (!isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 							+ ", Field: " + field;
@@ -14583,7 +15164,8 @@ void FFMpeg::settingFfmpegParameters(
 					}
 				}
 
-				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate, ffmpegVideoBitRate,
+				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate,
+					videoWidth, videoHeight, ffmpegVideoBitRate,
 					ffmpegVideoMaxRate, ffmpegVideoBufSize));
 			}
 		}
@@ -14697,7 +15279,7 @@ void FFMpeg::settingFfmpegParameters(
 				string ffmpegAudioBitRate;
 				{
 					field = "KBitRate";
-					if (isMetadataPresent(bitRateInfo, field))
+					if (!isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 							+ ", Field: " + field;

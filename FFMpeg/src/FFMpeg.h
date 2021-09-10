@@ -203,6 +203,9 @@ public:
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 
+	void muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName,
+		string destinationPathName);
+
 	void getLiveStreamingInfo(
 		string liveURL,
 		string userAgent,
@@ -555,7 +558,7 @@ private:
         bool& twoPasses,
         string& ffmpegVideoFrameRateParameter,
         string& ffmpegVideoKeyFramesRateParameter,
-		vector<tuple<string, int, string, string, string>>& videoBitRatesInfo,
+		vector<tuple<string, int, int, int, string, string, string>>& videoBitRatesInfo,
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioOtherParameters,

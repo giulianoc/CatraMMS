@@ -5,11 +5,8 @@
 	{
 		"Codec" : "libaom-av1",
 		"Profile" : "",
-		"Width" : 640,
-		"Height" : 360,
 		"FrameRate": 0,
 		"TwoPasses" : false,
-		"KBitRate" : 2000,
 		"OtherOutputParameters": "-strict experimental -movflags +faststart",
 		"BitRates": [
 			{
@@ -22,7 +19,6 @@
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 92,
 		"ChannelsNumber": 2,
 		"BitRates": [
 			{

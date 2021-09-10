@@ -5,11 +5,8 @@
 	{
 		"Codec" : "libx264",
 		"Profile" : "high422",
-		"Width" : 1920,
-		"Height" : 1080,
 		"FrameRate": 50,
 		"TwoPasses" : false,
-		"KBitRate" : 5000,
 		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22",
 		"BitRates": [
 			{
@@ -22,7 +19,6 @@
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 128,
 		"ChannelsNumber": 2,
 		"BitRates": [
 			{
