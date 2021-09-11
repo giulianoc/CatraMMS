@@ -387,6 +387,35 @@ private:
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
 
+	pair<string, string> createDeliveryAuthorization(
+		int64_t userKey,
+		shared_ptr<Workspace> requestWorkspace,
+		string clientIPAddress,
+
+		int64_t mediaItemKey,
+		string uniqueName,
+		int64_t encodingProfileKey,
+		string encodingProfileLabel,
+
+		int64_t physicalPathKey,
+
+		int64_t ingestionJobKey,
+		int64_t deliveryCode,
+
+		int ttlInSeconds,
+		int maxRetries,
+		bool save,
+		bool authorizationThroughPath
+	);
+
+	void createBulkOfDeliveryAuthorization(
+		FCGX_Request& request,
+		int64_t userKey,
+		shared_ptr<Workspace> requestWorkspace,
+		string clientIPAddress,
+		unordered_map<string, string> queryParameters,
+		string requestBody);
+
 	void createDeliveryCDN77Authorization(
 		FCGX_Request& request,
 		int64_t userKey,

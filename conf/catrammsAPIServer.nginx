@@ -147,6 +147,9 @@
 			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&confKey=$2 last;
 		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/bulkOfDelivery/?$ /api?version=$1&method=createBulkOfDeliveryAuthorization last;
+		}
 
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
