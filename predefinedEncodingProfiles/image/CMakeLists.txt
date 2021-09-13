@@ -29,6 +29,7 @@ SET (PROFILEs
 	MMS_PNG_120.json
 	MMS_JPG_240.json
 	MMS_PNG_240.json
+	MMS_JPG_930.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/image)
