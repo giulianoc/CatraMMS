@@ -115,6 +115,7 @@ public:
 
 		mutex* cpuUsageMutex,
 		int *cpuUsage,
+		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
 		#ifdef __VECTOR__
@@ -188,7 +189,13 @@ private:
 
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
-	int							*_cpuUsage;
+	int*						_cpuUsage;
+	// lastEncodingAccepted: scenario, this process receives 10 encoding requests concurrently and,
+	//	since the cpu usage is OK at this time, all the requestes are accepted overloading the process 
+	//	To solve this issue, we will force to wait at lease 5 seconds to accept a second encoding request.
+	//	That will allow the cpuUsage to be updated for the next encoding request
+	int							_intervalInSecondsBetweenEncodingAccept;
+	chrono::system_clock::time_point*	_lastEncodingAcceptedTime;
 	bool						_cpuUsageThreadShutdown;
 
 	int							_cpuUsageThresholdForEncoding;

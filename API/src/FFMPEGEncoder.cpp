@@ -181,7 +181,8 @@ int main(int argc, char** argv)
 		mutex fcgiAcceptMutex;
 
 		mutex cpuUsageMutex;
-		int cpuUsage;
+		int cpuUsage = 0;
+		chrono::system_clock::time_point    lastEncodingAcceptedTime = chrono::system_clock::now();
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
@@ -283,6 +284,7 @@ int main(int argc, char** argv)
 
 				&cpuUsageMutex,
 				&cpuUsage,
+				&lastEncodingAcceptedTime,
 
 				&encodingMutex,
 				&encodingsCapability,
@@ -362,6 +364,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 
         mutex* cpuUsageMutex,
 		int* cpuUsage,
+		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
 		#ifdef __VECTOR__
@@ -474,9 +477,15 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->cpuUsageThresholdForProxy: " + to_string(_cpuUsageThresholdForProxy)
 	);
+    _intervalInSecondsBetweenEncodingAccept = JSONUtils::asInt(_configuration["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 5);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->intervalInSecondsBetweenEncodingAccept: " + to_string(_intervalInSecondsBetweenEncodingAccept)
+    );
+
 
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;
+	_lastEncodingAcceptedTime = lastEncodingAcceptedTime;
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
@@ -600,6 +609,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodeContent")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -716,6 +745,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -767,6 +798,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "cutFrameAccurate")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -884,6 +935,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -935,6 +988,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "overlayImageOnVideo")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1051,6 +1124,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1102,6 +1177,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "overlayTextOnVideo")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1218,6 +1313,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1269,6 +1366,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "generateFrames")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1385,6 +1502,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1436,6 +1555,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "slideShow")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1552,6 +1691,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1603,6 +1744,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "videoSpeed")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1719,6 +1880,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1770,6 +1933,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "pictureInPicture")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1886,6 +2069,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -1937,6 +2122,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "introOutroOverlay")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2053,6 +2258,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -2104,6 +2311,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "liveRecorder")
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2222,6 +2449,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(selectedLiveRecording->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -2276,6 +2505,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		|| method == "awaitingTheBeginning"
 	)
     {
+		// Make some time after the acception of the previous encoding request
+		// in order to give time to the cpuUsage variable to be correctly updated
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		if (now - *_lastEncodingAcceptedTime <
+			chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+		{
+			string errorMessage = string("Too early to accept a new encoding request")
+				+ ", seconds since the last request: "
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count())
+				+ ", " + NoEncodingAvailable().what();
+           
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			// throw runtime_error(noEncodingAvailableMessage);
+			return;
+		}
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2417,6 +2666,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
 				);
 				#endif
+
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -3268,7 +3519,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
 
 	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >=
-			chrono::seconds(_encodingCompletedRetentionInSeconds))
+		chrono::seconds(_encodingCompletedRetentionInSeconds))
 	{
 		*_lastEncodingCompletedCheck = chrono::system_clock::now();
 		encodingCompletedRetention();

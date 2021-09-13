@@ -10060,7 +10060,7 @@ void FFMpeg::liveRecorder(
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
+				string errorMessage = __FILEREF__ + "liveRecording. Wrong output type"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", outputType: " + outputType;

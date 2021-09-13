@@ -11,6 +11,10 @@ component=$1
 if [ $# -eq 2 ]
 then
     logFileNumber=$2
+	if [ $logFileNumber -lt 0 ]
+	then
+		logFileNumber=$((logFileNumber*-1))
+	fi
 else
     logFileNumber=1
 fi

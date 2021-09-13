@@ -15372,7 +15372,14 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				if (chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
 				{
-					int secondsToWaitLastChunk = 30;
+					int secondsToWaitLastChunk = 15;
+
+					_logger->info(__FILEREF__ + "Sleeping to wait the last chunk..."
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
+						+ ", secondsToWaitLastChunk: " + to_string(secondsToWaitLastChunk)
+					);
 
 					this_thread::sleep_for(chrono::seconds(secondsToWaitLastChunk));
 				}
