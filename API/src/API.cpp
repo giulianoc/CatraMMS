@@ -95,6 +95,8 @@ int main(int argc, char** argv)
 		}
 
 		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
+		spdlog::register_logger(logger);
+
 		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
 		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
     

@@ -415,6 +415,8 @@ void API::mediaItemsList(
 
     try
     {
+		chrono::system_clock::time_point startAPI = chrono::system_clock::now();
+
         int64_t mediaItemKey = -1;
         auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
         if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
@@ -670,6 +672,12 @@ void API::mediaItemsList(
             
             sendSuccess(request, 200, responseBody);
         }
+
+		_logger->info(__FILEREF__ + api
+			+ ", @API statistics@ - elapsed (seconds): @" + to_string(
+				chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startAPI).count()) + "@"
+		);
     }
     catch(runtime_error e)
     {
