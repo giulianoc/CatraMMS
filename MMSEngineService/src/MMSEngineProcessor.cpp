@@ -16679,6 +16679,17 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			}
 		}
 
+		// 2021-09-14: default is set to true because often we have the error
+		//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
+		//	For this reason this field is set to true by default
+		bool fixStartTimeIfOvercomeDuration = true;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "FixInstantInSecondsIfOvercomeDuration"))
+			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot,
+				"FixInstantInSecondsIfOvercomeDuration", true);
+		else if (JSONUtils::isMetadataPresent(parametersRoot, "FixStartTimeIfOvercomeDuration"))
+			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot,
+				"FixStartTimeIfOvercomeDuration", true);
+
 		{
 			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
 			{
@@ -16785,16 +16796,32 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
         if (durationInMilliSeconds < startTimeInSeconds * 1000)
         {
-            string errorMessage = __FILEREF__ + "Frame was not generated because instantInSeconds is bigger than the video duration"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			if (fixStartTimeIfOvercomeDuration)
+			{
+				double previousStartTimeInSeconds = startTimeInSeconds;
+				startTimeInSeconds = durationInMilliSeconds / 1000;
+
+				_logger->info(__FILEREF__ + "startTimeInSeconds was changed to durationInMilliSeconds"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", fixStartTimeIfOvercomeDuration: " + to_string(fixStartTimeIfOvercomeDuration)
+					+ ", previousStartTimeInSeconds: " + to_string(previousStartTimeInSeconds)
+					+ ", new startTimeInSeconds: " + to_string(startTimeInSeconds)
+				);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Frame was not generated because instantInSeconds is bigger than the video duration"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
                     + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
                     + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-            ;
-            _logger->error(errorMessage);
+				;
+				_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
         }
     }
     catch(runtime_error e)

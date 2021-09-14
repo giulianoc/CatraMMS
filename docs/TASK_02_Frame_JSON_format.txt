@@ -32,6 +32,15 @@
 		// optional. default is 0 
 		"InstantInSeconds": 3.5,
 
+		// optional. Only in case InstantInSeconds overcome the duration
+		//	of the input media:
+		//		if FixInstantInSecondsIfOvercomeDuration is set to true
+		//			the InstantInSeconds is changed to the duration of the media.
+		//		if FixInstantInSecondsIfOvercomeDuration is set to false
+		//			this task will fail because
+		//	Default is true
+		"FixInstantInSecondsIfOvercomeDuration": true,
+
 		// optional
 		// default is the width of the video
 		"Width": 320,

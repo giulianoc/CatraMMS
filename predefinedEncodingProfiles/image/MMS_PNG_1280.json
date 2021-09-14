@@ -1,0 +1,11 @@
+{
+	"Label": "MMS_PNG_1280",
+	"FileFormat": "PNG",
+	"Image": {
+		"Width": 1280,
+		"Height": 0,
+		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
+		"AspectRatio": false,
+		"InterlaceType": "NoInterlace"
+	}
+}
