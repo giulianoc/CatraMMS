@@ -30,6 +30,7 @@ SET (PROFILEs
 	MMS_JPG_240.json
 	MMS_PNG_240.json
 	MMS_JPG_930.json
+	MMS_PNG_1024_576.json
 	MMS_PNG_1280.json
 )
 
