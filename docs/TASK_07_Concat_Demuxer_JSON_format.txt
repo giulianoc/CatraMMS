@@ -8,7 +8,7 @@
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. At least two References have to be present
+			// mandatory. At least one Reference have to be present
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key
 			// of the video by which this video depend on.

@@ -729,6 +729,7 @@ public:
         LiveGrid				= 28,
         AwaitingTheBeginning	= 29,
         IntroOutroOverlay		= 30,
+        VODProxy				= 31,
 
         EmailNotification       = 60,	// 30,
         MediaCrossReference		= 61,	// 31,
@@ -803,6 +804,8 @@ public:
 				return "Awaiting-The-Beginning";
 			case IngestionType::IntroOutroOverlay:
 				return "Intro-Outro-Overlay";
+			case IngestionType::VODProxy:
+				return "VOD-Proxy";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -889,6 +892,8 @@ public:
             return IngestionType::AwaitingTheBeginning;
         else if (lowerCase == "intro-outro-overlay")
             return IngestionType::IntroOutroOverlay;
+        else if (lowerCase == "vod-proxy")
+            return IngestionType::VODProxy;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

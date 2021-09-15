@@ -1017,6 +1017,30 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
+	/*
+    else if (type == "VOD-Proxy")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::VODProxy;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
+    }
+	*/
     else if (type == "Awaiting-The-Beginning")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AwaitingTheBeginning;
