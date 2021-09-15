@@ -717,19 +717,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -738,7 +731,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -921,19 +913,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -942,7 +927,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -1126,19 +1110,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -1147,7 +1124,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -1330,19 +1306,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -1351,7 +1320,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -1534,19 +1502,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -1555,7 +1516,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -1738,19 +1698,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -1759,7 +1712,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -1942,19 +1894,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -1963,7 +1908,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -2146,19 +2090,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -2167,7 +2104,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -2350,19 +2286,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
@@ -2371,7 +2300,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
 
 				#ifdef __VECTOR__
@@ -2551,19 +2479,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (now - *_lastEncodingAcceptedTime <
 					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
 					/*
+					 * 2021-09-15: scenario: received a lot of requests that fail
+					 * Those requests set _lastEncodingAcceptedTime and delay a lot
+					 * the requests that would work fine
+					 * Consider that Live-Recorder is a Task where FFMPEGEncoder
+					 * could receive a lot of close requests
 					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -2759,23 +2680,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (now - *_lastEncodingAcceptedTime <
 					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 				{
+					/*
+					 * 2021-09-15: scenario: received a lot of requests that fail
+					 * Those requests set _lastEncodingAcceptedTime and delay a lot
+					 * the requests that would work fine
+					 * Consider that Live-Proxy is a Task where FFMPEGEncoder
+					 * could receive a lot of close requests
 					int secondsToWait =
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
-					_logger->warn(__FILEREF__ + "Too early to accept a new encoding request"
+					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait" + to_string(secondsToWait)
-					);
-					this_thread::sleep_for(chrono::seconds(secondsToWait));
-					/*
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
 					_logger->warn(__FILEREF__ + errorMessage);
