@@ -406,6 +406,40 @@ public:
 
 		pid_t* pChildPid);
 
+	void vodProxy(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+
+		Json::Value sourcePhysicalPathsRoot,
+
+		string otherInputOptions,
+
+		bool timePeriod,
+		time_t utcProxyPeriodStart,
+		time_t utcProxyPeriodEnd,
+
+		// array, each element is an output containing the following fields
+		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
+		//  #in case of HLS or DASH
+		//		string otherOutputOptions
+		//		string audioVolumeChange
+		//      Json::Value encodingProfileDetailsRoot,
+		//      string encodingProfileContentType
+		//      int segmentDurationInSeconds,
+		//      int playlistEntriesNumber,
+		//      string manifestDirectoryPath,
+		//      string manifestFileName,
+		//  #in case of RTMP_Stream
+		//		string otherOutputOptions
+		//		string audioVolumeChange
+		//      Json::Value encodingProfileDetailsRoot,
+		//      string encodingProfileContentType
+		//      string rtmpUrl,
+		//
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+
+		pid_t* pChildPid);
+
 	void awaitingTheBegining(
         int64_t encodingJobKey,
         int64_t ingestionJobKey,

@@ -1,0 +1,116 @@
+"Task": {
+	// optional
+	"Label"="My VOD Proxy",
+
+	// mandatory
+	"Type": "VOD-Proxy",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. At least one Reference have to be present.
+			// The media could be all video or all audio.
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference items using the key
+			// of the video by which this video depend on.
+			// As references can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
+
+			// The below object could contain optionally:
+			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			//		a specific profile
+			// - StopIfReferenceProcessingError in case of multiple References,
+			//		this boolean field specifies if the MMS has to continue or not
+			//		in case of an error during the processing. Default is false
+
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 }
+		],
+
+		// Optional. This tag is used in the scenario where it is needed to proxy both
+		//	the media inherited by the parent Task and the media specified by the References tag
+		//	In this scenario this tag has to be set
+		//  Options: "Beginning", "End", an integer specifying the position where
+		//		the dependencies have to be placed. 0 is same as Beginning
+		"DependenciesToBeAddedToReferencesAt": "End",
+
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
+		"EncodersPool": "",
+
+		// optional, it specifies if the Proxy will have a specified running period
+		//	Default is false
+		"TimePeriod": false,
+
+		// mandatory in case the 'TimePeriod' field is true: It specifies the proxy period, his format is:
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		"ProxyPeriod": {
+			"Start": "2019-01-21T12:30:00Z",
+			"End": "2019-01-21T13:30:00Z"
+		},
+
+		// optional: It is possible to use this field to specify any other input options.
+		// Examples:
+		//	-itsoffset -2.0
+		"OtherInputOptions": "",
+
+		// This json array lists all the Outputs the Live-Proxy task has to generate.
+		//	At least one Output has to be present
+		"Outputs" = [
+			{
+				// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
+				"OutputType": "HLS",
+
+				// DeliveryCode is used only in case of HLS and DASH
+				//	It identifies this specific delivery. In case for example
+				//	- we have two HLS Outputs or
+				//	- we have the same channel delivered
+				//		as Recording monitor HLS and Live Proxy Output
+				//	In these scenarios, delivery code identifies each delivery.
+				//	Internally the delivery code is used to
+				//		- build the delivery URL (so it is used to build
+				//			the path where the HLS segments are saved)
+				// mandatory only if OutputType is HLS or DASH.
+				"DeliveryCode": 12345,
+
+				// optional, used only in case of HLS, Default: 10
+				"SegmentDurationInSeconds": 10,
+
+				// optional, used only in case of HLS, Default: 6
+				"PlaylistEntriesNumber": 6,
+
+				// mandatory only in case of RTMP_Stream
+				"RtmpUrl": "...",
+
+				// optional: It is possible to use this field to specify any other output options.
+				// Examples:
+				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
+				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
+				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
+				"OtherOutputOptions": "-map 0:1",
+
+				// optional: To change the audio volume
+				//	- 0.5: If we want our volume to be half of the input volume
+				//	- 1.5: 150% of current volume
+				//	- 10dB: increase the volume by 10dB
+				//	- -5dB: reduce the volume by 5dB
+				"AudioVolumeChange": "2.5",
+
+				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
+				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
+				//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+				//		Possible values for the ContentType are: video, audio
+				"EncodingProfileKey": 1,
+				"EncodingProfileLabel": "Profile sport",
+				"ContentType": "video"
+			}
+		],
+
+		// optional: If present, it specifies when the Task has to be executed. The processing of the task
+		//		can be delayed respect to the specified date based on his dependencies with other tasks.
+		//		The date format is:
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		//	If it is not present, by default it will be initialized with the ingesion time
+		"ProcessingStartingFrom": "2019-01-21T12:30:00Z"
+	}
+}
+

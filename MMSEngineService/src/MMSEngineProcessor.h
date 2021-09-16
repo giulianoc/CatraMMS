@@ -240,6 +240,15 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
+	void manageVODProxy(
+		int64_t ingestionJobKey,
+		MMSEngineDBFacade::IngestionStatus ingestionStatus,
+		shared_ptr<Workspace> workspace,
+		Json::Value parametersRoot,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
+	);
+
 	void manageAwaitingTheBeginning(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,

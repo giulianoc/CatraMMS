@@ -66,7 +66,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
-			// first Live-Proxy (because if we have many many Live-Recorder, Live-Proxy will never start
+			// first Live-Proxy/VOD-Proxy (because if we have many many Live-Recorder,
+			// Live-Proxy will never start
 			{
 				int minutesAheadToConsiderLiveProxy = 5;
 
@@ -76,7 +77,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType = 'Live-Proxy' "
+						"and ij.ingestionType in ('Live-Proxy', 'VODProxy') "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
 						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
@@ -343,7 +344,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							", 'Face-Recognition'"
 							", 'Face-Identification'"
 							// ", 'Live-Recorder'"	already asked before
-							// ", 'Live-Proxy'"	already asked before
+							// ", 'Live-Proxy', 'VODProxy'"	already asked before
 							", 'Awaiting-The-Beginning'"
 							", 'Live-Grid'"
 						;
@@ -351,9 +352,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
 					else
 					{
-						// everythink but Live-Recorder, Live-Proxy already asked before
+						// everythink but Live-Recorder, Live-Proxy, VOD-Proxy
+						// already asked before
 						lastSQLCommand +=
-							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') ";
+							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy' and ij.ingestionType != 'VOD-Proxy') ";
 					}
 					lastSQLCommand +=
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
@@ -375,7 +377,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-					preparedStatement->setInt(queryParameterIndexIngestionJob++, _doNotManageIngestionsOlderThanDays);
+					preparedStatement->setInt(queryParameterIndexIngestionJob++,
+						_doNotManageIngestionsOlderThanDays);
 
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
@@ -384,15 +387,22 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
-						+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
-						+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
-						+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
-						+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
-						+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
+						+ ", IngestionStatus::Start_TaskQueued: "
+							+ MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+						+ ", IngestionStatus::SourceDownloadingInProgress: "
+							+ MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+						+ ", IngestionStatus::SourceMovingInProgress: "
+							+ MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+						+ ", IngestionStatus::SourceCopingInProgress: "
+							+ MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+						+ ", IngestionStatus::SourceUploadingInProgress: "
+							+ MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+						+ ", _doNotManageIngestionsOlderThanDays: "
+							+ to_string(_doNotManageIngestionsOlderThanDays)
 						+ ", mysqlRowCount: " + to_string(mysqlRowCount)
 						+ ", mysqlOffset: " + to_string(mysqlOffset)
-						+ ", onlyTasksNotInvolvingMMSEngineThreads: " + to_string(onlyTasksNotInvolvingMMSEngineThreads)
+						+ ", onlyTasksNotInvolvingMMSEngineThreads: "
+							+ to_string(onlyTasksNotInvolvingMMSEngineThreads)
 						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
@@ -5078,6 +5088,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::PictureInPicture
                 || ingestionType == IngestionType::IntroOutroOverlay
                 || ingestionType == IngestionType::LiveProxy
+                || ingestionType == IngestionType::VODProxy
                 || ingestionType == IngestionType::LiveGrid
                 || ingestionType == IngestionType::AwaitingTheBeginning
 				// IngestionType::Cut has the EncodingJob only in case of FrameAccurate

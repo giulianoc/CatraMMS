@@ -166,6 +166,7 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegLiveProxyURI;
+    string                              _ffmpegVODProxyURI;
     string								_ffmpegAwaitingTheBeginningURI;
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
@@ -267,6 +268,10 @@ private:
 	bool liveProxy();
 	bool liveProxy_through_ffmpeg();
     void processLiveProxy(bool killedByUser);
+
+	bool vodProxy();
+	bool vodProxy_through_ffmpeg();
+    void processVODProxy(bool killedByUser);
 
 	bool awaitingTheBeginning();
 	bool awaitingTheBeginning_through_ffmpeg();

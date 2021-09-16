@@ -304,7 +304,8 @@ public:
 		LiveGrid			= 12,
 		AwaitingTheBeginning	= 13,
 		IntroOutroOverlay	= 14,
-		CutFrameAccurate	= 15
+		CutFrameAccurate	= 15,
+		VODProxy			= 16
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -342,6 +343,8 @@ public:
                 return "IntroOutroOverlay";
             case EncodingType::CutFrameAccurate:
                 return "CutFrameAccurate";
+            case EncodingType::VODProxy:
+                return "VODProxy";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -385,6 +388,8 @@ public:
             return EncodingType::IntroOutroOverlay;
         else if (lowerCase == "cutframeaccurate")
             return EncodingType::CutFrameAccurate;
+        else if (lowerCase == "vodproxy")
+            return EncodingType::VODProxy;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -657,12 +662,12 @@ public:
         // struct IntroOutroOverlayData {
         // };
 
-		struct LiveProxyData {
+		// struct LiveProxyData {
 			// int64_t									_encodingProfileKey;
             // string									_jsonEncodingProfile;
 			// ContentType								_contentType;
-			Json::Value								_outputsRoot;
-		};
+			// Json::Value								_outputsRoot;
+		// };
 
 		struct AwaitingTheBeginningData {
 			int64_t									_encodingProfileKey;
@@ -686,7 +691,7 @@ public:
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		// shared_ptr<IntroOutroOverlayData>			_introOutroOverlayData;
-		shared_ptr<LiveProxyData>					_liveProxyData;
+		// shared_ptr<LiveProxyData>					_liveProxyData;
 		shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
@@ -1758,6 +1763,17 @@ public:
 
 		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+		Json::Value outputsRoot);
+
+	void addEncoding_VODProxyJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+
+		MMSEngineDBFacade::ContentType vodContentType,
+		vector<string>& sourcePhysicalPaths,
+
+		MMSEngineDBFacade::EncodingPriority encodingPriority,
+		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 		Json::Value outputsRoot);
 
 	void addEncoding_AwaitingTheBeginningJob (

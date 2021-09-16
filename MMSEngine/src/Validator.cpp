@@ -1017,7 +1017,6 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
-	/*
     else if (type == "VOD-Proxy")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::VODProxy;
@@ -1040,7 +1039,6 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
-	*/
     else if (type == "Awaiting-The-Beginning")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AwaitingTheBeginning;
@@ -1290,6 +1288,11 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
+    {
+        validateVODProxyMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
@@ -4073,6 +4076,286 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 			}
 		}
 	}
+
+	bool timePeriod = false;
+	field = "TimePeriod";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+
+    field = "ProxyPeriod";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		if (timePeriod)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+         
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+				;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	else
+	{
+		Json::Value proxyPeriodRoot = parametersRoot[field];
+
+		time_t utcProxyPeriodStart = -1;
+		time_t utcProxyPeriodEnd = -1;
+
+		field = "Start";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+		}
+
+		field = "End";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+		}
+
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
+			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__
+				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	field = "Outputs";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	Json::Value outputsRoot = parametersRoot[field];
+
+	if (outputsRoot.size() == 0)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	{
+		Json::Value outputRoot = outputsRoot[outputIndex];
+
+		field = "OutputType";
+		string liveProxyOutputType;
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+		{
+			liveProxyOutputType = outputRoot.get(field, "").asString();
+			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+			{
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+					+ ", Field: " + field
+					+ ", liveProxyOutputType: " + liveProxyOutputType
+					+ ", label: " + label
+					;
+				_logger->error(__FILEREF__ + errorMessage);
+        
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (liveProxyOutputType == "HLS")
+		{
+			vector<string> mandatoryFields = {
+				"DeliveryCode"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (liveProxyOutputType == "RTMP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+	}
+
+    field = "ProcessingStartingFrom";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
+	}
+}
+
+void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
+{
+        
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+        /*
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() < 2)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
+                    + ", Field: " + field
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+        if (validateDependenciesToo)
+        {
+            // It is not important the number of References but how many media items it refers.
+            // For example ReferenceIngestionJobKey is just one Reference but it could reference
+            // a log of media items in case the IngestionJob generates a log of media contents
+            if (dependencies.size() < 1)
+            {
+                string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)"
+                        + ", Field: " + field
+                        + ", dependencies.size: " + to_string(dependencies.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            MMSEngineDBFacade::ContentType firstContentType;
+            bool firstContentTypeInitialized = false;
+            for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
+
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+                if (firstContentTypeInitialized)
+                {
+                    if (referenceContentType != firstContentType)
+                    {
+                        string errorMessage = __FILEREF__ + "Reference... does not refer the correct ContentType"
+                                + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                            + ", referenceMediaItemKey: " + to_string(key)
+                            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                            + ", label: " + label
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+                else
+                {
+                    if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                            && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+                    {
+                        string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
+                            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                            + ", referenceMediaItemKey: " + to_string(key)
+                            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                            + ", label: " + label
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+
+                    firstContentType = referenceContentType;
+                    firstContentTypeInitialized = true;
+                }
+            }
+        }
+    }
 
 	bool timePeriod = false;
 	field = "TimePeriod";

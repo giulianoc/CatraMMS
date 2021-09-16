@@ -488,22 +488,40 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
 	chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
-	if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::CutFrameAccurate
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AwaitingTheBeginning
-		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveGrid
+	if (encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::EncodeImage
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::EncodeVideoAudio
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::GenerateFrames
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::SlideShow
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::FaceRecognition
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::FaceIdentification
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::LiveRecorder
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::VideoSpeed
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::PictureInPicture
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::IntroOutroOverlay
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::CutFrameAccurate
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::LiveProxy
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::VODProxy
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::AwaitingTheBeginning
+		|| encodingJob->_encodingItem->_encodingType ==
+			MMSEngineDBFacade::EncodingType::LiveGrid
 	)
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(

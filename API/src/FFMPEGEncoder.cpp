@@ -2580,6 +2580,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
     }
     else if (method == "liveProxy"
+		|| method == "vodProxy"
 		|| method == "liveGrid"
 		|| method == "awaitingTheBeginning"
 	)
@@ -2731,6 +2732,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					liveProxyThread.detach();
 				}
+				else if (method == "vodProxy")
+				{
+					_logger->info(__FILEREF__ + "Creating vodProxy thread"
+						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
+						+ ", requestBody: " + requestBody
+					);
+					thread vodProxyThread(&FFMPEGEncoder::vodProxyThread,
+						this, selectedLiveProxy, encodingJobKey, requestBody);
+					vodProxyThread.detach();
+				}
 				else if (method == "liveGrid")
 				{
 					_logger->info(__FILEREF__ + "Creating liveGrid thread"
@@ -2797,7 +2808,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "liveProxy/liveGrid/awaitingTheBeginning Thread failed"
+            _logger->error(__FILEREF__ + "liveProxy/vodProxy/liveGrid/awaitingTheBeginning Thread failed"
                 + ", method: " + method
                 + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
@@ -10063,7 +10074,7 @@ void FFMPEGEncoder::liveProxyThread(
 
 		liveProxy->_liveProxyOutputRoots.clear();
 		{
-			Json::Value outputsRoot = liveProxyMetadata["outputsRoot"];
+			Json::Value outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 
 			{
 				Json::StreamWriterBuilder wbuilder;
@@ -10175,18 +10186,18 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-		string userAgent = liveProxyMetadata.get("userAgent", "").asString();
-		int maxWidth = JSONUtils::asInt(liveProxyMetadata, "maxWidth", -1);
-		string otherInputOptions = liveProxyMetadata.get("otherInputOptions", "").asString();
+		liveProxy->_ingestedParametersRoot = liveProxyMetadata["ingestedParametersRoot"];
+
+		string userAgent = (liveProxy->_ingestedParametersRoot).get("UserAgent", "").asString();
+		int maxWidth = JSONUtils::asInt(liveProxy->_ingestedParametersRoot, "MaxWidth", -1);
+		string otherInputOptions = (liveProxy->_ingestedParametersRoot).get(
+			"OtherInputOptions", "").asString();
 		// string otherOutputOptions = liveProxyMetadata.get("otherOutputOptions", "").asString();
 		// int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		// int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
-		liveProxy->_channelLabel = liveProxyMetadata.get("configurationLabel", "").asString();
+		liveProxy->_channelLabel = liveProxy->_ingestedParametersRoot.get("ConfigurationLabel", "").asString();
 		// string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
 		// string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
-
-		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
-		// string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 
 		liveProxy->_channelType = liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
 		int ipMMSAsServer_listenTimeoutInSeconds = liveProxy->
@@ -10214,11 +10225,13 @@ void FFMPEGEncoder::liveProxyThread(
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
-		bool timePeriod = JSONUtils::asBool(liveProxyMetadata, "timePeriod", false);
+		bool timePeriod = JSONUtils::asBool(liveProxyMetadata["encodingParametersRoot"], "timePeriod", false);
 		if (timePeriod)
 		{
-			utcProxyPeriodStart = JSONUtils::asInt64(liveProxyMetadata, "utcProxyPeriodStart", -1);
-			utcProxyPeriodEnd = JSONUtils::asInt64(liveProxyMetadata, "utcProxyPeriodEnd", -1);
+			utcProxyPeriodStart = JSONUtils::asInt64(liveProxyMetadata["encodingParametersRoot"],
+				"utcProxyPeriodStart", -1);
+			utcProxyPeriodEnd = JSONUtils::asInt64(liveProxyMetadata["encodingParametersRoot"],
+				"utcProxyPeriodEnd", -1);
 		}
 
 		string liveURL;
@@ -10761,6 +10774,454 @@ void FFMPEGEncoder::liveProxyThread(
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
 			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+
+void FFMPEGEncoder::vodProxyThread(
+	// FCGX_Request& request,
+	shared_ptr<LiveProxyAndGrid> vodProxy,
+	int64_t encodingJobKey,
+	string requestBody)
+{
+    string api = "vodProxy";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+		vodProxy->_killedBecauseOfNotWorking = false;
+		vodProxy->_errorMessage = "";
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value vodProxyMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &vodProxyMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		vodProxy->_ingestionJobKey = JSONUtils::asInt64(vodProxyMetadata, "ingestionJobKey", -1);
+
+		vodProxy->_liveProxyOutputRoots.clear();
+		{
+			Json::Value outputsRoot = vodProxyMetadata["encodingParametersRoot"]["outputsRoot"];
+
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
+
+				_logger->info(__FILEREF__ + "vodProxy. outputsRoot"
+					+ ", ingestionJobKey: " + to_string(vodProxy->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sOutputsRoot: " + sOutputsRoot
+				);
+			}
+
+			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			{
+				string otherOutputOptions;
+				string audioVolumeChange;
+				Json::Value encodingProfileDetailsRoot = Json::nullValue;
+				string manifestDirectoryPath;
+				string manifestFileName;
+				int segmentDurationInSeconds = -1;
+				int playlistEntriesNumber = -1;
+				bool isVideo = true;
+				string rtmpUrl;
+
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+					manifestFileName = outputRoot.get("manifestFileName", "").asString();
+					segmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
+					playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
+				else if (outputType == "RTMP_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "vodProxy. Wrong output type"
+						+ ", ingestionJobKey: " + to_string(vodProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", outputType: " + outputType;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
+					= make_tuple(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
+						manifestDirectoryPath, manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
+						isVideo, rtmpUrl);
+
+				vodProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					if (FileIO::directoryExisting(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(vodProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(vodProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+		}
+
+		vodProxy->_ingestedParametersRoot = vodProxyMetadata["ingestedParametersRoot"];
+
+		string otherInputOptions = (vodProxy->_ingestedParametersRoot).get(
+			"OtherInputOptions", "").asString();
+
+		time_t utcProxyPeriodStart = -1;
+		time_t utcProxyPeriodEnd = -1;
+		bool timePeriod = JSONUtils::asBool(vodProxyMetadata["encodingParametersRoot"],
+			"timePeriod", false);
+		if (timePeriod)
+		{
+			utcProxyPeriodStart = JSONUtils::asInt64(vodProxyMetadata["encodingParametersRoot"],
+				"utcProxyPeriodStart", -1);
+			utcProxyPeriodEnd = JSONUtils::asInt64(vodProxyMetadata["encodingParametersRoot"],
+				"utcProxyPeriodEnd", -1);
+		}
+
+		{
+			// based on vodProxy->_proxyStart, the monitor thread starts the checkings
+			if (utcProxyPeriodStart != -1)
+			{
+				if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+						chrono::system_clock::now())
+					vodProxy->_proxyStart = chrono::system_clock::now();
+				else
+					vodProxy->_proxyStart = chrono::system_clock::from_time_t(
+						utcProxyPeriodStart);
+			}
+			else
+				vodProxy->_proxyStart = chrono::system_clock::now();
+
+			vodProxy->_ffmpeg->vodProxy(
+				vodProxy->_ingestionJobKey,
+				encodingJobKey,
+
+				vodProxyMetadata["sourcePhysicalPaths"],
+
+				otherInputOptions,
+				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
+				vodProxy->_liveProxyOutputRoots,
+				&(vodProxy->_childPid));
+		}
+
+        vodProxy->_running = false;
+		vodProxy->_method = "";
+        vodProxy->_childPid = 0;
+		vodProxy->_killedBecauseOfNotWorking = false;
+        
+        _logger->info(__FILEREF__ + "_ffmpeg->vodProxy finished"
+			+ ", ingestionJobKey: " + to_string(vodProxy->_ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", vodProxy->_channelLabel: " + vodProxy->_channelLabel
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, vodProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		vodProxy->_ingestionJobKey = 0;
+		vodProxy->_channelLabel = "";
+		vodProxy->_liveProxyOutputRoots.clear();
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(vodProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        vodProxy->_running = false;
+		vodProxy->_method = "";
+		vodProxy->_ingestionJobKey = 0;
+        vodProxy->_childPid = 0;
+		vodProxy->_channelLabel = "";
+		vodProxy->_liveProxyOutputRoots.clear();
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser;
+		if (vodProxy->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			completedWithError			= true;
+			vodProxy->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser				= true;
+		}
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(vodProxy->_encodingJobKey,
+				completedWithError, vodProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(vodProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+    }
+    catch(runtime_error e)
+    {
+        vodProxy->_running = false;
+		vodProxy->_method = "";
+		vodProxy->_ingestionJobKey = 0;
+        vodProxy->_childPid = 0;
+		vodProxy->_channelLabel = "";
+		vodProxy->_liveProxyOutputRoots.clear();
+		vodProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		vodProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, vodProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(vodProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        vodProxy->_running = false;
+		vodProxy->_method = "";
+		vodProxy->_ingestionJobKey = 0;
+        vodProxy->_childPid = 0;
+		vodProxy->_channelLabel = "";
+		vodProxy->_liveProxyOutputRoots.clear();
+		vodProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		vodProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, vodProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(vodProxy->_encodingJobKey);
 			if (erase)
 				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)

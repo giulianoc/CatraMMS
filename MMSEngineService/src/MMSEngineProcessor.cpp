@@ -4809,6 +4809,108 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
+                        {
+                            try
+                            {
+								manageVODProxy(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot,
+									dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageVODProxy failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageVODProxy failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
                         {
                             try
@@ -13245,6 +13347,413 @@ void MMSEngineProcessor::manageLiveProxy(
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageVODProxy(
+	int64_t ingestionJobKey,
+	MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies
+)
+{
+    try
+    {
+		_logger->info(__FILEREF__ + "manageVODProxy"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
+
+        if (dependencies.size() < 1)
+        {
+            string errorMessage = __FILEREF__ + "No enough media to be proxied"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		MMSEngineDBFacade::ContentType vodContentType;
+		vector<string> sourcePhysicalPaths;
+
+		for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
+		{
+            int64_t key;
+            // MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
+
+            tie(key, vodContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
+
+			_logger->info(__FILEREF__ + "manageVODProxy"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", key: " + to_string(key)
+			);
+
+            int64_t sourceMediaItemKey;
+            int64_t sourcePhysicalPathKey;
+            string sourcePhysicalPath;
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
+						warningIfMissing);
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore,
+					ignore, ignore) = physicalPathDetails;
+
+                sourceMediaItemKey = key;
+            }
+            else
+            {
+				tuple<string, int, string, string, int64_t, string>
+					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key);
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+
+                sourcePhysicalPathKey = key;
+
+                bool warningIfMissing = false;
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+					string, string> mediaItemKeyDetails =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyDetails;
+            }
+
+            sourcePhysicalPaths.push_back(sourcePhysicalPath);
+
+			// check on content type (all video or all audio) is already done in validation
+		}
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+		{
+			string field = "EncodingPriority";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
+					workspace->_maxEncodingPriority);
+			}
+			else
+			{
+				encodingPriority = MMSEngineDBFacade::toEncodingPriority(
+						parametersRoot.get(field, "").asString());
+			}
+		}
+
+		Json::Value outputsRoot;
+		bool timePeriod;
+		int64_t utcProxyPeriodStart = -1;
+		int64_t utcProxyPeriodEnd = -1;
+        {
+			timePeriod = false;
+            string field = "TimePeriod";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				utcProxyPeriodStart = -1;
+				utcProxyPeriodEnd = -1;
+			}
+			else
+			{
+				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+				if (timePeriod)
+				{
+					field = "ProxyPeriod";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+
+					Json::Value proxyPeriodRoot = parametersRoot[field];
+
+					field = "Start";
+					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+
+					field = "End";
+					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+				}
+			}
+
+			field = "Outputs";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			outputsRoot = parametersRoot[field];
+        }
+
+		Json::Value localOutputsRoot(Json::arrayValue);
+		{
+			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			{
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+
+				string outputType;
+				string otherOutputOptions;
+				string audioVolumeChange;
+				int64_t deliveryCode;
+				int segmentDurationInSeconds = 0;
+				int playlistEntriesNumber = 0;
+				int64_t encodingProfileKey = -1;
+				Json::Value encodingProfileDetailsRoot = Json::nullValue;
+				MMSEngineDBFacade::ContentType encodingProfileContentType =
+					MMSEngineDBFacade::ContentType::Video;
+				string manifestDirectoryPath;
+				string manifestFileName;
+				string rtmpUrl;
+
+
+				string field = "OutputType";
+				if (!JSONUtils::isMetadataPresent(outputRoot, field))
+					outputType = "HLS";
+				else
+					outputType = outputRoot.get(field, "HLS").asString();
+
+				field = "OtherOutputOptions";
+				if (JSONUtils::isMetadataPresent(outputRoot, field))
+					otherOutputOptions = outputRoot.get(field, "").asString();
+
+				field = "AudioVolumeChange";
+				if (JSONUtils::isMetadataPresent(outputRoot, field))
+					audioVolumeChange = outputRoot.get(field, "").asString();
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					field = "DeliveryCode";
+					if (!JSONUtils::isMetadataPresent(outputRoot, field))
+					{
+						string errorMessage =
+							__FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					deliveryCode = outputRoot.get(field, 0).asInt64();
+
+					field = "SegmentDurationInSeconds";
+					if (!JSONUtils::isMetadataPresent(outputRoot, field))
+						segmentDurationInSeconds = 10;
+					else
+						segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
+
+					field = "PlaylistEntriesNumber";
+					if (!JSONUtils::isMetadataPresent(outputRoot, field))
+						playlistEntriesNumber = 6;
+					else
+						playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
+
+					string manifestExtension;
+					if (outputType == "HLS")
+						manifestExtension = "m3u8";
+					else if (outputType == "DASH")
+						manifestExtension = "mpd";
+
+					{
+						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+							to_string(deliveryCode),
+							workspace);
+
+						manifestFileName = to_string(deliveryCode) + ".m3u8";
+					}
+				}
+				else
+				{
+					field = "RtmpUrl";
+					rtmpUrl = outputRoot.get(field, "").asString();
+				}
+
+				string keyField = "EncodingProfileKey";
+				string labelField = "EncodingProfileLabel";
+				string contentTypeField = "ContentType";
+				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
+				{
+					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
+
+					_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					);
+				}
+				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
+				{
+					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
+
+					MMSEngineDBFacade::ContentType contentType;
+					if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+					{
+						contentType = MMSEngineDBFacade::toContentType(
+							outputRoot.get(contentTypeField, "").asString());
+
+						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace->_workspaceKey, contentType, encodingProfileLabel);
+					}
+					else
+					{
+						bool contentTypeToBeUsed = false;
+						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
+					}
+
+					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingProfileLabel: " + encodingProfileLabel
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					);
+				}
+
+				if (encodingProfileKey != -1)
+				{
+					string jsonEncodingProfile;
+
+					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+						workspace->_workspaceKey, encodingProfileKey);
+					tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+					{
+						Json::CharReaderBuilder builder;
+						Json::CharReader* reader = builder.newCharReader();
+						string errors;
+
+						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+							&encodingProfileDetailsRoot,
+							&errors);
+						delete reader;
+
+						if (!parsingSuccessful)
+						{
+							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errors: " + errors
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+
+				Json::Value localOutputRoot;
+
+				field = "outputType";
+				localOutputRoot[field] = outputType;
+
+				field = "otherOutputOptions";
+				localOutputRoot[field] = otherOutputOptions;
+
+				field = "audioVolumeChange";
+				localOutputRoot[field] = audioVolumeChange;
+
+				field = "segmentDurationInSeconds";
+				localOutputRoot[field] = segmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				localOutputRoot[field] = playlistEntriesNumber;
+
+				{
+					field = "encodingProfileKey";
+					localOutputRoot[field] = encodingProfileKey;
+
+					field = "encodingProfileDetails";
+					localOutputRoot[field] = encodingProfileDetailsRoot;
+
+					field = "encodingProfileContentType";
+					outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+				}
+
+				field = "manifestDirectoryPath";
+				localOutputRoot[field] = manifestDirectoryPath;
+
+				field = "manifestFileName";
+				localOutputRoot[field] = manifestFileName;
+
+				field = "rtmpUrl";
+				localOutputRoot[field] = rtmpUrl;
+
+				localOutputsRoot.append(localOutputRoot);
+			}
+		}
+
+		_mmsEngineDBFacade->addEncoding_VODProxyJob(workspace, ingestionJobKey,
+			vodContentType,
+			sourcePhysicalPaths,
+
+			encodingPriority,
+			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
+			localOutputsRoot);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageVODProxy failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageVODProxy failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
