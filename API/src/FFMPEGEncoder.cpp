@@ -10999,7 +10999,7 @@ void FFMPEGEncoder::vodProxyThread(
 				vodProxy->_ingestionJobKey,
 				encodingJobKey,
 
-				vodProxyMetadata["sourcePhysicalPaths"],
+				vodProxyMetadata["encodingParametersRoot"]["sourcePhysicalPaths"],
 
 				otherInputOptions,
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,

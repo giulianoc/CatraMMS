@@ -11910,6 +11910,7 @@ void FFMpeg::vodProxy(
 	_logger->info(__FILEREF__ + "Received " + _currentApiName
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", sourcePhysicalPathsRoot.size: " + to_string(sourcePhysicalPathsRoot.size())
 		+ ", otherInputOptions: " + otherInputOptions
 		+ ", timePeriod: " + to_string(timePeriod)
 		+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
@@ -12041,10 +12042,17 @@ void FFMpeg::vodProxy(
 		ffmpegArgumentList.push_back("-stream_loop");
 		ffmpegArgumentList.push_back("-1");
 		for (int sourcePhysicalPathIndex = 0;
-			sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size(); sourcePhysicalPathIndex)
+			sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
+			sourcePhysicalPathIndex++)
 		{
 			string sourcePhysicalPath = sourcePhysicalPathsRoot[sourcePhysicalPathIndex]
 				.asString();
+
+			_logger->info(__FILEREF__ + "VODProxy source. "
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+			);
 
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(sourcePhysicalPath);

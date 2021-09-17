@@ -77,7 +77,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType in ('Live-Proxy', 'VODProxy') "
+						"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy') "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
 						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:

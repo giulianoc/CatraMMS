@@ -15013,14 +15013,18 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 	//		- no way to exit (we have to respect the timePeriod)
 	//	- if timePeriod false
 	//		- exit if too many error
-	time_t utcNowCheckToExit = 0;
-	while (!killedByUser)
-	{
-		if (timePeriod)
-		{
-			if (utcNowCheckToExit >= utcProxyPeriodEnd)
-				break;
-		}
+	// 2021-09-17: in case we have an error, even if the timePeriod is false
+	//	or it is not expired, we will come back to MMS system.
+	//	That because, if we have an error, for sure we will continue to have an error,
+	//	it does not have sense to try again
+	// time_t utcNowCheckToExit = 0;
+	// while (!killedByUser)
+	// {
+		// if (timePeriod)
+		// {
+		// 	if (utcNowCheckToExit >= utcProxyPeriodEnd)
+		// 		break;
+		// }
 
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegVODProxyURI;
@@ -15515,20 +15519,23 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
                 {
 					encodingStatusFailures++;
 
-					_logger->error(__FILEREF__ + "getEncodingStatus failed"
+					string errorMessage = string("getEncodingStatus failed")
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
 						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
-					);
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
                 }
             }
-            
+
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-			utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
+			time_t utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
 
 			if (timePeriod)
 			{
@@ -15671,16 +15678,11 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
             
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
+			// 2021-09-17: in case we have an error, even if the timePeriod is false
+			//	or it is not expired, we will come back to MMS system.
+			//	That because, if we have an error, for sure we will continue to have an error,
+			//	it does not have sense to try again
+            throw e;
         }
         catch (curlpp::RuntimeError& e) 
         {
@@ -15693,16 +15695,11 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
+			// 2021-09-17: in case we have an error, even if the timePeriod is false
+			//	or it is not expired, we will come back to MMS system.
+			//	That because, if we have an error, for sure we will continue to have an error,
+			//	it does not have sense to try again
+            throw e;
         }
         catch (runtime_error e)
         {
@@ -15715,16 +15712,11 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
+			// 2021-09-17: in case we have an error, even if the timePeriod is false
+			//	or it is not expired, we will come back to MMS system.
+			//	That because, if we have an error, for sure we will continue to have an error,
+			//	it does not have sense to try again
+            throw e;
         }
         catch (exception e)
         {
@@ -15737,18 +15729,13 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
+			// 2021-09-17: in case we have an error, even if the timePeriod is false
+			//	or it is not expired, we will come back to MMS system.
+			//	That because, if we have an error, for sure we will continue to have an error,
+			//	it does not have sense to try again
+            throw e;
         }
-	}
+	// }
 
     return killedByUser;
 }

@@ -1,8 +1,21 @@
-"Task": {
-	"Label"="My VOD Proxy",
-
-	"Type": "VOD-Proxy",
-
-	"Parameters": {
-	}
+{
+  "Label"="My VOD Proxy",
+  "Task": {
+    "Label": "Task label 2",
+    "Parameters": {
+      "Outputs": [{
+        "OutputType": "RTMP_Stream",
+        "RtmpUrl": "rtmp://aaa/bbb"
+      }],
+      "References": [
+        {"ReferencePhysicalPathKey": 1630435},
+        {"ReferencePhysicalPathKey": 1630364},
+        {"ReferencePhysicalPathKey": 1630295}
+      ],
+      "TimePeriod": false
+    },
+    "Type": "VOD-Proxy"
+  },
+  "Type": "Workflow"
 }
+
