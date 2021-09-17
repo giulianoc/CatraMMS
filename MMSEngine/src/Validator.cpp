@@ -4270,20 +4270,6 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        /*
-        Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() < 2)
-        {
-            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
-                    + ", Field: " + field
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
@@ -4306,6 +4292,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
                 throw runtime_error(errorMessage);
             }
 
+			/*
             MMSEngineDBFacade::ContentType firstContentType;
             bool firstContentTypeInitialized = false;
             for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
@@ -4354,6 +4341,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
                     firstContentTypeInitialized = true;
                 }
             }
+			*/
         }
     }
 

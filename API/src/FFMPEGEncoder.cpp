@@ -10849,6 +10849,10 @@ void FFMPEGEncoder::vodProxyThread(
         }
 
 		vodProxy->_ingestionJobKey = JSONUtils::asInt64(vodProxyMetadata, "ingestionJobKey", -1);
+		string contentType = (vodProxyMetadata["encodingParametersRoot"])
+			.get("contentType", "").asString();
+		string sourcePhysicalPathName = (vodProxyMetadata["encodingParametersRoot"])
+			.get("sourcePhysicalPathName", "").asString();
 
 		vodProxy->_liveProxyOutputRoots.clear();
 		{
@@ -10999,7 +11003,8 @@ void FFMPEGEncoder::vodProxyThread(
 				vodProxy->_ingestionJobKey,
 				encodingJobKey,
 
-				vodProxyMetadata["encodingParametersRoot"]["sourcePhysicalPaths"],
+				contentType,
+				sourcePhysicalPathName,
 
 				otherInputOptions,
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,

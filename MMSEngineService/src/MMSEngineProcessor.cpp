@@ -13374,7 +13374,7 @@ void MMSEngineProcessor::manageVODProxy(
 
         if (dependencies.size() < 1)
         {
-            string errorMessage = __FILEREF__ + "No enough media to be proxied"
+            string errorMessage = __FILEREF__ + "Wrong source number to be proxied"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
@@ -13384,11 +13384,14 @@ void MMSEngineProcessor::manageVODProxy(
         }
 
 		MMSEngineDBFacade::ContentType vodContentType;
-		vector<string> sourcePhysicalPaths;
+		string sourcePhysicalPathName;
 
-		for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType: dependencies)
+		// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+		// 	keyAndDependencyType: dependencies)
 		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = dependencies[0];
+
             int64_t key;
             // MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
@@ -13405,7 +13408,7 @@ void MMSEngineProcessor::manageVODProxy(
 
             int64_t sourceMediaItemKey;
             int64_t sourcePhysicalPathKey;
-            string sourcePhysicalPath;
+            // string sourcePhysicalPath;
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
@@ -13413,7 +13416,7 @@ void MMSEngineProcessor::manageVODProxy(
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
 						warningIfMissing);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore,
+                tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore, ignore,
 					ignore, ignore) = physicalPathDetails;
 
                 sourceMediaItemKey = key;
@@ -13422,7 +13425,7 @@ void MMSEngineProcessor::manageVODProxy(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
+				tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathDetails;
 
                 sourcePhysicalPathKey = key;
@@ -13436,10 +13439,6 @@ void MMSEngineProcessor::manageVODProxy(
                 tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyDetails;
             }
-
-            sourcePhysicalPaths.push_back(sourcePhysicalPath);
-
-			// check on content type (all video or all audio) is already done in validation
 		}
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
@@ -13732,7 +13731,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 		_mmsEngineDBFacade->addEncoding_VODProxyJob(workspace, ingestionJobKey,
 			vodContentType,
-			sourcePhysicalPaths,
+			sourcePhysicalPathName,
 
 			encodingPriority,
 			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,

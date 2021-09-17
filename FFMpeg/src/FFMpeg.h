@@ -410,7 +410,8 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 
-		Json::Value sourcePhysicalPathsRoot,
+		string vodContentType,
+		string sourcePhysicalPathName,
 
 		string otherInputOptions,
 

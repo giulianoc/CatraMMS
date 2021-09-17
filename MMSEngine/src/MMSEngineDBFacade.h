@@ -1770,7 +1770,7 @@ public:
 		int64_t ingestionJobKey,
 
 		MMSEngineDBFacade::ContentType vodContentType,
-		vector<string>& sourcePhysicalPaths,
+		string sourcePhysicalPathName,
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority,
 		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,

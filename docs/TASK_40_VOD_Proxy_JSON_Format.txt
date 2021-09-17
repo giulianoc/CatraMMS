@@ -8,8 +8,7 @@
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. At least one Reference have to be present.
-			// The media could be all video or all audio.
+			// mandatory. Only one Reference has to be present.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key
 			// of the video by which this video depend on.
@@ -22,17 +21,11 @@
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
 
-			{ "ReferenceMediaItemKey": 11 },
 			{ "ReferenceMediaItemKey": 12 }
 		],
 
 		// Optional. This tag is used in the scenario where it is needed to proxy both
 		//	the media inherited by the parent Task and the media specified by the References tag
-		//	In this scenario this tag has to be set
-		//  Options: "Beginning", "End", an integer specifying the position where
-		//		the dependencies have to be placed. 0 is same as Beginning
-		"DependenciesToBeAddedToReferencesAt": "End",
-
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
 		"EncodersPool": "",

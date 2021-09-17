@@ -9737,7 +9737,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 	int64_t ingestionJobKey,
 
 	MMSEngineDBFacade::ContentType vodContentType,
-	vector<string>& sourcePhysicalPaths,
+	string sourcePhysicalPathName,
 
 	MMSEngineDBFacade::EncodingPriority encodingPriority,
 	bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
@@ -9755,8 +9755,8 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
         _logger->info(__FILEREF__ + "addEncoding_VODProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 
-            + ", vodContentType: " + MMSEngineDBFacade::toString(vodContentType),
-            + ", sourcePhysicalPaths.size: " + to_string(sourcePhysicalPaths.size()),
+            + ", vodContentType: " + MMSEngineDBFacade::toString(vodContentType)
+            + ", sourcePhysicalPathName: " + sourcePhysicalPathName
 
             + ", outputsRoot.size: " + to_string(outputsRoot.size())
         );
@@ -9786,11 +9786,8 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 				string field = "contentType";
 				parametersRoot[field] = MMSEngineDBFacade::toString(vodContentType);
 
-				Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-				for (string sourcePhysicalPath: sourcePhysicalPaths)
-					sourcePhysicalPathsRoot.append(sourcePhysicalPath);
-				field = "sourcePhysicalPaths";
-				parametersRoot[field] = sourcePhysicalPathsRoot;
+				field = "sourcePhysicalPathName";
+				parametersRoot[field] = sourcePhysicalPathName;
 
 				field = "timePeriod";
 				parametersRoot[field] = timePeriod;

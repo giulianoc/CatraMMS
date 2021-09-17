@@ -11875,7 +11875,8 @@ void FFMpeg::vodProxy(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 
-	Json::Value sourcePhysicalPathsRoot,
+	string vodContentType,
+	string sourcePhysicalPathName,
 
 	string otherInputOptions,
 
@@ -11910,7 +11911,7 @@ void FFMpeg::vodProxy(
 	_logger->info(__FILEREF__ + "Received " + _currentApiName
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", sourcePhysicalPathsRoot.size: " + to_string(sourcePhysicalPathsRoot.size())
+		+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
 		+ ", otherInputOptions: " + otherInputOptions
 		+ ", timePeriod: " + to_string(timePeriod)
 		+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
@@ -12037,26 +12038,26 @@ void FFMpeg::vodProxy(
 		//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
 		//		in the background process group
 		ffmpegArgumentList.push_back("-nostdin");
+
 		ffmpegArgumentList.push_back("-re");
 		addToArguments(otherInputOptions, ffmpegArgumentList);
-		ffmpegArgumentList.push_back("-stream_loop");
-		ffmpegArgumentList.push_back("-1");
-		for (int sourcePhysicalPathIndex = 0;
-			sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
-			sourcePhysicalPathIndex++)
+
+		if (vodContentType == "Image")
 		{
-			string sourcePhysicalPath = sourcePhysicalPathsRoot[sourcePhysicalPathIndex]
-				.asString();
+			ffmpegArgumentList.push_back("-r");
+			ffmpegArgumentList.push_back("1");
 
-			_logger->info(__FILEREF__ + "VODProxy source. "
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath
-			);
-
-			ffmpegArgumentList.push_back("-i");
-			ffmpegArgumentList.push_back(sourcePhysicalPath);
+			ffmpegArgumentList.push_back("-loop");
+			ffmpegArgumentList.push_back("1");
 		}
+		else
+		{
+			ffmpegArgumentList.push_back("-stream_loop");
+			ffmpegArgumentList.push_back("-1");
+		}
+
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(sourcePhysicalPathName);
 
 		if (timePeriod)
 		{
