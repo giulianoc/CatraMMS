@@ -13687,6 +13687,20 @@ void MMSEngineProcessor::manageVODProxy(
 						}
 					}
 				}
+				else
+				{
+					// in case we have an Image as input, the encoding profile has to be mandatory
+					if (vodContentType == MMSEngineDBFacade::ContentType::Image)
+					{
+						string errorMessage = __FILEREF__
+							+ "EncodingProfile is mandatory in case of Image"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
 
 				Json::Value localOutputRoot;
 

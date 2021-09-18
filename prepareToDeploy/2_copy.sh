@@ -40,13 +40,13 @@ if [ "$deploy" == "y" ]; then
 	#date
 fi
 
-echo -n "deploy su rsis-lab-mmst? " 
-read deploy
-if [ "$deploy" == "y" ]; then
-	echo "rsis-lab-mmst"
-	scp /opt/catrasoftware/deploy/$tarFileName mms@rsis-lab-mmst:/opt/catramms
-	date
-fi
+#echo -n "deploy su rsis-lab-mmst? " 
+#read deploy
+#if [ "$deploy" == "y" ]; then
+#	echo "rsis-lab-mmst"
+#	scp /opt/catrasoftware/deploy/$tarFileName mms@rsis-lab-mmst:/opt/catramms
+#	date
+#fi
 
 echo -n "deploy su cibor? " 
 read deploy

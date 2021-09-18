@@ -4265,6 +4265,8 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		dependencies)
 {
         
+	MMSEngineDBFacade::ContentType referenceContentType = MMSEngineDBFacade::ContentType::Video;
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
@@ -4291,57 +4293,6 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
                 throw runtime_error(errorMessage);
             }
-
-			/*
-            MMSEngineDBFacade::ContentType firstContentType;
-            bool firstContentTypeInitialized = false;
-            for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
-				keyAndDependencyType: dependencies)
-            {
-                int64_t key;
-                MMSEngineDBFacade::ContentType referenceContentType;
-                Validator::DependencyType dependencyType;
-				bool stopIfReferenceProcessingError;
-
-                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-					= keyAndDependencyType;
-
-                if (firstContentTypeInitialized)
-                {
-                    if (referenceContentType != firstContentType)
-                    {
-                        string errorMessage = __FILEREF__ + "Reference... does not refer the correct ContentType"
-                                + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-                            + ", referenceMediaItemKey: " + to_string(key)
-                            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                            + ", label: " + label
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                else
-                {
-                    if (referenceContentType != MMSEngineDBFacade::ContentType::Video
-                            && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
-                    {
-                        string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
-                            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-                            + ", referenceMediaItemKey: " + to_string(key)
-                            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                            + ", label: " + label
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-
-                    firstContentType = referenceContentType;
-                    firstContentTypeInitialized = true;
-                }
-            }
-			*/
         }
     }
 
@@ -4484,6 +4435,30 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
 		}
 		else if (liveProxyOutputType == "RTMP_Stream")
 		{
@@ -4507,6 +4482,30 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
 		}
 	}
 
