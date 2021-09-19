@@ -3362,18 +3362,18 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
+		bool isMMSAssetPathName = true;
         FFMpeg ffmpeg (_configuration, _logger);
-		// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				stagingEncodedAssetPathName + "/" + manifestFileName,
+				isMMSAssetPathName, stagingEncodedAssetPathName + "/" + manifestFileName,
 				videoTracks, audioTracks);
 		}
 		else
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				stagingEncodedAssetPathName,
+				isMMSAssetPathName, stagingEncodedAssetPathName,
 				videoTracks, audioTracks);
 		}
 

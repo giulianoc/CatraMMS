@@ -736,12 +736,14 @@ public:
         IntroOutroOverlay		= 30,
         VODProxy				= 31,
 
-        EmailNotification       = 60,	// 30,
-        MediaCrossReference		= 61,	// 31,
-        WorkflowAsLibrary		= 62,	// 32,
-        ContentUpdate           = 80,	// 50,
-        ContentRemove           = 90,	// 60,
-        GroupOfTasks			= 100	// 70
+        EmailNotification       = 60,
+        MediaCrossReference		= 61,
+        WorkflowAsLibrary		= 62,
+        CheckStreaming			= 63,
+
+        ContentUpdate           = 80,
+        ContentRemove           = 90,
+        GroupOfTasks			= 100
     };
     static const char* toString(const IngestionType& ingestionType)
     {
@@ -818,6 +820,9 @@ public:
                 return "Media-Cross-Reference";
             case IngestionType::WorkflowAsLibrary:
                 return "Workflow-As-Library";
+			case IngestionType::CheckStreaming:
+				return "Check-Streaming";
+
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -906,6 +911,9 @@ public:
             return IngestionType::MediaCrossReference;
         else if (lowerCase == "workflow-as-library")
             return IngestionType::WorkflowAsLibrary;
+        else if (lowerCase == "check-streaming")
+            return IngestionType::CheckStreaming;
+
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")

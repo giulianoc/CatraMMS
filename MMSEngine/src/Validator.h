@@ -125,6 +125,9 @@ public:
         Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
 
+    void validateCheckStreamingMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot);
+
 	void validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
 		Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);

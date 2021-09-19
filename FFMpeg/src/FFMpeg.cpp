@@ -5512,623 +5512,10 @@ ffmpeg \
     }
 }
 
-/*
-tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-	FFMpeg::getMediaInfo(string mmsAssetPathName)
-{
-	_currentApiName = "getMediaInfo";
-
-	_logger->info(__FILEREF__ + "getMediaInfo"
-			", mmsAssetPathName: " + mmsAssetPathName
-			);
-
-    size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
-    if (fileNameIndex == string::npos)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the asset path name"
-                + ", mmsAssetPathName: " + mmsAssetPathName;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    
-    string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
-
-    string      detailsPathFileName =
-            _ffmpegTempDir + "/" + sourceFileName + ".json";
-    
-    // ffprobe:
-    //   "-v quiet": Don't output anything else but the desired raw data value
-    //   "-print_format": Use a certain format to print out the data
-    //   "compact=": Use a compact output format
-    //   "print_section=0": Do not print the section name
-    //   ":nokey=1": do not print the key of the key:value pair
-    //   ":escape=csv": escape the value
-    //   "-show_entries format=duration": Get entries of a field named duration inside a section named format
-    string ffprobeExecuteCommand = 
-            _ffmpegPath + "/ffprobe "
-            // + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
-            + "-v quiet -print_format json -show_streams -show_format "
-            + mmsAssetPathName + " "
-            + "> " + detailsPathFileName 
-            + " 2>&1"
-            ;
-
-    #ifdef __APPLE__
-        ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-
-    try
-    {
-        _logger->info(__FILEREF__ + "getMediaInfo: Executing ffprobe command"
-            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-        );
-
-        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
-
-		// The check/retries below was done to manage the scenario where the file was created
-		// by another MMSEngine and it is not found just because of nfs delay.
-		// Really, looking the log, we saw the file is just missing and it is not an nfs delay
-		int attemptIndex = 0;
-		bool executeDone = false;
-		while (!executeDone)
-		{
-			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
-			if (executeCommandStatus != 0)
-			{
-				if (FileIO::fileExisting(mmsAssetPathName))
-				{
-					string errorMessage = __FILEREF__ +
-						"getMediaInfo: ffmpeg: ffprobe command failed"
-						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-					;
-
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				else
-				{
-					if (attemptIndex < _waitingNFSSync_attemptNumber)
-					{
-						attemptIndex++;
-
-						string errorMessage = __FILEREF__
-							+ "getMediaInfo: The file does not exist, waiting because of nfs delay"
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-							+ ", attemptIndex: " + to_string(attemptIndex)
-							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-						;
-
-						_logger->warn(errorMessage);
-
-						this_thread::sleep_for(
-								chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
-					}
-					else
-					{
-						string errorMessage = __FILEREF__
-							+ "getMediaInfo: ffmpeg: ffprobe command failed because the file does not exist"
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-							+ ", attemptIndex: " + to_string(attemptIndex)
-							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-			}
-			else
-			{
-				executeDone = true;
-			}
-        }
-        
-        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
-            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            + ", statistics duration (secs): "
-				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-        );
-    }
-    catch(runtime_error e)
-    {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
-                + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-        ;
-        _logger->error(errorMessage);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-
-    int64_t durationInMilliSeconds = -1;
-    long bitRate = -1;
-    string videoCodecName;
-    string videoProfile;
-    int videoWidth = -1;
-    int videoHeight = -1;
-    string videoAvgFrameRate;
-    long videoBitRate = -1;
-    string audioCodecName;
-    long audioSampleRate = -1;
-    int audioChannels = -1;
-    long audioBitRate = -1;
-    try
-    {
-        // json output will be like:
-        //    {
-        //        "streams": [
-        //            {
-        //                "index": 0,
-        //                "codec_name": "mpeg4",
-        //                "codec_long_name": "MPEG-4 part 2",
-        //                "profile": "Advanced Simple Profile",
-        //                "codec_type": "video",
-        //                "codec_time_base": "1/25",
-        //                "codec_tag_string": "XVID",
-        //                "codec_tag": "0x44495658",
-        //                "width": 712,
-        //                "height": 288,
-        //                "coded_width": 712,
-        //                "coded_height": 288,
-        //                "has_b_frames": 1,
-        //                "sample_aspect_ratio": "1:1",
-        //                "display_aspect_ratio": "89:36",
-        //                "pix_fmt": "yuv420p",
-        //                "level": 5,
-        //                "chroma_location": "left",
-        //                "refs": 1,
-        //                "quarter_sample": "false",
-        //                "divx_packed": "false",
-        //                "r_frame_rate": "25/1",
-        //                "avg_frame_rate": "25/1",
-        //                "time_base": "1/25",
-        //                "start_pts": 0,
-        //                "start_time": "0.000000",
-        //                "duration_ts": 142100,
-        //                "duration": "5684.000000",
-        //                "bit_rate": "873606",
-        //                "nb_frames": "142100",
-        //                "disposition": {
-        //                    "default": 0,
-        //                    "dub": 0,
-        //                    "original": 0,
-        //                    "comment": 0,
-        //                    "lyrics": 0,
-        //                    "karaoke": 0,
-        //                    "forced": 0,
-        //                    "hearing_impaired": 0,
-        //                    "visual_impaired": 0,
-        //                    "clean_effects": 0,
-        //                    "attached_pic": 0,
-        //                    "timed_thumbnails": 0
-        //                }
-        //            },
-        //            {
-        //                "index": 1,
-        //                "codec_name": "mp3",
-        //                "codec_long_name": "MP3 (MPEG audio layer 3)",
-        //                "codec_type": "audio",
-        //                "codec_time_base": "1/48000",
-        //                "codec_tag_string": "U[0][0][0]",
-        //                "codec_tag": "0x0055",
-        //                "sample_fmt": "s16p",
-        //                "sample_rate": "48000",
-        //                "channels": 2,
-        //                "channel_layout": "stereo",
-        //                "bits_per_sample": 0,
-        //                "r_frame_rate": "0/0",
-        //                "avg_frame_rate": "0/0",
-        //                "time_base": "3/125",
-        //                "start_pts": 0,
-        //                "start_time": "0.000000",
-        //                "duration_ts": 236822,
-        //                "duration": "5683.728000",
-        //                "bit_rate": "163312",
-        //                "nb_frames": "236822",
-        //                "disposition": {
-        //                    "default": 0,
-        //                    "dub": 0,
-        //                    "original": 0,
-        //                    "comment": 0,
-        //                    "lyrics": 0,
-        //                    "karaoke": 0,
-        //                    "forced": 0,
-        //                    "hearing_impaired": 0,
-        //                    "visual_impaired": 0,
-        //                    "clean_effects": 0,
-        //                    "attached_pic": 0,
-        //                    "timed_thumbnails": 0
-        //                }
-        //            }
-        //        ],
-        //        "format": {
-        //            "filename": "/Users/multi/VitadaCamper.avi",
-        //            "nb_streams": 2,
-        //            "nb_programs": 0,
-        //            "format_name": "avi",
-        //            "format_long_name": "AVI (Audio Video Interleaved)",
-        //            "start_time": "0.000000",
-        //            "duration": "5684.000000",
-        //            "size": "745871360",
-        //            "bit_rate": "1049783",
-        //            "probe_score": 100,
-        //            "tags": {
-        //                "encoder": "VirtualDubMod 1.5.10.2 (build 2540/release)"
-        //            }
-        //        }
-        //    }
-
-        ifstream detailsFile(detailsPathFileName);
-        stringstream buffer;
-        buffer << detailsFile.rdbuf();
-        
-        _logger->info(__FILEREF__ + "Details found"
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", details: " + buffer.str()
-        );
-
-        string mediaDetails = buffer.str();
-        // LF and CR create problems to the json parser...
-        while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
-            mediaDetails.pop_back();
-
-        Json::Value detailsRoot;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(mediaDetails.c_str(),
-                    mediaDetails.c_str() + mediaDetails.size(), 
-                    &detailsRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the media details"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", errors: " + errors
-                        + ", mediaDetails: " + mediaDetails
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("ffmpeg: media json is not well format")
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", mediaDetails: " + mediaDetails
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-                
-        string field = "streams";
-        if (!isMetadataPresent(detailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        Json::Value streamsRoot = detailsRoot[field];
-        bool videoFound = false;
-        bool audioFound = false;
-        for(int streamIndex = 0; streamIndex < streamsRoot.size(); streamIndex++) 
-        {
-            Json::Value streamRoot = streamsRoot[streamIndex];
-            
-            field = "codec_type";
-            if (!isMetadataPresent(streamRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string codecType = streamRoot.get(field, "XXX").asString();
-            
-            if (codecType == "video" && !videoFound)
-            {
-                videoFound = true;
-
-                field = "codec_name";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                videoCodecName = streamRoot.get(field, "XXX").asString();
-
-                field = "profile";
-                if (isMetadataPresent(streamRoot, field))
-                    videoProfile = streamRoot.get(field, "XXX").asString();
-                else
-                {
-                    // if (videoCodecName != "mjpeg")
-                    // {
-                    //     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    //             + ", mmsAssetPathName: " + mmsAssetPathName
-                    //             + ", Field: " + field;
-                    //     _logger->error(errorMessage);
-
-                    //     throw runtime_error(errorMessage);
-                    // }
-                }
-
-                field = "width";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                videoWidth = asInt(streamRoot, field, 0);
-
-                field = "height";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                videoHeight = asInt(streamRoot, field, 0);
-                
-                field = "avg_frame_rate";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                videoAvgFrameRate = streamRoot.get(field, "XXX").asString();
-
-                field = "bit_rate";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    if (videoCodecName != "mjpeg")
-                    {
-                        // I didn't find bit_rate also in a ts file, let's set it as a warning
-                        
-                        string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                                + ", mmsAssetPathName: " + mmsAssetPathName
-                                + ", Field: " + field;
-                        _logger->warn(errorMessage);
-
-                        // throw runtime_error(errorMessage);
-                    }
-                }
-                else
-                    videoBitRate = stol(streamRoot.get(field, "XXX").asString());
-            }
-            else if (codecType == "audio" && !audioFound)
-            {
-                audioFound = true;
-
-                field = "codec_name";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                audioCodecName = streamRoot.get(field, "XXX").asString();
-
-                field = "sample_rate";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                audioSampleRate = stol(streamRoot.get(field, "XXX").asString());
-
-                field = "channels";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                audioChannels = asInt(streamRoot, field, 0);
-                
-                field = "bit_rate";
-                if (!isMetadataPresent(streamRoot, field))
-                {
-                    // I didn't find bit_rate in a webm file, let's set it as a warning
-
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->warn(errorMessage);
-
-                    // throw runtime_error(errorMessage);
-                }
-				else
-					audioBitRate = stol(streamRoot.get(field, "XXX").asString());
-            }
-        }
-
-        field = "format";
-        if (!isMetadataPresent(detailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        Json::Value formatRoot = detailsRoot[field];
-
-        field = "duration";
-        if (!isMetadataPresent(formatRoot, field))
-        {
-			// I didn't find it in a .avi file generated using OpenCV::VideoWriter
-			// let's log it as a warning
-            if (videoCodecName != "" && videoCodecName != "mjpeg")
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-                _logger->warn(errorMessage);
-
-                // throw runtime_error(errorMessage);
-            }            
-        }
-        else
-        {
-            string duration = formatRoot.get(field, "XXX").asString();
-
-			// 2020-01-13: atoll remove the milliseconds and this is wrong
-            // durationInMilliSeconds = atoll(duration.c_str()) * 1000;
-
-            double dDurationInMilliSeconds = stod(duration);
-            durationInMilliSeconds = dDurationInMilliSeconds * 1000;
-        }
-
-        field = "bit_rate";
-        if (!isMetadataPresent(formatRoot, field))
-        {
-            if (videoCodecName != "" && videoCodecName != "mjpeg")
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }            
-        }
-        else
-        {
-            string bit_rate = formatRoot.get(field, "XXX").asString();
-            bitRate = atoll(bit_rate.c_str());
-        }
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
-                + ", e.what(): " + e.what()
-        ;
-        _logger->error(errorMessage);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
-                + ", e.what(): " + e.what()
-        ;
-        _logger->error(errorMessage);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-
-    // if (durationInMilliSeconds == -1)
-    // {
-    //     string errorMessage = __FILEREF__ + "ffmpeg: durationInMilliSeconds was not able to be retrieved from media"
-    //             + ", mmsAssetPathName: " + mmsAssetPathName
-    //             + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
-    //     _logger->error(errorMessage);
-
-    //     throw runtime_error(errorMessage);
-    // }
-    // else if (width == -1 || height == -1)
-    // {
-    //     string errorMessage = __FILEREF__ + "ffmpeg: width/height were not able to be retrieved from media"
-    //             + ", mmsAssetPathName: " + mmsAssetPathName
-    //             + ", width: " + to_string(width)
-    //             + ", height: " + to_string(height)
-    //             ;
-    //     _logger->error(errorMessage);
-
-    //     throw runtime_error(errorMessage);
-    // }
-    
-    _logger->info(__FILEREF__ + "FFMpeg::getMediaInfo"
-        + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-        + ", bitRate: " + to_string(bitRate)
-        + ", videoCodecName: " + videoCodecName
-        + ", videoProfile: " + videoProfile
-        + ", videoWidth: " + to_string(videoWidth)
-        + ", videoHeight: " + to_string(videoHeight)
-        + ", videoAvgFrameRate: " + videoAvgFrameRate
-        + ", videoBitRate: " + to_string(videoBitRate)
-        + ", audioCodecName: " + audioCodecName
-        + ", audioSampleRate: " + to_string(audioSampleRate)
-        + ", audioChannels: " + to_string(audioChannels)
-        + ", audioBitRate: " + to_string(audioBitRate)
-    );
-    
-    return make_tuple(durationInMilliSeconds, bitRate, 
-            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-            audioCodecName, audioSampleRate, audioChannels, audioBitRate
-            );
-}
-*/
-
 pair<int64_t, long> FFMpeg::getMediaInfo(
 	int64_t ingestionJobKey,
-	string mmsAssetPathName,
+	bool isMMSAssetPathName,	// false means it is a URL
+	string mediaSource,
 	vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 	vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks)
 {
@@ -6136,39 +5523,45 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
 	_logger->info(__FILEREF__ + "getMediaInfo"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", mmsAssetPathName: " + mmsAssetPathName
+			+ ", isMMSAssetPathName: " + to_string(isMMSAssetPathName)
+			+ ", mediaSource: " + mediaSource
 			);
 
 	// milli secs to wait in case of nfs delay
-	if (!FileIO::fileExisting(mmsAssetPathName,
-		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
-		&& !FileIO::directoryExisting(mmsAssetPathName)
-	)
+	if (isMMSAssetPathName)
 	{
-		string errorMessage = string("Source asset path name not existing")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", mmsAssetPathName: " + mmsAssetPathName
-		;
-		_logger->error(__FILEREF__ + errorMessage);
+		if (!FileIO::fileExisting(mediaSource,
+			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
+			&& !FileIO::directoryExisting(mediaSource)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+			;
+			_logger->error(__FILEREF__ + errorMessage);
 
-		throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
+
+		/*
+		size_t fileNameIndex = mediaSource.find_last_of("/");
+		if (fileNameIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the asset path name"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource;
+			_logger->error(errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+    
+		string sourceFileName = mediaSource.substr(fileNameIndex + 1);
+		*/
 	}
 
-    size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
-    if (fileNameIndex == string::npos)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the asset path name"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", mmsAssetPathName: " + mmsAssetPathName;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    
-    string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
-
     string      detailsPathFileName =
-            _ffmpegTempDir + "/" + sourceFileName + ".json";
+            _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".json";
     
     /*
      * ffprobe:
@@ -6184,7 +5577,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 		_ffmpegPath + "/ffprobe "
 		// + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
 		+ "-v quiet -print_format json -show_streams -show_format "
-		+ mmsAssetPathName + " "
+		+ mediaSource + " "
 		+ "> " + detailsPathFileName 
 		+ " 2>&1"
 	;
@@ -6375,7 +5768,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         
         _logger->info(__FILEREF__ + "Details found"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", mediaSource: " + mediaSource
             + ", details: " + buffer.str()
         );
 
@@ -6400,7 +5793,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the media details"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
+					+ ", mediaSource: " + mediaSource
 					+ ", errors: " + errors
 					+ ", mediaDetails: " + mediaDetails
 				;
@@ -6413,7 +5806,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         {
             string errorMessage = string("ffmpeg: media json is not well format")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", mmsAssetPathName: " + mmsAssetPathName
+				+ ", mediaSource: " + mediaSource
 				+ ", mediaDetails: " + mediaDetails
 			;
             _logger->error(__FILEREF__ + errorMessage);
@@ -6426,7 +5819,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", mmsAssetPathName: " + mmsAssetPathName
+				+ ", mediaSource: " + mediaSource
 				+ ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -6445,7 +5838,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", mediaSource: " + mediaSource
                     + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -6471,7 +5864,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6488,7 +5881,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 						string errorMessage = __FILEREF__
 							+ "ffmpeg: Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", mediaSource: " + mediaSource
                             + ", Field: " + field;
 						_logger->error(errorMessage);
 
@@ -6509,7 +5902,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     if (videoCodecName != "mjpeg")
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                                + ", mmsAssetPathName: " + mmsAssetPathName
+                                + ", mediaSource: " + mediaSource
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
 
@@ -6523,7 +5916,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6536,7 +5929,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6549,7 +5942,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6566,7 +5959,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         
                         string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", mediaSource: " + mediaSource
                             + ", Field: " + field;
                         _logger->warn(errorMessage);
 
@@ -6585,7 +5978,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mediaSource: " + mediaSource
 							+ ", Field: " + field;
 						_logger->warn(errorMessage);
 
@@ -6623,7 +6016,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6636,7 +6029,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6649,7 +6042,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6662,7 +6055,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
@@ -6677,7 +6070,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", mediaSource: " + mediaSource
                         + ", Field: " + field;
                     _logger->warn(errorMessage);
 
@@ -6719,7 +6112,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", mediaSource: " + mediaSource
                 + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -6736,7 +6129,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", mediaSource: " + mediaSource
                     + ", Field: " + field;
                 _logger->warn(errorMessage);
 
@@ -6761,7 +6154,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", mediaSource: " + mediaSource
                     + ", firstVideoCodecName: " + firstVideoCodecName;
                     + ", Field: " + field;
                 _logger->warn(errorMessage);
@@ -6818,7 +6211,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     if (durationInMilliSeconds == -1)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: durationInMilliSeconds was not able to be retrieved from media"
-                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", mediaSource: " + mediaSource
                 + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
         _logger->error(errorMessage);
 
@@ -6827,7 +6220,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     else if (width == -1 || height == -1)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: width/height were not able to be retrieved from media"
-                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", mediaSource: " + mediaSource
                 + ", width: " + to_string(width)
                 + ", height: " + to_string(height)
                 ;
@@ -6855,6 +6248,95 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 	*/
 
 	return make_pair(durationInMilliSeconds, bitRate);
+}
+
+int FFMpeg::probeChannel(
+	int64_t ingestionJobKey,
+	string url
+)
+{
+	_currentApiName = "probeChannel";
+
+    string outputProbePathFileName =
+		_ffmpegTempDir + "/"
+		+ to_string(ingestionJobKey)
+		+ ".probeChannel.log"
+	;
+        
+	_logger->info(__FILEREF__ + _currentApiName
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", url: " + url
+			);
+
+	// 2021-09-18: l'idea sarebbe che se il comando ritorna 124 (timeout), vuol dire
+	//	che il play ha strimmato per i secondi indicati ed è stato fermato dal comando
+	//	di timeout. Quindi in questo caso l'url funziona bene.
+	//	Se invece ritorna 0 vuol dire che ffplay non è riuscito a strimmare, c'è
+	//	stato un errore. Quindi in questo caso l'url NON funziona bene.
+    string probeExecuteCommand = 
+		string("timeout 10 ") + _ffmpegPath + "/ffplay "
+		+ url + " "
+		+ "> " + outputProbePathFileName 
+		+ " 2>&1"
+	;
+
+	int executeCommandStatus = 0;
+    try
+    {
+        _logger->info(__FILEREF__ + _currentApiName + ": Executing ffplay command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", probeExecuteCommand: " + probeExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+		executeCommandStatus = ProcessUtility::execute(probeExecuteCommand);
+		if (executeCommandStatus != 124)
+		{
+			string errorMessage = __FILEREF__
+				+ _currentApiName + ": ffmpeg: probe command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", probeExecuteCommand: " + probeExecuteCommand
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + _currentApiName + ": Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", probeExecuteCommand: " + probeExecuteCommand
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
+					endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			outputProbePathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: probe command failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", probeExecuteCommand: " + probeExecuteCommand
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", outputProbePathFileName: " + outputProbePathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(outputProbePathFileName, exceptionInCaseOfError);
+
+        // throw e;
+		return 1;
+    }
+
+	return 0;
 }
 
 void FFMpeg::muxAllFiles(
@@ -12045,7 +11527,7 @@ void FFMpeg::vodProxy(
 		if (vodContentType == "Image")
 		{
 			ffmpegArgumentList.push_back("-r");
-			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back("25");
 
 			ffmpegArgumentList.push_back("-loop");
 			ffmpegArgumentList.push_back("1");
@@ -12201,22 +11683,42 @@ void FFMpeg::vodProxy(
 						_logger->warn(errorMessage);
 					}
 
-					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+					if (vodContentType == "Video" || vodContentType == "Image")
+					{
+						addToArguments(ffmpegVideoCodecParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoProfileParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoBitRateParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoOtherParameters,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoMaxRateParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoBufSizeParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoFrameRateParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoKeyFramesRateParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegVideoResolutionParameter,
+							ffmpegEncodingProfileArgumentList);
+					}
 					ffmpegEncodingProfileArgumentList.push_back("-threads");
 					ffmpegEncodingProfileArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+					if (vodContentType == "Video" || vodContentType == "Audio")
+					{
+						addToArguments(ffmpegAudioCodecParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegAudioBitRateParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegAudioOtherParameters,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegAudioChannelsParameter,
+							ffmpegEncodingProfileArgumentList);
+						addToArguments(ffmpegAudioSampleRateParameter,
+							ffmpegEncodingProfileArgumentList);
+					}
 				}
 				catch(runtime_error e)
 				{

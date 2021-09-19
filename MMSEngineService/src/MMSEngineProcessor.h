@@ -411,6 +411,12 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
+	void checkStreamingThread(
+		shared_ptr<long> processorsThreadsNumber,
+		int64_t ingestionJobKey,
+		shared_ptr<Workspace> workspace,
+		Json::Value parametersRoot);
+
     void manageMediaCrossReferenceTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,

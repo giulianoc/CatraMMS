@@ -1,0 +1,12 @@
+{
+  "Label"="My Check Streaming",
+  "Task": {
+    "Label": "Task label 2",
+    "Parameters": {
+      "ConfigurationLabel": "Channel A"
+    },
+    "Type": "Check-Streaming"
+  },
+  "Type": "Workflow"
+}
+

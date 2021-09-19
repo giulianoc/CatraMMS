@@ -1482,7 +1482,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     return ingestionJobKey;
 }
 
-int MMSEngineDBFacade::getIngestionTypePriority(MMSEngineDBFacade::IngestionType ingestionType)
+int MMSEngineDBFacade::getIngestionTypePriority(
+	MMSEngineDBFacade::IngestionType ingestionType)
 {
 	// The priority is used when engine retrieves the ingestion jobs to be executed
 	//
@@ -3933,7 +3934,8 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
         throw e;
     }
     
-    return make_tuple(label, ingestionType, ingestionStatus, metaDataContent, errorMessage);
+    return make_tuple(label, ingestionType, ingestionStatus,
+		metaDataContent, errorMessage);
 }
 
 void MMSEngineDBFacade::addIngestionJobOutput(

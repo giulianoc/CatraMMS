@@ -687,6 +687,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot,
 				validateDependenciesToo, dependencies);
     }
+    else if (type == "Check-Streaming")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::CheckStreaming;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateCheckStreamingMetadata(workspaceKey, label, parametersRoot);
+    }
     else if (type == "Media-Cross-Reference")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::MediaCrossReference;
@@ -1215,6 +1236,10 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);
     }
+	else if (ingestionType == MMSEngineDBFacade::IngestionType::CheckStreaming)
+	{
+		validateCheckStreamingMetadata(workspaceKey, label, parametersRoot);
+	}
     else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
     {
         validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot, 
@@ -2548,6 +2573,48 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     }
 
     field = "ProcessingStartingFrom";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
+	}
+}
+
+void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "ConfigurationLabel"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    string field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();

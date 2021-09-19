@@ -197,11 +197,14 @@ public:
 	bool forbiddenErrorInOutputLog();
 	bool isFrameIncreasing(int secondsToWaitBetweenSamples);
 
-    // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
-
-	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey, string mmsAssetPathName,
+	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey,
+		bool isMMSAssetPathName, string mediaSource,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
+
+	int probeChannel(
+		int64_t ingestionJobKey,
+		string url);
 
 	void muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName,
 		string destinationPathName);

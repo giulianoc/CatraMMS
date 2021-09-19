@@ -29,6 +29,12 @@ int main (int iArgc, char *pArgv [])
 
 	try
 	{
+		/*
+		FFMpeg ffmpeg(configuration, logger);
+		int64_t ingestionJobKey = 10;
+		cout << "probeChannel: " << ffmpeg.probeChannel(ingestionJobKey, liveURL) << endl;
+		*/
+
 		vector<tuple<int, string, string, string, string, int, int>> videoTracks;
 		vector<tuple<int, string, string, string, int, bool>> audioTracks;
 
