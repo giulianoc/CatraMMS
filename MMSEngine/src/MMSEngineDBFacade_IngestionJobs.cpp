@@ -2249,6 +2249,13 @@ void MMSEngineDBFacade::updateIngestionJob (
             errorMessageForSQL = errorMessage.substr(0, 1024);
         else
             errorMessageForSQL = errorMessage;
+		{
+			string strToBeReplaced = "FFMpeg";
+			string strToReplace = "XXX";
+			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
+				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced),
+					strToBeReplaced.length(), strToReplace);
+		}
 
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
@@ -2431,6 +2438,13 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
             errorMessageForSQL = errorMessage.substr(0, 1024);
         else
             errorMessageForSQL = errorMessage;
+		{
+			string strToBeReplaced = "FFMpeg";
+			string strToReplace = "XXX";
+			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
+				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced),
+					strToBeReplaced.length(), strToReplace);
+		}
 
 		if (errorMessageForSQL != "")
         {

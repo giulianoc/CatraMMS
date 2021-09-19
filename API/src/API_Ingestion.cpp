@@ -1519,6 +1519,20 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			responseBody); 
     }
 
+	// just log initial parameters
+	/*
+    {
+        Json::StreamWriterBuilder wbuilder;
+
+		_logger->info(__FILEREF__ + "IngestionJob to be added"
+			+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+			+ ", type: " + type
+			+ ", taskLabel: " + taskLabel
+			+ ", taskMetadata before: " + Json::writeString(wbuilder, parametersRoot)
+		);
+    }
+	*/
+
 	manageReferencesInput(ingestionRootKey,
 		taskLabel, type, taskRoot,
 		parametersSectionPresent, parametersRoot,
@@ -1529,7 +1543,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     string taskMetadata;
 
     if (parametersSectionPresent)
-    {                
+    {
         Json::StreamWriterBuilder wbuilder;
 
         taskMetadata = Json::writeString(wbuilder, parametersRoot);        
@@ -1637,7 +1651,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
 
 			// in case of OnError, OverallInput has to be the same of the failed task
-            dependOnIngestionJobKeysOverallInput,
+			// 2021-09-19: I had to remove dependOnIngestionJobKeysOverallInputOnError
+			//	because otherwise the OnError tasks would not receive the correct ingestionJobs
+            // dependOnIngestionJobKeysOverallInput,
 
 			referencesOutputIngestionJobKeys,
 
@@ -2090,7 +2106,10 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
 		// in case of OnError, OverallInput has to be the same of the failed task
-        dependOnIngestionJobKeysOverallInput,
+		// in case of OnError, OverallInput has to be the same of the failed task
+		// 2021-09-19: I had to remove dependOnIngestionJobKeysOverallInputOnError
+		//	because otherwise the OnError tasks would not receive the correct ingestionJobs
+        // dependOnIngestionJobKeysOverallInput,
 
 		referencesOutputIngestionJobKeys,
 		mapLabelAndIngestionJobKey, responseBody);
@@ -2103,7 +2122,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value& taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
-        vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+        // vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
         vector<int64_t>& referencesOutputIngestionJobKeys,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
@@ -2134,7 +2153,10 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
+
+        field = "Label";
+        string taskLabel = taskRoot.get(field, "").asString();
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -2148,11 +2170,30 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }
         else
         {
+			/*
+			// just logs
+			{
+				string sDependOnIngestionJobKeysForStarting;
+				for (int64_t key: dependOnIngestionJobKeysForStarting)
+					sDependOnIngestionJobKeysForStarting += (string(",") + to_string(key));
+				string sDependOnIngestionJobKeysOverallInput;
+				for (int64_t key: dependOnIngestionJobKeysOverallInput)
+					sDependOnIngestionJobKeysOverallInput += (string(",") + to_string(key));
+				_logger->error(__FILEREF__ + "ingestionSingleTask (OnSuccess)"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", taskType: " + taskType
+					+ ", taskLabel: " + taskLabel
+					+ ", sDependOnIngestionJobKeysForStarting: " + sDependOnIngestionJobKeysForStarting
+					+ ", sDependOnIngestionJobKeysOverallInput: " + sDependOnIngestionJobKeysOverallInput
+				);
+			}
+			*/
             int localDependOnSuccess = 1;
-            localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);            
+            localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace,
+				ingestionRootKey, taskRoot, 
+				dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+				responseBody);            
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2201,6 +2242,9 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = taskRoot.get(field, "").asString();
 
+		field = "Label";
+        string taskLabel = taskRoot.get(field, "").asString();
+
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
         {
@@ -2208,16 +2252,36 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    // dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
         else
         {
+			/*
+			// just logs
+			{
+				string sDependOnIngestionJobKeysForStarting;
+				for (int64_t key: dependOnIngestionJobKeysForStarting)
+					sDependOnIngestionJobKeysForStarting += (string(",") + to_string(key));
+				string sDependOnIngestionJobKeysOverallInputOnError;
+				for (int64_t key: dependOnIngestionJobKeysOverallInputOnError)
+					sDependOnIngestionJobKeysOverallInputOnError += (string(",") + to_string(key));
+				_logger->error(__FILEREF__ + "ingestionSingleTask (OnError)"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", taskType: " + taskType
+					+ ", taskLabel: " + taskLabel
+					+ ", sDependOnIngestionJobKeysForStarting: " + sDependOnIngestionJobKeysForStarting
+					+ ", sDependOnIngestionJobKeysOverallInputOnError: " + sDependOnIngestionJobKeysOverallInputOnError
+				);
+			}
+			*/
             int localDependOnSuccess = 0;
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
-                    responseBody);            
+					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    // dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+                    responseBody);
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2237,7 +2301,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 				}
 			}
 		}
-    }    
+    }
 
     field = "OnComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))

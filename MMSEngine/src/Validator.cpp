@@ -2594,7 +2594,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "ConfigurationLabel"
+        "InputType"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2613,8 +2613,72 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
             throw runtime_error(errorMessage);
         }
     }
+	string field = "InputType";
+	string inputType = parametersRoot.get(field, "").asString();
+
+	if (inputType == "Channel")
+	{
+		vector<string> mandatoryFields = {
+			"ConfigurationLabel"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (inputType == "StreamingUrl")
+	{
+		vector<string> mandatoryFields = {
+			"StreamingName",
+			"StreamingUrl"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "InputType Field is wrong, it is neither Channel nor StreamingUrl"
+			+ ", inputType: " + inputType
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
     
-    string field = "ProcessingStartingFrom";
+    field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();

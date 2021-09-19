@@ -6,8 +6,19 @@
 	"Type": "Check-Streaming",
 
 	"Parameters": {
+		// The Streaming to be checked could be specified using the Channel Configuration Label
+		// or specifying directly the Streaming Url to be checked
 		// mandatory
+		// Possible values: Channel or StreamingUrl
+		"InputType": "Channel",
+
+		// mandatory if InputType is Channel
 		"ConfigurationLabel": "Channel A",
+
+		// mandatory if InputType is StreamingUrl
+		"StreamingName": "Streaming A",
+		// mandatory if InputType is StreamingUrl
+		"StreamingUrl": "https://.....",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

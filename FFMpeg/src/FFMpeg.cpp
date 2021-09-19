@@ -455,9 +455,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						;            
+						;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -659,6 +664,11 @@ void FFMpeg::encodeContent(
 						;            
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -858,9 +868,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						;            
+						;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -938,9 +953,13 @@ void FFMpeg::encodeContent(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded dir size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
 
@@ -1147,9 +1166,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
-						;            
+						;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -1363,9 +1387,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
-						;            
+						;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -1641,9 +1670,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						;            
+						;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
 						throw runtime_error(errorMessage);
 					}
 
@@ -1782,12 +1816,16 @@ void FFMpeg::encodeContent(
             if (llDirSize == 0)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded dir size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded dir size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
 
@@ -1934,9 +1972,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -2121,9 +2164,14 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed (second step)"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
                     
@@ -2367,9 +2415,14 @@ void FFMpeg::encodeContent(
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -2507,9 +2560,13 @@ void FFMpeg::encodeContent(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded file size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }
@@ -2766,9 +2823,14 @@ void FFMpeg::overlayImageOnVideo(
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "overlayImageOnVideo command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -2840,9 +2902,13 @@ void FFMpeg::overlayImageOnVideo(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }        
@@ -3081,9 +3147,14 @@ void FFMpeg::overlayTextOnVideo(
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "overlayTextOnVideo command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -3156,9 +3227,13 @@ void FFMpeg::overlayTextOnVideo(
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded file size is 0"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }        
@@ -3640,6 +3715,11 @@ void FFMpeg::awaitingTheBegining(
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
 				throw e;
 			}
 		}
@@ -3846,6 +3926,11 @@ void FFMpeg::awaitingTheBegining(
 					;
 					_logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+					errorMessage = __FILEREF__ + "awaitingTheBegining command failed"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
 					throw runtime_error(errorMessage);
 				}
 
@@ -4302,9 +4387,14 @@ void FFMpeg::videoSpeed(
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "videoSpeed command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 				#else
@@ -4333,9 +4423,14 @@ void FFMpeg::videoSpeed(
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "videoSpeed command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 				#endif
@@ -4438,6 +4533,11 @@ void FFMpeg::videoSpeed(
 
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded file size is 0"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }        
@@ -4742,9 +4842,14 @@ void FFMpeg::pictureInPicture(
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;            
+                        ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "pictureInPicture command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -4816,9 +4921,13 @@ void FFMpeg::pictureInPicture(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, pictureInPicture encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }        
@@ -5170,6 +5279,12 @@ void FFMpeg::introOutroOverlay(
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
 				throw e;
 			}
 		}
@@ -5314,6 +5429,11 @@ ffmpeg \
                         ;
                         _logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "introOutroOverlay command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
                         throw runtime_error(errorMessage);
                     }
 
@@ -5387,9 +5507,13 @@ ffmpeg \
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, pictureInPicture encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
                 throw runtime_error(errorMessage);
             }
         }        
@@ -5613,6 +5737,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "getMediaInfo command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
 				throw runtime_error(errorMessage);
 			}
 			else
@@ -5799,6 +5928,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				;
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "failed to parse the media details"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mediaSource: " + mediaSource
+					+ ", errors: " + errors
+					+ ", mediaDetails: " + mediaDetails
+				;
                 throw runtime_error(errorMessage);
             }
         }
@@ -6301,6 +6437,11 @@ int FFMpeg::probeChannel(
 			;
 			_logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__
+				+ _currentApiName + ": probe command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
 
@@ -6399,6 +6540,11 @@ void FFMpeg::muxAllFiles(
 			;
 			_logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__
+				+ _currentApiName + ": command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
 
@@ -6420,6 +6566,11 @@ void FFMpeg::muxAllFiles(
         ;
         _logger->error(errorMessage);
 
+		// to hide the ffmpeg staff
+        errorMessage = __FILEREF__ + "command failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", e.what(): " + e.what()
+        ;
         throw e;
     }
 }
@@ -6513,6 +6664,12 @@ void FFMpeg::getLiveStreamingInfo(
 			;
 			_logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ +
+				"getLiveStreamingInfo failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
         
@@ -7176,9 +7333,11 @@ vector<string> FFMpeg::generateFramesToIngest(
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
-
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "generateFramesToIngest: command failed"
+            ;
             throw runtime_error(errorMessage);
         }
 	#else
@@ -7207,9 +7366,14 @@ vector<string> FFMpeg::generateFramesToIngest(
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            ;            
+            ;
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "generateFramesToIngest: command failed"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            ;
             throw runtime_error(errorMessage);
         }
 	#endif
@@ -7309,7 +7473,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             }
             catch(runtime_error e)
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -7318,7 +7482,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             }
             catch(exception e)
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -7478,6 +7642,10 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "concat: command failed"
+				+ ", inputBuffer: " + inputBuffer
+            ;
             throw runtime_error(errorMessage);
         }
 
@@ -7511,6 +7679,10 @@ void FFMpeg::concat(int64_t ingestionJobKey,
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
+		// to hide the ffmpeg staff
+        errorMessage = __FILEREF__ + "command failed"
+			+ ", e.what(): " + e.what()
+        ;
 		throw runtime_error(errorMessage);
     }
 
@@ -7679,9 +7851,11 @@ void FFMpeg::cutWithoutEncoding(
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
-
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "cut: command failed"
+            ;
             throw runtime_error(errorMessage);
         }
         
@@ -7929,7 +8103,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			}
 			catch(runtime_error e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", e.what(): " + e.what()
@@ -8003,6 +8177,11 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					;
 					_logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+					errorMessage = __FILEREF__ + "cut with reencoding: command failed"      
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
 					throw runtime_error(errorMessage);
 				}
 
@@ -8416,9 +8595,13 @@ void FFMpeg::generateSlideshowMediaToIngest(
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            ;            
+            ;
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "generateSlideshowMediaToIngest: command failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            ;
             throw runtime_error(errorMessage);
         }
         
@@ -8600,9 +8783,11 @@ void FFMpeg::extractTrackMediaToIngest(
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
-
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "extractTrackMediaToIngest: command failed"
+            ;
             throw runtime_error(errorMessage);
         }
         
@@ -9238,7 +9423,7 @@ void FFMpeg::liveRecorder(
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -9496,7 +9681,7 @@ void FFMpeg::liveRecorder(
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -9790,9 +9975,14 @@ void FFMpeg::liveRecorder(
                 + ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            ;            
+            ;
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "liveRecorder: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+            ;
             throw runtime_error(errorMessage);
         }
 
@@ -10758,7 +10948,7 @@ void FFMpeg::liveProxy(
 				}
 				catch(runtime_error e)
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
@@ -11017,7 +11207,7 @@ void FFMpeg::liveProxy(
 				}
 				catch(runtime_error e)
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
@@ -11124,9 +11314,14 @@ void FFMpeg::liveProxy(
 				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-           ;            
+           ;
            _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "liveProxy: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
         
@@ -11722,7 +11917,7 @@ void FFMpeg::vodProxy(
 				}
 				catch(runtime_error e)
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
@@ -11978,7 +12173,7 @@ void FFMpeg::vodProxy(
 				}
 				catch(runtime_error e)
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
@@ -12082,9 +12277,14 @@ void FFMpeg::vodProxy(
 				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-           ;            
+           ;
            _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "vodProxy: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+           ;
 			throw runtime_error(errorMessage);
 		}
         
@@ -12583,7 +12783,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		}
 		catch(runtime_error e)
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+			string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
@@ -12784,9 +12984,14 @@ void FFMpeg::liveProxyByHTTPStreaming(
 				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-           ;            
+           ;
            _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "liveProxy: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
         
@@ -13196,7 +13401,7 @@ void FFMpeg::liveProxyByStream(
 		}
 		catch(runtime_error e)
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+			string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
@@ -13333,9 +13538,14 @@ void FFMpeg::liveProxyByStream(
 				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-           ;            
+           ;
            _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "liveProxy: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+           ;
 			throw runtime_error(errorMessage);
 		}
         
@@ -14112,9 +14322,14 @@ void FFMpeg::liveGrid(
 				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-           ;            
+           ;
            _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "liveGrid: command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
 			throw runtime_error(errorMessage);
 		}
         
@@ -14205,7 +14420,7 @@ void FFMpeg::liveGrid(
 			}
 			catch(runtime_error e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: remove directory failed"
+				string errorMessage = __FILEREF__ + "remove directory failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", e.what(): " + e.what()
@@ -14216,7 +14431,7 @@ void FFMpeg::liveGrid(
 			}
 			catch(exception e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: remove directory failed"
+				string errorMessage = __FILEREF__ + "remove directory failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", e.what(): " + e.what()
@@ -14366,9 +14581,11 @@ void FFMpeg::changeFileFormat(
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
-
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "changeFileFormat: command failed"
+            ;
             throw runtime_error(errorMessage);
         }
         
@@ -14471,9 +14688,11 @@ void FFMpeg::streamingToFile(
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
-
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "streamingToFile: command failed"
+            ;
             throw runtime_error(errorMessage);
         }
         
@@ -14548,7 +14767,7 @@ void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileN
             }
             catch(runtime_error e)
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -14557,7 +14776,7 @@ void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileN
             }
             catch(exception e)
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -14724,7 +14943,7 @@ int FFMpeg::getEncodingProgress()
     }
     catch(FFMpegEncodingStatusNotAvailable e)
     {
-        _logger->info(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
+        _logger->warn(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
@@ -14806,7 +15025,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
     }
     catch(FFMpegEncodingStatusNotAvailable e)
     {
-        _logger->info(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
+        _logger->warn(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
@@ -14891,7 +15110,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
     }
     catch(FFMpegEncodingStatusNotAvailable e)
     {
-        _logger->info(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
+        _logger->warn(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
@@ -15871,6 +16090,12 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
 				throw runtime_error(errorMessage);
 			}
 			else if (!FileIO::fileExisting(detailsYouTubeProfilesPath))
@@ -15884,6 +16109,12 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: command failed. no profiles file created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
 				throw runtime_error(errorMessage);
 			}
 
@@ -16116,6 +16347,12 @@ format code  extension  resolution note
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
 				throw runtime_error(errorMessage);
 			}
 			else if (!FileIO::fileExisting(detailsYouTubeURLPath))
@@ -16129,6 +16366,12 @@ format code  extension  resolution note
 				;
 				_logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: command failed. no URL file created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
 				throw runtime_error(errorMessage);
 			}
 

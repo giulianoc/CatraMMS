@@ -3797,11 +3797,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread checkStreamingThread(&MMSEngineProcessor::checkStreamingThread, this, 
-                                        _processorsThreadsNumber, ingestionJobKey, 
-                                            workspace, 
-                                            parametersRoot
-                                            );
+                                    thread checkStreamingThread(&MMSEngineProcessor::checkStreamingThread,
+										this, _processorsThreadsNumber, ingestionJobKey, 
+										workspace, 
+										parametersRoot
+									);
                                     checkStreamingThread.detach();
                                 }
                             }
@@ -20370,7 +20370,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 
         string sReferencies;
-		string checkStreaming_configurationLabel;
+		string checkStreaming_streamingName;
 		{
 			string field = "References";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -20433,10 +20433,25 @@ void MMSEngineProcessor::emailNotificationThread(
 									}
 								}
 
-								field = "ConfigurationLabel";
+								string inputType;
+								field = "InputType";
 								if (JSONUtils::isMetadataPresent(parametersRoot, field))
-									checkStreaming_configurationLabel
-										= parametersRoot.get(field, "").asString();
+									inputType = parametersRoot.get(field, "").asString();
+
+								if (inputType == "Channel")
+								{
+									field = "ConfigurationLabel";
+									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+										checkStreaming_streamingName
+											= parametersRoot.get(field, "").asString();
+								}
+								else
+								{
+									field = "StreamingName";
+									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+										checkStreaming_streamingName
+											= parametersRoot.get(field, "").asString();
+								}
 							}
 						}
 					}
@@ -20489,8 +20504,8 @@ void MMSEngineProcessor::emailNotificationThread(
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
         {
-            string strToBeReplaced = "${CheckStreaming_configurationLabel}";
-            string strToReplace = checkStreaming_configurationLabel;
+            string strToBeReplaced = "${CheckStreaming_streamingName}";
+            string strToReplace = checkStreaming_streamingName;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
             if (message.find(strToBeReplaced) != string::npos)
@@ -20608,7 +20623,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-        string field = "ConfigurationLabel";
+        string field = "InputType";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -20617,19 +20632,60 @@ void MMSEngineProcessor::checkStreamingThread(
 
             throw runtime_error(errorMessage);
         }
-        string configurationLabel = parametersRoot.get(field, "").asString();
+        string inputType = parametersRoot.get(field, "").asString();
 
-		string url;
-		bool warningIfMissing = false;
-		tuple<int64_t, string> ipChannelDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-			workspace->_workspaceKey, configurationLabel, warningIfMissing);
-        tie(ignore, url) = ipChannelDetails;
+		string streamingUrl;
+		if (inputType == "Channel")
+		{
+			string field = "ConfigurationLabel";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string configurationLabel = parametersRoot.get(field, "").asString();
+
+			bool warningIfMissing = false;
+			tuple<int64_t, string> ipChannelDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+			tie(ignore, streamingUrl) = ipChannelDetails;
+		}
+		else
+		{
+			// StreamingName is mandatory even if it is not used here
+			// It is mandatory because in case into the workflow we have the EMail task,
+			// the Email task may need the StreamingName information to add it into the email
+			string field = "StreamingName";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string streamingName = parametersRoot.get(field, "").asString();
+
+			field = "StreamingUrl";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			streamingUrl = parametersRoot.get(field, "").asString();
+		}
 
 		{
 			_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", url: " + url
+				+ ", streamingUrl: " + streamingUrl
 			);
 			bool isMMSAssetPathName = false;
 			pair<int64_t, long> mediaInfoDetails;
@@ -20637,7 +20693,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			FFMpeg ffmpeg (_configuration, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
-				isMMSAssetPathName, url,
+				isMMSAssetPathName, streamingUrl,
 				videoTracks, audioTracks);
 		}
 

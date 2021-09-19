@@ -316,7 +316,7 @@ private:
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value& taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
-            vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+            // vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
