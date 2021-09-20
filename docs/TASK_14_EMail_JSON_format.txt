@@ -25,6 +25,17 @@
 		],
 
 		// mandatory
+		// This parameter identifies the email details configured into the MMS system.
+		// The subject and the body of the email configured into the MMS system
+		// could contains "variables" that will be replaced by the MMS when sends the email.
+		// In order to allow the MMS to replace a "variable", it has to be specified in the subject or body of the email like ${<variable name>} (i.e.: ${Referencies})
+		// Here follows the list of the "variables" always replaced by MMS:
+		// - Dependencies: it contains details of the Media inheredit by the parent Task
+		// - Referencies: it contains details of the References included by the this Task
+		// Here follows the list of the "variables" replaced by MMS
+		// if the parent Task is 'CheckStreaming':
+		// - CheckStreaming_streamingName
+		// - CheckStreaming_streamingUrl
 		"ConfigurationLabel": "My email"
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task

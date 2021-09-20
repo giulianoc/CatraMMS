@@ -5700,8 +5700,8 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     string ffprobeExecuteCommand = 
 		_ffmpegPath + "/ffprobe "
 		// + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
-		+ "-v quiet -print_format json -show_streams -show_format "
-		+ mediaSource + " "
+		+ "-v quiet -print_format json -show_streams -show_format \""
+		+ mediaSource + "\" "
 		+ "> " + detailsPathFileName 
 		+ " 2>&1"
 	;
@@ -5940,7 +5940,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         }
         catch(...)
         {
-            string errorMessage = string("ffmpeg: media json is not well format")
+            string errorMessage = string("media json is not well format")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", mediaSource: " + mediaSource
 				+ ", mediaDetails: " + mediaDetails
@@ -5959,6 +5959,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				+ ", Field: " + field;
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+				+ ", Field: " + field;
             throw runtime_error(errorMessage);
         }
         Json::Value streamsRoot = detailsRoot[field];
@@ -5978,6 +5983,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     + ", Field: " + field;
                 _logger->error(errorMessage);
 
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaSource: " + mediaSource
+                    + ", Field: " + field;
                 throw runtime_error(errorMessage);
             }
             string codecType = streamRoot.get(field, "XXX").asString();
@@ -6004,6 +6014,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 trackIndex = asInt(streamRoot, field, 0);
@@ -6021,6 +6036,12 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                             + ", Field: " + field;
 						_logger->error(errorMessage);
 
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__
+							+ "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", mediaSource: " + mediaSource
+                            + ", Field: " + field;
 						throw runtime_error(errorMessage);
 					}
                 }
@@ -6056,6 +6077,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 videoWidth = asInt(streamRoot, field, 0);
@@ -6069,6 +6095,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 videoHeight = asInt(streamRoot, field, 0);
@@ -6082,6 +6113,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 videoAvgFrameRate = streamRoot.get(field, "XXX").asString();
@@ -6156,6 +6192,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 trackIndex = asInt(streamRoot, field, 0);
@@ -6169,6 +6210,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 audioCodecName = streamRoot.get(field, "XXX").asString();
@@ -6182,6 +6228,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 audioSampleRate = stol(streamRoot.get(field, "XXX").asString());
@@ -6195,6 +6246,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     _logger->error(errorMessage);
 
+					// to hide the ffmpeg staff
+                    errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mediaSource: " + mediaSource
+                        + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
                 audioChannels = asInt(streamRoot, field, 0);
@@ -6252,6 +6308,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 + ", Field: " + field;
             _logger->error(errorMessage);
 
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+				+ ", Field: " + field;
             throw runtime_error(errorMessage);
         }
         Json::Value formatRoot = detailsRoot[field];
@@ -6410,8 +6471,8 @@ int FFMpeg::probeChannel(
 	//	Se invece ritorna 0 vuol dire che ffplay non è riuscito a strimmare, c'è
 	//	stato un errore. Quindi in questo caso l'url NON funziona bene.
     string probeExecuteCommand = 
-		string("timeout 10 ") + _ffmpegPath + "/ffplay "
-		+ url + " "
+		string("timeout 10 ") + _ffmpegPath + "/ffplay \""
+		+ url + "\" "
 		+ "> " + outputProbePathFileName 
 		+ " 2>&1"
 	;

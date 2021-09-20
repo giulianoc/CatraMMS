@@ -20371,6 +20371,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
         string sReferencies;
 		string checkStreaming_streamingName;
+		string checkStreaming_streamingUrl;
 		{
 			string field = "References";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -20442,14 +20443,27 @@ void MMSEngineProcessor::emailNotificationThread(
 								{
 									field = "ConfigurationLabel";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+									{
 										checkStreaming_streamingName
 											= parametersRoot.get(field, "").asString();
+
+										bool warningIfMissing = false;
+										tuple<int64_t, string> ipChannelDetails =
+											_mmsEngineDBFacade->getIPChannelConfDetails(
+											workspace->_workspaceKey, checkStreaming_streamingName,
+											warningIfMissing);
+										tie(ignore, checkStreaming_streamingUrl) = ipChannelDetails;
+									}
 								}
 								else
 								{
 									field = "StreamingName";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
 										checkStreaming_streamingName
+											= parametersRoot.get(field, "").asString();
+									field = "StreamingUrl";
+									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+										checkStreaming_streamingUrl
 											= parametersRoot.get(field, "").asString();
 								}
 							}
@@ -20506,6 +20520,14 @@ void MMSEngineProcessor::emailNotificationThread(
         {
             string strToBeReplaced = "${CheckStreaming_streamingName}";
             string strToReplace = checkStreaming_streamingName;
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+        {
+            string strToBeReplaced = "${CheckStreaming_streamingUrl}";
+            string strToReplace = checkStreaming_streamingUrl;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
             if (message.find(strToBeReplaced) != string::npos)
