@@ -16533,7 +16533,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 }
                 catch(runtime_error e)
                 {
-                    string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                    string errorMessage = __FILEREF__ + "listing directory failed"
                            + ", e.what(): " + e.what()
                     ;
                     _logger->error(errorMessage);
@@ -16542,7 +16542,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 }
                 catch(exception e)
                 {
-                    string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                    string errorMessage = __FILEREF__ + "listing directory failed"
                            + ", e.what(): " + e.what()
                     ;
                     _logger->error(errorMessage);
@@ -22317,6 +22317,14 @@ RESUMING FILE TRANSFERS
 				);
 				try
 				{
+					// to hide ffmpeg staff
+					errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL failed"
+						+ ", may be the YouTube URL is not available anymore"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", YouTube URL: " + sourceReferenceURL
+						+ ", e.what(): " + e.what()
+					;
 					_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
 						MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
 						errorMessage);
@@ -22411,6 +22419,14 @@ RESUMING FILE TRANSFERS
 			);
 			try
 			{
+				// to hide ffmpeg staff
+				errorMessage = __FILEREF__ + "streamingToFile failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceReferenceURL: " + sourceReferenceURL
+					+ ", destBinaryPathName: " + destBinaryPathName
+					+ ", e.what(): " + e.what()
+				;
 				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
 					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
 					errorMessage);

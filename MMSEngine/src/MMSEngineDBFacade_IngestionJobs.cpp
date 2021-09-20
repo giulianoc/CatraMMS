@@ -317,6 +317,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
 						+ ", mysqlOffset: " + to_string(mysqlOffset)
 						+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
+						+ ", moreRows: " + to_string(moreRows)
 					);
 
 					lastSQLCommand = 
@@ -471,6 +472,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
                 }
             }
+			_logger->info(__FILEREF__ + "getIngestionsToBeManaged (exit)"
+				+ ", mysqlOffset: " + to_string(mysqlOffset)
+				+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
+				+ ", moreRows: " + to_string(moreRows)
+				+ ", select not live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterNotLive - pointAfterLive).count())
+			);
 
 			pointAfterNotLive = chrono::system_clock::now();
         }

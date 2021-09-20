@@ -44,6 +44,7 @@ SET (SCRIPTs
 	deploy.sh
 	installServer.sh
 	ingestionThroughChunks.sh
+	getIngestionsToBeManaged.sh
 )
 
 install (FILES ${SCRIPTs} DESTINATION scripts PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ)
