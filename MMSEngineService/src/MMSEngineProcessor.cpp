@@ -38,7 +38,9 @@ MMSEngineProcessor::MMSEngineProcessor(
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<long> processorsThreadsNumber,
         ActiveEncodingsManager* pActiveEncodingsManager,
-        Json::Value configuration
+		mutex* cpuUsageMutex,
+		int* cpuUsage,
+		Json::Value configuration
 )
 {
     _processorIdentifier         = processorIdentifier;
@@ -51,9 +53,13 @@ MMSEngineProcessor::MMSEngineProcessor(
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
     _processorMMS                   = System::getHostName();
-    
+
+	_cpuUsageMutex = cpuUsageMutex;
+	_cpuUsage = cpuUsage;
+	_cpuUsageThreadShutdown	= false;
+
     _processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
-    _maxAdditionalProcessorThreads =  JSONUtils::asInt(configuration["mms"], "maxAdditionalProcessorThreads", 1);
+    _cpuUsageThreshold =  JSONUtils::asInt(configuration["mms"], "cpuUsageThreshold", 10);
 
     _maxDownloadAttemptNumber       = JSONUtils::asInt(configuration["download"], "maxDownloadAttemptNumber", 5);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -471,14 +477,15 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
-                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+					int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                     {
                         // content retention is a periodical event, we will wait the next one
                         
                         _logger->warn(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                            + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                         );
                     }
                     else
@@ -741,6 +748,72 @@ void MMSEngineProcessor::operator ()()
     );
 }
 
+int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
+{
+	lock_guard<mutex> locker(*_cpuUsageMutex);
+
+	int maxAdditionalProcessorThreads;
+	if (*_cpuUsage > _cpuUsageThreshold)
+		maxAdditionalProcessorThreads = 0;
+	else
+		maxAdditionalProcessorThreads = 20;
+
+    _logger->info(__FILEREF__ + "getMaxAdditionalProcessorThreads"
+        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        + ", *_cpuUsage: " + to_string(*_cpuUsage)
+        + ", maxAdditionalProcessorThreads: " + to_string(maxAdditionalProcessorThreads)
+    );
+
+	return maxAdditionalProcessorThreads;
+}
+
+void MMSEngineProcessor::cpuUsageThread()
+{
+
+	int64_t counter = 0;
+
+	while(!_cpuUsageThreadShutdown)
+	{
+		this_thread::sleep_for(chrono::milliseconds(50));
+
+		try
+		{
+			lock_guard<mutex> locker(*_cpuUsageMutex);
+
+			*_cpuUsage = _getCpuUsage.getCpuUsage();
+
+			if (++counter % 100 == 0)
+				_logger->info(__FILEREF__ + "cpuUsageThread"
+					+ ", _cpuUsage: " + to_string(*_cpuUsage)
+				);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string ("cpuUsage thread failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string ("cpuUsage thread failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+	}
+}
+
+void MMSEngineProcessor::stopCPUUsageThread()
+{
+
+	_cpuUsageThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(1));
+}
+
 void MMSEngineProcessor::handleCheckIngestionEvent()
 {
 
@@ -768,13 +841,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			//	That is to avoid to block every thing in case we reached the max number of threads in MMS Engine
 			bool onlyTasksNotInvolvingMMSEngineThreads = false;
 
-			if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+			int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
+			if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
 			{
 				_logger->warn(__FILEREF__ + "Not enough available threads to manage Tasks involving more threads"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-					+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-						+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+					+ ", _processorThreads + maxAdditionalProcessorThreads: "
+						+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 				);
 
 				onlyTasksNotInvolvingMMSEngineThreads = true;
@@ -1417,14 +1491,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										*		in case handleCheckIngestionEvent gets 20 events,
 										*		we have still to postpone all the events overcoming the thread limit
 										*/
+										int maxAdditionalProcessorThreads =
+											getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() >
-											_processorThreads + _maxAdditionalProcessorThreads)
+											_processorThreads + maxAdditionalProcessorThreads)
 										{
 											_logger->warn(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
 												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 												+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-												+ ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+												+ ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
 											);
 
 											string errorMessage = "";
@@ -1483,8 +1559,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										*		in case handleCheckIngestionEvent gets 20 events,
 										*		we have still to postpone all the events overcoming the thread limit
 										*/
+										int maxAdditionalProcessorThreads =
+											getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() >
-											_processorThreads + _maxAdditionalProcessorThreads)
+											_processorThreads + maxAdditionalProcessorThreads)
 										{
 											_logger->warn(__FILEREF__
 												+ "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
@@ -1492,8 +1570,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 												+ ", _processorsThreadsNumber.use_count(): "
 												+ to_string(_processorsThreadsNumber.use_count())
-												+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-												+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+												+ ", _processorThreads + maxAdditionalProcessorThreads: "
+												+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 											);
 
 											string errorMessage = "";
@@ -1543,8 +1621,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										*		in case handleCheckIngestionEvent gets 20 events,
 										*		we have still to postpone all the events overcoming the thread limit
 										*/
+										int maxAdditionalProcessorThreads =
+											getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() >
-											_processorThreads + _maxAdditionalProcessorThreads)
+											_processorThreads + maxAdditionalProcessorThreads)
 										{
 											_logger->warn(__FILEREF__
 												+ "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
@@ -1552,8 +1632,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 												+ ", _processorsThreadsNumber.use_count(): "
 												+ to_string(_processorsThreadsNumber.use_count())
-												+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-												+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+												+ ", _processorThreads + maxAdditionalProcessorThreads: "
+												+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 											);
 
 											string errorMessage = "";
@@ -1645,14 +1725,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-									_processorThreads + _maxAdditionalProcessorThreads)
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage removeContentThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -1790,14 +1872,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-									_processorThreads + _maxAdditionalProcessorThreads)
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage ftpDeliveryContentThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -1946,14 +2030,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-									_processorThreads + _maxAdditionalProcessorThreads)
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage localCopyContent, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -2091,14 +2177,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-									_processorThreads + _maxAdditionalProcessorThreads)
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage http callback, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -2651,7 +2739,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									*		in case handleCheckIngestionEvent gets 20 events,
 									*		we have still to postpone all the events overcoming the thread limit
 									*/
-									if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+									int maxAdditionalProcessorThreads =
+										getMaxAdditionalProcessorThreads();
+									if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
 									{
 										_logger->warn(__FILEREF__
 											+ "Not enough available threads to manage changeFileFormatThread, activity is postponed"
@@ -2659,8 +2749,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 											+ ", _processorsThreadsNumber.use_count(): "
 												+ to_string(_processorsThreadsNumber.use_count())
-											+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+											+ ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 										);
 
 										string errorMessage = "";
@@ -2905,16 +2995,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-										_processorThreads + _maxAdditionalProcessorThreads)
+										_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestConcatenationThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): "
 											+ to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: "
-											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -3049,14 +3141,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
                                 if (_processorsThreadsNumber.use_count() >
-									_processorThreads + _maxAdditionalProcessorThreads)
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestCutMediaThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -3286,13 +3380,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -3627,13 +3723,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage email notification, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -3770,13 +3868,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage check streaming, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -4008,13 +4108,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage post on facebook, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -4152,13 +4254,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage post on youtube, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -5010,14 +5114,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
 								{
 									_logger->warn(__FILEREF__ + "Not enough available threads to manage liveCutThread, activity is postponed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-										+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+										+ ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 									);
 
 									string errorMessage = "";
@@ -5161,15 +5267,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__
 											+ "Not enough available threads to manage changeFileFormatThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: "
-											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";

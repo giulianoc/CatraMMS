@@ -472,14 +472,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
                 }
             }
+
+			pointAfterNotLive = chrono::system_clock::now();
+
 			_logger->info(__FILEREF__ + "getIngestionsToBeManaged (exit)"
 				+ ", mysqlOffset: " + to_string(mysqlOffset)
 				+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
 				+ ", moreRows: " + to_string(moreRows)
+				+ ", onlyTasksNotInvolvingMMSEngineThreads: " + to_string(onlyTasksNotInvolvingMMSEngineThreads)
 				+ ", select not live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterNotLive - pointAfterLive).count())
 			);
-
-			pointAfterNotLive = chrono::system_clock::now();
         }
 
         for (tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,

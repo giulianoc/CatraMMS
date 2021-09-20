@@ -14,7 +14,6 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
-// #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
@@ -202,81 +201,100 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
     multiEventsSet->addDestination(MMSENGINEPROCESSORNAME);
 
-    logger->info(__FILEREF__ + "Creating ActiveEncodingsManager"
-            );
-    ActiveEncodingsManager      activeEncodingsManager(configuration, multiEventsSet, mmsEngineDBFacade, mmsStorage, logger);
+	logger->info(__FILEREF__ + "Creating ActiveEncodingsManager");
+    ActiveEncodingsManager      activeEncodingsManager(configuration, multiEventsSet,
+		mmsEngineDBFacade, mmsStorage, logger);
 
-//    MMSEngineProcessor      mmsEngineProcessor(0, logger, multiEventsSet, 
-//            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
+	mutex cpuUsageMutex;
+	int cpuUsage = 0;
+
     vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
     {
         int processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
         shared_ptr<long> processorsThreadsNumber = make_shared<long>(0);
 
         for (int processorThreadIndex = 0; processorThreadIndex < processorThreads; processorThreadIndex++)
-        {
-            logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
-                + ", processorThreadIndex: " + to_string(processorThreadIndex)
-                    );
-            shared_ptr<MMSEngineProcessor>      mmsEngineProcessor = 
-                    make_shared<MMSEngineProcessor>(processorThreadIndex, logger, multiEventsSet, 
-                        mmsEngineDBFacade, mmsStorage, processorsThreadsNumber,
-                    &activeEncodingsManager, configuration);
-            mmsEngineProcessors.push_back(mmsEngineProcessor);
+		{
+			logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
+				+ ", processorThreadIndex: " + to_string(processorThreadIndex)
+			);
+			shared_ptr<MMSEngineProcessor>      mmsEngineProcessor = 
+				make_shared<MMSEngineProcessor>(processorThreadIndex, logger, multiEventsSet, 
+					mmsEngineDBFacade,
+					mmsStorage,
+					processorsThreadsNumber,
+					&activeEncodingsManager,
+					&cpuUsageMutex,
+					&cpuUsage,
+					configuration);
+			mmsEngineProcessors.push_back(mmsEngineProcessor);
         }
-    }    
-    
-    unsigned long           ulThreadSleepInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "threadSleepInMilliSecs", 5);
+    }
+
+    unsigned long ulThreadSleepInMilliSecs = JSONUtils::asInt(configuration["scheduler"],
+		"threadSleepInMilliSecs", 5);
     logger->info(__FILEREF__ + "Creating Scheduler2"
-        + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
-            );
-    Scheduler2              scheduler(ulThreadSleepInMilliSecs);
+		+ ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
+	);
+    Scheduler2 scheduler(ulThreadSleepInMilliSecs);
 
 
     logger->info(__FILEREF__ + "Starting ActiveEncodingsManager"
             );
     thread activeEncodingsManagerThread (ref(activeEncodingsManager));
-    
+
     vector<shared_ptr<thread>> mmsEngineProcessorsThread;
     {
         //    thread mmsEngineProcessorThread (mmsEngineProcessor);
-        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessors.size(); mmsProcessorIndex++)
+        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessors.size();
+			mmsProcessorIndex++)
         {
             logger->info(__FILEREF__ + "Starting MMSEngineProcessor"
-                + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
-                    );
-            mmsEngineProcessorsThread.push_back(make_shared<thread>(&MMSEngineProcessor::operator(), mmsEngineProcessors[mmsProcessorIndex]));
-        }
-    }    
+				+ ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
+			);
+            mmsEngineProcessorsThread.push_back(
+				make_shared<thread>(&MMSEngineProcessor::operator(),
+					mmsEngineProcessors[mmsProcessorIndex]));
 
-    logger->info(__FILEREF__ + "Starting Scheduler2"
-            );
+			if (mmsProcessorIndex == 0)
+			{
+				thread cpuUsageThread(&MMSEngineProcessor::cpuUsageThread,
+					mmsEngineProcessors[mmsProcessorIndex]);
+				cpuUsageThread.detach();
+			}
+        }
+    }
+
+    logger->info(__FILEREF__ + "Starting Scheduler2");
     thread schedulerThread (ref(scheduler));
 
-    unsigned long           checkIngestionTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "checkIngestionTimesPeriodInMilliSecs", 2000);
+    unsigned long checkIngestionTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"],
+		"checkIngestionTimesPeriodInMilliSecs", 2000);
     logger->info(__FILEREF__ + "Creating and Starting CheckIngestionTimes"
-        + ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
-            );
+		+ ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
+	);
     shared_ptr<CheckIngestionTimes>     checkIngestionTimes =
-            make_shared<CheckIngestionTimes>(checkIngestionTimesPeriodInMilliSecs, multiEventsSet, logger);
+		make_shared<CheckIngestionTimes>(checkIngestionTimesPeriodInMilliSecs, multiEventsSet, logger);
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
-    unsigned long           checkEncodingTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "checkEncodingTimesPeriodInMilliSecs", 10000);
+    unsigned long checkEncodingTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"],
+		"checkEncodingTimesPeriodInMilliSecs", 10000);
     logger->info(__FILEREF__ + "Creating and Starting CheckEncodingTimes"
-        + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
-            );
+		+ ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
+	);
     shared_ptr<CheckEncodingTimes>     checkEncodingTimes =
-            make_shared<CheckEncodingTimes>(checkEncodingTimesPeriodInMilliSecs, multiEventsSet, logger);
+		make_shared<CheckEncodingTimes>(checkEncodingTimesPeriodInMilliSecs, multiEventsSet, logger);
     checkEncodingTimes->start();
     scheduler.activeTimes(checkEncodingTimes);
 
-    string           contentRetentionTimesSchedule = configuration["scheduler"].get("contentRetentionTimesSchedule", "").asString();
+    string contentRetentionTimesSchedule = configuration["scheduler"].get(
+		"contentRetentionTimesSchedule", "").asString();
     logger->info(__FILEREF__ + "Creating and Starting ContentRetentionTimes"
-        + ", contentRetentionTimesSchedule: " + contentRetentionTimesSchedule
-            );
-    shared_ptr<ContentRetentionTimes>     contentRetentionTimes =
-            make_shared<ContentRetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
+		+ ", contentRetentionTimesSchedule: " + contentRetentionTimesSchedule
+	);
+	shared_ptr<ContentRetentionTimes>     contentRetentionTimes =
+		make_shared<ContentRetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
     contentRetentionTimes->start();
     scheduler.activeTimes(contentRetentionTimes);
 
@@ -297,21 +315,10 @@ int main (int iArgc, char *pArgv [])
 			+ checkRefreshPartitionFreeSizeTimesSchedule
             );
     shared_ptr<CheckRefreshPartitionFreeSizeTimes>     checkRefreshPartitionFreeSizeTimes =
-            make_shared<CheckRefreshPartitionFreeSizeTimes>(checkRefreshPartitionFreeSizeTimesSchedule, multiEventsSet, logger);
+		make_shared<CheckRefreshPartitionFreeSizeTimes>(checkRefreshPartitionFreeSizeTimesSchedule,
+			multiEventsSet, logger);
     checkRefreshPartitionFreeSizeTimes->start();
     scheduler.activeTimes(checkRefreshPartitionFreeSizeTimes);
-
-	/*
-    string           mainAndBackupRunningHALiveRecordingTimesSchedule = configuration["scheduler"].get("mainAndBackupRunningHALiveRecordingTimesSchedule", "").asString();
-    logger->info(__FILEREF__ + "Creating and Starting MainAndBackupRunningHALiveRecordingEvent"
-        + ", mainAndBackupRunningHALiveRecordingTimesSchedule: " + mainAndBackupRunningHALiveRecordingTimesSchedule
-            );
-    shared_ptr<MainAndBackupRunningHALiveRecordingEvent>     mainAndBackupRunningHALiveRecordingTimes =
-            make_shared<MainAndBackupRunningHALiveRecordingEvent>(mainAndBackupRunningHALiveRecordingTimesSchedule, multiEventsSet, logger);
-    mainAndBackupRunningHALiveRecordingTimes->start();
-    scheduler.activeTimes(mainAndBackupRunningHALiveRecordingTimes);
-	*/
-
 
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager");
     activeEncodingsManagerThread.join();
@@ -325,6 +332,9 @@ int main (int iArgc, char *pArgv [])
 			// I guess if join is called once the thread is already exits generates
 			// memory leak. I do not care about this because the process is going down
             mmsEngineProcessorsThread[mmsProcessorIndex]->join();
+
+			if (mmsProcessorIndex == 0)
+				mmsEngineProcessors[mmsProcessorIndex]->stopCPUUsageThread();
         }
     }
 

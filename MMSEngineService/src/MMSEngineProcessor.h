@@ -8,6 +8,7 @@
 // #define SPDLOG_TRACE_ON
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
+#include "catralibraries/GetCpuUsage.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ActiveEncodingsManager.h"
@@ -60,16 +61,22 @@ public:
             shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<long> processorsThreadsNumber,
             ActiveEncodingsManager* pActiveEncodingsManager,
+			mutex* cpuUsageMutex,
+			int* cpuUsage,
             Json::Value configuration);
     
     ~MMSEngineProcessor();
     
     void operator()();
+
+	void cpuUsageThread();
+	void stopCPUUsageThread();
+
     
 private:
     int                                 _processorIdentifier;
     int                                 _processorThreads;
-    int                                 _maxAdditionalProcessorThreads;
+    int									_cpuUsageThreshold;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -78,6 +85,11 @@ private:
     shared_ptr<long>                    _processorsThreadsNumber;
     ActiveEncodingsManager*             _pActiveEncodingsManager;
     
+	GetCpuUsage_t				_getCpuUsage;
+	mutex*						_cpuUsageMutex;
+	int*						_cpuUsage;
+	bool						_cpuUsageThreadShutdown;
+
     string                  _processorMMS;
 
     int                     _maxDownloadAttemptNumber;
@@ -133,7 +145,8 @@ private:
 	int						_waitingNFSSync_maxMillisecondsToWait;
 	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
-    // void sendEmail(string to, string subject, vector<string>& emailBody);
+
+	int getMaxAdditionalProcessorThreads();
 
 	bool isMaintenanceMode();
 	bool isProcessorShutdown();

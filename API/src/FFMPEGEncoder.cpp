@@ -43,16 +43,16 @@ int main(int argc, char** argv)
 		if (configurationPathName == nullptr)
 		{
 			cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
-        
+
 			return 1;
 		}
-    
+
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
 
 		string logPathName =  configuration["log"]["encoder"].get("pathName", "").asString();
 		string logType =  configuration["log"]["encoder"].get("type", "").asString();
 		bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
-    
+
 		std::vector<spdlog::sink_ptr> sinks;
 		{
 			if(logType == "daily")
@@ -13782,7 +13782,7 @@ void FFMPEGEncoder::cpuUsageThread()
 
 	while(!_cpuUsageThreadShutdown)
 	{
-		this_thread::sleep_for(chrono::seconds(1));
+		this_thread::sleep_for(chrono::milliseconds(50));
 
 		try
 		{
@@ -13790,7 +13790,7 @@ void FFMPEGEncoder::cpuUsageThread()
 
 			*_cpuUsage = _getCpuUsage.getCpuUsage();
 
-			if (++counter % 15 == 0)
+			if (++counter % 100 == 0)
 				_logger->info(__FILEREF__ + "cpuUsageThread"
 					+ ", _cpuUsage: " + to_string(*_cpuUsage)
 				);
