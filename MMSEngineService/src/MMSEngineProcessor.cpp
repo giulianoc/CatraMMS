@@ -20504,33 +20504,33 @@ void MMSEngineProcessor::emailNotificationThread(
         {
             string strToBeReplaced = "${Dependencies}";
             string strToReplace = sDependencies;
-            if (subject.find(strToBeReplaced) != string::npos)
+            while (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
-            if (message.find(strToBeReplaced) != string::npos)
+            while (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
         {
             string strToBeReplaced = "${Referencies}";
             string strToReplace = sReferencies;
-            if (subject.find(strToBeReplaced) != string::npos)
+            while (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
-            if (message.find(strToBeReplaced) != string::npos)
+            while (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
         {
             string strToBeReplaced = "${CheckStreaming_streamingName}";
             string strToReplace = checkStreaming_streamingName;
-            if (subject.find(strToBeReplaced) != string::npos)
+            while (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
-            if (message.find(strToBeReplaced) != string::npos)
+            while (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
         {
             string strToBeReplaced = "${CheckStreaming_streamingUrl}";
             string strToReplace = checkStreaming_streamingUrl;
-            if (subject.find(strToBeReplaced) != string::npos)
+            while (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
-            if (message.find(strToBeReplaced) != string::npos)
+            while (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
 
