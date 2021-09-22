@@ -26,10 +26,18 @@
 
 		// mandatory
 		// This parameter identifies the email details configured into the MMS system.
-		// The subject and the body of the email configured into the MMS system
-		// could contains "variables" that will be replaced by the MMS when sends the email.
-		// In order to allow the MMS to replace a "variable", it has to be specified in the subject or body of the email like ${<variable name>} (i.e.: ${Referencies})
-		// Here follows the list of the "variables" always replaced by MMS:
+		//
+		// The emails are configured into the MMS system. The subject and the body 
+		// could contains "variables" that will be replaced by the MMS before to send the email.
+		// We have two types of substitutions:
+		//	- MMS substitution (described here)
+		//	- User substitution (see next tag)
+		// The MMS substitution are variables created by the MMS and make available to be
+		// replaced into the email.
+		// In order to allow the MMS to replace a "variable", it has to be specified
+		// a placeholder in the subject or body of the email using the format ${<variable name>}
+		// (i.e.: ${Referencies})
+		// Here follows the list of the "variables" replaced by MMS if the placeholder is present:
 		// - Dependencies: it contains details of the Media inheredit by the parent Task
 		// - Referencies: it contains details of the References included by the this Task
 		// Here follows the list of the "variables" replaced by MMS
@@ -37,6 +45,16 @@
 		// - CheckStreaming_streamingName
 		// - CheckStreaming_streamingUrl
 		"ConfigurationLabel": "My email"
+
+		// optional
+		// A vector of strings that will be replaced by MMS if present into the
+		// subject or body of the email
+		"UserSubstitutions": [
+			{
+				"ToBeReplaced": "blablabla",
+				"ReplaceWith": "oneoneone"
+			}
+		],
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

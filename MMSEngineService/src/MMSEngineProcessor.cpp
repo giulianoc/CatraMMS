@@ -15886,16 +15886,21 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			// just waiting if the last chunk was not finished yet
 			if (!lastRequestedChunk)
 			{
+				chrono::system_clock::time_point now;
 				if (chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
+					now - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
 				{
 					int secondsToWaitLastChunk = 15;
 
 					_logger->info(__FILEREF__ + "Sleeping to wait the last chunk..."
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
-						+ ", secondsToWaitLastChunk: " + to_string(secondsToWaitLastChunk)
+						+ ", maxWaitingForLastChunkInSeconds: "
+							+ to_string(maxWaitingForLastChunkInSeconds)
+						+ ", seconds passed: " + to_string(chrono::duration_cast<
+							chrono::seconds>(now - startLookingForChunks).count())
+						+ ", secondsToWait before next check: "
+							+ to_string(secondsToWaitLastChunk)
 					);
 
 					this_thread::sleep_for(chrono::seconds(secondsToWaitLastChunk));
@@ -20609,37 +20614,90 @@ void MMSEngineProcessor::emailNotificationThread(
                 workspace->_workspaceKey, configurationLabel);            
         tie(emailAddresses, subject, message) = email;
 
+        field = "UserSubstitutions";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+			Json::Value userSubstitutionsRoot = parametersRoot[field];
+
+			for (int userSubstitutionIndex = 0;
+				userSubstitutionIndex < userSubstitutionsRoot.size();
+				userSubstitutionIndex++)
+			{
+				Json::Value userSubstitutionRoot = userSubstitutionsRoot[userSubstitutionIndex];
+
+				field = "ToBeReplaced";
+				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + field;
+					_logger->warn(errorMessage);
+
+					continue;
+				}
+				string strToBeReplaced = userSubstitutionRoot.get(field, "").asString();
+
+				field = "ReplaceWith";
+				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + field;
+					_logger->warn(errorMessage);
+
+					continue;
+				}
+				string strToReplace = userSubstitutionRoot.get(field, "").asString();
+
+				if (strToBeReplaced != "")
+				{
+					while (subject.find(strToBeReplaced) != string::npos)
+						subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(),
+							strToReplace);
+					while (message.find(strToBeReplaced) != string::npos)
+						message.replace(message.find(strToBeReplaced), strToBeReplaced.length(),
+							strToReplace);
+				}
+			}
+        }
+
         {
             string strToBeReplaced = "${Dependencies}";
             string strToReplace = sDependencies;
             while (subject.find(strToBeReplaced) != string::npos)
-                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
             while (message.find(strToBeReplaced) != string::npos)
-                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
         }
         {
             string strToBeReplaced = "${Referencies}";
             string strToReplace = sReferencies;
             while (subject.find(strToBeReplaced) != string::npos)
-                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
             while (message.find(strToBeReplaced) != string::npos)
-                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
         }
         {
             string strToBeReplaced = "${CheckStreaming_streamingName}";
             string strToReplace = checkStreaming_streamingName;
             while (subject.find(strToBeReplaced) != string::npos)
-                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
             while (message.find(strToBeReplaced) != string::npos)
-                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
         }
         {
             string strToBeReplaced = "${CheckStreaming_streamingUrl}";
             string strToReplace = checkStreaming_streamingUrl;
             while (subject.find(strToBeReplaced) != string::npos)
-                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
             while (message.find(strToBeReplaced) != string::npos)
-                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(),
+					strToReplace);
         }
 
         vector<string> emailBody;
