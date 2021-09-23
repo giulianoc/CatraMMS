@@ -12,7 +12,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
-    bool autoCommit = true;
+    // bool autoCommit = true;
 
     try
     {
@@ -21,15 +21,17 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
-        {
-            lastSQLCommand = 
-                "START TRANSACTION";
+		// 2021-09-23: I removed TRANSACTION and FOR UPDATE because I saw we may have deadlock when a MediaItem is added
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
+        // autoCommit = false;
+        // // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        // {
+        //     lastSQLCommand = 
+        //         "START TRANSACTION";
+
+        //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+        //     statement->execute(lastSQLCommand);
+        // }
         
 		// 1. MediaItemKeys expired
         int start = 0;
@@ -43,7 +45,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				"from MMS_MediaItem where "
 				"DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
 				"and processorMMSForRetention is null "
-				"limit ? offset ? for update";
+				"limit ? offset ?";	// for update"; see comment marked as 2021-09-23
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -105,6 +107,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                         {
 							// may be another processor doing the same activity updates it
 							// Really it should never happen because of the 'for update'
+							// 2021-09-23: we do not have for update anymore
 
 							continue;
 							/*
@@ -160,7 +163,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				// MediaItemKey not expired
 				"and DATE_ADD(mi.ingestionDate, INTERVAL mi.retentionInMinutes MINUTE) > NOW() "
 				"and processorMMSForRetention is null "
-				"limit ? offset ? for update";
+				"limit ? offset ?";	// for update"; see comment marked as 2021-09-23
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -223,6 +226,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                         {
 							// may be another processor doing the same activity updates it
 							// Really it should never happen because of the 'for update'
+							// 2021-09-23: we do not have for update anymore
 
 							continue;
 							/*
@@ -260,15 +264,15 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
             }
         }
         
-        // conn->_sqlConnection->commit(); OR execute COMMIT
-        {
-            lastSQLCommand = 
-                "COMMIT";
+        // // conn->_sqlConnection->commit(); OR execute COMMIT
+        // {
+        //     lastSQLCommand = 
+        //         "COMMIT";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        autoCommit = true;
+        //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+        //     statement->execute(lastSQLCommand);
+        // }
+        // autoCommit = true;
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -290,12 +294,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         {
             try
             {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
+                // // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -345,12 +349,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         {
             try
             {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
+                // // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -399,12 +403,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         {
             try
             {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
+                // // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -5110,7 +5114,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					crossReferenceParametersRoot = crossReferenceRoot[field];
 				}
 
-				addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
+				addCrossReference (conn, ingestionJobKey,
+						sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
 						crossReferenceParametersRoot);
 			}
 		}
@@ -5464,6 +5469,66 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         
         mediaItemKeyAndPhysicalPathKey.first = mediaItemKey;
         mediaItemKeyAndPhysicalPathKey.second = physicalPathKey;
+    }
+    catch(DeadlockFound se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", exceptionMessage: " + exceptionMessage
+			+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", title: " + title
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw se;
     }
     catch(sql::SQLException se)
     {
@@ -7308,7 +7373,9 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 */
 
 void MMSEngineDBFacade::addCrossReference (
-	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
+	int64_t ingestionJobKey,
+	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
+	int64_t targetMediaItemKey,
 	Json::Value crossReferenceParametersRoot)
 {
     
@@ -7323,8 +7390,9 @@ void MMSEngineDBFacade::addCrossReference (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
-				crossReferenceParametersRoot);
+		addCrossReference (conn, ingestionJobKey,
+			sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
+			crossReferenceParametersRoot);
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -7333,6 +7401,27 @@ void MMSEngineDBFacade::addCrossReference (
 		conn = nullptr;
     }
     catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(DeadlockFound se)
     {
         string exceptionMessage(se.what());
         
@@ -7394,6 +7483,7 @@ void MMSEngineDBFacade::addCrossReference (
 
 void MMSEngineDBFacade::addCrossReference (
     shared_ptr<MySQLConnection> conn,
+	int64_t ingestionJobKey,
 	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
 	Json::Value crossReferenceParametersRoot)
 {
@@ -7446,17 +7536,23 @@ void MMSEngineDBFacade::addCrossReference (
         
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
-        throw se;
+		if (exceptionMessage.find("Deadlock found when trying to get lock") !=
+			string::npos)
+			throw DeadlockFound(exceptionMessage);
+		else
+			throw se;
     }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
@@ -7466,6 +7562,7 @@ void MMSEngineDBFacade::addCrossReference (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 

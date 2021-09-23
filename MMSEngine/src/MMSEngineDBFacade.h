@@ -63,6 +63,21 @@ struct MediaItemKeyNotFound: public exception {
     }; 
 };
 
+struct DeadlockFound: public exception { 
+    
+    string _errorMessage;
+    
+    DeadlockFound(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+    
+    char const* what() const throw() 
+    {
+        return _errorMessage.c_str();
+    }; 
+};
+
 struct EncoderNotFound: public exception { 
 
     string _errorMessage;
@@ -2017,6 +2032,7 @@ public:
 	*/
 
 	void addCrossReference (
+		int64_t ingestionJobKey,
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
 		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
 
@@ -2534,6 +2550,7 @@ private:
 
 	void addCrossReference (
         shared_ptr<MySQLConnection> conn,
+		int64_t ingestionJobKey,
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
 		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
 
