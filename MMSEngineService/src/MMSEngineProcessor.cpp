@@ -20679,12 +20679,12 @@ void MMSEngineProcessor::emailNotificationThread(
 		string subject;
 		string message;
         tuple<string, string, string> email = _mmsEngineDBFacade->getEMailByConfigurationLabel(
-                workspace->_workspaceKey, configurationLabel);            
+			workspace->_workspaceKey, configurationLabel);            
         tie(emailAddresses, subject, message) = email;
 
         field = "UserSubstitutions";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
+		{
 			Json::Value userSubstitutionsRoot = parametersRoot[field];
 
 			for (int userSubstitutionIndex = 0;
@@ -20715,6 +20715,12 @@ void MMSEngineProcessor::emailNotificationThread(
 				}
 				string strToReplace = userSubstitutionRoot.get(field, "").asString();
 
+				_logger->info(__FILEREF__ + "User substitution"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", strToBeReplaced: " + strToBeReplaced
+					+ ", strToReplace: " + strToReplace
+				);
 				if (strToBeReplaced != "")
 				{
 					while (subject.find(strToBeReplaced) != string::npos)
@@ -20726,6 +20732,13 @@ void MMSEngineProcessor::emailNotificationThread(
 				}
 			}
         }
+		else
+		{
+			_logger->info(__FILEREF__ + "NO User substitution"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+		}
 
         {
             string strToBeReplaced = "${Dependencies}";
@@ -20775,7 +20788,7 @@ void MMSEngineProcessor::emailNotificationThread(
         emailSender.sendEmail(emailAddresses, subject, emailBody);
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""

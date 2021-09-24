@@ -120,56 +120,7 @@ int main(int argc, char** argv)
 		// spdlog::register_logger(logger);
 		*/
 
-		/*
-		* FFMPEGEncoder has not to have access to DB
-		*
-		size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();                    
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->poolSize: " + to_string(dbPoolSize)
-		);
-		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-            );
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, dbPoolSize, logger);
-		*/
-
-		/*
-		string encoderCapabilityConfigurationPathName;
-		{
-			string sConfigurationPathName = configurationPathName;
-			size_t endOfDirectoryIndex = sConfigurationPathName.find_last_of("/");
-			if (endOfDirectoryIndex == string::npos)
-			{
-				logger->error(__FILEREF__
-					+ "MMS API: not able to get encoderCapabilityConfigurationPathName"
-					+ ", sConfigurationPathName: " + sConfigurationPathName
-				);
-        
-				return 1;
-			}
-
-			encoderCapabilityConfigurationPathName = sConfigurationPathName.substr(
-				0, endOfDirectoryIndex);
-			encoderCapabilityConfigurationPathName += "/mms_encoderCapability.cfg";
-
-			logger->info(__FILEREF__ + "Encoder Capability"
-				+ ", encoderCapabilityConfigurationPathName: "
-					+ encoderCapabilityConfigurationPathName
-			);
-		}
-		*/
-
 		MMSStorage::createDirectories(configuration, logger);
-		/*
-		{
-			// here the MMSStorage is instantiated just because it will create
-			// the local directories of the transcoder
-			logger->info(__FILEREF__ + "Creating MMSStorage"
-				);
-			shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-				configuration, logger);
-		}
-		*/
 
 		FCGX_Init();
 
@@ -449,16 +400,6 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_mmsAPIPort)
     );
-	/*
-    _mmsAPIUser = _configuration["api"].get("user", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->user: " + _mmsAPIUser
-    );
-    _mmsAPIPassword = _configuration["api"].get("password", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->password: " + "..."
-    );
-	*/
     _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
@@ -578,6 +519,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string>& requestDetails
 )
 {
+	chrono::system_clock::time_point startManageRequestAndResponse = chrono::system_clock::now();
+
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {
@@ -2824,7 +2767,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
     }
     else if (method == "encodingStatus")
-    {
+	{
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -3628,6 +3571,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		*_lastEncodingCompletedCheck = chrono::system_clock::now();
 		encodingCompletedRetention();
 	}
+
+	chrono::system_clock::time_point endManageRequestAndResponse = chrono::system_clock::now();
+
+	_logger->info(__FILEREF__ + "manageRequestAndResponse"
+		+ ", method: " + method
+		+ ", @MMS statistics@ - duration manageRequestAndResponse (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(endManageRequestAndResponse - startManageRequestAndResponse).count()) + "@"
+	);
 }
 
 void FFMPEGEncoder::encodeContentThread(
