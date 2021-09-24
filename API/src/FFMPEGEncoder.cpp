@@ -134,7 +134,8 @@ int main(int argc, char** argv)
 		mutex cpuUsageMutex;
 		int cpuUsage = 0;
 
-		mutex lastEncodingAcceptedTimeMutex;
+		// 2021-09-24: chrono is already thread safe.
+		// mutex lastEncodingAcceptedTimeMutex;
 		chrono::system_clock::time_point    lastEncodingAcceptedTime = chrono::system_clock::now();
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
@@ -238,7 +239,7 @@ int main(int argc, char** argv)
 				&cpuUsageMutex,
 				&cpuUsage,
 
-				&lastEncodingAcceptedTimeMutex,
+				// &lastEncodingAcceptedTimeMutex,
 				&lastEncodingAcceptedTime,
 
 				&encodingMutex,
@@ -320,7 +321,7 @@ FFMPEGEncoder::FFMPEGEncoder(
         mutex* cpuUsageMutex,
 		int* cpuUsage,
 
-        mutex* lastEncodingAcceptedTimeMutex,
+        // mutex* lastEncodingAcceptedTimeMutex,
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
@@ -433,7 +434,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;
 
-	_lastEncodingAcceptedTimeMutex = lastEncodingAcceptedTimeMutex;
+	// _lastEncodingAcceptedTimeMutex = lastEncodingAcceptedTimeMutex;
 	_lastEncodingAcceptedTime = lastEncodingAcceptedTime;
 
 	_encodingMutex = encodingMutex;
@@ -519,7 +520,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string>& requestDetails
 )
 {
-	chrono::system_clock::time_point startManageRequestAndResponse = chrono::system_clock::now();
+	// chrono::system_clock::time_point startManageRequestAndResponse = chrono::system_clock::now();
 
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
@@ -649,7 +650,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -845,7 +846,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1042,7 +1043,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1238,7 +1239,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1434,7 +1435,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1630,7 +1631,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1826,7 +1827,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -2022,7 +2023,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -2218,7 +2219,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{            
-				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -2414,7 +2415,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			#endif
 
 			try
-			{            
+			{
+				/*
+				 * 2021-09-15: live-recorder cannot wait. Scenario: received a lot of requests that fail
+				 * Those requests set _lastEncodingAcceptedTime and delay a lot
+				 * the requests that would work fine
+				 * Consider that Live-Recorder is a Task where FFMPEGEncoder
+				 * could receive a lot of close requests
 				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
@@ -2422,12 +2429,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (now - *_lastEncodingAcceptedTime <
 					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 				{
-					/*
-					 * 2021-09-15: scenario: received a lot of requests that fail
-					 * Those requests set _lastEncodingAcceptedTime and delay a lot
-					 * the requests that would work fine
-					 * Consider that Live-Recorder is a Task where FFMPEGEncoder
-					 * could receive a lot of close requests
 					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -2440,8 +2441,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
+				*/
 
 				#ifdef __VECTOR__
 				#else	// __MAP__
@@ -2472,7 +2473,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				);
 				#endif
 
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
+				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -2617,6 +2618,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
+				/*
+				 * 2021-09-15: liveProxy cannot wait. Scenario: received a lot of requests that fail
+				 * Those requests set _lastEncodingAcceptedTime and delay a lot
+				 * the requests that would work fine
+				 * Consider that Live-Proxy is a Task where FFMPEGEncoder
+				 * could receive a lot of close requests
 				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
@@ -2624,12 +2631,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (now - *_lastEncodingAcceptedTime <
 					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 				{
-					/*
-					 * 2021-09-15: scenario: received a lot of requests that fail
-					 * Those requests set _lastEncodingAcceptedTime and delay a lot
-					 * the requests that would work fine
-					 * Consider that Live-Proxy is a Task where FFMPEGEncoder
-					 * could receive a lot of close requests
 					int secondsToWait =
 						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
@@ -2648,8 +2649,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
-					*/
 				}
+				*/
 
 				#ifdef __VECTOR__
 				#else	// __MAP__
@@ -2714,7 +2715,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				);
 				#endif
 
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
+				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
@@ -3572,13 +3573,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		encodingCompletedRetention();
 	}
 
+	/* this statistics information is already present in APICommon.cpp
 	chrono::system_clock::time_point endManageRequestAndResponse = chrono::system_clock::now();
-
 	_logger->info(__FILEREF__ + "manageRequestAndResponse"
 		+ ", method: " + method
 		+ ", @MMS statistics@ - duration manageRequestAndResponse (secs): @"
 			+ to_string(chrono::duration_cast<chrono::seconds>(endManageRequestAndResponse - startManageRequestAndResponse).count()) + "@"
 	);
+	*/
 }
 
 void FFMPEGEncoder::encodeContentThread(

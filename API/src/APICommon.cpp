@@ -519,7 +519,7 @@ int APICommon::operator()()
 			_logger->info(__FILEREF__ + "manageRequestAndResponse"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 				+ ", threadId: " + sThreadId
-				+ ", method: " + method
+				+ ", method: @" + method + "@"
 				+ ", requestURI: " + requestURI
 				+ ", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent)
 				+ ", @MMS statistics@ - manageRequestDuration (secs): @"
