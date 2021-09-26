@@ -131,7 +131,8 @@ int main (int iArgc, char *pArgv [])
 			emailBody.push_back("<p>MMS technical support</p>");
 
 			EMailSender emailSender(logger, configuration);
-			emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+			emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
 	}
 	catch(exception e)

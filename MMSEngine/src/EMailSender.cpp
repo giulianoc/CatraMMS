@@ -29,7 +29,11 @@ EMailSender::EMailSender(
 EMailSender::~EMailSender() {
 }
 
-void EMailSender:: sendEmail(string tosCommaSeparated, string subject, vector<string>& emailBody)
+void EMailSender:: sendEmail(
+	string tosCommaSeparated,
+	string subject,
+	vector<string>& emailBody,
+	bool useMMSCCToo)
 {
     // curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd   
     //      --mail-from 'giulianocatrambone@gmail.com' 
@@ -50,7 +54,10 @@ void EMailSender:: sendEmail(string tosCommaSeparated, string subject, vector<st
     }
     string from = _configuration["EmailNotification"].get("from", "XXX").asString();
     // string to = "giulianoc@catrasoftware.it";
-    string cc = _configuration["EmailNotification"].get("cc", "XXX").asString();
+    string cc;
+	
+	if (useMMSCCToo)
+		cc = _configuration["EmailNotification"].get("cc", "XXX").asString();
     
     string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
     

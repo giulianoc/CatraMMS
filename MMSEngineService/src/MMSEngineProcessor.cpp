@@ -20785,7 +20785,8 @@ void MMSEngineProcessor::emailNotificationThread(
         emailBody.push_back(message);
 
         EMailSender emailSender(_logger, _configuration);
-        emailSender.sendEmail(emailAddresses, subject, emailBody);
+		bool useMMSCCToo = false;
+        emailSender.sendEmail(emailAddresses, subject, emailBody, useMMSCCToo);
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)

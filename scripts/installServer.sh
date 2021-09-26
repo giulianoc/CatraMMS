@@ -261,6 +261,7 @@ create-directory()
 	echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
 	echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
 	echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
+	echo "date" >> /home/mms/.bashrc
 }
 
 install-mms-packages()

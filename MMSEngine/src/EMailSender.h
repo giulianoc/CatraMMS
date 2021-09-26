@@ -41,7 +41,12 @@ public:
     
     virtual ~EMailSender();
     
-    void sendEmail(string tosCommaSeparated, string subject, vector<string>& emailBody);
+    void sendEmail(
+		string tosCommaSeparated,
+		string subject,
+		vector<string>& emailBody,
+		bool useMMSCCToo
+	);
   
 private:
     shared_ptr<spdlog::logger>          _logger;

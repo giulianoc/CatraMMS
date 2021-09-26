@@ -5203,7 +5203,8 @@ void API::mmsSupport(
             emailBody.push_back(string("<p>") + text + "</p>");
 
             EMailSender emailSender(_logger, _configuration);
-            emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 
             string responseBody;
             sendSuccess(request, 201, responseBody);

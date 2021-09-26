@@ -36,7 +36,8 @@ int main (int iArgc, char *pArgv [])
         emailBody.push_back("Test body");
 
         EMailSender emailSender(logger, configuration);
-        emailSender.sendEmail(emailAddresses, "Test subject", emailBody);
+		bool useMMSCCToo = true;
+        emailSender.sendEmail(emailAddresses, "Test subject", emailBody, useMMSCCToo);
     }
     catch(...)
     {

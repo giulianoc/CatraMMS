@@ -324,7 +324,8 @@ void API::registerUser(
             emailBody.push_back("<p>MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
-            emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -514,7 +515,8 @@ void API::createWorkspace(
             emailBody.push_back("<p>MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
-            emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -894,7 +896,8 @@ void API::shareWorkspace_(
             emailBody.push_back("<p>MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
-            emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -1065,7 +1068,8 @@ void API::confirmRegistration(
             emailBody.push_back("<p>MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
-            emailSender.sendEmail(to, subject, emailBody);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
