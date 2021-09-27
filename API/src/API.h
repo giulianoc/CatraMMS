@@ -39,11 +39,14 @@ public:
     };
     
     API(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-			shared_ptr<MMSStorage> mmsStorage,
-            mutex* fcgiAcceptMutex,
-            FileUploadProgressData* fileUploadProgressData,
-            shared_ptr<spdlog::logger> logger);
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		shared_ptr<MMSStorage> mmsStorage,
+		string fastcgiHostName,
+		int fastcgiPort,
+		int fastcgiListenQueueDepth,
+		mutex* fcgiAcceptMutex,
+		FileUploadProgressData* fileUploadProgressData,
+		shared_ptr<spdlog::logger> logger);
     
     ~API();
     

@@ -111,6 +111,9 @@ public:
 		Json::Value configuration, 
 		// string encoderCapabilityConfigurationPathName,
 
+		string fastcgiHostName,
+		int fastcgiPort,
+		int fastcgiListenQueueDepth,
 		mutex* fcgiAcceptMutex,
 
 		mutex* cpuUsageMutex,

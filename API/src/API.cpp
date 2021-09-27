@@ -129,6 +129,19 @@ int main(int argc, char** argv)
 		// spdlog::register_logger(logger);
 		*/
 
+		string fastcgiHostName = configuration["api"].get("fastcgiHostName", "127.0.0.1").asString();
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", api->fastcgiHostName: " + fastcgiHostName
+		);
+		int fastcgiPort = JSONUtils::asInt(configuration["api"], "fastcgiPort", -1);
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", api->fastcgiPort: " + to_string(fastcgiPort)
+		);
+		int fastcgiListenQueueDepth = JSONUtils::asInt(configuration["api"], "fastcgiListenQueueDepth", 1024);
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", api->fastcgiListenQueueDepth: " + to_string(fastcgiListenQueueDepth)
+		);
+
 		size_t dbPoolSize = JSONUtils::asInt(configuration["database"], "apiPoolSize", 5);
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", database->poolSize: " + to_string(dbPoolSize)
@@ -161,6 +174,9 @@ int main(int argc, char** argv)
 			shared_ptr<API> api = make_shared<API>(configuration, 
                 mmsEngineDBFacade,
 				mmsStorage,
+				fastcgiHostName,
+				fastcgiPort,
+				fastcgiListenQueueDepth,
                 &fcgiAcceptMutex,
                 &fileUploadProgressData,
                 logger
@@ -225,15 +241,21 @@ int main(int argc, char** argv)
 }
 
 API::API(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-			shared_ptr<MMSStorage> mmsStorage,
-            mutex* fcgiAcceptMutex,
-            FileUploadProgressData* fileUploadProgressData,
-            shared_ptr<spdlog::logger> logger)
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		shared_ptr<MMSStorage> mmsStorage,
+		string fastcgiHostName,
+		int fastcgiPort,
+		int fastcgiListenQueueDepth,
+		mutex* fcgiAcceptMutex,
+		FileUploadProgressData* fileUploadProgressData,
+		shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
-            mmsEngineDBFacade,
-            fcgiAcceptMutex,
-            logger) 
+		fastcgiHostName,
+		fastcgiPort,
+		fastcgiListenQueueDepth,
+		fcgiAcceptMutex,
+		mmsEngineDBFacade,
+		logger) 
 {
 	_mmsStorage = mmsStorage;
 

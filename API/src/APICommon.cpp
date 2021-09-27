@@ -24,53 +24,73 @@
 
 extern char** environ;
 
-APICommon::APICommon(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            mutex* fcgiAcceptMutex,
-            shared_ptr<spdlog::logger> logger)
+APICommon::APICommon(
+	Json::Value configuration, 
+	string fastcgiHostName,
+	int fastcgiPort,
+	int fastcgiListenQueueDepth,
+	mutex* fcgiAcceptMutex,
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	shared_ptr<spdlog::logger> logger)
 {
 	_accessToDBAllowed = true;
-    _mmsEngineDBFacade  = mmsEngineDBFacade;
+	_mmsEngineDBFacade  = mmsEngineDBFacade;
 
-	init(configuration, fcgiAcceptMutex, logger);
+	init(configuration,
+		fastcgiHostName, fastcgiPort, fastcgiListenQueueDepth,
+		fcgiAcceptMutex, logger);
 }
 
-APICommon::APICommon(Json::Value configuration, 
-            mutex* fcgiAcceptMutex,
-            shared_ptr<spdlog::logger> logger)
+APICommon::APICommon(
+	Json::Value configuration, 
+	string fastcgiHostName,
+	int fastcgiPort,
+	int fastcgiListenQueueDepth,
+	mutex* fcgiAcceptMutex,
+	shared_ptr<spdlog::logger> logger)
 {
 	_accessToDBAllowed = false;
 
-	init(configuration, fcgiAcceptMutex, logger);
+	init(configuration,
+		fastcgiHostName, fastcgiPort, fastcgiListenQueueDepth,
+		fcgiAcceptMutex, logger);
 }
 
 APICommon::~APICommon() {
 }
 
-void APICommon::init(Json::Value configuration, 
-            mutex* fcgiAcceptMutex,
-            shared_ptr<spdlog::logger> logger)
+void APICommon::init(
+	Json::Value configuration,
+	string fastcgiHostName,
+	int fastcgiPort,
+	int fastcgiListenQueueDepth,
+	mutex* fcgiAcceptMutex,
+	shared_ptr<spdlog::logger> logger)
 {
-    _configuration      = configuration;
-    _fcgiAcceptMutex    = fcgiAcceptMutex;
-    _logger             = logger;
+	_fastcgiHostName	= fastcgiHostName;
+	_fastcgiPort		= fastcgiPort;
+	_fastcgiListenQueueDepth = fastcgiListenQueueDepth;
+	_configuration      = configuration;
+	_fcgiAcceptMutex    = fcgiAcceptMutex;
+	_logger             = logger;
 
 	_hostName			= System::getHostName();                                                  
 
-    _requestIdentifier = 0;
-    _maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
-    );
-    Json::Value api = _configuration["api"];
-    _maxBinaryContentLength = JSONUtils::asInt64(api["binary"], "maxContentLength", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
-    );
+	_requestIdentifier = 0;
 
-    _guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->guiProtocol: " + _guiProtocol
+	_maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", api->maxContentLength: " + to_string(_maxAPIContentLength)
+	);
+	Json::Value api = _configuration["api"];
+	_maxBinaryContentLength = JSONUtils::asInt64(api["binary"], "maxContentLength", 0);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
+	);
+
+	_guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->guiProtocol: " + _guiProtocol
     );
     _guiHostname =  _configuration["mms"].get("guiHostname", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -108,7 +128,18 @@ int APICommon::operator()()
 
     FCGX_Request request;
 
-    FCGX_InitRequest(&request, 0, 0);
+	int sock_fd = 0;
+	if (_fastcgiHostName != "" && _fastcgiPort != -1 && _fastcgiListenQueueDepth)
+	{
+		string socketPath = _fastcgiHostName + ":" + to_string(_fastcgiPort);
+		_logger->info(__FILEREF__ + "APICommon::FCGX_OpenSocket"
+			+ ", threadId: " + sThreadId
+			+ ", socketPath: " + socketPath
+			+ ", fastcgiListenQueueDepth: " + to_string(_fastcgiListenQueueDepth)
+		);
+		sock_fd = FCGX_OpenSocket(socketPath.c_str(), _fastcgiListenQueueDepth);
+	}
+	FCGX_InitRequest(&request, sock_fd, 0);
 
     bool shutdown = false;    
     while (!shutdown)
