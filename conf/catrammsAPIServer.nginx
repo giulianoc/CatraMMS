@@ -250,6 +250,7 @@
 
 		fastcgi_read_timeout 120;
 
+		#the api fastcgi listen to 8010 port (see scripts/mmsApi.sh)
 		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}

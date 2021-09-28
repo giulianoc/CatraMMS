@@ -33,26 +33,17 @@ class APICommon {
 public:
     APICommon(
 		Json::Value configuration,
-		string fastcgiHostName,
-		int fastcgiPort,
-		int fastcgiListenQueueDepth,
 		mutex* fcgiAcceptMutex,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<spdlog::logger> logger);
 
     APICommon(
 		Json::Value configuration,
-		string fastcgiHostName,
-		int fastcgiPort,
-		int fastcgiListenQueueDepth,
 		mutex* fcgiAcceptMutex,
 		shared_ptr<spdlog::logger> logger);
     
 	void init(
 		Json::Value configuration,
-		string fastcgiHostName,
-		int fastcgiPort,
-		int fastcgiListenQueueDepth,
 		mutex* fcgiAcceptMutex,                                                                           
 		shared_ptr<spdlog::logger> logger);
     
@@ -117,9 +108,6 @@ protected:
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
 private:
-	string			_fastcgiHostName;
-	int				_fastcgiPort;
-	int				_fastcgiListenQueueDepth;
     int             _requestIdentifier;
     unsigned long   _maxAPIContentLength;
 	string			_encoderUser;

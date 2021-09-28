@@ -124,19 +124,6 @@ int main(int argc, char** argv)
 
 		FCGX_Init();
 
-		string fastcgiHostName = configuration["ffmpeg"].get("fastcgiHostName", "127.0.0.1").asString();
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", ffmpeg->fastcgiHostName: " + fastcgiHostName
-		);
-		int fastcgiPort = JSONUtils::asInt(configuration["ffmpeg"], "fastcgiPort", -1);
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", ffmpeg->fastcgiPort: " + to_string(fastcgiPort)
-		);
-		int fastcgiListenQueueDepth = JSONUtils::asInt(configuration["ffmpeg"], "fastcgiListenQueueDepth", 1024);
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", ffmpeg->fastcgiListenQueueDepth: " + to_string(fastcgiListenQueueDepth)
-		);
-
 		int threadsNumber = JSONUtils::asInt(configuration["ffmpeg"], "encoderThreadsNumber", 1);
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", ffmpeg->encoderThreadsNumber: " + to_string(threadsNumber)
@@ -247,9 +234,6 @@ int main(int argc, char** argv)
 				configuration, 
 				// encoderCapabilityConfigurationPathName, 
 
-				fastcgiHostName,
-				fastcgiPort,
-				fastcgiListenQueueDepth,
 				&fcgiAcceptMutex,
 
 				&cpuUsageMutex,
@@ -332,9 +316,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 		Json::Value configuration, 
 		// string encoderCapabilityConfigurationPathName,
 
-		string fastcgiHostName,
-		int fastcgiPort,
-		int fastcgiListenQueueDepth,
         mutex* fcgiAcceptMutex,
 
         mutex* cpuUsageMutex,
@@ -373,9 +354,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
-		fastcgiHostName,
-		fastcgiPort,
-		fastcgiListenQueueDepth,
 		fcgiAcceptMutex,
 		logger) 
 {

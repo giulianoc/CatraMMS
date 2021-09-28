@@ -64,6 +64,7 @@
 
 		fastcgi_read_timeout 120;
 
+		#the encoder fastcgi listen to 8020 port (see scripts/mmsEncoder.sh)
 		fastcgi_pass   127.0.0.1:8020;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}

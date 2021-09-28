@@ -37,6 +37,7 @@ export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS
 export MMS_CONFIGPATHNAME=~/mms/conf/mms.cfg
 
 PIDFILE=/var/catramms/pids/api.pid
+#port used by nginx (see conf/*.nginx files)
 PORT=8010
 
 if [ "$command" == "start" ]

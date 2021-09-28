@@ -26,9 +26,6 @@ extern char** environ;
 
 APICommon::APICommon(
 	Json::Value configuration, 
-	string fastcgiHostName,
-	int fastcgiPort,
-	int fastcgiListenQueueDepth,
 	mutex* fcgiAcceptMutex,
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 	shared_ptr<spdlog::logger> logger)
@@ -37,22 +34,17 @@ APICommon::APICommon(
 	_mmsEngineDBFacade  = mmsEngineDBFacade;
 
 	init(configuration,
-		fastcgiHostName, fastcgiPort, fastcgiListenQueueDepth,
 		fcgiAcceptMutex, logger);
 }
 
 APICommon::APICommon(
 	Json::Value configuration, 
-	string fastcgiHostName,
-	int fastcgiPort,
-	int fastcgiListenQueueDepth,
 	mutex* fcgiAcceptMutex,
 	shared_ptr<spdlog::logger> logger)
 {
 	_accessToDBAllowed = false;
 
 	init(configuration,
-		fastcgiHostName, fastcgiPort, fastcgiListenQueueDepth,
 		fcgiAcceptMutex, logger);
 }
 
@@ -61,15 +53,9 @@ APICommon::~APICommon() {
 
 void APICommon::init(
 	Json::Value configuration,
-	string fastcgiHostName,
-	int fastcgiPort,
-	int fastcgiListenQueueDepth,
 	mutex* fcgiAcceptMutex,
 	shared_ptr<spdlog::logger> logger)
 {
-	_fastcgiHostName	= fastcgiHostName;
-	_fastcgiPort		= fastcgiPort;
-	_fastcgiListenQueueDepth = fastcgiListenQueueDepth;
 	_configuration      = configuration;
 	_fcgiAcceptMutex    = fcgiAcceptMutex;
 	_logger             = logger;
@@ -128,17 +114,16 @@ int APICommon::operator()()
 
     FCGX_Request request;
 
+	// 0 is file number for STDIN by default
+	// The fastcgi process is launched by spawn-fcgi (see scripts/mmsApi.sh scripts/mmsEncoder.sh)
+	// specifying the port to be used to listen to nginx calls
+	// The nginx process is configured to proxy the requests to 127.0.0.1:<port>
+	// specified by spawn-fcgi
 	int sock_fd = 0;
-	if (_fastcgiHostName != "" && _fastcgiPort != -1 && _fastcgiListenQueueDepth)
-	{
-		string socketPath = _fastcgiHostName + ":" + to_string(_fastcgiPort);
-		_logger->info(__FILEREF__ + "APICommon::FCGX_OpenSocket"
-			+ ", threadId: " + sThreadId
-			+ ", socketPath: " + socketPath
-			+ ", fastcgiListenQueueDepth: " + to_string(_fastcgiListenQueueDepth)
-		);
-		sock_fd = FCGX_OpenSocket(socketPath.c_str(), _fastcgiListenQueueDepth);
-	}
+	_logger->info(__FILEREF__ + "APICommon::FCGX_OpenSocket"
+		+ ", threadId: " + sThreadId
+		+ ", sock_fd: " + to_string(sock_fd)
+	);
 	FCGX_InitRequest(&request, sock_fd, 0);
 
     bool shutdown = false;    
