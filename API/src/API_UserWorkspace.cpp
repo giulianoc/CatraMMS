@@ -112,11 +112,21 @@ void API::registerUser(
                 }
             }
 
-            workspaceName = metadataRoot.get("WorkspaceName", "XXX").asString();
-            email = metadataRoot.get("EMail", "XXX").asString();
-            password = metadataRoot.get("Password", "XXX").asString();
+            email = metadataRoot.get("EMail", "").asString();
+            password = metadataRoot.get("Password", "").asString();
+            workspaceName = metadataRoot.get("WorkspaceName", "").asString();
             name = metadataRoot.get("Name", "XXX").asString();
-            country = metadataRoot.get("Country", "XXX").asString();
+            country = metadataRoot.get("Country", "").asString();
+
+			if (workspaceName == "")
+			{
+				if (name != "")
+					workspaceName = name;
+				else
+					workspaceName = email;
+			}
+			if (name == "")
+				workspaceName = email;
         }
 
         encodingPriority = _encodingPriorityWorkspaceDefaultValue;
