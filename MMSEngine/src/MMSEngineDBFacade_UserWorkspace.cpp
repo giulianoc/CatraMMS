@@ -370,6 +370,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
         userKey = getLastInsertId(conn);
 
         {
+			// defaults when a new user is added/registered
             bool admin = false;
             bool createRemoveWorkspace = true;
             bool ingestWorkflow = true;
@@ -380,9 +381,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool editConfiguration = true;
             bool killEncoding = true;
             bool cancelIngestionJob = true;
-            bool editEncodersPool = false;
-            bool applicationRecorder = false;
-            
+            bool editEncodersPool = true;
+            bool applicationRecorder = true;
+
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
                     conn,
@@ -886,7 +887,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 }
 
 pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
-		bool ldapEnabled,
+	bool ldapEnabled,
     bool userAlreadyPresent,
     string userName,
     string userEmailAddress,

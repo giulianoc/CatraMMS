@@ -276,6 +276,10 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
     );
+    _sharedEncoderLabel =  _configuration["api"].get("sharedEncoderLabel", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->sharedEncoderLabel: " + _sharedEncoderLabel
+    );
 
     _apiProtocol =  _configuration["api"].get("protocol", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"

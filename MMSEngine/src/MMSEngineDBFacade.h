@@ -2310,6 +2310,9 @@ public:
 	void addAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
 
+	void addAssociationWorkspaceEncoder(
+		int64_t workspaceKey, string encoderLabel);
+
 	void removeAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
 
@@ -2577,6 +2580,10 @@ private:
 		bool userAPIKeyInfo
 		// bool encoders
 		);
+
+	void addAssociationWorkspaceEncoder(
+		int64_t workspaceKey, int64_t encoderKey,
+		shared_ptr<MySQLConnection> conn);
 
 	Json::Value getEncoderRoot (
 		shared_ptr<sql::ResultSet> resultSet);

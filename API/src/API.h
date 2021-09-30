@@ -78,8 +78,9 @@ private:
 	shared_ptr<MMSStorage>				_mmsStorage;
     MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
-    int _maxIngestionsNumberWorkspaceDefaultValue;
-    int _maxStorageInMBWorkspaceDefaultValue;
+    int					_maxIngestionsNumberWorkspaceDefaultValue;
+    int					_maxStorageInMBWorkspaceDefaultValue;
+	string				_sharedEncoderLabel;
     // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
     int                 _webServerPort;

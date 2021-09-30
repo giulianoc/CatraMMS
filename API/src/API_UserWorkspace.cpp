@@ -261,15 +261,18 @@ void API::registerUser(
         }
         */
 
+		int64_t workspaceKey;
+		int64_t userKey;
+		string confirmationCode;
         try
         {
             _logger->info(__FILEREF__ + "Registering User"
                 + ", workspaceName: " + workspaceName
                 + ", email: " + email
             );
-            
-            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerUserAndAddWorkspace(
+
+			tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
+				= _mmsEngineDBFacade->registerUserAndAddWorkspace(
                     name, 
                     email, 
                     password,
@@ -285,16 +288,90 @@ void API::registerUser(
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
+			workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
+			userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
+			confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
+
             _logger->info(__FILEREF__ + "Registered User and added Workspace"
                 + ", workspaceName: " + workspaceName
                 + ", email: " + email
-                + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
-                + ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
+                + ", userKey: " + to_string(userKey)
+                + ", confirmationCode: " + confirmationCode
             );
-            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		try
+		{
+			_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", _sharedEncoderLabel: " + _sharedEncoderLabel
+			);
+
+			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
+				_sharedEncoderLabel);
+		}
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+			// 2021-09-30: we do not raise an exception because this association
+			// is not critical for the account
+            // sendError(request, 500, errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+			// 2021-09-30: we do not raise an exception because this association
+			// is not critical for the account
+            // sendError(request, 500, errorMessage);
+
+            // throw runtime_error(errorMessage);
+        }
+
+        try
+        {
             string responseBody = string("{ ")
-                + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + " "
-                + ", \"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
+                + "\"workspaceKey\": " + to_string(workspaceKey) + " "
+                + ", \"userKey\": " + to_string(userKey) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
@@ -302,8 +379,8 @@ void API::registerUser(
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
 			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
-				+ to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
-				+ "&confirmationCode=" + get<2>(workspaceKeyUserKeyAndConfirmationCode));
+				+ to_string(userKey)
+				+ "&confirmationCode=" + confirmationCode);
 
             string to = email;
             string subject = "Confirmation code";
@@ -311,8 +388,8 @@ void API::registerUser(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
-            emailBody.push_back(string("<p>here follows the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
-                + "</b> and the confirmation code <b>" + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</b> to be used to confirm the registration</p>");
+            emailBody.push_back(string("<p>here follows the user key <b>") + to_string(userKey) 
+                + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
             // string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
             //         + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
             // emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
