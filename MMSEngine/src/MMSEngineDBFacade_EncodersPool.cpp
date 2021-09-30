@@ -576,7 +576,12 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 	shared_ptr<MySQLConnection> conn)
 {
     string      lastSQLCommand;
-    
+
+	_logger->info(__FILEREF__ + "Received addAssociationWorkspaceEncoder"
+		+ ", workspaceKey: " + to_string(workspaceKey)
+		+ ", encoderKey: " + to_string(encoderKey)
+	);
+
     try
     {
         {
@@ -666,7 +671,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
-				int64_t encoderKey = resultSet->getInt64("encoderKey");
+				encoderKey = resultSet->getInt64("encoderKey");
 			else
 			{
 				string errorMessage = string("No encoder label found")
