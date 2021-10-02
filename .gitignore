@@ -24,6 +24,7 @@ nbproject
 *.sln
 *.suo
 *.vcproj
+.vscode
 Release
 
 Makefile

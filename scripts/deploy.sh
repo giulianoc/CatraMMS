@@ -13,6 +13,7 @@ version=$1
 mmsStopALL.sh
 sleep 2
 
+currentPathNameVersion=$(readlink -f /opt/catramms/CatraMMS)
 
 echo "cd /opt/catramms"
 cd /opt/catramms
@@ -35,6 +36,14 @@ ln -s CatraMMS-$version CatraMMS
 sleep 1
 
 cd
+
+if [ "${currentPathNameVersion}" != "" ];
+then
+	tenDaysInMinutes=14400
+
+	echo "Remove previous versions (retention $tenDaysInMinutes)"
+	find /opt/catramms -mmin +$tenDaysInMinutes -name "CatraMMS-*" -not -path "${currentPathNameVersion}*" -exec rm -rf {} \;
+fi
 
 mmsStatusALL.sh
 

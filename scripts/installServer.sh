@@ -187,6 +187,21 @@ install-packages()
 	read -n 1 -s -r -p "install dvb-tools..."
 	echo ""
 	apt install -y dvb-tools
+
+	if [ "$moduleName" == "api" ]; then
+
+		#api should have GUI as well
+
+		echo ""
+		read -n 1 -s -r -p "install jre..."
+		echo ""
+		apt install -y default-jre
+
+		echo ""
+		read -n 1 -s -r -p "install openjdk..."
+		echo ""
+		apt install -y openjdk-11-jdk
+	fi
 }
 
 
@@ -332,6 +347,71 @@ install-mms-packages()
 		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
 	fi
 
+	if [ "$moduleName" == "api" ]; then
+
+		#api should have GUI as well
+
+		echo ""
+		echo -n "tomcat version (i.e.: 9.0.53)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		read VERSION
+		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
+		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
+		ln -rs /opt/catramms/apache-tomcat-${VERSION} /opt/catramms/tomcat
+
+		rm -rf /opt/catramms/tomcat/logs
+		ln -s /var/catramms/logs/tomcat-gui /opt/catramms/tomcat/logs
+
+		echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
+
+		chown -R mms:mms /opt/catramms/apache-tomcat-${VERSION}
+
+		chmod u+x /opt/catramms/tomcat/bin/*.sh
+
+		echo "[Unit]" > /etc/systemd/system/tomcat.service
+		echo "Description=Tomcat 9 servlet container" >> /etc/systemd/system/tomcat.service
+		echo "After=network.target" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "[Service]" >> /etc/systemd/system/tomcat.service
+		echo "Type=forking" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "User=mms" >> /etc/systemd/system/tomcat.service
+		echo "Group=mms" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"CATALINA_HOME=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomcat.pid\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "ExecStart=/opt/catramms/tomcat/bin/startup.sh" >> /etc/systemd/system/tomcat.service
+		echo "ExecStop=/opt/catramms/tomcat/bin/shutdown.sh" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+		echo "[Install]" >> /etc/systemd/system/tomcat.service
+		echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service
+		echo "" >> /etc/systemd/system/tomcat.service
+
+		#notify systemd that a new unit file exists
+		systemctl daemon-reload
+
+		systemctl enable --now tomcat
+
+		echo "Make sure inside tomcat/conf/server.xml we have:"
+		echo ""
+		echo "<Connector port=\"8080\" protocol=\"HTTP/1.1\""
+		echo "address=\"127.0.0.1\""
+		echo "connectionTimeout=\"20000\""
+		echo "URIEncoding=\"UTF-8\""
+		echo "redirectPort=\"8443\" />"
+		echo ""
+		echo "Make sure inside the Host tag we have:"
+		echo ""
+		echo "<Context path=\"\" docBase=\"catramms\" reloadable=\"true\">"
+		echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
+		echo "</Context>"
+		echo ""
+	fi
 
 	package=opencv
 	read -n 1 -s -r -p "Downloading $package..."
@@ -473,7 +553,7 @@ if [ "$moduleName" == "storage" ]; then
 	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
 	echo "- open /etc/default/nfs-kernel-server"
 	echo "-	comment out the line RPCMOUNTDOPTS=--manage-gids"
-	echo "- add the following line RPCMOUNTDOPTS=\"-p 13025\""
+	echo "- add the following line RPCMOUNTDOPTS=\"-p 13035\""
 	echo "- Restart NFSd with sudo /etc/init.d/nfs-kernel-server restart"
 else
 	echo ""
