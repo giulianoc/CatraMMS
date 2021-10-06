@@ -57,7 +57,7 @@ int main (int iArgc, char *pArgv [])
                 shareWorkspace, editMedia,
                 editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 				applicationRecorder,
-                workspaceKey);
+                workspaceKey, 30);
 	}
 
     logger->info(__FILEREF__ + "Shutdown done"

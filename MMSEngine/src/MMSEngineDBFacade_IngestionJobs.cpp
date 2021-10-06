@@ -1625,12 +1625,12 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
 }
 
 void MMSEngineDBFacade::addIngestionJobDependency (
-        shared_ptr<MySQLConnection> conn,
-        int64_t ingestionJobKey,
-        int dependOnSuccess,
-        int64_t dependOnIngestionJobKey,
-        int orderNumber,
-		bool referenceOutputDependency
+	shared_ptr<MySQLConnection> conn,
+	int64_t ingestionJobKey,
+	int dependOnSuccess,
+	int64_t dependOnIngestionJobKey,
+	int orderNumber,
+	bool referenceOutputDependency
 )
 {
     string      lastSQLCommand;
@@ -1672,12 +1672,13 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 
         {
 			lastSQLCommand = 
-				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, "
-				"dependOnSuccess, dependOnIngestionJobKey, orderNumber, referenceOutputDependency) values ("
+				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, "
+				"ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, "
+				"orderNumber, referenceOutputDependency) values ("
 				"NULL, ?, ?, ?, ?, ?)";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);

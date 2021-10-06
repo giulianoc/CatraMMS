@@ -83,7 +83,7 @@ int main (int iArgc, char *pArgv [])
 				shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 				applicationRecorder,
-				defaultWorkspaceKeys,
+				defaultWorkspaceKeys, 30,
 				chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
 		);
 

@@ -1,0 +1,22 @@
+
+{
+	"Label": "--__title__",
+	"Url": "__url__",
+	"Type": "direct-movie",
+	"Description": "__description__",
+	"Name": "__title__",
+	"Region": "",
+	"Country": "",
+	"ImageUniqueName": "__title__",
+	"Position": __position__,
+	"ChannelData": {
+		"staging": true,
+		"production": true,
+		"cmsSynch": false,
+		"year": __year__,
+		"categories": [__categories__],
+		"channelName": "__title__",
+		"language": "__language__"
+	}
+}
+

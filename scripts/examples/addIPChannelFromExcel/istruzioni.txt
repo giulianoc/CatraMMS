@@ -1,0 +1,5 @@
+
+1. save excel as 'tab separated field'
+2. execute foglio.sh, it will generate the output.sh script
+3. run output.sh
+

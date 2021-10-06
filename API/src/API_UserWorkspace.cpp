@@ -1131,7 +1131,8 @@ void API::confirmRegistration(
         try
         {
             tuple<string,string,string> apiKeyNameAndEmailAddress
-                = _mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second);
+                = _mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second,
+					_expirationInDaysWorkspaceDefaultValue);
 
             string apiKey;
             string name;
@@ -1528,6 +1529,7 @@ void API::login(
 							editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 							applicationRecorder,
 							_ldapDefaultWorkspaceKeys,
+							_expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
 						);

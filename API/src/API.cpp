@@ -237,9 +237,9 @@ API::API(Json::Value configuration,
 {
 	_mmsStorage = mmsStorage;
 
-    string encodingPriority =  _configuration["api"].get("encodingPriorityWorkspaceDefaultValue", "XXX").asString();
+    string encodingPriority =  _configuration["api"]["workspaceDefaults"].get("encodingPriority", "low").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
+        + ", api->workspaceDefaults->encodingPriority: " + encodingPriority
     );
     try
     {
@@ -259,23 +259,28 @@ API::API(Json::Value configuration,
 		+ ", database->maxPageSize: " + to_string(_maxPageSize)
 	);
 
-    string encodingPeriod =  _configuration["api"].get("encodingPeriodWorkspaceDefaultValue", "XXX").asString();
+    string encodingPeriod =  _configuration["api"]["workspaceDefaults"].get("encodingPeriod", "daily").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->encodingPeriodWorkspaceDefaultValue: " + encodingPeriod
+        + ", api->workspaceDefaults->encodingPeriod: " + encodingPeriod
     );
     if (encodingPeriod == "daily")
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
     else
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-    _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"], "maxIngestionsNumberWorkspaceDefaultValue", 0);
+    _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
+        + ", api->workspaceDefaults->maxIngestionsNumber: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
     );
-    _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"], "maxStorageInMBWorkspaceDefaultValue", 0);
+    _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxStorageInMB", 100);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
+        + ", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
     );
+    _expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "expirationInDays", 30);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: " + to_string(_expirationInDaysWorkspaceDefaultValue)
+    );
+
     _sharedEncoderLabel =  _configuration["api"].get("sharedEncoderLabel", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->sharedEncoderLabel: " + _sharedEncoderLabel

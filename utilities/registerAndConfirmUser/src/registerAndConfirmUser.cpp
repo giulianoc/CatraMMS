@@ -98,7 +98,8 @@ int main (int iArgc, char *pArgv [])
 	try
 	{
 		tuple<string,string,string> apiKeyNameAndEmailAddress
-			= mmsEngineDBFacade->confirmRegistration(get<2>(workspaceKeyUserKeyAndConfirmationCode));
+			= mmsEngineDBFacade->confirmRegistration(
+				get<2>(workspaceKeyUserKeyAndConfirmationCode), 30);
 
 		string apiKey;
 		string name;

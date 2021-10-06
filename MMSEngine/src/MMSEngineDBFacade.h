@@ -1224,7 +1224,8 @@ public:
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
-    tuple<string,string,string> confirmRegistration(string confirmationCode);
+    tuple<string,string,string> confirmRegistration(
+		string confirmationCode, int expirationInDaysWorkspaceDefaultValue);
 
 	pair<int64_t,string> registerActiveDirectoryUser(
 		string userName,
@@ -1234,7 +1235,7 @@ public:
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder,
-		string defaultWorkspaceKeys,
+		string defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
 		chrono::system_clock::time_point userExpirationDate
 	);
 
@@ -1245,7 +1246,7 @@ public:
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder,
-		int64_t workspaceKey);
+		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
@@ -2410,11 +2411,11 @@ private:
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder,
-		int64_t workspaceKey);
+		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue);
 
 		void addWorkspaceForAdminUsers(
 			shared_ptr<MySQLConnection> conn,
-			int64_t workspaceKey
+			int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 		);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(

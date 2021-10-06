@@ -80,6 +80,7 @@ private:
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
     int					_maxIngestionsNumberWorkspaceDefaultValue;
     int					_maxStorageInMBWorkspaceDefaultValue;
+	int					_expirationInDaysWorkspaceDefaultValue;
 	string				_sharedEncoderLabel;
     // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;

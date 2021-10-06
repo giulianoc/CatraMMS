@@ -1334,7 +1334,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	bool applicationRecorder,
-	string defaultWorkspaceKeys,
+	string defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -1435,7 +1435,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						shareWorkspace, editMedia,
 						editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 						applicationRecorder,
-						llDefaultWorkspaceKey);
+						llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue);
 					if (apiKey.empty())
 						apiKey = localApiKey;
 				}
@@ -1636,7 +1636,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	bool applicationRecorder,
-	int64_t workspaceKey
+	int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 )
 {
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -1658,7 +1658,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 			applicationRecorder,
-			workspaceKey);
+			workspaceKey, expirationInDaysWorkspaceDefaultValue);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1757,7 +1757,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	bool applicationRecorder,
-	int64_t workspaceKey
+	int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 )
 {
 	string apiKey;
@@ -1881,7 +1881,8 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			char        strExpirationDate [64];
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
-					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+					chrono::system_clock::now()
+					+ chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
 
 				tm          tmDateTime;
 				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
@@ -1914,7 +1915,8 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
-			addWorkspaceForAdminUsers(conn, workspaceKey);
+			addWorkspaceForAdminUsers(conn,
+				workspaceKey, expirationInDaysWorkspaceDefaultValue);
         }
     }
     catch(sql::SQLException se)
@@ -2284,7 +2286,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 }
 
 tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
-    string confirmationCode
+    string confirmationCode, int expirationInDaysWorkspaceDefaultValue
 )
 {
     string      apiKey;
@@ -2484,7 +2486,8 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 			char        strExpirationDate [64];
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
-                        chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
+                        chrono::system_clock::now()
+						+ chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
 
                 tm          tmDateTime;
                 time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
@@ -2517,7 +2520,8 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
-			addWorkspaceForAdminUsers(conn, workspaceKey);
+			addWorkspaceForAdminUsers(conn,
+				workspaceKey, expirationInDaysWorkspaceDefaultValue);
         }
 
         {
@@ -2707,7 +2711,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 	shared_ptr<MySQLConnection> conn,
-	int64_t workspaceKey
+	int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 )
 {
 	string apiKey;
@@ -2835,7 +2839,8 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			char        strExpirationDate [64];
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
-					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+					chrono::system_clock::now()
+					+ chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
 
 				tm          tmDateTime;
 				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
@@ -3238,7 +3243,8 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
         
         {
             lastSQLCommand = 
-                "select userKey, workspaceKey, flags from MMS_APIKey where apiKey = ? and expirationDate >= NOW()";
+                "select userKey, workspaceKey, flags from MMS_APIKey "
+				"where apiKey = ? and expirationDate >= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
