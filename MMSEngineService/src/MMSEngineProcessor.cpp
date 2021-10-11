@@ -4244,7 +4244,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnYouTube)
+                        else if (ingestionType ==
+							MMSEngineDBFacade::IngestionType::PostOnYouTube)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
@@ -4254,15 +4255,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *		in case handleCheckIngestionEvent gets 20 events,
 								 *		we have still to postpone all the events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads =
-									getMaxAdditionalProcessorThreads();
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage post on youtube, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
+                                        + ", _processorsThreadsNumber.use_count(): "
+											+ to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -24341,7 +24344,10 @@ void MMSEngineProcessor::postVideoOnYouTube(
             + ", youTubeDescription: " + youTubeDescription
             + ", youTubeCategoryId: " + to_string(youTubeCategoryId)
         );
-        
+
+		// 1. get refresh_token from the configuration
+		// 2. call google API
+		// 3. the response will have the access token to be used
         string youTubeAccessToken = getYouTubeAccessTokenByConfigurationLabel(
             workspace, youTubeConfigurationLabel);
 
@@ -24350,7 +24356,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
             size_t extensionIndex = mmsAssetPathName.find_last_of(".");
             if (extensionIndex == string::npos)
             {
-                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in mmsAssetPathName"
+                string errorMessage = __FILEREF__
+					+ "No fileFormat (extension of the file) found in mmsAssetPathName"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", mmsAssetPathName: " + mmsAssetPathName
@@ -24636,17 +24643,20 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 if (curlUploadData.lastByteSent == -1)
                     headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
                 else
-                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes - curlUploadData.lastByteSent + 1));
+                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes
+						- curlUploadData.lastByteSent + 1));
                 if (curlUploadData.lastByteSent == -1)
                     headerList.push_back(string("Content-Type: ") + videoContentType);
                 else
-                    headerList.push_back(string("Content-Range: bytes ") + to_string(curlUploadData.lastByteSent) + "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
+                    headerList.push_back(string("Content-Range: bytes ") + to_string(curlUploadData.lastByteSent)
+						+ "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 {
-                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
+                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(
+						curlUploadVideoOnYouTubeCallback);
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
                     request.setOpt(curlUploadDataData);
@@ -24916,7 +24926,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         _logger->info(__FILEREF__ + "Resuming"
                                 + ", youTubeUploadURL: " + youTubeUploadURL
                                 + ", rangeHeader: " + rangeHeader
-                                + ", rangeHeader.substr(rangeStartOffsetIndex + 1): " + rangeHeader.substr(rangeStartOffsetIndex + 1)
+                                + ", rangeHeader.substr(rangeStartOffsetIndex + 1): "
+									+ rangeHeader.substr(rangeStartOffsetIndex + 1)
                         );
                         curlUploadData.lastByteSent = stoll(rangeHeader.substr(rangeStartOffsetIndex + 1)) + 1;
                         curlUploadData.mediaSourceFileStream.seekg(curlUploadData.lastByteSent, ios::beg);
@@ -24994,7 +25005,8 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     
     try
     {
-        string youTubeRefreshToken = _mmsEngineDBFacade->getYouTubeRefreshTokenByConfigurationLabel(
+        string youTubeRefreshToken =
+			_mmsEngineDBFacade->getYouTubeRefreshTokenByConfigurationLabel(
                 workspace->_workspaceKey, youTubeConfigurationLabel);            
 
         youTubeURL = _youTubeDataAPIProtocol
@@ -25004,10 +25016,10 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
             + _youTubeDataAPIRefreshTokenURI;
 
         string body =
-                string("client_id=") + _youTubeDataAPIClientId
-                + "&client_secret=" + _youTubeDataAPIClientSecret
-                + "&refresh_token=" + youTubeRefreshToken
-                + "&grant_type=refresh_token";
+			string("client_id=") + _youTubeDataAPIClientId
+			+ "&client_secret=" + _youTubeDataAPIClientSecret
+			+ "&refresh_token=" + youTubeRefreshToken
+			+ "&grant_type=refresh_token";
 
         list<string> headerList;
 

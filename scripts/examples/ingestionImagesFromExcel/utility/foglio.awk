@@ -9,7 +9,16 @@ BEGIN {
 
 {
 	title=$1;
-	imageURL=$5;
+	imageURL=$9;
+
+	if (NR == 1 && title == "Titolo")
+	{
+		printf("First row skipped\n");
+		
+		next;
+	}
+
+	fileFormat=""
 	imageURLLower=tolower(imageURL);
 	if (index(imageURLLower, ".png") != 0)
 		fileFormat="png";
@@ -21,9 +30,11 @@ BEGIN {
 
 		gsub(/\//, "\\\/", title);
 		gsub(/\//, "\\\/", imageURL);
-		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./ingestionImage.json\n", title, imageURL, fileFormat, retention) >> outputPathName;
+		# printf("imageURL: %s\n", imageURL);
+		# printf("fileFormat: %s\n", fileFormat);
+		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__uniqueName__/%s/g\" | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./ingestionImage.json\n", title, title, imageURL, fileFormat, retention) >> outputPathName;
 
-		printf("curl -k -v -X POST -u %s:%s -d @./ingestionImage.json -H \"Content-Type: application/json\" https://mms-api.cloud-mms.com/catramms/v1/ingestion\n", userKey, apiKey) >> outputPathName;
+		printf("curl -k -v -X POST -u %s:%s -d @./ingestionImage.json -H \"Content-Type: application/json\" https://%s/catramms/v1/ingestion\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{
@@ -32,7 +43,7 @@ BEGIN {
 		else if (imageURL == "")
 			printf("ImageURL is missing\n");
 		else if (fileFormat == "")
-			printf("FileFormat is missing\n");
+			printf("FileFormat is missing, wrong image URL: %s\n", imageURL);
 	}
 }
 

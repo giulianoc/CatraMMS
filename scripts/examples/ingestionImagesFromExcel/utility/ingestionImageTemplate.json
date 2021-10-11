@@ -8,9 +8,38 @@
 			"Title": "__title__",
 			"SourceURL": "__url__",
 			"FileFormat": "__fileformat__",
-			"UniqueName": "__title__",
+			"UniqueName": "__uniqueName__",
 			"Retention": "__retention__",
 			"Ingester": "Giuliano Catrambone"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Label": "Encodes",
+				"Type": "GroupOfTasks",
+				"Parameters": {
+					"ExecutionType": "parallel",
+					"Tasks": [
+						{
+							"Label": "Encode __title__ W240",
+							"Type": "Encode",
+							"Parameters": {
+								"ContentType": "image",
+								"EncodingPriority": "Low",
+								"EncodingProfileLabel": "MMS_JPG_240"
+							}
+						},
+						{
+							"Label": "Encode __title__ H700",
+							"Type": "Encode",
+							"Parameters": {
+								"ContentType": "image",
+								"EncodingPriority": "Low",
+								"EncodingProfileLabel": "MMS_JPG_H700"
+							}
+						}
+					]
+				}
+			}
 		}
 	}
 }

@@ -1,8 +1,8 @@
 {
-	"Label": "MMS_PNG_40",
-	"FileFormat": "PNG",
+	"Label": "MMS_JPG_W930",
+	"FileFormat": "JPG",
 	"Image": {
-		"Width": 40,
+		"Width": 930,
 		"Height": 0,
 		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
 		"AspectRatio": false,
