@@ -91,21 +91,21 @@
 				"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 				"Tasks": [
 					{
-						"Label": "Encode image MMS_JPG_240 (Frame): ${Title}",
+						"Label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_JPG_240",
+							"EncodingProfileLabel": "MMS_JPG_W240",
 							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
 						"Type": "Encode"
 					},
 					{
-						"Label": "Encode image MMS_PNG_240 (Frame): ${Title}",
+						"Label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_PNG_240",
+							"EncodingProfileLabel": "MMS_PNG_W240",
 							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
 						"Type": "Encode"
@@ -135,21 +135,21 @@
 			"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 			"Tasks": [
 				{
-					"Label": "Encode image MMS_JPG_240 (FrameContainingFace): ${Title}",
+					"Label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_JPG_240",
+						"EncodingProfileLabel": "MMS_JPG_W240",
 						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
 					"Type": "Encode"
 				},
 				{
-					"Label": "Encode image MMS_PNG_240 (FrameContainingFace): ${Title}",
+					"Label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_PNG_240",
+						"EncodingProfileLabel": "MMS_PNG_W240",
 						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
 					"Type": "Encode"
