@@ -3,43 +3,63 @@ BEGIN {
 	FS="\t";
 	outputPathName="./output.sh"
 
-	position=5555
-
 	printf("#!/bin/bash\n\n") > outputPathName;
 }
 
 {
-	title=$1;
-	year=$2
-	filmURL=$3
-	language=$6
-	genere=$7
-	description=$8
+	language=$1
+	position=$2
+	title=$3;
+	year=$4
+	genre=$5
+	episodeNumber=$6
+	episodeTitle=$7
+	movieURL=$8
+	season=$9
+	description=$10
 
-	if (title != "" && filmURL != "")
+	if (NR == 1 && title == "Titolo")
+	{
+		printf("First row skipped\n");
+		
+		next;
+	}
+
+	if (title != "" && movieURL != "")
 	{
 		printf("\n") >> outputPathName;
 
 		gsub(/\//, "\\\/", title);
-		gsub(/\//, "\\\/", filmURL);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", title);
+
+		gsub(/\//, "\\\/", episodeTitle);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", episodeTitle);
+
+		gsub(/\//, "\\\/", movieURL);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", movieURL);
+
 		gsub(/\//, "\\\/", description);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", description);
+
+		if (year == "")
+			year = "null";
 
 		categories="";
-		split(genere, a, "/");
-		for(int index=0; index<a.length; index++)
+		len=split(genre, arr, "/");
+		for(i=1; i<=len; i++)
 		{
-			category=a[index];
+			category=arr[i];
 			sub(/^[ \t]+/, "", category)
 			sub(/[ \t]+$/, "", category)
 
 			if (categories != "")
 				categories=categories", ";
-			categories=categories"\""category"\"";
+			categories=categories"\\\""category"\\\"";
 		}
 
-		printf("sed \"s/__title__/%s/g\" ./utility/addIPChannelTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__position__/%d/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" > ./addIPChannel.json\n", title, filmURL, description, position, year, categories, language) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/addIPChannelTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__position__/%d/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__episodeTitle__/%s/g\" | sed \"s/__episodeNumber__/%s/g\" | sed \"s/__season__/%s/g\" > ./outputAddIPChannel.json\n", title, movieURL, description, position, year, categories, language, episodeTitle, episodeNumber, season) >> outputPathName;
 
-		printf("curl -k -v -X POST -u %s:%s -d @./addIPChannel.json -H \"Content-Type: application/json\" https://mms-api.cloud-mms.com/catramms/v1/conf/ipChannel\n", userKey, apiKey) >> outputPathName;
+		printf("curl -k -u %s:%s -d @./outputAddIPChannel.json -H \"Content-Type: application/json\" https://%s/catramms/v1/conf/ipChannel\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{

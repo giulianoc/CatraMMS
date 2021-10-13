@@ -2,7 +2,7 @@
 
 if [ $# -ne 4 ];
 then
-	echo "Usage $0 <tsv path name> <userKey> <apiKey> <mmsHostname> (i.e.: 40 702347803978348... mms-api.cloud-mms.com)"
+	echo "Usage $0 <tsv path name> <userKey> <apiKey> <mmsAPIHostname> (i.e.: 40 702347803978348... mms-api.cloud-mms.com)"
 
 	exit 1
 fi

@@ -14,7 +14,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Label": "Encodes",
+				"Label": "Encodes __title__",
 				"Type": "GroupOfTasks",
 				"Parameters": {
 					"ExecutionType": "parallel",
@@ -25,7 +25,7 @@
 							"Parameters": {
 								"ContentType": "image",
 								"EncodingPriority": "Low",
-								"EncodingProfileLabel": "MMS_JPG_240"
+								"EncodingProfileLabel": "MMS_JPG_W240"
 							}
 						},
 						{

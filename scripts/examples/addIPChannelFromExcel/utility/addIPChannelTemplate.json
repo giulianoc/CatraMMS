@@ -1,8 +1,8 @@
 
 {
-	"Label": "--__title__",
+	"Label": "__season__-__title__-__episodeNumber__",
 	"Url": "__url__",
-	"Type": "direct-movie",
+	"Type": "direct-serie",
 	"Description": "__description__",
 	"Name": "__title__",
 	"Region": "",
@@ -16,7 +16,10 @@
 		"year": __year__,
 		"categories": [__categories__],
 		"channelName": "__title__",
-		"language": "__language__"
+		"language": "__language__",
+		"episodeTitle": "__episodeTitle__",
+		"episodeNumber": "__episodeNumber__",
+		"season": "__season__"
 	}
 }
 

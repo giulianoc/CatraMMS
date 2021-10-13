@@ -3364,6 +3364,16 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
+					catch (exception e)
+					{
+						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", deliveryCode: " + to_string(deliveryCode)
+							+ ", e.what(): " + e.what()
+						);
+
+						continue;
+					}
 
 					string deliveryURL;
 					string deliveryFileName;

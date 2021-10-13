@@ -8,8 +8,8 @@ BEGIN {
 }
 
 {
-	title=$1;
-	imageURL=$9;
+	title=$2;
+	imageURL=$10;
 
 	if (NR == 1 && title == "Titolo")
 	{
@@ -32,9 +32,9 @@ BEGIN {
 		gsub(/\//, "\\\/", imageURL);
 		# printf("imageURL: %s\n", imageURL);
 		# printf("fileFormat: %s\n", fileFormat);
-		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__uniqueName__/%s/g\" | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./ingestionImage.json\n", title, title, imageURL, fileFormat, retention) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__uniqueName__/%s/g\" | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./outputIngestionImage.json\n", title, title, imageURL, fileFormat, retention) >> outputPathName;
 
-		printf("curl -k -v -X POST -u %s:%s -d @./ingestionImage.json -H \"Content-Type: application/json\" https://%s/catramms/v1/ingestion\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
+		printf("curl -k -v -X POST -u %s:%s -d @./outputIngestionImage.json -H \"Content-Type: application/json\" https://%s/catramms/v1/ingestion\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{
