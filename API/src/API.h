@@ -407,7 +407,8 @@ private:
 		int ttlInSeconds,
 		int maxRetries,
 		bool save,
-		bool authorizationThroughPath
+		bool authorizationThroughPath,
+		bool warningIfMissingMediaItemKey
 	);
 
 	void createBulkOfDeliveryAuthorization(

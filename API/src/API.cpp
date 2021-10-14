@@ -2348,6 +2348,7 @@ void API::createDeliveryAuthorization(
 
 		try
 		{
+			bool warningIfMissingMediaItemKey = false;
 			pair<string, string> deliveryAuthorizationDetails = createDeliveryAuthorization(
 				userKey,
 				requestWorkspace,
@@ -2366,7 +2367,8 @@ void API::createDeliveryAuthorization(
 				ttlInSeconds,
 				maxRetries,
 				save,
-				authorizationThroughPath
+				authorizationThroughPath,
+				warningIfMissingMediaItemKey
 			);
 
 			string deliveryURL;
@@ -3174,7 +3176,7 @@ void API::createBulkOfDeliveryAuthorization(
 		/*
 		 * input:
             {
-                "vodUniqueNameList" : [
+                "uniqueNameList" : [
                     {
                         "uniqueName": "...",
 						"encodingProfileKey": 123
@@ -3251,23 +3253,26 @@ void API::createBulkOfDeliveryAuthorization(
 
 			bool save = false;
 
-			string field = "vodUniqueNameList";
+			string field = "uniqueNameList";
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
-				Json::Value vodUniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
-				for (int vodUniqueNameIndex = 0; vodUniqueNameIndex < vodUniqueNameListRoot.size();
-					vodUniqueNameIndex++)
+				Json::Value uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
+				for (int uniqueNameIndex = 0; uniqueNameIndex < uniqueNameListRoot.size();
+					uniqueNameIndex++)
 				{
-					Json::Value vodUniqueNameRoot = vodUniqueNameListRoot[vodUniqueNameIndex];
+					Json::Value uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
 					field = "uniqueName";
-					string uniqueName = vodUniqueNameRoot.get(field, "").asString();
+					string uniqueName = uniqueNameRoot.get(field, "").asString();
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(vodUniqueNameRoot, field, -1);
+					int64_t encodingProfileKey = JSONUtils::asInt64(uniqueNameRoot, field, -1);
+					field = "encodingProfileLabel";
+					string encodingProfileLabel = uniqueNameRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
+						bool warningIfMissingMediaItemKey = true;
 						deliveryAuthorizationDetails = createDeliveryAuthorization(
 							userKey,
 							requestWorkspace,
@@ -3276,7 +3281,7 @@ void API::createBulkOfDeliveryAuthorization(
 							-1,	// mediaItemKey,
 							uniqueName,
 							encodingProfileKey,
-							"",	// encodingProfileLabel,
+							encodingProfileLabel,
 
 							-1,	// physicalPathKey,
 
@@ -3286,10 +3291,21 @@ void API::createBulkOfDeliveryAuthorization(
 							ttlInSeconds,
 							maxRetries,
 							save,
-							authorizationThroughPath
+							authorizationThroughPath,
+							warningIfMissingMediaItemKey
 						);
 					}
 					catch (runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
+							+ ", uniqueName: " + uniqueName
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", e.what(): " + e.what()
+						);
+
+						continue;
+					}
+					catch (exception e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", uniqueName: " + uniqueName
@@ -3306,13 +3322,13 @@ void API::createBulkOfDeliveryAuthorization(
 					tie(deliveryURL, deliveryFileName) = deliveryAuthorizationDetails;
 
 					field = "deliveryURL";
-					vodUniqueNameRoot[field] = deliveryURL;
+					uniqueNameRoot[field] = deliveryURL;
 
-					vodUniqueNameListRoot[vodUniqueNameIndex] = vodUniqueNameRoot;
+					uniqueNameListRoot[uniqueNameIndex] = uniqueNameRoot;
 				}
 
-				field = "vodUniqueNameList";
-				deliveryAutorizationDetailsRoot[field] = vodUniqueNameListRoot;
+				field = "uniqueNameList";
+				deliveryAutorizationDetailsRoot[field] = uniqueNameListRoot;
 			}
 
 			field = "liveIngestionJobKeyList";
@@ -3333,6 +3349,7 @@ void API::createBulkOfDeliveryAuthorization(
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
+						bool warningIfMissingMediaItemKey = false;
 						deliveryAuthorizationDetails = createDeliveryAuthorization(
 							userKey,
 							requestWorkspace,
@@ -3351,7 +3368,8 @@ void API::createBulkOfDeliveryAuthorization(
 							ttlInSeconds,
 							maxRetries,
 							save,
-							authorizationThroughPath
+							authorizationThroughPath,
+							warningIfMissingMediaItemKey
 						);
 					}
 					catch (runtime_error e)
@@ -3467,7 +3485,8 @@ pair<string, string> API::createDeliveryAuthorization(
 	int ttlInSeconds,
 	int maxRetries,
 	bool save,
-	bool authorizationThroughPath
+	bool authorizationThroughPath,
+	bool warningIfMissingMediaItemKey
 	)
 {
 	string deliveryURL;
@@ -3490,11 +3509,10 @@ pair<string, string> API::createDeliveryAuthorization(
 			{
 				// initialize mediaItemKey
 
-				bool warningIfMissing = false;
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 						requestWorkspace->_workspaceKey,
-						uniqueName, warningIfMissing);
+						uniqueName, warningIfMissingMediaItemKey);
 				tie(mediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 
