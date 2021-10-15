@@ -1,10 +1,10 @@
 
 {
-	"Label": "__season__-__title__-__episodeNumber__",
+	"Label": "__title__-__season__-__episodeNumber__",
 	"Url": "__url__",
 	"Type": "direct-serie",
 	"Description": "__description__",
-	"Name": "__title__",
+	"Name": "__title__-__season__-__episodeNumber__-__episodeTitle__",
 	"Region": "",
 	"Country": "",
 	"ImageUniqueName": "__title__",
@@ -15,7 +15,7 @@
 		"cmsSynch": false,
 		"year": __year__,
 		"categories": [__categories__],
-		"channelName": "__title__",
+		"channelName": "__episodeTitle__",
 		"language": "__language__",
 		"episodeTitle": "__episodeTitle__",
 		"episodeNumber": "__episodeNumber__",

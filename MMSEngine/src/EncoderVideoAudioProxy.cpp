@@ -65,10 +65,10 @@ void EncoderVideoAudioProxy::init(
     _proxyIdentifier        = proxyIdentifier;
     
     _mtEncodingJobs         = mtEncodingJobs;
-    
+
     _logger                 = logger;
     _configuration          = configuration;
-    
+
     _multiEventsSet         = multiEventsSet;
     _mmsEngineDBFacade      = mmsEngineDBFacade;
     _mmsStorage             = mmsStorage;
@@ -1531,39 +1531,41 @@ void EncoderVideoAudioProxy::encodeContentImage()
 					+ to_string(_encodingItem->_ingestionJobKey)
 			);
         
-			if (stagingEncodedAssetPathName != "")
+			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
 			{
-				string directoryPathName;
-				try
+				if (stagingEncodedAssetPathName != "")
 				{
-					size_t endOfDirectoryIndex
-						= stagingEncodedAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
+					string directoryPathName;
+					try
 					{
-						directoryPathName
-							= stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+						size_t endOfDirectoryIndex
+							= stagingEncodedAssetPathName.find_last_of("/");
+						if (endOfDirectoryIndex != string::npos)
+						{
+							directoryPathName
+								= stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "removeDirectory"
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", directoryPathName: " + directoryPathName
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+						}
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "removeDirectory failed"
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", directoryPathName: " + directoryPathName
+							+ ", exception: " + e.what()
 						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 					}
 				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "removeDirectory failed"
-						+ ", _ingestionJobKey: "
-							+ to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-						+ ", exception: " + e.what()
-					);
-				}
-			}
 
-			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
 				throw runtime_error(e.what());
+			}
 		}
 		catch (exception e)
 		{
@@ -1575,39 +1577,41 @@ void EncoderVideoAudioProxy::encodeContentImage()
 					+ to_string(_encodingItem->_ingestionJobKey)
 			);
         
-			if (stagingEncodedAssetPathName != "")
+			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
 			{
-				string directoryPathName;
-				try
+				if (stagingEncodedAssetPathName != "")
 				{
-					size_t endOfDirectoryIndex
-						= stagingEncodedAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
+					string directoryPathName;
+					try
 					{
-						directoryPathName
-							= stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+						size_t endOfDirectoryIndex
+							= stagingEncodedAssetPathName.find_last_of("/");
+						if (endOfDirectoryIndex != string::npos)
+						{
+							directoryPathName
+								= stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "removeDirectory"
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", directoryPathName: " + directoryPathName
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+						}
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "removeDirectory failed"
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", directoryPathName: " + directoryPathName
+							+ ", exception: " + e.what()
 						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 					}
 				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "removeDirectory failed"
-						+ ", _ingestionJobKey: "
-							+ to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-						+ ", exception: " + e.what()
-					);
-				}
-			}
 
-			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
 				throw e;
+			}
 		}
 	}
 }

@@ -2,13 +2,13 @@
 	"Label": "__title__",
 	"Type": "Workflow",
 	"Task": {
-		"Label": "__title__",
+		"Label": "__season__-__title__",
 		"Type": "Add-Content",
 		"Parameters": {
 			"Title": "__title__",
 			"SourceURL": "__url__",
 			"FileFormat": "__fileformat__",
-			"UniqueName": "__uniqueName__",
+			"UniqueName": "__title__",
 			"Retention": "__retention__",
 			"Ingester": "Giuliano Catrambone"
 		},
