@@ -7,18 +7,16 @@ BEGIN {
 }
 
 {
-	language=$1
-	position=$2
-	title=$3;
-	year=$4
-	genre=$5
-	episodeNumber=$6
-	episodeTitle=$7
-	movieURL=$8
-	season=$9
-	description=$10
+	position=$1
+	title=$2;
+	year=$3
+	movieURL=$4
+	language=$7
+	genre=$8
+	description=$9
+	duration=$10
 
-	if (NR == 1 && title == "Titolo")
+	if (NR == 1 && title == "TITOLO")
 	{
 		printf("First row skipped\n");
 		
@@ -32,14 +30,11 @@ BEGIN {
 		gsub(/\//, "\\\/", title);
 		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", title);
 
-		gsub(/\//, "\\\/", episodeTitle);
-		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", episodeTitle);
+		gsub(/\//, "\\\/", description);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", description);
 
 		gsub(/\//, "\\\/", movieURL);
 		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", movieURL);
-
-		gsub(/\//, "\\\/", description);
-		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", description);
 
 		if (year == "")
 			year = "null";
@@ -57,14 +52,14 @@ BEGIN {
 			categories=categories"\\\""category"\\\"";
 		}
 
-		printf("sed \"s/__title__/%s/g\" ./utility/addIPChannelTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__position__/%d/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__episodeTitle__/%s/g\" | sed \"s/__episodeNumber__/%s/g\" | sed \"s/__season__/%s/g\" > ./outputAddIPChannel.json\n", title, movieURL, description, position, year, categories, language, episodeTitle, episodeNumber, season) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/movie_addIPChannelTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__position__/%d/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__duration__/%s/g\" > ./outputAddIPChannel.json\n", title, movieURL, description, position, year, categories, language, duration) >> outputPathName;
 
 		printf("curl -k -u %s:%s -d @./outputAddIPChannel.json -H \"Content-Type: application/json\" https://%s/catramms/v1/conf/ipChannel\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{
-		if (title == "")
-			printf("Title is missing\n");
+		if (serieTitle == "")
+			printf("serieTitle is missing\n");
 		else if (filmURL == "")
 			printf("filmURL is missing\n");
 	}

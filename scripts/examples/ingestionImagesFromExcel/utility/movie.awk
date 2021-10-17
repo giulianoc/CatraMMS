@@ -8,12 +8,10 @@ BEGIN {
 }
 
 {
-	title=$3;
-	#episodeNumber=$6
-	season=$9
-	imageURL=$11;
+	title=$2;
+	imageURL=$6;
 
-	if (NR == 1 && title == "Titolo")
+	if (NR == 1 && title == "TITOLO")
 	{
 		printf("First row skipped\n");
 		
@@ -37,7 +35,7 @@ BEGIN {
 
 		# printf("imageURL: %s\n", imageURL);
 		# printf("fileFormat: %s\n", fileFormat);
-		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__season__/%s/g\" | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./outputIngestionImage.json\n", title, season, imageURL, fileFormat, retention) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/movie_ingestionImageTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./outputIngestionImage.json\n", title, imageURL, fileFormat, retention) >> outputPathName;
 
 		printf("curl -k -u %s:%s -d @./outputIngestionImage.json -H \"Content-Type: application/json\" https://%s/catramms/v1/ingestion\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}

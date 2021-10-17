@@ -979,7 +979,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
                 "NULL, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, trimUserName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
@@ -1114,27 +1115,79 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
             }
 
-            lastSQLCommand = 
-                    "insert into MMS_ConfirmationCode (userKey, flags, workspaceKey, isSharedWorkspace, creationDate, confirmationCode) values ("
-                    "?, ?, ?, 1, NOW(), ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-            preparedStatement->setString(queryParameterIndex++, flags);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKeyToBeShared);
-            preparedStatement->setString(queryParameterIndex++, confirmationCode);
+			try
+			{
+				lastSQLCommand = 
+					"insert into MMS_ConfirmationCode (userKey, flags, workspaceKey, "
+					"isSharedWorkspace, creationDate, confirmationCode) values ("
+					"?, ?, ?, 1, NOW(), ?)";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+				preparedStatement->setString(queryParameterIndex++, flags);
+				preparedStatement->setInt64(queryParameterIndex++,
+					workspaceKeyToBeShared);
+				preparedStatement->setString(queryParameterIndex++, confirmationCode);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", userKey: " + to_string(userKey)
-				+ ", flags: " + flags
-				+ ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
-				+ ", confirmationCode: " + confirmationCode
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", flags: " + flags
+					+ ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
+					+ ", confirmationCode: " + confirmationCode
+					+ ", elapsed (secs): @"
+						+ to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+			catch(sql::SQLException se)
+			{
+				string exceptionMessage(se.what());
+
+				if (exceptionMessage.find("Duplicate entry") == string::npos)
+					throw se;
+        
+				// in case of duplicate entry, it means this is the second time
+				// it is received a share workspace, we just do an update
+				lastSQLCommand = 
+					"update MMS_ConfirmationCode set flags = ?, "
+					"isSharedWorkspace = 1, creationDate = NOW(), confirmationCode = ? "
+					"where userKey = ? and workspaceKey = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, flags);
+				preparedStatement->setString(queryParameterIndex++, confirmationCode);
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+				preparedStatement->setInt64(queryParameterIndex++,
+					workspaceKeyToBeShared);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", flags: " + flags
+					+ ", confirmationCode: " + confirmationCode
+					+ ", userKey: " + to_string(userKey)
+					+ ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
+					+ ", elapsed (secs): @"
+						+ to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -4227,18 +4280,16 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 		if (admin)
         {
             lastSQLCommand = 
-                "update MMS_Workspace set isEnabled = ?, name = ?, maxEncodingPriority = ?, encodingPeriod = ?, maxIngestionsNumber = ?, "
-                "maxStorageInMB = ?, languageCode = ? "
-                "where workspaceKey = ?";
+				"update MMS_Workspace set isEnabled = ?, maxEncodingPriority = ?, "
+				"encodingPeriod = ?, maxIngestionsNumber = ?, maxStorageInMB = ? "
+				"where workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, newEnabled);
-            preparedStatement->setString(queryParameterIndex++, newName);
             preparedStatement->setString(queryParameterIndex++, newMaxEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, newEncodingPeriod);
             preparedStatement->setInt64(queryParameterIndex++, newMaxIngestionsNumber);
             preparedStatement->setInt64(queryParameterIndex++, newMaxStorageInMB);
-            preparedStatement->setString(queryParameterIndex++, newLanguageCode);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -4246,12 +4297,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEnabled: " + to_string(newEnabled)
-				+ ", newName: " + newName
 				+ ", newMaxEncodingPriority: " + newMaxEncodingPriority
 				+ ", newEncodingPeriod: " + newEncodingPeriod
 				+ ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
 				+ ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
-				+ ", newLanguageCode: " + newLanguageCode
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4262,12 +4311,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", newEnabled: " + to_string(newEnabled)
-                        + ", newName: " + newName
                         + ", newMaxEncodingPriority: " + newMaxEncodingPriority
                         + ", newEncodingPeriod: " + newEncodingPeriod
                         + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
                         + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
-                        + ", newLanguageCode: " + newLanguageCode
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -4276,7 +4323,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 // throw runtime_error(errorMessage);
             }
         }
-		else if (isOwner)
+
         {
             lastSQLCommand = 
                 "update MMS_Workspace set name = ?, languageCode = ? "
@@ -4454,123 +4501,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				workspaceDetailRoot = getWorkspaceDetailsRoot (conn, resultSet, userAPIKeyInfo);
             }
         }
-
-		/*
-        string field = "workspaceKey";
-        workspaceDetailRoot[field] = workspaceKey;
-
-        field = "isEnabled";
-        workspaceDetailRoot[field] = (newEnabled ? "true" : "false");
-
-        field = "workspaceName";
-        workspaceDetailRoot[field] = newName;
-
-        field = "maxEncodingPriority";
-        workspaceDetailRoot[field] = newMaxEncodingPriority;
-
-        field = "encodingPeriod";
-        workspaceDetailRoot[field] = newEncodingPeriod;
-
-        field = "maxIngestionsNumber";
-        workspaceDetailRoot[field] = newMaxIngestionsNumber;
-
-        field = "maxStorageInMB";
-        workspaceDetailRoot[field] = newMaxStorageInMB;
-
-		{
-			int64_t workSpaceUsageInBytes;
-
-			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
-			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
-                                                                                                            
-			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
-
-			field = "workSpaceUsageInMB";
-			workspaceDetailRoot[field] = workSpaceUsageInMB;
-		}
-
-        field = "languageCode";
-        workspaceDetailRoot[field] = newLanguageCode;
-
-
-		Json::Value     userAPIKeyRoot;
-
-        field = "admin";
-        userAPIKeyRoot[field] = admin ? true : false;
-
-        field = "createRemoveWorkspace";
-        userAPIKeyRoot[field] = newCreateRemoveWorkspace ? true : false;
-
-        field = "ingestWorkflow";
-        userAPIKeyRoot[field] = newIngestWorkflow ? true : false;
-
-        field = "createProfiles";
-        userAPIKeyRoot[field] = newCreateProfiles ? true : false;
-
-        field = "deliveryAuthorization";
-        userAPIKeyRoot[field] = newDeliveryAuthorization ? true : false;
-
-        field = "shareWorkspace";
-        userAPIKeyRoot[field] = newShareWorkspace ? true : false;
-
-        field = "editMedia";
-        userAPIKeyRoot[field] = newEditMedia ? true : false;
-        
-        field = "editConfiguration";
-        userAPIKeyRoot[field] = newEditConfiguration ? true : false;
-        
-        field = "killEncoding";
-        userAPIKeyRoot[field] = newKillEncoding ? true : false;
-        
-        field = "cancelIngestionJob";
-        userAPIKeyRoot[field] = newCancelIngestionJob ? true : false;
-        
-        field = "editEncodersPool";
-        userAPIKeyRoot[field] = newEditEncodersPool ? true : false;
-
-        field = "applicationRecorder";
-        userAPIKeyRoot[field] = newApplicationRecorder ? true : false;
-
-        {
-            lastSQLCommand = 
-                "select w.name, a.apiKey, a.isOwner, a.isDefault, "
-                    "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
-                    "from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and a.workspaceKey = ? and a.userKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", userKey: " + to_string(userKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                field = "creationDate";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
-
-                field = "apiKey";
-                userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
-
-                field = "owner";
-                userAPIKeyRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
-
-				field = "default";
-				userAPIKeyRoot[field] = resultSet->getInt("isDefault") == 1
-					? "true" : "false";
-            }
-        }
-
-		field = "userAPIKey";
-		workspaceDetailRoot[field] = userAPIKeyRoot;
-		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -5206,7 +5136,8 @@ Json::Value MMSEngineDBFacade::updateUser (
         {
             lastSQLCommand = 
                 "select password from MMS_User where userKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 

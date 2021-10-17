@@ -92,11 +92,8 @@ void API::registerUser(
 
         {
             vector<string> mandatoryFields = {
-                "WorkspaceName",
-                "Name",
                 "EMail",
-                "Password",
-                "Country"
+                "Password"
             };
             for (string field: mandatoryFields)
             {
@@ -115,7 +112,7 @@ void API::registerUser(
             email = metadataRoot.get("EMail", "").asString();
             password = metadataRoot.get("Password", "").asString();
             workspaceName = metadataRoot.get("WorkspaceName", "").asString();
-            name = metadataRoot.get("Name", "XXX").asString();
+            name = metadataRoot.get("Name", "").asString();
             country = metadataRoot.get("Country", "").asString();
 
 			if (workspaceName == "")
@@ -899,7 +896,7 @@ void API::shareWorkspace_(
                 }
             }
 
-            email = metadataRoot.get("EMail", "XXX").asString();
+            email = metadataRoot.get("EMail", "").asString();
         }
         else
         {
@@ -1107,8 +1104,8 @@ void API::workspaceList(
 }
 
 void API::confirmRegistration(
-        FCGX_Request& request,
-        unordered_map<string, string> queryParameters)
+	FCGX_Request& request,
+	unordered_map<string, string> queryParameters)
 {
     string api = "confirmRegistration";
 
@@ -2162,9 +2159,9 @@ void API::updateUser(
                 }
             }
 
-            name = metadataRoot.get("Name", "XXX").asString();
-            email = metadataRoot.get("EMail", "XXX").asString();
-            country = metadataRoot.get("Country", "XXX").asString();
+            name = metadataRoot.get("Name", "").asString();
+            email = metadataRoot.get("EMail", "").asString();
+            country = metadataRoot.get("Country", "").asString();
 
 			if (JSONUtils::isMetadataPresent(metadataRoot, "NewPassword")
 					&& JSONUtils::isMetadataPresent(metadataRoot, "OldPassword"))
@@ -2176,6 +2173,7 @@ void API::updateUser(
         }
 		else
         {
+			/*
             vector<string> mandatoryFields = {
                 "Country"
             };
@@ -2192,8 +2190,9 @@ void API::updateUser(
                     throw runtime_error(errorMessage);
                 }
             }
+			*/
 
-            country = metadataRoot.get("Country", "XXX").asString();
+            country = metadataRoot.get("Country", "").asString();
         }
 
         try
@@ -2222,7 +2221,7 @@ void API::updateUser(
             
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
-            
+
             sendSuccess(request, 200, responseBody);            
         }
         catch(runtime_error e)
@@ -2385,12 +2384,12 @@ void API::updateWorkspace(
             }
 
             newEnabled = JSONUtils::asBool(metadataRoot, "Enabled", false);
-            newName = metadataRoot.get("Name", "XXX").asString();
-            newMaxEncodingPriority = metadataRoot.get("MaxEncodingPriority", "XXX").asString();
-            newEncodingPeriod = metadataRoot.get("EncodingPeriod", "XXX").asString();
+            newName = metadataRoot.get("Name", "").asString();
+            newMaxEncodingPriority = metadataRoot.get("MaxEncodingPriority", "").asString();
+            newEncodingPeriod = metadataRoot.get("EncodingPeriod", "").asString();
             newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, "MaxIngestionsNumber", 0);
             newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, "MaxStorageInMB", 0);
-            newLanguageCode = metadataRoot.get("LanguageCode", "XXX").asString();
+            newLanguageCode = metadataRoot.get("LanguageCode", "").asString();
             newCreateRemoveWorkspace = JSONUtils::asBool(metadataRoot, "CreateRemoveWorkspace", false);
             newIngestWorkflow = JSONUtils::asBool(metadataRoot, "IngestWorkflow", false);
             newCreateProfiles = JSONUtils::asBool(metadataRoot, "CreateProfiles", false);
@@ -2756,7 +2755,7 @@ void API::workspaceUsage (
 		sendSuccess(request, 200, responseBody);            
     }
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
             + ", e.what(): " + e.what()
         );
@@ -2764,14 +2763,14 @@ void API::workspaceUsage (
 		sendError(request, 500, e.what());
 
         throw e;
-    } 
+    }
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
         );
 
 		sendError(request, 500, e.what());
 
         throw e;
-    } 
+    }
 }

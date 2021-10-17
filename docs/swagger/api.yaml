@@ -1,0 +1,1352 @@
+openapi: 3.0.0
+servers:
+  - description: Media Management System Base URL
+    url: https://mms-api.cloud-mms.com/catramms/v1
+info:
+  description: Media Management System API
+  version: v1
+  title: Media Management Service API
+  contact:
+    email: mms-technical-support@cloud-mms.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: admins
+    description: Secured Admin-only calls
+  - name: developers
+    description: Operations available to regular developers
+security: 
+  - BasicAuth: []
+paths:
+  /status:
+    get:
+      security: []
+      tags:
+        - developers
+      summary: status of the API service
+      operationId: statusAPI
+      description: Provide the status of the MMS API service
+      responses:
+        '200':
+          description: API service is up and running
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        '500':
+          description: API service is NOT up and running
+  /support:
+    post:
+      tags:
+        - developers
+      summary: ask for MMS support
+      operationId: mmsSupport
+      description: in case of any issue/question about MMS, this API allows you to ask support to the MMS team
+      responses:
+        '201':
+          description: support was submitted
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Support'
+        description: 'Support request details:'
+  /login:
+    post:
+      security: []
+      tags:
+        - developers
+      summary: login into the MMS platform
+      operationId: login
+      description: This API allows the user to login into the MMS platform.
+        As input user and password as input, the output will be the api-key
+        associated to the user default workspace
+        with all the rights the user has on the specified workspace
+      responses:
+        '200':
+          description: login done successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/UserAndWorkspace'
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - EMail
+                - Password
+              properties:
+                EMail:
+                  type: string
+                  example: anthony@companyName.com
+                Password:
+                  type: string
+                  example: k9wo39lksh
+                RemoteClientIPAddress:
+                  type: string
+                  description: in case this field is present, MMS register the client IP |
+                    used by the user
+                  example: 111.222.333.444
+        description: 'User details'
+  /user:
+    post:
+      security: []
+      tags:
+        - developers
+      summary: register a new User into the MMS platform
+      operationId: registerUser
+      description: This API registers a new user into the MMS platform
+        and creates his default workspace.
+      responses:
+        '201':
+          description: user registered and workspace created successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - userKey
+                    - workspaceKey
+                  properties:
+                    userKey:
+                      type: integer
+                      format: int64
+                      example: 123
+                    workspaceKey:
+                      type: integer
+                      format: int64
+                      example: 824
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+        description: 'User for Registration details'
+    put:
+      tags:
+        - developers
+      summary: update of a User metadata
+      operationId: updateUser
+      description: This API updates the user metadata
+      responses:
+        '200':
+          description: user updated successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                type: object
+                required:
+                  - Name
+                  - EMail
+                  - Country
+                properties:
+                  Name:
+                    type: string
+                    example: Anthony
+                  EMail:
+                    type: string
+                    example: anthony@companyName.com
+                  Country:
+                    type: string
+                    example: Italy
+        description: 'User fields to be updated'
+  /user/{userKey}/{confirmationeCode}:
+    get:
+      security: []
+      tags:
+        - developers
+      summary: confirm the registration of the user
+      operationId: confirmRegistration
+      description: confirm the registration of the user
+      parameters:
+        - in: path
+          name: userKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: confirmationeCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: it returns the api-key of the pair userKey-workspaceKey
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - apiKey
+                properties:
+                  status:
+                    type: string
+                  apiKey:
+                    type: string
+        '500':
+          description: internal server error
+  /workspace:
+    get:
+      tags:
+        - developers
+      summary: return all the workspaces of a user, the own workspace and the shared workspaces
+      operationId: workspaceList
+      description: return all the workspaces of a user, the own workspace and the shared workspaces
+      responses:
+        '200':
+          description: list of all the workspaces
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: object
+                      required:
+                        - numFound
+                        - workspaces
+                      properties:
+                        numFound:
+                          type: integer
+                          format: int32
+                        workspaces:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Workspace'
+        '500':
+          description: 'internal server error'
+    post:
+      tags:
+        - developers
+      summary: create a new Workspace into the MMS platform
+      operationId: registerWorkspace
+      description: This API registers a new workspace into the MMS platform. It can be executed only by a user having the createRemoveWorkspace or admin priviledge.
+      responses:
+        '201':
+          description: workspace created successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - workspaceKey
+                  properties:
+                    workspaceKey:
+                      type: integer
+                      format: int64
+                      example: 824
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                type: object
+                required:
+                  - WorkspaceName
+                properties:
+                  WorkspaceName:
+                    type: string
+                    example: news video
+        description: 'Workspace details'
+    put:
+      tags:
+        - developers
+      summary: update of a Workspace metadata
+      operationId: updateWorkspace
+      description: This API updates the Workspace metadata. Only the owner of the workspace is able to do the update. Moreover, the isEnabled, maxEncodingPriority, encodingPeriod,
+        maxIngestionsNumber and maxStorageInMB fields can be updated only by admin
+      responses:
+        '200':
+          description: workspace updated successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                type: object
+                required:
+                  - Enabled
+                  - Name
+                  - MaxEncodingPriority
+                  - EncodingPeriod
+                  - MaxIngestionsNumber
+                  - MaxStorageInMB
+                  - LanguageCode
+                  - CreateRemoveWorkspace
+                  - IngestWorkflow
+                  - CreateProfiles
+                  - DeliveryAuthorization
+                  - ShareWorkspace
+                  - EditMedia
+                  - EditConfiguration
+                  - KillEncoding
+                  - CancelIngestionJob
+                  - EditEncodersPool
+                  - ApplicationRecorder
+                properties:
+                  Enabled:
+                    type: boolean
+                    example: true
+                  Name:
+                    type: string
+                    example: News Video
+                  MaxEncodingPriority:
+                    type: string
+                    example: Low
+                  EncodingPeriod:
+                    type: string
+                    example: Daily
+                  MaxIngestionsNumber:
+                    type: integer
+                    format: int64
+                    example: 20000
+                  MaxStorageInMB:
+                    type: integer
+                    format: int64
+                    example: 500000
+                  LanguageCode:
+                    type: string
+                    example: it
+                  CreateRemoveWorkspace:
+                    type: boolean
+                    example: true
+                  IngestWorkflow:
+                    type: boolean
+                    example: true
+                  CreateProfiles:
+                    type: boolean
+                    example: true
+                  DeliveryAuthorization:
+                    type: boolean
+                    example: true
+                  ShareWorkspace:
+                    type: boolean
+                    example: true
+                  EditMedia:
+                    type: boolean
+                    example: true
+                  EditConfiguration:
+                    type: boolean
+                    example: true
+                  KillEncoding:
+                    type: boolean
+                    example: true
+                  CancelIngestionJob:
+                    type: boolean
+                    example: true
+                  EditEncodersPool:
+                    type: boolean
+                    example: true
+                  ApplicationRecorder:
+                    type: boolean
+                    example: true
+        description: 'Workspace fields to be updated'
+    delete:
+      tags:
+        - developers
+      summary: delete the Workspace identified by the apikey
+      operationId: deleteWorkspace
+      description: delete the Workspace identified by the apikey (http basic authentication password). If the owner does not have any other workspace, also the user is removed. It can be executed only by a user having the createRemoveWorkspace or admin priviledge.
+      responses:
+        '200':
+          description: workspace deleted successful
+        '500':
+          description: 'internal server error'
+  /workspace-encoder/{workspaceKey}/{encoderKey}:
+    post:
+      tags:
+        - developers
+      summary: associate the encoder to the workspace
+      operationId: workspaceEncoderAssociation
+      description: This API associates the encoder to a workspace
+      parameters:
+        - in: path
+          name: workspaceKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: encoderKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: association workspace-encoder created successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - workspaceKey
+                    - encoderKey
+                  properties:
+                    workspaceKey:
+                      type: integer
+                      format: int64
+                      example: 824
+                    encoderKey:
+                      type: integer
+                      format: int64
+                      example: 824
+        '500':
+          description: 'internal server error'
+    delete:
+      tags:
+        - developers
+      summary: delete the association workspace-encoder. Only admin has the rights to do it
+      operationId: deleteWorkspaceEncoder
+      description: delete the association workspace-encoder. Only admin has the rights to do it
+      parameters:
+        - in: path
+          name: workspaceKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: encoderKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: association workspace-encoder deleted successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - workspaceKey
+                    - encoderKey
+                  properties:
+                    workspaceKey:
+                      type: integer
+                      format: int64
+                      example: 824
+                    encoderKey:
+                      type: integer
+                      format: int64
+                      example: 824
+        '403':
+          description: 'APIKey does not have the admin permission'
+        '500':
+          description: 'internal server error'
+  /workspace/share:
+    put:
+      tags:
+        - developers
+      summary: share the workspace with a user already present or a new user
+      operationId: shareWorkspace
+      description: This API shares a workspace with a user already present or a new user.  It can be executed only by a user having the shareWorkspace or admin priviledge.
+      parameters:
+        - in: query
+          name: userAlreadyPresent
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: createRemoveWorkspace
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: ingestWorkflow
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: createProfiles
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: deliveryAuthorization
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: shareWorkspace
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: editMedia
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: editConfiguration
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: killEncoding
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: cancelIngestionJob
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: editEncodersPool
+          required: true
+          schema:
+            type: boolean
+        - in: query
+          name: applicationRecorder
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '201':
+          description: workspace shared successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - userKey
+                  properties:
+                    userKey:
+                      type: integer
+                      format: int64
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - EMail
+                  properties:
+                    EMail:
+                      type: string
+                      example: anthony@companyName.com
+                    Password:
+                      type: string
+                      description: this field is 'required' in case userAlreadyPresent is false
+                      example: 19264hd93h
+                    Name:
+                      type: string
+                      description: this field is 'required' in case userAlreadyPresent is false
+                      example: Anthony
+                    Country:
+                      type: string
+                      description: this field is 'required' in case userAlreadyPresent is false
+                      example: Italy
+        description: 'Just the EMail if userAlreadyPresent is true, all the above fields if userAlreadyPresent is false'
+  /workspace/default/{workspaceKeyToBeSetAsDefault}:
+    put:
+      tags:
+        - developers
+      summary: set the workspace specified by the path parameter as default
+      operationId: workspaceDefault
+      description: This API set the workspace specified by the path parameter as default. This is the workspace used by the MMS platform once the user login into the system
+      parameters:
+        - in: path
+          name: workspaceKeyToBeSetAsDefault
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: default flag set successful
+        '500':
+          description: 'internal server error'
+  /workspace/usage:
+    get:
+      tags:
+        - developers
+      summary: return the storage used by the workspace
+      operationId: workspaceUsage
+      description: return the storage used by the workspace
+      responses:
+        '200':
+          description: storage usage calculated successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: integer
+                      format: int64
+        '500':
+          description: 'internal server error'
+  /encoder:
+    get:
+      tags:
+        - developers
+      summary: return all the encoders associated to the workspace (current api-key)
+      operationId: encoderList
+      description: return all the encoders associated to the workspace (current api-key). Only in case of admin, it is possible to ask for all the encoders available into the MMS platform or the encoder for a specific workspace (different from the one associated to the api-key)
+      parameters:
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: rows
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: label
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: serverName
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: port
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: labelOrder
+          required: false
+          description: asc or desc
+          schema:
+            type: string
+        - in: query
+          name: allEncoders
+          required: false
+          description: only in case of user with admin priviledge
+          schema:
+            type: boolean
+        - in: query
+          name: workspaceKey
+          required: false
+          description: only in case of user with admin priviledge
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: list of the encoders
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: object
+                      required:
+                        - numFound
+                        - encoders
+                      properties:
+                        numFound:
+                          type: integer
+                          format: int32
+                        encoders:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Encoder'
+        '500':
+          description: 'internal server error'
+    post:
+      tags:
+        - developers
+      summary: add a new encoder into the MMS platform
+      operationId: addEncoder
+      description: This API adds a new encoder into the MMS platform. It can be executed only by a user having the admin priviledge.
+      responses:
+        '201':
+          description: workspace created successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Encoder'
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                type: object
+                required:
+                  - EncoderKey
+                properties:
+                  EncoderKey:
+                    type: integer
+                    format: int64
+        description: 'Encoder details'
+  /encoder/{encoderKey}:
+    get:
+      tags:
+        - developers
+      summary: return the encoder details identified by the encoderKey parameter
+      operationId: encoderDetails
+      description: return the encoder details identified by the encoderKey parameter
+      parameters:
+        - in: path
+          name: encoderKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encoder details
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: object
+                      required:
+                        - numFound
+                        - encoders
+                      properties:
+                        numFound:
+                          type: integer
+                          format: int32
+                        encoders:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Encoder'
+        '500':
+          description: 'internal server error'
+    put:
+      tags:
+        - developers
+      summary: update of the Encoder metadata
+      operationId: updateEncoder
+      description: This API updates the Encoder metadata. It can be executed only by a user having the admin priviledge.
+      parameters:
+        - in: path
+          name: encoderKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encoder updated successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - EncoderKey
+                  properties:
+                    EncoderKey:
+                      type: integer
+                      format: int64
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                  $ref: '#/components/schemas/Encoder'
+        description: 'Encoder fields to be updated'
+    delete:
+      tags:
+        - developers
+      summary: delete the Encoder
+      operationId: deleteEncoder
+      description: delete the Encoder identified by the encoderKey parameter. It can be executed 
+        only by a user having the admin priviledge.
+      parameters:
+        - in: path
+          name: encoderKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encoder deleted successful
+        '500':
+          description: 'internal server error'
+  /encodersPool:
+    get:
+      tags:
+        - developers
+      summary: return all the encodersPool associated to the workspace (current api-key)
+      operationId: encodersPoolList
+      description: return all the encodersPool associated to the workspace (current api-key).
+      parameters:
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: rows
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: label
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: labelOrder
+          required: false
+          description: asc or desc
+          schema:
+            type: string
+      responses:
+        '200':
+          description: list of the encodersPool
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: object
+                      required:
+                        - numFound
+                        - encoders
+                      properties:
+                        numFound:
+                          type: integer
+                          format: int32
+                        encoders:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/EncodersPool'
+        '500':
+          description: 'internal server error'
+    post:
+      tags:
+        - developers
+      summary: add a new encodersPool into the MMS platform
+      operationId: addEncodersPool
+      description: This API adds a new encodersPool into the MMS platform.
+      responses:
+        '201':
+          description: encodersPool created successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - EncodersPoolKey
+                  properties:
+                    EncodersPoolKey:
+                      type: integer
+                      format: int64
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                type: object
+                required:
+                  - Label
+                  - encoderKeys
+                properties:
+                  encoderKeys:
+                    type: array
+                    items:
+                      type: integer
+                      format: int64
+        description: 'EncodersPool details'
+  /encodersPool/{encodersPoolKey}:
+    get:
+      tags:
+        - developers
+      summary: return the encodersPool details identified by the encodersPoolKey parameter
+      operationId: encodersPoolDetails
+      description: return the encodersPool details identified by the encodersPoolKey parameter
+      parameters:
+        - in: path
+          name: encodersPoolKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encodersPool details
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    # - requestParameters
+                    - response
+                  properties:
+                    # requestParameters:
+                    response:
+                      type: object
+                      required:
+                        - numFound
+                        - encoders
+                      properties:
+                        numFound:
+                          type: integer
+                          format: int32
+                        encoders:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/EncodersPool'
+        '500':
+          description: 'internal server error'
+    put:
+      tags:
+        - developers
+      summary: update of the EncodersPool metadata
+      operationId: updateEncodersPool
+      description: This API updates the EncodersPool metadata.
+      parameters:
+        - in: path
+          name: encodersPoolKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encodersPool updated successful
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: object
+                  required:
+                    - EncodersPoolKey
+                  properties:
+                    EncoderKey:
+                      type: integer
+                      format: int64
+        '400':
+          description: 'Json field is not present or it is null'
+        '500':
+          description: 'internal server error'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              items:
+                  $ref: '#/components/schemas/EncodersPool'
+        description: 'EncodersPool fields to be updated'
+    delete:
+      tags:
+        - developers
+      summary: delete the EncodersPool
+      operationId: deleteEncodersPool
+      description: delete the EncodersPool identified by the encodersPoolKey parameter
+      parameters:
+        - in: path
+          name: encodersPoolKey
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: encodersPool deleted successful
+        '500':
+          description: 'internal server error'
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    Encoder:
+      type: object
+      required:
+        - enabled
+        - encoderKey
+        - external
+        - label
+        - protocol
+        - port
+        - serverName
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        encoderKey:
+          type: integer
+          format: int64
+        external:
+          type: boolean
+          example: true
+        label:
+          type: string
+          example: encoder for channels
+        protocol:
+          type: string
+          example: http
+        port:
+          type: integer
+          format: int32
+          example: 8088
+        serverName:
+          type: string
+          example: mms-t-transcoder-fr-1
+    EncodersPool:
+      type: object
+      required:
+        - encodersPoolKey
+        - label
+        - encoders
+      properties:
+        encodersPoolKey:
+          type: integer
+          format: int64
+        label:
+          type: string
+          example: encodersPool for channels
+        encoders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Encoder'
+    Support:
+      type: object
+      required:
+        - UserEmailAddress
+        - Subject
+        - Text
+      properties:
+        UserEmailAddress:
+          type: string
+          example: anthony@companyName.com
+        Subject:
+          type: string
+          example: Proxy task does not work
+        Text:
+          type: string
+          example: 'The Proxy task fails woth the following error: .....'
+    UserRegistration:
+      type: object
+      required:
+        - EMail
+        - Password
+      properties:
+        EMail:
+          type: string
+          example: anthony@companyName.com
+        Password:
+          type: string
+          example: 19264hd93h
+        Name:
+          type: string
+          example: Anthony
+        WorkspaceName:
+          type: string
+          description: name of the default workspace associated to the user. If not provided
+            it is set with the 'Name' of the user if present adn, if not present, it is set
+            with the 'EMail' of the user.
+        Country:
+          type: string
+          example: Italy
+    UserAndWorkspace:
+      type: object
+      required:
+        - name
+        - userKey
+        - eMailAddress
+        - country
+        - creationDate
+        - expirationDate
+        - ldapEnabled
+        - loginWorkspace
+      properties:
+        name:
+          type: string
+          example: Anthony
+        userKey:
+          type: integer
+          format: int64
+          example: 1
+        eMailAddress:
+          type: string
+          format: email
+          example: anthony@companyName.com
+        country:
+          type: string
+          example: Italy
+        creationDate:
+          type: string
+          format: date-time
+          example: 2021-04-08T20:28:33Z
+        expirationDate:
+          type: string
+          format: date-time
+          example: 2031-04-06T20:06:39Z
+        ldapEnabled:
+          type: boolean
+          example: false
+        loginWorkspace:
+          $ref: '#/components/schemas/Workspace'
+    User:
+      type: object
+      required:
+        - name
+        - userKey
+        - eMailAddress
+        - country
+        - creationDate
+        - expirationDate
+        - ldapEnabled
+      properties:
+        name:
+          type: string
+          example: Anthony
+        userKey:
+          type: integer
+          format: int64
+          example: 1
+        eMailAddress:
+          type: string
+          format: email
+          example: anthony@companyName.com
+        country:
+          type: string
+          example: Italy
+        creationDate:
+          type: string
+          format: date-time
+          example: 2021-04-08T20:28:33Z
+        expirationDate:
+          type: string
+          format: date-time
+          example: 2031-04-06T20:06:39Z
+        ldapEnabled:
+          type: boolean
+          example: false
+    UserAPIKey:
+      type: object
+      required:
+        - apiKey
+        - owner
+        - default
+        - admin
+        - applicationRecorder
+        - cancelIngestionJob
+        - createProfiles
+        - createRemoveWorkspace
+        - deliveryAuthorization
+        - editConfiguration
+        - editEncodersPool
+        - editMedia
+        - ingestWorkflow
+        - killEncoding
+        - shareWorkspace
+      properties:
+        apiKey:
+          type: string
+          example: 1j1l1x1p1l1d1q1r1f111w1u1d1p1e1r1q1h1C1j1p1d1l1o111f1r1p1b1b1V111S1b1b14141419131714161518
+        owner:
+          type: boolean
+          example: true
+        default:
+          type: boolean
+          example: true
+        admin:
+          type: boolean
+          example: true
+        applicationRecorder:
+          type: boolean
+          example: true
+        cancelIngestionJob:
+          type: boolean
+          example: true
+        createProfiles:
+          type: boolean
+          example: true
+        createRemoveWorkspace:
+          type: boolean
+          example: true
+        deliveryAuthorization:
+          type: boolean
+          example: true
+        editConfiguration:
+          type: boolean
+          example: true
+        editEncodersPool:
+          type: boolean
+          example: true
+        editMedia:
+          type: boolean
+          example: true
+        ingestWorkflow:
+          type: boolean
+          example: true
+        killEncoding:
+          type: boolean
+          example: true
+        shareWorkspace:
+          type: boolean
+          example: true
+    Workspace:
+      type: object
+      required:
+        - creationDate
+        - isEnabled
+        - languageCode
+        - maxStorageInMB
+        - maxEncodingPriority
+        - maxIngestionsNumber
+        - encodingPeriod
+        - userAPIKey
+      properties:
+        creationDate:
+          type: string
+          format: date-time
+          example: 2021-04-08T20:28:33Z
+        isEnabled:
+          type: boolean
+          example: true
+        languageCode:
+          type: string
+          example: it
+        maxStorageInMB:
+          type: integer
+          format: int64
+          example: 500000
+        maxEncodingPriority:
+          type: string
+          example: Low
+        maxIngestionsNumber:
+          type: integer
+          format: int64
+          example: 20000
+        encodingPeriod:
+          type: string
+          example: Daily
+        userAPIKey:
+          $ref: '#/components/schemas/UserAPIKey'

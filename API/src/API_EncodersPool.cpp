@@ -84,7 +84,7 @@ void API::addEncoder(
 			else
 				external = false;
 
-            field = "true";
+            field = "Enabled";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				enabled = requestBodyRoot.get(field, true).asBool();            
 			else
@@ -124,26 +124,6 @@ void API::addEncoder(
 				else if (protocol == "https")
 					port = 443;
 			}
-
-			/*
-            field = "MaxTranscodingCapability";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				maxTranscodingCapability = requestBodyRoot.get(field, 5).asInt();            
-			else
-				maxTranscodingCapability = 5;            
-
-            field = "MaxLiveProxiesCapabilities";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				maxLiveProxiesCapabilities = requestBodyRoot.get(field, 5).asInt();            
-			else
-				maxLiveProxiesCapabilities = 5;
-
-            field = "MaxLiveRecordingCapabilities";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				maxLiveRecordingCapabilities = requestBodyRoot.get(field, 5).asInt();            
-			else
-				maxLiveRecordingCapabilities = 5;            
-			*/
         }
         catch(runtime_error e)
         {

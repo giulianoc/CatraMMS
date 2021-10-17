@@ -1601,9 +1601,47 @@ int64_t MMSEngineDBFacade::addEncodersPool(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// check: every encoderKey shall be already associated to the workspace
+		for(int64_t encoderKey: encoderKeys)
         {
             lastSQLCommand = 
-                "insert into MMS_EncodersPool(workspaceKey, label, lastEncoderIndexUsed) values ( "
+				"select count(*) from MMS_EncoderWorkspaceMapping "
+				"where workspaceKey = ? and encoderKey = ? ";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+				if (resultSet->getInt64(1) == 0)
+				{
+					string errorMessage = __FILEREF__
+						+ "Encoder is not already associated to the workspace"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encoderKey: " + to_string(encoderKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+		}
+
+        {
+            lastSQLCommand = 
+                "insert into MMS_EncodersPool(workspaceKey, label, "
+				"lastEncoderIndexUsed) values ( "
                 "?, ?, 0)";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -1617,7 +1655,8 @@ int64_t MMSEngineDBFacade::addEncodersPool(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
@@ -1627,8 +1666,9 @@ int64_t MMSEngineDBFacade::addEncodersPool(
 		for(int64_t encoderKey: encoderKeys)
         {
             lastSQLCommand = 
-                "insert into MMS_EncoderEncodersPoolMapping(encodersPoolKey, encoderKey) values ( "
-                "?, ?)";
+                "insert into MMS_EncoderEncodersPoolMapping(encodersPoolKey, "
+				"encoderKey) values ( "
+				"?, ?)";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1727,11 +1767,55 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 
     try
     {
+		_logger->info(__FILEREF__ + "Received modifyEncodersPool"
+			+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", newLabel: " + newLabel
+			+ ", newEncoderKeys.size: " + to_string(newEncoderKeys.size())
+		);
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
+		// check: every encoderKey shall be already associated to the workspace
+		for(int64_t encoderKey: newEncoderKeys)
+        {
+            lastSQLCommand = 
+				"select count(*) from MMS_EncoderWorkspaceMapping "
+				"where workspaceKey = ? and encoderKey = ? ";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+				if (resultSet->getInt64(1) == 0)
+				{
+					string errorMessage = __FILEREF__
+						+ "Encoder is not already associated to the workspace"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encoderKey: " + to_string(encoderKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+		}
+
         {
 			lastSQLCommand = 
 				string("select label from MMS_EncodersPool ") 
@@ -1820,10 +1904,12 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 				// all the new encoderKey that are not present in savedEncoderKeys have to be added
 				for(int64_t newEncoderKey: newEncoderKeys)
 				{
-					if (find(savedEncoderKeys.begin(), savedEncoderKeys.end(), newEncoderKey) == savedEncoderKeys.end())
+					if (find(savedEncoderKeys.begin(), savedEncoderKeys.end(),
+						newEncoderKey) == savedEncoderKeys.end())
 					{
 						lastSQLCommand = 
-							"insert into MMS_EncoderEncodersPoolMapping(encodersPoolKey, encoderKey) values ( "
+							"insert into MMS_EncoderEncodersPoolMapping("
+							"encodersPoolKey, encoderKey) values ( "
 							"?, ?)";
 
 						shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -1846,7 +1932,8 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 				// all the saved encoderKey that are not present in encoderKeys have to be removed
 				for(int64_t savedEncoderKey: savedEncoderKeys)
 				{
-					if (find(newEncoderKeys.begin(), newEncoderKeys.end(), savedEncoderKey) == newEncoderKeys.end())
+					if (find(newEncoderKeys.begin(), newEncoderKeys.end(),
+						savedEncoderKey) == newEncoderKeys.end())
 					{
 						lastSQLCommand = 
 							"delete from MMS_EncoderEncodersPoolMapping "

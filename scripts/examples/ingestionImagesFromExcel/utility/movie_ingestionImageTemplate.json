@@ -2,7 +2,7 @@
 	"Label": "__title__",
 	"Type": "Workflow",
 	"Task": {
-		"Label": "__season__-__title__",
+		"Label": "__title__",
 		"Type": "Add-Content",
 		"Parameters": {
 			"Title": "__title__",

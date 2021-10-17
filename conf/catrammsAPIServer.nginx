@@ -8,7 +8,7 @@
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/mmsSupport/?$ /api?version=$1&method=mmsSupport last;
+			rewrite ^/catramms/(v[0-9]+)/support/?$ /api?version=$1&method=mmsSupport last;
 		}
 
 		if ($request_method = POST) {

@@ -1,10 +1,10 @@
 
 {
-	"Label": "__title__-__season__-__episodeNumber__",
+	"Label": "__title__",
 	"Url": "__url__",
-	"Type": "direct-serie",
+	"Type": "direct-movie",
 	"Description": "__description__",
-	"Name": "__title__-__season__-__episodeNumber__-__episodeTitle__",
+	"Name": "__title__",
 	"Region": "",
 	"Country": "",
 	"ImageUniqueName": "__title__",
@@ -15,11 +15,9 @@
 		"cmsSynch": false,
 		"year": __year__,
 		"categories": [__categories__],
-		"channelName": "__episodeTitle__",
+		"channelName": "__title__",
 		"language": "__language__",
-		"episodeTitle": "__episodeTitle__",
-		"episodeNumber": "__episodeNumber__",
-		"season": "__season__"
+		"duration": "__duration__"
 	}
 }
 
