@@ -70,7 +70,7 @@ void API::encodingJobsStatus(
         if (startIngestionDateIt != queryParameters.end()
 			|| endIngestionDateIt != queryParameters.end())
         {
-			if (startIngestionDateIt != queryParameters.end()
+			if (startIngestionDateIt != queryParameters.end())
 				startIngestionDate = startIngestionDateIt->second;
 			else
 			{
@@ -125,7 +125,7 @@ void API::encodingJobsStatus(
         if (startEncodingDateIt != queryParameters.end()
 			|| endEncodingDateIt != queryParameters.end())
         {
-			if (startEncodingDateIt != queryParameters.end()
+			if (startEncodingDateIt != queryParameters.end())
 				startEncodingDate = startEncodingDateIt->second;
 			else
 			{

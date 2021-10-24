@@ -3582,7 +3582,7 @@ void API::ingestionRootsStatus(
         if (startIngestionDateIt != queryParameters.end()
 			|| endIngestionDateIt != queryParameters.end())
         {
-			if (startIngestionDateIt != queryParameters.end()
+			if (startIngestionDateIt != queryParameters.end())
 				startIngestionDate = startIngestionDateIt->second;
 			else
 			{
@@ -3851,7 +3851,7 @@ void API::ingestionJobsStatus(
         if (startIngestionDateIt != queryParameters.end()
 			|| endIngestionDateIt != queryParameters.end())
         {
-			if (startIngestionDateIt != queryParameters.end()
+			if (startIngestionDateIt != queryParameters.end())
 				startIngestionDate = startIngestionDateIt->second;
 			else
 			{
