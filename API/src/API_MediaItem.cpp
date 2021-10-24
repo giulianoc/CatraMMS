@@ -401,11 +401,11 @@ void API::updatePhysicalPath(
 }
 
 void API::mediaItemsList(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody,
-		bool admin)
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	string requestBody,
+	bool admin)
 {
     string api = "mediaItemsList";
 
@@ -678,6 +678,89 @@ void API::mediaItemsList(
 				chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startAPI).count()) + "@"
 		);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::tagsList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "tagsList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end() && startIt->second != "")
+        {
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
+        {
+            rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
+        }
+        
+        bool contentTypePresent = false;
+        MMSEngineDBFacade::ContentType contentType;
+        auto contentTypeIt = queryParameters.find("contentType");
+        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+        {
+            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+            
+            contentTypePresent = true;
+        }
+        
+        {
+            Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
+                    workspace->_workspaceKey, start, rows,
+                    contentTypePresent, contentType);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, tagsRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
     }
     catch(runtime_error e)
     {

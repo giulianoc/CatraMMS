@@ -4332,6 +4332,9 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             field = "label";
             requestParametersRoot[field] = label;
             
+            field = "ingestionJobOutputs";
+            requestParametersRoot[field] = ingestionJobOutputs;
+
             field = "status";
             requestParametersRoot[field] = status;
 

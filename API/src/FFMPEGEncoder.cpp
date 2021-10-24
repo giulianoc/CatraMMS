@@ -405,6 +405,10 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
+    _mmsAPIVersion = _configuration["api"].get("version", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->version: " + _mmsAPIVersion
+    );
     _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
@@ -8692,6 +8696,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 			+ "://"
 			+ _mmsAPIHostname + ":"
 			+ to_string(_mmsAPIPort)
+			+ "/catramms/"
+			+ _mmsAPIVersion
 			+ _mmsAPIIngestionURI
             ;
 
@@ -9766,8 +9772,10 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			+ "://"
 			+ _mmsAPIHostname + ":"
 			+ to_string(_mmsAPIPort)
+			+ "/catramms/"
+			+ _mmsAPIVersion
 			+ _mmsAPIIngestionURI
-           ;
+		;
 
 		list<string> header;
 

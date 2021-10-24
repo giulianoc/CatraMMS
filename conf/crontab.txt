@@ -17,7 +17,7 @@
 0 3 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 15 0 "dbUser dbPwd dbName"
 * * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 engine
 * * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 load-balancer
-* * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 "http://mms-api.catrasoft.cloud/catramms/v1/status"
+* * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 "http://mms-api.catrasoft.cloud/catramms/1.0.1/status"
 
 
 #StreamingRepository is not used

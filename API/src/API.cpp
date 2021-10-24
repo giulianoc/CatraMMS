@@ -286,17 +286,21 @@ API::API(Json::Value configuration,
         + ", api->sharedEncoderLabel: " + _sharedEncoderLabel
     );
 
-    _apiProtocol =  _configuration["api"].get("protocol", "XXX").asString();
+    _apiProtocol =  _configuration["api"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->protocol: " + _apiProtocol
     );
-    _apiHostname =  _configuration["api"].get("hostname", "XXX").asString();
+    _apiHostname =  _configuration["api"].get("hostname", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->hostname: " + _apiHostname
     );
     _apiPort = JSONUtils::asInt(_configuration["api"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_apiPort)
+    );
+    _apiVersion =  _configuration["api"].get("version", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->version: " + _apiVersion
     );
 
     Json::Value api = _configuration["api"];
@@ -516,6 +520,11 @@ void API::manageRequestAndResponse(
     }
     string method = methodIt->second;
 
+    string version;
+    auto versionIt = queryParameters.find("version");
+    if (versionIt != queryParameters.end())
+		version = versionIt->second;
+
     if (!basicAuthenticationPresent)
     {
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
@@ -531,12 +540,16 @@ void API::manageRequestAndResponse(
     if (method == "status")
     {
         try
-        {            
-            string responseBody = string("{ ")
-                    + "\"status\": \"API server up and running\" "
-                    + "}";
+        {
+			Json::Value statusRoot;
 
-            sendSuccess(request, 200, responseBody);
+			statusRoot["status"] = "API server up and running";
+			statusRoot["version-api"] = version;
+
+			Json::StreamWriterBuilder wbuilder;
+			string sJson = Json::writeString(wbuilder, statusRoot);
+
+            sendSuccess(request, 200, sJson);
         }
         catch(exception e)
         {
@@ -4995,89 +5008,6 @@ void API::createDeliveryCDN77Authorization(
 
 		throw runtime_error(errorMessage);
 	}
-}
-
-void API::tagsList(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
-{
-    string api = "tagsList";
-
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
-
-    try
-    {
-        int start = 0;
-        auto startIt = queryParameters.find("start");
-        if (startIt != queryParameters.end() && startIt->second != "")
-        {
-            start = stoll(startIt->second);
-        }
-
-        int rows = 10;
-        auto rowsIt = queryParameters.find("rows");
-        if (rowsIt != queryParameters.end() && rowsIt->second != "")
-        {
-            rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-				rows = _maxPageSize;
-        }
-        
-        bool contentTypePresent = false;
-        MMSEngineDBFacade::ContentType contentType;
-        auto contentTypeIt = queryParameters.find("contentType");
-        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
-        {
-            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
-            
-            contentTypePresent = true;
-        }
-        
-        {
-            Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
-                    workspace->_workspaceKey, start, rows,
-                    contentTypePresent, contentType);
-
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, tagsRoot);
-            
-            sendSuccess(request, 200, responseBody);
-        }
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
 }
 
 void API::parseContentRange(string contentRange,

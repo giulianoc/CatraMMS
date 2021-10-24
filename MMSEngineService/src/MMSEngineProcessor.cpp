@@ -198,6 +198,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_mmsAPIPort)
     );
+    _mmsAPIVersion = _configuration["api"].get("version", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->version: " + _mmsAPIVersion
+    );
     _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
@@ -15185,6 +15189,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				+ "://"
 				+ _mmsAPIHostname + ":"
 				+ to_string(_mmsAPIPort)
+				+ "/catramms/"
+				+ _mmsAPIVersion
 				+ _mmsAPIIngestionURI
             ;
 
@@ -16339,6 +16345,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				+ "://"
 				+ _mmsAPIHostname + ":"
 				+ to_string(_mmsAPIPort)
+				+ "/catramms/"
+				+ _mmsAPIVersion
 				+ _mmsAPIIngestionURI
             ;
 

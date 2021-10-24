@@ -272,6 +272,7 @@ private:
     // string								_mmsAPIUser;
     // string								_mmsAPIPassword;
     string								_mmsAPIIngestionURI;
+    string								_mmsAPIVersion;
     int									_mmsAPITimeoutInSeconds;
 
     void encodeContentThread(

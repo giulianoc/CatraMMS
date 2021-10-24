@@ -11595,7 +11595,9 @@ void FFMpeg::liveProxy(
 			throw FFMpegEncodingKilledByUser();
 		else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
 			throw FFMpegURLForbidden();
-		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
+		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos
+			|| lastPartOfFfmpegOutputFile.find("Invalid data found when processing input")
+				!= string::npos)
 			throw FFMpegURLNotFound();
 		else
 			throw e;

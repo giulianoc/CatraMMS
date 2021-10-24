@@ -866,7 +866,8 @@ void API::addEncodersPool(
             {
 				Json::Value encoderKeysRoot = requestBodyRoot[field];
 
-				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
+				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size();
+					++encoderIndex)
 				{
 					encoderKeys.push_back((encoderKeysRoot[encoderIndex]).asInt64());
 				}

@@ -397,9 +397,6 @@ void API::registerUser(
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
             emailBody.push_back(string("<p>here follows the user key <b>") + to_string(userKey) 
                 + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
-            // string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
-            //         + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
-            // emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
             emailBody.push_back(
 					string("<p>Please click <a href=\"")
 					+ confirmationURL
@@ -592,7 +589,7 @@ void API::createWorkspace(
             emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
             emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
-            string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
+            string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/" 
                     + to_string(userKey) + "/" + get<1>(workspaceKeyAndConfirmationCode);
             emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");

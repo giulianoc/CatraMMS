@@ -98,6 +98,7 @@ private:
     string              _apiProtocol;
     string              _apiHostname;
     int                 _apiPort;
+    string				_apiVersion;
     
     // string				_ffmpegEncoderProtocol;
     // int					_ffmpegEncoderPort;
