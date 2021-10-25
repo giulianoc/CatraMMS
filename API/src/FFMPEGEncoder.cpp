@@ -13043,6 +13043,10 @@ void FFMPEGEncoder::monitorThread()
 						_logger->info(__FILEREF__ + "Checks are not done because too early"
 							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", liveRecordingLiveTimeInMinutes: "
+								+ to_string(liveRecordingLiveTimeInMinutes)
+							+ ", (segmentDurationInSeconds / 60) + 5: "
+								+ to_string((segmentDurationInSeconds / 60) + 5)
 						);
 
 						continue;

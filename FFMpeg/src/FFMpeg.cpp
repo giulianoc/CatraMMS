@@ -10197,41 +10197,74 @@ void FFMpeg::liveRecorder(
 	}
     catch(runtime_error e)
     {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-			string errorMessage;
-			if (iReturnedStatus == 9)	// 9 means: SIGKILL
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
-			else
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
-        _logger->error(errorMessage);
+		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		_logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Remove"
+		// copy ffmpeg log file
+		{
+			char		sEndFfmpegCommand [64];
+
+			time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+			tm		tmUtcEndFfmpegCommand;
+			localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
+			sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcEndFfmpegCommand. tm_year + 1900,
+				tmUtcEndFfmpegCommand. tm_mon + 1,
+				tmUtcEndFfmpegCommand. tm_mday,
+				tmUtcEndFfmpegCommand. tm_hour,
+				tmUtcEndFfmpegCommand. tm_min,
+				tmUtcEndFfmpegCommand. tm_sec);
+
+			string debugOutputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey) + "_"
+				+ to_string(encodingJobKey) + "_"
+				+ sEndFfmpegCommand
+				+ ".liveRecorder.log.debug"
+			;
+
+			_logger->info(__FILEREF__ + "Coping"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+				);
+			FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+		}
+
+		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-        _logger->info(__FILEREF__ + "Remove"
+		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", segmentListPathName: " + segmentListPathName);
-        FileIO::remove(segmentListPathName, exceptionInCaseOfError);
+			+ ", segmentListPathName: " + segmentListPathName);
+		FileIO::remove(segmentListPathName, exceptionInCaseOfError);
 
 		/*
 		if (segmentListPath != "")
@@ -11456,9 +11489,9 @@ void FFMpeg::liveProxy(
 			}
     	}
 
-		if (timePeriod && endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcProxyPeriodEnd - utcNow - 60))
+		if (timePeriod && endFfmpegCommand - startFfmpegCommand
+			< chrono::seconds(utcProxyPeriodEnd - utcNow - 60))
 		{
-
 			throw runtime_error("liveProxy exit before unexpectly");
 		}
     }
@@ -11495,7 +11528,8 @@ void FFMpeg::liveProxy(
 		{
 			char		sEndFfmpegCommand [64];
 
-			time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
 			tm		tmUtcEndFfmpegCommand;
 			localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
 			sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
