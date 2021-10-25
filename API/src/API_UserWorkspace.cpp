@@ -376,10 +376,14 @@ void API::registerUser(
 
         try
         {
-            string responseBody = string("{ ")
-                + "\"workspaceKey\": " + to_string(workspaceKey) + " "
-                + ", \"userKey\": " + to_string(userKey) + " "
-                + "}";
+			Json::Value registrationRoot;
+			registrationRoot["workspaceKey"] = workspaceKey;
+			registrationRoot["userKey"] = userKey;
+			registrationRoot["confirmationCode"] = confirmationCode;
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, registrationRoot);
+
             sendSuccess(request, 201, responseBody);
             
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
