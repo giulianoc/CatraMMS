@@ -1268,7 +1268,7 @@ public:
         int64_t workspaceKey,
         bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
-        int64_t newMaxStorageInMB, string newLanguageCode,
+        int64_t newMaxStorageInMB, string newLanguageCode, string newExpirationDate,
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding,

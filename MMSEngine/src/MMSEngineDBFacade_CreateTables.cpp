@@ -362,7 +362,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_LoginStatistics ("
                     "loginStatisticsKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "userKey				BIGINT UNSIGNED NOT NULL,"
-                    "ip						VARCHAR (128) NOT NULL,"
+                    "ip						VARCHAR (128) NULL,"
                     "continent				VARCHAR (128) NULL,"
                     "continentCode			VARCHAR (128) NULL,"
                     "country				VARCHAR (128) NULL,"

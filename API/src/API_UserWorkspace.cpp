@@ -2012,16 +2012,16 @@ void API::login(
             _logger->info(__FILEREF__ + "Login User"
                 + ", userKey: " + to_string(userKey)
             );
-            
+
             Json::Value loginWorkspaceRoot =
                     _mmsEngineDBFacade->getLoginWorkspace(userKey);
 
-            string field = "loginWorkspace";
+            string field = "workspace";
             loginDetailsRoot[field] = loginWorkspaceRoot;
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
-            
+
             sendSuccess(request, 200, responseBody);            
         }
         catch(runtime_error e)
@@ -2296,6 +2296,7 @@ void API::updateWorkspace(
         int64_t newMaxIngestionsNumber;
         int64_t newMaxStorageInMB;
         string newLanguageCode;
+        string newExpirationDate;
         bool newCreateRemoveWorkspace;
         bool newIngestWorkflow;
         bool newCreateProfiles;
@@ -2354,6 +2355,7 @@ void API::updateWorkspace(
                 "MaxIngestionsNumber",
                 "MaxStorageInMB",
                 "LanguageCode",
+                "ExpirationDate",
                 "CreateRemoveWorkspace",
                 "IngestWorkflow",
                 "CreateProfiles",
@@ -2387,6 +2389,7 @@ void API::updateWorkspace(
             newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, "MaxIngestionsNumber", 0);
             newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, "MaxStorageInMB", 0);
             newLanguageCode = metadataRoot.get("LanguageCode", "").asString();
+            newExpirationDate = metadataRoot.get("ExpirationDate", "").asString();
             newCreateRemoveWorkspace = JSONUtils::asBool(metadataRoot, "CreateRemoveWorkspace", false);
             newIngestWorkflow = JSONUtils::asBool(metadataRoot, "IngestWorkflow", false);
             newCreateProfiles = JSONUtils::asBool(metadataRoot, "CreateProfiles", false);
@@ -2412,7 +2415,7 @@ void API::updateWorkspace(
                     workspace->_workspaceKey,
                     newEnabled, newName, newMaxEncodingPriority,
                     newEncodingPeriod, newMaxIngestionsNumber,
-                    newMaxStorageInMB, newLanguageCode,
+                    newMaxStorageInMB, newLanguageCode, newExpirationDate,
                     newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles,
                     newDeliveryAuthorization, newShareWorkspace,
                     newEditMedia, newEditConfiguration, newKillEncoding, newCancelIngestionJob,

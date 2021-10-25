@@ -3667,7 +3667,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 				lastSQLCommand =
 					"select count(*) from MMS_Workspace w, MMS_APIKey a "
 					"where w.workspaceKey = a.workspaceKey "
-					"and a.userKey = ? and w.isEnabled = 1";
+					"and a.userKey = ? "
+					"and w.isEnabled = 1 and NOW() < a.expirationDate";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -3702,7 +3703,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
 					"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+					"a.apiKey, a.isOwner, a.isDefault, "
+					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+					"a.flags, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
@@ -3711,13 +3714,16 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
 					"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+					"a.apiKey, a.isOwner, a.isDefault, "
+					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+					"a.flags, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
-					"and userKey = ? and w.isEnabled = 1";
+					"and userKey = ? "
+					"and w.isEnabled = 1 and NOW() < a.expirationDate";
             shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
@@ -3834,12 +3840,16 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
 			// if NOT admin returns only the one having isEnabled = 1
 			lastSQLCommand = 
 				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-				"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
+				"w.languageCode, "
+				"a.apiKey, a.isOwner, a.isDefault, "
+				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+				"a.flags, "
 				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 				"from MMS_APIKey a, MMS_Workspace w "
 				"where a.workspaceKey = w.workspaceKey "
 				"and a.userKey = ? and a.isDefault = 1 "
+				"and NOW() < a.expirationDate "
 				"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
 				"limit 1";
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3868,11 +3878,14 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+					"a.apiKey, a.isOwner, a.isDefault, "
+					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+					"a.flags, "
 					"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 					"from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
 					"and a.userKey = ? "
+					"and NOW() < a.expirationDate "
 					"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
 					"limit 1";
 				shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3904,7 +3917,8 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
 					;
 					_logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);
+					// no exception, just return an empty loginWorkspaceRoot
+					// throw runtime_error(errorMessage);
 				}
 			}
         }
@@ -4016,7 +4030,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
 			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB =
 				getWorkspaceUsage(conn, workspaceKey);
-			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
+			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
@@ -4043,6 +4057,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			field = "default";
 			userAPIKeyRoot[field] = resultSet->getInt("isDefault") == 1
 				? "true" : "false";
+
+			field = "expirationDate";
+			userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
 
 			string flags = resultSet->getString("flags");
 
@@ -4207,7 +4224,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t workspaceKey,
         bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
-        int64_t newMaxStorageInMB, string newLanguageCode,
+        int64_t newMaxStorageInMB, string newLanguageCode, string newExpirationDate,
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
@@ -4276,7 +4293,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			throw runtime_error(errorMessage);
 		}
 
-		// some fields (isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB) can be update only by an Administrator
+		// some fields (isEnabled, expirationDate, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB) can be update only by an Administrator
 		if (admin)
         {
             lastSQLCommand = 
@@ -4434,11 +4451,21 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("APPLICATION_RECORDER");
             }
 
-            lastSQLCommand =
-                "update MMS_APIKey set flags = ? "
-                "where workspaceKey = ? and userKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
+			if (admin)
+				lastSQLCommand =
+					"update MMS_APIKey "
+					"set expirationDate = convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
+					"flags = ? "
+					"where workspaceKey = ? and userKey = ?";
+			else
+				lastSQLCommand =
+					"update MMS_APIKey set flags = ? "
+					"where workspaceKey = ? and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (admin)
+				preparedStatement->setString(queryParameterIndex++, newExpirationDate);
             preparedStatement->setString(queryParameterIndex++, flags);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -4473,7 +4500,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			lastSQLCommand = 
 				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
 				"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-				"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+				"a.apiKey, a.isOwner, a.isDefault, "
+				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+				"a.flags, "
 				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 				"from MMS_APIKey a, MMS_Workspace w "
 				"where a.workspaceKey = w.workspaceKey "
