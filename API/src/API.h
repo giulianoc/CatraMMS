@@ -124,6 +124,7 @@ private:
     string				_ldapBaseDn;
 	string				_ldapDefaultWorkspaceKeys;
 
+	bool				_registerUserEnabled;
 
     FileUploadProgressData*     _fileUploadProgressData;
     

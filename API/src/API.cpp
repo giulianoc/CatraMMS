@@ -382,6 +382,10 @@ API::API(Json::Value configuration,
 		+ ", api->activeDirectory->defaultWorkspaceKeys: " + _ldapDefaultWorkspaceKeys
 	);
 
+	_registerUserEnabled  = JSONUtils::asBool(api, "registerUserEnabled", false);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->registerUserEnabled: " + to_string(_registerUserEnabled)
+    );
 	_savingGEOUserInfo = JSONUtils::asBool(_configuration["mms"]["geoService"], "savingGEOUserInfo", false);
 	if (_savingGEOUserInfo)
 	{

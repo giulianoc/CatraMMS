@@ -32,8 +32,8 @@
 
 
 void API::registerUser(
-        FCGX_Request& request,
-        string requestBody)
+	FCGX_Request& request,
+	string requestBody)
 {
     string api = "registerUser";
 
@@ -43,6 +43,17 @@ void API::registerUser(
 
     try
     {
+		if (!_registerUserEnabled)
+		{
+			string errorMessage = string("registerUser is not enabled"
+			);
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         string name;
         string email;
         string password;
