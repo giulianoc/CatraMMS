@@ -2146,7 +2146,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-                    "url						VARCHAR (2048) NOT NULL,"
+					// in case of pull (1) only url is used
+					// in case of push (0) all the push* fields are used
+					"pull						INT NOT NULL DEFAULT 1,"
+					"url						VARCHAR (2048) NULL,"
+                    "pushProtocol				VARCHAR (64) NULL,"
+                    "pushEncoderKey				BIGINT UNSIGNED NULL,"
+					"pushEncoderPort			INT NULL,"
+					"pushUri					VARCHAR (2048) NULL,"
+					"pushTimeout				INT NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "name						VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"

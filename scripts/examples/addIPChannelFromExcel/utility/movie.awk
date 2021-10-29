@@ -54,7 +54,7 @@ BEGIN {
 
 		printf("sed \"s/__title__/%s/g\" ./utility/movie_addIPChannelTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__position__/%d/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__duration__/%s/g\" > ./outputAddIPChannel.json\n", title, movieURL, description, position, year, categories, language, duration) >> outputPathName;
 
-		printf("curl -k -u %s:%s -d @./outputAddIPChannel.json -H \"Content-Type: application/json\" https://%s/catramms/v1/conf/ipChannel\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
+		printf("curl -k -u %s:%s -d @./outputAddIPChannel.json -H \"Content-Type: application/json\" https://%s/catramms/1.0.1/conf/ipChannel\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{
