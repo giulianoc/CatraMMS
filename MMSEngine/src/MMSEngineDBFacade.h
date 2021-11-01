@@ -1767,7 +1767,7 @@ public:
 		EncodingPriority encodingPriority,
 
 		int pushListenTimeout,
-		string captureEncoderServerName, int captureVideoDeviceNumber,
+		int captureVideoDeviceNumber,
 		string captureVideoInputFormat, int captureFrameRate,
 		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 		int captureChannelsNumber,
@@ -1790,7 +1790,7 @@ public:
 		int64_t liveURLConfKey, string configurationLabel, string url,
 
 		int pushListenTimeout,
-		string captureEncoderServerName, int captureVideoDeviceNumber,
+		int captureVideoDeviceNumber,
 		string captureVideoInputFormat, int captureFrameRate,
 		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 		int captureChannelsNumber,
@@ -2100,7 +2100,7 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
-    int64_t addChannelConf(
+    Json::Value addChannelConf(
         int64_t workspaceKey,
         string label,
 		string sourceType,
@@ -2128,7 +2128,7 @@ public:
 		int position,
 		Json::Value channelData);
 
-	void modifyChannelConf(
+	Json::Value modifyChannelConf(
 		int64_t confKey,
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
@@ -2167,7 +2167,7 @@ public:
 		string labelOrder);
 
 	tuple<int64_t, string, string, string, string, int, string, int,
-		int64_t, int, string, int, int, int, int, int, int64_t>
+		int, string, int, int, int, int, int, int64_t>
 		getChannelConfDetails(
 			int64_t workspaceKey, string label, bool warningIfMissing);
 

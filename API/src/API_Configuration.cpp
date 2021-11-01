@@ -946,13 +946,13 @@ void API::addChannelConf(
         int pushServerPort;
         string pushUri;
         int pushListenTimeout;
-        int captureVideoDeviceNumber;
-        string captureVideoInputFormat;
-        int captureFrameRate;
-        int captureWidth;
-        int captureHeight;
-        int captureAudioDeviceNumber;
-        int captureChannelsNumber;
+        int captureLiveVideoDeviceNumber;
+        string captureLiveVideoInputFormat;
+        int captureLiveFrameRate;
+        int captureLiveWidth;
+        int captureLiveHeight;
+        int captureLiveAudioDeviceNumber;
+        int captureLiveChannelsNumber;
 		int64_t satSourceSATConfKey;
 
         string type;
@@ -974,7 +974,7 @@ void API::addChannelConf(
                 Json::CharReader* reader = builder.newCharReader();
                 string errors;
 
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+				bool parsingSuccessful = reader->parse(requestBody.c_str(),
                         requestBody.c_str() + requestBody.size(), 
                         &requestBodyRoot, &errors);
                 delete reader;
@@ -991,7 +991,7 @@ void API::addChannelConf(
                 }
             }
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1002,7 +1002,7 @@ void API::addChannelConf(
             }    
             label = requestBodyRoot.get(field, "").asString();            
 
-            field = "SourceType";
+            field = "sourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1013,99 +1013,97 @@ void API::addChannelConf(
             }    
             sourceType = requestBodyRoot.get(field, "").asString();            
 
-            field = "Url";
+            field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				url = requestBodyRoot.get(field, "").asString();            
 
-            field = "PushProtocol";
+            field = "pushProtocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushProtocol = requestBodyRoot.get(field, "").asString();            
 
-            field = "PushServerName";
+            field = "pushServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushServerName = requestBodyRoot.get(field, "").asString();            
 
-			field = "PushServerPort";
+			field = "pushServerPort";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-            field = "PushURI";
+            field = "pushURI";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushUri = requestBodyRoot.get(field, "").asString();            
 
-			field = "PushListenTimeout";
+			field = "pushListenTimeout";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-			field = "CaptureVideoDeviceNumber";
+			field = "captureLiveVideoDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-            field = "CaptureVideoInputFormat";
+            field = "captureLiveVideoInputFormat";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureVideoInputFormat = requestBodyRoot.get(field, "").asString();
+				captureLiveVideoInputFormat = requestBodyRoot.get(field, "").asString();
 
-			field = "CaptureFrameRate";
+			field = "captureLiveFrameRate";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "CaptureWidth";
+			field = "captureLiveWidth";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "CaptureHeight";
+			field = "captureLiveHeight";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "CaptureAudioDeviceNumber";
+			field = "captureLiveAudioDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "CaptureChannelsNumber";
+			field = "captureLiveChannelsNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "SourceSATConfKey";
+			field = "sourceSATConfKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-            field = "Type";
+            field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				type = requestBodyRoot.get(field, "").asString();            
 
-            field = "Description";
+            field = "description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				description = requestBodyRoot.get(field, "").asString();            
 
-            field = "Name";
+            field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				name = requestBodyRoot.get(field, "").asString();            
 
-            field = "Region";
+            field = "region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				region = requestBodyRoot.get(field, "").asString();            
 
-            field = "Country";
+            field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				country = requestBodyRoot.get(field, "").asString();            
 
-			field = "ImageMediaItemKey";
+			field = "imageMediaItemKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "ImageUniqueName";
+			field = "imageUniqueName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				imageUniqueName = requestBodyRoot.get(field, "").asString();            
 
-			field = "Position";
+			field = "position";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-            field = "ChannelData";
+            field = "channelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
 				channelData = requestBodyRoot[field];
-            }
         }
         catch(runtime_error e)
         {
@@ -1130,7 +1128,7 @@ void API::addChannelConf(
         string sResponse;
         try
         {
-            int64_t confKey = _mmsEngineDBFacade->addChannelConf(
+			Json::Value channelConfRoot = _mmsEngineDBFacade->addChannelConf(
                 workspace->_workspaceKey, label,
 				sourceType,
 				url,
@@ -1139,23 +1137,20 @@ void API::addChannelConf(
 				pushServerPort,
 				pushUri,
 				pushListenTimeout,
-				captureVideoDeviceNumber,
-				captureVideoInputFormat,
-				captureFrameRate,
-				captureWidth,
-				captureHeight,
-				captureAudioDeviceNumber,
-				captureChannelsNumber,
+				captureLiveVideoDeviceNumber,
+				captureLiveVideoInputFormat,
+				captureLiveFrameRate,
+				captureLiveWidth,
+				captureLiveHeight,
+				captureLiveAudioDeviceNumber,
+				captureLiveChannelsNumber,
 				satSourceSATConfKey,
 				type, description,
 				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				channelData);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
+            Json::StreamWriterBuilder wbuilder;
+            sResponse = Json::writeString(wbuilder, channelConfRoot);
         }
         catch(runtime_error e)
         {
@@ -1232,13 +1227,13 @@ void API::modifyChannelConf(
         int pushServerPort;
         string pushUri;
         int pushListenTimeout;
-        int captureVideoDeviceNumber;
-        string captureVideoInputFormat;
-        int captureFrameRate;
-        int captureWidth;
-        int captureHeight;
-        int captureAudioDeviceNumber;
-        int captureChannelsNumber;
+        int captureLiveVideoDeviceNumber;
+        string captureLiveVideoInputFormat;
+        int captureLiveFrameRate;
+        int captureLiveWidth;
+        int captureLiveHeight;
+        int captureLiveAudioDeviceNumber;
+        int captureLiveChannelsNumber;
 		int64_t satSourceSATConfKey;
 
         string type;
@@ -1259,13 +1254,13 @@ void API::modifyChannelConf(
 		bool pushServerPortToBeModified;
 		bool pushUriToBeModified;
 		bool pushListenTimeoutToBeModified;
-		bool captureVideoDeviceNumberToBeModified;
-		bool captureVideoInputFormatToBeModified;
-		bool captureFrameRateToBeModified;
-		bool captureWidthToBeModified;
-		bool captureHeightToBeModified;
-		bool captureAudioDeviceNumberToBeModified;
-		bool captureChannelsNumberToBeModified;
+		bool captureLiveVideoDeviceNumberToBeModified;
+		bool captureLiveVideoInputFormatToBeModified;
+		bool captureLiveFrameRateToBeModified;
+		bool captureLiveWidthToBeModified;
+		bool captureLiveHeightToBeModified;
+		bool captureLiveAudioDeviceNumberToBeModified;
+		bool captureLiveChannelsNumberToBeModified;
 		bool satSourceSATConfKeyToBeModified;
 		bool typeToBeModified;
 		bool descriptionToBeModified;
@@ -1302,7 +1297,7 @@ void API::modifyChannelConf(
                 }
             }
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1311,10 +1306,10 @@ void API::modifyChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = requestBodyRoot.get(field, "").asString();            
 			labelToBeModified = true;
 
-            field = "SourceType";
+            field = "sourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1327,7 +1322,7 @@ void API::modifyChannelConf(
 			sourceTypeToBeModified = true;
 
 			urlToBeModified = false;
-            field = "Url";
+            field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				url = requestBodyRoot.get(field, "").asString();            
@@ -1335,7 +1330,7 @@ void API::modifyChannelConf(
 			}
 
 			pushProtocolToBeModified = false;
-            field = "PushProtocol";
+            field = "pushProtocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				pushProtocol = requestBodyRoot.get(field, "").asString();            
@@ -1343,7 +1338,7 @@ void API::modifyChannelConf(
 			}
 
 			pushServerNameToBeModified = false;
-            field = "PushServerName";
+            field = "pushServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				pushServerName = requestBodyRoot.get(field, "").asString();            
@@ -1351,7 +1346,7 @@ void API::modifyChannelConf(
 			}
 
 			pushServerPortToBeModified = false;
-			field = "PushServerPort";
+			field = "pushServerPort";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
@@ -1359,7 +1354,7 @@ void API::modifyChannelConf(
 			}
 
 			pushUriToBeModified = false;
-            field = "PushURI";
+            field = "pushURI";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				pushUri = requestBodyRoot.get(field, "").asString();            
@@ -1367,71 +1362,71 @@ void API::modifyChannelConf(
 			}
 
 			pushListenTimeoutToBeModified = false;
-			field = "PushListenTimeout";
+			field = "pushListenTimeout";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
 				pushListenTimeoutToBeModified = true;
 			}
 
-			captureVideoDeviceNumberToBeModified = false;
-			field = "CaptureVideoDeviceNumber";
+			captureLiveVideoDeviceNumberToBeModified = false;
+			field = "captureLiveVideoDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureVideoDeviceNumberToBeModified = true;
+				captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveVideoDeviceNumberToBeModified = true;
 			}
 
-			captureVideoInputFormatToBeModified = false;
-            field = "CaptureVideoInputFormat";
+			captureLiveVideoInputFormatToBeModified = false;
+            field = "captureLiveVideoInputFormat";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureVideoInputFormat = requestBodyRoot.get(field, "").asString();
-				captureVideoInputFormatToBeModified = true;
+				captureLiveVideoInputFormat = requestBodyRoot.get(field, "").asString();
+				captureLiveVideoInputFormatToBeModified = true;
 			}
 
-			captureFrameRateToBeModified = false;
-			field = "CaptureFrameRate";
+			captureLiveFrameRateToBeModified = false;
+			field = "captureLiveFrameRate";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureFrameRateToBeModified = true;
+				captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveFrameRateToBeModified = true;
 			}
 
-			captureWidthToBeModified = false;
-			field = "CaptureWidth";
+			captureLiveWidthToBeModified = false;
+			field = "captureLiveWidth";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureWidthToBeModified = true;
+				captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveWidthToBeModified = true;
 			}
 
-			captureHeightToBeModified = false;
-			field = "CaptureHeight";
+			captureLiveHeightToBeModified = false;
+			field = "captureLiveHeight";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureHeightToBeModified = true;
+				captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveHeightToBeModified = true;
 			}
 
-			captureAudioDeviceNumberToBeModified = false;
-			field = "CaptureAudioDeviceNumber";
+			captureLiveAudioDeviceNumberToBeModified = false;
+			field = "captureLiveAudioDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureAudioDeviceNumberToBeModified = true;
+				captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveAudioDeviceNumberToBeModified = true;
 			}
 
-			captureChannelsNumberToBeModified = false;
-			field = "CaptureChannelsNumber";
+			captureLiveChannelsNumberToBeModified = false;
+			field = "captureLiveChannelsNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
-				captureChannelsNumberToBeModified = true;
+				captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveChannelsNumberToBeModified = true;
 			}
 
 			satSourceSATConfKeyToBeModified = false;
-			field = "SourceSATConfKey";
+			field = "sourceSATConfKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
@@ -1439,7 +1434,7 @@ void API::modifyChannelConf(
 			}
 
 			typeToBeModified = false;
-            field = "Type";
+            field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				type = requestBodyRoot.get(field, "XXX").asString();            
@@ -1447,7 +1442,7 @@ void API::modifyChannelConf(
 			}
 
 			descriptionToBeModified = false;
-            field = "Description";
+            field = "description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				description = requestBodyRoot.get(field, "XXX").asString();            
@@ -1455,7 +1450,7 @@ void API::modifyChannelConf(
 			}
 
 			nameToBeModified = false;
-            field = "Name";
+            field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				name = requestBodyRoot.get(field, "XXX").asString();            
@@ -1463,7 +1458,7 @@ void API::modifyChannelConf(
 			}
 
 			regionToBeModified = false;
-            field = "Region";
+            field = "region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				region = requestBodyRoot.get(field, "XXX").asString();            
@@ -1471,7 +1466,7 @@ void API::modifyChannelConf(
 			}
 
 			countryToBeModified = false;
-            field = "Country";
+            field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				country = requestBodyRoot.get(field, "XXX").asString();            
@@ -1479,7 +1474,7 @@ void API::modifyChannelConf(
 			}
 
 			imageToBeModified = false;
-			field = "ImageMediaItemKey";
+			field = "imageMediaItemKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				imageMediaItemKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
@@ -1487,7 +1482,7 @@ void API::modifyChannelConf(
 			}
 
 			imageToBeModified = false;
-			field = "ImageUniqueName";
+			field = "imageUniqueName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				imageUniqueName = requestBodyRoot.get(field, "").asString();            
@@ -1495,7 +1490,7 @@ void API::modifyChannelConf(
 			}
 
 			positionToBeModified = false;
-			field = "Position";
+			field = "position";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
@@ -1503,7 +1498,7 @@ void API::modifyChannelConf(
 			}
 
 			channelDataToBeModified = false;
-            field = "ChannelData";
+            field = "channelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				channelData = requestBodyRoot[field];
@@ -1546,7 +1541,7 @@ void API::modifyChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-            _mmsEngineDBFacade->modifyChannelConf(
+			Json::Value channelConfRoot = _mmsEngineDBFacade->modifyChannelConf(
                 confKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
@@ -1556,13 +1551,13 @@ void API::modifyChannelConf(
 				pushServerPortToBeModified, pushServerPort,
 				pushUriToBeModified, pushUri,
 				pushListenTimeoutToBeModified, pushListenTimeout,
-				captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
-				captureVideoInputFormatToBeModified, captureVideoInputFormat,
-				captureFrameRateToBeModified, captureFrameRate,
-				captureWidthToBeModified, captureWidth,
-				captureHeightToBeModified, captureHeight,
-				captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
-				captureChannelsNumberToBeModified, captureChannelsNumber,
+				captureLiveVideoDeviceNumberToBeModified, captureLiveVideoDeviceNumber,
+				captureLiveVideoInputFormatToBeModified, captureLiveVideoInputFormat,
+				captureLiveFrameRateToBeModified, captureLiveFrameRate,
+				captureLiveWidthToBeModified, captureLiveWidth,
+				captureLiveHeightToBeModified, captureLiveHeight,
+				captureLiveAudioDeviceNumberToBeModified, captureLiveAudioDeviceNumber,
+				captureLiveChannelsNumberToBeModified, captureLiveChannelsNumber,
 				satSourceSATConfKeyToBeModified, satSourceSATConfKey,
 				typeToBeModified, type,
 				descriptionToBeModified, description,
@@ -1573,11 +1568,8 @@ void API::modifyChannelConf(
 				positionToBeModified, position,
 				channelDataToBeModified, channelData);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
+            Json::StreamWriterBuilder wbuilder;
+            sResponse = Json::writeString(wbuilder, channelConfRoot);
         }
         catch(runtime_error e)
         {

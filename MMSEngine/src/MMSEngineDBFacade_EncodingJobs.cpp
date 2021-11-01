@@ -8774,7 +8774,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	EncodingPriority encodingPriority,
 
 	int pushListenTimeout,
-	string captureEncoderServerName, int captureVideoDeviceNumber,
+	int captureVideoDeviceNumber,
 	string captureVideoInputFormat, int captureFrameRate,
 	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 	int captureChannelsNumber,
@@ -8863,9 +8863,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "pushListenTimeout";
 				parametersRoot[field] = pushListenTimeout;
-
-				field = "captureEncoderServerName";
-				parametersRoot[field] = captureEncoderServerName;
 
 				field = "captureVideoDeviceNumber";
 				parametersRoot[field] = captureVideoDeviceNumber;
@@ -9423,7 +9420,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t liveURLConfKey, string configurationLabel, string url,
 
 	int pushListenTimeout,
-	string captureEncoderServerName, int captureVideoDeviceNumber,
+	int captureVideoDeviceNumber,
 	string captureVideoInputFormat, int captureFrameRate,
 	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 	int captureChannelsNumber,
@@ -9491,9 +9488,6 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "pushListenTimeout";
 				parametersRoot[field] = pushListenTimeout;
-
-				field = "captureEncoderServerName";
-				parametersRoot[field] = captureEncoderServerName;
 
 				field = "captureVideoDeviceNumber";
 				parametersRoot[field] = captureVideoDeviceNumber;

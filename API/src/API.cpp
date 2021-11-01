@@ -3632,7 +3632,7 @@ pair<string, string> API::createDeliveryAuthorization(
 			string channelSourceType;
 			bool warningIfMissing = false;
 			tuple<int64_t, string, string, string, string, int, string, int,
-				int64_t, int, string, int, int, int, int, int, int64_t>
+				int, string, int, int, int, int, int, int64_t>
 				channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 					requestWorkspace->_workspaceKey, configurationLabel,
 					warningIfMissing);
@@ -3641,7 +3641,6 @@ pair<string, string> API::createDeliveryAuthorization(
 				ignore, ignore, ignore, ignore,
 				ignore,
 				ignore, ignore,
-				ignore,
 				ignore, ignore, ignore,
 				ignore, ignore,
 				ignore) = channelConfDetails;

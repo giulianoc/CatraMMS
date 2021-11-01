@@ -11937,7 +11937,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
-		int64_t captureEncoderKey = -1;
 		int captureVideoDeviceNumber = -1;
 		string captureVideoInputFormat;
 		int captureFrameRate = -1;
@@ -11983,14 +11982,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 				{
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, int, string, int,
-						int64_t, int, string, int, int, int, int, int, int64_t>
+						int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(confKey, channelSourceType,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
 						pushListenTimeout,
-						captureEncoderKey, captureVideoDeviceNumber,
+						captureVideoDeviceNumber,
 						captureVideoInputFormat,
 						captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber,
@@ -12197,9 +12196,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string satelliteModulation;
 		int satelliteVideoPid = -1;
 		int satelliteAudioItalianPid = -1;
-
 		string liveURL;
-		string captureEncoderServerName;
+
 		if (channelSourceType == "IP_PULL")
 			liveURL = pullUrl;
 		else if (channelSourceType == "IP_PUSH")
@@ -12218,11 +12216,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			tie(satelliteServiceId, satelliteFrequency,
 				satelliteSymbolRate, satelliteModulation,
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
-		}
-		else if (channelSourceType == "CaptureLive")
-		{
-			captureEncoderServerName = _mmsEngineDBFacade->getEncoderDetails(
-				captureEncoderKey);
 		}
 
 		{
@@ -12653,7 +12646,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 
 			pushListenTimeout,
-			captureEncoderServerName, captureVideoDeviceNumber,
+			captureVideoDeviceNumber,
 			captureVideoInputFormat, captureFrameRate,
 			captureWidth, captureHeight, captureAudioDeviceNumber,
 			captureChannelsNumber,
@@ -12730,7 +12723,6 @@ void MMSEngineProcessor::manageLiveProxy(
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
-		int64_t captureEncoderKey = -1;
 		int captureVideoDeviceNumber = -1;
 		string captureVideoInputFormat;
 		int captureFrameRate = -1;
@@ -12763,14 +12755,14 @@ void MMSEngineProcessor::manageLiveProxy(
 				{
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, int, string, int,
-						int64_t, int, string, int, int, int, int, int, int64_t>
+						int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(confKey, channelSourceType,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
 						pushListenTimeout,
-						captureEncoderKey, captureVideoDeviceNumber,
+						captureVideoDeviceNumber,
 						captureVideoInputFormat,
 						captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber,
@@ -12875,9 +12867,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		string satelliteModulation;
 		int satelliteVideoPid = -1;
 		int satelliteAudioItalianPid = -1;
-
 		string liveURL;
-		string captureEncoderServerName;
+
 		if (channelSourceType == "IP_PULL")
 			liveURL = pullUrl;
 		else if (channelSourceType == "IP_PUSH")
@@ -12896,11 +12887,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			tie(satelliteServiceId, satelliteFrequency,
 				satelliteSymbolRate, satelliteModulation,
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
-		}
-		else if (channelSourceType == "CaptureLive")
-		{
-			captureEncoderServerName = _mmsEngineDBFacade->getEncoderDetails(
-				captureEncoderKey);
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);
@@ -13148,7 +13134,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			channelSourceType, confKey, configurationLabel, liveURL,
 
 			pushListenTimeout,
-			captureEncoderServerName, captureVideoDeviceNumber,
+			captureVideoDeviceNumber,
 			captureVideoInputFormat, captureFrameRate,
 			captureWidth, captureHeight, captureAudioDeviceNumber,
 			captureChannelsNumber,
@@ -13943,7 +13929,7 @@ void MMSEngineProcessor::manageLiveGrid(
 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int, string, int,
-					int64_t, int, string, int, int, int, int, int, int64_t>
+					int, string, int, int, int, int, int, int64_t>
 					confKeyAndChannelURL = _mmsEngineDBFacade->getChannelConfDetails(
 					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
 
@@ -13951,7 +13937,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string channelSourceType;
 				string inputChannelURL;
 				tie(inputChannelConfKey, channelSourceType, inputChannelURL,
-					ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = confKeyAndChannelURL;
 
@@ -20422,7 +20408,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 										bool warningIfMissing = false;
 										tuple<int64_t, string, string, string, string,
-											int, string, int, int64_t, int, string, int,
+											int, string, int, int, string, int,
 											int, int, int, int, int64_t>
 											channelDetails =
 											_mmsEngineDBFacade->getChannelConfDetails(
@@ -20433,7 +20419,7 @@ void MMSEngineProcessor::emailNotificationThread(
 										string channelSourceType;
 										tie(ignore, channelSourceType,
 											checkStreaming_streamingUrl,
-											ignore, ignore, ignore, ignore, ignore,
+											ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore)
 											= channelDetails;
@@ -20723,12 +20709,12 @@ void MMSEngineProcessor::checkStreamingThread(
 
 			bool warningIfMissing = false;
 			tuple<int64_t, string, string, string, string, int, string, int,
-				int64_t, int, string, int, int, int, int, int, int64_t>
+				int, string, int, int, int, int, int, int64_t>
 				ipChannelDetails = _mmsEngineDBFacade->getChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 			string channelSourceType;
 			tie(ignore, channelSourceType, streamingUrl,
-				ignore, ignore, ignore, ignore, ignore, ignore,
+				ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore) = ipChannelDetails;
 		}

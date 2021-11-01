@@ -1,4 +1,5 @@
 
+#include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 
 int64_t MMSEngineDBFacade::addYouTubeConf(
@@ -1284,7 +1285,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
     return facebookPageToken;
 }
 
-int64_t MMSEngineDBFacade::addChannelConf(
+Json::Value MMSEngineDBFacade::addChannelConf(
     int64_t workspaceKey,
     string label,
 	string sourceType,
@@ -1294,13 +1295,13 @@ int64_t MMSEngineDBFacade::addChannelConf(
 	int pushServerPort,
 	string pushUri,
 	int pushListenTimeout,
-	int captureVideoDeviceNumber,
-	string captureVideoInputFormat,
-	int captureFrameRate,
-	int captureWidth,
-	int captureHeight,
-	int captureAudioDeviceNumber,
-	int captureChannelsNumber,
+	int captureLiveVideoDeviceNumber,
+	string captureLiveVideoInputFormat,
+	int captureLiveFrameRate,
+	int captureLiveWidth,
+	int captureLiveHeight,
+	int captureLiveAudioDeviceNumber,
+	int captureLiveChannelsNumber,
 	int64_t satSourceSATConfKey,
 	string type,
 	string description,
@@ -1336,9 +1337,9 @@ int64_t MMSEngineDBFacade::addChannelConf(
                 "insert into MMS_Conf_IPChannel(workspaceKey, label, sourceType, "
 				"url, "
 				"pushProtocol, pushServerName, pushServerPort, pushUri, "
-				"pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, "
-				"captureFrameRate, captureWidth, captureHeight, "
-				"captureAudioDeviceNumber, captureChannelsNumber, "
+				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
+				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
+				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
 				"satSourceSATConfKey, "
 				"type, description, name, "
 				"region, country, imageMediaItemKey, imageUniqueName, "
@@ -1377,34 +1378,34 @@ int64_t MMSEngineDBFacade::addChannelConf(
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
 				preparedStatement->setInt(queryParameterIndex++, pushListenTimeout);
-			if (captureVideoDeviceNumber == -1)
+			if (captureLiveVideoDeviceNumber == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureVideoDeviceNumber);
-			if (captureVideoInputFormat == "")
+				preparedStatement->setInt(queryParameterIndex++, captureLiveVideoDeviceNumber);
+			if (captureLiveVideoInputFormat == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
-				preparedStatement->setString(queryParameterIndex++, captureVideoInputFormat);
-			if (captureFrameRate == -1)
+				preparedStatement->setString(queryParameterIndex++, captureLiveVideoInputFormat);
+			if (captureLiveFrameRate == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureFrameRate);
-			if (captureWidth == -1)
+				preparedStatement->setInt(queryParameterIndex++, captureLiveFrameRate);
+			if (captureLiveWidth == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureWidth);
-			if (captureHeight == -1)
+				preparedStatement->setInt(queryParameterIndex++, captureLiveWidth);
+			if (captureLiveHeight == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureHeight);
-			if (captureAudioDeviceNumber == -1)
+				preparedStatement->setInt(queryParameterIndex++, captureLiveHeight);
+			if (captureLiveAudioDeviceNumber == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureAudioDeviceNumber);
-			if (captureChannelsNumber == -1)
+				preparedStatement->setInt(queryParameterIndex++, captureLiveAudioDeviceNumber);
+			if (captureLiveChannelsNumber == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
-				preparedStatement->setInt(queryParameterIndex++, captureChannelsNumber);
+				preparedStatement->setInt(queryParameterIndex++, captureLiveChannelsNumber);
 			if (satSourceSATConfKey == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 			else
@@ -1475,12 +1476,60 @@ int64_t MMSEngineDBFacade::addChannelConf(
 
             confKey = getLastInsertId(conn);
         }
-                            
+
+		Json::Value channelConfRoot;
+		{
+			int start = 0;
+			int rows = 1;
+			string label;
+			string url;
+			string type;
+			string name;
+			string region;
+			string country;
+			string labelOrder;
+			Json::Value channelConfListRoot = getChannelConfList (
+				workspaceKey, confKey,
+				start, rows, label, url, type, name, region, country, labelOrder);
+
+			string field = "response";
+			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value responseRoot = channelConfListRoot[field];
+
+			field = "channelConf";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			channelConfRoot = responseRoot[field];
+
+			if (channelConfRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return channelConfRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -1539,12 +1588,10 @@ int64_t MMSEngineDBFacade::addChannelConf(
         }
 
         throw e;
-    }  
-    
-    return confKey;
+    }
 }
 
-void MMSEngineDBFacade::modifyChannelConf(
+Json::Value MMSEngineDBFacade::modifyChannelConf(
     int64_t confKey,
     int64_t workspaceKey,
     bool labelToBeModified, string label,
@@ -1556,13 +1603,13 @@ void MMSEngineDBFacade::modifyChannelConf(
 	bool pushServerPortToBeModified, int pushServerPort,
 	bool pushUriToBeModified, string pushUri,
 	bool pushListenTimeoutToBeModified, int pushListenTimeout,
-	bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber,
-	bool captureVideoInputFormatToBeModified, string captureVideoInputFormat,
-	bool captureFrameRateToBeModified, int captureFrameRate,
-	bool captureWidthToBeModified, int captureWidth,
-	bool captureHeightToBeModified, int captureHeight,
-	bool captureAudioDeviceNumberToBeModified, int captureAudioDeviceNumber,
-	bool captureChannelsNumberToBeModified, int captureChannelsNumber,
+	bool captureLiveVideoDeviceNumberToBeModified, int captureLiveVideoDeviceNumber,
+	bool captureLiveVideoInputFormatToBeModified, string captureLiveVideoInputFormat,
+	bool captureLiveFrameRateToBeModified, int captureLiveFrameRate,
+	bool captureLiveWidthToBeModified, int captureLiveWidth,
+	bool captureLiveHeightToBeModified, int captureLiveHeight,
+	bool captureLiveAudioDeviceNumberToBeModified, int captureLiveAudioDeviceNumber,
+	bool captureLiveChannelsNumberToBeModified, int captureLiveChannelsNumber,
 	bool satSourceSATConfKeyToBeModified, int64_t satSourceSATConfKey,
 
 	bool typeToBeModified, string type,
@@ -1653,59 +1700,59 @@ void MMSEngineDBFacade::modifyChannelConf(
 				oneParameterPresent = true;
 			}
 
-			if (captureVideoDeviceNumberToBeModified)
+			if (captureLiveVideoDeviceNumberToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureVideoDeviceNumber = ?");
+				setSQL += ("captureLiveVideoDeviceNumber = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureVideoInputFormatToBeModified)
+			if (captureLiveVideoInputFormatToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureVideoInputFormat = ?");
+				setSQL += ("captureLiveVideoInputFormat = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureFrameRateToBeModified)
+			if (captureLiveFrameRateToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureFrameRate = ?");
+				setSQL += ("captureLiveFrameRate = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureWidthToBeModified)
+			if (captureLiveWidthToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureWidth = ?");
+				setSQL += ("captureLiveWidth = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureHeightToBeModified)
+			if (captureLiveHeightToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureHeight = ?");
+				setSQL += ("captureLiveHeight = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureAudioDeviceNumberToBeModified)
+			if (captureLiveAudioDeviceNumberToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureAudioDeviceNumber = ?");
+				setSQL += ("captureLiveAudioDeviceNumber = ?");
 				oneParameterPresent = true;
 			}
 
-			if (captureChannelsNumberToBeModified)
+			if (captureLiveChannelsNumberToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureChannelsNumber = ?");
+				setSQL += ("captureLiveChannelsNumber = ?");
 				oneParameterPresent = true;
 			}
 
@@ -1858,66 +1905,66 @@ void MMSEngineDBFacade::modifyChannelConf(
 				else
 					preparedStatement->setInt(queryParameterIndex++, pushListenTimeout);
 			}
-			if (captureVideoDeviceNumberToBeModified)
+			if (captureLiveVideoDeviceNumberToBeModified)
 			{
-				if (captureVideoDeviceNumber == -1)
+				if (captureLiveVideoDeviceNumber == -1)
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::INTEGER);
 				else
 					preparedStatement->setInt(queryParameterIndex++,
-						captureVideoDeviceNumber);
+						captureLiveVideoDeviceNumber);
 			}
-			if (captureVideoInputFormatToBeModified)
+			if (captureLiveVideoInputFormatToBeModified)
 			{
-				if (captureVideoInputFormat == "")
+				if (captureLiveVideoInputFormat == "")
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++,
-						captureVideoInputFormat);
+						captureLiveVideoInputFormat);
 			}
-			if (captureFrameRateToBeModified)
+			if (captureLiveFrameRateToBeModified)
 			{
-				if (captureFrameRate == -1)
+				if (captureLiveFrameRate == -1)
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::INTEGER);
 				else
 					preparedStatement->setInt(queryParameterIndex++,
-						captureFrameRate);
+						captureLiveFrameRate);
 			}
-			if (captureWidthToBeModified)
+			if (captureLiveWidthToBeModified)
 			{
-				if (captureWidth == -1)
+				if (captureLiveWidth == -1)
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::INTEGER);
 				else
-					preparedStatement->setInt(queryParameterIndex++, captureWidth);
+					preparedStatement->setInt(queryParameterIndex++, captureLiveWidth);
 			}
-			if (captureHeightToBeModified)
+			if (captureLiveHeightToBeModified)
 			{
-				if (captureHeight == -1)
+				if (captureLiveHeight == -1)
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::INTEGER);
 				else
-					preparedStatement->setInt(queryParameterIndex++, captureHeight);
+					preparedStatement->setInt(queryParameterIndex++, captureLiveHeight);
 			}
-			if (captureAudioDeviceNumberToBeModified)
+			if (captureLiveAudioDeviceNumberToBeModified)
 			{
-				if (captureAudioDeviceNumber == -1)
-					preparedStatement->setNull(queryParameterIndex++,
-						sql::DataType::INTEGER);
-				else
-					preparedStatement->setInt(queryParameterIndex++,
-						captureAudioDeviceNumber);
-			}
-			if (captureChannelsNumberToBeModified)
-			{
-				if (captureChannelsNumber == -1)
+				if (captureLiveAudioDeviceNumber == -1)
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::INTEGER);
 				else
 					preparedStatement->setInt(queryParameterIndex++,
-						captureChannelsNumber);
+						captureLiveAudioDeviceNumber);
+			}
+			if (captureLiveChannelsNumberToBeModified)
+			{
+				if (captureLiveChannelsNumber == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						captureLiveChannelsNumber);
 			}
 			if (satSourceSATConfKeyToBeModified)
 			{
@@ -2060,14 +2107,62 @@ void MMSEngineDBFacade::modifyChannelConf(
                 throw runtime_error(errorMessage);                    
                 */
             }
-        }
-                            
+		}
+
+		Json::Value channelConfRoot;
+		{
+			int start = 0;
+			int rows = 1;
+			string label;
+			string url;
+			string type;
+			string name;
+			string region;
+			string country;
+			string labelOrder;
+			Json::Value channelConfListRoot = getChannelConfList (
+				workspaceKey, confKey,
+				start, rows, label, url, type, name, region, country, labelOrder);
+
+			string field = "response";
+			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value responseRoot = channelConfListRoot[field];
+
+			field = "channelConf";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			channelConfRoot = responseRoot[field];
+
+			if (channelConfRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
+
+		return channelConfRoot[0];
+	}
     catch(sql::SQLException se)
     {
         string exceptionMessage(se.what());
@@ -2424,10 +2519,10 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
             lastSQLCommand = 
                 string("select confKey, label, sourceType, url, "
 						"pushProtocol, pushServerName, pushServerPort, pushUri, "
-						"pushListenTimeout, captureVideoDeviceNumber, "
-						"captureVideoInputFormat, captureFrameRate, captureWidth, "
-						"captureHeight, captureAudioDeviceNumber, "
-						"captureChannelsNumber, satSourceSATConfKey, "
+						"pushListenTimeout, captureLiveVideoDeviceNumber, "
+						"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
+						"captureLiveHeight, captureLiveAudioDeviceNumber, "
+						"captureLiveChannelsNumber, satSourceSATConfKey, "
 						"type, description, name, "
 						"region, country, "
 						"imageMediaItemKey, imageUniqueName, position, channelData "
@@ -2535,50 +2630,50 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				else
 					channelConfRoot[field] = resultSet->getInt("pushListenTimeout");
 
-                field = "captureVideoDeviceNumber";
-				if (resultSet->isNull("captureVideoDeviceNumber"))
+                field = "captureLiveVideoDeviceNumber";
+				if (resultSet->isNull("captureLiveVideoDeviceNumber"))
 					channelConfRoot[field] = Json::nullValue;
 				else
 					channelConfRoot[field] =
-						resultSet->getInt("captureVideoDeviceNumber");
+						resultSet->getInt("captureLiveVideoDeviceNumber");
 
-                field = "captureVideoInputFormat";
-				if (resultSet->isNull("captureVideoInputFormat"))
+                field = "captureLiveVideoInputFormat";
+				if (resultSet->isNull("captureLiveVideoInputFormat"))
 					channelConfRoot[field] = Json::nullValue;
 				else
 					channelConfRoot[field] = static_cast<string>(
-						resultSet->getString("captureVideoInputFormat"));
+						resultSet->getString("captureLiveVideoInputFormat"));
 
-                field = "captureFrameRate";
-				if (resultSet->isNull("captureFrameRate"))
+                field = "captureLiveFrameRate";
+				if (resultSet->isNull("captureLiveFrameRate"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureFrameRate");
+					channelConfRoot[field] = resultSet->getInt("captureLiveFrameRate");
 
-                field = "captureWidth";
-				if (resultSet->isNull("captureWidth"))
+                field = "captureLiveWidth";
+				if (resultSet->isNull("captureLiveWidth"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureWidth");
+					channelConfRoot[field] = resultSet->getInt("captureLiveWidth");
 
-                field = "captureHeight";
-				if (resultSet->isNull("captureHeight"))
+                field = "captureLiveHeight";
+				if (resultSet->isNull("captureLiveHeight"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureHeight");
+					channelConfRoot[field] = resultSet->getInt("captureLiveHeight");
 
-                field = "captureAudioDeviceNumber";
-				if (resultSet->isNull("captureAudioDeviceNumber"))
+                field = "captureLiveAudioDeviceNumber";
+				if (resultSet->isNull("captureLiveAudioDeviceNumber"))
 					channelConfRoot[field] = Json::nullValue;
 				else
 					channelConfRoot[field] =
-						resultSet->getInt("captureAudioDeviceNumber");
+						resultSet->getInt("captureLiveAudioDeviceNumber");
 
-                field = "captureChannelsNumber";
-				if (resultSet->isNull("captureChannelsNumber"))
+                field = "captureLiveChannelsNumber";
+				if (resultSet->isNull("captureLiveChannelsNumber"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureChannelsNumber");
+					channelConfRoot[field] = resultSet->getInt("captureLiveChannelsNumber");
 
                 field = "satSourceSATConfKey";
 				if (resultSet->isNull("satSourceSATConfKey"))
@@ -2719,7 +2814,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 }
 
 tuple<int64_t, string, string, string, string, int, string, int,
-	int64_t, int, string, int, int, int, int, int, int64_t>
+	int, string, int, int, int, int, int, int64_t>
 	MMSEngineDBFacade::getChannelConfDetails(
     int64_t workspaceKey, string label,
 	bool warningIfMissing
@@ -2749,23 +2844,22 @@ tuple<int64_t, string, string, string, string, int, string, int,
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
-		int64_t captureEncoderKey = -1;
-		int captureVideoDeviceNumber = -1;
-		string captureVideoInputFormat;
-		int captureFrameRate = -1;
-		int captureWidth = -1;
-		int captureHeight = -1;
-		int captureAudioDeviceNumber = -1;
-		int captureChannelsNumber = -1;
+		int captureLiveVideoDeviceNumber = -1;
+		string captureLiveVideoInputFormat;
+		int captureLiveFrameRate = -1;
+		int captureLiveWidth = -1;
+		int captureLiveHeight = -1;
+		int captureLiveAudioDeviceNumber = -1;
+		int captureLiveChannelsNumber = -1;
 		int64_t satSourceSATConfKey = -1;
 		{
 			lastSQLCommand = "select confKey, sourceType, "
 				"url, "
 				"pushProtocol, pushServerName, pushServerPort, pushUri, "
-				"pushListenTimeout, satSourceSATConfKey, captureVideoDeviceNumber, "
-				"captureVideoInputFormat, "
-				"captureFrameRate, captureWidth, captureHeight, "
-				"captureAudioDeviceNumber, captureChannelsNumber, "
+				"pushListenTimeout, satSourceSATConfKey, captureLiveVideoDeviceNumber, "
+				"captureLiveVideoInputFormat, "
+				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
+				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
 				"satSourceSATConfKey "
 				"from MMS_Conf_IPChannel "
 				"where workspaceKey = ? and label = ?";
@@ -2815,21 +2909,21 @@ tuple<int64_t, string, string, string, string, int, string, int,
 			if (!resultSet->isNull("pushListenTimeout"))
 				pushListenTimeout = resultSet->getInt("pushListenTimeout");
 			if (!resultSet->isNull("satSourceSATConfKey"))
-				captureEncoderKey = resultSet->getInt64("satSourceSATConfKey");
-			if (!resultSet->isNull("captureVideoDeviceNumber"))
-				captureVideoDeviceNumber = resultSet->getInt("captureVideoDeviceNumber");
-			if (!resultSet->isNull("captureVideoInputFormat"))
-				captureVideoInputFormat = resultSet->getString("captureVideoInputFormat");
-			if (!resultSet->isNull("captureFrameRate"))
-				captureFrameRate = resultSet->getInt("captureFrameRate");
-			if (!resultSet->isNull("captureWidth"))
-				captureWidth = resultSet->getInt("captureWidth");
-			if (!resultSet->isNull("captureHeight"))
-				captureHeight = resultSet->getInt("captureHeight");
-			if (!resultSet->isNull("captureAudioDeviceNumber"))
-				captureAudioDeviceNumber = resultSet->getInt("captureAudioDeviceNumber");
-			if (!resultSet->isNull("captureChannelsNumber"))
-				captureChannelsNumber = resultSet->getInt("captureChannelsNumber");
+				satSourceSATConfKey = resultSet->getInt64("satSourceSATConfKey");
+			if (!resultSet->isNull("captureLiveVideoDeviceNumber"))
+				captureLiveVideoDeviceNumber = resultSet->getInt("captureLiveVideoDeviceNumber");
+			if (!resultSet->isNull("captureLiveVideoInputFormat"))
+				captureLiveVideoInputFormat = resultSet->getString("captureLiveVideoInputFormat");
+			if (!resultSet->isNull("captureLiveFrameRate"))
+				captureLiveFrameRate = resultSet->getInt("captureLiveFrameRate");
+			if (!resultSet->isNull("captureLiveWidth"))
+				captureLiveWidth = resultSet->getInt("captureLiveWidth");
+			if (!resultSet->isNull("captureLiveHeight"))
+				captureLiveHeight = resultSet->getInt("captureLiveHeight");
+			if (!resultSet->isNull("captureLiveAudioDeviceNumber"))
+				captureLiveAudioDeviceNumber = resultSet->getInt("captureLiveAudioDeviceNumber");
+			if (!resultSet->isNull("captureLiveChannelsNumber"))
+				captureLiveChannelsNumber = resultSet->getInt("captureLiveChannelsNumber");
 			if (!resultSet->isNull("satSourceSATConfKey"))
 				satSourceSATConfKey = resultSet->getInt64("satSourceSATConfKey");
         }
@@ -2842,9 +2936,9 @@ tuple<int64_t, string, string, string, string, int, string, int,
 
 		return make_tuple(confKey, sourceType, url,
 			pushProtocol, pushServerName, pushServerPort, pushUri, pushListenTimeout,
-			captureEncoderKey, captureVideoDeviceNumber, captureVideoInputFormat,
-            captureFrameRate, captureWidth, captureHeight,
-			captureAudioDeviceNumber, captureChannelsNumber,
+			captureLiveVideoDeviceNumber, captureLiveVideoInputFormat,
+            captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
+			captureLiveAudioDeviceNumber, captureLiveChannelsNumber,
 			satSourceSATConfKey);
     }
     catch(sql::SQLException se)
