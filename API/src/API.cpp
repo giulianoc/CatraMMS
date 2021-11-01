@@ -1945,7 +1945,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         facebookConfList(request, workspace);
     }
-    else if (method == "addIPChannelConf")
+    else if (method == "addChannelConf")
     {
         if (!admin && !editConfiguration)
         {
@@ -1959,9 +1959,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addIPChannelConf(request, workspace, queryParameters, requestBody);
+        addChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "modifyIPChannelConf")
+    else if (method == "modifyChannelConf")
     {
         if (!admin && !editConfiguration)
         {
@@ -1975,9 +1975,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyIPChannelConf(request, workspace, queryParameters, requestBody);
+        modifyChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeIPChannelConf")
+    else if (method == "removeChannelConf")
     {
         if (!admin && !editConfiguration)
         {
@@ -1991,63 +1991,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeIPChannelConf(request, workspace, queryParameters);
+        removeChannelConf(request, workspace, queryParameters);
     }
-    else if (method == "ipChannelConfList")
+    else if (method == "channelConfList")
     {
-        ipChannelConfList(request, workspace, queryParameters);
-    }
-    else if (method == "addSATChannelConf")
-    {
-        if (!admin && !editConfiguration)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        addSATChannelConf(request, workspace, queryParameters, requestBody);
-    }
-    else if (method == "modifySATChannelConf")
-    {
-        if (!admin && !editConfiguration)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        modifySATChannelConf(request, workspace, queryParameters, requestBody);
-    }
-    else if (method == "removeSATChannelConf")
-    {
-        if (!admin && !editConfiguration)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        removeSATChannelConf(request, workspace, queryParameters);
-    }
-    else if (method == "satChannelConfList")
-    {
-        satChannelConfList(request, workspace, queryParameters);
+        channelConfList(request, workspace, queryParameters);
     }
     else if (method == "addSourceSATChannelConf")
     {
@@ -2564,8 +2512,8 @@ void API::createDeliveryAuthorization(
 
 				if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
-					string field = "ChannelType";
-					string channelType = ingestionJobRoot.get(field, "IP_MMSAsClient").asString();
+					string field = "channelSourceType";
+					string channelSourceType = ingestionJobRoot.get(field, "IP_PULL").asString();
 
 					field = "Outputs";
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -2613,11 +2561,11 @@ void API::createDeliveryAuthorization(
 					{
 						if (outputsDeliveryCodesAndOutputTypes.size() == 0)
 						{
-							if (channelType == "IP_MMSAsClient")
+							if (channelSourceType == "IP_PULL")
 							{
 								_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
 								// deliveryCode shall be mandatory. Just for backward compatibility
-								// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it
+								// (cibor project), in case it is missing and it is IP_PULL, we set it
 								// with confKey
 
 								field = "ConfigurationLabel";
@@ -3677,8 +3625,26 @@ pair<string, string> API::createDeliveryAuthorization(
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
 		{
-			string field = "ChannelType";
-			string channelType = ingestionJobRoot.get(field, "IP_MMSAsClient").asString();
+			string field = "ConfigurationLabel";
+			string configurationLabel = ingestionJobRoot.get(field, "").asString();
+
+			int64_t liveURLConfKey;
+			string channelSourceType;
+			bool warningIfMissing = false;
+			tuple<int64_t, string, string, string, string, int, string, int,
+				int64_t, int, string, int, int, int, int, int, int64_t>
+				channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
+					requestWorkspace->_workspaceKey, configurationLabel,
+					warningIfMissing);
+			tie(liveURLConfKey, channelSourceType,
+				ignore,
+				ignore, ignore, ignore, ignore,
+				ignore,
+				ignore, ignore,
+				ignore,
+				ignore, ignore, ignore,
+				ignore, ignore,
+				ignore) = channelConfDetails;
 
 			field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -3726,21 +3692,12 @@ pair<string, string> API::createDeliveryAuthorization(
 			{
 				if (outputsDeliveryCodesAndOutputTypes.size() == 0)
 				{
-					if (channelType == "IP_MMSAsClient")
+					if (channelSourceType == "IP_PULL")
 					{
 						_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
-						// deliveryCode shall be mandatory. Just for backward compatibility
-						// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it
-						// with confKey
-
-						field = "ConfigurationLabel";
-						string configurationLabel = ingestionJobRoot.get(field, "").asString();
-
-						int64_t liveURLConfKey;
-						bool warningIfMissing = false;
-						pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-							requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-						tie(liveURLConfKey, ignore) = liveURLConfDetails;
+						// deliveryCode shall be mandatory. Just for backward
+						// compatibility (cibor project), in case it is missing
+						// and it is IP_PULL, we set it with confKey
 
 						deliveryCode = liveURLConfKey;
 					}
@@ -3769,14 +3726,14 @@ pair<string, string> API::createDeliveryAuthorization(
 					// we have just one delivery code, it will be this one
 					deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
 					outputType = outputsDeliveryCodesAndOutputTypes[0].second;
-
 				}
 			}
 			else
 			{
 				bool deliveryCodeFound = false;
 
-				for (pair<int64_t, string> deliveryCodeAndOutputType: outputsDeliveryCodesAndOutputTypes)
+				for (pair<int64_t, string> deliveryCodeAndOutputType:
+					outputsDeliveryCodesAndOutputTypes)
 				{
 					if (deliveryCodeAndOutputType.first == deliveryCode)
 					{
@@ -3815,7 +3772,8 @@ pair<string, string> API::createDeliveryAuthorization(
 
 			if (authorizationThroughPath)
 			{
-				time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+				time_t expirationTime = chrono::system_clock::to_time_t(
+					chrono::system_clock::now());
 				expirationTime += ttlInSeconds;
 
 				string uriToBeSigned;
@@ -3893,7 +3851,8 @@ pair<string, string> API::createDeliveryAuthorization(
 						field = "DeliveryCode";
 						if (JSONUtils::isMetadataPresent(outputRoot, field))
 						{
-							int64_t localDeliveryCode = outputRoot.get(field, 0).asInt64();
+							int64_t localDeliveryCode
+								= outputRoot.get(field, 0).asInt64();
 
 							outputsDeliveryCodesAndOutputTypes.push_back(
 								make_pair(localDeliveryCode, outputType));
@@ -4817,7 +4776,7 @@ void API::createDeliveryCDN77Authorization(
 
 		string liveURLData;
 		tuple<string, string, string> liveURLConfDetails
-			= _mmsEngineDBFacade->getIPChannelConfDetails(
+			= _mmsEngineDBFacade->getChannelConfDetails(
 			requestWorkspace->_workspaceKey, liveURLConfKey);
 		tie(ignore, ignore, liveURLData) = liveURLConfDetails;
 

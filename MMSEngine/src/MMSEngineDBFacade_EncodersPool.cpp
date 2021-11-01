@@ -489,6 +489,124 @@ void MMSEngineDBFacade::removeEncoder(
     }        
 }
 
+string MMSEngineDBFacade::getEncoderDetails (
+	int64_t encoderKey
+)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+
+        _logger->info(__FILEREF__ + "getEncoderDetails"
+            + ", encoderKey: " + to_string(encoderKey)
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string serverName;
+
+		{
+			lastSQLCommand =
+				"select serverName "
+				"from MMS_Encoder "
+				"where encoderKey = ?"
+				;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(
+					chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+				serverName = static_cast<string>(resultSet->getString("serverName"));
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return serverName;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+}
+
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
     int64_t workspaceKey, int64_t encoderKey)
 {
@@ -1463,12 +1581,10 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
 						{
 							lastSQLCommand = 
-								string("select encoderKey, label, external, enabled, protocol, "
-									"serverName, port "
-									// , maxTranscodingCapability, "
-									// "maxLiveProxiesCapabilities, maxLiveRecordingCapabilities "
-									"from MMS_Encoder ")
-								+ "where encoderKey = ? ";
+								"select encoderKey, label, external, enabled, protocol, "
+								"serverName, port "
+								"from MMS_Encoder "
+								"where encoderKey = ? ";
 
 							shared_ptr<sql::PreparedStatement> preparedStatementEncoder (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));

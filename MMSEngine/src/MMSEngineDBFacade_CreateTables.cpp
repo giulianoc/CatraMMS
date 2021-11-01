@@ -1028,9 +1028,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "protocol				VARCHAR (16) NOT NULL,"
                     "serverName				VARCHAR (64) NOT NULL,"
                     "port					INT UNSIGNED NOT NULL,"
-                    // "maxTranscodingCapability		INT UNSIGNED NOT NULL,"
-                    // "maxLiveProxiesCapabilities		INT UNSIGNED NOT NULL,"
-                    // "maxLiveRecordingCapabilities	INT UNSIGNED NOT NULL,"
                     "constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
                     "UNIQUE (label)) "
                     "ENGINE=InnoDB";
@@ -2146,15 +2143,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					// in case of pull (1) only url is used
-					// in case of push (0) all the push* fields are used
-					"pull						INT NOT NULL DEFAULT 1,"
-					"url						VARCHAR (2048) NULL,"
+					// IP_PULL, IP_PUSH, CaptureLive, Satellite
+					"sourceType					VARCHAR (64) NOT NULL,"
+					"url						VARCHAR (2048) NULL,"	// pull
                     "pushProtocol				VARCHAR (64) NULL,"
-                    "pushEncoderKey				BIGINT UNSIGNED NULL,"
-					"pushEncoderPort			INT NULL,"
+                    "pushServerName				VARCHAR (128) NULL,"
+					"pushServerPort				INT NULL,"
 					"pushUri					VARCHAR (2048) NULL,"
-					"pushTimeout				INT NULL,"
+					"pushListenTimeout			INT NULL,"
+					"captureVideoDeviceNumber	INT NULL,"
+					"captureVideoInputFormat	VARCHAR (64) NULL,"
+					"captureFrameRate			INT NULL,"
+					"captureWidth				INT NULL,"
+					"captureHeight				INT NULL,"
+					"captureAudioDeviceNumber	INT NULL,"
+					"captureChannelsNumber		INT NULL,"
+                    "satSourceSATConfKey		BIGINT UNSIGNED NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "name						VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
@@ -2208,48 +2212,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "deliverySystem				VARCHAR (64) NULL,"
                     "constraint MMS_Conf_SourceSATChannel_PK PRIMARY KEY (confKey), "
                     "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-
-        try
-        {
-            string channelDataDefinition;
-            if (jsonTypeSupported)
-                channelDataDefinition = "JSON";
-            else
-                channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
-
-            lastSQLCommand = 
-				"create table if not exists MMS_Conf_SATChannel ("
-                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
-                    "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					"sourceSATConfKey			BIGINT UNSIGNED NOT NULL,"
-                    "region						VARCHAR (128) NULL,"
-                    "country					VARCHAR (128) NULL,"
-                    "imageMediaItemKey			BIGINT UNSIGNED NULL,"
-                    "imageUniqueName			VARCHAR (128) NULL,"
-                    "position					INT UNSIGNED NULL,"
-                    "channelData				" + channelDataDefinition + ","
-                    "constraint MMS_Conf_SATChannel_PK PRIMARY KEY (confKey), "
-                    "constraint MMS_Conf_SATChannel_FK foreign key (workspaceKey) "
-						"references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "constraint MMS_Conf_SATChannel_FK2 foreign key (sourceSATConfKey) "
-						"references MMS_Conf_SourceSATChannel (confKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

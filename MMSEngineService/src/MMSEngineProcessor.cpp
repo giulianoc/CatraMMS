@@ -23,7 +23,6 @@
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
-// #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "EMailSender.h"
 #include "Magick++.h"
 #include <openssl/md5.h>
@@ -4705,7 +4704,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
+                        else if (ingestionType ==
+							MMSEngineDBFacade::IngestionType::LiveProxy)
                         {
                             try
                             {
@@ -11921,25 +11921,33 @@ void MMSEngineProcessor::manageLiveRecorder(
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			encodingPriority = 
-				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
-		}
+			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
+				workspace->_maxEncodingPriority);
 		else
-		{
-			encodingPriority =
-				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
-		}
-
-		string channelType;
-		int64_t deliveryCode;
-
-		string actAsServerProtocol;
-		string actAsServerBindIP;
-		int actAsServerPort;
-		string actAsServerURI;
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(
+				parametersRoot.get(field, "").asString());
 
 		string configurationLabel;
+
+		int64_t confKey = -1;
+		string channelSourceType;
+		string pullUrl;
+		string pushProtocol;
+		string pushServerName;
+		int pushServerPort = -1;
+		string pushUri;
+		int pushListenTimeout = -1;
+		int64_t captureEncoderKey = -1;
+		int captureVideoDeviceNumber = -1;
+		string captureVideoInputFormat;
+		int captureFrameRate = -1;
+		int captureWidth = -1;
+		int captureHeight = -1;
+		int captureAudioDeviceNumber = -1;
+		int captureChannelsNumber = -1;
+		int64_t satSourceSATConfKey = -1;
+
+		int64_t deliveryCode;
 
 		string encodersPool;
 		string userAgent;
@@ -11959,13 +11967,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t monitorEncodingProfileKey = -1;
 		Json::Value outputsRoot = Json::nullValue;
         {
-            string field = "ChannelType";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				channelType = "IP_MMSAsClient";
-			else
-				channelType = parametersRoot.get(field, "").asString();
-
-			if (channelType == "IP_MMSAsClient")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -11977,130 +11978,28 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = parametersRoot.get(field, "XXX").asString();
-			}
-			else if (channelType == "Satellite")
-			{
-				field = "ConfigurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				configurationLabel = parametersRoot.get(field, "").asString();
+
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
+					bool warningIfMissing = false;
+					tuple<int64_t, string, string, string, string, int, string, int,
+						int64_t, int, string, int, int, int, int, int, int64_t>
+						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
+						workspace->_workspaceKey, configurationLabel, warningIfMissing);
+					tie(confKey, channelSourceType,
+						pullUrl,
+						pushProtocol, pushServerName, pushServerPort, pushUri,
+						pushListenTimeout,
+						captureEncoderKey, captureVideoDeviceNumber,
+						captureVideoInputFormat,
+						captureFrameRate, captureWidth, captureHeight,
+						captureAudioDeviceNumber, captureChannelsNumber,
+						satSourceSATConfKey) = channelConfDetails;
 
-					throw runtime_error(errorMessage);
+					// default is IP_PULL
+					if (channelSourceType == "")
+						channelSourceType = "IP_PULL";
 				}
-				configurationLabel = parametersRoot.get(field, "XXX").asString();
-			}
-			else if (channelType == "IP_MMSAsServer")
-			{
-				field = "ActAsServerProtocol";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerProtocol = parametersRoot.get(field, "").asString();
-
-				field = "ActAsServerBindIP";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerBindIP = parametersRoot.get(field, "").asString();
-
-				field = "ActAsServerPort";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerPort = JSONUtils::asInt(parametersRoot, field, 0);
-
-				field = "ActAsServerURI";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerURI = parametersRoot.get(field, "").asString();
-			}
-			else if (channelType == "CaptureLive")
-			{
-				/*
-				field = "CaptureLive";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				Json::Value captureLiveRoot = parametersRoot[field];
-
-				field = "DeviceName";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
-
-				field = "FrameRate";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-					captureLive_frameRate = 25;
-				else
-					captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, field, 25);
-
-				field = "Width";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_width = JSONUtils::asInt(captureLiveRoot, field, 0);
-
-				field = "Height";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_height = JSONUtils::asInt(captureLiveRoot, field, 0);
-				*/
 			}
 
             field = "EncodersPool";
@@ -12110,17 +12009,6 @@ void MMSEngineProcessor::manageLiveRecorder(
             field = "UserAgent";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				userAgent = parametersRoot.get(field, "").asString();
-
-			/*
-            field = "HighAvailability";
-			if (channelType == "IP_MMSAsServer")
-				highAvailability = false;
-			else
-			{
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					highAvailability = JSONUtils::asBool(parametersRoot, field, false);
-            }
-			*/
 
             field = "RecordingPeriod";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
@@ -12297,13 +12185,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 		time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
-		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
+		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: "
+		//		+ ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
 		time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
-
-		int64_t confKey = -1;
-		string liveURL;
 
 		int64_t satelliteServiceId = -1;
 		int64_t satelliteFrequency = -1;
@@ -12312,31 +12198,31 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int satelliteVideoPid = -1;
 		int satelliteAudioItalianPid = -1;
 
-		if (channelType == "IP_MMSAsClient")
+		string liveURL;
+		string captureEncoderServerName;
+		if (channelSourceType == "IP_PULL")
+			liveURL = pullUrl;
+		else if (channelSourceType == "IP_PUSH")
 		{
-			bool warningIfMissing = false;
-			pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-				workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(confKey, liveURL) = channelConfDetails;
+			liveURL = pushProtocol + "://" + pushServerName
+				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (channelType == "Satellite")
+		else if (channelSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> satChannelConfDetails =
-				_mmsEngineDBFacade->getSATChannelConfDetails(
-				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+			tuple<int64_t, int64_t, int64_t, string, int, int>
+				satChannelConfDetails =
+				_mmsEngineDBFacade->getSourceSATChannelConfDetails(
+				satSourceSATConfKey, warningIfMissing);
 
-			tie(confKey, satelliteServiceId, satelliteFrequency, satelliteSymbolRate, satelliteModulation,
+			tie(satelliteServiceId, satelliteFrequency,
+				satelliteSymbolRate, satelliteModulation,
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
-		else if (channelType == "IP_MMSAsServer")
+		else if (channelSourceType == "CaptureLive")
 		{
-			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
-				+ ":" + to_string(actAsServerPort) + actAsServerURI;
-		}
-		else if (channelType == "CaptureLive")
-		{
-			// liveURL = "/dev/" + captureLive_deviceName;
+			captureEncoderServerName = _mmsEngineDBFacade->getEncoderDetails(
+				captureEncoderKey);
 		}
 
 		{
@@ -12351,27 +12237,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				throw runtime_error(errorMessage);
 			}
-			/*
-			else if (encodersNumber == 1 && highAvailability)
-			{
-				// in case of high availability and in case we have just ONE encoder, to avoid the below algorithm
-				// trying to assign the backup encoder without any possibility of success, we will force          
-				// highAvailability to be false                                                                   
-
-				string errorMessage = __FILEREF__ + "highAvailability but only ONE encoder is available"
-					+ ", force highAvailability to be false"
-					", ingestionJobKey: " + to_string(ingestionJobKey)
-				;
-				_logger->error(errorMessage);
-
-				highAvailability = false;
-			}
-			*/
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);
 
-		// in case we have monitorHLS and/or liveRecorderVirtualVOD, this will be "translate"
+		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
+		// this will be "translate"
 		// in one entry added to the outputsRoot
 		string monitorManifestDirectoryPath;
 		string monitorManifestFileName;
@@ -12427,7 +12298,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string manifestExtension;
 				manifestExtension = "m3u8";
 
-				if (channelType == "IP_MMSAsClient")
+				if (channelSourceType == "IP_PULL")
 				{
 					// monitorHLS is true
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
@@ -12436,7 +12307,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 				{
 					// monitorHLS is true
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
@@ -12445,7 +12316,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelType == "IP_MMSAsServer")
+				else if (channelSourceType == "IP_PUSH")
 				{
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 						to_string(deliveryCode),
@@ -12453,7 +12324,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelType == "CaptureLive")
+				else if (channelSourceType == "CaptureLive")
 				{
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 						to_string(deliveryCode),
@@ -12575,11 +12446,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 					field = "DeliveryCode";
 					if (!JSONUtils::isMetadataPresent(outputRoot, field))
 					{
-						if (channelType == "IP_MMSAsClient")
+						if (channelSourceType == "IP_PULL")
 						{
 							_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
 							// deliveryCode shall be mandatory. Just for backward compatibility
-							// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it 
+							// (cibor project), in case it is missing and it is IP_PULL, we set it 
 							// with confKey
 							deliveryCode = confKey;
 						}
@@ -12615,7 +12486,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					else if (outputType == "DASH")
 						manifestExtension = "mpd";
 
-					if (channelType == "IP_MMSAsClient")
+					if (channelSourceType == "IP_PULL")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -12623,7 +12494,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "Satellite")
+					else if (channelSourceType == "Satellite")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -12631,7 +12502,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "IP_MMSAsServer")
+					else if (channelSourceType == "IP_PUSH")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -12639,7 +12510,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "CaptureLive")
+					else if (channelSourceType == "CaptureLive")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -12776,10 +12647,16 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			ingestionJobLabel, channelType, // highAvailability,
+			ingestionJobLabel, channelSourceType,
 			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
+
+			pushListenTimeout,
+			captureEncoderServerName, captureVideoDeviceNumber,
+			captureVideoInputFormat, captureFrameRate,
+			captureWidth, captureHeight, captureAudioDeviceNumber,
+			captureChannelsNumber,
 
 			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
 			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
@@ -12790,17 +12667,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorManifestFileName,	// used by FFMPEGEncoder.cpp to build virtualVOD
 
 			localOutputsRoot);
-
-		/*
-		if (highAvailability)
-		{
-			main = false;
-
-			_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-				highAvailability, main, configurationLabel, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
-				autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
-		}
-		*/
 	}
     catch(runtime_error e)
     {
@@ -12843,30 +12709,36 @@ void MMSEngineProcessor::manageLiveProxy(
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
-				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+				static_cast<MMSEngineDBFacade::EncodingPriority>(
+				workspace->_maxEncodingPriority);
 		}
 		else
 		{
 			encodingPriority =
-				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+				MMSEngineDBFacade::toEncodingPriority(
+				parametersRoot.get(field, "").asString());
 		}
 		*/
 
-		string channelType;
-
-		string actAsServerProtocol;
-		string actAsServerBindIP;
-		int actAsServerPort;
-		string actAsServerURI;
-
 		string configurationLabel;
 
-		/*
-		string captureLive_deviceName;
-		int captureLive_frameRate;
-		int captureLive_width;
-		int captureLive_height;
-		*/
+		int64_t confKey = -1;
+		string channelSourceType;
+		string pullUrl;
+		string pushProtocol;
+		string pushServerName;
+		int pushServerPort = -1;
+		string pushUri;
+		int pushListenTimeout = -1;
+		int64_t captureEncoderKey = -1;
+		int captureVideoDeviceNumber = -1;
+		string captureVideoInputFormat;
+		int captureFrameRate = -1;
+		int captureWidth = -1;
+		int captureHeight = -1;
+		int captureAudioDeviceNumber = -1;
+		int captureChannelsNumber = -1;
+		int64_t satSourceSATConfKey = -1;
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
@@ -12875,15 +12747,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
-            string field = "ChannelType";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				channelType = "IP_MMSAsClient";
-			else
-				channelType = parametersRoot.get(field, "").asString();
-
-			if (channelType == "IP_MMSAsClient")
 			{
-				field = "ConfigurationLabel";
+				string field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12893,134 +12758,32 @@ void MMSEngineProcessor::manageLiveProxy(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = parametersRoot.get(field, "XXX").asString();
-			}
-			else if (channelType == "Satellite")
-			{
-				field = "ConfigurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				configurationLabel = parametersRoot.get(field, "").asString();
+
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
+					bool warningIfMissing = false;
+					tuple<int64_t, string, string, string, string, int, string, int,
+						int64_t, int, string, int, int, int, int, int, int64_t>
+						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
+						workspace->_workspaceKey, configurationLabel, warningIfMissing);
+					tie(confKey, channelSourceType,
+						pullUrl,
+						pushProtocol, pushServerName, pushServerPort, pushUri,
+						pushListenTimeout,
+						captureEncoderKey, captureVideoDeviceNumber,
+						captureVideoInputFormat,
+						captureFrameRate, captureWidth, captureHeight,
+						captureAudioDeviceNumber, captureChannelsNumber,
+						satSourceSATConfKey) = channelConfDetails;
 
-					throw runtime_error(errorMessage);
+					// default is IP_PULL
+					if (channelSourceType == "")
+						channelSourceType = "IP_PULL";
 				}
-				configurationLabel = parametersRoot.get(field, "XXX").asString();
-			}
-			else if (channelType == "IP_MMSAsServer")
-			{
-				field = "ActAsServerProtocol";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerProtocol = parametersRoot.get(field, "").asString();
-
-				field = "ActAsServerBindIP";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerBindIP = parametersRoot.get(field, "").asString();
-
-				field = "ActAsServerPort";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerPort = parametersRoot.get(field, 0).asInt();
-
-				field = "ActAsServerURI";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				actAsServerURI = parametersRoot.get(field, "").asString();
-			}
-			else if (channelType == "CaptureLive")
-			{
-				/*
-				field = "CaptureLive";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				Json::Value captureLiveRoot = parametersRoot[field];
-
-				field = "DeviceName";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
-
-				field = "FrameRate";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-					captureLive_frameRate = 25;
-				else
-					captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, field, 25);
-
-				field = "Width";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_width = JSONUtils::asInt(captureLiveRoot, field, 0);
-
-				field = "Height";
-				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				captureLive_height = JSONUtils::asInt(captureLiveRoot, field, 0);
-				*/
 			}
 
 			timePeriod = false;
-            field = "TimePeriod";
+            string field = "TimePeriod";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				utcProxyPeriodStart = -1;
@@ -13034,7 +12797,8 @@ void MMSEngineProcessor::manageLiveProxy(
 					field = "ProxyPeriod";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						string errorMessage = __FILEREF__
+							+ "Field is not present or it is null"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -13049,7 +12813,8 @@ void MMSEngineProcessor::manageLiveProxy(
 					field = "Start";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						string errorMessage = __FILEREF__
+							+ "Field is not present or it is null"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -13063,7 +12828,8 @@ void MMSEngineProcessor::manageLiveProxy(
 					field = "End";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						string errorMessage = __FILEREF__
+							+ "Field is not present or it is null"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -13080,13 +12846,15 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				maxAttemptsNumberInCaseOfErrors = 3;
 			else
-				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(parametersRoot, field, 0);
+				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
+					parametersRoot, field, 0);
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
 			else
-				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
+				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
+					parametersRoot, field, 0);
 
 			field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13101,9 +12869,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		int64_t confKey = -1;
-		string liveURL;
-
 		int64_t satelliteServiceId = -1;
 		int64_t satelliteFrequency = -1;
 		int64_t satelliteSymbolRate = -1;
@@ -13111,31 +12876,31 @@ void MMSEngineProcessor::manageLiveProxy(
 		int satelliteVideoPid = -1;
 		int satelliteAudioItalianPid = -1;
 
-		if (channelType == "IP_MMSAsClient")
+		string liveURL;
+		string captureEncoderServerName;
+		if (channelSourceType == "IP_PULL")
+			liveURL = pullUrl;
+		else if (channelSourceType == "IP_PUSH")
 		{
-			bool warningIfMissing = false;
-			pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-				workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(confKey, liveURL) = channelConfDetails;
+			liveURL = pushProtocol + "://" + pushServerName
+				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (channelType == "Satellite")
+		else if (channelSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> satChannelConfDetails =
-				_mmsEngineDBFacade->getSATChannelConfDetails(
-				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+			tuple<int64_t, int64_t, int64_t, string, int, int>
+				satChannelConfDetails =
+				_mmsEngineDBFacade->getSourceSATChannelConfDetails(
+				satSourceSATConfKey, warningIfMissing);
 
-			tie(confKey, satelliteServiceId, satelliteFrequency, satelliteSymbolRate, satelliteModulation,
+			tie(satelliteServiceId, satelliteFrequency,
+				satelliteSymbolRate, satelliteModulation,
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
-		else if (channelType == "IP_MMSAsServer")
+		else if (channelSourceType == "CaptureLive")
 		{
-			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
-				+ ":" + to_string(actAsServerPort) + actAsServerURI;
-		}
-		else if (channelType == "CaptureLive")
-		{
-			// liveURL = "/dev/" + captureLive_deviceName;
+			captureEncoderServerName = _mmsEngineDBFacade->getEncoderDetails(
+				captureEncoderKey);
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);
@@ -13179,11 +12944,11 @@ void MMSEngineProcessor::manageLiveProxy(
 					field = "DeliveryCode";
 					if (!JSONUtils::isMetadataPresent(outputRoot, field))
 					{
-						if (channelType == "IP_MMSAsClient")
+						if (channelSourceType == "IP_PULL")
 						{
 							_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
 							// deliveryCode shall be mandatory. Just for backward compatibility
-							// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it 
+							// (cibor project), in case it is missing and it is IP_PULL, we set it 
 							// with confKey
 							deliveryCode = confKey;
 						}
@@ -13219,7 +12984,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					else if (outputType == "DASH")
 						manifestExtension = "mpd";
 
-					if (channelType == "IP_MMSAsClient")
+					if (channelSourceType == "IP_PULL")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -13227,7 +12992,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "Satellite")
+					else if (channelSourceType == "Satellite")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -13235,7 +13000,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "IP_MMSAsServer")
+					else if (channelSourceType == "IP_PUSH")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -13243,7 +13008,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else if (channelType == "CaptureLive")
+					else if (channelSourceType == "CaptureLive")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode),
@@ -13380,7 +13145,13 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			channelType, confKey, configurationLabel, liveURL,
+			channelSourceType, confKey, configurationLabel, liveURL,
+
+			pushListenTimeout,
+			captureEncoderServerName, captureVideoDeviceNumber,
+			captureVideoInputFormat, captureFrameRate,
+			captureWidth, captureHeight, captureAudioDeviceNumber,
+			captureChannelsNumber,
 
 			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
 			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
@@ -14171,14 +13942,23 @@ void MMSEngineProcessor::manageLiveGrid(
 				string inputConfigurationLabel = inputChannelsRoot[inputChannelIndex].asString();
 
 				bool warningIfMissing = false;
-				pair<int64_t, string> confKeyAndChannelURL = _mmsEngineDBFacade->getIPChannelConfDetails(
+				tuple<int64_t, string, string, string, string, int, string, int,
+					int64_t, int, string, int, int, int, int, int, int64_t>
+					confKeyAndChannelURL = _mmsEngineDBFacade->getChannelConfDetails(
 					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
 
 				int64_t inputChannelConfKey;
+				string channelSourceType;
 				string inputChannelURL;
-				tie(inputChannelConfKey, inputChannelURL) = confKeyAndChannelURL;
+				tie(inputChannelConfKey, channelSourceType, inputChannelURL,
+					ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore) = confKeyAndChannelURL;
 
-				inputChannels.push_back(make_tuple(inputChannelConfKey, inputConfigurationLabel, inputChannelURL));
+				// bisognerebbe verificare channelSourceType
+
+				inputChannels.push_back(make_tuple(inputChannelConfKey,
+					inputConfigurationLabel, inputChannelURL));
 			}
 
 			string keyField = "EncodingProfileKey";
@@ -14319,7 +14099,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		// string channelType;
+		// string channelSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
@@ -14329,7 +14109,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 		bool errorIfAChunkIsMissing = false;
         {
 			/*
-            string field = "ChannelType";
+            string field = "ChannelSourceType";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14340,9 +14120,9 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-			channelType = liveCutParametersRoot.get(field, "").asString();
+			channelSourceType = liveCutParametersRoot.get(field, "").asString();
 
-			if (channelType == "IP_MMSAsClient")
+			if (channelSourceType == "IP_PULL")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -14357,7 +14137,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				}
 				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
 			}
-			else if (channelType == "Satellite")
+			else if (channelSourceType == "Satellite")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -14374,7 +14154,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			}
 			*/
 
-			// else if (channelType == "IP_MMSAsServer")
+			// else if (channelSourceType == "IP_PUSH")
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
@@ -14445,14 +14225,14 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 		/*
 		int64_t confKey = -1;
-		if (channelType == "IP_MMSAsClient")
+		if (channelSourceType == "IP_PULL")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
 			tie(confKey, ignore) = confKeyAndLiveURL;
 		}
-		else if (channelType == "Satellite")
+		else if (channelSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
@@ -14505,13 +14285,13 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
 				/*
-				if (channelType == "IP_MMSAsClient")
+				if (channelSourceType == "IP_PULL")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
 						+ to_string(confKey) + " and (";
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.satConfKey') = "
 						+ to_string(confKey) + " and (";
-				else // if (channelType == "IP_MMSAsServer")
+				else // if (channelSourceType == "IP_PUSH")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.actAsServerChannelCode') = "
 						+ to_string(actAsServerChannelCode) + " and (";
 				*/
@@ -14836,7 +14616,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				// + ", channelType: " + channelType
+				// + ", channelSourceType: " + channelSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
 				+ ", deliveryCode: " + to_string(deliveryCode)
@@ -14907,19 +14687,19 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				/*
-				if (channelType == "IP_MMSAsClient")
+				if (channelSourceType == "IP_PULL")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else // if (channelType == "IP_MMSAsServer")
+				else // if (channelSourceType == "IP_PUSH")
 				{
 					Json::Value removed;
 					field = "ActAsServerChannelCode";
@@ -15104,20 +14884,20 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					*/
 
 					/*
-					field = "channelType";
-					mmsDataRoot[field] = channelType;
+					field = "channelSourceType";
+					mmsDataRoot[field] = channelSourceType;
 
-					if (channelType == "IP_MMSAsClient")
+					if (channelSourceType == "IP_PULL")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = ipConfigurationLabel;
 					}
-					else if (channelType == "Satellite")
+					else if (channelSourceType == "Satellite")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = satConfigurationLabel;
 					}
-					else // if (channelType == "IP_MMSAsServer")
+					else // if (channelSourceType == "IP_PUSH")
 					{
 						field = "actAsServerChannelCode";
 						mmsDataRoot[field] = actAsServerChannelCode;
@@ -15436,7 +15216,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		// string channelType;
+		// string channelSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
@@ -15448,7 +15228,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		bool errorIfAChunkIsMissing = false;
         {
 			/*
-            string field = "ChannelType";
+            string field = "channelSourceType";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15459,9 +15239,9 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-			channelType = liveCutParametersRoot.get(field, "").asString();
+			channelSourceType = liveCutParametersRoot.get(field, "").asString();
 
-			if (channelType == "IP_MMSAsClient")
+			if (channelSourceType == "IP_PULL")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -15476,7 +15256,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				}
 				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
 			}
-			else if (channelType == "Satellite")
+			else if (channelSourceType == "Satellite")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -15493,7 +15273,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			}
 			*/
 
-			// else if (channelType == "IP_MMSAsServer")
+			// else if (channelSourceType == "IP_PUSH")
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
@@ -15572,14 +15352,14 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 		/*
 		int64_t confKey = -1;
-		if (channelType == "IP_MMSAsClient")
+		if (channelSourceType == "IP_PULL")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
 			tie(confKey, ignore) = confKeyAndLiveURL;
 		}
-		else if (channelType == "Satellite")
+		else if (channelSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
@@ -15632,13 +15412,13 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
 				/*
-				if (channelType == "IP_MMSAsClient")
+				if (channelSourceType == "IP_PULL")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
 						+ to_string(confKey) + " and (";
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.satConfKey') = "
 						+ to_string(confKey) + " and (";
-				else // if (channelType == "IP_MMSAsServer")
+				else // if (channelSourceType == "IP_PUSH")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.actAsServerChannelCode') = "
 						+ to_string(actAsServerChannelCode) + " and (";
 				*/
@@ -15992,7 +15772,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				// + ", channelType: " + channelType
+				// + ", channelSourceType: " + channelSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
 				+ ", deliveryCode: " + to_string(deliveryCode)
@@ -16063,19 +15843,19 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				/*
-				if (channelType == "IP_MMSAsClient")
+				if (channelSourceType == "IP_PULL")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else // if (channelType == "IP_MMSAsServer")
+				else // if (channelSourceType == "IP_PUSH")
 				{
 					Json::Value removed;
 					field = "ActAsServerChannelCode";
@@ -16260,20 +16040,20 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					*/
 
 					/*
-					field = "channelType";
-					mmsDataRoot[field] = channelType;
+					field = "channelSourceType";
+					mmsDataRoot[field] = channelSourceType;
 
-					if (channelType == "IP_MMSAsClient")
+					if (channelSourceType == "IP_PULL")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = ipConfigurationLabel;
 					}
-					else if (channelType == "Satellite")
+					else if (channelSourceType == "Satellite")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = satConfigurationLabel;
 					}
-					else // if (channelType == "IP_MMSAsServer")
+					else // if (channelSourceType == "IP_PUSH")
 					{
 						field = "actAsServerChannelCode";
 						mmsDataRoot[field] = actAsServerChannelCode;
@@ -20634,17 +20414,29 @@ void MMSEngineProcessor::emailNotificationThread(
 								if (inputType == "Channel")
 								{
 									field = "ConfigurationLabel";
-									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+									if (JSONUtils::isMetadataPresent(parametersRoot,
+										field))
 									{
 										checkStreaming_streamingName
 											= parametersRoot.get(field, "").asString();
 
 										bool warningIfMissing = false;
-										tuple<int64_t, string> ipChannelDetails =
-											_mmsEngineDBFacade->getIPChannelConfDetails(
-											workspace->_workspaceKey, checkStreaming_streamingName,
+										tuple<int64_t, string, string, string, string,
+											int, string, int, int64_t, int, string, int,
+											int, int, int, int, int64_t>
+											channelDetails =
+											_mmsEngineDBFacade->getChannelConfDetails(
+											workspace->_workspaceKey,
+											checkStreaming_streamingName,
 											warningIfMissing);
-										tie(ignore, checkStreaming_streamingUrl) = ipChannelDetails;
+
+										string channelSourceType;
+										tie(ignore, channelSourceType,
+											checkStreaming_streamingUrl,
+											ignore, ignore, ignore, ignore, ignore,
+											ignore, ignore, ignore, ignore, ignore,
+											ignore, ignore, ignore, ignore)
+											= channelDetails;
 									}
 								}
 								else
@@ -20930,9 +20722,15 @@ void MMSEngineProcessor::checkStreamingThread(
 			string configurationLabel = parametersRoot.get(field, "").asString();
 
 			bool warningIfMissing = false;
-			tuple<int64_t, string> ipChannelDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+			tuple<int64_t, string, string, string, string, int, string, int,
+				int64_t, int, string, int, int, int, int, int, int64_t>
+				ipChannelDetails = _mmsEngineDBFacade->getChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(ignore, streamingUrl) = ipChannelDetails;
+			string channelSourceType;
+			tie(ignore, channelSourceType, streamingUrl,
+				ignore, ignore, ignore, ignore, ignore, ignore,
+				ignore, ignore, ignore, ignore, ignore, ignore,
+				ignore, ignore) = ipChannelDetails;
 		}
 		else
 		{

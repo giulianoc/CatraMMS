@@ -1755,7 +1755,7 @@ public:
 	void addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey, string ingestionJobLabel,
-		string channelType,
+		string channelSourceType,
 		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
 		string userAgent,
@@ -1766,8 +1766,15 @@ public:
 		string outputFileFormat,
 		EncodingPriority encodingPriority,
 
-		int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
-		string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
+		int pushListenTimeout,
+		string captureEncoderServerName, int captureVideoDeviceNumber,
+		string captureVideoInputFormat, int captureFrameRate,
+		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
+		int captureChannelsNumber,
+
+		int64_t satelliteServiceId, int64_t satelliteFrequency,
+		int64_t satelliteSymbolRate, string satelliteModulation, int satelliteVideoPid,
+		int satelliteAudioItalianPid,
 
 		bool monitorHLS,
 		bool liveRecorderVirtualVOD,
@@ -1779,14 +1786,22 @@ public:
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string channelType,
+		string channelSourceType,
 		int64_t liveURLConfKey, string configurationLabel, string url,
 
-		int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
-		string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
+		int pushListenTimeout,
+		string captureEncoderServerName, int captureVideoDeviceNumber,
+		string captureVideoInputFormat, int captureFrameRate,
+		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
+		int captureChannelsNumber,
+
+		int64_t satelliteServiceId, int64_t satelliteFrequency,
+		int64_t satelliteSymbolRate, string satelliteModulation, int satelliteVideoPid,
+		int satelliteAudioItalianPid,
 
 		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+		long maxAttemptsNumberInCaseOfErrors,
+		long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);
 
 	void addEncoding_VODProxyJob (
@@ -2085,10 +2100,24 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
-    int64_t addIPChannelConf(
+    int64_t addChannelConf(
         int64_t workspaceKey,
         string label,
-        string url,
+		string sourceType,
+		string url,
+		string pushProtocol,
+		string pushServerName,
+		int pushServerPort,
+		string pushUri,
+		int pushListenTimeout,
+		int captureVideoDeviceNumber,
+		string captureVideoInputFormat,
+		int captureFrameRate,
+		int captureWidth,
+		int captureHeight,
+		int captureAudioDeviceNumber,
+		int captureChannelsNumber,
+		int64_t satSourceSATConfKey,
         string type,
         string description,
         string name,
@@ -2099,11 +2128,25 @@ public:
 		int position,
 		Json::Value channelData);
 
-	void modifyIPChannelConf(
+	void modifyChannelConf(
 		int64_t confKey,
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
+		bool sourceTypeToBeModified, string sourceType,
 		bool urlToBeModified, string url,
+		bool pushProtocolToBeModified, string pushProtocol,
+		bool pushServerNameToBeModified, string pushServerName,
+		bool pushServerPortToBeModified, int pushServerPort,
+		bool pushUriToBeModified, string pushUri,
+		bool pushListenTimeoutToBeModified, int pushListenTimeout,
+		bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber,
+		bool captureVideoInputFormatToBeModified, string captureVideoInputFormat,
+		bool captureFrameRateToBeModified, int captureFrameRate,
+		bool captureWidthToBeModified, int captureWidth,
+		bool captureHeightToBeModified, int captureHeight,
+		bool captureAudioDeviceNumberToBeModified, int captureAudioDeviceNumber,
+		bool captureChannelsNumberToBeModified, int captureChannelsNumber,
+		bool satSourceSATConfKeyToBeModified, int64_t satSourceSATConfKey,
 		bool typeToBeModified, string type,
 		bool descriptionToBeModified, string description,
 		bool nameToBeModified, string name,
@@ -2113,55 +2156,23 @@ public:
 		bool positionToBeModified, int position,
 		bool channelDataToBeModified, Json::Value channelData);
 
-    void removeIPChannelConf(
+    void removeChannelConf(
         int64_t workspaceKey,
         int64_t confKey);
 
-    Json::Value getIPChannelConfList (
+    Json::Value getChannelConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
 		string label, string type, string name, string region, string country, string url,
 		string labelOrder);
 
-    pair<int64_t, string> getIPChannelConfDetails(
-        int64_t workspaceKey, string label,
-		bool warningIfMissing);
+	tuple<int64_t, string, string, string, string, int, string, int,
+		int64_t, int, string, int, int, int, int, int, int64_t>
+		getChannelConfDetails(
+			int64_t workspaceKey, string label, bool warningIfMissing);
 
-	tuple<string, string, string> getIPChannelConfDetails(
+	tuple<string, string, string> getChannelConfDetails(
 		int64_t workspaceKey, int64_t confKey);
-
-    int64_t addSATChannelConf(
-        int64_t workspaceKey,
-		int64_t sourceSATConfKey,
-		string label,
-		string region,
-		string country,
-		int64_t imageMediaItemKey,
-		string imageUniqueName,
-		int position,
-		Json::Value channelData);
-
-	void modifySATChannelConf(
-		int64_t confKey,
-		int64_t workspaceKey,
-
-		bool sourceSATConfKeyToBeModified, int64_t sourceSATConfKey,
-		bool labelToBeModified, string label,
-		bool regionToBeModified, string region,
-		bool countryToBeModified, string country,
-		bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
-		bool positionToBeModified, int position,
-		bool channelDataToBeModified, Json::Value channelData);
-
-    void removeSATChannelConf(
-        int64_t workspaceKey,
-        int64_t confKey);
-
-    Json::Value getSATChannelConfList (
-        int64_t workspaceKey, int64_t serviceId,
-		string label, string region, string country,
-		int start, int rows,
-		string labelOrder);
 
 	int64_t addSourceSATChannelConf(
 		int64_t serviceId,
@@ -2215,9 +2226,8 @@ public:
 		int videoPid, string audioPids,
 		string nameOrder);
 
-    tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> getSATChannelConfDetails(
-        int64_t workspaceKey, string name,
-		bool warningIfMissing);
+    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceSATChannelConfDetails(
+        int64_t confKey, bool warningIfMissing);
 
     int64_t addFTPConf(
         int64_t workspaceKey,
@@ -2307,6 +2317,8 @@ public:
 
 	void removeEncoder(
 		int64_t encoderKey);
+
+	string getEncoderDetails (int64_t encoderKey);
 
 	void addAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);

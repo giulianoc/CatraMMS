@@ -3705,151 +3705,10 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		Validator::DependencyType, bool>>& dependencies)
 {
 
-	string channelType = "IP_MMSAsClient";
-
-    string field = "ChannelType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
-	{
-		channelType = parametersRoot.get(field, "").asString();
-		if (!isChannelTypeValid(channelType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive"
-                + ")"
-                + ", Field: " + field
-                + ", channelType: " + channelType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
-	}
-
-	if (channelType == "IP_MMSAsClient")
-	{
-		field = "ConfigurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-           
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (channelType == "Satellite")
-	{
-		field = "ConfigurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-           
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (channelType == "IP_MMSAsServer")
 	{
 		vector<string> mandatoryFields = {
-			"ActAsServerProtocol",
-			"ActAsServerBindIP",
-			"ActAsServerPort",
-			"ActAsServerURI"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-          
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	else if (channelType == "CaptureLive")
-	{
-		field = "CaptureLive";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-               ;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value captureLiveRoot = parametersRoot[field];
-
-		vector<string> mandatoryFields = {
-			"VideoDeviceNumber",
-			// "Width",
-			// "Height",
-			"AudioDeviceNumber"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(captureLiveRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-          
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-
-	field = "DeliveryCode";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-       
-		string errorMessage = __FILEREF__ + "Field is not present or it is null"
-			+ ", Field: " + field
-			+ ", sParametersRoot: " + sParametersRoot
-			+ ", label: " + label
-		;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	{
-		vector<string> mandatoryFields = {
+			"ConfigurationLabel",
+			"DeliveryCode",
 			"RecordingPeriod",
 			"SegmentDuration"
 		};
@@ -3872,7 +3731,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    field = "SegmentDuration";
+    string field = "SegmentDuration";
 	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
@@ -4081,131 +3940,20 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		dependencies)
 {
         
-	string channelType = "IP_MMSAsClient";
-
-    string field = "ChannelType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	string field = "ConfigurationLabel";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		channelType = parametersRoot.get(field, "").asString();
-		if (!isChannelTypeValid(channelType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP_MMSAsClient, Satellite or IP_MMSAsServer"
-                + ")"
-                + ", Field: " + field
-                + ", channelType: " + channelType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
-	}
-
-	if (channelType == "IP_MMSAsClient")
-	{
-		field = "ConfigurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-           
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (channelType == "Satellite")
-	{
-		field = "ConfigurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-           
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (channelType == "IP_MMSAsServer")
-	{
-		vector<string> mandatoryFields = {
-			"ActAsServerProtocol",
-			"ActAsServerBindIP",
-			"ActAsServerPort",
-			"ActAsServerURI"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
           
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	else if (channelType == "CaptureLive")
-	{
-		field = "CaptureLive";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field
-				+ ", sParametersRoot: " + sParametersRoot
-				+ ", label: " + label
-               ;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value captureLiveRoot = parametersRoot[field];
-
-		vector<string> mandatoryFields = {
-			"VideoDeviceNumber",
-			// "Width",
-			// "Height",
-			"AudioDeviceNumber"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(captureLiveRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-          
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
+		throw runtime_error(errorMessage);
 	}
 
 	bool timePeriod = false;
@@ -5626,29 +5374,6 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
 
-	/*
-	string channelType = "IP_MMSAsClient";
-
-    string field = "ChannelType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
-	{
-		channelType = parametersRoot.get(field, "").asString();
-		if (!isChannelTypeValid(channelType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP_MMSAsClient, Satellite or IP_MMSAsServer"
-                + ")"
-                + ", Field: " + field
-                + ", channelType: " + channelType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
-	}
-	*/
-
 	vector<string> mandatoryFields = {
 		"CutPeriod"
     };
@@ -5669,63 +5394,6 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
             throw runtime_error(errorMessage);
         }
     }
-
-	/*
-	if (channelType == "IP_MMSAsClient")
-	{
-		field = "ConfigurationLabel";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-	}
-	else if (channelType == "Satellite")
-	{
-		field = "ConfigurationLabel";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-	}
-	else if (channelType == "IP_MMSAsServer")
-	{
-		field = "ActAsServerChannelCode";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-	}
-	*/
 
 	string field = "DeliveryCode";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -6614,24 +6282,6 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
     for (string validOutput: validOutputs)
     {
         if (faceRecognitionOutput == validOutput) 
-            return true;
-    }
-    
-    return false;
-}
-
-bool Validator::isChannelTypeValid(string channelType)
-{
-    vector<string> validChannelTypes = {
-        "IP_MMSAsClient",
-        "Satellite",
-		"IP_MMSAsServer",
-		"CaptureLive"
-    };
-
-    for (string validChannelType: validChannelTypes)
-    {
-        if (channelType == validChannelType) 
             return true;
     }
     

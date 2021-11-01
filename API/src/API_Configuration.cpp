@@ -922,13 +922,13 @@ void API::facebookConfList(
     }
 }
 
-void API::addIPChannelConf(
+void API::addChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addIPChannelConf";
+    string api = "addChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -938,7 +938,23 @@ void API::addIPChannelConf(
     try
     {
         string label;
+		string sourceType;
+
         string url;
+        string pushProtocol;
+        string pushServerName;
+        int pushServerPort;
+        string pushUri;
+        int pushListenTimeout;
+        int captureVideoDeviceNumber;
+        string captureVideoInputFormat;
+        int captureFrameRate;
+        int captureWidth;
+        int captureHeight;
+        int captureAudioDeviceNumber;
+        int captureChannelsNumber;
+		int64_t satSourceSATConfKey;
+
         string type;
         string description;
         string name;
@@ -984,9 +1000,9 @@ void API::addIPChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = requestBodyRoot.get(field, "").asString();            
 
-            field = "Url";
+            field = "SourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -995,7 +1011,63 @@ void API::addIPChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            url = requestBodyRoot.get(field, "").asString();            
+            sourceType = requestBodyRoot.get(field, "").asString();            
+
+            field = "Url";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				url = requestBodyRoot.get(field, "").asString();            
+
+            field = "PushProtocol";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushProtocol = requestBodyRoot.get(field, "").asString();            
+
+            field = "PushServerName";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushServerName = requestBodyRoot.get(field, "").asString();            
+
+			field = "PushServerPort";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+            field = "PushURI";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushUri = requestBodyRoot.get(field, "").asString();            
+
+			field = "PushListenTimeout";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+			field = "CaptureVideoDeviceNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+            field = "CaptureVideoInputFormat";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureVideoInputFormat = requestBodyRoot.get(field, "").asString();
+
+			field = "CaptureFrameRate";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+			field = "CaptureWidth";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+			field = "CaptureHeight";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+			field = "CaptureAudioDeviceNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+			field = "CaptureChannelsNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				captureChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+			field = "SourceSATConfKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
 
             field = "Type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1058,8 +1130,24 @@ void API::addIPChannelConf(
         string sResponse;
         try
         {
-            int64_t confKey = _mmsEngineDBFacade->addIPChannelConf(
-                workspace->_workspaceKey, label, url, type, description,
+            int64_t confKey = _mmsEngineDBFacade->addChannelConf(
+                workspace->_workspaceKey, label,
+				sourceType,
+				url,
+				pushProtocol,
+				pushServerName,
+				pushServerPort,
+				pushUri,
+				pushListenTimeout,
+				captureVideoDeviceNumber,
+				captureVideoInputFormat,
+				captureFrameRate,
+				captureWidth,
+				captureHeight,
+				captureAudioDeviceNumber,
+				captureChannelsNumber,
+				satSourceSATConfKey,
+				type, description,
 				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				channelData);
 
@@ -1120,13 +1208,13 @@ void API::addIPChannelConf(
     }
 }
 
-void API::modifyIPChannelConf(
+void API::modifyChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "modifyIPChannelConf";
+    string api = "modifyChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1136,7 +1224,23 @@ void API::modifyIPChannelConf(
     try
     {
         string label;
+		string sourceType;
+
         string url;
+        string pushProtocol;
+        string pushServerName;
+        int pushServerPort;
+        string pushUri;
+        int pushListenTimeout;
+        int captureVideoDeviceNumber;
+        string captureVideoInputFormat;
+        int captureFrameRate;
+        int captureWidth;
+        int captureHeight;
+        int captureAudioDeviceNumber;
+        int captureChannelsNumber;
+		int64_t satSourceSATConfKey;
+
         string type;
         string description;
         string name;
@@ -1147,6 +1251,31 @@ void API::modifyIPChannelConf(
 		int position = -1;
         Json::Value channelData;
         
+		bool labelToBeModified;
+		bool sourceTypeToBeModified;
+		bool urlToBeModified;
+		bool pushProtocolToBeModified;
+		bool pushServerNameToBeModified;
+		bool pushServerPortToBeModified;
+		bool pushUriToBeModified;
+		bool pushListenTimeoutToBeModified;
+		bool captureVideoDeviceNumberToBeModified;
+		bool captureVideoInputFormatToBeModified;
+		bool captureFrameRateToBeModified;
+		bool captureWidthToBeModified;
+		bool captureHeightToBeModified;
+		bool captureAudioDeviceNumberToBeModified;
+		bool captureChannelsNumberToBeModified;
+		bool satSourceSATConfKeyToBeModified;
+		bool typeToBeModified;
+		bool descriptionToBeModified;
+		bool nameToBeModified;
+		bool regionToBeModified;
+		bool countryToBeModified;
+		bool imageToBeModified;
+		bool positionToBeModified;
+		bool channelDataToBeModified;
+
         try
         {
             Json::Value requestBodyRoot;
@@ -1183,8 +1312,9 @@ void API::modifyIPChannelConf(
                 throw runtime_error(errorMessage);
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
+			labelToBeModified = true;
 
-            field = "Url";
+            field = "SourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1193,44 +1323,191 @@ void API::modifyIPChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            url = requestBodyRoot.get(field, "").asString();            
+            sourceType = requestBodyRoot.get(field, "").asString();            
+			sourceTypeToBeModified = true;
 
+			urlToBeModified = false;
+            field = "Url";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				url = requestBodyRoot.get(field, "").asString();            
+				urlToBeModified = true;
+			}
+
+			pushProtocolToBeModified = false;
+            field = "PushProtocol";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushProtocol = requestBodyRoot.get(field, "").asString();            
+				pushProtocolToBeModified = true;
+			}
+
+			pushServerNameToBeModified = false;
+            field = "PushServerName";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushServerName = requestBodyRoot.get(field, "").asString();            
+				pushServerNameToBeModified = true;
+			}
+
+			pushServerPortToBeModified = false;
+			field = "PushServerPort";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
+				pushServerPortToBeModified = true;
+			}
+
+			pushUriToBeModified = false;
+            field = "PushURI";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushUri = requestBodyRoot.get(field, "").asString();            
+				pushUriToBeModified = true;
+			}
+
+			pushListenTimeoutToBeModified = false;
+			field = "PushListenTimeout";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
+				pushListenTimeoutToBeModified = true;
+			}
+
+			captureVideoDeviceNumberToBeModified = false;
+			field = "CaptureVideoDeviceNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureVideoDeviceNumberToBeModified = true;
+			}
+
+			captureVideoInputFormatToBeModified = false;
+            field = "CaptureVideoInputFormat";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureVideoInputFormat = requestBodyRoot.get(field, "").asString();
+				captureVideoInputFormatToBeModified = true;
+			}
+
+			captureFrameRateToBeModified = false;
+			field = "CaptureFrameRate";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureFrameRateToBeModified = true;
+			}
+
+			captureWidthToBeModified = false;
+			field = "CaptureWidth";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureWidthToBeModified = true;
+			}
+
+			captureHeightToBeModified = false;
+			field = "CaptureHeight";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureHeightToBeModified = true;
+			}
+
+			captureAudioDeviceNumberToBeModified = false;
+			field = "CaptureAudioDeviceNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureAudioDeviceNumberToBeModified = true;
+			}
+
+			captureChannelsNumberToBeModified = false;
+			field = "CaptureChannelsNumber";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				captureChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureChannelsNumberToBeModified = true;
+			}
+
+			satSourceSATConfKeyToBeModified = false;
+			field = "SourceSATConfKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
+				satSourceSATConfKeyToBeModified = true;
+			}
+
+			typeToBeModified = false;
             field = "Type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				type = requestBodyRoot.get(field, "XXX").asString();            
+				typeToBeModified = true;
+			}
 
+			descriptionToBeModified = false;
             field = "Description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				description = requestBodyRoot.get(field, "XXX").asString();            
+				descriptionToBeModified = true;
+			}
 
+			nameToBeModified = false;
             field = "Name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				name = requestBodyRoot.get(field, "XXX").asString();            
+				nameToBeModified = true;
+			}
 
+			regionToBeModified = false;
             field = "Region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				region = requestBodyRoot.get(field, "XXX").asString();            
+				regionToBeModified = true;
+			}
 
+			countryToBeModified = false;
             field = "Country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				country = requestBodyRoot.get(field, "XXX").asString();            
+				countryToBeModified = true;
+			}
 
+			imageToBeModified = false;
 			field = "ImageMediaItemKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				imageMediaItemKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+				imageToBeModified = true;
+			}
 
+			imageToBeModified = false;
 			field = "ImageUniqueName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				imageUniqueName = requestBodyRoot.get(field, "").asString();            
+				imageToBeModified = true;
+			}
 
+			positionToBeModified = false;
 			field = "Position";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
+				positionToBeModified = true;
+			}
 
+			channelDataToBeModified = false;
             field = "ChannelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				channelData = requestBodyRoot[field];
+				channelDataToBeModified = true;
             }
         }
         catch(runtime_error e)
@@ -1269,21 +1546,24 @@ void API::modifyIPChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-			bool labelToBeModified = true;
-			bool urlToBeModified = true;
-			bool typeToBeModified = true;
-			bool descriptionToBeModified = true;
-			bool nameToBeModified = true;
-			bool regionToBeModified = true;
-			bool countryToBeModified = true;
-			bool imageToBeModified = true;
-			bool positionToBeModified = true;
-			bool channelDataToBeModified = true;
-
-            _mmsEngineDBFacade->modifyIPChannelConf(
+            _mmsEngineDBFacade->modifyChannelConf(
                 confKey, workspace->_workspaceKey,
 				labelToBeModified, label,
+				sourceTypeToBeModified, sourceType,
 				urlToBeModified, url,
+				pushProtocolToBeModified, pushProtocol,
+				pushServerNameToBeModified, pushServerName,
+				pushServerPortToBeModified, pushServerPort,
+				pushUriToBeModified, pushUri,
+				pushListenTimeoutToBeModified, pushListenTimeout,
+				captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
+				captureVideoInputFormatToBeModified, captureVideoInputFormat,
+				captureFrameRateToBeModified, captureFrameRate,
+				captureWidthToBeModified, captureWidth,
+				captureHeightToBeModified, captureHeight,
+				captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
+				captureChannelsNumberToBeModified, captureChannelsNumber,
+				satSourceSATConfKeyToBeModified, satSourceSATConfKey,
 				typeToBeModified, type,
 				descriptionToBeModified, description,
 				nameToBeModified, name,
@@ -1350,12 +1630,12 @@ void API::modifyIPChannelConf(
     }
 }
 
-void API::removeIPChannelConf(
+void API::removeChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeIPChannelConf";
+    string api = "removeChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1379,7 +1659,7 @@ void API::removeIPChannelConf(
             }
             confKey = stoll(confKeyIt->second);
             
-            _mmsEngineDBFacade->removeIPChannelConf(
+            _mmsEngineDBFacade->removeChannelConf(
                 workspace->_workspaceKey, confKey);
 
             sResponse = (
@@ -1390,7 +1670,7 @@ void API::removeIPChannelConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeIPChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1398,7 +1678,7 @@ void API::removeIPChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeIPChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1437,12 +1717,12 @@ void API::removeIPChannelConf(
     }
 }
 
-void API::ipChannelConfList(
+void API::channelConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
 {
-    string api = "ipChannelConfList";
+    string api = "channelConfList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1585,7 +1865,7 @@ void API::ipChannelConfList(
 
         {
             
-            Json::Value channelConfListRoot = _mmsEngineDBFacade->getIPChannelConfList(
+            Json::Value channelConfListRoot = _mmsEngineDBFacade->getChannelConfList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, 
 					url, type, name, region, country, labelOrder);
 
@@ -1625,629 +1905,6 @@ void API::ipChannelConfList(
     }
 }
 
-void API::addSATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
-{
-    string api = "addSATChannelConf";
-
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
-
-    try
-    {
-		int64_t sourceSATConfKey;
-
-        string label;
-        string region;
-        string country;
-		int64_t imageMediaItemKey = -1;
-		string imageUniqueName;
-		int position = -1;
-        Json::Value channelData = Json::nullValue;
-
-
-        try
-        {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
-			string field = "SourceSATConfKey";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			sourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
-
-			field = "Label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			label = requestBodyRoot.get(field, "").asString();            
-
-			field = "Region";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				region = requestBodyRoot.get(field, "").asString();            
-
-			field = "Country";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				country = requestBodyRoot.get(field, "").asString();            
-
-			field = "ImageMediaItemKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
-
-			field = "ImageUniqueName";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				imageUniqueName = requestBodyRoot.get(field, "").asString();            
-
-			field = "Position";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
-
-			field = "ChannelData";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelData = requestBodyRoot[field];
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-			int64_t confKey = _mmsEngineDBFacade->addSATChannelConf(
-				workspace->_workspaceKey, sourceSATConfKey, label, region, country, 
-				imageMediaItemKey, imageUniqueName, position, channelData);
-
-			sResponse = (
-				string("{ ") 
-					+ "\"confKey\": " + to_string(confKey)
-					+ "}"
-				);            
-		}
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-
-        sendSuccess(request, 201, sResponse);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-void API::modifySATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
-{
-    string api = "modifySATChannelConf";
-
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
-
-    try
-    {
-		bool sourceSATConfKeyToBeModified;
-		int64_t sourceSATConfKey = -1;
-		bool labelToBeModified;
-        string label;
-		bool regionToBeModified;
-        string region;
-		bool countryToBeModified;
-        string country;
-		bool imageToBeModified;
-		int64_t imageMediaItemKey = -1;
-		string imageUniqueName;
-		bool positionToBeModified;
-		int position = -1;
-		bool channelDataToBeModified;
-        Json::Value channelData = Json::nullValue;
-
-        try
-        {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
-            string field = "SourceSATConfKey";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				sourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
-				sourceSATConfKeyToBeModified = true;
-            }
-
-            field = "Label";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				label = requestBodyRoot.get(field, "").asString();            
-				labelToBeModified = true;
-            }
-
-            field = "Region";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				region = requestBodyRoot.get(field, "XXX").asString();            
-				regionToBeModified = true;
-            }
-
-            field = "Country";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				country = requestBodyRoot.get(field, "XXX").asString();            
-				countryToBeModified = true;
-            }
-
-			field = "ImageMediaItemKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
-				imageToBeModified = true;
-			}
-
-			field = "ImageUniqueName";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				imageUniqueName = requestBodyRoot.get(field, "").asString();            
-				imageToBeModified = true;
-			}
-
-			field = "Position";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
-				positionToBeModified = true;
-			}
-
-            field = "ChannelData";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				channelData = requestBodyRoot[field];
-				channelDataToBeModified = true;
-			}
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-            int64_t confKey;
-            auto confKeyIt = queryParameters.find("confKey");
-            if (confKeyIt == queryParameters.end())
-            {
-                string errorMessage = string("The 'serviceId' parameter is not found");
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            confKey = stoll(confKeyIt->second);
-
-            _mmsEngineDBFacade->modifySATChannelConf(
-                confKey, workspace->_workspaceKey,
-				sourceSATConfKeyToBeModified, sourceSATConfKey,
-				labelToBeModified, label,
-				regionToBeModified, region,
-				countryToBeModified, country,
-				imageToBeModified, imageMediaItemKey, imageUniqueName,
-				positionToBeModified, position,
-				channelDataToBeModified, channelData);
-
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-
-        sendSuccess(request, 200, sResponse);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-void API::removeSATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters)
-{
-    string api = "removeSATChannelConf";
-
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
-
-    try
-    {
-        string sResponse;
-        try
-        {
-            int64_t confKey;
-            auto confKeyIt = queryParameters.find("confKey");
-            if (confKeyIt == queryParameters.end())
-            {
-                string errorMessage = string("The 'confKey' parameter is not found");
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            confKey = stoll(confKeyIt->second);
-            
-            _mmsEngineDBFacade->removeSATChannelConf(
-                workspace->_workspaceKey, confKey);
-
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSATChannelConf failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-
-        sendSuccess(request, 200, sResponse);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-void API::satChannelConfList(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-		unordered_map<string, string> queryParameters)
-{
-    string api = "satChannelConfList";
-
-    _logger->info(__FILEREF__ + "Received " + api
-    );
-
-    try
-    {
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-		{
-			confKey = stoll(confKeyIt->second);
-			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
-			//	it is changed to -1, the return is all the rows. Because of that it was commented
-			// if (liveURLKey == 0)
-			// 	liveURLKey = -1;
-		}
-
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
-		{
-			start = stoll(startIt->second);
-		}
-
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-				rows = _maxPageSize;
-		}
-
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = curlpp::unescape(firstDecoding);
-		}
-
-		string region;
-		auto regionIt = queryParameters.find("region");
-		if (regionIt != queryParameters.end() && regionIt->second != "")
-		{
-			region = regionIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(region, regex(plus), plusDecoded);
-
-			region = curlpp::unescape(firstDecoding);
-		}
-
-		string country;
-		auto countryIt = queryParameters.find("country");
-		if (countryIt != queryParameters.end() && countryIt->second != "")
-		{
-			country = countryIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(country, regex(plus), plusDecoded);
-
-			country = curlpp::unescape(firstDecoding);
-		}
-
-		string labelOrder;
-		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
-		{
-			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
-				labelOrder = labelOrderIt->second;
-			else
-				_logger->warn(__FILEREF__ + "satChannelList: 'labelOrder' parameter is unknown"
-					+ ", labelOrder: " + labelOrderIt->second);
-		}
-
-        {
-            Json::Value channelConfListRoot = _mmsEngineDBFacade->getSATChannelConfList(
-                    workspace->_workspaceKey, confKey, label, region, country, start, rows,
-					labelOrder);
-
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, channelConfListRoot);
-            
-            sendSuccess(request, 200, responseBody);
-        }
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
 
 void API::addSourceSATChannelConf(
         FCGX_Request& request,

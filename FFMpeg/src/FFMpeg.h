@@ -288,7 +288,7 @@ public:
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
-		string channelType,
+		string channelSourceType,
         string liveURL,
 		int listenTimeoutInSeconds,
 		int captureLive_videoDeviceNumber,
@@ -372,12 +372,12 @@ public:
 		// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
 		//		listening for an incoming connection
 		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		string channelType,
+		string channelSourceType,
 		string liveURL,
 		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
 
-		// parameters used only in case channelType is CaptureLive
+		// parameters used only in case channelSourceType is CaptureLive
 		int captureLive_videoDeviceNumber,
 		string captureLive_videoInputFormat,
 		int captureLive_frameRate,

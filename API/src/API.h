@@ -478,46 +478,24 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
-    void addIPChannelConf(
+    void addChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void modifyIPChannelConf(
+    void modifyChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeIPChannelConf(
+    void removeChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void ipChannelConfList(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-		unordered_map<string, string> queryParameters);
-
-    void addSATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody);
-
-    void modifySATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody);
-
-    void removeSATChannelConf(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters);
-
-    void satChannelConfList(
+    void channelConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);

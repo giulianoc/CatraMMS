@@ -7,51 +7,8 @@
 
 	"Parameters": {
 
-		// optional, possible values: IP_MMSAsClient, Satellite, IP_MMSAsServer or CaptureLive
-		//	Default is IP_MMSAsClient
-		"ChannelType": "IP_MMSAsClient",
-
-		// mandatory only if channelType is IP_MMSAsServer
-		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
-		"ActAsServerProtocol": "rtmp",
-		// mandatory only if channelType is IP_MMSAsServer
-			// local transcoder IP address where to listen for data
-		"ActAsServerBindIP": 127.0.0.1,
-		// mandatory only if channelType is IP_MMSAsServer
-			// local transcoder port where to listen for data
-		"ActAsServerPort": 12345,
-		// mandatory only if channelType is IP_MMSAsServer
-			// max time in seconds waiting an incoming connection. Default is 300
-		"ActAsServerListenTimeout": 300,
-
-		// mandatory in case channelType is IP or Satellite
-		//	- if channelType is IP, it refers an IP Channel Configuration
-		//	- if channelType is Satellite, it refers a Satellite Channel Configuration
+		// mandatory, it identifies the channel
 		"ConfigurationLabel": "",
-
-		// mandatory only if ChannelType is CaptureLive
-		"CaptureLive": {
-			// mandatory, video live input device, i.e.: 0
-			"VideoDeviceNumber": 0,
-
-			// optional, live input format, i.e.: mjpeg, yuyv422, ...
-			"VideoInputFormat": "mjpeg",
-
-			// optional, live input framerate, default: 25
-			"FrameRate": 25,
-
-			// optional, live input width
-			"Width": 640,
-
-			// optional, live input height
-			"Height": 640,
-
-			// mandatory, audio live input device, i.e.: 0 or 1 or ...
-			"AudioDeviceNumber": 0,
-
-			// optional, audio live input channels number, i.e.: 1 (mono), 2 (stereo), ...
-			"ChannelsNumber": 2
-		}
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used

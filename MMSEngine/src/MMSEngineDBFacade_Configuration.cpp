@@ -1284,10 +1284,24 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
     return facebookPageToken;
 }
 
-int64_t MMSEngineDBFacade::addIPChannelConf(
+int64_t MMSEngineDBFacade::addChannelConf(
     int64_t workspaceKey,
     string label,
-    string url,
+	string sourceType,
+	string url,
+	string pushProtocol,
+	string pushServerName,
+	int pushServerPort,
+	string pushUri,
+	int pushListenTimeout,
+	int captureVideoDeviceNumber,
+	string captureVideoInputFormat,
+	int captureFrameRate,
+	int captureWidth,
+	int captureHeight,
+	int captureAudioDeviceNumber,
+	int captureChannelsNumber,
+	int64_t satSourceSATConfKey,
 	string type,
 	string description,
 	string name,
@@ -1319,16 +1333,83 @@ int64_t MMSEngineDBFacade::addIPChannelConf(
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_IPChannel(workspaceKey, label, url, type, description, name, "
-				"region, country, imageMediaItemKey, imageUniqueName, position, channelData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "insert into MMS_Conf_IPChannel(workspaceKey, label, sourceType, "
+				"url, "
+				"pushProtocol, pushServerName, pushServerPort, pushUri, "
+				"pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, "
+				"captureFrameRate, captureWidth, captureHeight, "
+				"captureAudioDeviceNumber, captureChannelsNumber, "
+				"satSourceSATConfKey, "
+				"type, description, name, "
+				"region, country, imageMediaItemKey, imageUniqueName, "
+				"position, channelData) values ("
+                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+				"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, url);
+            preparedStatement->setString(queryParameterIndex++, sourceType);
+			if (url == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, url);
+
+			if (pushProtocol == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, pushProtocol);
+			if (pushServerName == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, pushServerName);
+			if (pushServerPort == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, pushServerPort);
+			if (pushUri == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, pushUri);
+			if (pushListenTimeout == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, pushListenTimeout);
+			if (captureVideoDeviceNumber == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureVideoDeviceNumber);
+			if (captureVideoInputFormat == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, captureVideoInputFormat);
+			if (captureFrameRate == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureFrameRate);
+			if (captureWidth == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureWidth);
+			if (captureHeight == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureHeight);
+			if (captureAudioDeviceNumber == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureAudioDeviceNumber);
+			if (captureChannelsNumber == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, captureChannelsNumber);
+			if (satSourceSATConfKey == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, satSourceSATConfKey);
+
 			if (type == "")
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1463,11 +1544,27 @@ int64_t MMSEngineDBFacade::addIPChannelConf(
     return confKey;
 }
 
-void MMSEngineDBFacade::modifyIPChannelConf(
+void MMSEngineDBFacade::modifyChannelConf(
     int64_t confKey,
     int64_t workspaceKey,
     bool labelToBeModified, string label,
-    bool urlToBeModified, string url,
+
+	bool sourceTypeToBeModified, string sourceType,
+	bool urlToBeModified, string url,
+	bool pushProtocolToBeModified, string pushProtocol,
+	bool pushServerNameToBeModified, string pushServerName,
+	bool pushServerPortToBeModified, int pushServerPort,
+	bool pushUriToBeModified, string pushUri,
+	bool pushListenTimeoutToBeModified, int pushListenTimeout,
+	bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber,
+	bool captureVideoInputFormatToBeModified, string captureVideoInputFormat,
+	bool captureFrameRateToBeModified, int captureFrameRate,
+	bool captureWidthToBeModified, int captureWidth,
+	bool captureHeightToBeModified, int captureHeight,
+	bool captureAudioDeviceNumberToBeModified, int captureAudioDeviceNumber,
+	bool captureChannelsNumberToBeModified, int captureChannelsNumber,
+	bool satSourceSATConfKeyToBeModified, int64_t satSourceSATConfKey,
+
 	bool typeToBeModified, string type,
 	bool descriptionToBeModified, string description,
 	bool nameToBeModified, string name,
@@ -1500,11 +1597,123 @@ void MMSEngineDBFacade::modifyIPChannelConf(
 				oneParameterPresent = true;
 			}
 
+			if (sourceTypeToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("sourceType = ?");
+				oneParameterPresent = true;
+			}
+
 			if (urlToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += ("url = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushProtocolToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushProtocol = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushServerNameToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushServerName = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushServerPortToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushServerPort = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushUriToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushUri = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushListenTimeoutToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushListenTimeout = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureVideoDeviceNumberToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureVideoDeviceNumber = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureVideoInputFormatToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureVideoInputFormat = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureFrameRateToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureFrameRate = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureWidthToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureWidth = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureHeightToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureHeight = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureAudioDeviceNumberToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureAudioDeviceNumber = ?");
+				oneParameterPresent = true;
+			}
+
+			if (captureChannelsNumberToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("captureChannelsNumber = ?");
+				oneParameterPresent = true;
+			}
+
+			if (satSourceSATConfKeyToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("satSourceSATConfKey = ?");
 				oneParameterPresent = true;
 			}
 
@@ -1599,40 +1808,163 @@ void MMSEngineDBFacade::modifyIPChannelConf(
             int queryParameterIndex = 1;
 			if (labelToBeModified)
 				preparedStatement->setString(queryParameterIndex++, label);
+			if (sourceTypeToBeModified)
+				preparedStatement->setString(queryParameterIndex++, sourceType);
 			if (urlToBeModified)
-				preparedStatement->setString(queryParameterIndex++, url);
+			{
+				if (url == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, url);
+			}
+			if (pushProtocolToBeModified)
+			{
+				if (pushProtocol == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, pushProtocol);
+			}
+			if (pushServerNameToBeModified)
+			{
+				if (pushServerName == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, pushServerName);
+			}
+			if (pushServerPortToBeModified)
+			{
+				if (pushServerPort == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++, pushServerPort);
+			}
+			if (pushUriToBeModified)
+			{
+				if (pushUri == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, pushUri);
+			}
+			if (pushListenTimeoutToBeModified)
+			{
+				if (pushListenTimeout == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++, pushListenTimeout);
+			}
+			if (captureVideoDeviceNumberToBeModified)
+			{
+				if (captureVideoDeviceNumber == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						captureVideoDeviceNumber);
+			}
+			if (captureVideoInputFormatToBeModified)
+			{
+				if (captureVideoInputFormat == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++,
+						captureVideoInputFormat);
+			}
+			if (captureFrameRateToBeModified)
+			{
+				if (captureFrameRate == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						captureFrameRate);
+			}
+			if (captureWidthToBeModified)
+			{
+				if (captureWidth == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++, captureWidth);
+			}
+			if (captureHeightToBeModified)
+			{
+				if (captureHeight == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++, captureHeight);
+			}
+			if (captureAudioDeviceNumberToBeModified)
+			{
+				if (captureAudioDeviceNumber == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						captureAudioDeviceNumber);
+			}
+			if (captureChannelsNumberToBeModified)
+			{
+				if (captureChannelsNumber == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						captureChannelsNumber);
+			}
+			if (satSourceSATConfKeyToBeModified)
+			{
+				if (satSourceSATConfKey == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt(queryParameterIndex++,
+						satSourceSATConfKey);
+			}
 			if (typeToBeModified)
 			{
 				if (type == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, type);
 			}
 			if (descriptionToBeModified)
 			{
 				if (description == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, description);
 			}
 			if (nameToBeModified)
 			{
 				if (name == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, name);
 			}
 			if (regionToBeModified)
 			{
 				if (region == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, region);
 			}
 			if (countryToBeModified)
 			{
 				if (country == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, country);
 			}
@@ -1640,30 +1972,37 @@ void MMSEngineDBFacade::modifyIPChannelConf(
 			{
 				if (imageMediaItemKey == -1)
 				{
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::BIGINT);
 
 					if (imageUniqueName == "")
-						preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+						preparedStatement->setNull(queryParameterIndex++,
+							sql::DataType::VARCHAR);
 					else
-						preparedStatement->setString(queryParameterIndex++, imageUniqueName);
+						preparedStatement->setString(queryParameterIndex++,
+							imageUniqueName);
 				}
 				else
 				{
-					preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setInt64(queryParameterIndex++,
+						imageMediaItemKey);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				}
 			}
 			if (positionToBeModified)
 			{
 				if (position == -1)
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::INTEGER);
 				else
 					preparedStatement->setInt(queryParameterIndex++, position);
 			}
 			if (channelDataToBeModified)
 			{
 				if (sChannelData == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
 				else
 					preparedStatement->setString(queryParameterIndex++, sChannelData);
 			}
@@ -1675,20 +2014,37 @@ void MMSEngineDBFacade::modifyIPChannelConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label (" + to_string(labelToBeModified) + "): " + label
+				+ ", sourceType (" + to_string(sourceTypeToBeModified) + "): "
+					+ sourceType
 				+ ", url (" + to_string(urlToBeModified) + "): " + url
+				+ ", pushProtocol (" + to_string(pushProtocolToBeModified) + "): "
+					+ pushProtocol
+				+ ", pushServerName (" + to_string(pushServerNameToBeModified) + "): "
+					+ pushServerName
+				+ ", pushServerPort (" + to_string(pushServerPortToBeModified) + "): "
+					+ to_string(pushServerPort)
+				+ ", pushUri (" + to_string(pushUriToBeModified) + "): " + pushUri
+				+ ", pushListenTimeout (" + to_string(pushListenTimeoutToBeModified) + "): "
+					+ to_string(pushListenTimeout)
 				+ ", type (" + to_string(typeToBeModified) + "): " + type
-				+ ", description (" + to_string(descriptionToBeModified) + "): " + description
+				+ ", description (" + to_string(descriptionToBeModified) + "): "
+					+ description
 				+ ", name (" + to_string(nameToBeModified) + "): " + name
 				+ ", region (" + to_string(regionToBeModified) + "): " + region
 				+ ", country (" + to_string(countryToBeModified) + "): " + country
-				+ ", imageMediaItemKey (" + to_string(imageToBeModified) + "): " + to_string(imageMediaItemKey)
-				+ ", imageUniqueName (" + to_string(imageToBeModified) + "): " + imageUniqueName
-				+ ", position (" + to_string(positionToBeModified) + "): " + to_string(position)
-				+ ", sChannelData (" + to_string(channelDataToBeModified) + "): " + sChannelData
+				+ ", imageMediaItemKey (" + to_string(imageToBeModified) + "): "
+					+ to_string(imageMediaItemKey)
+				+ ", imageUniqueName (" + to_string(imageToBeModified) + "): "
+					+ imageUniqueName
+				+ ", position (" + to_string(positionToBeModified) + "): "
+					+ to_string(position)
+				+ ", sChannelData (" + to_string(channelDataToBeModified) + "): "
+					+ sChannelData
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -1772,7 +2128,7 @@ void MMSEngineDBFacade::modifyIPChannelConf(
     }      
 }
 
-void MMSEngineDBFacade::removeIPChannelConf(
+void MMSEngineDBFacade::removeChannelConf(
     int64_t workspaceKey,
     int64_t confKey)
 {
@@ -1885,7 +2241,7 @@ void MMSEngineDBFacade::removeIPChannelConf(
     }        
 }
 
-Json::Value MMSEngineDBFacade::getIPChannelConfList (
+Json::Value MMSEngineDBFacade::getChannelConfList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
 	string label, string url, string type, string name, string region, string country,
@@ -2066,7 +2422,14 @@ Json::Value MMSEngineDBFacade::getIPChannelConfList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string("select confKey, label, url, type, description, name, region, country, "
+                string("select confKey, label, sourceType, url, "
+						"pushProtocol, pushServerName, pushServerPort, pushUri, "
+						"pushListenTimeout, captureVideoDeviceNumber, "
+						"captureVideoInputFormat, captureFrameRate, captureWidth, "
+						"captureHeight, captureAudioDeviceNumber, "
+						"captureChannelsNumber, satSourceSATConfKey, "
+						"type, description, name, "
+						"region, country, "
 						"imageMediaItemKey, imageUniqueName, position, channelData "
 						"from MMS_Conf_IPChannel ") 
                 + sqlWhere
@@ -2080,17 +2443,22 @@ Json::Value MMSEngineDBFacade::getIPChannelConfList (
             if (liveURLKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
             if (label != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+                preparedStatement->setString(queryParameterIndex++,
+					string("%") + label + "%");
             if (url != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + url + "%");
+                preparedStatement->setString(queryParameterIndex++,
+					string("%") + url + "%");
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
             if (name != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
+                preparedStatement->setString(queryParameterIndex++,
+					string("%") + name + "%");
             if (region != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + region + "%");
+                preparedStatement->setString(queryParameterIndex++,
+					string("%") + region + "%");
             if (country != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + country + "%");
+                preparedStatement->setString(queryParameterIndex++,
+					string("%") + country + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2108,7 +2476,8 @@ Json::Value MMSEngineDBFacade::getIPChannelConfList (
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -2119,10 +2488,103 @@ Json::Value MMSEngineDBFacade::getIPChannelConfList (
                 channelConfRoot[field] = resultSet->getInt64("confKey");
 
                 field = "label";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("label"));
+                channelConfRoot[field] = static_cast<string>(
+					resultSet->getString("label"));
+
+                field = "sourceType";
+                channelConfRoot[field] = static_cast<string>(
+					resultSet->getString("sourceType"));
 
                 field = "url";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("url"));
+				if (resultSet->isNull("url"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("url"));
+
+                field = "pushProtocol";
+				if (resultSet->isNull("pushProtocol"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("pushProtocol"));
+
+                field = "pushServerName";
+				if (resultSet->isNull("pushServerName"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("pushServerName"));
+
+                field = "pushServerPort";
+				if (resultSet->isNull("pushServerPort"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("pushServerPort");
+
+                field = "pushUri";
+				if (resultSet->isNull("pushUri"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("pushUri"));
+
+                field = "pushListenTimeout";
+				if (resultSet->isNull("pushListenTimeout"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("pushListenTimeout");
+
+                field = "captureVideoDeviceNumber";
+				if (resultSet->isNull("captureVideoDeviceNumber"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] =
+						resultSet->getInt("captureVideoDeviceNumber");
+
+                field = "captureVideoInputFormat";
+				if (resultSet->isNull("captureVideoInputFormat"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("captureVideoInputFormat"));
+
+                field = "captureFrameRate";
+				if (resultSet->isNull("captureFrameRate"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("captureFrameRate");
+
+                field = "captureWidth";
+				if (resultSet->isNull("captureWidth"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("captureWidth");
+
+                field = "captureHeight";
+				if (resultSet->isNull("captureHeight"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("captureHeight");
+
+                field = "captureAudioDeviceNumber";
+				if (resultSet->isNull("captureAudioDeviceNumber"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] =
+						resultSet->getInt("captureAudioDeviceNumber");
+
+                field = "captureChannelsNumber";
+				if (resultSet->isNull("captureChannelsNumber"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("captureChannelsNumber");
+
+                field = "satSourceSATConfKey";
+				if (resultSet->isNull("satSourceSATConfKey"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt64("satSourceSATConfKey");
 
                 field = "type";
 				if (resultSet->isNull("type"))
@@ -2256,20 +2718,20 @@ Json::Value MMSEngineDBFacade::getIPChannelConfList (
     return channelConfListRoot;
 }
 
-pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
+tuple<int64_t, string, string, string, string, int, string, int,
+	int64_t, int, string, int, int, int, int, int, int64_t>
+	MMSEngineDBFacade::getChannelConfDetails(
     int64_t workspaceKey, string label,
 	bool warningIfMissing
 )
 {
     string      lastSQLCommand;
-	int64_t		confKey;
-    string      url;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
     {
-        _logger->info(__FILEREF__ + "getLiveURLByConfigurationLabel"
+        _logger->info(__FILEREF__ + "getChannelConfDetails"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", label: " + label
         );
@@ -2278,12 +2740,38 @@ pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        
-        {
-            lastSQLCommand = string("select confKey, url from MMS_Conf_IPChannel ")
-				+ "where workspaceKey = ? and label = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+		int64_t confKey;
+		string sourceType;
+		string url;
+		string pushProtocol;
+		string pushServerName;
+		int pushServerPort = -1;
+		string pushUri;
+		int pushListenTimeout = -1;
+		int64_t captureEncoderKey = -1;
+		int captureVideoDeviceNumber = -1;
+		string captureVideoInputFormat;
+		int captureFrameRate = -1;
+		int captureWidth = -1;
+		int captureHeight = -1;
+		int captureAudioDeviceNumber = -1;
+		int captureChannelsNumber = -1;
+		int64_t satSourceSATConfKey = -1;
+		{
+			lastSQLCommand = "select confKey, sourceType, "
+				"url, "
+				"pushProtocol, pushServerName, pushServerPort, pushUri, "
+				"pushListenTimeout, satSourceSATConfKey, captureVideoDeviceNumber, "
+				"captureVideoInputFormat, "
+				"captureFrameRate, captureWidth, captureHeight, "
+				"captureAudioDeviceNumber, captureChannelsNumber, "
+				"satSourceSATConfKey "
+				"from MMS_Conf_IPChannel "
+				"where workspaceKey = ? and label = ?";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
@@ -2294,15 +2782,16 @@ pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-            if (!resultSet->next())
-            {
-                string errorMessage = __FILEREF__ + "Configuration label is not found"
-                    + ", workspaceKey: " + to_string(workspaceKey)
-                    + ", label: " + label
-                ;
+			if (!resultSet->next())
+			{
+				string errorMessage = __FILEREF__ + "Configuration label is not found"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", label: " + label
+				;
                 if (warningIfMissing)
                     _logger->warn(errorMessage);
                 else
@@ -2311,8 +2800,38 @@ pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
 				throw ConfKeyNotFound(errorMessage);                    
             }
 
-            confKey = resultSet->getInt64("confKey");
-            url = resultSet->getString("url");
+			confKey = resultSet->getInt64("confKey");
+			sourceType = resultSet->getString("sourceType");
+			if (!resultSet->isNull("url"))
+				url = resultSet->getString("url");
+			if (!resultSet->isNull("pushProtocol"))
+				pushProtocol = resultSet->getString("pushProtocol");
+			if (!resultSet->isNull("pushServerName"))
+				pushServerName = resultSet->getString("pushServerName");
+			if (!resultSet->isNull("pushServerPort"))
+				pushServerPort = resultSet->getInt("pushServerPort");
+			if (!resultSet->isNull("pushUri"))
+				pushUri = resultSet->getString("pushUri");
+			if (!resultSet->isNull("pushListenTimeout"))
+				pushListenTimeout = resultSet->getInt("pushListenTimeout");
+			if (!resultSet->isNull("satSourceSATConfKey"))
+				captureEncoderKey = resultSet->getInt64("satSourceSATConfKey");
+			if (!resultSet->isNull("captureVideoDeviceNumber"))
+				captureVideoDeviceNumber = resultSet->getInt("captureVideoDeviceNumber");
+			if (!resultSet->isNull("captureVideoInputFormat"))
+				captureVideoInputFormat = resultSet->getString("captureVideoInputFormat");
+			if (!resultSet->isNull("captureFrameRate"))
+				captureFrameRate = resultSet->getInt("captureFrameRate");
+			if (!resultSet->isNull("captureWidth"))
+				captureWidth = resultSet->getInt("captureWidth");
+			if (!resultSet->isNull("captureHeight"))
+				captureHeight = resultSet->getInt("captureHeight");
+			if (!resultSet->isNull("captureAudioDeviceNumber"))
+				captureAudioDeviceNumber = resultSet->getInt("captureAudioDeviceNumber");
+			if (!resultSet->isNull("captureChannelsNumber"))
+				captureChannelsNumber = resultSet->getInt("captureChannelsNumber");
+			if (!resultSet->isNull("satSourceSATConfKey"))
+				satSourceSATConfKey = resultSet->getInt64("satSourceSATConfKey");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -2320,6 +2839,13 @@ pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return make_tuple(confKey, sourceType, url,
+			pushProtocol, pushServerName, pushServerPort, pushUri, pushListenTimeout,
+			captureEncoderKey, captureVideoDeviceNumber, captureVideoInputFormat,
+            captureFrameRate, captureWidth, captureHeight,
+			captureAudioDeviceNumber, captureChannelsNumber,
+			satSourceSATConfKey);
     }
     catch(sql::SQLException se)
     {
@@ -2403,11 +2929,9 @@ pair<int64_t, string> MMSEngineDBFacade::getIPChannelConfDetails(
 
         throw e;
     } 
-    
-    return make_pair(confKey, url);
 }
 
-tuple<string, string, string> MMSEngineDBFacade::getIPChannelConfDetails(
+tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
     int64_t workspaceKey, int64_t confKey
 )
 {
@@ -2417,7 +2941,7 @@ tuple<string, string, string> MMSEngineDBFacade::getIPChannelConfDetails(
 
     try
     {        
-        _logger->info(__FILEREF__ + "getDetailsByConfLiveKey"
+        _logger->info(__FILEREF__ + "getChannelConfDetails"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", confKey: " + to_string(confKey)
         );
@@ -2532,861 +3056,6 @@ tuple<string, string, string> MMSEngineDBFacade::getIPChannelConfDetails(
 
         throw e;
     } 
-}
-
-int64_t MMSEngineDBFacade::addSATChannelConf(
-	int64_t workspaceKey,
-	int64_t sourceSATConfKey,
-	string label,
-	string region,
-	string country,
-	int64_t imageMediaItemKey,
-	string imageUniqueName,
-	int position,
-	Json::Value channelData)
-{
-	string      lastSQLCommand;
-	int64_t		confKey;
-
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        
-        {
-			string sChannelData;
-			if (channelData != Json::nullValue)
-			{
-				Json::StreamWriterBuilder wbuilder;
-				sChannelData = Json::writeString(wbuilder, channelData);
-			}
-
-            lastSQLCommand = 
-                "insert into MMS_Conf_SATChannel(workspaceKey, label, sourceSATConfKey, region, country,"
-				"imageMediaItemKey, imageUniqueName, position, channelData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setInt64(queryParameterIndex++, sourceSATConfKey);
-			if (region == "")
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, region);
-			if (country == "")
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, country);
-			if (imageMediaItemKey == -1)
-			{
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-
-				if (imageUniqueName == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, imageUniqueName);
-			}
-			else
-			{
-				preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			}
-			if (position == -1)
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
-			else
-				preparedStatement->setInt(queryParameterIndex++, position);
-			if (sChannelData == "")
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, sChannelData);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", label: " + label
-				+ ", sourceSATConfKey: " + to_string(sourceSATConfKey)
-				+ ", region: " + region
-				+ ", country: " + country
-				+ ", imageMediaItemKey: " + to_string(imageMediaItemKey)
-				+ ", imageUniqueName: " + imageUniqueName
-				+ ", position: " + to_string(position)
-				+ ", sChannelData: " + sChannelData
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-
-            confKey = getLastInsertId(conn);
-        }
-                            
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }        
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }  
-    
-    return confKey;
-}
-
-void MMSEngineDBFacade::modifySATChannelConf(
-	int64_t confKey,
-	int64_t workspaceKey,
-	bool sourceSATConfKeyToBeModified, int64_t sourceSATConfKey,
-	bool labelToBeModified, string label,
-	bool regionToBeModified, string region,
-	bool countryToBeModified, string country,
-	bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
-	bool positionToBeModified, int position,
-	bool channelDataToBeModified, Json::Value channelData)
-{
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        
-        {
-			string setSQL = "set ";
-			bool oneParameterPresent = false;
-
-			if (sourceSATConfKeyToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("sourceSATConfKey = ?");
-				oneParameterPresent = true;
-			}
-
-			if (labelToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("label = ?");
-				oneParameterPresent = true;
-			}
-
-			if (regionToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("region = ?");
-				oneParameterPresent = true;
-			}
-
-			if (countryToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("country = ?");
-				oneParameterPresent = true;
-			}
-
-			if (imageToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("imageMediaItemKey = ?, imageUniqueName = ?");
-				oneParameterPresent = true;
-			}
-
-			if (positionToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("position = ?");
-				oneParameterPresent = true;
-			}
-
-			string sChannelData;
-			if (channelDataToBeModified)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("channelData = ?");
-				oneParameterPresent = true;
-
-				if (channelData != Json::nullValue)
-				{
-					Json::StreamWriterBuilder wbuilder;
-					sChannelData = Json::writeString(wbuilder, channelData);
-				}
-			}
-
-			if (!oneParameterPresent)
-            {
-                string errorMessage = __FILEREF__ + "Wrong input, no parameters to be updated"
-                        + ", confKey: " + to_string(confKey)
-                        + ", oneParameterPresent: " + to_string(oneParameterPresent)
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-
-            lastSQLCommand = 
-                string("update MMS_Conf_SATChannel ") + setSQL + " "
-				"where confKey = ? and workspaceKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-			if (sourceSATConfKeyToBeModified)
-				preparedStatement->setInt64(queryParameterIndex++, sourceSATConfKey);
-			if (labelToBeModified)
-			{
-				if (label == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, label);
-			}
-			if (regionToBeModified)
-			{
-				if (region == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, region);
-			}
-			if (countryToBeModified)
-			{
-				if (country == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, country);
-			}
-			if (imageToBeModified)
-			{
-				if (imageMediaItemKey == -1)
-				{
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-
-					if (imageUniqueName == "")
-						preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-					else
-						preparedStatement->setString(queryParameterIndex++, imageUniqueName);
-				}
-				else
-				{
-					preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				}
-			}
-			if (positionToBeModified)
-			{
-				if (position == -1)
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
-				else
-					preparedStatement->setInt(queryParameterIndex++, position);
-			}
-			if (channelDataToBeModified)
-			{
-				if (sChannelData == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, sChannelData);
-			}
-            preparedStatement->setInt64(queryParameterIndex++, confKey);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", sourceSATConfKey (" + to_string(sourceSATConfKeyToBeModified) + "): " + to_string(sourceSATConfKey)
-				+ ", label (" + to_string(labelToBeModified) + "): " + label
-				+ ", region (" + to_string(regionToBeModified) + "): " + region
-				+ ", country (" + to_string(countryToBeModified) + "): " + country
-				+ ", imageMediaItemKey (" + to_string(imageToBeModified) + "): " + to_string(imageMediaItemKey)
-				+ ", imageUniqueName (" + to_string(imageToBeModified) + "): " + imageUniqueName
-				+ ", position (" + to_string(positionToBeModified) + "): " + to_string(position)
-				+ ", sChannelData (" + to_string(channelDataToBeModified) + "): " + sChannelData
-				+ ", confKey: " + to_string(confKey)
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                /*
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", confKey: " + to_string(confKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->warn(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-                */
-            }
-        }
-                            
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }        
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }
-}
-
-void MMSEngineDBFacade::removeSATChannelConf(
-	int64_t workspaceKey,
-	int64_t confKey)
-{
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        
-        {
-            lastSQLCommand = 
-                "delete from MMS_Conf_SATChannel where confKey = ? and workspaceKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, confKey);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", confKey: " + to_string(confKey)
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no delete was done"
-					+ ", confKey: " + to_string(confKey)
-					+ ", workspaceKey: " + to_string(workspaceKey)
-                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->warn(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-                            
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }        
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }        
-}
-
-Json::Value MMSEngineDBFacade::getSATChannelConfList (
-	int64_t workspaceKey, int64_t confKey,
-	string label, string region, string country,
-	int start, int rows,
-	string labelOrder)
-{
-    string      lastSQLCommand;
-    Json::Value channelConfListRoot;
-    
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-        string field;
-        
-        _logger->info(__FILEREF__ + "getSATChannelConfList"
-            + ", workspaceKey: " + to_string(workspaceKey)
-            + ", confKey: " + to_string(confKey)
-            + ", label: " + label
-            + ", region: " + region
-            + ", country: " + country
-            + ", start: " + to_string(start)
-            + ", rows: " + to_string(rows)
-            + ", labelOrder: " + labelOrder
-        );
-        
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
-        {
-            Json::Value requestParametersRoot;
-
-			{
-				field = "workspaceKey";
-				requestParametersRoot[field] = workspaceKey;
-			}
-            
-            if (confKey != -1)
-			{
-				field = "confKey";
-				requestParametersRoot[field] = confKey;
-			}
-            
-            if (label != "")
-			{
-				field = "label";
-				requestParametersRoot[field] = label;
-			}
-
-            if (region != "")
-			{
-				field = "region";
-				requestParametersRoot[field] = region;
-			}
-
-            if (country != "")
-			{
-				field = "country";
-				requestParametersRoot[field] = country;
-			}
-
-			{
-				field = "start";
-				requestParametersRoot[field] = start;
-			}
-            
-			{
-				field = "rows";
-				requestParametersRoot[field] = rows;
-			}
-            
-            if (labelOrder != "")
-			{
-				field = "labelOrder";
-				requestParametersRoot[field] = labelOrder;
-			}
-
-            field = "requestParameters";
-            channelConfListRoot[field] = requestParametersRoot;
-        }
-        
-		string sqlWhere = "where csc.sourceSATConfKey = sc.confKey and csc.workspaceKey = ? ";
-        if (confKey != -1)
-			sqlWhere += ("and sc.confKey = ? ");
-		if (label != "")
-			sqlWhere += ("and LOWER(csc.label) like LOWER(?) ");
-		if (region != "")
-			sqlWhere += ("and csc.region like ? ");
-		if (country != "")
-			sqlWhere += ("and csc.country like ? ");
-        // if (name != "")
-		// 	sqlWhere += ("and LOWER(sc.name) like LOWER(?) ");
-
-        Json::Value responseRoot;
-        {
-			lastSQLCommand = string("select count(*) from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc ")
-				+ sqlWhere;
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (confKey != -1)
-				preparedStatement->setInt64(queryParameterIndex++, confKey);
-			if (label != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
-			if (region != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + region + "%");
-			if (country != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + country + "%");
-            // if (name != "")
-            //     preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", confKey: " + to_string(confKey)
-				+ ", label: " + "%" + label + "%"
-				+ ", region: " + "%" + region + "%"
-				+ ", country: " + "%" + country + "%"
-				// + ", name: " + "%" + name + "%"
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (!resultSet->next())
-            {
-                string errorMessage ("select count(*) failed");
-
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            field = "numFound";
-            responseRoot[field] = resultSet->getInt64(1);
-        }
-
-        Json::Value channelRoot(Json::arrayValue);
-        {
-			string orderByCondition;
-			if (labelOrder == "")
-				orderByCondition = " ";
-			else
-				orderByCondition = "order by csc.label " + labelOrder + " ";
-
-			lastSQLCommand = 
-				string("select csc.confKey, csc.sourceSATConfKey, csc.label, "
-					"csc.region, csc.country, "
-					"csc.imageMediaItemKey, csc.imageUniqueName, csc.position, csc.channelData "
-					"from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc ") 
-				+ sqlWhere
-				+ orderByCondition
-				+ "limit ? offset ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (confKey != -1)
-				preparedStatement->setInt64(queryParameterIndex++, confKey);
-			if (label != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
-			if (region != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + region + "%");
-			if (country != "")
-				preparedStatement->setString(queryParameterIndex++, string("%") + country + "%");
-            // if (name != "")
-            //     preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
-            preparedStatement->setInt(queryParameterIndex++, rows);
-            preparedStatement->setInt(queryParameterIndex++, start);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", confKey: " + to_string(confKey)
-				+ ", label: " + "%" + label + "%"
-				+ ", region: " + "%" + region + "%"
-				+ ", country: " + "%" + country + "%"
-				// + ", name: " + "%" + name + "%"
-				+ ", rows: " + to_string(rows)
-				+ ", start: " + to_string(start)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            while (resultSet->next())
-            {
-                Json::Value channelConfRoot;
-
-				field = "confKey";
-				channelConfRoot[field] = resultSet->getInt64("confKey");
-
-                field = "sourceSATConfKey";
-                channelConfRoot[field] = resultSet->getInt64("sourceSATConfKey");
-
-                field = "label";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("label"));
-
-				field = "region";
-				if (resultSet->isNull("region"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("region"));
-
-				field = "country";
-				if (resultSet->isNull("country"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("country"));
-
-				field = "imageMediaItemKey";
-				if (resultSet->isNull("imageMediaItemKey"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = resultSet->getInt64("imageMediaItemKey");
-
-				field = "imageUniqueName";
-				if (resultSet->isNull("imageUniqueName"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("imageUniqueName"));
-
-				field = "position";
-				if (resultSet->isNull("position"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = resultSet->getInt("position");
-
-				field = "channelData";
-				if (resultSet->isNull("channelData"))
-					channelConfRoot[field] = Json::nullValue;
-				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("channelData"));
-
-                channelRoot.append(channelConfRoot);
-            }
-        }
-
-        field = "channelConf";
-        responseRoot[field] = channelRoot;
-
-        field = "response";
-        channelConfListRoot[field] = responseRoot;
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    
-    return channelConfListRoot;
 }
 
 int64_t MMSEngineDBFacade::addSourceSATChannelConf(
@@ -4558,20 +4227,19 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
     return channelConfListRoot;
 }
 
-tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::getSATChannelConfDetails(
-    int64_t workspaceKey, string label,
-	bool warningIfMissing
+tuple<int64_t, int64_t, int64_t, string, int, int>
+	MMSEngineDBFacade::getSourceSATChannelConfDetails(
+	int64_t confKey, bool warningIfMissing
 )
 {
     string      lastSQLCommand;
-    
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
     {
         _logger->info(__FILEREF__ + "getSATChannelConfDetails"
-            + ", workspaceKey: " + to_string(workspaceKey)
-            + ", label: " + label
+            + ", confKey: " + to_string(confKey)
         );
 
         conn = _connectionPool->borrow();
@@ -4579,7 +4247,6 @@ tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::g
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
-		int64_t confKey;
 		int64_t serviceId;
 		int64_t frequency;
 		int64_t symbolRate;
@@ -4587,33 +4254,29 @@ tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::g
 		int videoPid;
 		int audioItalianPid;
         {
-			lastSQLCommand = "select s.confKey, ss.serviceId, ss.frequency, ss.symbolRate, "
-				"ss.modulation, ss.videoPid, ss.audioItalianPid "
-				"from MMS_Conf_SATChannel s, MMS_Conf_SourceSATChannel ss "
-				"where s.sourceSATConfKey = ss.confKey "
-				"and s.workspaceKey = ? and s.label = ?"
+			lastSQLCommand = "select serviceId, frequency, symbolRate, "
+				"modulation, videoPid, audioItalianPid "
+				"from MMS_Conf_SourceSATChannel "
+				"where confKey = ?"
 			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", label: " + label
+				+ ", confKey: " + to_string(confKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (!resultSet->next())
             {
-                string errorMessage = __FILEREF__ + "Configuration name is not found"
-                    + ", workspaceKey: " + to_string(workspaceKey)
-                    + ", label: " + label
+                string errorMessage = __FILEREF__ + "Configuration is not found"
+                    + ", confKey: " + to_string(confKey)
                 ;
                 if (warningIfMissing)
                     _logger->warn(errorMessage);
@@ -4623,7 +4286,6 @@ tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::g
 				throw ConfKeyNotFound(errorMessage);                    
             }
 
-			confKey = resultSet->getInt64("confKey");
 			serviceId = resultSet->getInt64("serviceId");
 			frequency = resultSet->getInt64("frequency");
 			symbolRate = resultSet->getInt64("symbolRate");
@@ -4638,7 +4300,8 @@ tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::g
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(confKey, serviceId, frequency, symbolRate, modulation, videoPid, audioItalianPid);
+		return make_tuple(serviceId, frequency, symbolRate, modulation,
+			videoPid, audioItalianPid);
     }
     catch(sql::SQLException se)
     {

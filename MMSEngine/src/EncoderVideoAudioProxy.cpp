@@ -11834,11 +11834,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
-	// string channelType;
 	string encodersPool;
 	int64_t channelConfKey;
-	// bool highAvailability;
-	// bool main;
 	string liveURL;
 	string userAgent;
 	time_t utcRecordingPeriodStart;
@@ -11846,25 +11843,13 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool autoRenew;
 	bool monitorHLS = false;
 	bool virtualVOD = false;
-	// int monitorVirtualVODSegmentDurationInSeconds;
 	string outputFileFormat;
 	{
-		/*
-        string field = "ChannelType";
-        channelType = _encodingItem->_ingestedParametersRoot.get(field, "IP_MMSAsClient").asString();
-		*/
-
         string field = "EncodersPool";
         encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
         field = "confKey";
         channelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
-
-        // field = "highAvailability";
-        // highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
-
-        // field = "main";
-        // main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -11910,175 +11895,20 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		{
 			if (_encodingItem->_encoderKey == -1)
 			{
-				// In case of HighAvailability, main and backup should run on different server.
-				// The below algorithm assigns first the main transcoder and, only
-				// once the main transcoder is assigned, trying to assign the backup transcoder
-				// case Main:
-				//		1. look for the transcoder of the backup
-				//		2. if it is no defined
-				//			a "random" transcoder is used
-				//		   else
-				//			a transcoder different by the backupTranscoder (if exist) is used
-				// case Backup:
-				//		1. look for the mainTransocder
-				//		2. if present
-				//				a transcoder different by the mainTranscoder (if exist) is used
-				//		   else
-				//				sleep waiting main transcoder is assigned and come back to 1. The loop 1. and 2. is executed up to 60 secs
-				/*
-				if (highAvailability)
 				{
-					if (main)
-					{
-						// int64_t backupEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-						// 	main, _encodingItem->_encodingJobKey);
-
-						// if (backupEncoderKey == -1)
-						{
-							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
-								+ "BackupTranscoder is not selected yet. Just get a transcoder"
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", highAvailability: " + to_string(highAvailability)
-								+ ", main: " + to_string(main)
-							);
-
-							// string transcoderToSKip;
-							// _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-							// 		encodersPool, _encodingItem->_workspace, transcoderToSKip);
-							int64_t encoderKeyToBeSkipped = -1;
-							pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-								encodersPool, _encodingItem->_workspace,
-								encoderKeyToBeSkipped);
-							tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
-						}
-						// else
-						// {
-						// 	_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
-						// 		+ "BackupTranscoder is already selected. Just get another transcoder"
-						// 		+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						// 		+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						// 		+ ", highAvailability: " + to_string(highAvailability)
-						// 		+ ", main: " + to_string(main)
-						// 		+ ", backupEncoderKey: " + to_string(backupEncoderKey)
-						// 	);
-
-						// 	int64_t encoderKeyToBeSkipped = backupEncoderKey;
-						// 	pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-						// 			encodersPool, _encodingItem->_workspace,
-						// 			encoderKeyToBeSkipped);
-						// 	tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
-						// }
-					}
-					else
-					{
-						// backup live recorder
-
-						int intervalInSecondsToWaitLiveRecorderMainTranscoder = 5;
-						int maxWaitInSecondsForLiveRecorderMainTranscoder = 60;
-
-						chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-						chrono::system_clock::time_point intermediatePoint;
-						bool transcoderFound = false;
-
-						while (!transcoderFound)
-						{
-							// string mainTranscoder;
-							// int64_t mainEncoderKey;
-							// pair<int64_t, string> otherTranscoder =
-							// 	_mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-							// 		main, _encodingItem->_encodingJobKey);
-							// tie(mainEncoderKey, mainTranscoder) = otherTranscoder;
-							int64_t mainEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-									main, _encodingItem->_encodingJobKey);
-
-							if (mainEncoderKey == -1)
-							{
-								if (chrono::duration_cast<chrono::seconds>(
-									(chrono::system_clock::now() + chrono::seconds (intervalInSecondsToWaitLiveRecorderMainTranscoder)) - startPoint).count() >
-										maxWaitInSecondsForLiveRecorderMainTranscoder)
-								{
-									string errorMessage = string("LiveRecorder. Selection of the transcoder (backup). ")
-										+ "Main Transcoder is not selected and time expired, set this encodingJob as failed"
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", highAvailability: " + to_string(highAvailability)
-										+ ", main: " + to_string(main)
-									;
-									_logger->info(__FILEREF__ + errorMessage);
-
-									throw EncoderNotFound(errorMessage);
-									// int64_t encoderKeyToBeSkipped = -1;
-									// pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-									// 		encodersPool, _encodingItem->_workspace,
-									// 		encoderKeyToBeSkipped);
-									// tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
-
-									// transcoderFound = true;
-								}
-								else
-								{
-									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). "
-										+ "Main Transcoder is not selected. Just wait a bit"
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", highAvailability: " + to_string(highAvailability)
-										+ ", main: " + to_string(main)
-									);
-
-									this_thread::sleep_for(chrono::seconds(
-										intervalInSecondsToWaitLiveRecorderMainTranscoder));
-
-									intermediatePoint = chrono::system_clock::now();
-								}
-							}
-							else
-							{
-								_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). "
-									+ "Main Transcoder is already selected. Just get another transcoder"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", highAvailability: " + to_string(highAvailability)
-									+ ", main: " + to_string(main)
-									+ ", mainEncoderKey: " + to_string(mainEncoderKey)
-								);
-
-								// string transcoderToSKip = mainTranscoder;
-								// _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-								// 	encodersPool, _encodingItem->_workspace, transcoderToSKip);
-								int64_t encoderKeyToBeSkipped = mainEncoderKey;
-								pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-										encodersPool, _encodingItem->_workspace,
-										encoderKeyToBeSkipped);
-								tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
-
-								transcoderFound = true;
-							}
-						}
-					}
-				}
-				else
-				*/
-				{
-					// no high availability
-
-					_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder. No high availability, just get a transcoder"
+					_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						// + ", highAvailability: " + to_string(highAvailability)
 						);
 
-					/*
-					string encoderToSKip;
-					_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-							encodersPool, _encodingItem->_workspace, encoderToSKip);
-					*/
 					int64_t encoderKeyToBeSkipped = -1;
-					pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+					pair<int64_t, string> encoderURL =
+						_encodersLoadBalancer->getEncoderURL(
 							encodersPool, _encodingItem->_workspace,
 							encoderKeyToBeSkipped);
-					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
+						= encoderURL;
 				}
 
 				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
@@ -12089,11 +11919,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 				);
 
-				// ffmpegEncoderURL = 
-                //     _ffmpegEncoderProtocol
-                //     + "://"
-                //     + _currentUsedFFMpegEncoderHost + ":"
-                //     + to_string(_ffmpegEncoderPort)
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
@@ -12415,13 +12240,8 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
 					liveRecorderMedatada["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
-					liveRecorderMedatada["liveRecorderParametersRoot"] =
+					liveRecorderMedatada["ingestedParametersRoot"] =
 						_encodingItem->_ingestedParametersRoot;
-					// liveRecorderMedatada["monitorVirtualVODEncodingProfileContentType"] =
-					// 	MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData
-					// 		->_monitorVirtualVODEncodingProfileContentType);
-					// liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"] =
-					// 	_encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileDetailsRoot;
 					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{
@@ -12638,11 +12458,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				// in the above 'while' loop, we have to select another encoder
 				_encodingItem->_encoderKey	= -1;
 
-				// ffmpegEncoderURL = 
-                //     _ffmpegEncoderProtocol
-                //     + "://"
-                //     + _currentUsedFFMpegEncoderHost + ":"
-                //     + to_string(_ffmpegEncoderPort)
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
@@ -13209,127 +13024,24 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 {
     try
     {
-		/*
-		bool main;
-		bool highAvailability;
+		// Status will be success if at least one Chunk was generated, otherwise it will be failed
 		{
-			string field = "main";
-			main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+			string errorMessage;
+			string processorMMS;
+			MMSEngineDBFacade::IngestionStatus	newIngestionStatus
+				= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			field = "highAvailability";
-			highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
-		}
-		*/
-
-		/*
-		_logger->info(__FILEREF__ + "remove"
-			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-		);
-		FileIO::remove(stagingEncodedAssetPathName);
-		*/
-
-		// if (main)
-		{
-			// in case of highAvailability, the IngestionJob is not updated to Success until all the
-			// main and backup chunks are managed.
-			// This is to avoid the 'on success' task receives input MIKs that are not validated (and that
-			// will be removed soon)
-			/*
-			if (highAvailability)
-			{
-				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
-				// So in case this is changed, also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA has to be changed too
-				int toleranceMinutes = 5;
-
-				// 2020-06-09: since it happened that this waiting was not enough and a MIK went as input
-				// to a task and it was removed while the task was using it, it was added one more minute
-				toleranceMinutes++;	
-
-				int sleepTimeInSeconds = 15;	// main and backup management starts: * * * * * * 15,30,45
-
-				_logger->info(__FILEREF__ + "Waiting the finishing of main and backup chunks management"
-					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				);
-
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				chrono::system_clock::time_point endPoint;
-				bool mainAndBackupChunksManagementCompleted;
-				do
-				{
-					this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
-
-					mainAndBackupChunksManagementCompleted =
-						_mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
-						_encodingItem->_ingestionJobKey);
-					endPoint = chrono::system_clock::now();
-				}
-				while(!mainAndBackupChunksManagementCompleted &&
-					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
-					< toleranceMinutes * 60);
-
-				if (mainAndBackupChunksManagementCompleted)
-				{
-					// scenario:
-					//	1. the manageMainAndBackupOfRunnungLiveRecordingHA method validated all the chunks
-					//		and set validated = false and retentionInMinutes = 0 for the others chunks.
-					//	2. the retention algorithm has still to process the retention and may be one content
-					//		is not removed yet
-					//	3. the LiveRecording->OnSuccess task starts, Validator gets all the IngestionJobOutput contents
-					//		containing also the content having retentionInMinutes = 0
-					//	4. the retention algorithm starts and remove the content
-					//	5. the OnSuccess Task starts processing the content and, when it will process the removed content fails
-					//
-					//	To solve this issue we still wait the period of the retention in order to minimize the above issue
-					//
-					//	Another solution would be that the Validator gets only the contents having validated = true
-					//	for the LiveRecorder output!!! This should be a bit difficult to be done, actually Validator
-					//	calls MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey where there are no information
-					//	about the source Task generating the content!!!
-
-					int secondsToWaitTheRetentionAlgorithm = 60;
-
-					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
-						+ ", still wait a bit the retention algorithm"
-						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					);
-
-					this_thread::sleep_for(chrono::milliseconds(secondsToWaitTheRetentionAlgorithm));
-				}
-				else
-				{
-					_logger->warn(__FILEREF__ + "Managing of main and backup chunks NOT completed"
-						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					);
-				}
-			}
-			*/
-
-			// Status will be success if at least one Chunk was generated, otherwise it will be failed
-			{
-				string errorMessage;
-				string processorMMS;
-				MMSEngineDBFacade::IngestionStatus	newIngestionStatus
-					= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
-
-				_logger->info(__FILEREF__ + "Update IngestionJob"
-					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-					+ ", errorMessage: " + errorMessage
-					+ ", processorMMS: " + processorMMS
-				);
-				_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
-					errorMessage);
-			}
-		}
-		/*
-		else
-		{
-			_logger->info(__FILEREF__ + "IngestionJob does not update because it's backup recording"
+			_logger->info(__FILEREF__ + "Update IngestionJob"
 				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
 			);
+			_mmsEngineDBFacade->updateIngestionJob(
+				_encodingItem->_ingestionJobKey, newIngestionStatus,
+				errorMessage);
 		}
-		*/
-    }
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "processLiveRecorder failed"
@@ -13365,42 +13077,49 @@ bool EncoderVideoAudioProxy::liveProxy()
 	time_t utcProxyPeriodEnd = -1;
 	{
 		string field = "timePeriod";
-		timePeriod = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot, field, false);
+		timePeriod = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot,
+			field, false);
 
 		if (timePeriod)
 		{
 			string field = "utcProxyPeriodStart";
-			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_ingestedParametersRoot, field, -1);
+			utcProxyPeriodStart = JSONUtils::asInt64(
+				_encodingItem->_ingestedParametersRoot, field, -1);
 
 			field = "utcProxyPeriodEnd";
-			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_ingestedParametersRoot, field, -1);
+			utcProxyPeriodEnd = JSONUtils::asInt64(
+				_encodingItem->_ingestedParametersRoot, field, -1);
 		}
 	}
 
 	if (timePeriod)
 	{
-		time_t utcNow;                                                                                            
+		time_t utcNow;
 
-		{                                                                                                         
-			chrono::system_clock::time_point now = chrono::system_clock::now();                                   
-			utcNow = chrono::system_clock::to_time_t(now);                                                        
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
 		// MMS allocates a thread just 5 minutes before the beginning of the recording                            
-		if (utcNow < utcProxyPeriodStart)                                                                     
-		{                                                                                                         
-			if (utcProxyPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)                  
-			{                                                                                                     
-				_logger->info(__FILEREF__ + "Too early to allocate a thread for proxing"                        
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)                                        
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)                         
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)                           
-					+ ", utcProyPeriodStart - utcNow: " + to_string(utcProxyPeriodStart - utcNow)        
-					+ ", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
+		if (utcNow < utcProxyPeriodStart)
+		{
+			if (utcProxyPeriodStart - utcNow >=
+				_timeBeforeToPrepareResourcesInMinutes * 60)                  
+			{
+				_logger->info(__FILEREF__ + "Too early to allocate a thread for proxing"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", utcProyPeriodStart - utcNow: " + to_string(
+						utcProxyPeriodStart - utcNow)        
+					+ ", _timeBeforeToPrepareResourcesInSeconds: "
+						+ to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
 				);
 
-				// it is simulated a MaxConcurrentJobsReached to avoid to increase the error counter              
-				throw MaxConcurrentJobsReached();                                                                 
+				// it is simulated a MaxConcurrentJobsReached to avoid
+				// to increase the error counter              
+				throw MaxConcurrentJobsReached();
 			}
 		}
 
@@ -13438,64 +13157,55 @@ bool EncoderVideoAudioProxy::liveProxy()
 bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 {
 
-	// string channelType;
+	// string channelSourceType;
 	string encodersPool;
 	int64_t liveURLConfKey;
 	string configurationLabel;
 	string liveURL;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
-	// string userAgent;
-	// int maxWidth = -1;
-	// string otherInputOptions;
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	{
-        // string field = "ChannelType";
-        // channelType = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+        // string field = "channelSourceType";
+        // channelSourceType = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
         string field = "EncodersPool";
         encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
         field = "liveURLConfKey";
-        liveURLConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+        liveURLConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+			field, 0);
 
         field = "ConfigurationLabel";
-        // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-        configurationLabel = _encodingItem->_ingestedParametersRoot.get(field, "XXX").asString();
+        configurationLabel = _encodingItem->_ingestedParametersRoot.get(field, "").
+			asString();
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
-        // field = "UserAgent";
-		// if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
-		// 	userAgent = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-        // field = "MaxWidth";
-		// if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
-		// 	maxWidth = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, field, -1);
-
-        // field = "OtherInputOptions";
-		// if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
-		// 	otherInputOptions = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 600);
+        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
+			_encodingItem->_encodingParametersRoot, field, 600);
 
         field = "maxAttemptsNumberInCaseOfErrors";
-        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
+        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
+			_encodingItem->_encodingParametersRoot, field, 2);
 
 		field = "timePeriod";
-		timePeriod = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+		timePeriod = JSONUtils::asBool(_encodingItem->_encodingParametersRoot,
+			field, false);
 
 		if (timePeriod)
 		{
 			field = "utcProxyPeriodStart";
-			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+			utcProxyPeriodStart = JSONUtils::asInt64(
+				_encodingItem->_encodingParametersRoot, field, -1);
 
 			field = "utcProxyPeriodEnd";
-			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+			utcProxyPeriodEnd = JSONUtils::asInt64(
+				_encodingItem->_encodingParametersRoot, field, -1);
 		}
 	}
 
@@ -13506,8 +13216,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
 	long encodingStatusFailures = 0;
-	// 2020-04-19: Reset encodingStatusFailures into DB. That because if we comes from an error/exception
-	//	encodingStatusFailures is > than 0 but we consider here like it is 0 because our variable is set to 0
+	// 2020-04-19: Reset encodingStatusFailures into DB.
+	// That because if we comes from an error/exception
+	//	encodingStatusFailures is > than 0 but we consider here like
+	//	it is 0 because our variable is set to 0
 	try
 	{
 		_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
@@ -13572,34 +13284,27 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		{
 			if (_encodingItem->_encoderKey == -1)
 			{
-				/*
-				string encoderToSkip;
-				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					encodersPool, _encodingItem->_workspace, encoderToSkip);
-				*/
 				int64_t encoderKeyToBeSkipped = -1;
 				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped);
-				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
+					= encoderURL;
 
 				_logger->info(__FILEREF__ + "Configuration item"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-					+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+					+ ", _currentUsedFFMpegEncoderKey: "
+						+ to_string(_currentUsedFFMpegEncoderKey)
 				);
-				// ffmpegEncoderURL = 
-				// 	_ffmpegEncoderProtocol
-				// 	+ "://"
-				// 	+ _currentUsedFFMpegEncoderHost + ":"
-				// 	+ to_string(_ffmpegEncoderPort)
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
 					+ ffmpegURI
 					+ "/" + to_string(_encodingItem->_encodingJobKey)
 				;
 
-				_logger->info(__FILEREF__ + "LiveProxy. Selection of the transcoder. The transcoder is selected by load balancer"
+				_logger->info(__FILEREF__ +
+					"LiveProxy. Selection of the transcoder. The transcoder is selected by load balancer"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -13783,15 +13488,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
-					// liveProxyMetadata["timePeriod"] = timePeriod;
-					// liveProxyMetadata["utcProxyPeriodStart"] = utcProxyPeriodStart;
-					// liveProxyMetadata["utcProxyPeriodEnd"] = utcProxyPeriodEnd;
-					// liveProxyMetadata["userAgent"] = userAgent;
-					// liveProxyMetadata["maxWidth"] = maxWidth;
-					// liveProxyMetadata["otherInputOptions"] = otherInputOptions;
-					// liveProxyMetadata["outputsRoot"] = _encodingItem->_liveProxyData->_outputsRoot;
-					// liveProxyMetadata["configurationLabel"] = configurationLabel;
-					liveProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
+					liveProxyMetadata["ingestedParametersRoot"] =
+						_encodingItem->_ingestedParametersRoot;
 					liveProxyMetadata["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
 					{
@@ -13805,8 +13503,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				header.push_back("Content-Type: application/json");
 				{
-					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
-					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+					string userPasswordEncoded = Convert::base64_encode(
+						_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+					string basicAuthorization = string("Authorization: Basic ")
+						+ userPasswordEncoded;
 
 					header.push_back(basicAuthorization);
 				}
@@ -13818,7 +13518,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
 				// timeout consistent with nginx configuration (fastcgi_read_timeout)
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+				request.setOpt(new curlpp::options::Timeout(
+					_ffmpegEncoderTimeoutInSeconds));
 
 				// if (_ffmpegEncoderProtocol == "https")
 				string httpsPrefix("https");
@@ -13904,7 +13605,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string sResponse = response.str();
 				// LF and CR create problems to the json parser...
-				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+				while (sResponse.size() > 0 &&
+					(sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
 				Json::Value liveProxyContentResponse;
@@ -13921,27 +13623,31 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					if (!parsingSuccessful)
 					{
-						string errorMessage = __FILEREF__ + "failed to parse the response body"
+						string errorMessage = __FILEREF__
+							+ "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: "
+								+ to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
-					}               
+					}
 				}
 				catch(runtime_error e)
 				{
 					string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
-                        ;
+					;
 					_logger->error(__FILEREF__ + errorMessage);
 
 					throw e;
@@ -13950,7 +13656,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				{
 					string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
@@ -13963,13 +13670,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					string field = "error";
 					if (JSONUtils::isMetadataPresent(liveProxyContentResponse, field))
 					{
-						string error = liveProxyContentResponse.get(field, "XXX").asString();
+						string error = liveProxyContentResponse.get(field, "").asString();
                     
 						if (error.find(NoEncodingAvailable().what()) != string::npos)
 						{
 							string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->warn(__FILEREF__ + errorMessage);
@@ -13980,8 +13688,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						{
 							string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->error(__FILEREF__ + errorMessage);
@@ -14008,11 +13718,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				// in the above 'while' loop, we have to select another encoder
 				_encodingItem->_encoderKey	= -1;
 
-				// ffmpegEncoderURL = 
-                //     _ffmpegEncoderProtocol
-                //     + "://"
-                //     + _currentUsedFFMpegEncoderHost + ":"
-                //     + to_string(_ffmpegEncoderPort)
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
@@ -14036,25 +13741,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(
 				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderKey, "");
 
-			/*
-			string manifestDirectoryPathName;
-			if (outputType == "HLS" || outputType == "DASH")
-			{
-				size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
-				if (manifestFilePathIndex == string::npos)
-				{
-					string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
-							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", manifestFilePathName: " + manifestFilePathName;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
-			}
-			*/
-
 			if (timePeriod)
 				;
 			else
@@ -14075,7 +13761,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", e.what(): " + e.what()
 					);
@@ -14083,7 +13770,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				catch(exception e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					);
 				}
@@ -14094,7 +13782,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			bool completedWithError = false;
 			string encodingErrorMessage;
 			// string lastRecordedAssetFileName;
-			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
+			chrono::system_clock::time_point startCheckingEncodingStatus
+				= chrono::system_clock::now();
 
 			int encoderNotReachableFailures = 0;
 			int encodingPid;
@@ -14103,19 +13792,23 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
 			//  the engine has to select another encoder and not remain in the next loop indefinitely
-            while(!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
+            while(!(encodingFinished || encoderNotReachableFailures >=
+				_maxEncoderNotReachableFailures))
             // while(!encodingFinished)
             {
-				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+				this_thread::sleep_for(chrono::seconds(
+					_intervalInSecondsToCheckEncodingFinished));
 
 				try
 				{
 					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
+					tie(encodingFinished, killedByUser, completedWithError,
+						encodingErrorMessage,
 						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
 					_logger->info(__FILEREF__ + "getEncodingStatus"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", killedByUser: " + to_string(killedByUser)
@@ -14137,7 +13830,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 						catch(runtime_error e)
 						{
-							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+							_logger->error(__FILEREF__
+								+ "appendIngestionJobErrorMessage failed"
 								+ ", _ingestionJobKey: " +
 									to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: "
@@ -14147,7 +13841,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 						catch(exception e)
 						{
-							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+							_logger->error(__FILEREF__
+								+ "appendIngestionJobErrorMessage failed"
 								+ ", _ingestionJobKey: " +
 									to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: "
@@ -14158,12 +13853,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					if (completedWithError) // || chunksWereNotGenerated)
 					{
-						if (urlForbidden || urlNotFound)	// see my comment at the beginning of the while loop
+						if (urlForbidden || urlNotFound)
+							// see my comment at the beginning of the while loop
 						{
 							string errorMessage =
 								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
 								+ ", encodingErrorMessage: " + encodingErrorMessage
 								;
 							_logger->error(errorMessage);
@@ -14174,11 +13872,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						currentAttemptsNumberInCaseOfErrors++;
 
 						string errorMessage = __FILEREF__ + "Encoding failed"             
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: "
+								+ to_string(_encodingItem->_encodingJobKey)
 							+ ", configurationLabel: " + configurationLabel
 							+ ", encodingErrorMessage: " + encodingErrorMessage
-							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
 						;
 						_logger->error(errorMessage);
 
@@ -14186,12 +13885,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 						// in this scenario encodingFinished is true
 
-						_logger->info(__FILEREF__ + "Start waiting loop for the next call"
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						_logger->info(__FILEREF__
+							+ "Start waiting loop for the next call"
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: "
+								+ to_string(_encodingItem->_encodingJobKey)
 						);
 
-						chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+						chrono::system_clock::time_point startWaiting
+							= chrono::system_clock::now();
 						chrono::system_clock::time_point now;
 						do
 						{
@@ -14200,15 +13903,20 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							// Before the sleep was after the check, so when the sleep is finished,
 							// the flow will go out of the loop and no check is done and Task remains up
 							// even if user kiiled it.
-							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+							this_thread::sleep_for(chrono::seconds(
+								_intervalInSecondsToCheckEncodingFinished));
 
 							// update EncodingJob failures number to notify the GUI EncodingJob is failing
 							try
 							{
-								_logger->info(__FILEREF__ + "check and update encodingJob FailuresNumber"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								_logger->info(__FILEREF__
+									+ "check and update encodingJob FailuresNumber"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: "
+										+ to_string(encodingStatusFailures)
 								);
 
 								long previousEncodingStatusFailures =
@@ -14217,10 +13925,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 										encodingStatusFailures);
 								if (previousEncodingStatusFailures < 0)
 								{
-									_logger->info(__FILEREF__ + "LiveProxy Killed by user during waiting loop"
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+									_logger->info(__FILEREF__
+										+ "LiveProxy Killed by user during waiting loop"
+										+ ", _ingestionJobKey: "
+											+ to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", encodingStatusFailures: "
+											+ to_string(encodingStatusFailures)
 									);
 
 									// when previousEncodingStatusFailures is < 0 means:
@@ -14237,18 +13949,24 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 							catch(...)
 							{
-								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								_logger->error(__FILEREF__
+									+ "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: "
+										+ to_string(encodingStatusFailures)
 								);
 							}
 
 							now = chrono::system_clock::now();
 						}
 						while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
-								< chrono::seconds(waitingSecondsBetweenAttemptsInCaseOfErrors)
-						 		&& (timePeriod || currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+								< chrono::seconds(
+									waitingSecondsBetweenAttemptsInCaseOfErrors)
+						 		&& (timePeriod || currentAttemptsNumberInCaseOfErrors <
+									maxAttemptsNumberInCaseOfErrors)
 								&& !killedByUser);
 
 						// if (chunksWereNotGenerated)
@@ -14258,20 +13976,26 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					}
 					else
 					{
-						// ffmpeg is running successful, we will make sure currentAttemptsNumberInCaseOfErrors is reset
+						// ffmpeg is running successful,
+						// we will make sure currentAttemptsNumberInCaseOfErrors is reset
 						currentAttemptsNumberInCaseOfErrors = 0;
 
 						if (encodingStatusFailures > 0)
 						{
 							try
 							{
-								// update EncodingJob failures number to notify the GUI encodingJob is successful
+								// update EncodingJob failures number to notify
+								// the GUI encodingJob is successful
 								encodingStatusFailures = 0;
 
-								_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								_logger->info(__FILEREF__
+									+ "updateEncodingJobFailuresNumber"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: "
+										+ to_string(encodingStatusFailures)
 								);
 
 								int64_t mediaItemKey = -1;
@@ -14283,10 +14007,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 							catch(...)
 							{
-								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								_logger->error(__FILEREF__
+									+ "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: "
+										+ to_string(encodingStatusFailures)
 								);
 							}
 						}
@@ -14296,48 +14024,62 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					{
 						if (timePeriod)
 						{
-							time_t utcNow;                                                                    
+							time_t utcNow;
 
-							{                                                                                 
-								chrono::system_clock::time_point now = chrono::system_clock::now();           
-								utcNow = chrono::system_clock::to_time_t(now);                                
-							}                                                                                 
-                                                                                                              
-							int encodingProgress;                                                             
-                                                                                                              
-							if (utcNow < utcProxyPeriodStart)                                             
-								encodingProgress = 0;                                                         
-							else if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)      
-								encodingProgress = ((utcNow - utcProxyPeriodStart) * 100) /               
-									(utcProxyPeriodEnd - utcProxyPeriodStart);                        
-							else                                                                              
+							{
+								chrono::system_clock::time_point now
+									= chrono::system_clock::now();           
+								utcNow = chrono::system_clock::to_time_t(now);
+							}
+
+							int encodingProgress;
+
+							if (utcNow < utcProxyPeriodStart)
+								encodingProgress = 0;
+							else if (utcProxyPeriodStart < utcNow
+									&& utcNow < utcProxyPeriodEnd)      
+								encodingProgress =
+									((utcNow - utcProxyPeriodStart) * 100) /
+									(utcProxyPeriodEnd - utcProxyPeriodStart);
+							else
 								encodingProgress = 100;
 
 							try
 							{
 								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
-									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingProgress: " + to_string(encodingProgress)
+									+ ", ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: "
+										+ to_string(encodingProgress)
 								);
 								_mmsEngineDBFacade->updateEncodingJobProgress (
 									_encodingItem->_encodingJobKey, encodingProgress);
 							}
 							catch(runtime_error e)
 							{
-								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingProgress: " + to_string(encodingProgress)
+								_logger->error(__FILEREF__
+									+ "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: "
+										+ to_string(encodingProgress)
 									+ ", e.what(): " + e.what()
 								);
 							}
 							catch(exception e)
 							{
-								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingProgress: " + to_string(encodingProgress)
+								_logger->error(__FILEREF__
+									+ "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: "
+										+ to_string(encodingProgress)
 								);
 							}
 						}
@@ -14347,8 +14089,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							try
 							{
 								_logger->info(__FILEREF__ + "updateEncodingPid"
-									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
 									+ ", encodingPid: " + to_string(encodingPid)
 								);
 								_mmsEngineDBFacade->updateEncodingPid (
@@ -14359,8 +14103,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							catch(runtime_error e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
 									+ ", _encodingPid: " + to_string(encodingPid)
 									+ ", e.what(): " + e.what()
 								);
@@ -14368,41 +14114,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							catch(exception e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _ingestionJobKey: "
+										+ to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: "
+										+ to_string(_encodingItem->_encodingJobKey)
 									+ ", _encodingPid: " + to_string(encodingPid)
 								);
 							}
 						}
 					}
-
-					/*
-					if (outputType == "HLS" || outputType == "DASH")
-					{
-						bool exceptionInCaseOfError = false;
-
-						for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
-						{
-							try
-							{
-								_logger->info(__FILEREF__ + "Remove chunk because too old"
-									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-								FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-							}
-							catch(runtime_error e)
-							{
-								_logger->error(__FILEREF__ + "remove failed"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
-									+ ", e.what(): " + e.what()
-								);
-							}
-						}
-					}
-					*/
                 }
 				catch(EncoderNotReachable e)
 				{
@@ -14418,24 +14138,32 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					//	and the encoderNotReachableFailures variable
 
 					_logger->error(__FILEREF__ + "Transcoder is not reachable at all, let's select another encoder"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
-						+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
-						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+						+ ", encoderNotReachableFailures: "
+							+ to_string(encoderNotReachableFailures)
+						+ ", _maxEncoderNotReachableFailures: "
+							+ to_string(_maxEncoderNotReachableFailures)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
+						+ ", _currentUsedFFMpegEncoderKey: "
+							+ to_string(_currentUsedFFMpegEncoderKey)
 					);
 				}
                 catch(...)
                 {
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
+						+ ", _currentUsedFFMpegEncoderKey: "
+							+ to_string(_currentUsedFFMpegEncoderKey)
 					);
                 }
             }
@@ -14448,39 +14176,50 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			{
 				if (utcNowCheckToExit < utcProxyPeriodEnd)
 				{
-					_logger->error(__FILEREF__ + "LiveProxy media file completed unexpected"
+					_logger->error(__FILEREF__
+						+ "LiveProxy media file completed unexpected"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", still remaining seconds (utcProxyPeriodEnd - utcNow): " + to_string(utcProxyPeriodEnd - utcNowCheckToExit)
+						+ ", still remaining seconds (utcProxyPeriodEnd - utcNow): "
+							+ to_string(utcProxyPeriodEnd - utcNowCheckToExit)
 						+ ", configurationLabel: " + configurationLabel
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", killedByUser: " + to_string(killedByUser)
-						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
-						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+						+ ", @MMS statistics@ - encodingDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(
+								endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: "
+							+ to_string(_intervalInSecondsToCheckEncodingFinished)
 					);
 
 					try
 					{
 						char strDateTime [64];
 						{
-							time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+							time_t utcTime = chrono::system_clock::to_time_t(
+								chrono::system_clock::now());
 							tm tmDateTime;
 							localtime_r (&utcTime, &tmDateTime);
 							sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-								tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-								tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+								tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1,
+								tmDateTime. tm_mday,
+								tmDateTime. tm_hour, tmDateTime. tm_min,
+								tmDateTime. tm_sec);
 						}
-						string errorMessage = string(strDateTime) + " LiveProxy media file completed unexpected";
+						string errorMessage = string(strDateTime)
+							+ " LiveProxy media file completed unexpected";
 
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 							_encodingItem->_ingestionJobKey, errorMessage);
 					}
 					catch(runtime_error e)
 					{
-						_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						_logger->error(__FILEREF__
+							+ "appendIngestionJobErrorMessage failed"
 							+ ", _ingestionJobKey: " +
 								to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: "
@@ -14490,7 +14229,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					}
 					catch(exception e)
 					{
-						_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						_logger->error(__FILEREF__
+							+ "appendIngestionJobErrorMessage failed"
 							+ ", _ingestionJobKey: " +
 								to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: "
@@ -14502,15 +14242,19 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				{
 					_logger->info(__FILEREF__ + "LiveProxy media file completed"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: "
+							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", killedByUser: " + to_string(killedByUser)
-						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
-						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+						+ ", @MMS statistics@ - encodingDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(
+								endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: "
+							+ to_string(_intervalInSecondsToCheckEncodingFinished)
 					);
 				}
 			}
@@ -14525,22 +14269,28 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
-                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+                    + ", @MMS statistics@ - encodingDuration (secs): @"
+						+ to_string(chrono::duration_cast<chrono::seconds>(
+							endEncoding - startEncoding).count()) + "@"
+                    + ", _intervalInSecondsToCheckEncodingFinished: "
+						+ to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 
 				try
 				{
 					char strDateTime [64];
 					{
-						time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						time_t utcTime = chrono::system_clock::to_time_t(
+							chrono::system_clock::now());
 						tm tmDateTime;
 						localtime_r (&utcTime, &tmDateTime);
 						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-							tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+							tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1,
+							tmDateTime. tm_mday,
 							tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
 					}
-					string errorMessage = string(strDateTime) + " LiveProxy media file completed unexpected";
+					string errorMessage = string(strDateTime)
+						+ " LiveProxy media file completed unexpected";
 
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 						_encodingItem->_ingestionJobKey, errorMessage);
@@ -14576,7 +14326,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                 ;
             _logger->warn(__FILEREF__ + errorMessage);
 
-			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// in this case we will through the exception independently
+			// if the live streaming time (utcRecordingPeriodEnd)
 			// is finished or not. This task will come back by the MMS system
             throw e;
         }
@@ -14590,7 +14341,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                 ;
             _logger->error(__FILEREF__ + errorMessage);
 
-			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// in this case we will through the exception independently
+			// if the live streaming time (utcRecordingPeriodEnd)
 			// is finished or not. This task will come back by the MMS system
             throw e;
         }
@@ -14825,8 +14577,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-            + ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) 
-            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) 
+            + ", currentAttemptsNumberInCaseOfErrors: "
+				+ to_string(currentAttemptsNumberInCaseOfErrors) 
+            + ", maxAttemptsNumberInCaseOfErrors: "
+				+ to_string(maxAttemptsNumberInCaseOfErrors) 
 			+ ", configurationLabel: " + configurationLabel
             ;
 		_logger->error(errorMessage);
@@ -16917,7 +16671,7 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getIPChannelConfDetails(
+			_mmsEngineDBFacade->getChannelConfDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -17107,7 +16861,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getIPChannelConfDetails(
+			_mmsEngineDBFacade->getChannelConfDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -17215,8 +16969,36 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 
 		bool labelToBeModified = false;
 		string label;
+		bool sourceTypeToBeModified = false;
+		string sourceType;
 		bool urlToBeModified = false;
 		string url;
+		bool pushProtocolToBeModified = false;
+		string pushProtocol;
+		bool pushServerNameToBeModified = false;
+		string pushServerName;
+		bool pushServerPortToBeModified = false;
+		int pushServerPort = -1;
+		bool pushUriToBeModified = false;
+		string pushUri;
+		bool pushListenTimeoutToBeModified = false;
+		int pushListenTimeout = -1;
+		bool captureVideoDeviceNumberToBeModified = false;
+		int captureVideoDeviceNumber = -1;
+		bool captureVideoInputFormatToBeModified = false;
+		string captureVideoInputFormat;
+		bool captureFrameRateToBeModified = false;
+		int captureFrameRate = -1;
+		bool captureWidthToBeModified = false;
+		int captureWidth = -1;
+		bool captureHeightToBeModified = false;
+		int captureHeight = -1;
+		bool captureAudioDeviceNumberToBeModified = false;
+		int captureAudioDeviceNumber = -1;
+		bool captureChannelsNumberToBeModified = false;
+		int captureChannelsNumber = -1;
+		bool satSourceSATConfKeyToBeModified = false;
+		int64_t satSourceSATConfKey = -1;
 		bool typeToBeModified = false;
 		string type;
 		bool descriptionToBeModified = false;
@@ -17234,11 +17016,25 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		int position = -1;
 		bool channelDataToBeModified = true;
 
-		_mmsEngineDBFacade->modifyIPChannelConf(
+		_mmsEngineDBFacade->modifyChannelConf(
 			liveURLConfKey,
 			_encodingItem->_workspace->_workspaceKey,
 			labelToBeModified, label,
+			sourceTypeToBeModified, sourceType,
 			urlToBeModified, url,
+			pushProtocolToBeModified, pushProtocol,
+			pushServerNameToBeModified, pushServerName,
+			pushServerPortToBeModified, pushServerPort,
+			pushUriToBeModified, pushUri,
+			pushListenTimeoutToBeModified, pushListenTimeout,
+			captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
+			captureVideoInputFormatToBeModified, captureVideoInputFormat,
+			captureFrameRateToBeModified, captureFrameRate,
+			captureWidthToBeModified, captureWidth,
+			captureHeightToBeModified, captureHeight,
+			captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
+			captureChannelsNumberToBeModified, captureChannelsNumber,
+			satSourceSATConfKeyToBeModified, satSourceSATConfKey,
 			typeToBeModified, type,
 			descriptionToBeModified, description,
 			nameToBeModified, name,

@@ -54,7 +54,7 @@ struct LiveProxyAndGrid
 
 		int64_t					_ingestionJobKey;
 		Json::Value				_ingestedParametersRoot;
-        string					_channelType;
+        string					_channelSourceType;
 		string					_channelLabel;
 		// vector<string>			_manifestFilePathNames;
 		chrono::system_clock::time_point	_proxyStart;
@@ -75,8 +75,8 @@ struct LiveRecording
 		// vector<string>			_manifestFilePathNames;
 		int64_t					_ingestionJobKey;
 		Json::Value				_encodingParametersRoot;
-		Json::Value				_liveRecorderParametersRoot;
-        string					_channelType;
+		Json::Value				_ingestedParametersRoot;
+        string					_channelSourceType;
         string					_transcoderStagingContentsPath;
         string					_stagingContentsPath;
         string					_segmentListFileName;
@@ -312,11 +312,11 @@ private:
         string requestBody);
 	pair<string, double> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string channelType, 
+		string channelSourceType, 
 		// bool highAvailability, bool main,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
-		Json::Value liveRecorderParametersRoot,
+		Json::Value ingestedParametersRoot,
 		string transcoderStagingContentsPath,
 		string stagingContentsPath,
 		string segmentListFileName,
@@ -325,11 +325,11 @@ private:
 		double lastRecordedAssetDurationInSeconds);
 	pair<string, double> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string channelType, 
+		string channelSourceType, 
 		// bool highAvailability, bool main,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
-		Json::Value liveRecorderParametersRoot,
+		Json::Value ingestedParametersRoot,
 		string transcoderStagingContentsPath,
 		string stagingContentsPath,
 		string segmentListFileName,
@@ -352,7 +352,7 @@ private:
 		// bool highAvailability,
 		Json::Value userDataRoot,
 		string fileFormat,
-		Json::Value liveRecorderParametersRoot,
+		Json::Value ingestedParametersRoot,
 		Json::Value encodingParametersRoot,
 		bool copy);
 	long liveRecorder_buildAndIngestVirtualVOD(

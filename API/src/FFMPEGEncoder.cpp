@@ -6297,30 +6297,45 @@ void FFMPEGEncoder::liveRecorderThread(
             throw runtime_error(errorMessage);
         }
 
-        liveRecording->_ingestionJobKey = JSONUtils::asInt64(liveRecorderMedatada, "ingestionJobKey", -1);
+        liveRecording->_ingestionJobKey = JSONUtils::asInt64(liveRecorderMedatada,
+			"ingestionJobKey", -1);
 
-		// _transcoderStagingContentsPath is a transcoder LOCAL path, this is important because in case of high bitrate,
+		// _transcoderStagingContentsPath is a transcoder LOCAL path,
+		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
-        liveRecording->_transcoderStagingContentsPath = liveRecorderMedatada.get("transcoderStagingContentsPath", "XXX").asString();
+        liveRecording->_transcoderStagingContentsPath =
+			liveRecorderMedatada.get("transcoderStagingContentsPath", "").asString();
         string userAgent = liveRecorderMedatada.get("userAgent", "").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
-        liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "").asString();
-        liveRecording->_segmentListFileName = liveRecorderMedatada.get("segmentListFileName", "").asString();
-        liveRecording->_recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "").asString();
-        liveRecording->_virtualVODStagingContentsPath = liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
-        liveRecording->_liveRecorderVirtualVODImageMediaItemKey = JSONUtils::asInt64(liveRecorderMedatada,
-			"liveRecorderVirtualVODImageMediaItemKey", -1);
+        liveRecording->_stagingContentsPath =
+			liveRecorderMedatada.get("stagingContentsPath", "").asString();
+        liveRecording->_segmentListFileName =
+			liveRecorderMedatada.get("segmentListFileName", "").asString();
+        liveRecording->_recordedFileNamePrefix =
+			liveRecorderMedatada.get("recordedFileNamePrefix", "").asString();
+        liveRecording->_virtualVODStagingContentsPath =
+			liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
+        liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
+			JSONUtils::asInt64(liveRecorderMedatada,
+				"liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
-		liveRecording->_encodingParametersRoot = liveRecorderMedatada["encodingParametersRoot"];
-		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
-		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
+		liveRecording->_encodingParametersRoot =
+			liveRecorderMedatada["encodingParametersRoot"];
+		liveRecording->_ingestedParametersRoot =
+			liveRecorderMedatada["ingestedParametersRoot"];
+		liveRecording->_channelLabel = liveRecording->_ingestedParametersRoot.get(
+			"ConfigurationLabel", "").asString();
 
-        liveRecording->_channelType = liveRecording->_liveRecorderParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
-		int ipMMSAsServer_listenTimeoutInSeconds = liveRecording->
-			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
+        liveRecording->_channelSourceType = liveRecorderMedatada["encodingParametersRoot"].get(
+			"channelSourceType", "IP_PULL").asString();
+		int ipMMSAsServer_listenTimeoutInSeconds =
+			liveRecorderMedatada["encodingParametersRoot"]
+			.get("ActAsServerListenTimeout", 300).asInt();
+		int pushListenTimeout = JSONUtils::asInt(
+			liveRecorderMedatada["encodingParametersRoot"], "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
@@ -6329,36 +6344,48 @@ void FFMPEGEncoder::liveRecorderThread(
 		int captureLive_height = -1;
 		int captureLive_audioDeviceNumber = -1;
 		int captureLive_channelsNumber = -1;
-		if (liveRecording->_channelType == "CaptureLive")
+		if (liveRecording->_channelSourceType == "CaptureLive")
 		{
-			Json::Value captureLiveRoot =
-				(liveRecording->_liveRecorderParametersRoot)["CaptureLive"];
-
-			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
-			captureLive_videoInputFormat = captureLiveRoot.get("VideoInputFormat", "").asString();
-			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
-			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", -1);
-			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt(captureLiveRoot, "ChannelsNumber", -1);
+			captureLive_videoDeviceNumber = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"],
+				"captureVideoDeviceNumber", -1);
+			captureLive_videoInputFormat =
+				liveRecorderMedatada["encodingParametersRoot"].
+				get("captureVideoInputFormat", "").asString();
+			captureLive_frameRate = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"], "captureFrameRate", -1);
+			captureLive_width = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"], "captureWidth", -1);
+			captureLive_height = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"], "captureHeight", -1);
+			captureLive_audioDeviceNumber = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"],
+				"captureAudioDeviceNumber", -1);
+			captureLive_channelsNumber = JSONUtils::asInt(
+				liveRecorderMedatada["encodingParametersRoot"],
+				"captureChannelsNumber", -1);
 		}
 
         string liveURL;
 
-		if (liveRecording->_channelType == "Satellite")
+		if (liveRecording->_channelSourceType == "Satellite")
 		{
 			satelliteServiceId = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"], "satelliteServiceId", -1);
+				liveRecorderMedatada["encodingParametersRoot"],
+				"satelliteServiceId", -1);
 			satelliteFrequency = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"], "satelliteFrequency", -1);
+				liveRecorderMedatada["encodingParametersRoot"],
+				"satelliteFrequency", -1);
 			satelliteSymbolRate = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"], "satelliteSymbolRate", -1);
+				liveRecorderMedatada["encodingParametersRoot"],
+				"satelliteSymbolRate", -1);
 			satelliteModulation = liveRecorderMedatada["encodingParametersRoot"].
 				get("satelliteModulation", "").asString();
 			satelliteVideoPid = JSONUtils::asInt(
 				liveRecorderMedatada["encodingParametersRoot"], "satelliteVideoPid", -1);
 			satelliteAudioItalianPid = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
+				liveRecorderMedatada["encodingParametersRoot"],
+				"satelliteAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
 			// IP-PORT it was using before because we already have a dbvlast sending the stream
@@ -6366,7 +6393,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			// For this reason, before to generate a new IP-PORT, let's look for the serviceId
 			// inside the dvblast conf. file to see if it was already running before
 
-			pair<string, string> satelliteMulticast = getSatelliteMulticastFromDvblastConfigurationFile(
+			pair<string, string> satelliteMulticast =
+				getSatelliteMulticastFromDvblastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
 				satelliteModulation);
@@ -6380,11 +6408,13 @@ void FFMPEGEncoder::liveRecorderThread(
 				satelliteMulticastPort = to_string(*_satelliteChannelPort_CurrentOffset
 					+ _satelliteChannelPort_Start);
 
-				*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
+				*_satelliteChannelPort_CurrentOffset =
+					(*_satelliteChannelPort_CurrentOffset + 1)
 					% _satelliteChannelPort_MaxNumberOfOffsets;
 			}
 
-			liveURL = string("udp://@") + satelliteMulticastIP + ":" + satelliteMulticastPort;
+			liveURL = string("udp://@") + satelliteMulticastIP
+				+ ":" + satelliteMulticastPort;
 
 			createOrUpdateSatelliteDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
@@ -6393,7 +6423,7 @@ void FFMPEGEncoder::liveRecorderThread(
 				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
 				true);
 		}
-		else
+		else 
 		{
 			// in case of actAsServer
 			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
@@ -6401,11 +6431,14 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveURL = liveRecorderMedatada.get("liveURL", "").asString();
 		}
 
-        time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot,
+        time_t utcRecordingPeriodStart = JSONUtils::asInt64(
+			liveRecording->_encodingParametersRoot,
 			"utcRecordingPeriodStart", -1);
-        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot,
+        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(
+			liveRecording->_encodingParametersRoot,
 			"utcRecordingPeriodEnd", -1);
-        int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
+        int segmentDurationInSeconds = JSONUtils::asInt(
+			liveRecording->_encodingParametersRoot,
 			"segmentDurationInSeconds", -1);
         string outputFileFormat = liveRecording->_encodingParametersRoot
 			.get("outputFileFormat", "").asString();
@@ -6422,66 +6455,18 @@ void FFMPEGEncoder::liveRecorderThread(
 		{
 			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
-			liveRecording->_virtualVOD = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
+			liveRecording->_virtualVOD = JSONUtils::asBool(
+				liveRecording->_encodingParametersRoot,
 				"liveRecorderVirtualVOD", false);
 
 			if (monitorHLS || liveRecording->_virtualVOD)
 			{
-				// Json::Value monitorHLSRoot = liveRecording->_liveRecorderParametersRoot["MonitorHLS"];
-
-				liveRecording->_monitorVirtualVODManifestDirectoryPath = liveRecording->_encodingParametersRoot
+				liveRecording->_monitorVirtualVODManifestDirectoryPath =
+					liveRecording->_encodingParametersRoot
 					.get("monitorManifestDirectoryPath", "").asString();
-				liveRecording->_monitorVirtualVODManifestFileName = liveRecording->_encodingParametersRoot
+				liveRecording->_monitorVirtualVODManifestFileName =
+					liveRecording->_encodingParametersRoot
 					.get("monitorManifestFileName", "").asString();
-				/*
-				monitorVirtualVODPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
-					"monitorVirtualVODPlaylistEntriesNumber", 6);
-				monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
-					"monitorVirtualVODSegmentDurationInSeconds", 10);
-
-				monitorVirtualVODEncodingProfileDetailsRoot =
-					liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"];
-				string monitorVirtualVODEncodingProfileContentType =
-					liveRecorderMedatada.get("monitorVirtualVODEncodingProfileContentType", "Video").asString();
-
-				monitorIsVideo = monitorVirtualVODEncodingProfileContentType == "Video" ? true : false;
-
-				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
-				{
-					try
-					{
-						_logger->info(__FILEREF__ + "removeDirectory"
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-					catch(exception e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-				}
-				*/
 			}
 		}
 
@@ -6489,12 +6474,14 @@ void FFMPEGEncoder::liveRecorderThread(
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
-					exceptionInCaseOfError);
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
+				exceptionInCaseOfError);
 		}
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
@@ -6505,29 +6492,34 @@ void FFMPEGEncoder::liveRecorderThread(
 		//		For this reason the above decrement was commented
 
 		// based on liveProxy->_proxyStart, the monitor thread starts the checkings
-		// In case of IP_MMSAsServer, the checks should be done after the ffmpeg server
+		// In case of IP_PUSH, the checks should be done after the ffmpeg server
 		// receives the stream and we do not know what it happens.
 		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-		if (liveRecording->_channelType == "IP_MMSAsServer")
+		if (liveRecording->_channelSourceType == "IP_PUSH")
 		{
-			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
+			if (chrono::system_clock::from_time_t(
+					utcRecordingPeriodStart) < chrono::system_clock::now())
 				liveRecording->_recordingStart = chrono::system_clock::now() +
 					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 			else
-				liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart) +
+				liveRecording->_recordingStart = chrono::system_clock::from_time_t(
+					utcRecordingPeriodStart) +
 					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 		}
 		else
 		{
-			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
+			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart)
+					< chrono::system_clock::now())
 				liveRecording->_recordingStart = chrono::system_clock::now();
 			else
-				liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);
+				liveRecording->_recordingStart = chrono::system_clock::from_time_t(
+					utcRecordingPeriodStart);
 		}
 
 		liveRecording->_liveRecorderOutputRoots.clear();
 		{
-			Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
+			Json::Value outputsRoot =
+				liveRecording->_encodingParametersRoot["outputsRoot"];
 
 			{
 				Json::StreamWriterBuilder wbuilder;
@@ -6558,32 +6550,42 @@ void FFMPEGEncoder::liveRecorderThread(
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
+						asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
+						asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+						asString();
 					manifestFileName = outputRoot.get("manifestFileName", "").asString();
-					localSegmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
-					playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
+					localSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
+						"segmentDurationInSeconds", 10);
+					playlistEntriesNumber = JSONUtils::asInt(outputRoot,
+						"playlistEntriesNumber", 5);
 
-					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					string encodingProfileContentType =
+						outputRoot.get("encodingProfileContentType", "Video").asString();
 
 					isVideo = encodingProfileContentType == "Video" ? true : false;
 				}
 				else if (outputType == "RTMP_Stream")
 				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
+						asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
+						asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 
-					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					string encodingProfileContentType =
+						outputRoot.get("encodingProfileContentType", "Video").asString();
 					isVideo = encodingProfileContentType == "Video" ? true : false;
 				}
 				else
 				{
 					string errorMessage = __FILEREF__ + "liveRecorder. Wrong output type"
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", ingestionJobKey: "
+							+ to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", outputType: " + outputType;
 					_logger->error(errorMessage);
@@ -6591,10 +6593,12 @@ void FFMPEGEncoder::liveRecorderThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
-					= make_tuple(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
-						manifestDirectoryPath, manifestFileName, localSegmentDurationInSeconds, playlistEntriesNumber,
-						isVideo, rtmpUrl);
+				tuple<string, string, string, Json::Value, string, string, int, int,
+					bool, string> tOutputRoot
+					= make_tuple(outputType, otherOutputOptions, audioVolumeChange,
+						encodingProfileDetailsRoot, manifestDirectoryPath,
+						manifestFileName, localSegmentDurationInSeconds,
+						playlistEntriesNumber, isVideo, rtmpUrl);
 
 				liveRecording->_liveRecorderOutputRoots.push_back(tOutputRoot);
 
@@ -6608,12 +6612,14 @@ void FFMPEGEncoder::liveRecorderThread(
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
 							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+							FileIO::removeDirectory(manifestDirectoryPath,
+								bRemoveRecursively);
 						}
 						catch(runtime_error e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", ingestionJobKey: "
+									+ to_string(liveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								+ ", e.what(): " + e.what()
@@ -6625,7 +6631,8 @@ void FFMPEGEncoder::liveRecorderThread(
 						catch(exception e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", ingestionJobKey: "
+									+ to_string(liveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								+ ", e.what(): " + e.what()
@@ -6642,15 +6649,22 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
 
+		_logger->info(__FILEREF__ + "liveRecorder. _ffmpeg->liveRecorder"
+			+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", channelSourceType: " + liveRecording->_channelSourceType
+			+ ", liveURL: " + liveURL
+		);
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
 			encodingJobKey,
-			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+			liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
 
-			liveRecording->_channelType,
+			liveRecording->_channelSourceType,
 			StringUtils::trimTabToo(liveURL),
-			ipMMSAsServer_listenTimeoutInSeconds,
+			pushListenTimeout,
 			captureLive_videoDeviceNumber,
 			captureLive_videoInputFormat,
 			captureLive_frameRate,
@@ -6668,19 +6682,13 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			monitorHLS,
 			liveRecording->_virtualVOD,
-			// monitorVirtualVODEncodingProfileDetailsRoot,
-			// monitorIsVideo,
-			// liveRecording->_monitorVirtualVODManifestDirectoryPath,
-			// liveRecording->_monitorVirtualVODManifestFileName,
-			// monitorVirtualVODPlaylistEntriesNumber,
-			// monitorVirtualVODSegmentDurationInSeconds,
 
 			liveRecording->_liveRecorderOutputRoots,
 
 			&(liveRecording->_childPid)
 		);
 
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -6694,7 +6702,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		}
 
 		// to wait the ingestion of the last chunk
-		this_thread::sleep_for(chrono::seconds(2 * _liveRecorderChunksIngestionCheckInSeconds));
+		this_thread::sleep_for(chrono::seconds(
+			2 * _liveRecorderChunksIngestionCheckInSeconds));
 
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
@@ -6702,7 +6711,8 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_killedBecauseOfNotWorking = false;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
-            + ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+            + ", liveRecording->_ingestionJobKey: "
+				+ to_string(liveRecording->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
 
@@ -6724,7 +6734,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
@@ -6745,7 +6756,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -6754,7 +6766,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -6818,12 +6830,13 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(liveRecording->_transcoderStagingContentsPath
-					+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
+				+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
 		}
 
 		#ifdef __VECTOR__
@@ -6838,7 +6851,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -6847,7 +6861,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLForbidden e)
     {
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -6893,21 +6907,23 @@ void FFMPEGEncoder::liveRecorderThread(
 		bool urlForbidden				= true;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
+			completedWithError, liveRecording->_errorMessage, killedByUser,
+			urlForbidden, urlNotFound);
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
-					+ liveRecording->_segmentListFileName))
+			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
-					exceptionInCaseOfError);
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
+				exceptionInCaseOfError);
 		}
 
 		#ifdef __VECTOR__
@@ -6922,7 +6938,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -6931,7 +6948,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLNotFound e)
     {
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -6983,15 +7000,17 @@ void FFMPEGEncoder::liveRecorderThread(
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
-					+ liveRecording->_segmentListFileName))
+			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
-					exceptionInCaseOfError);
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
+				exceptionInCaseOfError);
 		}
 
 		#ifdef __VECTOR__
@@ -7006,7 +7025,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -7015,7 +7035,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(runtime_error e)
     {
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7067,15 +7087,17 @@ void FFMPEGEncoder::liveRecorderThread(
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
-					+ liveRecording->_segmentListFileName))
+			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
-					exceptionInCaseOfError);
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
+				exceptionInCaseOfError);
 		}
 
 		#ifdef __VECTOR__
@@ -7090,7 +7112,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -7099,7 +7122,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(exception e)
     {
-		if (liveRecording->_channelType == "Satellite"
+		if (liveRecording->_channelSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7154,12 +7177,14 @@ void FFMPEGEncoder::liveRecorderThread(
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+				+ ", segmentListPathName: "
+					+ liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
-					exceptionInCaseOfError);
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+				+ liveRecording->_segmentListFileName,
+				exceptionInCaseOfError);
 		}
 
 		#ifdef __VECTOR__
@@ -7174,7 +7199,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveRecordingsCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveRecordingsCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -7245,11 +7271,11 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								lastRecordedAssetInfo = liveRecorder_processStreamSegmenterOutput(
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
-									liveRecording->_channelType,
+									liveRecording->_channelSourceType,
 									// highAvailability, main,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
-									liveRecording->_liveRecorderParametersRoot,
+									liveRecording->_ingestedParametersRoot,
 
 									liveRecording->_transcoderStagingContentsPath,
 									liveRecording->_stagingContentsPath,
@@ -7263,11 +7289,11 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								lastRecordedAssetInfo = liveRecorder_processHLSSegmenterOutput(
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
-									liveRecording->_channelType,
+									liveRecording->_channelSourceType,
 									// highAvailability, main,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
-									liveRecording->_liveRecorderParametersRoot,
+									liveRecording->_ingestedParametersRoot,
 
 									liveRecording->_transcoderStagingContentsPath,
 									liveRecording->_stagingContentsPath,
@@ -7387,7 +7413,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					try
 					{
 						int64_t deliveryCode = JSONUtils::asInt64(
-							liveRecording->_liveRecorderParametersRoot, "DeliveryCode", 0);
+							liveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
 						string ingestionJobLabel = liveRecording->_encodingParametersRoot
 							.get("ingestionJobLabel", "").asString();
 						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
@@ -7398,11 +7424,11 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						string apiKey;
 						{
 							string field = "InternalMMS";
-							if (JSONUtils::isMetadataPresent(liveRecording->_liveRecorderParametersRoot, field))
+							if (JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, field))
 							{
 								// internalMMSRootPresent = true;
 
-								Json::Value internalMMSRoot = liveRecording->_liveRecorderParametersRoot[field];
+								Json::Value internalMMSRoot = liveRecording->_ingestedParametersRoot[field];
 
 								field = "userKey";
 								userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
@@ -7499,11 +7525,11 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 
 pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelType,
+	string channelSourceType,
 	// bool highAvailability, bool main,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
-	Json::Value liveRecorderParametersRoot,
+	Json::Value ingestedParametersRoot,
 	string transcoderStagingContentsPath,
 	string stagingContentsPath,
 	string segmentListFileName,
@@ -7672,7 +7698,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 
 			string uniqueName;
 			{
-				int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot, "DeliveryCode", 0);
+				int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
 
 				uniqueName = to_string(deliveryCode);
 				uniqueName += " - ";
@@ -7684,21 +7710,21 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			// UserData
 			Json::Value userDataRoot;
 			{
-				if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, "UserData"))
-					userDataRoot = liveRecorderParametersRoot["UserData"];
+				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
+					userDataRoot = ingestedParametersRoot["UserData"];
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
 				/*
-				mmsDataRoot["channelType"] = channelType;
-				if (channelType == "IP_MMSAsClient")
+				mmsDataRoot["channelSourceType"] = channelSourceType;
+				if (channelSourceType == "IP_PULL")
 					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else if (channelType == "Satellite")
+				else if (channelSourceType == "Satellite")
 					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else // if (channelType == "IP_MMSAsServer")
+				else // if (channelSourceType == "IP_PUSH")
 				*/
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"DeliveryCode", 0);
 					mmsDataRoot["deliveryCode"] = deliveryCode;
 				}
@@ -7725,9 +7751,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			string addContentTitle;
 			{
 				/*
-				if (channelType == "IP_MMSAsServer")
+				if (channelSourceType == "IP_PUSH")
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"DeliveryCode", 0);
 					addContentTitle = to_string(deliveryCode);
 				}
@@ -7736,13 +7762,13 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					// 2021-02-03: in this case, we will use the 'ConfigurationLabel' that
 					// it is much better that a code. Who will see the title of the chunks will recognize
 					// easily the recording
-					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
+					addContentTitle = ingestedParametersRoot.get("ConfigurationLabel", "").asString();
 				}
 				*/
 				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
 				if (ingestionJobLabel == "")
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"DeliveryCode", 0);
 					addContentTitle = to_string(deliveryCode);
 				}
@@ -7842,7 +7868,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						transcoderStagingContentsPath, currentRecordedAssetFileName,
 						stagingContentsPath,
 						addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-						liveRecorderParametersRoot, encodingParametersRoot,
+						ingestedParametersRoot, encodingParametersRoot,
 						false);
 				}
 				catch(runtime_error e)
@@ -7919,11 +7945,11 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 
 pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelType,
+	string channelSourceType,
 	// bool highAvailability, bool main,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
-	Json::Value liveRecorderParametersRoot,
+	Json::Value ingestedParametersRoot,
 	string transcoderStagingContentsPath,
 	string stagingContentsPath,
 	string segmentListFileName,
@@ -8109,7 +8135,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						{
 							string uniqueName;
 							{
-								int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot, "DeliveryCode", 0);
+								int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
 
 								uniqueName = to_string(deliveryCode);
 								uniqueName += " - ";
@@ -8121,21 +8147,21 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 							// UserData
 							Json::Value userDataRoot;
 							{
-								if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, "UserData"))
-									userDataRoot = liveRecorderParametersRoot["UserData"];
+								if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
+									userDataRoot = ingestedParametersRoot["UserData"];
 
 								Json::Value mmsDataRoot;
 								mmsDataRoot["dataType"] = "liveRecordingChunk";
 								/*
-								mmsDataRoot["channelType"] = channelType;
-								if (channelType == "IP_MMSAsClient")
+								mmsDataRoot["channelSourceType"] = channelSourceType;
+								if (channelSourceType == "IP_PULL")
 									mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else if (channelType == "Satellite")
+								else if (channelSourceType == "Satellite")
 									mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else // if (channelType == "IP_MMSAsServer")
+								else // if (channelSourceType == "IP_PUSH")
 								*/
 								{
-									int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 										"DeliveryCode", 0);
 									mmsDataRoot["deliveryCode"] = deliveryCode;
 								}
@@ -8172,7 +8198,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 							{
 								if (ingestionJobLabel == "")
 								{
-									int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 										"DeliveryCode", 0);
 									addContentTitle = to_string(deliveryCode);
 								}
@@ -8267,7 +8293,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 										stagingContentsPath,
 										addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-										liveRecorderParametersRoot, encodingParametersRoot,
+										ingestedParametersRoot, encodingParametersRoot,
 										true);
 								}
 								catch(runtime_error e)
@@ -8382,7 +8408,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	// bool highAvailability,
 	Json::Value userDataRoot,
 	string fileFormat,
-	Json::Value liveRecorderParametersRoot,
+	Json::Value ingestedParametersRoot,
 	Json::Value encodingParametersRoot,
 	bool copy)
 {
@@ -8506,11 +8532,11 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		string apiKey;
 		{
 			field = "InternalMMS";
-    		if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, field))
+    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
 				// internalMMSRootPresent = true;
 
-				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
+				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "userKey";
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
@@ -8532,7 +8558,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 			}
 		}
 
-		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
+		Json::Value addContentParametersRoot = ingestedParametersRoot;
 		// if (internalMMSRootPresent)
 		{
 			Json::Value removed;
@@ -8640,7 +8666,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot, "DeliveryCode", 0);
+			int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
 			{
 				Json::Value variableWorkflowRoot;
 
@@ -10015,27 +10041,13 @@ void FFMPEGEncoder::liveProxyThread(
             throw runtime_error(errorMessage);
         }
 
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
-
-		// CHECK TO BE COMMENTED AFTER LAUNCH IN PRODUCTION
-		/*
-		if (!JSONUtils::isMetadataPresent(liveProxyMetadata, "outputsRoot"))
-		{
-			string errorMessage = string("Forced FFMpegEncodingKilledByUser")
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", requestBody: " + requestBody
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			liveProxy->_killedBecauseOfNotWorking = false;
-
-			throw FFMpegEncodingKilledByUser();
-		}
-		*/
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(
+			liveProxyMetadata, "ingestionJobKey", -1);
 
 		liveProxy->_liveProxyOutputRoots.clear();
 		{
-			Json::Value outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
+			Json::Value outputsRoot =
+				liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 
 			{
 				Json::StreamWriterBuilder wbuilder;
@@ -10149,20 +10161,19 @@ void FFMPEGEncoder::liveProxyThread(
 
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["ingestedParametersRoot"];
 
-		string userAgent = (liveProxy->_ingestedParametersRoot).get("UserAgent", "").asString();
-		int maxWidth = JSONUtils::asInt(liveProxy->_ingestedParametersRoot, "MaxWidth", -1);
+		string userAgent = (liveProxy->_ingestedParametersRoot).
+			get("UserAgent", "").asString();
+		int maxWidth = JSONUtils::asInt(liveProxy->_ingestedParametersRoot,
+			"MaxWidth", -1);
 		string otherInputOptions = (liveProxy->_ingestedParametersRoot).get(
 			"OtherInputOptions", "").asString();
-		// string otherOutputOptions = liveProxyMetadata.get("otherOutputOptions", "").asString();
-		// int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
-		// int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
-		liveProxy->_channelLabel = liveProxy->_ingestedParametersRoot.get("ConfigurationLabel", "").asString();
-		// string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
-		// string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
+		liveProxy->_channelLabel =
+			liveProxy->_ingestedParametersRoot.get("ConfigurationLabel", "").asString();
 
-		liveProxy->_channelType = liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
-		int ipMMSAsServer_listenTimeoutInSeconds = liveProxy->
-			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
+		liveProxy->_channelSourceType = liveProxyMetadata["encodingParametersRoot"].
+			get("channelSourceType", "IP_PULL").asString();
+		int pushListenTimeout = liveProxyMetadata["encodingParametersRoot"].
+			get("pushListenTimeout", -1).asInt();
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
 		int captureLive_frameRate = -1;
@@ -10170,23 +10181,31 @@ void FFMPEGEncoder::liveProxyThread(
 		int captureLive_height = -1;
 		int captureLive_audioDeviceNumber = -1;
 		int captureLive_channelsNumber = -1;
-		if (liveProxy->_channelType == "CaptureLive")
+		if (liveProxy->_channelSourceType == "CaptureLive")
 		{
-			Json::Value captureLiveRoot =
-				(liveProxy->_ingestedParametersRoot)["CaptureLive"];
-
-			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
-			captureLive_videoInputFormat = captureLiveRoot.get("VideoInputFormat", "").asString();
-			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
-			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", -1);
-			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt(captureLiveRoot, "ChannelsNumber", -1);
+			captureLive_videoDeviceNumber = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"],
+				"captureVideoDeviceNumber", -1);
+			captureLive_videoInputFormat = liveProxyMetadata["encodingParametersRoot"].
+				get("captureVideoInputFormat", "").asString();
+			captureLive_frameRate = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"], "captureFrameRate", -1);
+			captureLive_width = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"], "captureWidth", -1);
+			captureLive_height = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"], "captureHeight", -1);
+			captureLive_audioDeviceNumber = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"],
+				"captureAudioDeviceNumber", -1);
+			captureLive_channelsNumber = JSONUtils::asInt(
+				liveProxyMetadata["encodingParametersRoot"],
+				"captureChannelsNumber", -1);
 		}
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
-		bool timePeriod = JSONUtils::asBool(liveProxyMetadata["encodingParametersRoot"], "timePeriod", false);
+		bool timePeriod = JSONUtils::asBool(liveProxyMetadata["encodingParametersRoot"],
+			"timePeriod", false);
 		if (timePeriod)
 		{
 			utcProxyPeriodStart = JSONUtils::asInt64(liveProxyMetadata["encodingParametersRoot"],
@@ -10196,7 +10215,7 @@ void FFMPEGEncoder::liveProxyThread(
 		}
 
 		string liveURL;
-		if (liveProxy->_channelType == "Satellite")
+		if (liveProxy->_channelSourceType == "Satellite")
 		{
 			satelliteServiceId = JSONUtils::asInt64(
 				liveProxyMetadata["encodingParametersRoot"], "satelliteServiceId", -1);
@@ -10266,32 +10285,34 @@ void FFMPEGEncoder::liveProxyThread(
 
 		{
 			// based on liveProxy->_proxyStart, the monitor thread starts the checkings
-			// In case of IP_MMSAsServer, the checks should be done after the ffmpeg server
+			// In case of IP_PUSH, the checks should be done after the ffmpeg server
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-			if (liveProxy->_channelType == "IP_MMSAsServer")
+			if (liveProxy->_channelSourceType == "IP_PUSH")
 			{
 				if (utcProxyPeriodStart != -1)
 				{
 					if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
 						liveProxy->_proxyStart = chrono::system_clock::now() +
-							chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+							chrono::seconds(pushListenTimeout);
 					else
 						liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) +
-							chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+							chrono::seconds(pushListenTimeout);
 				}
 				else
 					liveProxy->_proxyStart = chrono::system_clock::now() +
-						chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+						chrono::seconds(pushListenTimeout);
 			}
 			else
 			{
 				if (utcProxyPeriodStart != -1)
 				{
-					if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
+					if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+							chrono::system_clock::now())
 						liveProxy->_proxyStart = chrono::system_clock::now();
 					else
-						liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+						liveProxy->_proxyStart = chrono::system_clock::from_time_t(
+							utcProxyPeriodStart);
 				}
 				else
 					liveProxy->_proxyStart = chrono::system_clock::now();
@@ -10301,9 +10322,9 @@ void FFMPEGEncoder::liveProxyThread(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				maxWidth,
-				liveProxy->_channelType,
+				liveProxy->_channelSourceType,
 				StringUtils::trimTabToo(liveURL),
-				ipMMSAsServer_listenTimeoutInSeconds,
+				pushListenTimeout,
 				captureLive_videoDeviceNumber,
 				captureLive_videoInputFormat,
 				captureLive_frameRate,
@@ -10318,8 +10339,9 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_childPid));
 		}
 
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -10347,8 +10369,8 @@ void FFMPEGEncoder::liveProxyThread(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
+			completedWithError, liveProxy->_errorMessage, killedByUser,
+			urlForbidden, urlNotFound);
 
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_channelLabel = "";
@@ -10366,7 +10388,8 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+				_logger->error(__FILEREF__
+					+ "_liveProxiesCapability->erase. Key not found"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", erase: " + to_string(erase)
 				);
@@ -10375,8 +10398,9 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -10455,8 +10479,9 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLForbidden e)
     {
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -10530,8 +10555,9 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -10605,8 +10631,9 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -10680,8 +10707,9 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
-		if (liveProxy->_channelType == "Satellite"
-			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
 		)
 		{
 			// remove configuration from dvblast configuration file
@@ -11334,7 +11362,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 
 		liveProxy->_ingestedParametersRoot = awaitingTheBeginningMetadata["awaitingTheBeginningIngestedParametersRoot"];
 
-		liveProxy->_channelType = ""; // liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
+		liveProxy->_channelSourceType = ""; // liveProxy->_ingestedParametersRoot.get("channelSourceType", "IP_PULL").asString();
 
 		time_t utcCountDownEnd = JSONUtils::asInt64(awaitingTheBeginningMetadata, "utcCountDownEnd", -1);
 

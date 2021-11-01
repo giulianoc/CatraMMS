@@ -8762,8 +8762,8 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey, string ingestionJobLabel,
-	string channelType,
-	// bool highAvailability,
+	string channelSourceType,
+
 	string configurationLabel, int64_t confKey, string url,
 	string userAgent,
 	time_t utcRecordingPeriodStart,
@@ -8772,6 +8772,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int segmentDurationInSeconds,
 	string outputFileFormat,
 	EncodingPriority encodingPriority,
+
+	int pushListenTimeout,
+	string captureEncoderServerName, int captureVideoDeviceNumber,
+	string captureVideoInputFormat, int captureFrameRate,
+	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
+	int captureChannelsNumber,
 
 	int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
 	string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
@@ -8795,7 +8801,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ingestionJobLabel: " + ingestionJobLabel
-            + ", channelType: " + channelType
+            + ", channelSourceType: " + channelSourceType
             // + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
@@ -8818,12 +8824,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         );
 
         autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
             lastSQLCommand = 
                 "START TRANSACTION";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            shared_ptr<sql::Statement> statement (
+				conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
 
@@ -8840,11 +8846,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				string field = "ingestionJobLabel";
 				parametersRoot[field] = ingestionJobLabel;
 
-				field = "channelType";
-				parametersRoot[field] = channelType;
-
-				// field = "highAvailability";
-				// parametersRoot[field] = highAvailability;
+				field = "channelSourceType";
+				parametersRoot[field] = channelSourceType;
 
 				field = "main";
 				parametersRoot[field] = main;
@@ -8857,6 +8860,33 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "pushListenTimeout";
+				parametersRoot[field] = pushListenTimeout;
+
+				field = "captureEncoderServerName";
+				parametersRoot[field] = captureEncoderServerName;
+
+				field = "captureVideoDeviceNumber";
+				parametersRoot[field] = captureVideoDeviceNumber;
+
+				field = "captureVideoInputFormat";
+				parametersRoot[field] = captureVideoInputFormat;
+
+				field = "captureFrameRate";
+				parametersRoot[field] = captureFrameRate;
+
+				field = "captureWidth";
+				parametersRoot[field] = captureWidth;
+
+				field = "captureHeight";
+				parametersRoot[field] = captureHeight;
+
+				field = "captureAudioDeviceNumber";
+				parametersRoot[field] = captureAudioDeviceNumber;
+
+				field = "captureChannelsNumber";
+				parametersRoot[field] = captureChannelsNumber;
 
 				field = "satelliteServiceId";
 				parametersRoot[field] = satelliteServiceId;
@@ -8997,8 +9027,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				string field = "ingestionJobLabel";
 				parametersRoot[field] = ingestionJobLabel;
 
-				field = "channelType";
-				parametersRoot[field] = channelType;
+				field = "channelSourceType";
+				parametersRoot[field] = channelSourceType;
 
 				field = "highAvailability";
 				parametersRoot[field] = highAvailability;
@@ -9389,8 +9419,14 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string channelType,
+	string channelSourceType,
 	int64_t liveURLConfKey, string configurationLabel, string url,
+
+	int pushListenTimeout,
+	string captureEncoderServerName, int captureVideoDeviceNumber,
+	string captureVideoInputFormat, int captureFrameRate,
+	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
+	int captureChannelsNumber,
 
 	int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
 	string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
@@ -9410,7 +9446,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", channelType: " + channelType
+            + ", channelSourceType: " + channelSourceType
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
@@ -9441,8 +9477,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "channelType";
-				parametersRoot[field] = channelType;
+				string field = "channelSourceType";
+				parametersRoot[field] = channelSourceType;
 
 				field = "liveURLConfKey";
 				parametersRoot[field] = liveURLConfKey;
@@ -9452,6 +9488,33 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "pushListenTimeout";
+				parametersRoot[field] = pushListenTimeout;
+
+				field = "captureEncoderServerName";
+				parametersRoot[field] = captureEncoderServerName;
+
+				field = "captureVideoDeviceNumber";
+				parametersRoot[field] = captureVideoDeviceNumber;
+
+				field = "captureVideoInputFormat";
+				parametersRoot[field] = captureVideoInputFormat;
+
+				field = "captureFrameRate";
+				parametersRoot[field] = captureFrameRate;
+
+				field = "captureWidth";
+				parametersRoot[field] = captureWidth;
+
+				field = "captureHeight";
+				parametersRoot[field] = captureHeight;
+
+				field = "captureAudioDeviceNumber";
+				parametersRoot[field] = captureAudioDeviceNumber;
+
+				field = "captureChannelsNumber";
+				parametersRoot[field] = captureChannelsNumber;
 
 				field = "satelliteServiceId";
 				parametersRoot[field] = satelliteServiceId;

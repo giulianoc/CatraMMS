@@ -8891,17 +8891,17 @@ void FFMpeg::liveRecorder(
 	string segmentListPathName,
 	string recordedFileNamePrefix,
 
-	// if channelType is IP_MMSAsServer means the liveURL should be like
+	// if channelSourceType is IP_PUSH means the liveURL should be like
 	//		rtmp://<local transcoder IP to bind>:<port>
 	//		listening for an incoming connection
-	// else if channelType is CaptureLive, liveURL is not used
+	// else if channelSourceType is CaptureLive, liveURL is not used
 	// else means the liveURL is "any thing" referring a stream
-	string channelType,	// IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive
+	string channelSourceType,	// IP_PULL, Satellite, IP_PUSH, CaptureLive
     string liveURL,
-	// Used only in case channelType is IP_MMSAsServer, Maximum time to wait for the incoming connection
+	// Used only in case channelSourceType is IP_PUSH, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
 
-	// parameters used only in case channelType is CaptureLive
+	// parameters used only in case channelSourceType is CaptureLive
 	int captureLive_videoDeviceNumber,
 	string captureLive_videoInputFormat,
 	int captureLive_frameRate,
@@ -8957,7 +8957,7 @@ void FFMpeg::liveRecorder(
 		+ ", segmentListPathName: " + segmentListPathName
 		+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 
-		+ ", channelType: " + channelType
+		+ ", channelSourceType: " + channelSourceType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
@@ -9139,7 +9139,7 @@ void FFMpeg::liveRecorder(
 			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 			+ ", streamingDuration: " + to_string(streamingDuration)
 		);
-		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+		if (channelSourceType == "IP_PUSH" || channelSourceType == "Satellite")
 		{
 			if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
 			{
@@ -9165,7 +9165,7 @@ void FFMpeg::liveRecorder(
 
 		// user agent is an HTTP header and can be used only in case of http request
 		bool userAgentToBeUsed = false;
-		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		if (channelSourceType == "IP_PULL" && userAgent != "")
 		{
 			string httpPrefix = "http";	// it includes also https
 			if (liveURL.size() >= httpPrefix.size()
@@ -9191,7 +9191,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 
-		if (channelType == "IP_MMSAsServer")
+		if (channelSourceType == "IP_PUSH")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");
@@ -9205,12 +9205,12 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "IP_MMSAsClient" || channelType == "Satellite")
+		else if (channelSourceType == "IP_PULL" || channelSourceType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "CaptureLive")
+		else if (channelSourceType == "CaptureLive")
 		{
 			// video
 			{
@@ -10457,17 +10457,17 @@ void FFMpeg::liveProxy(
 	int64_t encodingJobKey,
 	int maxWidth,
 
-	// if channelType is IP_MMSAsServer means the liveURL is like
+	// if channelSourceType is IP_PUSH means the liveURL is like
 	//		rtmp://<local IP to bind>:<port>
 	//		listening for an incoming connection
-	// else if channelType is CaptureLive liveURL is not used
+	// else if channelSourceType is CaptureLive liveURL is not used
 	// else liveURL is "any thing" referring a stream
-	string channelType,
+	string channelSourceType,
 	string liveURL,
 	// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
 
-	// parameters used only in case channelType is CaptureLive
+	// parameters used only in case channelSourceType is CaptureLive
 	int captureLive_videoDeviceNumber,
 	string captureLive_videoInputFormat,
 	int captureLive_frameRate,
@@ -10511,7 +10511,7 @@ void FFMpeg::liveProxy(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", maxWidth: " + to_string(maxWidth)
-		+ ", channelType: " + channelType
+		+ ", channelSourceType: " + channelSourceType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
@@ -10539,7 +10539,7 @@ void FFMpeg::liveProxy(
 	);
 
 	string otherOutputOptionsBecauseOfMaxWidth;
-	if (channelType == "IP_MMSAsClient" && maxWidth != -1)
+	if (channelSourceType == "IP_PULL" && maxWidth != -1)
 	{
 		try
 		{
@@ -10741,7 +10741,7 @@ void FFMpeg::liveProxy(
 				+ ", streamingDuration: " + to_string(streamingDuration)
 			);
 
-			if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+			if (channelSourceType == "IP_PUSH" || channelSourceType == "Satellite")
 			{
 				if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
 				{
@@ -10768,7 +10768,7 @@ void FFMpeg::liveProxy(
 
 		// user agent is an HTTP header and can be used only in case of http request
 		bool userAgentToBeUsed = false;
-		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		if (channelSourceType == "IP_PULL" && userAgent != "")
 		{
 			string httpPrefix = "http";	// it includes also https
 			if (liveURL.size() >= httpPrefix.size()
@@ -10809,7 +10809,7 @@ void FFMpeg::liveProxy(
 		}
 		ffmpegArgumentList.push_back("-re");
 		addToArguments(otherInputOptions, ffmpegArgumentList);
-		if (channelType == "IP_MMSAsServer")
+		if (channelSourceType == "IP_PUSH")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");
@@ -10823,12 +10823,12 @@ void FFMpeg::liveProxy(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "IP_MMSAsClient" || channelType == "Satellite")
+		else if (channelSourceType == "IP_PULL" || channelSourceType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "CaptureLive")
+		else if (channelSourceType == "CaptureLive")
 		{
 			// video
 			{
