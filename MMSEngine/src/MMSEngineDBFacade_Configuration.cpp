@@ -1553,7 +1553,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1572,7 +1572,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
         throw e;
     }        
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -3152,7 +3152,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
     } 
 }
 
-int64_t MMSEngineDBFacade::addSourceSATChannelConf(
+Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
 	int64_t serviceId,
 	int64_t networkId,
 	int64_t transportStreamId,
@@ -3282,12 +3282,60 @@ int64_t MMSEngineDBFacade::addSourceSATChannelConf(
 
 			confKey = getLastInsertId(conn);
         }
-                            
+
+		Json::Value sourceSATChannelConfRoot;
+		{
+			int start = 0;
+			int rows = 1;
+			int64_t serviceId;
+			string name;
+			int64_t frequency;
+			string lnb;
+			int videoPid;
+			string audioPids;
+			string nameOrder;
+			Json::Value sourceSATChannelConfRoot = getSourceSATChannelConfList (
+				confKey, start, rows, serviceId, name, frequency, lnb,
+				videoPid, audioPids, nameOrder);
+
+			string field = "response";
+			if (!JSONUtils::isMetadataPresent(sourceSATChannelConfRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value responseRoot = sourceSATChannelConfRoot[field];
+
+			field = "sourceSATChannelConf";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceSATChannelConfRoot = responseRoot[field];
+
+			if (sourceSATChannelConfRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sourceSATChannelConfRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -3347,11 +3395,9 @@ int64_t MMSEngineDBFacade::addSourceSATChannelConf(
 
         throw e;
     }  
-    
-    return confKey;
 }
 
-void MMSEngineDBFacade::modifySourceSATChannelConf(
+Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
 	int64_t confKey,
 
 	bool serviceIdToBeModified, int64_t serviceId,
@@ -3703,12 +3749,60 @@ void MMSEngineDBFacade::modifySourceSATChannelConf(
                 */
             }
         }
+
+		Json::Value sourceSATChannelConfRoot;
+		{
+			int start = 0;
+			int rows = 1;
+			int64_t serviceId;
+			string name;
+			int64_t frequency;
+			string lnb;
+			int videoPid;
+			string audioPids;
+			string nameOrder;
+			Json::Value sourceSATChannelConfRoot = getSourceSATChannelConfList (
+				confKey, start, rows, serviceId, name, frequency, lnb,
+				videoPid, audioPids, nameOrder);
+
+			string field = "response";
+			if (!JSONUtils::isMetadataPresent(sourceSATChannelConfRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value responseRoot = sourceSATChannelConfRoot[field];
+
+			field = "sourceSATChannelConf";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceSATChannelConfRoot = responseRoot[field];
+
+			if (sourceSATChannelConfRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
                             
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sourceSATChannelConfRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -3881,7 +3975,7 @@ void MMSEngineDBFacade::removeSourceSATChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
-	int64_t workspaceKey, int64_t confKey,
+	int64_t confKey,
 	int start, int rows,
 	int64_t serviceId, string name, int64_t frequency, string lnb,
 	int videoPid, string audioPids,
@@ -3897,7 +3991,6 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
         string field;
         
         _logger->info(__FILEREF__ + "getSourceSATChannelConfList"
-            + ", workspaceKey: " + to_string(workspaceKey)
             + ", confKey: " + to_string(confKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
@@ -3918,11 +4011,6 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
         {
             Json::Value requestParametersRoot;
 
-			{
-				field = "workspaceKey";
-				requestParametersRoot[field] = workspaceKey;
-			}
-            
             if (confKey != -1)
 			{
 				field = "confKey";
@@ -4247,7 +4335,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
             }
         }
 
-        field = "channelConf";
+        field = "sourceSATChannelConf";
         responseRoot[field] = channelRoot;
 
         field = "response";

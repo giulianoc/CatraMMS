@@ -1957,25 +1957,25 @@ void API::addSourceSATChannelConf(
                 }
             }
 
-			string field = "ServiceId";
+			string field = "serviceId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				serviceId = -1;
 			else
 				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "NetworkId";
+			field = "networkId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				networkId = -1;
 			else
 				networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "TransportStreamId";
+			field = "transportStreamId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				transportStreamId = -1;
 			else
 				transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "Name";
+			field = "name";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1986,7 +1986,7 @@ void API::addSourceSATChannelConf(
 			}
 			name = requestBodyRoot.get(field, "").asString();            
 
-			field = "Satellite";
+			field = "satellite";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1997,7 +1997,7 @@ void API::addSourceSATChannelConf(
 			}
 			satellite = requestBodyRoot.get(field, "").asString();            
 
-			field = "Frequency";
+			field = "frequency";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2008,57 +2008,57 @@ void API::addSourceSATChannelConf(
 			}
 			frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "Lnb";
+			field = "lnb";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				lnb = requestBodyRoot.get(field, "").asString();            
 
-			field = "VideoPid";
+			field = "videoPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				videoPid = -1;
 			else
 				videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-			field = "AudioPids";
+			field = "audioPids";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				audioPids = requestBodyRoot.get(field, "").asString();            
 
-			field = "AudioItalianPid";
+			field = "audioItalianPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				audioItalianPid = -1;
 			else
 				audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-			field = "AudioEnglishPid";
+			field = "audioEnglishPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				audioEnglishPid = -1;
 			else
 				audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-			field = "TeletextPid";
+			field = "teletextPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				teletextPid = -1;
 			else
 				teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-			field = "Modulation";
+			field = "modulation";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				modulation = requestBodyRoot.get(field, "").asString();            
 
-			field = "Polarization";
+			field = "polarization";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				polarization = requestBodyRoot.get(field, "").asString();            
 
-			field = "SymbolRate";
+			field = "symbolRate";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				symbolRate = -1;
 			else
 				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
-			field = "Country";
+			field = "country";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				country = requestBodyRoot.get(field, "").asString();            
 
-			field = "DeliverySystem";
+			field = "deliverySystem";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				deliverySystem = requestBodyRoot.get(field, "").asString();            
         }
@@ -2085,18 +2085,16 @@ void API::addSourceSATChannelConf(
         string sResponse;
         try
         {
-			int64_t confKey = _mmsEngineDBFacade->addSourceSATChannelConf(
+			Json::Value sourceSATChannelConfRoot =
+				_mmsEngineDBFacade->addSourceSATChannelConf(
 				serviceId, networkId, transportStreamId,
 				name, satellite, frequency, lnb,
 				videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid,
 				modulation, polarization, symbolRate, country, deliverySystem
 			);
 
-			sResponse = (
-				string("{ ") 
-					+ "\"confKey\": " + to_string(confKey)
-					+ "}"
-				);
+            Json::StreamWriterBuilder wbuilder;
+            sResponse = Json::writeString(wbuilder, sourceSATChannelConfRoot);
 		}
         catch(runtime_error e)
         {
@@ -2226,119 +2224,119 @@ void API::modifySourceSATChannelConf(
                 }
             }
 
-            string field = "ServiceId";
+            string field = "serviceId";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				serviceIdToBeModified = true;
             }
 
-            field = "NetworkId";
+            field = "networkId";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				networkIdToBeModified = true;
             }
 
-            field = "TransportStreamId";
+            field = "transportStreamId";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				transportStreamIdToBeModified = true;
             }
 
-            field = "Name";
+            field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				name = requestBodyRoot.get(field, "").asString();            
 				nameToBeModified = true;
             }
 
-            field = "Satellite";
+            field = "satellite";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				satellite = requestBodyRoot.get(field, "").asString();            
 				satelliteToBeModified = true;
             }
 
-            field = "Frequency";
+            field = "frequency";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				frequencyToBeModified = true;
             }
 
-            field = "Lnb";
+            field = "lnb";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				lnb = requestBodyRoot.get(field, "").asString();            
 				lnbToBeModified = true;
             }
 
-            field = "VideoPid";
+            field = "videoPid";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);
 				videoPidToBeModified = true;
             }
 
-            field = "AudioPids";
+            field = "audioPids";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				audioPids = requestBodyRoot.get(field, "").asString();            
 				audioPidsToBeModified = true;
             }
 
-            field = "AudioItalianPid";
+            field = "audioItalianPid";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);
 				audioItalianPidToBeModified = true;
             }
 
-            field = "AudioEnglishPid";
+            field = "audioEnglishPid";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);
 				audioEnglishPidToBeModified = true;
             }
 
-            field = "TeletextPid";
+            field = "teletextPid";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);
 				teletextPidToBeModified = true;
             }
 
-            field = "Modulation";
+            field = "modulation";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				modulation = requestBodyRoot.get(field, "").asString();            
 				modulationToBeModified = true;
             }
 
-            field = "Polarization";
+            field = "polarization";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				polarization = requestBodyRoot.get(field, "").asString();            
 				polarizationToBeModified = true;
             }
 
-            field = "SymbolRate";
+            field = "symbolRate";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				symbolRateToBeModified = true;
             }
 
-            field = "Country";
+            field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				country = requestBodyRoot.get(field, "").asString();            
 				countryToBeModified = true;
             }
 
-            field = "DeliverySystem";
+            field = "deliverySystem";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				deliverySystem = requestBodyRoot.get(field, "").asString();            
@@ -2381,7 +2379,8 @@ void API::modifySourceSATChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-            _mmsEngineDBFacade->modifySourceSATChannelConf(
+			Json::Value sourceSATChannelConfRoot =
+				_mmsEngineDBFacade->modifySourceSATChannelConf(
 				confKey,
                 serviceIdToBeModified, serviceId,
 				networkIdToBeModified, networkId,
@@ -2402,11 +2401,8 @@ void API::modifySourceSATChannelConf(
 				deliverySystemToBeModified, deliverySystem
 			);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
+            Json::StreamWriterBuilder wbuilder;
+            sResponse = Json::writeString(wbuilder, sourceSATChannelConfRoot);
         }
         catch(runtime_error e)
         {
@@ -2659,13 +2655,14 @@ void API::sourceSatChannelConfList(
 		}
 
         {
-            Json::Value channelConfListRoot = _mmsEngineDBFacade->getSourceSATChannelConfList(
-                    workspace->_workspaceKey, confKey, start, rows,
-					serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
+            Json::Value sourceSATChannelConfRoot =
+				_mmsEngineDBFacade->getSourceSATChannelConfList(
+				confKey, start, rows,
+				serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, channelConfListRoot);
-            
+            string responseBody = Json::writeString(wbuilder, sourceSATChannelConfRoot);
+
             sendSuccess(request, 200, responseBody);
         }
     }

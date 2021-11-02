@@ -2174,7 +2174,7 @@ public:
 	tuple<string, string, string> getChannelConfDetails(
 		int64_t workspaceKey, int64_t confKey);
 
-	int64_t addSourceSATChannelConf(
+	Json::Value addSourceSATChannelConf(
 		int64_t serviceId,
 		int64_t networkId,
 		int64_t transportStreamId,
@@ -2194,7 +2194,7 @@ public:
 		string deliverySystem
 	);
 
-	void modifySourceSATChannelConf(
+	Json::Value modifySourceSATChannelConf(
 		int64_t confKey,
 
 		bool serviceIdToBeModified, int64_t serviceId,
@@ -2220,7 +2220,7 @@ public:
         int64_t confKey);
 
     Json::Value getSourceSATChannelConfList (
-        int64_t workspaceKey, int64_t confKey,
+        int64_t confKey,
 		int start, int rows,
 		int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
