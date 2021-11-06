@@ -103,12 +103,12 @@ void API::registerUser(
 
         {
             vector<string> mandatoryFields = {
-                "EMail",
-                "Password"
+				"email",
+				"password"
             };
             for (string field: mandatoryFields)
             {
-                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+				if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -120,11 +120,11 @@ void API::registerUser(
                 }
             }
 
-            email = metadataRoot.get("EMail", "").asString();
-            password = metadataRoot.get("Password", "").asString();
-            workspaceName = metadataRoot.get("WorkspaceName", "").asString();
-            name = metadataRoot.get("Name", "").asString();
-            country = metadataRoot.get("Country", "").asString();
+            email = metadataRoot.get("email", "").asString();
+            password = metadataRoot.get("password", "").asString();
+            workspaceName = metadataRoot.get("workspaceName", "").asString();
+            name = metadataRoot.get("name", "").asString();
+            country = metadataRoot.get("country", "").asString();
 
 			if (workspaceName == "")
 			{
@@ -1278,8 +1278,8 @@ void API::login(
 			if (!_ldapEnabled)
 			{
 				vector<string> mandatoryFields = {
-					"EMail",
-					"Password"
+					"email",
+					"password"
 				};
 				for (string field: mandatoryFields)
 				{
@@ -1295,13 +1295,13 @@ void API::login(
 					}
 				}
 
-				string field = "EMail";
+				string field = "email";
 				string email = metadataRoot.get(field, "").asString();
 
-				field = "Password";
+				field = "password";
 				string password = metadataRoot.get(field, "").asString();
 
-				field = "RemoteClientIPAddress";
+				field = "remoteClientIPAddress";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
 					remoteClientIPAddress = metadataRoot.get(field, "").asString();
 
@@ -1370,8 +1370,8 @@ void API::login(
 			else // if (_ldapEnabled)
 			{
 				vector<string> mandatoryFields = {
-					"Name",
-					"Password"
+					"name",
+					"password"
 				};
 				for (string field: mandatoryFields)
 				{
@@ -1387,13 +1387,13 @@ void API::login(
 					}
 				}
 
-				string field = "Name";
+				string field = "name";
 				string userName = metadataRoot.get(field, "").asString();
 
-				field = "Password";
+				field = "password";
 				string password = metadataRoot.get(field, "").asString();
 
-				field = "RemoteClientIPAddress";
+				field = "remoteClientIPAddress";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
 					remoteClientIPAddress = metadataRoot.get(field, "").asString();
 
@@ -2153,9 +2153,9 @@ void API::updateUser(
 		if(!_ldapEnabled)
         {
             vector<string> mandatoryFields = {
-                "Name",
-                "EMail",
-                "Country"
+                "name",
+                "enail",
+                "country"
             };
             for (string field: mandatoryFields)
             {
@@ -2171,40 +2171,21 @@ void API::updateUser(
                 }
             }
 
-            name = metadataRoot.get("Name", "").asString();
-            email = metadataRoot.get("EMail", "").asString();
-            country = metadataRoot.get("Country", "").asString();
+            name = metadataRoot.get("name", "").asString();
+            email = metadataRoot.get("email", "").asString();
+            country = metadataRoot.get("country", "").asString();
 
-			if (JSONUtils::isMetadataPresent(metadataRoot, "NewPassword")
-					&& JSONUtils::isMetadataPresent(metadataRoot, "OldPassword"))
+			if (JSONUtils::isMetadataPresent(metadataRoot, "newPassword")
+					&& JSONUtils::isMetadataPresent(metadataRoot, "oldPassword"))
 			{
 				passwordChanged = true;
-				newPassword = metadataRoot.get("NewPassword", "").asString();
-				oldPassword = metadataRoot.get("OldPassword", "").asString();
+				newPassword = metadataRoot.get("newPassword", "").asString();
+				oldPassword = metadataRoot.get("oldPassword", "").asString();
 			}
         }
 		else
         {
-			/*
-            vector<string> mandatoryFields = {
-                "Country"
-            };
-            for (string field: mandatoryFields)
-            {
-                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
-
-                    sendError(request, 400, errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-			*/
-
-            country = metadataRoot.get("Country", "").asString();
+            country = metadataRoot.get("country", "").asString();
         }
 
         try
