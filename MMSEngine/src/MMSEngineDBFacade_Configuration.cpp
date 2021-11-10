@@ -132,9 +132,11 @@ void MMSEngineDBFacade::modifyYouTubeConf(
         
         {
             lastSQLCommand = 
-                "update MMS_Conf_YouTube set label = ?, refreshToken = ? where confKey = ? and workspaceKey = ?";
+                "update MMS_Conf_YouTube set label = ?, refreshToken = ? "
+				"where confKey = ? and workspaceKey = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, refreshToken);

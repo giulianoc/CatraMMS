@@ -1263,16 +1263,28 @@ public:
     pair<int64_t,int64_t> getWorkspaceUsage(
         int64_t workspaceKey);
 
-    Json::Value updateWorkspaceDetails (
-        int64_t userKey,
-        int64_t workspaceKey,
-        bool newEnabled, string newName, string newMaxEncodingPriority,
-        string newEncodingPeriod, int64_t newMaxIngestionsNumber,
-        int64_t newMaxStorageInMB, string newLanguageCode, string newExpirationDate,
-        bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
-        bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding,
-		bool newCancelIngestionJob, bool newEditEncodersPool, bool newApplicationRecorder);
+	Json::Value updateWorkspaceDetails (
+		int64_t userKey,
+		int64_t workspaceKey,
+		bool enabledChanged, bool newEnabled,
+		bool nameChanged, string newName,
+		bool maxEncodingPriorityChanged, string newMaxEncodingPriority,
+		bool encodingPeriodChanged, string newEncodingPeriod,
+		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
+		bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
+		bool languageCodeChanged, string newLanguageCode,
+		bool expirationDateChanged, string newExpirationDate,
+		bool newCreateRemoveWorkspace,
+		bool newIngestWorkflow,
+		bool newCreateProfiles,
+		bool newDeliveryAuthorization,
+		bool newShareWorkspace,
+		bool newEditMedia,
+		bool newEditConfiguration,
+		bool newKillEncoding,
+		bool newCancelIngestionJob,
+		bool newEditEncodersPool,
+		bool newApplicationRecorder);
 
 	Json::Value setWorkspaceAsDefault (
 		int64_t userKey,
@@ -1282,12 +1294,10 @@ public:
     Json::Value updateUser (
 		bool ldapEnabled,
         int64_t userKey,
-        string name, 
-        string email, 
-        string country,
-		bool passwordChanged,                                                                                 
-        string newPassword,                                                                                   
-        string oldPassword);
+        bool nameChanged, string name, 
+        bool emailChanged, string email, 
+        bool countryChanged, string country,
+		bool passwordChanged, string newPassword, string oldPassword);
 
 	void addIngestionJobOutput(
 		int64_t ingestionJobKey,
