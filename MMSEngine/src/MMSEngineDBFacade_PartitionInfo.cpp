@@ -355,15 +355,17 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 				throw runtime_error(errorMessage);
 			}
 
+			int partitionResultSetIndexToBeUsed;
 			{
 				unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 				default_random_engine e(seed);
-				int partitionIndexToBeUsed = e() % resultSet->rowsCount();
-				_logger->info(__FILEREF__ + "Partition to be used"
-					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", partitionIndexToBeUsed: " + to_string(partitionIndexToBeUsed)
-				);
-				for (int resultSetIndex = 0; resultSetIndex < partitionIndexToBeUsed; resultSetIndex++)
+				partitionResultSetIndexToBeUsed = e() % resultSet->rowsCount();
+				// _logger->info(__FILEREF__ + "Partition to be used"
+				// 	+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				// 	+ ", partitionResultSetIndexToBeUsed: " + to_string(partitionResultSetIndexToBeUsed)
+				// );
+				for (int resultSetIndex = 0; resultSetIndex < partitionResultSetIndexToBeUsed;
+					resultSetIndex++)
 					resultSet->next();
 			}
 
@@ -371,6 +373,12 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
             {
 				partitionToBeUsed = resultSet->getInt("partitionKey");
 				currentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+
+				_logger->info(__FILEREF__ + "Partition to be used"
+					+ ", partitionToBeUsed: " + to_string(partitionToBeUsed)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", partitionResultSetIndexToBeUsed: " + to_string(partitionResultSetIndexToBeUsed)
+				);
 			}
 			else
 			{
