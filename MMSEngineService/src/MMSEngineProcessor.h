@@ -11,6 +11,7 @@
 #include "catralibraries/GetCpuUsage.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
+#include "ThreadsStatistic.h"
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
@@ -60,6 +61,7 @@ public:
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<long> processorsThreadsNumber,
+			shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
             ActiveEncodingsManager* pActiveEncodingsManager,
 			mutex* cpuUsageMutex,
 			int* cpuUsage,
@@ -84,7 +86,9 @@ private:
     shared_ptr<MMSStorage>              _mmsStorage;
     shared_ptr<long>                    _processorsThreadsNumber;
     ActiveEncodingsManager*             _pActiveEncodingsManager;
-    
+
+	shared_ptr<ThreadsStatistic>		_mmsThreadsStatistic;
+
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
 	int*						_cpuUsage;

@@ -1780,6 +1780,21 @@ void API::channelConfList(
 			url = curlpp::unescape(firstDecoding);
 		}
 
+		string sourceType;
+		auto sourceTypeIt = queryParameters.find("sourceType");
+		if (sourceTypeIt != queryParameters.end() && sourceTypeIt->second != "")
+		{
+			if (sourceTypeIt->second == "IP_PULL"
+				|| sourceTypeIt->second == "IP_PUSH"
+				|| sourceTypeIt->second == "CaptureLive"
+				|| sourceTypeIt->second == "Satellite"
+			)
+				sourceType = sourceTypeIt->second;
+			else
+				_logger->warn(__FILEREF__ + "channelList: 'sourceType' parameter is unknown"
+					+ ", sourceType: " + sourceTypeIt->second);
+		}
+
 		string type;
 		auto typeIt = queryParameters.find("type");
 		if (typeIt != queryParameters.end() && typeIt->second != "")
@@ -1859,7 +1874,7 @@ void API::channelConfList(
             
             Json::Value channelConfListRoot = _mmsEngineDBFacade->getChannelConfList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, 
-					url, type, name, region, country, labelOrder);
+					url, sourceType, type, name, region, country, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, channelConfListRoot);

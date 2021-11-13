@@ -32,7 +32,15 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
         //     statement->execute(lastSQLCommand);
         // }
-        
+
+		_logger->info(__FILEREF__
+			+ "getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)"
+			+ ", processorMMS: " + processorMMS
+			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
+				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
+			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		);
+
 		// 1. MediaItemKeys expired
         int start = 0;
         bool noMoreRowsReturned = false;
@@ -145,6 +153,14 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
             }
         }
 
+		_logger->info(__FILEREF__
+			+ "getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)"
+			+ ", processorMMS: " + processorMMS
+			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
+				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
+			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		);
+
 		// 1. PhysicalPathKeys expired
         start = 0;
         noMoreRowsReturned = false;
@@ -157,7 +173,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p where "
 				"mi.mediaItemKey = p.mediaItemKey "
-				"and p.retentionInMinutes != null "
+				"and p.retentionInMinutes is not null "
 				// PhysicalPathKey expired
 				"and DATE_ADD(mi.ingestionDate, INTERVAL p.retentionInMinutes MINUTE) < NOW() "
 				// MediaItemKey not expired
@@ -263,6 +279,14 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 }
             }
         }
+
+		_logger->info(__FILEREF__
+			+ "getExpiredMediaItemKeysCheckingDependencies"
+			+ ", processorMMS: " + processorMMS
+			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
+				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
+			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		);
         
         // // conn->_sqlConnection->commit(); OR execute COMMIT
         // {

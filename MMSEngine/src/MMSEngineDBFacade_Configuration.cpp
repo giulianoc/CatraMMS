@@ -1485,6 +1485,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 			int rows = 1;
 			string label;
 			string url;
+			string sourceType;
 			string type;
 			string name;
 			string region;
@@ -1492,7 +1493,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 			string labelOrder;
 			Json::Value channelConfListRoot = getChannelConfList (
 				workspaceKey, confKey,
-				start, rows, label, url, type, name, region, country, labelOrder);
+				start, rows, label, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
@@ -2117,6 +2118,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 			int rows = 1;
 			string label;
 			string url;
+			string sourceType;
 			string type;
 			string name;
 			string region;
@@ -2124,7 +2126,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 			string labelOrder;
 			Json::Value channelConfListRoot = getChannelConfList (
 				workspaceKey, confKey,
-				start, rows, label, url, type, name, region, country, labelOrder);
+				start, rows, label, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
@@ -2341,7 +2343,8 @@ void MMSEngineDBFacade::removeChannelConf(
 Json::Value MMSEngineDBFacade::getChannelConfList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
-	string label, string url, string type, string name, string region, string country,
+	string label, string url, string sourceType, string type,
+	string name, string region, string country,
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
@@ -2361,6 +2364,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
             + ", rows: " + to_string(rows)
             + ", label: " + label
             + ", url: " + url
+            + ", sourceType: " + sourceType
             + ", type: " + type
             + ", name: " + name
             + ", region: " + region
@@ -2409,6 +2413,12 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				requestParametersRoot[field] = url;
 			}
 
+            if (sourceType != "")
+			{
+				field = "sourceType";
+				requestParametersRoot[field] = sourceType;
+			}
+
             if (type != "")
 			{
 				field = "type";
@@ -2450,6 +2460,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
             sqlWhere += ("and LOWER(label) like LOWER(?) ");
         if (url != "")
             sqlWhere += ("and url like ? ");
+        if (sourceType != "")
+            sqlWhere += ("and sourceType = ? ");
         if (type != "")
             sqlWhere += ("and type = ? ");
         if (name != "")
@@ -2474,6 +2486,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (url != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + url + "%");
+            if (sourceType != "")
+                preparedStatement->setString(queryParameterIndex++, sourceType);
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
             if (name != "")
@@ -2489,6 +2503,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", liveURLKey: " + to_string(liveURLKey)
 				+ ", url: " + "%" + url + "%"
+				+ ", sourceType: " + sourceType
 				+ ", type: " + type
 				+ ", name: " + "%" + name + "%"
 				+ ", region: " + "%" + region + "%"
@@ -2545,6 +2560,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
             if (url != "")
                 preparedStatement->setString(queryParameterIndex++,
 					string("%") + url + "%");
+            if (sourceType != "")
+                preparedStatement->setString(queryParameterIndex++, sourceType);
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
             if (name != "")
@@ -2566,6 +2583,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				+ ", liveURLKey: " + to_string(liveURLKey)
 				+ ", label: " + "%" + label + "%"
 				+ ", url: " + "%" + url + "%"
+				+ ", sourceType: " + sourceType
 				+ ", type: " + type
 				+ ", name: " + "%" + name + "%"
 				+ ", region: " + "%" + region + "%"

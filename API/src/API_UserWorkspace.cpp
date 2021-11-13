@@ -740,6 +740,17 @@ void API::shareWorkspace_(
 			userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
 		}
 
+		if (!userAlreadyPresent && !_registerUserEnabled)
+		{
+			string errorMessage = string("registerUser is not enabled"
+			);
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         bool createRemoveWorkspace;
         auto createRemoveWorkspaceIt = queryParameters.find("createRemoveWorkspace");
         if (createRemoveWorkspaceIt == queryParameters.end())
@@ -929,7 +940,7 @@ void API::shareWorkspace_(
         if (userAlreadyPresent)
         {
             vector<string> mandatoryFields = {
-                "EMail"
+				"email"
             };
             for (string field: mandatoryFields)
             {
@@ -945,15 +956,15 @@ void API::shareWorkspace_(
                 }
             }
 
-            email = metadataRoot.get("EMail", "").asString();
+            email = metadataRoot.get("email", "").asString();
         }
         else
         {
             vector<string> mandatoryFields = {
-                "Name",
-                "EMail",
-                "Password",
-                "Country"
+                "name",
+                "email",
+                "password",
+                "country"
             };
             for (string field: mandatoryFields)
             {
@@ -969,10 +980,10 @@ void API::shareWorkspace_(
                 }
             }
 
-            email = metadataRoot.get("EMail", "XXX").asString();
-            password = metadataRoot.get("Password", "XXX").asString();
-            name = metadataRoot.get("Name", "XXX").asString();
-            country = metadataRoot.get("Country", "XXX").asString();
+            email = metadataRoot.get("email", "").asString();
+            password = metadataRoot.get("password", "").asString();
+            name = metadataRoot.get("name", "").asString();
+            country = metadataRoot.get("country", "").asString();
         }
 
         try
@@ -983,7 +994,7 @@ void API::shareWorkspace_(
             
             tuple<int64_t,string> userKeyAndConfirmationCode = 
                 _mmsEngineDBFacade->registerUserAndShareWorkspace(
-						_ldapEnabled,
+					_ldapEnabled,
                     userAlreadyPresent,
                     name, 
                     email, 
@@ -996,22 +1007,31 @@ void API::shareWorkspace_(
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
+			int64_t userKey = get<0>(userKeyAndConfirmationCode);
+			string confirmationCode = get<1>(userKeyAndConfirmationCode);
+
             _logger->info(__FILEREF__ + "Registered User and shared Workspace"
                 + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                 + ", email: " + email
-                + ", userKey: " + to_string(get<0>(userKeyAndConfirmationCode))
-                + ", confirmationCode: " + get<1>(userKeyAndConfirmationCode)
+                + ", userKey: " + to_string(userKey)
+                + ", confirmationCode: " + confirmationCode
             );
-            
-            string responseBody = string("{ ")
-                + "\"userKey\": " + to_string(get<0>(userKeyAndConfirmationCode)) + " "
-                + "}";
+
+			Json::Value registrationRoot;
+			registrationRoot["userKey"] = userKey;
+			registrationRoot["confirmationCode"] = confirmationCode;
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, registrationRoot);
+
             sendSuccess(request, 201, responseBody);
-            
+
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true");
+			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
+				+ to_string(userKey)
+				+ "&confirmationCode=" + confirmationCode);
 
             string to = email;
             string subject = "Confirmation code";
@@ -1019,8 +1039,9 @@ void API::shareWorkspace_(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
-            emailBody.push_back(string("<p>Here follows the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
-                + "</b> and the confirmation code <b>" + get<1>(userKeyAndConfirmationCode) + "</b> to be used to confirm the sharing of the Workspace</p>");
+            emailBody.push_back(string("<p>Here follows the user key <b>")
+				+ to_string(userKey) 
+                + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the sharing of the Workspace</p>");
             emailBody.push_back(
 					string("<p>Please click <a href=\"")
 					+ confirmationURL
@@ -1213,7 +1234,7 @@ void API::confirmRegistration(
                 + ", e.what(): " + e.what()
             );
 
-            string errorMessage = string("Internal server error: ") + e.what();
+            string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 500, errorMessage);

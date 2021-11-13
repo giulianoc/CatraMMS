@@ -42,6 +42,7 @@ SET (SOURCES
 	EncoderVideoAudioProxy.cpp
 	EncodersLoadBalancer.cpp
 	EMailSender.cpp
+	ThreadsStatistic.cpp
 )
 SET (HEADERS
 	Workspace.h
@@ -56,6 +57,7 @@ SET (HEADERS
 	EMailSender.h
 	LocalAssetIngestionEvent.h
 	MultiLocalAssetIngestionEvent.h
+	ThreadsStatistic.h
 )
 
 find_program(LSB_RELEASE_EXEC lsb_release)

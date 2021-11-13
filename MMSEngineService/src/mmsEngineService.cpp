@@ -14,6 +14,7 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
+#include "ThreadsStatisticTimes.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
@@ -208,6 +209,9 @@ int main (int iArgc, char *pArgv [])
 	mutex cpuUsageMutex;
 	int cpuUsage = 0;
 
+	shared_ptr<ThreadsStatistic>	mmsThreadsStatistic =
+		make_shared<ThreadsStatistic>(logger);
+
     vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
     {
         int processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
@@ -223,6 +227,7 @@ int main (int iArgc, char *pArgv [])
 					mmsEngineDBFacade,
 					mmsStorage,
 					processorsThreadsNumber,
+					mmsThreadsStatistic,
 					&activeEncodingsManager,
 					&cpuUsageMutex,
 					&cpuUsage,
@@ -287,6 +292,20 @@ int main (int iArgc, char *pArgv [])
 		make_shared<CheckEncodingTimes>(checkEncodingTimesPeriodInMilliSecs, multiEventsSet, logger);
     checkEncodingTimes->start();
     scheduler.activeTimes(checkEncodingTimes);
+
+    unsigned long threadsStatisticTimesPeriodInMilliSecs =
+		JSONUtils::asInt(configuration["scheduler"],
+		"threadsStatisticTimesPeriodInMilliSecs", 60000);
+    logger->info(__FILEREF__ + "Creating and Starting ThreadsStatisticTimes"
+		+ ", threadsStatisticTimesPeriodInMilliSecs: " +
+			to_string(threadsStatisticTimesPeriodInMilliSecs)
+	);
+    shared_ptr<ThreadsStatisticTimes>     threadsStatisticTimes =
+		make_shared<ThreadsStatisticTimes>(threadsStatisticTimesPeriodInMilliSecs,
+			multiEventsSet, logger);
+    threadsStatisticTimes->start();
+    scheduler.activeTimes(threadsStatisticTimes);
+
 
     string contentRetentionTimesSchedule = configuration["scheduler"].get(
 		"contentRetentionTimesSchedule", "").asString();

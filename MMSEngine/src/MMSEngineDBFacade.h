@@ -2173,7 +2173,8 @@ public:
     Json::Value getChannelConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
-		string label, string type, string name, string region, string country, string url,
+		string label, string sourceType, string type,
+		string name, string region, string country, string url,
 		string labelOrder);
 
 	tuple<int64_t, string, string, string, string, int, string, int,

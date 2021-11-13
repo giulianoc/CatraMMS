@@ -2371,7 +2371,6 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
         );
 
         autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
             lastSQLCommand = 
                 "START TRANSACTION";
@@ -2386,21 +2385,25 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
         bool        isSharedWorkspace;
         {
             lastSQLCommand = 
-                "select userKey, flags, workspaceKey, isSharedWorkspace from MMS_ConfirmationCode "
-				"where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
+                "select userKey, flags, workspaceKey, isSharedWorkspace "
+				"from MMS_ConfirmationCode "
+				"where confirmationCode = ? and "
+				"DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
-            preparedStatement->setInt(queryParameterIndex++, _confirmationCodeRetentionInDays);
+            preparedStatement->setInt(queryParameterIndex++,
+				_confirmationCodeRetentionInDays);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confirmationCode: " + confirmationCode
-				+ ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
+				+ ", _confirmationCodeRetentionInDays: "
+					+ to_string(_confirmationCodeRetentionInDays)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
