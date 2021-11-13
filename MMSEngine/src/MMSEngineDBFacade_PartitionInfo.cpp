@@ -35,7 +35,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
         
         {
 			lastSQLCommand =
-				"select partitionKey from MMS_PartitionInfo "
+				"select currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where partitionKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -52,8 +52,19 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 			);
             if (resultSet->next())
             {
+				int64_t savedCurrentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+				_logger->info(__FILEREF__
+					+ "Difference between estimate and calculate CurrentFreeSizeInBytes"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", savedCurrentFreeSizeInBytes: " + to_string(savedCurrentFreeSizeInBytes)
+					+ ", calculated currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes)
+					+ ", difference (saved - calculated): "
+						+ to_string(savedCurrentFreeSizeInBytes - currentFreeSizeInBytes)
+				);
+
 				lastSQLCommand =
-					"update MMS_PartitionInfo set currentFreeSizeInBytes = ?, lastUpdateFreeSize = NOW() "
+					"update MMS_PartitionInfo set currentFreeSizeInBytes = ?, "
+					"lastUpdateFreeSize = NOW() "
 					"where partitionKey = ?";
 
 				shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -313,12 +324,13 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
-        
+
         {
 			lastSQLCommand = 
 				"select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where (currentFreeSizeInBytes / 1000) - (freeSpaceToLeaveInMB * 1000) > ? / 1000 "
-				"order by partitionKey asc limit 1 for update";
+				"for update";
+				// "order by partitionKey asc limit 1 for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -332,6 +344,17 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+
+			{
+				unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+				default_random_engine e(seed);
+				int partitionIndexToBeUsed = e() % resultSet->rowsCount();
+				_logger->info(__FILEREF__ + "Partition to be used"
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", partitionIndexToBeUsed: " + to_string(partitionIndexToBeUsed)
+				);
+			}
+
             if (resultSet->next())
             {
 				partitionToBeUsed = resultSet->getInt("partitionKey");
@@ -352,7 +375,8 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 
 		{
 			lastSQLCommand =
-				"update MMS_PartitionInfo set currentFreeSizeInBytes = ? "
+				"update MMS_PartitionInfo set currentFreeSizeInBytes = ?, "
+				"lastUpdateFreeSize = NOW() "
 				"where partitionKey = ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
