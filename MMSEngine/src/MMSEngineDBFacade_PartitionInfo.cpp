@@ -345,6 +345,16 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
+			if (resultSet->rowsCount() == 0)
+			{
+				string errorMessage = string("No more space in MMS Partitions")
+					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
 			{
 				unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 				default_random_engine e(seed);
@@ -353,6 +363,8 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", partitionIndexToBeUsed: " + to_string(partitionIndexToBeUsed)
 				);
+				for (int resultSetIndex = 0; resultSetIndex < partitionIndexToBeUsed; resultSetIndex++)
+					resultSet->next();
 			}
 
             if (resultSet->next())
