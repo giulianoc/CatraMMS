@@ -1429,7 +1429,7 @@ void API::modifyChannelConf(
 			field = "sourceSATConfKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
+				satSourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				satSourceSATConfKeyToBeModified = true;
 			}
 
@@ -1477,7 +1477,7 @@ void API::modifyChannelConf(
 			field = "imageMediaItemKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				imageMediaItemKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 				imageToBeModified = true;
 			}
 
