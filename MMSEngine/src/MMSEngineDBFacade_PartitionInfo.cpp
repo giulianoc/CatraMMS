@@ -35,7 +35,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
         
         {
 			lastSQLCommand =
-				"select currentFreeSizeInBytes from MMS_PartitionInfo "
+				"select partitionPathName, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where partitionKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -52,10 +52,13 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 			);
             if (resultSet->next())
             {
+				string partitionPathName = resultSet->getString("partitionPathName");
 				int64_t savedCurrentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+
 				_logger->info(__FILEREF__
 					+ "Difference between estimate and calculate CurrentFreeSizeInBytes"
-					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", partitionKey: " + to_string(partitionKey)
+					+ ", partitionPathName: " + partitionPathName
 					+ ", savedCurrentFreeSizeInBytes: " + to_string(savedCurrentFreeSizeInBytes)
 					+ ", calculated currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes)
 					+ ", difference (saved - calculated): "
