@@ -67,36 +67,39 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         // ingested jobs that do not have to wait a dependency
         {
 			// first Live-Proxy/VOD-Proxy (because if we have many many Live-Recorder,
-			// Live-Proxy will never start
+			// Live-Proxy will never start)
+			// We will add also the YouTube-Live-Broadcast because this task has also a Schedule
 			{
 				int minutesAheadToConsiderLiveProxy = 5;
 
 				lastSQLCommand = 
-					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
-						"ij.ingestionType, "
-						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
-						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy') "
-						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
-						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
-						//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
-						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
-						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
-						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
-						//	non considera la condizione di job "troppo vecchio"
-						"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-						"and ("
-							"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
-							"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
-							"or (JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = true and "
-								"UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
-						") "
-						// "for update "
-						;
-						// "limit ? offset ?"
-						// "limit ? offset ? for update"
+					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, "
+					"ij.status, ij.ingestionType, "
+					"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+					"where ir.ingestionRootKey = ij.ingestionRootKey and "
+					"ij.processorMMS is null "
+					"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy', 'YouTube-Live-Broadcast') "
+					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
+					"and ij.sourceBinaryTransferred = 1)) "
+					// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
+					//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
+					//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
+					//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
+					//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
+					//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
+					//	non considera la condizione di job "troppo vecchio"
+					"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+					"and ("
+						"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
+						"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
+						"or (JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = true and "
+							"UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
+					") "
+					// "for update "
+					;
+					// "limit ? offset ?"
+					// "limit ? offset ? for update"
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndexIngestionJob = 1;
@@ -321,11 +324,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					);
 
 					lastSQLCommand = 
-						"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, "
-							"ij.status, ij.ingestionType, "
-							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
-							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null ";
+						"select ij.ingestionJobKey, ij.label, ir.workspaceKey, "
+						"ij.metaDataContent, ij.status, ij.ingestionType, "
+						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+						"where ir.ingestionRootKey = ij.ingestionRootKey "
+						"and ij.processorMMS is null ";
 					if (onlyTasksNotInvolvingMMSEngineThreads)
 					{
 						string tasksNotInvolvingMMSEngineThreadsList =
@@ -353,14 +357,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
 					else
 					{
-						// everythink but Live-Recorder, Live-Proxy, VOD-Proxy
+						// everything but Live-Recorder, Live-Proxy, VOD-Proxy
 						// already asked before
 						lastSQLCommand +=
-							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy' and ij.ingestionType != 'VOD-Proxy') ";
+							"and ij.ingestionType not in ('Live-Recorder', 'Live-Proxy', 'VOD-Proxy', 'YouTube-Live-Broadcast') ";
 					}
 					lastSQLCommand +=
-						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
+						"and ij.sourceBinaryTransferred = 1)) "
+						"and ij.processingStartingFrom <= NOW() "
+						"and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 						"order by ij.priority asc, ij.processingStartingFrom asc "
 						"limit ? offset ?"
 						// "limit ? offset ? for update"
@@ -371,13 +377,15 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+					   	MMSEngineDBFacade::toString(IngestionStatus::
+							SourceDownloadingInProgress));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+					   	MMSEngineDBFacade::toString(IngestionStatus::
+							SourceUploadingInProgress));
 					preparedStatement->setInt(queryParameterIndexIngestionJob++,
 						_doNotManageIngestionsOlderThanDays);
 
@@ -391,13 +399,17 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", IngestionStatus::Start_TaskQueued: "
 							+ MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 						+ ", IngestionStatus::SourceDownloadingInProgress: "
-							+ MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+							+ MMSEngineDBFacade::toString(IngestionStatus::
+								SourceDownloadingInProgress)
 						+ ", IngestionStatus::SourceMovingInProgress: "
-							+ MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+							+ MMSEngineDBFacade::toString(IngestionStatus::
+								SourceMovingInProgress)
 						+ ", IngestionStatus::SourceCopingInProgress: "
-							+ MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+							+ MMSEngineDBFacade::toString(IngestionStatus::
+								SourceCopingInProgress)
 						+ ", IngestionStatus::SourceUploadingInProgress: "
-							+ MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+							+ MMSEngineDBFacade::toString(IngestionStatus::
+								SourceUploadingInProgress)
 						+ ", _doNotManageIngestionsOlderThanDays: "
 							+ to_string(_doNotManageIngestionsOlderThanDays)
 						+ ", mysqlRowCount: " + to_string(mysqlRowCount)
@@ -405,7 +417,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", onlyTasksNotInvolvingMMSEngineThreads: "
 							+ to_string(onlyTasksNotInvolvingMMSEngineThreads)
 						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (secs): @" + to_string(
+							chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
 
@@ -421,15 +434,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						string ingestionJobLabel	= resultSet->getString("label");
 						int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
 						string metaDataContent      = resultSet->getString("metaDataContent");
-						IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
-							resultSet->getString("status"));
+						IngestionStatus ingestionStatus     = MMSEngineDBFacade::
+							toIngestionStatus(resultSet->getString("status"));
 						IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 							resultSet->getString("ingestionType"));
 						string ingestionDate      = resultSet->getString("ingestionDate");
 
 						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-							ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
+							ingestionJobKey, workspaceKey, ingestionStatus,
+							ingestionType, conn);
 
 						bool ingestionJobToBeManaged;
 						int64_t dependOnIngestionJobKey;
@@ -448,10 +462,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
 							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-							tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
-								IngestionStatus> ingestionToBeManaged = make_tuple(ingestionJobKey,
-									ingestionJobLabel, workspace, ingestionDate, metaDataContent,
-									ingestionType, ingestionStatus);
+							tuple<int64_t, string, shared_ptr<Workspace>, string, string,
+								IngestionType, IngestionStatus> ingestionToBeManaged =
+									make_tuple(ingestionJobKey, ingestionJobLabel, workspace,
+									ingestionDate, metaDataContent, ingestionType,
+									ingestionStatus);
 
 							ingestionsToBeManaged.push_back(ingestionToBeManaged);
 							othersToBeIngested++;
@@ -464,9 +479,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							_logger->info(__FILEREF__ + "Ingestion job cannot be processed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", ingestionStatus: " + toString(ingestionStatus)
-								+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+								+ ", dependOnIngestionJobKey: "
+									+ to_string(dependOnIngestionJobKey)
 								+ ", dependOnSuccess: " + to_string(dependOnSuccess)
-								+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+								+ ", ingestionStatusDependency: "
+									+ toString(ingestionStatusDependency)
 							);
 						}
 					}
@@ -479,8 +496,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				+ ", mysqlOffset: " + to_string(mysqlOffset)
 				+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
 				+ ", moreRows: " + to_string(moreRows)
-				+ ", onlyTasksNotInvolvingMMSEngineThreads: " + to_string(onlyTasksNotInvolvingMMSEngineThreads)
-				+ ", select not live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterNotLive - pointAfterLive).count())
+				+ ", onlyTasksNotInvolvingMMSEngineThreads: "
+					+ to_string(onlyTasksNotInvolvingMMSEngineThreads)
+				+ ", select not live elapsed (secs): " + to_string(
+					chrono::duration_cast<chrono::seconds>(
+					pointAfterNotLive - pointAfterLive).count())
 			);
         }
 
@@ -488,14 +508,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			IngestionStatus>& ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
-			/*
-            string ingestionJobLabel;
-            shared_ptr<Workspace> workspace;
-            string ingestionDate;
-            string metaDataContent;
-            string sourceReference;
-            MMSEngineDBFacade::IngestionType ingestionType;
-			*/
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
             tie(ingestionJobKey, ignore, ignore, ignore, ignore, ignore,
@@ -506,22 +518,27 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     || ingestionStatus == IngestionStatus::SourceUploadingInProgress)
             {
                 // let's consider IngestionStatus::SourceUploadingInProgress
-                // In this scenarios, the content was already uploaded by the client (sourceBinaryTransferred = 1),
-                // if we set startProcessing = NOW() we would not have any difference with endProcessing
-                // So, in this scenarios (SourceUploadingInProgress), startProcessing-endProcessing is the time
+                // In this scenarios, the content was already uploaded by the client
+				// (sourceBinaryTransferred = 1),
+                // if we set startProcessing = NOW() we would not have any difference
+				// with endProcessing
+                // So, in this scenarios (SourceUploadingInProgress),
+				// startProcessing-endProcessing is the time
                 // between the client ingested the Workflow and the content completely uploaded.
-                // In this case, if the client has to upload 10 contents sequentially, the last one is the sum
-                // of all the other contents
+                // In this case, if the client has to upload 10 contents sequentially,
+				// the last one is the sum of all the other contents
 
                 lastSQLCommand = 
-                    "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";                
+                    "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";
             }
             else
             {
                 lastSQLCommand = 
-                    "update MMS_IngestionJob set startProcessing = NOW(), processorMMS = ? where ingestionJobKey = ?";                
+					"update MMS_IngestionJob set startProcessing = NOW(), "
+					"processorMMS = ? where ingestionJobKey = ?";
             }
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -849,7 +866,8 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", resultSetDependency->rowsCount: " + to_string(resultSetDependency->rowsCount())
+			+ ", resultSetDependency->rowsCount: "
+				+ to_string(resultSetDependency->rowsCount())
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);

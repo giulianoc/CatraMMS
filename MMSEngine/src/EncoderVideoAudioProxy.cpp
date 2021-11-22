@@ -2925,6 +2925,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 					;
 					_logger->error(errorMessage);
@@ -4337,6 +4339,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 					;
 					_logger->error(errorMessage);
@@ -5371,6 +5375,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 					;
 					_logger->error(errorMessage);
@@ -6382,6 +6388,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 					;
 					_logger->error(errorMessage);
@@ -7201,6 +7209,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 					_logger->error(errorMessage);
@@ -7916,6 +7926,8 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 					_logger->error(errorMessage);
@@ -8629,6 +8641,8 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 					_logger->error(errorMessage);
@@ -9420,6 +9434,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 					_logger->error(errorMessage);
@@ -10086,6 +10102,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _currentUsedFFMpegEncoderHost: "
+							+ _currentUsedFFMpegEncoderHost
 						+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 					_logger->error(errorMessage);
@@ -12534,9 +12552,13 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					if (completedWithError)
 					{
-						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						string errorMessage = __FILEREF__
+							+ "Encoding failed (look the Transcoder logs)"             
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _currentUsedFFMpegEncoderHost: "
+								+ _currentUsedFFMpegEncoderHost
 							+ ", encodingErrorMessage: " + encodingErrorMessage
 							;
 						_logger->error(errorMessage);
@@ -12739,7 +12761,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					// already incremented in above in if (completedWithError)
                     // encodingStatusFailures++;
 
-					_logger->error(__FILEREF__ + "getEncodingStatus failed"
+					_logger->error(__FILEREF__ + "getEcodingStatus failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", liveURL: " + liveURL
@@ -13862,6 +13884,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									+ to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: "
 									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", _currentUsedFFMpegEncoderHost: "
+									+ _currentUsedFFMpegEncoderHost
 								+ ", encodingErrorMessage: " + encodingErrorMessage
 								;
 							_logger->error(errorMessage);
@@ -13876,6 +13900,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								+ to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: "
 								+ to_string(_encodingItem->_encodingJobKey)
+							+ ", _currentUsedFFMpegEncoderHost: "
+								+ _currentUsedFFMpegEncoderHost
 							+ ", configurationLabel: " + configurationLabel
 							+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
@@ -15177,10 +15203,14 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 					if (completedWithError) // || chunksWereNotGenerated)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed"             
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _currentUsedFFMpegEncoderHost: "
+								+ _currentUsedFFMpegEncoderHost
 							+ ", encodingErrorMessage: " + encodingErrorMessage
-							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
+							// + ", chunksWereNotGenerated: "
+							//	+ to_string(chunksWereNotGenerated)
 						;
 						_logger->error(errorMessage);
 
@@ -16083,8 +16113,12 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 						{
 							string errorMessage =
 								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", _currentUsedFFMpegEncoderHost: "
+									+ _currentUsedFFMpegEncoderHost
 								+ ", encodingErrorMessage: " + encodingErrorMessage
 								;
 							_logger->error(errorMessage);
@@ -16095,8 +16129,11 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 						currentAttemptsNumberInCaseOfErrors++;
 
 						string errorMessage = __FILEREF__ + "Encoding failed"             
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _ingestionJobKey: "
+								+ to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _currentUsedFFMpegEncoderHost: "
+								+ _currentUsedFFMpegEncoderHost
 							+ ", encodingErrorMessage: " + encodingErrorMessage
 							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
 						;
@@ -17783,8 +17820,12 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						{
 							string errorMessage =
 								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", _currentUsedFFMpegEncoderHost: "
+									+ _currentUsedFFMpegEncoderHost
 								+ ", encodingErrorMessage: " + encodingErrorMessage
 								;
 							_logger->error(errorMessage);
@@ -18604,7 +18645,8 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 }
 */
 
-tuple<bool, bool, bool, string, bool, bool, int, int> EncoderVideoAudioProxy::getEncodingStatus()
+tuple<bool, bool, bool, string, bool, bool, int, int>
+	EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;

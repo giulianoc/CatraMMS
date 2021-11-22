@@ -13,7 +13,7 @@
 	#1
 	location /catramms {
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/status/?$ /api?version=$1&method=status last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
 		}
 		if ($request_method = POST) {
 			#this request will receive the URL parameters
@@ -23,10 +23,10 @@
 	}
 
 	#2
-	location ~ /catramms/(v[0-9]+)/binary {
+	location ~ /catramms/([0-9]+.[0-9]+.[0-9]+)/binary {
 		if ($request_method = POST) {
 			set $XProgressID "$msec";
-			rewrite ^/catramms/(v[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
 		}
 	}
 

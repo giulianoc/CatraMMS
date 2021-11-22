@@ -131,8 +131,7 @@ class MMSEngineDBFacade {
 public:
     enum class LockType {
 		Ingestion						= 0,
-		Encoding						= 1,
-		MainAndBackupLiveRecordingHA	= 2
+		Encoding						= 1
     };
     static const char* toString(const LockType& lockType)
     {
@@ -142,8 +141,6 @@ public:
                 return "Ingestion";
             case LockType::Encoding:
                 return "Encoding";
-            case LockType::MainAndBackupLiveRecordingHA:
-                return "MainAndBackupLiveRecordingHA";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -158,8 +155,6 @@ public:
             return LockType::Ingestion;
 		else if (lowerCase == "encoding")
             return LockType::Encoding;
-		else if (lowerCase == "mainandbackupliverecordingha")
-            return LockType::MainAndBackupLiveRecordingHA;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -750,6 +745,7 @@ public:
         AwaitingTheBeginning	= 29,
         IntroOutroOverlay		= 30,
         VODProxy				= 31,
+        YouTubeLiveBroadcast	= 32,
 
         EmailNotification       = 60,
         MediaCrossReference		= 61,
@@ -828,6 +824,8 @@ public:
 				return "Intro-Outro-Overlay";
 			case IngestionType::VODProxy:
 				return "VOD-Proxy";
+			case IngestionType::YouTubeLiveBroadcast:
+				return "YouTube-Live-Broadcast";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -919,6 +917,8 @@ public:
             return IngestionType::IntroOutroOverlay;
         else if (lowerCase == "vod-proxy")
             return IngestionType::VODProxy;
+        else if (lowerCase == "youtube-live-broadcast")
+            return IngestionType::YouTubeLiveBroadcast;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

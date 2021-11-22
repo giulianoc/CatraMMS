@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 // #define SPDLOG_DEBUG_ON
 // #define SPDLOG_TRACE_ON
 #include "spdlog/spdlog.h"
@@ -64,7 +65,7 @@ public:
 			shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
             ActiveEncodingsManager* pActiveEncodingsManager,
 			mutex* cpuUsageMutex,
-			int* cpuUsage,
+			deque<int>* cpuUsage,
             Json::Value configuration);
     
     ~MMSEngineProcessor();
@@ -91,7 +92,7 @@ private:
 
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
-	int*						_cpuUsage;
+	deque<int>*					_cpuUsage;
 	bool						_cpuUsageThreadShutdown;
 
     string                  _processorMMS;
@@ -131,6 +132,9 @@ private:
     int                     _youTubeDataAPIPort;
     string                  _youTubeDataAPIRefreshTokenURI;
     string                  _youTubeDataAPIUploadVideoURI;
+	string					_youTubeDataAPILiveBroadcastURI;
+	string					_youTubeDataAPILiveStreamURI;
+	string					_youTubeDataAPILiveBroadcastBindURI;
     long                    _youTubeDataAPITimeoutInSeconds;
     string                  _youTubeDataAPIClientId;
     string                  _youTubeDataAPIClientSecret;
@@ -293,6 +297,13 @@ private:
 		string ingestionJobLabel,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
+
+	void youTubeLiveBroadcastThread(
+		shared_ptr<long> processorsThreadsNumber,
+		int64_t ingestionJobKey,
+		string ingestionJobLabel,
+		shared_ptr<Workspace> workspace,
+		Json::Value parametersRoot);
 
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,

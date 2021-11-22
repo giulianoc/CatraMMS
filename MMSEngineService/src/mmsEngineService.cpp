@@ -207,7 +207,13 @@ int main (int iArgc, char *pArgv [])
 		mmsEngineDBFacade, mmsStorage, logger);
 
 	mutex cpuUsageMutex;
-	int cpuUsage = 0;
+	deque<int> cpuUsage;
+	int numberOfLastCPUUsageToBeChecked = 3;
+	for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked;
+		cpuUsageIndex++)
+	{
+		cpuUsage.push_front(0);
+	}
 
 	shared_ptr<ThreadsStatistic>	mmsThreadsStatistic =
 		make_shared<ThreadsStatistic>(logger);

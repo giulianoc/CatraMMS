@@ -16,6 +16,7 @@
 
 #include "APICommon.h"
 #include "FFMpeg.h"
+#include <deque>
 
 #define __VECTOR__
 // #define __MAP__
@@ -114,7 +115,7 @@ public:
 		mutex* fcgiAcceptMutex,
 
 		mutex* cpuUsageMutex,
-		int *cpuUsage,
+		deque<int> *cpuUsage,
 
 		// mutex* lastEncodingAcceptedTimeMutex,
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
@@ -191,7 +192,7 @@ private:
 
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
-	int*						_cpuUsage;
+	deque<int>*						_cpuUsage;
 	bool						_cpuUsageThreadShutdown;
 
 	// 2021-09-24: chrono is already thread safe.

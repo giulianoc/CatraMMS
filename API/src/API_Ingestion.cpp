@@ -1297,16 +1297,19 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		string internalMMSField = "InternalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
 	}
-    else if (type == "Live-Cut")
+    else if (type == "Live-Cut" || type == "YouTube-Live-Broadcast")
     {
-		// 1. Live-Cut needs the UserKey/ApiKey for the ingestion of the cut workflow.
-		// The same UserKey/ApiKey used for the ingestion of the Workflow are used to ingest the cut
+		// 1. Live-Cut and YouTube-Live-Broadcast need the UserKey/ApiKey for the ingestion
+		// of the workflow they generate.
+		// The same UserKey/ApiKey used for the ingestion of the Workflow are used to ingest the new workflow
+		// they generate
 		//
 		// 2. Live-Cut generates a workflow made of Concat plus Cut.
+		// YouTube-Live-Broadcast generates a workflow made of Live-Proxy or VOD-Proxy
 		// For this reason, the events (onSuccess, onError, onComplete) have to be attached
-		// to the previous workflow 
-		// Here, we will remove the events (onSuccess, onError, onComplete) from LiveCut, if present,
-		// and we will add temporary inside the Parameters section. These events will be managed later
+		// to the new workflow 
+		// Here, we will remove the events (onSuccess, onError, onComplete) from LiveCut/YouTubeLiveBroadcast,
+		// if present, and we will add temporary inside the Parameters section. These events will be managed later
 		// in MMSEngineProcessor.cpp when the new workflow will be created
 
         Json::Value internalMMSRoot;

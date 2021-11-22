@@ -4,6 +4,7 @@
 #include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <iomanip>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -31,17 +32,17 @@
 #define MD5BUFFERSIZE 16384
 
 MMSEngineProcessor::MMSEngineProcessor(
-        int processorIdentifier,
-        shared_ptr<spdlog::logger> logger, 
-        shared_ptr<MultiEventsSet> multiEventsSet,
-        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-        shared_ptr<MMSStorage> mmsStorage,
-        shared_ptr<long> processorsThreadsNumber,
-		shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
-        ActiveEncodingsManager* pActiveEncodingsManager,
-		mutex* cpuUsageMutex,
-		int* cpuUsage,
-		Json::Value configuration
+	int processorIdentifier,
+	shared_ptr<spdlog::logger> logger, 
+	shared_ptr<MultiEventsSet> multiEventsSet,
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	shared_ptr<MMSStorage> mmsStorage,
+	shared_ptr<long> processorsThreadsNumber,
+	shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
+	ActiveEncodingsManager* pActiveEncodingsManager,
+	mutex* cpuUsageMutex,
+	deque<int>* cpuUsage,
+	Json::Value configuration
 )
 {
     _processorIdentifier         = processorIdentifier;
@@ -169,6 +170,21 @@ MMSEngineProcessor::MMSEngineProcessor(
     _youTubeDataAPIUploadVideoURI       = _configuration["YouTubeDataAPI"].get("uploadVideoURI", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI
+    );
+    _youTubeDataAPILiveBroadcastURI		= _configuration["YouTubeDataAPI"].get("liveBroadcastURI", "")
+		.asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI
+    );
+    _youTubeDataAPILiveStreamURI		= _configuration["YouTubeDataAPI"].get("liveStreamURI", "")
+		.asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI
+    );
+    _youTubeDataAPILiveBroadcastBindURI		= _configuration["YouTubeDataAPI"].
+		get("liveBroadcastBindURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI
     );
     _youTubeDataAPITimeoutInSeconds   = JSONUtils::asInt(_configuration["YouTubeDataAPI"], "timeout", 0);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -742,17 +758,28 @@ int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
 {
 	lock_guard<mutex> locker(*_cpuUsageMutex);
 
-	int maxAdditionalProcessorThreads;
-	if (*_cpuUsage > _cpuUsageThreshold)
-		maxAdditionalProcessorThreads = 0;
-	else
-		maxAdditionalProcessorThreads = 20;
+	// int maxAdditionalProcessorThreads = VECTOR_MAX_CAPACITY;	// it could be done
+	int maxAdditionalProcessorThreads = 20;	// it could be done
 
+	for(int cpuUsage: *_cpuUsage)
+	{
+		if (cpuUsage > _cpuUsageThreshold)
+		{
+			maxAdditionalProcessorThreads = 0;			// no to be done
+
+			break;
+		}
+	}
+
+	string lastCPUUsage;
+	for(int cpuUsage: *_cpuUsage)
+		lastCPUUsage += (to_string(cpuUsage) + " ");
     _logger->info(__FILEREF__ + "getMaxAdditionalProcessorThreads"
         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        + ", *_cpuUsage: " + to_string(*_cpuUsage)
+		+ ", lastCPUUsage: " + lastCPUUsage
         + ", maxAdditionalProcessorThreads: " + to_string(maxAdditionalProcessorThreads)
     );
+
 
 	return maxAdditionalProcessorThreads;
 }
@@ -770,12 +797,20 @@ void MMSEngineProcessor::cpuUsageThread()
 		{
 			lock_guard<mutex> locker(*_cpuUsageMutex);
 
-			*_cpuUsage = _getCpuUsage.getCpuUsage();
+			_cpuUsage->pop_back();
+			_cpuUsage->push_front(_getCpuUsage.getCpuUsage());
+			// *_cpuUsage = _getCpuUsage.getCpuUsage();
 
 			if (++counter % 100 == 0)
+			{
+				string lastCPUUsage;
+				for(int cpuUsage: *_cpuUsage)
+					lastCPUUsage += (to_string(cpuUsage) + " ");
+
 				_logger->info(__FILEREF__ + "cpuUsageThread"
-					+ ", _cpuUsage: " + to_string(*_cpuUsage)
+					+ ", lastCPUUsage: " + lastCPUUsage
 				);
+			}
 		}
 		catch(runtime_error e)
 		{
@@ -811,7 +846,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     {
 		if (isMaintenanceMode())
 		{
-			_logger->info(__FILEREF__ + "Received handleCheckIngestionEvent, not managed it because of MaintenanceMode"
+			_logger->info(__FILEREF__
+				+ "Received handleCheckIngestionEvent, not managed it because of MaintenanceMode"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -825,18 +861,23 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         try
         {
 			// getIngestionsToBeManaged
-			//	- in case we reached the max number of threads in MMS Engine, we still have to call getIngestionsToBeManaged
-			//		but it has to return ONLY tasks that do not involve creation of threads (a lot of important tasks
+			//	- in case we reached the max number of threads in MMS Engine,
+			//		we still have to call getIngestionsToBeManaged
+			//		but it has to return ONLY tasks that do not involve creation of threads
+			//		(a lot of important tasks
 			//		do not involve threads in MMS Engine)
-			//	That is to avoid to block every thing in case we reached the max number of threads in MMS Engine
+			//	That is to avoid to block every thing in case we reached the max number of threads
+			//	in MMS Engine
 			bool onlyTasksNotInvolvingMMSEngineThreads = false;
 
 			int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
 			if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
 			{
-				_logger->warn(__FILEREF__ + "Not enough available threads to manage Tasks involving more threads"
+				_logger->warn(__FILEREF__
+					+ "Not enough available threads to manage Tasks involving more threads"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+					+ ", _processorsThreadsNumber.use_count(): "
+						+ to_string(_processorsThreadsNumber.use_count())
 					+ ", _processorThreads + maxAdditionalProcessorThreads: "
 						+ to_string(_processorThreads + maxAdditionalProcessorThreads)
 				);
@@ -1016,8 +1057,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     string sourceFileName = to_string(ingestionJobKey) + "_source";
 
                     {
-                        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                                ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+                        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent
+							= _multiEventsSet->getEventsFactory()
+								->getFreeEvent<LocalAssetIngestionEvent>(
+										MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
                         localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
                         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
@@ -1033,7 +1076,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         localAssetIngestionEvent->setMetadataContent(metaDataContent);
 
-                        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+                        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(
+							localAssetIngestionEvent);
                         _multiEventsSet->addEvent(event);
 
                         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
@@ -1700,7 +1744,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked by
+							// _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/*
@@ -1846,7 +1891,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/*
@@ -1992,7 +2038,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 if (!_localCopyTaskEnabled)
@@ -2150,7 +2197,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/*
@@ -2706,7 +2754,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							|| ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames
 							)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
@@ -2874,7 +2923,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 manageSlideShowTask(
@@ -3501,7 +3551,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 manageOverlayImageOnVideoTask(
@@ -3603,7 +3654,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayTextOnVideo)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 manageOverlayTextOnVideoTask(
@@ -3705,7 +3757,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
@@ -3988,7 +4041,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
                                 manageMediaCrossReferenceTask(
@@ -4090,7 +4144,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnFacebook)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
@@ -4237,7 +4292,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         else if (ingestionType ==
 							MMSEngineDBFacade::IngestionType::PostOnYouTube)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
@@ -4385,7 +4441,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								manageFaceRecognitionMediaTask(
@@ -4488,7 +4545,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
 								manageFaceIdentificationMediaTask(
@@ -5209,6 +5267,151 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch(exception e)
 							{
 								_logger->error(__FILEREF__ + "liveCutThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+						}
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
+                        {
+							try
+							{
+								/* 2021-02-19: check on threads is already done
+								 * in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming
+								 *		the thread limit
+								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+								if (_processorsThreadsNumber.use_count() >
+									_processorThreads + maxAdditionalProcessorThreads)
+								{
+									_logger->warn(__FILEREF__
+										+ "Not enough available threads to manage liveCutThread, activity is postponed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", _processorsThreadsNumber.use_count(): "
+											+ to_string(_processorsThreadsNumber.use_count())
+										+ ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
+									);
+
+									string errorMessage = "";
+									string processorMMS = "";
+
+									_logger->info(__FILEREF__ + "Update IngestionJob"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: "
+											+ MMSEngineDBFacade::toString(ingestionStatus)
+										+ ", errorMessage: " + errorMessage
+										+ ", processorMMS: " + processorMMS
+									);                            
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										ingestionStatus, 
+										errorMessage,
+										processorMMS
+									);
+								}
+								else
+								{
+									thread youTubeLiveBroadcastThread(
+										&MMSEngineProcessor::youTubeLiveBroadcastThread, this, 
+										_processorsThreadsNumber,
+										ingestionJobKey, ingestionJobLabel,
+										workspace,
+										parametersRoot
+									);
+									youTubeLiveBroadcastThread.detach();
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", exception: " + e.what()
@@ -16363,6 +16566,1591 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "liveCutThread failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+}
+
+void MMSEngineProcessor::youTubeLiveBroadcastThread(
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	string ingestionJobLabel,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot
+)
+{
+    try
+    {
+		_logger->info(__FILEREF__ + "youTubeLiveBroadcastThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
+		string youTubeConfigurationLabel;
+		string youTubeLiveBroadcastTitle;
+		string youTubeLiveBroadcastDescription;
+		string scheduleStartTimeInSeconds;
+		string scheduleEndTimeInSeconds;
+		string sourceType;
+		// channelConfigurationLabel or referencesRoot has to be present
+		string channelConfigurationLabel;
+		Json::Value referencesRoot;
+        {
+            string field = "YouTubeConfigurationLabel";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            youTubeConfigurationLabel = parametersRoot.get(field, "").asString();
+
+            field = "Title";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            youTubeLiveBroadcastTitle = parametersRoot.get(field, "").asString();
+
+            field = "Description";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				youTubeLiveBroadcastDescription = parametersRoot.get(field, "").asString();
+
+            field = "ProxyPeriod";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			Json::Value scheduleRoot = parametersRoot[field];
+
+            field = "Start";
+            if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            scheduleStartTimeInSeconds = scheduleRoot.get(field, "").asString();
+
+            field = "End";
+            if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            scheduleEndTimeInSeconds = scheduleRoot.get(field, "").asString();
+
+            field = "SourceType";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            sourceType = parametersRoot.get(field, "").asString();
+
+			if (sourceType == "Live")
+			{
+				field = "ConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				channelConfigurationLabel = parametersRoot.get(field, "").asString();
+			}
+			else // if (sourceType == "MediaItem")
+			{
+				field = "References";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				referencesRoot = parametersRoot[field];
+			}
+        }
+
+		// 1. get refresh_token from the configuration
+		// 2. call google API
+		// 3. the response will have the access token to be used
+        string youTubeAccessToken = getYouTubeAccessTokenByConfigurationLabel(
+            workspace, youTubeConfigurationLabel);
+
+		string youTubeURL;
+		string sResponse;
+		string broadcastId;
+
+		// first call, create the Live Broadcast
+		try
+		{
+			/*
+			* curl -v --request POST \
+				'https://youtube.googleapis.com/youtube/v3/liveBroadcasts?part=snippet%2CcontentDetails%2Cstatus' \
+				--header 'Authorization: Bearer ya29.a0ARrdaM9t2WqGKTgB9rZtoZU4oUCnW96Pe8qmgdk6ryYxEEe21T9WXWr8Eai1HX3AzG9zdOAEzRm8T6MhBmuQEDj4C5iDmfhRVjmUakhCKbZ7mWmqLOP9M6t5gha1QsH5ocNKqAZkhbCnWK0euQxGoK79MBjA' \
+				--header 'Accept: application/json' \
+				--header 'Content-Type: application/json' \
+				--data '{"snippet":{"title":"Test CiborTV","scheduledStartTime":"2021-11-19T20:00:00.000Z","scheduledEndTime":"2021-11-19T22:00:00.000Z"},"contentDetails":{"enableClosedCaptions":true,"enableContentEncryption":true,"enableDvr":true,"enableEmbed":true,"recordFromStart":true,"startWithSlate":true},"status":{"privacyStatus":"unlisted"}}' \
+				--compressed
+			*/
+			youTubeURL = _youTubeDataAPIProtocol
+				+ "://"
+				+ _youTubeDataAPIHostName
+				+ ":" + to_string(_youTubeDataAPIPort)
+				+ _youTubeDataAPILiveBroadcastURI;
+
+			string body;
+			{
+				Json::Value bodyRoot;
+
+				{
+					Json::Value snippetRoot;
+
+					string field = "title";
+					snippetRoot[field] = youTubeLiveBroadcastTitle;
+
+					if (youTubeLiveBroadcastDescription != "")
+					{
+						field = "description";
+						snippetRoot[field] = youTubeLiveBroadcastDescription;
+					}
+
+					// scheduledStartTime
+					{
+						int64_t utcScheduleStartTimeInSeconds
+							= DateTime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
+
+						// format: YYYY-MM-DDTHH:MI:SS.000Z
+						string scheduleStartTimeInMilliSeconds = scheduleStartTimeInSeconds;
+						scheduleStartTimeInMilliSeconds.insert(scheduleStartTimeInSeconds.length() - 1,
+							".000", 4);
+
+						field = "scheduledStartTime";
+						snippetRoot[field] = scheduleStartTimeInMilliSeconds;
+					}
+
+					// scheduledEndTime
+					{
+						int64_t utcScheduleEndTimeInSeconds
+							= DateTime::sDateSecondsToUtc(scheduleEndTimeInSeconds);
+
+						// format: YYYY-MM-DDTHH:MI:SS.000Z
+						string scheduleEndTimeInMilliSeconds = scheduleEndTimeInSeconds;
+						scheduleEndTimeInMilliSeconds.insert(scheduleEndTimeInSeconds.length() - 1,
+							".000", 4);
+
+						field = "scheduledEndTime";
+						snippetRoot[field] = scheduleEndTimeInMilliSeconds;
+					}
+               
+					field = "snippet";
+					bodyRoot[field] = snippetRoot;
+				}
+               
+				{
+					Json::Value contentDetailsRoot;
+
+					bool enableClosedCaptions = true;
+					string field = "enableClosedCaptions";
+					contentDetailsRoot[field] = enableClosedCaptions;
+
+					bool enableContentEncryption = true;
+					field = "enableContentEncryption";
+					contentDetailsRoot[field] = enableContentEncryption;
+
+					bool enableDvr = true;
+					field = "enableDvr";
+					contentDetailsRoot[field] = enableDvr;
+
+					bool enableEmbed = true;
+					field = "enableEmbed";
+					contentDetailsRoot[field] = enableEmbed;
+
+					bool recordFromStart = true;
+					field = "recordFromStart";
+					contentDetailsRoot[field] = recordFromStart;
+
+					bool startWithSlate = true;
+					field = "startWithSlate";
+					contentDetailsRoot[field] = startWithSlate;
+
+					field = "contentDetails";
+					bodyRoot[field] = contentDetailsRoot;
+				}
+
+				{
+					Json::Value statusRoot;
+
+					string field = "privacyStatus";
+					statusRoot[field] = "unlisted";
+
+					field = "status";
+					bodyRoot[field] = statusRoot;
+				}
+
+				{
+					Json::StreamWriterBuilder wbuilder;
+                   
+					body = Json::writeString(wbuilder, bodyRoot);
+				}
+			}
+
+			list<string> headerList;
+
+			{
+				string header = "Authorization: Bearer " + youTubeAccessToken;
+				headerList.push_back(header);
+
+				header = "Accept: application/json";
+				headerList.push_back(header);
+
+				header = "Content-Type: application/json";
+				headerList.push_back(header);
+			}                    
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			request.setOpt(new curlpp::options::PostFields(body));
+			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+			request.setOpt(new curlpp::options::Url(youTubeURL));
+			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+
+			if (_youTubeDataAPIProtocol == "https")
+			{
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				// equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				// request.setOpt(sslCert);
+
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				// if(pPassphrase)
+				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());
+			}
+           
+			for (string headerMessage: headerList)
+				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
+			request.setOpt(new curlpp::options::HttpHeader(headerList));
+
+			ostringstream response;
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			// store response headers in the response
+			// You simply have to set next option to prefix the header to the normal body output. 
+			request.setOpt(new curlpp::options::Header(true)); 
+           
+			_logger->info(__FILEREF__ + "Calling youTube (live broadcast)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+			);
+			request.perform();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+
+			sResponse = response.str();
+			_logger->info(__FILEREF__ + "Called youTube (live broadcast)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sResponse: " + sResponse
+			);
+
+			if (responseCode != 200)
+			{
+				string errorMessage = __FILEREF__ + "youTube (live broadcast) failed"
+					+ ", youTubeURL: " + youTubeURL
+					+ ", body: " + body
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sResponse: " + sResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			/* sResponse:
+			HTTP/2 200 
+			content-type: application/json; charset=UTF-8
+			vary: Origin
+			vary: X-Origin
+			vary: Referer
+			content-encoding: gzip
+			date: Sat, 20 Nov 2021 11:19:49 GMT
+			server: scaffolding on HTTPServer2
+			cache-control: private
+			content-length: 858
+			x-xss-protection: 0
+			x-frame-options: SAMEORIGIN
+			x-content-type-options: nosniff
+			alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
+
+			{
+				"kind": "youtube#liveBroadcast",
+				"etag": "AwdnruQBkHYB37w_2Rp6zWvtVbw",
+				"id": "xdAak4DmKPI",
+				"snippet": {
+					"publishedAt": "2021-11-19T14:12:14Z",
+					"channelId": "UC2WYB3NxVDD0mf-jML8qGAA",
+					"title": "Test broadcast 2",
+					"description": "",
+					"thumbnails": {
+						"default": {
+							"url": "https://i.ytimg.com/vi/xdAak4DmKPI/default_live.jpg",
+							"width": 120,
+							"height": 90
+						},
+						"medium": {
+							"url": "https://i.ytimg.com/vi/xdAak4DmKPI/mqdefault_live.jpg",
+							"width": 320,
+							"height": 180
+						},
+						"high": {
+							"url": "https://i.ytimg.com/vi/xdAak4DmKPI/hqdefault_live.jpg",
+							"width": 480,
+							"height": 360
+						}
+					},
+					"scheduledStartTime": "2021-11-19T16:00:00Z",
+					"scheduledEndTime": "2021-11-19T17:00:00Z",
+					"isDefaultBroadcast": false,
+					"liveChatId": "KicKGFVDMldZQjNOeFZERDBtZi1qTUw4cUdBQRILeGRBYWs0RG1LUEk"
+				},
+				"status": {
+					"lifeCycleStatus": "created",
+					"privacyStatus": "unlisted",
+					"recordingStatus": "notRecording",
+					"madeForKids": false,
+					"selfDeclaredMadeForKids": false
+				},
+				"contentDetails": {
+					"monitorStream": {
+					"enableMonitorStream": true,
+					"broadcastStreamDelayMs": 0,
+					"embedHtml": "\u003ciframe width=\"425\" height=\"344\" src=\"https://www.youtube.com/embed/xdAak4DmKPI?autoplay=1&livemonitor=1\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen\u003e\u003c/iframe\u003e"
+					},
+					"enableEmbed": true,
+					"enableDvr": true,
+					"enableContentEncryption": true,
+					"startWithSlate": true,
+					"recordFromStart": true,
+					"enableClosedCaptions": true,
+					"closedCaptionsType": "closedCaptionsHttpPost",
+					"enableLowLatency": false,
+					"latencyPreference": "normal",
+					"projection": "rectangular",
+					"enableAutoStart": false,
+					"enableAutoStop": false
+				}
+			}
+			*/
+
+			Json::Value responseRoot;
+			{
+				Json::CharReaderBuilder builder;                                  
+				Json::CharReader* reader = builder.newCharReader();               
+				string errors;                                                    
+
+				bool parsingSuccessful = reader->parse(                           
+					sResponse.c_str(),                             
+					sResponse.c_str() + sResponse.size(),
+					&responseRoot, &errors);                      
+				delete reader;
+
+				if (!parsingSuccessful)                                           
+				{
+					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", sResponse: " + sResponse
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errors);
+				}
+			}
+
+			string field = "id";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+            broadcastId = responseRoot.get(field, "").asString();
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("YouTube live broadcast management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string("YouTube live broadcast management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string streamId;
+
+		// second call, create the Live Stream
+		try
+		{
+			/*
+			* curl -v --request POST \
+				'https://youtube.googleapis.com/youtube/v3/liveStreams?part=snippet%2Ccdn%2CcontentDetails%2Cstatus' \
+				--header 'Authorization: Bearer ya29.a0ARrdaM9t2WqGKTgB9rZtoZU4oUCnW96Pe8qmgdk6ryYxEEe21T9WXWr8Eai1HX3AzG9zdOAEzRm8T6MhBmuQEDj4C5iDmfhRVjmUakhCKbZ7mWmqLOP9M6t5gha1QsH5ocNKqAZkhbCnWK0euQxGoK79MBjA' \
+				--header 'Accept: application/json' \
+				--header 'Content-Type: application/json' \
+				--data '{"snippet":{"title":"my new video stream name","description":"A description of your video stream. This field is optional."},"cdn":{"frameRate":"60fps","ingestionType":"rtmp","resolution":"1080p"},"contentDetails":{"isReusable":true}}' \
+				--compressed
+			*/
+			youTubeURL = _youTubeDataAPIProtocol
+				+ "://"
+				+ _youTubeDataAPIHostName
+				+ ":" + to_string(_youTubeDataAPIPort)
+				+ _youTubeDataAPILiveStreamURI;
+
+			string body;
+			{
+				Json::Value bodyRoot;
+
+				{
+					Json::Value snippetRoot;
+
+					string field = "title";
+					snippetRoot[field] = youTubeLiveBroadcastTitle;
+
+					if (youTubeLiveBroadcastDescription != "")
+					{
+						field = "description";
+						snippetRoot[field] = youTubeLiveBroadcastDescription;
+					}
+
+					field = "snippet";
+					bodyRoot[field] = snippetRoot;
+				}
+               
+				{
+					Json::Value cdnRoot;
+
+					string field = "frameRate";
+					cdnRoot[field] = "60fps";
+
+					field = "ingestionType";
+					cdnRoot[field] = "rtmp";
+
+					field = "resolution";
+					cdnRoot[field] = "1080p";
+
+					field = "cdn";
+					bodyRoot[field] = cdnRoot;
+				}
+				{
+					Json::Value contentDetailsRoot;
+
+					bool isReusable = true;
+					string field = "isReusable";
+					contentDetailsRoot[field] = isReusable;
+
+					field = "contentDetails";
+					bodyRoot[field] = contentDetailsRoot;
+				}
+
+				{
+					Json::StreamWriterBuilder wbuilder;
+                   
+					body = Json::writeString(wbuilder, bodyRoot);
+				}
+			}
+
+			list<string> headerList;
+
+			{
+				string header = "Authorization: Bearer " + youTubeAccessToken;
+				headerList.push_back(header);
+
+				header = "Accept: application/json";
+				headerList.push_back(header);
+
+				header = "Content-Type: application/json";
+				headerList.push_back(header);
+			}                    
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			request.setOpt(new curlpp::options::PostFields(body));
+			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+			request.setOpt(new curlpp::options::Url(youTubeURL));
+			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+
+			if (_youTubeDataAPIProtocol == "https")
+			{
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				// equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				// request.setOpt(sslCert);
+
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				// if(pPassphrase)
+				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());
+			}
+           
+			for (string headerMessage: headerList)
+				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
+			request.setOpt(new curlpp::options::HttpHeader(headerList));
+
+			ostringstream response;
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			// store response headers in the response
+			// You simply have to set next option to prefix the header to the normal body output. 
+			request.setOpt(new curlpp::options::Header(true)); 
+           
+			_logger->info(__FILEREF__ + "Calling youTube (live stream)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+			);
+			request.perform();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+
+			sResponse = response.str();
+			_logger->info(__FILEREF__ + "Called youTube (live stream)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sResponse: " + sResponse
+			);
+
+			if (responseCode != 200)
+			{
+				string errorMessage = __FILEREF__ + "youTube (live stream) failed"
+					+ ", youTubeURL: " + youTubeURL
+					+ ", body: " + body
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sResponse: " + sResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			/* sResponse:
+			HTTP/2 200 
+			content-type: application/json; charset=UTF-8
+			vary: Origin
+			vary: X-Origin
+			vary: Referer
+			content-encoding: gzip
+			date: Sat, 20 Nov 2021 11:19:49 GMT
+			server: scaffolding on HTTPServer2
+			cache-control: private
+			content-length: 858
+			x-xss-protection: 0
+			x-frame-options: SAMEORIGIN
+			x-content-type-options: nosniff
+			alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
+
+			{
+				"kind": "youtube#liveStream",
+				"etag": "MYZZfdTjQds1ghPCh_jyIjtsT9c",
+				"id": "2WYB3NxVDD0mf-jML8qGAA1637335849431228",
+				"snippet": {
+					"publishedAt": "2021-11-19T15:30:49Z",
+					"channelId": "UC2WYB3NxVDD0mf-jML8qGAA",
+					"title": "my new video stream name",
+					"description": "A description of your video stream. This field is optional.",
+					"isDefaultStream": false
+				},
+				"cdn": {
+					"ingestionType": "rtmp",
+					"ingestionInfo": {
+						"streamName": "py80-04jp-6jq3-eq29-407j",
+						"ingestionAddress": "rtmp://a.rtmp.youtube.com/live2",
+						"backupIngestionAddress": "rtmp://b.rtmp.youtube.com/live2?backup=1",
+						"rtmpsIngestionAddress": "rtmps://a.rtmps.youtube.com/live2",
+						"rtmpsBackupIngestionAddress": "rtmps://b.rtmps.youtube.com/live2?backup=1"
+					},
+					"resolution": "1080p",
+					"frameRate": "60fps"
+				},
+				"status": {
+					"streamStatus": "ready",
+					"healthStatus": {
+						"status": "noData"
+					}
+				},
+				"contentDetails": {
+					"closedCaptionsIngestionUrl": "http://upload.youtube.com/closedcaption?cid=py80-04jp-6jq3-eq29-407j",
+					"isReusable": true
+				}
+			}
+			*/
+
+			Json::Value responseRoot;
+			{
+				Json::CharReaderBuilder builder;                                  
+				Json::CharReader* reader = builder.newCharReader();               
+				string errors;                                                    
+
+				bool parsingSuccessful = reader->parse(                           
+					sResponse.c_str(),                             
+					sResponse.c_str() + sResponse.size(),
+					&responseRoot, &errors);                      
+				delete reader;
+
+				if (!parsingSuccessful)                                           
+				{
+					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", sResponse: " + sResponse
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errors);
+				}
+			}
+
+			string field = "id";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			streamId = responseRoot.get(field, "").asString();
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("YouTube live stream management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string("YouTube live stream management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string rtmpURL;
+
+		// third call, bind live broadcast - live stream
+		try
+		{
+			/*
+			* curl -v --request POST \
+				'https://youtube.googleapis.com/youtube/v3/liveBroadcasts/bind?id=xdAak4DmKPI&part=snippet&streamId=2WYB3NxVDD0mf-jML8qGAA1637335849431228' \
+				--header 'Authorization: Bearer ya29.a0ARrdaM9t2WqGKTgB9rZtoZU4oUCnW96Pe8qmgdk6ryYxEEe21T9WXWr8Eai1HX3AzG9zdOAEzRm8T6MhBmuQEDj4C5iDmfhRVjmUakhCKbZ7mWmqLOP9M6t5gha1QsH5ocNKqAZkhbCnWK0euQxGoK79MBjA' \
+				--header 'Accept: application/json' \
+				--compressed
+			*/
+			string youTubeDataAPILiveBroadcastBindURI =
+				regex_replace(_youTubeDataAPILiveBroadcastBindURI, regex("__BROADCASTID__"), broadcastId);
+			youTubeDataAPILiveBroadcastBindURI =
+				regex_replace(youTubeDataAPILiveBroadcastBindURI, regex("__STREAMID__"), streamId);
+
+			youTubeURL = _youTubeDataAPIProtocol
+				+ "://"
+				+ _youTubeDataAPIHostName
+				+ ":" + to_string(_youTubeDataAPIPort)
+				+ youTubeDataAPILiveBroadcastBindURI;
+
+			string body;
+			{
+				Json::Value bodyRoot;
+
+				{
+					Json::Value snippetRoot;
+
+					string field = "title";
+					snippetRoot[field] = youTubeLiveBroadcastTitle;
+
+					if (youTubeLiveBroadcastDescription != "")
+					{
+						field = "description";
+						snippetRoot[field] = youTubeLiveBroadcastDescription;
+					}
+
+					field = "snippet";
+					bodyRoot[field] = snippetRoot;
+				}
+               
+				{
+					Json::Value cdnRoot;
+
+					string field = "frameRate";
+					cdnRoot[field] = "60fps";
+
+					field = "ingestionType";
+					cdnRoot[field] = "rtmp";
+
+					field = "resolution";
+					cdnRoot[field] = "1080p";
+
+					field = "cdn";
+					bodyRoot[field] = cdnRoot;
+				}
+				{
+					Json::Value contentDetailsRoot;
+
+					bool isReusable = true;
+					string field = "isReusable";
+					contentDetailsRoot[field] = isReusable;
+
+					field = "contentDetails";
+					bodyRoot[field] = contentDetailsRoot;
+				}
+
+				{
+					Json::StreamWriterBuilder wbuilder;
+                   
+					body = Json::writeString(wbuilder, bodyRoot);
+				}
+			}
+
+			list<string> headerList;
+
+			{
+				string header = "Authorization: Bearer " + youTubeAccessToken;
+				headerList.push_back(header);
+
+				header = "Accept: application/json";
+				headerList.push_back(header);
+
+				header = "Content-Type: application/json";
+				headerList.push_back(header);
+			}                    
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			request.setOpt(new curlpp::options::PostFields(body));
+			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+			request.setOpt(new curlpp::options::Url(youTubeURL));
+			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+
+			if (_youTubeDataAPIProtocol == "https")
+			{
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				// equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				// request.setOpt(sslCert);
+
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				// if(pPassphrase)
+				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());
+			}
+           
+			for (string headerMessage: headerList)
+				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
+			request.setOpt(new curlpp::options::HttpHeader(headerList));
+
+			ostringstream response;
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			// store response headers in the response
+			// You simply have to set next option to prefix the header to the normal body output. 
+			request.setOpt(new curlpp::options::Header(true)); 
+           
+			_logger->info(__FILEREF__ + "Calling youTube (live broadcast bind)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+			);
+			request.perform();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+
+			sResponse = response.str();
+			_logger->info(__FILEREF__ + "Called youTube (live broadcast bind)"
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sResponse: " + sResponse
+			);
+
+			if (responseCode != 200)
+			{
+				string errorMessage = __FILEREF__ + "youTube (live broadcast bind) failed"
+					+ ", youTubeURL: " + youTubeURL
+					+ ", body: " + body
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sResponse: " + sResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			/* sResponse:
+			HTTP/2 200 
+			content-type: application/json; charset=UTF-8
+			vary: Origin
+			vary: X-Origin
+			vary: Referer
+			content-encoding: gzip
+			date: Sat, 20 Nov 2021 11:19:49 GMT
+			server: scaffolding on HTTPServer2
+			cache-control: private
+			content-length: 858
+			x-xss-protection: 0
+			x-frame-options: SAMEORIGIN
+			x-content-type-options: nosniff
+			alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
+
+			{
+				"kind": "youtube#liveStream",
+				"etag": "MYZZfdTjQds1ghPCh_jyIjtsT9c",
+				"id": "2WYB3NxVDD0mf-jML8qGAA1637335849431228",
+				"snippet": {
+					"publishedAt": "2021-11-19T15:30:49Z",
+					"channelId": "UC2WYB3NxVDD0mf-jML8qGAA",
+					"title": "my new video stream name",
+					"description": "A description of your video stream. This field is optional.",
+					"isDefaultStream": false
+				},
+				"cdn": {
+					"ingestionType": "rtmp",
+					"ingestionInfo": {
+						"streamName": "py80-04jp-6jq3-eq29-407j",
+						"ingestionAddress": "rtmp://a.rtmp.youtube.com/live2",
+						"backupIngestionAddress": "rtmp://b.rtmp.youtube.com/live2?backup=1",
+						"rtmpsIngestionAddress": "rtmps://a.rtmps.youtube.com/live2",
+						"rtmpsBackupIngestionAddress": "rtmps://b.rtmps.youtube.com/live2?backup=1"
+					},
+					"resolution": "1080p",
+					"frameRate": "60fps"
+				},
+				"status": {
+					"streamStatus": "ready",
+					"healthStatus": {
+						"status": "noData"
+					}
+				},
+				"contentDetails": {
+					"closedCaptionsIngestionUrl": "http://upload.youtube.com/closedcaption?cid=py80-04jp-6jq3-eq29-407j",
+					"isReusable": true
+				}
+			}
+			*/
+
+			Json::Value responseRoot;
+			{
+				Json::CharReaderBuilder builder;                                  
+				Json::CharReader* reader = builder.newCharReader();               
+				string errors;                                                    
+
+				bool parsingSuccessful = reader->parse(                           
+					sResponse.c_str(),                             
+					sResponse.c_str() + sResponse.size(),
+					&responseRoot, &errors);                      
+				delete reader;
+
+				if (!parsingSuccessful)                                           
+				{
+					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", sResponse: " + sResponse
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errors);
+				}
+			}
+
+			string field = "cdn";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value cdnRoot = responseRoot[field];
+
+			field = "ingestionInfo";
+			if (!JSONUtils::isMetadataPresent(cdnRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value ingestionInfoRoot = cdnRoot[field];
+
+			field = "streamName";
+			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string streamName = ingestionInfoRoot.get(field, "").asString();
+
+			field = "ingestionAddress";
+			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string ingestionAddress = ingestionInfoRoot.get(field, "").asString();
+
+			rtmpURL = ingestionAddress + "/" + streamName;
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("YouTube live stream management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string("YouTube live stream management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", sResponse: " + sResponse
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest..."
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
+
+		Json::Value youTubeLiveBroadcastOnSuccess = Json::nullValue;
+		Json::Value youTubeLiveBroadcastOnError = Json::nullValue;
+		Json::Value youTubeLiveBroadcastOnComplete = Json::nullValue;
+		int64_t userKey;
+		string apiKey;
+		{
+			string field = "InternalMMS";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::Value internalMMSRoot = parametersRoot[field];
+
+				field = "userKey";
+				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+
+				field = "apiKey";
+				apiKey = internalMMSRoot.get(field, "").asString();
+
+				field = "OnSuccess";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					youTubeLiveBroadcastOnSuccess = internalMMSRoot[field];
+
+				field = "OnError";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					youTubeLiveBroadcastOnError = internalMMSRoot[field];
+
+				field = "OnComplete";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					youTubeLiveBroadcastOnComplete = internalMMSRoot[field];
+			}
+		}
+
+		// create workflow to ingest
+		string workflowMetadata;
+		{
+			string proxyLabel;
+			Json::Value proxyRoot;
+
+			if (sourceType == "Live")
+			{
+				Json::Value liveProxyParametersRoot;
+				{
+					string field = "Label";
+					proxyLabel = "Proxy " + channelConfigurationLabel
+						+ " to YouTube (" + youTubeConfigurationLabel + ")";
+					proxyRoot[field] = proxyLabel;
+
+					field = "Type";
+					proxyRoot[field] = "Live-Proxy";
+
+					liveProxyParametersRoot = parametersRoot;
+					{
+						Json::Value removed;
+						field = "YouTubeConfigurationLabel";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "Title";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "Description";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "SourceType";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+
+					bool timePeriod = true;
+					field = "TimePeriod";
+					liveProxyParametersRoot[field] = timePeriod;
+
+					Json::Value outputsRoot(Json::arrayValue);
+					{
+						Json::Value outputRoot;
+
+						field = "OutputType";
+						outputRoot[field] = "RTMP_Stream";
+
+						field = "RtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						outputsRoot.append(outputRoot);
+					}
+					field = "Outputs";
+					liveProxyParametersRoot[field] = outputsRoot;
+				}
+			}
+			else // if (sourceType == "MediaItem")
+			{
+				Json::Value vodProxyParametersRoot;
+				{
+					string field = "Label";
+					proxyLabel = "Proxy MediaItem to YouTube (" + youTubeConfigurationLabel + ")";
+					proxyRoot[field] = proxyLabel;
+
+					field = "Type";
+					proxyRoot[field] = "VOD-Proxy";
+
+					vodProxyParametersRoot = parametersRoot;
+					{
+						Json::Value removed;
+						field = "YouTubeConfigurationLabel";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "Title";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "Description";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "SourceType";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+
+					field = "References";
+					vodProxyParametersRoot[field] = referencesRoot;
+
+					bool timePeriod = true;
+					field = "TimePeriod";
+					vodProxyParametersRoot[field] = timePeriod;
+
+					Json::Value outputsRoot(Json::arrayValue);
+					{
+						Json::Value outputRoot;
+
+						field = "OutputType";
+						outputRoot[field] = "RTMP_Stream";
+
+						field = "RtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						outputsRoot.append(outputRoot);
+					}
+					field = "Outputs";
+					vodProxyParametersRoot[field] = outputsRoot;
+				}
+			}
+
+			Json::Value workflowRoot;
+			{
+				string field = "Label";
+				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
+
+				field = "Type";
+				workflowRoot[field] = "Workflow";
+
+				field = "Task";
+				workflowRoot[field] = proxyRoot;
+			}
+
+			{
+				Json::StreamWriterBuilder wbuilder;
+				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+			}
+		}
+
+		{
+			string mmsAPIURL =
+				_mmsAPIProtocol
+				+ "://"
+				+ _mmsAPIHostname + ":"
+				+ to_string(_mmsAPIPort)
+				+ "/catramms/"
+				+ _mmsAPIVersion
+				+ _mmsAPIIngestionURI
+            ;
+
+			list<string> header;
+
+			header.push_back("Content-Type: application/json");
+			{
+				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+				string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+				header.push_back(basicAuthorization);
+			}
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			// Setting the URL to retrive.
+			request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
+
+			if (_mmsAPIProtocol == "https")
+			{
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				// equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				// request.setOpt(sslCert);
+
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				// if(pPassphrase)
+				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+               
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());
+			}
+
+			request.setOpt(new curlpp::options::HttpHeader(header));
+			request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+			request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+			ostringstream response;
+
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			_logger->info(__FILEREF__ + "Ingesting YouTube Live Broadcast workflow"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", mmsAPIURL: " + mmsAPIURL
+				+ ", workflowMetadata: " + workflowMetadata
+			);
+			chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
+			request.perform();
+			chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
+
+			string sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+				sResponse.pop_back();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode == 201)
+			{
+				string message = __FILEREF__ + "Ingested CutLive workflow response"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", sResponse: " + sResponse
+					;
+				_logger->info(message);
+			}
+			else
+			{
+				string message = __FILEREF__ + "Ingested YouTube Live Broadcast workflow response"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", sResponse: " + sResponse
+					+ ", responseCode: " + to_string(responseCode)
+					;
+				_logger->error(message);
+
+				throw runtime_error(message);
+			}
+		}
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
+	}
+	catch(runtime_error e)
+	{
+        _logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

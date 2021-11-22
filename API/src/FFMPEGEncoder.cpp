@@ -132,7 +132,13 @@ int main(int argc, char** argv)
 		mutex fcgiAcceptMutex;
 
 		mutex cpuUsageMutex;
-		int cpuUsage = 0;
+		deque<int> cpuUsage;
+		int numberOfLastCPUUsageToBeChecked = 3;
+		for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked;
+			cpuUsageIndex++)
+		{
+			cpuUsage.push_front(0);
+		}
 
 		// 2021-09-24: chrono is already thread safe.
 		// mutex lastEncodingAcceptedTimeMutex;
@@ -319,7 +325,7 @@ FFMPEGEncoder::FFMPEGEncoder(
         mutex* fcgiAcceptMutex,
 
         mutex* cpuUsageMutex,
-		int* cpuUsage,
+		deque<int>* cpuUsage,
 
         // mutex* lastEncodingAcceptedTimeMutex,
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
@@ -13781,12 +13787,20 @@ void FFMPEGEncoder::cpuUsageThread()
 		{
 			lock_guard<mutex> locker(*_cpuUsageMutex);
 
-			*_cpuUsage = _getCpuUsage.getCpuUsage();
+			_cpuUsage->pop_back();
+			_cpuUsage->push_front(_getCpuUsage.getCpuUsage());
+			// *_cpuUsage = _getCpuUsage.getCpuUsage();
 
 			if (++counter % 100 == 0)
+			{
+				string lastCPUUsage;
+				for(int cpuUsage: *_cpuUsage)
+					lastCPUUsage += (to_string(cpuUsage) + " ");
+
 				_logger->info(__FILEREF__ + "cpuUsageThread"
-					+ ", _cpuUsage: " + to_string(*_cpuUsage)
+					+ ", lastCPUUsage: " + lastCPUUsage
 				);
+			}
 		}
 		catch(runtime_error e)
 		{
@@ -14195,16 +14209,23 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 	{
 		lock_guard<mutex> locker(*_cpuUsageMutex);
 
-		int maxCapability;
+		int maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
+		for(int cpuUsage: *_cpuUsage)
+		{
+			if (cpuUsage > _cpuUsageThresholdForEncoding)
+			{
+				maxCapability = 0;						// no to be done
 
-		if (*_cpuUsage > _cpuUsageThresholdForEncoding)
-			maxCapability = 0;						// no to be done
-		else
-			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+				break;
+			}
+		}
 
+		string lastCPUUsage;
+		for(int cpuUsage: *_cpuUsage)
+			lastCPUUsage += (to_string(cpuUsage) + " ");
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(*_cpuUsage)
+			+ ", lastCPUUsage: " + lastCPUUsage
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -14272,15 +14293,23 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 	{
 		lock_guard<mutex> locker(*_cpuUsageMutex);
 
-		int maxCapability;
+		int maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
-		if (*_cpuUsage > _cpuUsageThresholdForProxy)
-			maxCapability = 0;						// no to be done
-		else
-			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+		for(int cpuUsage: *_cpuUsage)
+		{
+			if (cpuUsage > _cpuUsageThresholdForProxy)
+			{
+				maxCapability = 0;						// no to be done
 
+				break;
+			}
+		}
+
+		string lastCPUUsage;
+		for(int cpuUsage: *_cpuUsage)
+			lastCPUUsage += (to_string(cpuUsage) + " ");
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(*_cpuUsage)
+			+ ", lastCPUUsage: " + lastCPUUsage
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -14348,15 +14377,23 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	{
 		lock_guard<mutex> locker(*_cpuUsageMutex);
 
-		int maxCapability;
+		int maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
-		if (*_cpuUsage > _cpuUsageThresholdForRecording)
-			maxCapability = 0;						// no to be done
-		else
-			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+		for(int cpuUsage: *_cpuUsage)
+		{
+			if (cpuUsage > _cpuUsageThresholdForRecording)
+			{
+				maxCapability = 0;						// no to be done
 
+				break;
+			}
+		}
+
+		string lastCPUUsage;
+		for(int cpuUsage: *_cpuUsage)
+			lastCPUUsage += (to_string(cpuUsage) + " ");
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(*_cpuUsage)
+			+ ", lastCPUUsage: " + lastCPUUsage
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 

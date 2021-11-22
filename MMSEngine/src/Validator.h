@@ -42,6 +42,8 @@ public:
 
     bool isCutTypeValid(string cutType);
 
+    bool isYouTubeLiveBroadcastSourceTypeValid(string sourceType);
+
     bool isFontTypeValid(string fontType);
     
     bool isColorValid(string fontColor);
@@ -186,7 +188,13 @@ public:
 
     void validateLiveProxyMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
+        bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
+
+    void validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
 
     void validateVODProxyMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
