@@ -44,6 +44,8 @@ public:
 
     bool isYouTubeLiveBroadcastSourceTypeValid(string sourceType);
 
+	bool isYouTubeTokenTypeValid(string tokenType);
+
     bool isFontTypeValid(string fontType);
     
     bool isColorValid(string fontColor);

@@ -6423,6 +6423,22 @@ bool Validator::isYouTubeLiveBroadcastSourceTypeValid(string sourceType)
     return false;
 }
 
+bool Validator::isYouTubeTokenTypeValid(string tokenType)
+{
+    vector<string> validTokenTypes = {
+        "RefreshToken",
+        "AccessToken"
+    };
+
+    for (string validTokenType: validTokenTypes)
+    {
+        if (tokenType == validTokenType) 
+            return true;
+    }
+
+    return false;
+}
+
 bool Validator::isFontTypeValid(string fontType)
 {
     vector<string> validFontTypes = {

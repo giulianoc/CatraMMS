@@ -2068,16 +2068,21 @@ public:
     void removeMediaItem (
         int64_t mediaItemKey);
 
-    int64_t addYouTubeConf(
+	Json::Value addYouTubeConf(
         int64_t workspaceKey,
         string label,
-        string refreshToken);
+		string tokenType,
+        string refreshToken,
+		string accessToken);
 
-    void modifyYouTubeConf(
+	Json::Value modifyYouTubeConf(
         int64_t confKey,
         int64_t workspaceKey,
-        string label,
-        string refreshToken);
+		string label, bool labelModified,
+		string tokenType, bool tokenTypeModified,
+		string refreshToken, bool refreshTokenModified,
+		string accessToken, bool accessTokenModified
+	);
 
     void removeYouTubeConf(
         int64_t workspaceKey,
@@ -2086,7 +2091,7 @@ public:
     Json::Value getYouTubeConfList (
         int64_t workspaceKey);
 
-    string getYouTubeRefreshTokenByConfigurationLabel(
+    tuple<string, string, string> getYouTubeDetailsByConfigurationLabel(
         int64_t workspaceKey, string youTubeConfigurationLabel);
     
     int64_t addFacebookConf(

@@ -514,6 +514,7 @@ private:
         int youTubeCategoryId, string youTubePrivacy);
 
 	string getYouTubeAccessTokenByConfigurationLabel(
+		int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
 } ;
 

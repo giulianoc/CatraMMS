@@ -2034,10 +2034,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_Conf_YouTube ("
-                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "workspaceKey               BIGINT UNSIGNED NOT NULL,"
-                    "label                      VARCHAR (128) NOT NULL,"
-                    "refreshToken               VARCHAR (128) NOT NULL,"
+                    "confKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey				BIGINT UNSIGNED NOT NULL,"
+                    "label						VARCHAR (128) NOT NULL,"
+                    "tokenType					VARCHAR (64) NOT NULL,"
+                    "refreshToken				VARCHAR (128) NULL,"
+                    "accessToken				VARCHAR (256) NULL,"
                     "constraint MMS_Conf_YouTube_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_YouTube_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

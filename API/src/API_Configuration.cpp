@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "Validator.h"
 #include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -38,7 +39,9 @@ void API::addYouTubeConf(
     try
     {
         string label;
+        string tokenType;
         string refreshToken;
+        string accessToken;
         
         try
         {
@@ -66,7 +69,7 @@ void API::addYouTubeConf(
                 }
             }
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -75,9 +78,9 @@ void API::addYouTubeConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = requestBodyRoot.get(field, "").asString();            
 
-            field = "RefreshToken";
+            field = "tokenType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -86,7 +89,35 @@ void API::addYouTubeConf(
 
                 throw runtime_error(errorMessage);
             }    
-            refreshToken = requestBodyRoot.get(field, "XXX").asString();            
+            tokenType = requestBodyRoot.get(field, "").asString();            
+
+			if (tokenType == "RefreshToken")
+			{
+				field = "refreshToken";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = __FILEREF__
+						+ "Field is not present or it is null"
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}    
+				refreshToken = requestBodyRoot.get(field, "XXX").asString();            
+			}
+			else	// if (tokenType == "AccessToken")
+			{
+				field = "accessToken";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}    
+				accessToken = requestBodyRoot.get(field, "").asString();            
+			}
         }
         catch(runtime_error e)
         {
@@ -111,14 +142,43 @@ void API::addYouTubeConf(
         string sResponse;
         try
         {
-            int64_t confKey = _mmsEngineDBFacade->addYouTubeConf(
-                workspace->_workspaceKey, label, refreshToken);
+			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+			if (!validator.isYouTubeTokenTypeValid(tokenType))
+			{
+				string errorMessage = string("The 'tokenType' is not valid")
+					+ ", tokenType: " + tokenType
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
+				throw runtime_error(errorMessage);
+            }
+
+			if (tokenType == "RefreshToken")
+			{
+				if (refreshToken == "")
+				{
+					string errorMessage = "The 'refreshToken' is not valid (empty)";
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			else // if (tokenType == "AccessToken")
+			{
+				if (accessToken == "")
+				{
+					string errorMessage = "The 'accessToken' is not valid (empty)";
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			Json::Value youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(
+				workspace->_workspaceKey, label, tokenType, refreshToken, accessToken);
+
+			Json::StreamWriterBuilder wbuilder;
+			sResponse = Json::writeString(wbuilder, youTubeRoot);
         }
         catch(runtime_error e)
         {
@@ -187,7 +247,13 @@ void API::modifyYouTubeConf(
     try
     {
         string label;
+		bool labelModified = false;
+        string tokenType;
+        bool tokenTypeModified = false;
         string refreshToken;
+        bool refreshTokenModified = false;
+        string accessToken;
+        bool accessTokenModified = false;
         
         try
         {
@@ -215,27 +281,33 @@ void API::modifyYouTubeConf(
                 }
             }
 
-            string field = "Label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            string field = "label";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+				label = requestBodyRoot.get(field, "").asString();            
+				labelModified = true;
+            }
 
-                throw runtime_error(errorMessage);
-            }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+			field = "tokenType";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				tokenType = requestBodyRoot.get(field, "").asString();            
+				tokenTypeModified = true;
+			}
 
-            field = "RefreshToken";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			field = "refreshToken";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				refreshToken = requestBodyRoot.get(field, "").asString();            
+				refreshTokenModified = true;
+			}
 
-                throw runtime_error(errorMessage);
-            }    
-            refreshToken = requestBodyRoot.get(field, "XXX").asString();            
+			field = "accessToken";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				accessToken = requestBodyRoot.get(field, "").asString();            
+				accessTokenModified = true;
+			}
         }
         catch(runtime_error e)
         {
@@ -267,21 +339,56 @@ void API::modifyYouTubeConf(
                 string errorMessage = string("The 'confKey' parameter is not found");
                 _logger->error(__FILEREF__ + errorMessage);
 
-                sendError(request, 400, errorMessage);
-
                 throw runtime_error(errorMessage);
             }
             confKey = stoll(confKeyIt->second);
 
-            _mmsEngineDBFacade->modifyYouTubeConf(
-                confKey, workspace->_workspaceKey, label, refreshToken);
+			if (tokenTypeModified)
+			{
+				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+				if (!validator.isYouTubeTokenTypeValid(tokenType))
+				{
+					string errorMessage = string("The 'tokenType' is not valid");
+						_logger->error(__FILEREF__ + errorMessage);
+					_logger->error(__FILEREF__ + errorMessage);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"confKey\": " + to_string(confKey)
-                    + "}"
-                    );            
-        }
+					throw runtime_error(errorMessage);
+				}
+
+				if (tokenType == "RefreshToken")
+				{
+					if (!refreshTokenModified || refreshToken == "")
+					{
+						string errorMessage = string("The 'refreshToken' is not valid");
+							_logger->error(__FILEREF__ + errorMessage);
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				else // if (tokenType == "AccessToken")
+				{
+					if (!accessTokenModified || accessToken == "")
+					{
+						string errorMessage = string("The 'accessToken' is not valid");
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+
+			Json::Value youTubeRoot = _mmsEngineDBFacade->modifyYouTubeConf(
+                confKey, workspace->_workspaceKey,
+				label, labelModified,
+				tokenType, tokenTypeModified,
+				refreshToken, refreshTokenModified,
+				accessToken, accessTokenModified
+			);
+
+			Json::StreamWriterBuilder wbuilder;
+			sResponse = Json::writeString(wbuilder, youTubeRoot);
+		}
         catch(runtime_error e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyYouTubeConf failed"
@@ -432,14 +539,13 @@ void API::youTubeConfList(
     try
     {
         {
-            
-            Json::Value youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(
-                    workspace->_workspaceKey);
+			Json::Value youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(
+				workspace->_workspaceKey);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
-            
-            sendSuccess(request, 200, responseBody);
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
+
+			sendSuccess(request, 200, responseBody);
         }
     }
     catch(runtime_error e)

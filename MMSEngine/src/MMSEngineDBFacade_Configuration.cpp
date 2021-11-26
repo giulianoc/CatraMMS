@@ -2,13 +2,15 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 
-int64_t MMSEngineDBFacade::addYouTubeConf(
-    int64_t workspaceKey,
-    string label,
-    string refreshToken)
+Json::Value MMSEngineDBFacade::addYouTubeConf(
+	int64_t workspaceKey,
+	string label,
+	string tokenType,
+	string refreshToken,
+	string accessToken
+	)
 {
     string      lastSQLCommand;
-    int64_t     confKey;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -18,18 +20,22 @@ int64_t MMSEngineDBFacade::addYouTubeConf(
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        
-        {
-            lastSQLCommand = 
-                "insert into MMS_Conf_YouTube(workspaceKey, label, refreshToken) values ("
-                "?, ?, ?)";
+
+		int64_t confKey;
+		{
+			lastSQLCommand = 
+				"insert into MMS_Conf_YouTube(workspaceKey, label, tokenType, "
+				"refreshToken, accessToken) values ("
+				"?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setString(queryParameterIndex++, tokenType);
             preparedStatement->setString(queryParameterIndex++, refreshToken);
+            preparedStatement->setString(queryParameterIndex++, accessToken);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -37,19 +43,51 @@ int64_t MMSEngineDBFacade::addYouTubeConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
+				+ ", tokenType: " + tokenType
 				+ ", refreshToken: " + refreshToken
+				+ ", accessToken: " + accessToken
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
             confKey = getLastInsertId(conn);
         }
-                            
+
+		Json::Value youTubeConfRoot;
+		{
+			string field = "confKey";
+			youTubeConfRoot[field] = confKey;
+
+			field = "label";
+			youTubeConfRoot[field] = label;
+
+			field = "tokenType";
+			youTubeConfRoot[field] = tokenType;
+
+			field = "refreshToken";
+			if (tokenType == "RefreshToken")
+			{
+				youTubeConfRoot[field] = refreshToken;
+
+				field = "accessToken";
+				youTubeConfRoot[field] = Json::nullValue;
+			}
+			else
+			{
+				youTubeConfRoot[field] = Json::nullValue;
+
+				field = "accessToken";
+				youTubeConfRoot[field] = accessToken;
+			}
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return youTubeConfRoot;
     }
     catch(sql::SQLException se)
     {
@@ -109,15 +147,15 @@ int64_t MMSEngineDBFacade::addYouTubeConf(
 
         throw e;
     }  
-    
-    return confKey;
 }
 
-void MMSEngineDBFacade::modifyYouTubeConf(
-    int64_t confKey,
-    int64_t workspaceKey,
-    string label,
-    string refreshToken)
+Json::Value MMSEngineDBFacade::modifyYouTubeConf(
+    int64_t confKey, int64_t workspaceKey,
+    string label, bool labelModified,
+    string tokenType, bool tokenTypeModified,
+    string refreshToken, bool refreshTokenModified,
+    string accessToken, bool accessTokenModified
+	)
 {
     string      lastSQLCommand;
     
@@ -129,17 +167,70 @@ void MMSEngineDBFacade::modifyYouTubeConf(
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        
-        {
+
+		{
+			string setSQL = "set ";
+			bool oneParameterPresent = false;
+
+			if (labelModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("label = ?");
+				oneParameterPresent = true;
+			}
+
+			if (tokenTypeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("tokenType = ?");
+				oneParameterPresent = true;
+			}
+
+			if (refreshTokenModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("refreshToken = ?");
+				oneParameterPresent = true;
+			}
+
+			if (accessTokenModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("accessToken = ?");
+				oneParameterPresent = true;
+			}
+
             lastSQLCommand = 
-                "update MMS_Conf_YouTube set label = ?, refreshToken = ? "
+                string("update MMS_Conf_YouTube ") + setSQL + " "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, refreshToken);
+			if (labelModified)
+				preparedStatement->setString(queryParameterIndex++, label);
+			if (tokenTypeModified)
+				preparedStatement->setString(queryParameterIndex++, tokenType);
+			if (refreshTokenModified)
+			{
+				if (refreshToken == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, refreshToken);
+			}
+			if (accessTokenModified)
+			{
+				if (accessToken == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, accessToken);
+			}
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -147,8 +238,10 @@ void MMSEngineDBFacade::modifyYouTubeConf(
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", label: " + label
-				+ ", refreshToken: " + refreshToken
+				+ ", label (" + to_string(labelModified) + "): " + label
+				+ ", tokenType (" + to_string(tokenTypeModified) + "): " + tokenType
+				+ ", refreshToken (" + to_string(refreshTokenModified) + "): " + refreshToken
+				+ ", accessToken (" + to_string(accessTokenModified) + "): " + accessToken
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -169,12 +262,76 @@ void MMSEngineDBFacade::modifyYouTubeConf(
                 */
             }
         }
+
+		Json::Value youTubeConfRoot;
+        {
+            lastSQLCommand = 
+                "select confKey, label, tokenType, refreshToken, accessToken "
+				"from MMS_Conf_YouTube "
+				"where confKey = ? and workspaceKey = ?";
+			;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (!resultSet->next())
+            {
+				string errorMessage = __FILEREF__ + "No YouTube conf found"
+					+ ", confKey: " + to_string(confKey)
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+            }
+
+            {
+                string field = "confKey";
+                youTubeConfRoot[field] = resultSet->getInt64("confKey");
+
+                field = "label";
+                youTubeConfRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+				field = "tokenType";
+				youTubeConfRoot[field] = static_cast<string>(
+					resultSet->getString("tokenType"));
+
+				field = "refreshToken";
+				if (resultSet->isNull("refreshToken"))
+					youTubeConfRoot[field] = Json::nullValue;
+				else
+					youTubeConfRoot[field] = static_cast<string>(
+						resultSet->getString("refreshToken"));
+
+				field = "accessToken";
+				if (resultSet->isNull("accessToken"))
+					youTubeConfRoot[field] = Json::nullValue;
+				else
+					youTubeConfRoot[field] = static_cast<string>(
+						resultSet->getString("accessToken"));
+            }
+        }
                             
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return youTubeConfRoot;
     }
     catch(sql::SQLException se)
     {
@@ -390,7 +547,8 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
                 string("select count(*) from MMS_Conf_YouTube ")
                     + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -416,12 +574,14 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
         }
 
         Json::Value youTubeRoot(Json::arrayValue);
-        {                    
+        {
             lastSQLCommand = 
-                string ("select confKey, label, refreshToken from MMS_Conf_YouTube ") 
+                string ("select confKey, label, tokenType, refreshToken, accessToken ")
+				+ "from MMS_Conf_YouTube "
                 + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -443,8 +603,23 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
                 field = "label";
                 youTubeConfRoot[field] = static_cast<string>(resultSet->getString("label"));
 
-                field = "refreshToken";
-                youTubeConfRoot[field] = static_cast<string>(resultSet->getString("refreshToken"));
+				field = "tokenType";
+				youTubeConfRoot[field] = static_cast<string>(
+					resultSet->getString("tokenType"));
+
+				field = "refreshToken";
+				if (resultSet->isNull("refreshToken"))
+					youTubeConfRoot[field] = Json::nullValue;
+				else
+					youTubeConfRoot[field] = static_cast<string>(
+						resultSet->getString("refreshToken"));
+
+				field = "accessToken";
+				if (resultSet->isNull("accessToken"))
+					youTubeConfRoot[field] = Json::nullValue;
+				else
+					youTubeConfRoot[field] = static_cast<string>(
+						resultSet->getString("accessToken"));
 
                 youTubeRoot.append(youTubeConfRoot);
             }
@@ -524,18 +699,21 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
     return youTubeConfListRoot;
 }
 
-string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
-    int64_t workspaceKey, string youTubeConfigurationLabel
+tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfigurationLabel(
+	int64_t workspaceKey, string youTubeConfigurationLabel
 )
 {
-    string      lastSQLCommand;
-    string      youTubeRefreshToken;
-    
+    string		lastSQLCommand;
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
     {        
-        _logger->info(__FILEREF__ + "getYouTubeRefreshTokenByConfigurationLabel"
+		string		youTubeTokenType;
+		string		youTubeRefreshToken;
+		string		youTubeAccessToken;
+
+        _logger->info(__FILEREF__ + "getYouTubeDetailsByConfigurationLabel"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", youTubeConfigurationLabel: " + youTubeConfigurationLabel
         );
@@ -547,9 +725,12 @@ string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
         
         {
             lastSQLCommand = 
-                string("select refreshToken from MMS_Conf_YouTube where workspaceKey = ? and label = ?");
+                "select tokenType, refreshToken, accessToken "
+				"from MMS_Conf_YouTube "
+				"where workspaceKey = ? and label = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, youTubeConfigurationLabel);
@@ -575,7 +756,11 @@ string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
                 throw runtime_error(errorMessage);
             }
 
-            youTubeRefreshToken = resultSet->getString("refreshToken");
+            youTubeTokenType = resultSet->getString("tokenType");
+			if (!resultSet->isNull("refreshToken"))
+				youTubeRefreshToken = resultSet->getString("refreshToken");
+			if (!resultSet->isNull("accessToken"))
+				youTubeAccessToken = resultSet->getString("accessToken");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -583,6 +768,8 @@ string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return make_tuple(youTubeTokenType, youTubeRefreshToken, youTubeAccessToken);
     }
     catch(sql::SQLException se)
     {
@@ -642,8 +829,6 @@ string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
 
         throw e;
     } 
-    
-    return youTubeRefreshToken;
 }
 
 int64_t MMSEngineDBFacade::addFacebookConf(

@@ -5310,7 +5310,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								throw runtime_error(errorMessage);
 							}
 						}
-                        else if (ingestionType == MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
+                        else if (ingestionType ==
+							MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
                         {
 							try
 							{
@@ -16623,6 +16624,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		string youTubeConfigurationLabel;
 		string youTubeLiveBroadcastTitle;
 		string youTubeLiveBroadcastDescription;
+		string youTubeLiveBroadcastPrivacyStatus;
+		bool youTubeLiveBroadcastMadeForKids;
+		string youTubeLiveBroadcastLatencyPreference;
+
 		string scheduleStartTimeInSeconds;
 		string scheduleEndTimeInSeconds;
 		string sourceType;
@@ -16654,9 +16659,28 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
             }
             youTubeLiveBroadcastTitle = parametersRoot.get(field, "").asString();
 
+            field = "MadeForKids";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				youTubeLiveBroadcastMadeForKids = JSONUtils::asBool(parametersRoot,
+					"MadeForKids", true);
+			else
+				youTubeLiveBroadcastMadeForKids = true;
+
             field = "Description";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				youTubeLiveBroadcastDescription = parametersRoot.get(field, "").asString();
+
+            field = "PrivacyStatus";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				youTubeLiveBroadcastPrivacyStatus = "unlisted";
+			else
+				youTubeLiveBroadcastPrivacyStatus = parametersRoot.get(field, "").asString();
+
+            field = "LatencyPreference";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				youTubeLiveBroadcastLatencyPreference = "normal";
+			else
+				youTubeLiveBroadcastLatencyPreference = parametersRoot.get(field, "").asString();
 
             field = "ProxyPeriod";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -16742,6 +16766,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		// 2. call google API
 		// 3. the response will have the access token to be used
         string youTubeAccessToken = getYouTubeAccessTokenByConfigurationLabel(
+			ingestionJobKey,
             workspace, youTubeConfigurationLabel);
 
 		string youTubeURL;
@@ -16782,6 +16807,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						snippetRoot[field] = youTubeLiveBroadcastDescription;
 					}
 
+					if (channelConfigurationLabel != "")
+					{
+						field = "channelId";
+						snippetRoot[field] = channelConfigurationLabel;
+					}
+
 					// scheduledStartTime
 					{
 						int64_t utcScheduleStartTimeInSeconds
@@ -16789,8 +16820,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 						// format: YYYY-MM-DDTHH:MI:SS.000Z
 						string scheduleStartTimeInMilliSeconds = scheduleStartTimeInSeconds;
-						scheduleStartTimeInMilliSeconds.insert(scheduleStartTimeInSeconds.length() - 1,
-							".000", 4);
+						scheduleStartTimeInMilliSeconds.insert(
+							scheduleStartTimeInSeconds.length() - 1, ".000", 4);
 
 						field = "scheduledStartTime";
 						snippetRoot[field] = scheduleStartTimeInMilliSeconds;
@@ -16813,16 +16844,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "snippet";
 					bodyRoot[field] = snippetRoot;
 				}
-               
+
 				{
 					Json::Value contentDetailsRoot;
 
-					bool enableClosedCaptions = true;
-					string field = "enableClosedCaptions";
-					contentDetailsRoot[field] = enableClosedCaptions;
-
 					bool enableContentEncryption = true;
-					field = "enableContentEncryption";
+					string field = "enableContentEncryption";
 					contentDetailsRoot[field] = enableContentEncryption;
 
 					bool enableDvr = true;
@@ -16841,6 +16868,17 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "startWithSlate";
 					contentDetailsRoot[field] = startWithSlate;
 
+					bool enableAutoStart = true;
+					field = "enableAutoStart";
+					contentDetailsRoot[field] = enableAutoStart;
+
+					bool enableAutoStop = true;
+					field = "enableAutoStop";
+					contentDetailsRoot[field] = enableAutoStop;
+
+					field = "latencyPreference";
+					contentDetailsRoot[field] = youTubeLiveBroadcastLatencyPreference;
+
 					field = "contentDetails";
 					bodyRoot[field] = contentDetailsRoot;
 				}
@@ -16849,7 +16887,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					Json::Value statusRoot;
 
 					string field = "privacyStatus";
-					statusRoot[field] = "unlisted";
+					statusRoot[field] = youTubeLiveBroadcastPrivacyStatus;
+
+					field = "selfDeclaredMadeForKids";
+					statusRoot[field] = youTubeLiveBroadcastMadeForKids;
 
 					field = "status";
 					bodyRoot[field] = statusRoot;
@@ -16867,6 +16908,9 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
+
+                header = "Content-Length: " + to_string(body.length());
+                headerList.push_back(header);
 
 				header = "Accept: application/json";
 				headerList.push_back(header);
@@ -16954,6 +16998,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			request.setOpt(new curlpp::options::Header(true)); 
            
 			_logger->info(__FILEREF__ + "Calling youTube (live broadcast)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
 				+ ", body: " + body
 			);
@@ -16961,26 +17006,47 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 
-			sResponse = response.str();
 			_logger->info(__FILEREF__ + "Called youTube (live broadcast)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
 				+ ", responseCode: " + to_string(responseCode)
-				+ ", sResponse: " + sResponse
 			);
 
 			if (responseCode != 200)
 			{
 				string errorMessage = __FILEREF__ + "youTube (live broadcast) failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", youTubeURL: " + youTubeURL
-					+ ", body: " + body
 					+ ", responseCode: " + to_string(responseCode)
-					+ ", sResponse: " + sResponse
 				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+
+			string sCompleteResponse = response.str();
+			size_t beginOfBodyIndex;
+			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "youTube response is wrong (live broadcast)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", youTubeURL: " + youTubeURL
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sCompleteResponse: " + sCompleteResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
+			_logger->info(__FILEREF__ + "Called youTube (live broadcast)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				// + ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sCompleteResponse: " + sCompleteResponse
+				// + ", sResponse: " + sResponse
+			);
 
 			/* sResponse:
 			HTTP/2 200 
@@ -17088,6 +17154,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", Field: " + field
 					+ ", sResponse: " + sResponse;
@@ -17096,6 +17163,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				throw runtime_error(errorMessage);
 			}
             broadcastId = responseRoot.get(field, "").asString();
+
+			sResponse = "";
 		}
 		catch(runtime_error e)
 		{
@@ -17124,6 +17193,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 
 		string streamId;
+		string rtmpURL;
 
 		// second call, create the Live Stream
 		try
@@ -17159,6 +17229,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						snippetRoot[field] = youTubeLiveBroadcastDescription;
 					}
 
+					if (channelConfigurationLabel != "")
+					{
+						field = "channelId";
+						snippetRoot[field] = channelConfigurationLabel;
+					}
+
 					field = "snippet";
 					bodyRoot[field] = snippetRoot;
 				}
@@ -17167,13 +17243,13 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					Json::Value cdnRoot;
 
 					string field = "frameRate";
-					cdnRoot[field] = "60fps";
+					cdnRoot[field] = "variable";
 
 					field = "ingestionType";
 					cdnRoot[field] = "rtmp";
 
 					field = "resolution";
-					cdnRoot[field] = "1080p";
+					cdnRoot[field] = "variable";
 
 					field = "cdn";
 					bodyRoot[field] = cdnRoot;
@@ -17201,6 +17277,9 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
+
+                header = "Content-Length: " + to_string(body.length());
+                headerList.push_back(header);
 
 				header = "Accept: application/json";
 				headerList.push_back(header);
@@ -17288,6 +17367,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			request.setOpt(new curlpp::options::Header(true)); 
            
 			_logger->info(__FILEREF__ + "Calling youTube (live stream)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
 				+ ", body: " + body
 			);
@@ -17295,26 +17375,47 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 
-			sResponse = response.str();
 			_logger->info(__FILEREF__ + "Called youTube (live stream)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
 				+ ", responseCode: " + to_string(responseCode)
-				+ ", sResponse: " + sResponse
 			);
 
 			if (responseCode != 200)
 			{
 				string errorMessage = __FILEREF__ + "youTube (live stream) failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", youTubeURL: " + youTubeURL
-					+ ", body: " + body
 					+ ", responseCode: " + to_string(responseCode)
-					+ ", sResponse: " + sResponse
 				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+
+			string sCompleteResponse = response.str();
+			size_t beginOfBodyIndex;
+			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "youTube response is wrong (live stream)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", youTubeURL: " + youTubeURL
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sCompleteResponse: " + sCompleteResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
+			_logger->info(__FILEREF__ + "Called youTube (live stream)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				// + ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sCompleteResponse: " + sCompleteResponse
+				// + ", sResponse: " + sResponse
+			);
 
 			/* sResponse:
 			HTTP/2 200 
@@ -17398,6 +17499,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", Field: " + field
 					+ ", sResponse: " + sResponse;
@@ -17406,6 +17508,66 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				throw runtime_error(errorMessage);
 			}
 			streamId = responseRoot.get(field, "").asString();
+
+			field = "cdn";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value cdnRoot = responseRoot[field];
+
+			field = "ingestionInfo";
+			if (!JSONUtils::isMetadataPresent(cdnRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value ingestionInfoRoot = cdnRoot[field];
+
+			field = "streamName";
+			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string streamName = ingestionInfoRoot.get(field, "").asString();
+
+			field = "ingestionAddress";
+			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", sResponse: " + sResponse;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string ingestionAddress = ingestionInfoRoot.get(field, "").asString();
+
+			rtmpURL = ingestionAddress + "/" + streamName;
+
+			sResponse = "";
 		}
 		catch(runtime_error e)
 		{
@@ -17433,8 +17595,6 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			throw runtime_error(errorMessage);
 		}
 
-		string rtmpURL;
-
 		// third call, bind live broadcast - live stream
 		try
 		{
@@ -17456,71 +17616,23 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				+ ":" + to_string(_youTubeDataAPIPort)
 				+ youTubeDataAPILiveBroadcastBindURI;
 
-			string body;
-			{
-				Json::Value bodyRoot;
-
-				{
-					Json::Value snippetRoot;
-
-					string field = "title";
-					snippetRoot[field] = youTubeLiveBroadcastTitle;
-
-					if (youTubeLiveBroadcastDescription != "")
-					{
-						field = "description";
-						snippetRoot[field] = youTubeLiveBroadcastDescription;
-					}
-
-					field = "snippet";
-					bodyRoot[field] = snippetRoot;
-				}
-               
-				{
-					Json::Value cdnRoot;
-
-					string field = "frameRate";
-					cdnRoot[field] = "60fps";
-
-					field = "ingestionType";
-					cdnRoot[field] = "rtmp";
-
-					field = "resolution";
-					cdnRoot[field] = "1080p";
-
-					field = "cdn";
-					bodyRoot[field] = cdnRoot;
-				}
-				{
-					Json::Value contentDetailsRoot;
-
-					bool isReusable = true;
-					string field = "isReusable";
-					contentDetailsRoot[field] = isReusable;
-
-					field = "contentDetails";
-					bodyRoot[field] = contentDetailsRoot;
-				}
-
-				{
-					Json::StreamWriterBuilder wbuilder;
-                   
-					body = Json::writeString(wbuilder, bodyRoot);
-				}
-			}
-
 			list<string> headerList;
 
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
 
+                // header = "Content-Length: " + to_string(body.length());
+                // headerList.push_back(header);
+
 				header = "Accept: application/json";
 				headerList.push_back(header);
 
-				header = "Content-Type: application/json";
-				headerList.push_back(header);
+				// header = "Content-Type: application/json";
+				// headerList.push_back(header);
 			}                    
+
+			string body;
 
 			curlpp::Cleanup cleaner;
 			curlpp::Easy request;
@@ -17601,83 +17713,108 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			request.setOpt(new curlpp::options::Header(true)); 
            
 			_logger->info(__FILEREF__ + "Calling youTube (live broadcast bind)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
+				// + ", body: " + body
 			);
 			request.perform();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
+			string sCompleteResponse = response.str();
 
-			sResponse = response.str();
 			_logger->info(__FILEREF__ + "Called youTube (live broadcast bind)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
 				+ ", responseCode: " + to_string(responseCode)
-				+ ", sResponse: " + sResponse
+				+ ", sCompleteResponse: " + sCompleteResponse
 			);
 
 			if (responseCode != 200)
 			{
 				string errorMessage = __FILEREF__ + "youTube (live broadcast bind) failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", youTubeURL: " + youTubeURL
-					+ ", body: " + body
 					+ ", responseCode: " + to_string(responseCode)
-					+ ", sResponse: " + sResponse
 				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			/* sResponse:
-			HTTP/2 200 
-			content-type: application/json; charset=UTF-8
-			vary: Origin
-			vary: X-Origin
-			vary: Referer
-			content-encoding: gzip
-			date: Sat, 20 Nov 2021 11:19:49 GMT
-			server: scaffolding on HTTPServer2
-			cache-control: private
-			content-length: 858
-			x-xss-protection: 0
-			x-frame-options: SAMEORIGIN
-			x-content-type-options: nosniff
-			alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
-
+			size_t beginOfBodyIndex;
+			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
 			{
-				"kind": "youtube#liveStream",
-				"etag": "MYZZfdTjQds1ghPCh_jyIjtsT9c",
-				"id": "2WYB3NxVDD0mf-jML8qGAA1637335849431228",
-				"snippet": {
-					"publishedAt": "2021-11-19T15:30:49Z",
-					"channelId": "UC2WYB3NxVDD0mf-jML8qGAA",
-					"title": "my new video stream name",
-					"description": "A description of your video stream. This field is optional.",
-					"isDefaultStream": false
+				string errorMessage = __FILEREF__ + "youTube response is wrong (live broadcast bind)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", youTubeURL: " + youTubeURL
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", sCompleteResponse: " + sCompleteResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
+			_logger->info(__FILEREF__ + "Called youTube (live broadcast bind)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				// + ", body: " + body
+				+ ", responseCode: " + to_string(responseCode)
+				+ ", sCompleteResponse: " + sCompleteResponse
+				// + ", sResponse: " + sResponse
+			);
+
+			/* sResponse:
+			HTTP/2 200 ^M
+			content-type: application/json; charset=UTF-8^M
+			vary: X-Origin^M
+			vary: Referer^M
+			vary: Origin,Accept-Encoding^M
+			date: Wed, 24 Nov 2021 22:35:48 GMT^M
+			server: scaffolding on HTTPServer2^M
+			cache-control: private^M
+			x-xss-protection: 0^M
+			x-frame-options: SAMEORIGIN^M
+			x-content-type-options: nosniff^M
+			accept-ranges: none^M
+			alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"^M
+			^M
+			{
+			"kind": "youtube#liveBroadcast",
+			"etag": "1NM7pffpR8009CHTdckGzn0rN-o",
+			"id": "tP_L5RKFrQM",
+			"snippet": {
+				"publishedAt": "2021-11-24T22:35:46Z",
+				"channelId": "UC2WYB3NxVDD0mf-jML8qGAA",
+				"title": "test",
+				"description": "",
+				"thumbnails": {
+				"default": {
+					"url": "https://i.ytimg.com/vi/tP_L5RKFrQM/default_live.jpg",
+					"width": 120,
+					"height": 90
 				},
-				"cdn": {
-					"ingestionType": "rtmp",
-					"ingestionInfo": {
-						"streamName": "py80-04jp-6jq3-eq29-407j",
-						"ingestionAddress": "rtmp://a.rtmp.youtube.com/live2",
-						"backupIngestionAddress": "rtmp://b.rtmp.youtube.com/live2?backup=1",
-						"rtmpsIngestionAddress": "rtmps://a.rtmps.youtube.com/live2",
-						"rtmpsBackupIngestionAddress": "rtmps://b.rtmps.youtube.com/live2?backup=1"
-					},
-					"resolution": "1080p",
-					"frameRate": "60fps"
+				"medium": {
+					"url": "https://i.ytimg.com/vi/tP_L5RKFrQM/mqdefault_live.jpg",
+					"width": 320,
+					"height": 180
 				},
-				"status": {
-					"streamStatus": "ready",
-					"healthStatus": {
-						"status": "noData"
-					}
+				"high": {
+					"url": "https://i.ytimg.com/vi/tP_L5RKFrQM/hqdefault_live.jpg",
+					"width": 480,
+					"height": 360
 				},
-				"contentDetails": {
-					"closedCaptionsIngestionUrl": "http://upload.youtube.com/closedcaption?cid=py80-04jp-6jq3-eq29-407j",
-					"isReusable": true
+				"standard": {
+					"url": "https://i.ytimg.com/vi/tP_L5RKFrQM/sddefault_live.jpg",
+					"width": 640,
+					"height": 480
 				}
+				},
+				"scheduledStartTime": "2021-11-24T22:25:00Z",
+				"scheduledEndTime": "2021-11-24T22:50:00Z",
+				"isDefaultBroadcast": false,
+				"liveChatId": "KicKGFVDMldZQjNOeFZERDBtZi1qTUw4cUdBQRILdFBfTDVSS0ZyUU0"
+			}
 			}
 			*/
 
@@ -17706,60 +17843,6 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					throw runtime_error(errors);
 				}
 			}
-
-			string field = "cdn";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			Json::Value cdnRoot = responseRoot[field];
-
-			field = "ingestionInfo";
-			if (!JSONUtils::isMetadataPresent(cdnRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			Json::Value ingestionInfoRoot = cdnRoot[field];
-
-			field = "streamName";
-			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string streamName = ingestionInfoRoot.get(field, "").asString();
-
-			field = "ingestionAddress";
-			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "YouTube response, Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string ingestionAddress = ingestionInfoRoot.get(field, "").asString();
-
-			rtmpURL = ingestionAddress + "/" + streamName;
 		}
 		catch(runtime_error e)
 		{
@@ -17862,6 +17945,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						field = "SourceType";
 						liveProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "InternalMMS";
+						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+							liveProxyParametersRoot.removeMember(field, &removed);
+					}
 
 					bool timePeriod = true;
 					field = "TimePeriod";
@@ -17882,6 +17971,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "Outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
 				}
+				string field = "Parameters";
+				proxyRoot[field] = liveProxyParametersRoot;
 			}
 			else // if (sourceType == "MediaItem")
 			{
@@ -17915,6 +18006,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						field = "SourceType";
 						vodProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "InternalMMS";
+						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+							vodProxyParametersRoot.removeMember(field, &removed);
+					}
 
 					field = "References";
 					vodProxyParametersRoot[field] = referencesRoot;
@@ -17938,6 +18035,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "Outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
 				}
+				string field = "Parameters";
+				proxyRoot[field] = vodProxyParametersRoot;
 			}
 
 			Json::Value workflowRoot;
@@ -25998,6 +26097,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 		// 2. call google API
 		// 3. the response will have the access token to be used
         string youTubeAccessToken = getYouTubeAccessTokenByConfigurationLabel(
+			ingestionJobKey,
             workspace, youTubeConfigurationLabel);
 
         string fileFormat;
@@ -26647,6 +26747,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 }
 
 string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
+	int64_t ingestionJobKey,
     shared_ptr<Workspace> workspace, string youTubeConfigurationLabel)
 {
     string youTubeURL;
@@ -26654,9 +26755,18 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     
     try
     {
-        string youTubeRefreshToken =
-			_mmsEngineDBFacade->getYouTubeRefreshTokenByConfigurationLabel(
+        tuple<string, string, string> youTubeDetails =
+			_mmsEngineDBFacade->getYouTubeDetailsByConfigurationLabel(
                 workspace->_workspaceKey, youTubeConfigurationLabel);            
+
+		string youTubeTokenType;
+		string youTubeRefreshToken;
+		string youTubeAccessToken;
+		tie(youTubeTokenType, youTubeRefreshToken, youTubeAccessToken)
+			= youTubeDetails;
+
+		if (youTubeTokenType == "AccessToken")
+			return youTubeAccessToken;
 
         youTubeURL = _youTubeDataAPIProtocol
             + "://"
@@ -26756,25 +26866,28 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
         request.setOpt(new curlpp::options::WriteStream(&response));
 
         _logger->info(__FILEREF__ + "Calling youTube refresh token"
-                + ", youTubeURL: " + youTubeURL
-                + ", body: " + body
-        );
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", youTubeURL: " + youTubeURL
+			+ ", body: " + body
+		);
         request.perform();
 
         long responseCode = curlpp::infos::ResponseCode::get(request);
 
         sResponse = response.str();
         _logger->info(__FILEREF__ + "Called youTube refresh token"
-                + ", youTubeURL: " + youTubeURL
-                + ", body: " + body
-                + ", responseCode: " + to_string(responseCode)
-                + ", sResponse: " + sResponse
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", youTubeURL: " + youTubeURL
+			+ ", body: " + body
+			+ ", responseCode: " + to_string(responseCode)
+			+ ", sResponse: " + sResponse
         );
 
         if (responseCode != 200)
         {
             string errorMessage = __FILEREF__ + "YouTube refresh token failed"
-                    + ", responseCode: " + to_string(responseCode);
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", responseCode: " + to_string(responseCode);
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -26795,9 +26908,10 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
             if (!parsingSuccessful)
             {
                 string errorMessage = __FILEREF__ + "failed to parse the youTube response"
-                        + ", errors: " + errors
-                        + ", sResponse: " + sResponse
-                        ;
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", errors: " + errors
+                    + ", sResponse: " + sResponse
+                 ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -26806,8 +26920,9 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
         catch(...)
         {
             string errorMessage = string("youTube json response is not well format")
-                    + ", sResponse: " + sResponse
-                    ;
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", sResponse: " + sResponse
+            ;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
@@ -26832,15 +26947,16 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
             throw runtime_error(errorMessage);
         }
         
-        return youTubeResponseRoot.get(field, "XXX").asString();
+        return youTubeResponseRoot.get(field, "").asString();
     }
     catch(runtime_error e)
     {
         string errorMessage = string("youTube refresh token failed")
-                + ", youTubeURL: " + youTubeURL
-                + ", sResponse: " + sResponse
-                + ", e.what(): " + e.what()
-                ;
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", youTubeURL: " + youTubeURL
+            + ", sResponse: " + sResponse
+            + ", e.what(): " + e.what()
+        ;
         _logger->error(__FILEREF__ + errorMessage);
 
         throw runtime_error(errorMessage);
@@ -26848,9 +26964,10 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     catch(exception e)
     {
         string errorMessage = string("youTube refresh token failed")
-                + ", youTubeURL: " + youTubeURL
-                + ", sResponse: " + sResponse
-                ;
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", youTubeURL: " + youTubeURL
+            + ", sResponse: " + sResponse
+        ;
         _logger->error(__FILEREF__ + errorMessage);
 
         throw runtime_error(errorMessage);
