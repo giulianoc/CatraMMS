@@ -55,8 +55,9 @@
 		// Optional, category id of the video
 		"CategoryId": 22,
 
-		// optional, it could be: private or public, default is private
-		"Privacy": "private",
+		// optional, it could be: private, public or unlisted,
+		//	default is private
+		"PrivacyStatus": "private",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

@@ -23,6 +23,24 @@ then
 	exit
 fi
 
+sleepIfNeeded()
+{
+	currentSeconds=$(date +"%-S")
+	if [ $currentSeconds -gt 45 ]
+	then
+		secondsToSleep=$((60-$currentSeconds+10))
+
+		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
+		sleep $secondsToSleep
+	elif [ $currentSeconds -lt 10 ]
+	then
+		secondsToSleep=$((10-$currentSeconds))
+
+		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
+		sleep $secondsToSleep
+	fi
+}
+
 
 PIDFILE=/var/catramms/pids/mmsEngineService.pid
 
@@ -68,6 +86,8 @@ then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
+	sleepIfNeeded
+
 	touch $processorShutdownPathName
 
 	maxSecondsToWait=10

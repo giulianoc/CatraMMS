@@ -444,6 +444,26 @@ public:
 
 		pid_t* pChildPid);
 
+	void yourTV(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+
+		long port,
+
+		Json::Value encodingProfileDetailsRoot,
+
+		string outputType,
+		string otherOutputOptions,
+		string audioVolumeChange,
+		string manifestDirectoryPath,
+		string manifestFileName,
+		int segmentDurationInSeconds,
+		int playlistEntriesNumber,
+		bool isVideo,
+		string rtmpUrl,
+
+		pid_t* pChildPid);
+
 	void awaitingTheBegining(
         int64_t encodingJobKey,
         int64_t ingestionJobKey,

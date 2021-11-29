@@ -1057,8 +1057,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
-			dependencies);
+        validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
     }
     else if (type == "VOD-Proxy")
     {
@@ -3359,23 +3359,25 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         }
     }
 
-    string field = "Privacy";
+    string field = "PrivacyStatus";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string youTubePrivacy = parametersRoot.get(field, "").asString();
+        string youTubePrivacyStatus = parametersRoot.get(field, "").asString();
 
-        if (youTubePrivacy != "private" && youTubePrivacy != "public")
+        if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
         {
-            string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private' or 'public'"
-                    + ", Field: " + field
-                    + ", youTubePrivacy: " + youTubePrivacy
-                    + ", label: " + label
-                    ;
+            string errorMessage = __FILEREF__ + field
+				+ " is wrong (it could be only 'private', 'public' or unlisted"
+				+ ", Field: " + field
+				+ ", youTubePrivacyStatus: " + youTubePrivacyStatus
+				+ ", label: " + label
+			;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
         }
     }
+
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
@@ -4183,6 +4185,25 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
                 + ", sourceType: " + sourceType
                 + ", label: " + label
             ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    field = "PrivacyStatus";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+        string youTubePrivacyStatus = parametersRoot.get(field, "").asString();
+
+        if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
+        {
+            string errorMessage = __FILEREF__ + field
+				+ " is wrong (it could be only 'private', 'public' or unlisted"
+				+ ", Field: " + field
+				+ ", youTubePrivacyStatus: " + youTubePrivacyStatus
+				+ ", label: " + label
+			;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
@@ -6417,6 +6438,23 @@ bool Validator::isYouTubeLiveBroadcastSourceTypeValid(string sourceType)
     for (string validSourceType: validSourceTypes)
     {
         if (sourceType == validSourceType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isYouTubePrivacyStatusValid(string privacyStatus)
+{
+    vector<string> validPrivacyStatuss = {
+        "private",
+        "public",
+        "unlisted"
+    };
+
+    for (string validPrivacyStatus: validPrivacyStatuss)
+    {
+        if (privacyStatus == validPrivacyStatus) 
             return true;
     }
     

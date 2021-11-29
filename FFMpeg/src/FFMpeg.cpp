@@ -12602,6 +12602,605 @@ void FFMpeg::vodProxy(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::yourTV(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+
+	long port,
+
+	Json::Value encodingProfileDetailsRoot,
+
+	string outputType,
+	string otherOutputOptions,
+	string audioVolumeChange,
+	string manifestDirectoryPath,
+	string manifestFileName,
+	int segmentDurationInSeconds,
+	int playlistEntriesNumber,
+	bool isVideo,
+	string rtmpUrl,
+
+	pid_t* pChildPid)
+{
+	_currentApiName = "yourTV";
+
+	_logger->info(__FILEREF__ + "Received " + _currentApiName
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+	);
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
+
+	time_t utcNow;
+
+	{
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		utcNow = chrono::system_clock::to_time_t(now);
+	}
+
+	vector<string> ffmpegArgumentList;
+	{
+		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+
+		ffmpegArgumentList.push_back("ffmpeg");
+		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
+		//		as fast as possible. This option will slow down the reading of the input(s)
+		//		to the native frame rate of the input(s). It is useful for real-time output
+		//		(e.g. live streaming).
+		// -hls_flags append_list: Append new segments into the end of old segment list
+		//		and remove the #EXT-X-ENDLIST from the old segment list
+		// -hls_time seconds: Set the target segment length in seconds. Segment will be cut on the next key frame
+		//		after this time has passed.
+		// -hls_list_size size: Set the maximum number of playlist entries. If set to 0 the list file
+		//		will contain all the segments. Default value is 5.
+		//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
+		//		in the background process group
+		ffmpegArgumentList.push_back("-nostdin");
+
+		ffmpegArgumentList.push_back("-re");
+
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back("udp://127.0.0.1:" + to_string(port));
+	}
+
+	vector<string> ffmpegEncodingProfileArgumentList;
+	// if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		try
+		{
+			string httpStreamingFileFormat;    
+			string ffmpegHttpStreamingParameter = "";
+
+			string ffmpegFileFormatParameter = "";
+
+			string ffmpegVideoCodecParameter = "";
+			string ffmpegVideoProfileParameter = "";
+			string ffmpegVideoResolutionParameter = "";
+			int videoBitRateInKbps = -1;
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoOtherParameters = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegVideoFrameRateParameter = "";
+			string ffmpegVideoKeyFramesRateParameter = "";
+			bool twoPasses;
+			vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+			string ffmpegAudioCodecParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+			string ffmpegAudioOtherParameters = "";
+			string ffmpegAudioChannelsParameter = "";
+			string ffmpegAudioSampleRateParameter = "";
+			vector<string> audioBitRatesInfo;
+
+
+			settingFfmpegParameters(
+				encodingProfileDetailsRoot,
+				isVideo,
+
+				httpStreamingFileFormat,
+				ffmpegHttpStreamingParameter,
+
+				ffmpegFileFormatParameter,
+
+				ffmpegVideoCodecParameter,
+				ffmpegVideoProfileParameter,
+				ffmpegVideoOtherParameters,
+				twoPasses,
+				ffmpegVideoFrameRateParameter,
+				ffmpegVideoKeyFramesRateParameter,
+				videoBitRatesInfo,
+
+				ffmpegAudioCodecParameter,
+				ffmpegAudioOtherParameters,
+				ffmpegAudioChannelsParameter,
+				ffmpegAudioSampleRateParameter,
+				audioBitRatesInfo
+			);
+
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter)
+				= videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+
+			/*
+			if (httpStreamingFileFormat != "")
+			{
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else */ if (twoPasses)
+			{
+				/*
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+				*/
+				twoPasses = false;
+
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", twoPasses: " + to_string(twoPasses)
+				;
+				_logger->warn(errorMessage);
+			}
+
+			{
+				addToArguments(ffmpegVideoCodecParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoProfileParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoOtherParameters,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoResolutionParameter,
+					ffmpegEncodingProfileArgumentList);
+			}
+			ffmpegEncodingProfileArgumentList.push_back("-threads");
+			ffmpegEncodingProfileArgumentList.push_back("0");
+			{
+				addToArguments(ffmpegAudioCodecParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioOtherParameters,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter,
+					ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter,
+					ffmpegEncodingProfileArgumentList);
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw e;
+		}
+	}
+	for (string parameter: ffmpegEncodingProfileArgumentList)
+		addToArguments(parameter, ffmpegArgumentList);
+
+	{
+		if (outputType == "HLS" || outputType == "DASH")
+		{
+			if (audioVolumeChange != "")
+			{
+				ffmpegArgumentList.push_back("-filter:a");
+				ffmpegArgumentList.push_back(string("volume=") + audioVolumeChange);
+			}
+
+			{
+				string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+
+				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
+				);
+
+				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+				// I saw just once that the directory was not created and the liveencoder remains in the loop
+				// where:
+				//	1. the encoder returns an error because of the missing directory
+				//	2. EncoderVideoAudioProxy calls again the encoder
+				// So, for this reason, the below check is done
+				if (!FileIO::directoryExisting(manifestDirectoryPath))
+				{
+					_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+
+					_logger->info(__FILEREF__ + "Create directory"
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					FileIO::createDirectory(manifestDirectoryPath,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP |
+						S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				addToArguments(otherOutputOptions, ffmpegArgumentList);
+
+				if (outputType == "HLS")
+				{
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("append_list");
+					ffmpegArgumentList.push_back("-hls_time");
+					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegArgumentList.push_back("-hls_list_size");
+					ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+					// Segment files removed from the playlist are deleted after a period of time
+					// equal to the duration of the segment plus the duration of the playlist
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("delete_segments");
+
+					// Set the number of unreferenced segments to keep on disk
+					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+					// to download segments which were recently referenced in the playlist.
+					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+					ffmpegArgumentList.push_back("-hls_delete_threshold");
+					ffmpegArgumentList.push_back(to_string(1));
+
+
+					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-hls_start_number_source");
+					// ffmpegArgumentList.push_back("datetime");
+
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-start_number");
+					// ffmpegArgumentList.push_back(to_string(10));
+				}
+				else if (outputType == "DASH")
+				{
+					ffmpegArgumentList.push_back("-seg_duration");
+					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegArgumentList.push_back("-window_size");
+					ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+					// it is important to specify -init_seg_name because those files
+					// will not be removed in EncoderVideoAudioProxy.cpp
+					ffmpegArgumentList.push_back("-init_seg_name");
+					ffmpegArgumentList.push_back("init-stream$RepresentationID$.$ext$");
+
+					// the only difference with the ffmpeg default is that default is $Number%05d$
+					// We had to change it to $Number%01d$ because otherwise the generated file containing
+					// 00001 00002 ... but the videojs player generates file name like 1 2 ...
+					// and the streaming was not working
+					ffmpegArgumentList.push_back("-media_seg_name");
+					ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
+				}
+				ffmpegArgumentList.push_back(manifestFilePathName);
+			}
+		}
+		else if (outputType == "RTMP_Stream")
+		{
+			if (rtmpUrl == "")
+			{
+				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", rtmpUrl: " + rtmpUrl
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (audioVolumeChange != "")
+			{
+				ffmpegArgumentList.push_back("-filter:a");
+				ffmpegArgumentList.push_back(string("volume=") + audioVolumeChange);
+			}
+
+			addToArguments(otherOutputOptions, ffmpegArgumentList);
+
+			ffmpegArgumentList.push_back("-bsf:a");
+			ffmpegArgumentList.push_back("aac_adtstoasc");
+			// 2020-08-13: commented bacause -c:v copy is already present
+			// ffmpegArgumentList.push_back("-vcodec");
+			// ffmpegArgumentList.push_back("copy");
+
+			// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
+			ffmpegArgumentList.push_back("-f");
+			ffmpegArgumentList.push_back("flv");
+			ffmpegArgumentList.push_back(rtmpUrl);
+		}
+		else
+		{
+			string errorMessage = __FILEREF__ + "vodProxy. Wrong output type"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", outputType: " + outputType;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	ostringstream ffmpegArgumentListStream;
+	int iReturnedStatus = 0;
+	chrono::system_clock::time_point startFfmpegCommand;
+	chrono::system_clock::time_point endFfmpegCommand;
+
+    try
+    {
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey)
+			+ ".yourTV.log"
+		;
+
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		if (!ffmpegArgumentList.empty())
+			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+				ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+		_logger->info(__FILEREF__ + _currentApiName + ": Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		);
+
+		startFfmpegCommand = chrono::system_clock::now();
+
+		bool redirectionStdOutput = true;
+		bool redirectionStdError = true;
+
+		ProcessUtility::forkAndExec (
+			_ffmpegPath + "/ffmpeg",
+			ffmpegArgumentList,
+			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+			pChildPid, &iReturnedStatus);
+		if (iReturnedStatus != 0)
+		{
+			string errorMessage = __FILEREF__ + _currentApiName + ": ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+           ;
+           _logger->error(errorMessage);
+
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + _currentApiName + ": command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+           ;
+			throw runtime_error(errorMessage);
+		}
+        
+		endFfmpegCommand = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + _currentApiName + ": Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		);
+
+		{
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				if (manifestDirectoryPath != "")
+				{
+					if (FileIO::directoryExisting(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+    	}
+    }
+    catch(runtime_error e)
+    {
+		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+		{
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		}
+		else
+		{
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		}
+        _logger->error(errorMessage);
+
+		// copy ffmpeg log file
+		{
+			char		sEndFfmpegCommand [64];
+
+			time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm		tmUtcEndFfmpegCommand;
+			localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
+			sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcEndFfmpegCommand. tm_year + 1900,
+				tmUtcEndFfmpegCommand. tm_mon + 1,
+				tmUtcEndFfmpegCommand. tm_mday,
+				tmUtcEndFfmpegCommand. tm_hour,
+				tmUtcEndFfmpegCommand. tm_min,
+				tmUtcEndFfmpegCommand. tm_sec);
+
+			string debugOutputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey) + "_"
+				+ to_string(encodingJobKey) + "_"
+				+ sEndFfmpegCommand
+				+ ".vodProxy.log.debug"
+			;
+
+			_logger->info(__FILEREF__ + "Coping"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+				);
+			FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+		}
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+		{
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				if (manifestDirectoryPath != "")
+				{
+					if (FileIO::directoryExisting(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+    	}
+
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 void FFMpeg::liveProxyByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,

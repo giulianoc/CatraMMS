@@ -23,6 +23,24 @@ then
 	exit
 fi
 
+sleepIfNeeded()
+{
+	currentSeconds=$(date +"%-S")
+	if [ $currentSeconds -gt 45 ]
+	then
+		secondsToSleep=$((60-$currentSeconds+10))
+
+		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
+		sleep $secondsToSleep
+	elif [ $currentSeconds -lt 10 ]
+	then
+		secondsToSleep=$((10-$currentSeconds))
+
+		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
+		sleep $secondsToSleep
+	fi
+}
+
 
 if [ "$2" == "nodaemon" ]
 then
@@ -48,6 +66,8 @@ then
 	ps -ef | grep "api.fcgi" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
+	sleepIfNeeded
+
 	#PIDFILE is not created in case of nodaemon
 	kill -9 `cat $PIDFILE`
 fi

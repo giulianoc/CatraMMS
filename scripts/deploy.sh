@@ -14,13 +14,13 @@ sleepIfNeeded()
 	currentSeconds=$(date +"%-S")
 	if [ $currentSeconds -gt 45 ]
 	then
-		secondsToSleep=$((60-$currentSeconds+15))
+		secondsToSleep=$((60-$currentSeconds+10))
 
 		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
 		sleep $secondsToSleep
-	elif [ $currentSeconds -lt 15 ]
+	elif [ $currentSeconds -lt 10 ]
 	then
-		secondsToSleep=$((15-$currentSeconds))
+		secondsToSleep=$((10-$currentSeconds))
 
 		echo "Current seconds: $currentSeconds, sleeping $secondsToSleep"
 		sleep $secondsToSleep

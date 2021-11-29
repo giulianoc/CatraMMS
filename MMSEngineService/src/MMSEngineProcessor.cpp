@@ -10528,7 +10528,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
         string youTubeDescription;
         Json::Value youTubeTags = Json::nullValue;
         int youTubeCategoryId = -1;
-        string youTubePrivacy;
+        string youTubePrivacyStatus;
         {
             string field = "ConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10558,11 +10558,11 @@ void MMSEngineProcessor::postOnYouTubeThread(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, 0);
 
-            field = "Privacy";
+            field = "PrivacyStatus";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubePrivacy = parametersRoot.get(field, "XXX").asString();
+                youTubePrivacyStatus = parametersRoot.get(field, "").asString();
             else
-                youTubePrivacy = "private";
+                youTubePrivacyStatus = "private";
         }
         
 		int dependencyIndex = 0;
@@ -10634,7 +10634,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 					sizeInBytes, ingestionJobKey, workspace,
 					youTubeConfigurationLabel, youTubeTitle,
 					youTubeDescription, youTubeTags,
-					youTubeCategoryId, youTubePrivacy);
+					youTubeCategoryId, youTubePrivacyStatus);
 			}
 			catch(runtime_error e)
 			{
@@ -25390,19 +25390,19 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
             if (_facebookGraphAPIProtocol == "https")
             {
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-    //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-    //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+    //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+    //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+    //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
 
 
                 // cert is stored PEM coded in file... 
@@ -26191,8 +26191,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 field = "embeddable";
                 statusRoot[field] = true;
 
-                field = "license";
-                statusRoot[field] = "youtube";
+                // field = "license";
+                // statusRoot[field] = "youtube";
 
                 field = "status";
                 bodyRoot[field] = statusRoot;
@@ -26304,28 +26304,34 @@ void MMSEngineProcessor::postVideoOnYouTube(
             request.setOpt(new curlpp::options::Header(true)); 
             
             _logger->info(__FILEREF__ + "Calling youTube (first call)"
-                    + ", youTubeURL: " + youTubeURL
-                    + ", body: " + body
-            );
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeURL: " + youTubeURL
+				+ ", body: " + body
+			);
             request.perform();
 
             long responseCode = curlpp::infos::ResponseCode::get(request);
 
             sResponse = response.str();
             _logger->info(__FILEREF__ + "Called youTube (first call)"
-                    + ", youTubeURL: " + youTubeURL
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", youTubeURL: " + youTubeURL
+                + ", body: " + body
+                + ", responseCode: " + to_string(responseCode)
+                + ", sResponse: " + sResponse
+            );
+            
+            if (responseCode != 200 ||
+				(sResponse.find("Location: ") == string::npos &&
+				 sResponse.find("location: ") == string::npos)
+			)
+            {
+                string errorMessage = __FILEREF__ + "youTube (first call) failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", youTubeURL: " + youTubeURL
                     + ", body: " + body
                     + ", responseCode: " + to_string(responseCode)
                     + ", sResponse: " + sResponse
-            );
-            
-            if (responseCode != 200 || sResponse.find("Location: ") == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "youTube (first call) failed"
-                        + ", youTubeURL: " + youTubeURL
-                        + ", body: " + body
-                        + ", responseCode: " + to_string(responseCode)
-                        + ", sResponse: " + sResponse
                 ;
                 _logger->error(errorMessage);
 
@@ -26351,6 +26357,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
              */
             
             int locationStartIndex = sResponse.find("Location: ");
+			if (locationStartIndex == string::npos)
+				locationStartIndex = sResponse.find("location: ");
             locationStartIndex += string("Location: ").length();
             int locationEndIndex = sResponse.find("\r", locationStartIndex);
             if (locationEndIndex == string::npos)
@@ -26358,7 +26366,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
             if (locationEndIndex == string::npos)
                 youTubeUploadURL = sResponse.substr(locationStartIndex);
             else
-                youTubeUploadURL = sResponse.substr(locationStartIndex, locationEndIndex - locationStartIndex);
+                youTubeUploadURL = sResponse.substr(locationStartIndex,
+					locationEndIndex - locationStartIndex);
         }
 
         bool contentCompletelyUploaded = false;
@@ -26388,25 +26397,32 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
             {                
                 list<string> headerList;
-                headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
+                headerList.push_back(string("Authorization: Bearer ")
+					+ youTubeAccessToken);
                 if (curlUploadData.lastByteSent == -1)
-                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
+                    headerList.push_back(string("Content-Length: ")
+						+ to_string(sizeInBytes));
                 else
-                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes
-						- curlUploadData.lastByteSent + 1));
+                    headerList.push_back(string("Content-Length: ")
+						+ to_string(sizeInBytes - curlUploadData.lastByteSent + 1));
                 if (curlUploadData.lastByteSent == -1)
-                    headerList.push_back(string("Content-Type: ") + videoContentType);
+                    headerList.push_back(string("Content-Type: ")
+						+ videoContentType);
                 else
-                    headerList.push_back(string("Content-Range: bytes ") + to_string(curlUploadData.lastByteSent)
-						+ "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
+                    headerList.push_back(string("Content-Range: bytes ")
+						+ to_string(curlUploadData.lastByteSent)
+						+ "-" + to_string(sizeInBytes - 1) + "/"
+						+ to_string(sizeInBytes));
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 {
-                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(
+                    curlpp::options::ReadFunctionCurlFunction
+						curlUploadCallbackFunction(
 						curlUploadVideoOnYouTubeCallback);
-                    curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
+                    curlpp::OptionTrait<void *, CURLOPT_READDATA>
+						curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
                     request.setOpt(curlUploadDataData);
            
@@ -26416,23 +26432,24 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
                 request.setOpt(new curlpp::options::CustomRequest{"PUT"});
                 request.setOpt(new curlpp::options::Url(youTubeUploadURL));
-                request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+                request.setOpt(new curlpp::options::Timeout(
+					_youTubeDataAPITimeoutInSeconds));
 
                 if (_youTubeDataAPIProtocol == "https")
                 {
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-        //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-        //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+        //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+        //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+        //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
 
 
                     // cert is stored PEM coded in file... 
@@ -26468,10 +26485,12 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
                     // disconnect if we can't validate server's cert
                     bool bSslVerifyPeer = false;
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
+						bSslVerifyPeer);
                     request.setOpt(sslVerifyPeer);
 
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST>
+						sslVerifyHost(0L);
                     request.setOpt(sslVerifyHost);
 
                     // request.setOpt(new curlpp::options::SslEngineDefault());                                              
@@ -26479,26 +26498,30 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 }
 
                 for (string headerMessage: headerList)
-                    _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
+                    _logger->info(__FILEREF__
+						+ "Adding header message: " + headerMessage);
                 request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                 _logger->info(__FILEREF__ + "Calling youTube (upload)"
-                        + ", youTubeUploadURL: " + youTubeUploadURL
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", youTubeUploadURL: " + youTubeUploadURL
                 );
                 request.perform();
 
                 long responseCode = curlpp::infos::ResponseCode::get(request);
                 
                 _logger->info(__FILEREF__ + "Called youTube (upload)"
-                        + ", youTubeUploadURL: " + youTubeUploadURL
-                        + ", responseCode: " + to_string(responseCode)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", youTubeUploadURL: " + youTubeUploadURL
+                    + ", responseCode: " + to_string(responseCode)
                 );
                 
                 if (responseCode == 200 || responseCode == 201)
                 {
                     _logger->info(__FILEREF__ + "youTube upload successful"
-                            + ", youTubeUploadURL: " + youTubeUploadURL
-                            + ", responseCode: " + to_string(responseCode)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", youTubeUploadURL: " + youTubeUploadURL
+                        + ", responseCode: " + to_string(responseCode)
                     );
 
                     contentCompletelyUploaded = true;
@@ -26509,9 +26532,11 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         || responseCode == 504
                         )
                 {                    
-                    _logger->warn(__FILEREF__ + "youTube upload failed, trying to resume"
-                            + ", youTubeUploadURL: " + youTubeUploadURL
-                            + ", responseCode: " + to_string(responseCode)
+                    _logger->warn(__FILEREF__
+						+ "youTube upload failed, trying to resume"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", youTubeUploadURL: " + youTubeUploadURL
+                        + ", responseCode: " + to_string(responseCode)
                     );
                     
                     /*
@@ -26526,32 +26551,35 @@ void MMSEngineProcessor::postVideoOnYouTube(
                     */
                     {                
                         list<string> headerList;
-                        headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
+                        headerList.push_back(string("Authorization: Bearer ")
+							+ youTubeAccessToken);
                         headerList.push_back(string("Content-Length: 0"));
-                        headerList.push_back(string("Content-Range: bytes */") + to_string(sizeInBytes));
+                        headerList.push_back(string("Content-Range: bytes */")
+							+ to_string(sizeInBytes));
 
                         curlpp::Cleanup cleaner;
                         curlpp::Easy request;
 
                         request.setOpt(new curlpp::options::CustomRequest{"PUT"});
                         request.setOpt(new curlpp::options::Url(youTubeUploadURL));
-                        request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+                        request.setOpt(new curlpp::options::Timeout(
+								_youTubeDataAPITimeoutInSeconds));
 
                         if (_youTubeDataAPIProtocol == "https")
                         {
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+                //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+                //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
 
 
                             // cert is stored PEM coded in file... 
@@ -26609,10 +26637,11 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         request.setOpt(new curlpp::options::Header(true));
             
                         _logger->info(__FILEREF__ + "Calling youTube check status"
-                                + ", youTubeUploadURL: " + youTubeUploadURL
-                                + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
-                                + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
-                                + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", youTubeUploadURL: " + youTubeUploadURL
+                            + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
+                            + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
+                            + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
                         );
                         request.perform();
 
@@ -26620,17 +26649,19 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         long responseCode = curlpp::infos::ResponseCode::get(request);
 
                         _logger->info(__FILEREF__ + "Called youTube check status"
-                                + ", youTubeUploadURL: " + youTubeUploadURL
-                                + ", responseCode: " + to_string(responseCode)
-                                + ", sResponse: " + sResponse
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", youTubeUploadURL: " + youTubeUploadURL
+                            + ", responseCode: " + to_string(responseCode)
+                            + ", sResponse: " + sResponse
                         );
 
                         if (responseCode != 308 || sResponse.find("Range: bytes=") == string::npos)
                         {   
                             // error
                             string errorMessage (__FILEREF__ + "youTube check status failed"
-                                    + ", youTubeUploadURL: " + youTubeUploadURL
-                                    + ", responseCode: " + to_string(responseCode)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", youTubeUploadURL: " + youTubeUploadURL
+                                + ", responseCode: " + to_string(responseCode)
                             );
                             _logger->error(errorMessage);
 
@@ -26664,8 +26695,9 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         {   
                             // error
                             string errorMessage (__FILEREF__ + "youTube check status failed"
-                                    + ", youTubeUploadURL: " + youTubeUploadURL
-                                    + ", rangeHeader: " + rangeHeader
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", youTubeUploadURL: " + youTubeUploadURL
+                                + ", rangeHeader: " + rangeHeader
                             );
                             _logger->error(errorMessage);
 
@@ -26673,10 +26705,11 @@ void MMSEngineProcessor::postVideoOnYouTube(
                         }
 
                         _logger->info(__FILEREF__ + "Resuming"
-                                + ", youTubeUploadURL: " + youTubeUploadURL
-                                + ", rangeHeader: " + rangeHeader
-                                + ", rangeHeader.substr(rangeStartOffsetIndex + 1): "
-									+ rangeHeader.substr(rangeStartOffsetIndex + 1)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", youTubeUploadURL: " + youTubeUploadURL
+                            + ", rangeHeader: " + rangeHeader
+                            + ", rangeHeader.substr(rangeStartOffsetIndex + 1): "
+								+ rangeHeader.substr(rangeStartOffsetIndex + 1)
                         );
                         curlUploadData.lastByteSent = stoll(rangeHeader.substr(rangeStartOffsetIndex + 1)) + 1;
                         curlUploadData.mediaSourceFileStream.seekg(curlUploadData.lastByteSent, ios::beg);
@@ -26686,8 +26719,9 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 {   
                     // error
                     string errorMessage (__FILEREF__ + "youTube upload failed"
-                            + ", youTubeUploadURL: " + youTubeUploadURL
-                            + ", responseCode: " + to_string(responseCode)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", youTubeUploadURL: " + youTubeUploadURL
+                        + ", responseCode: " + to_string(responseCode)
                     );
                     _logger->error(errorMessage);
 
@@ -26699,6 +26733,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
     catch (curlpp::LogicError & e) 
     {
         string errorMessage = __FILEREF__ + "Post video on YouTube failed (LogicError)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
@@ -26711,6 +26746,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
     catch (curlpp::RuntimeError & e) 
     {
         string errorMessage = __FILEREF__ + "Post video on YouTube failed (RuntimeError)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
@@ -26723,6 +26759,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
     catch (runtime_error e)
     {
         string errorMessage = __FILEREF__ + "Post video on YouTube failed (runtime_error)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
@@ -26735,6 +26772,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
     catch (exception e)
     {
         string errorMessage = __FILEREF__ + "Post video on YouTube failed (exception)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", youTubeURL: " + youTubeURL
             + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
@@ -26766,7 +26804,14 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 			= youTubeDetails;
 
 		if (youTubeTokenType == "AccessToken")
+		{
+			_logger->info(__FILEREF__ + "Using the youTube access token"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", youTubeAccessToken: " + youTubeAccessToken
+			);
+
 			return youTubeAccessToken;
+		}
 
         youTubeURL = _youTubeDataAPIProtocol
             + "://"
