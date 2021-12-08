@@ -106,6 +106,7 @@ private:
     string				_ffmpegEncoderPassword;
 	int					_ffmpegEncoderTimeoutInSeconds;
     string				_ffmpegEncoderKillEncodingURI;
+	string				_ffmpegEncoderChangeLiveProxyPlaylistURI;
 
 	int					_maxSecondsToWaitAPIIngestionLock;
 
@@ -238,6 +239,12 @@ private:
         string requestBody);
 
     void killOrCancelEncodingJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void changeLiveProxyPlaylist(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,

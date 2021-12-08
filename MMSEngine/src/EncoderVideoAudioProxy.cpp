@@ -11863,14 +11863,17 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool virtualVOD = false;
 	string outputFileFormat;
 	{
-        string field = "EncodersPool";
-        encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+        // string field = "EncodersPool";
+        // encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
-        field = "confKey";
+        string field = "confKey";
         channelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
+
+        field = "encodersPoolLabel";
+        encodersPool = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "userAgent";
         userAgent = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -13113,6 +13116,49 @@ bool EncoderVideoAudioProxy::liveProxy()
 				_encodingItem->_ingestedParametersRoot, field, -1);
 		}
 	}
+	/*
+	{
+		string field = "inputsRoot";
+		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+
+		if (inputsRoot.size() == 0)
+		{
+			string errorMessage = __FILEREF__ + "No inputsRoot are present"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", inputsRoot.size: " + to_string(inputsRoot.size())
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			Json::Value firstInputRoot = inputsRoot[0];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				string field = "utcProxyPeriodStart";
+				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+			}
+
+			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				field = "utcProxyPeriodEnd";
+				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+			}
+		}
+	}
+	*/
 
 	if (timePeriod)
 	{
@@ -13190,13 +13236,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	{
-        // string field = "channelSourceType";
-        // channelSourceType = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+        // string field = "EncodersPool";
+        // encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
-        string field = "EncodersPool";
-        encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "liveURLConfKey";
+        string field = "liveURLConfKey";
         liveURLConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
 			field, 0);
 
@@ -13206,6 +13249,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
+
+        field = "encodersPoolLabel";
+        encodersPool = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
         waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
@@ -13230,6 +13276,61 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				_encodingItem->_encodingParametersRoot, field, -1);
 		}
 	}
+	/*
+	{
+		string field = "inputsRoot";
+		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+
+		Json::Value firstInputRoot = inputsRoot[0];
+
+		field = "channelInput";
+		Json::Value channelInputRoot = firstInputRoot[field];
+
+        field = "encodersPoolLabel";
+        encodersPool = channelInputRoot.get(field, "").asString();
+
+        field = "channelConfKey";
+        liveURLConfKey = JSONUtils::asInt64(channelInputRoot, field, 0);
+
+        field = "channelConfigurationLabel";
+        configurationLabel = channelInputRoot.get(field, "").asString();
+
+        field = "url";
+        liveURL = channelInputRoot.get(field, "").asString();
+
+        field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
+			_encodingItem->_encodingParametersRoot, field, 600);
+
+        field = "maxAttemptsNumberInCaseOfErrors";
+        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
+			_encodingItem->_encodingParametersRoot, field, 2);
+
+		{
+			Json::Value firstInputRoot = inputsRoot[0];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				string field = "utcProxyPeriodStart";
+				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+			}
+
+			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				field = "utcProxyPeriodEnd";
+				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+			}
+		}
+	}
+	*/
 
 	bool killedByUser = false;
 	bool urlForbidden = false;
@@ -13756,6 +13857,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			}
 
 			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
 				+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
@@ -13774,6 +13876,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					int encodingProgress = -1;
 
 					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encodingProgress: " + to_string(encodingProgress)
 					);
@@ -13832,6 +13935,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", currentAttemptsNumberInCaseOfErrors: "
+							+ to_string(currentAttemptsNumberInCaseOfErrors)
+						+ ", maxAttemptsNumberInCaseOfErrors: "
+							+ to_string(maxAttemptsNumberInCaseOfErrors)
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", killedByUser: " + to_string(killedByUser)
 						+ ", completedWithError: " + to_string(completedWithError)
@@ -17008,6 +17115,8 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		string label;
 		bool sourceTypeToBeModified = false;
 		string sourceType;
+		bool encodersPoolToBeModified = false;
+		string encodersPool;
 		bool urlToBeModified = false;
 		string url;
 		bool pushProtocolToBeModified = false;
@@ -17058,6 +17167,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 			_encodingItem->_workspace->_workspaceKey,
 			labelToBeModified, label,
 			sourceTypeToBeModified, sourceType,
+			encodersPoolToBeModified, encodersPool,
 			urlToBeModified, url,
 			pushProtocolToBeModified, pushProtocol,
 			pushServerNameToBeModified, pushServerName,

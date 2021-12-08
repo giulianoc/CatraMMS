@@ -2103,6 +2103,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
 					// IP_PULL, IP_PUSH, CaptureLive, Satellite
 					"sourceType					VARCHAR (64) NOT NULL,"
+                    "encodersPoolLabel			VARCHAR (64) NULL,"
 					"url						VARCHAR (2048) NULL,"	// pull
                     "pushProtocol				VARCHAR (64) NULL,"
                     "pushServerName				VARCHAR (128) NULL,"

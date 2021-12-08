@@ -370,12 +370,12 @@ void API::encodingJobPriority(
 }
 
 void API::killOrCancelEncodingJob(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	string requestBody)
 {
-    string api = "killOrCancelEncodingJob";
+	string api = "killOrCancelEncodingJob";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -406,7 +406,7 @@ void API::killOrCancelEncodingJob(
 			MMSEngineDBFacade::EncodingStatus theOtherStatus;
 
 			tie(ingestionJobKey, type, encoderKey, status, highAvailability, main,
-					theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
+				theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
 
 			_logger->info(__FILEREF__ + "getEncodingJobDetails"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)

@@ -8764,7 +8764,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int64_t ingestionJobKey, string ingestionJobLabel,
 	string channelSourceType,
 
-	string configurationLabel, int64_t confKey, string url,
+	string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
 	string userAgent,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
@@ -8860,6 +8860,9 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "encodersPoolLabel";
+				parametersRoot[field] = encodersPoolLabel;
 
 				field = "pushListenTimeout";
 				parametersRoot[field] = pushListenTimeout;
@@ -9416,8 +9419,9 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
+	Json::Value inputsRoot,
 	string channelSourceType,
-	int64_t liveURLConfKey, string configurationLabel, string url,
+	int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
 
 	int pushListenTimeout,
 	int captureVideoDeviceNumber,
@@ -9474,7 +9478,10 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "channelSourceType";
+				string field = "inputsRoot";
+				parametersRoot[field] = inputsRoot;
+
+				field = "channelSourceType";
 				parametersRoot[field] = channelSourceType;
 
 				field = "liveURLConfKey";
@@ -9485,6 +9492,9 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "encodersPoolLabel";
+				parametersRoot[field] = encodersPoolLabel;
 
 				field = "pushListenTimeout";
 				parametersRoot[field] = pushListenTimeout;

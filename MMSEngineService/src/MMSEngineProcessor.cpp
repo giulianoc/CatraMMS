@@ -12194,6 +12194,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		int64_t confKey = -1;
 		string channelSourceType;
+		string encodersPoolLabel;
 		string pullUrl;
 		string pushProtocol;
 		string pushServerName;
@@ -12211,7 +12212,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		int64_t deliveryCode;
 
-		string encodersPool;
 		string userAgent;
         string recordingPeriodStart;
         string recordingPeriodEnd;
@@ -12244,11 +12244,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				{
 					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int, string, int,
+					tuple<int64_t, string, string, string, string, string, int, string, int,
 						int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(confKey, channelSourceType,
+						encodersPoolLabel,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
 						pushListenTimeout,
@@ -12264,9 +12265,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 				}
 			}
 
+			// EncodersPool override the one included in ChannelConf if present
             field = "EncodersPool";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				encodersPool = parametersRoot.get(field, "").asString();
+				encodersPoolLabel = parametersRoot.get(field, "").asString();
 
             field = "UserAgent";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -12483,7 +12485,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		{
 			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(
-				workspace->_workspaceKey, encodersPool);
+				workspace->_workspaceKey, encodersPoolLabel);
 			if (encodersNumber == 0)
 			{
 				string errorMessage = __FILEREF__ + "No encoders available"
@@ -12904,7 +12906,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			ingestionJobLabel, channelSourceType,
-			configurationLabel, confKey, liveURL, userAgent,
+			configurationLabel, confKey, liveURL, encodersPoolLabel, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 
@@ -12950,10 +12952,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 }
 
 void MMSEngineProcessor::manageLiveProxy(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot
+	int64_t ingestionJobKey,
+	MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot
 )
 {
     try
@@ -12980,7 +12982,11 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		int64_t confKey = -1;
 		string channelSourceType;
+		string encodersPoolLabel;
 		string pullUrl;
+		int maxWidth = -1;
+		string userAgent;
+		string otherInputOptions;
 		string pushProtocol;
 		string pushServerName;
 		int pushServerPort = -1;
@@ -13017,11 +13023,12 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				{
 					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int, string, int,
+					tuple<int64_t, string, string, string, string, string, int, string, int,
 						int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(confKey, channelSourceType,
+						encodersPoolLabel,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
 						pushListenTimeout,
@@ -13037,8 +13044,13 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 			}
 
+			// EncodersPool override the one included in ChannelConf if present
+            string field = "EncodersPool";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				encodersPoolLabel = parametersRoot.get(field, "").asString();
+
 			timePeriod = false;
-            string field = "TimePeriod";
+            field = "TimePeriod";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				utcProxyPeriodStart = -1;
@@ -13096,6 +13108,18 @@ void MMSEngineProcessor::manageLiveProxy(
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
+
+			field = "MaxWidth";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				maxWidth = JSONUtils::asInt(parametersRoot, field, -1);
+
+			field = "UserAgent";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				userAgent = parametersRoot.get(field, "").asString();
+
+			field = "OtherInputOptions";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				otherInputOptions = parametersRoot.get(field, "").asString();
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13172,6 +13196,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				string manifestDirectoryPath;
 				string manifestFileName;
 				string rtmpUrl;
+				string udpUrl;
 
 
 				string field = "OutputType";
@@ -13272,10 +13297,15 @@ void MMSEngineProcessor::manageLiveProxy(
 							manifestExtension, _encodingItem->_workspace);
 					*/
 				}
-				else
+				else if (outputType == "RTMP_Stream")
 				{
 					field = "RtmpUrl";
 					rtmpUrl = outputRoot.get(field, "").asString();
+				}
+				else // if (outputType == "UDP_Stream")
+				{
+					field = "udpUrl";
+					udpUrl = outputRoot.get(field, "").asString();
 				}
 
 				string keyField = "EncodingProfileKey";
@@ -13389,12 +13419,38 @@ void MMSEngineProcessor::manageLiveProxy(
 				field = "rtmpUrl";
 				localOutputRoot[field] = rtmpUrl;
 
+				field = "udpUrl";
+				localOutputRoot[field] = udpUrl;
+
 				localOutputsRoot.append(localOutputRoot);
 			}
 		}
 
+		Json::Value channelInputRoot = _mmsEngineDBFacade->getChannelInputRoot(
+			workspace->_workspaceKey, configurationLabel,
+			maxWidth, userAgent, otherInputOptions);
+
+		Json::Value inputRoot;
+		{
+			string field = "channelInput";
+			inputRoot[field] = channelInputRoot;
+
+			field = "timePeriod";
+			inputRoot[field] = timePeriod;
+
+			field = "utcProxyPeriodStart";
+			inputRoot[field] = utcProxyPeriodStart;
+
+			field = "utcProxyPeriodEnd";
+			inputRoot[field] = utcProxyPeriodEnd;
+		}
+
+		Json::Value inputsRoot(Json::arrayValue);
+		inputsRoot.append(inputRoot);
+
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			channelSourceType, confKey, configurationLabel, liveURL,
+			inputsRoot,
+			channelSourceType, confKey, configurationLabel, liveURL, encodersPoolLabel,
 
 			pushListenTimeout,
 			captureVideoDeviceNumber,
@@ -14191,7 +14247,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string inputConfigurationLabel = inputChannelsRoot[inputChannelIndex].asString();
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, int, string, int,
+				tuple<int64_t, string, string, string, string, string, int, string, int,
 					int, string, int, int, int, int, int, int64_t>
 					confKeyAndChannelURL = _mmsEngineDBFacade->getChannelConfDetails(
 					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
@@ -14200,7 +14256,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string channelSourceType;
 				string inputChannelURL;
 				tie(inputChannelConfKey, channelSourceType, inputChannelURL,
-					ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = confKeyAndChannelURL;
 
@@ -22381,7 +22437,7 @@ void MMSEngineProcessor::emailNotificationThread(
 											= parametersRoot.get(field, "").asString();
 
 										bool warningIfMissing = false;
-										tuple<int64_t, string, string, string, string,
+										tuple<int64_t, string, string, string, string, string,
 											int, string, int, int, string, int,
 											int, int, int, int, int64_t>
 											channelDetails =
@@ -22393,7 +22449,7 @@ void MMSEngineProcessor::emailNotificationThread(
 										string channelSourceType;
 										tie(ignore, channelSourceType,
 											checkStreaming_streamingUrl,
-											ignore, ignore, ignore, ignore,
+											ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore)
 											= channelDetails;
@@ -22689,13 +22745,13 @@ void MMSEngineProcessor::checkStreamingThread(
 			string configurationLabel = parametersRoot.get(field, "").asString();
 
 			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int, string, int,
+			tuple<int64_t, string, string, string, string, string, int, string, int,
 				int, string, int, int, int, int, int, int64_t>
 				ipChannelDetails = _mmsEngineDBFacade->getChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 			string channelSourceType;
 			tie(ignore, channelSourceType, streamingUrl,
-				ignore, ignore, ignore, ignore, ignore,
+				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore) = ipChannelDetails;
 		}

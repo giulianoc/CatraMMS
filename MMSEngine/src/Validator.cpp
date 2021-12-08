@@ -3886,7 +3886,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 				liveProxyOutputType = outputRoot.get(field, "").asString();
 				if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 				{
-					string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+					string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 						+ ", Field: " + field
 						+ ", liveProxyOutputType: " + liveProxyOutputType
 						+ ", label: " + label
@@ -3924,6 +3924,29 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			{
 				vector<string> mandatoryFields = {
 					"RtmpUrl"
+				};
+				for (string mandatoryField: mandatoryFields)
+				{
+					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", Field: " + mandatoryField
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+							;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+			else if (liveProxyOutputType == "UDP_Stream")
+			{
+				vector<string> mandatoryFields = {
+					"udpUrl"
 				};
 				for (string mandatoryField: mandatoryFields)
 				{
@@ -4091,7 +4114,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 			liveProxyOutputType = outputRoot.get(field, "").asString();
 			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 					+ ", Field: " + field
 					+ ", liveProxyOutputType: " + liveProxyOutputType
 					+ ", label: " + label
@@ -4129,6 +4152,29 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		{
 			vector<string> mandatoryFields = {
 				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (liveProxyOutputType == "UDP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"udpUrl"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -4509,7 +4555,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 			liveProxyOutputType = outputRoot.get(field, "").asString();
 			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 					+ ", Field: " + field
 					+ ", liveProxyOutputType: " + liveProxyOutputType
 					+ ", label: " + label
@@ -4571,6 +4617,53 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		{
 			vector<string> mandatoryFields = {
 				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
+		}
+		else if (liveProxyOutputType == "UDP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"udpUrl"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -4743,7 +4836,7 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 			outputType = parametersRoot.get(field, "").asString();
 			if (!isLiveProxyOutputTypeValid(outputType))
 			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 					+ ", Field: " + field
 					+ ", outputType: " + outputType
 					+ ", label: " + label
@@ -4781,6 +4874,29 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 		{
 			vector<string> mandatoryFields = {
 				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (outputType == "UDP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"udpUrl"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -6584,6 +6700,7 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
         "RTMP_Stream",
+        "UDP_Stream",
         "HLS",
         "DASH"
     };

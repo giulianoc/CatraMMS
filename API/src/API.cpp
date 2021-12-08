@@ -419,6 +419,10 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
     );
+    _ffmpegEncoderChangeLiveProxyPlaylistURI = _configuration["ffmpeg"].get("encoderChangeLiveProxyPlaylistURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->encoderChangeLiveProxyPlaylistURI: " + _ffmpegEncoderChangeLiveProxyPlaylistURI
+    );
 
 	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	_logger->info(__FILEREF__ + "Configuration item"
@@ -1699,6 +1703,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
         killOrCancelEncodingJob(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "changeLiveProxyPlaylist")
+    {
+        changeLiveProxyPlaylist(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "mediaItemsList")
     {
         mediaItemsList(request, workspace, queryParameters, requestBody, admin);
@@ -2949,14 +2957,14 @@ pair<string, string> API::createDeliveryAuthorization(
 			int64_t liveURLConfKey;
 			string channelSourceType;
 			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int, string, int,
+			tuple<int64_t, string, string, string, string, string, int, string, int,
 				int, string, int, int, int, int, int, int64_t>
 				channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
 					requestWorkspace->_workspaceKey, configurationLabel,
 					warningIfMissing);
 			tie(liveURLConfKey, channelSourceType,
 				ignore,
-				ignore, ignore, ignore, ignore,
+				ignore, ignore, ignore, ignore, ignore,
 				ignore,
 				ignore, ignore,
 				ignore, ignore, ignore,

@@ -12,6 +12,8 @@
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
+		// In case this field is initialized here, it overrides the one specified by the channel
+		// configuration label
 		"EncodersPool": "",
 
 		// optional, it specifies if the Proxy will have a specified running period

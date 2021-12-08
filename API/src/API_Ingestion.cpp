@@ -27,6 +27,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/Convert.h"
 #include "Validator.h"
 #include "PersistenceLock.h"
 #include "API.h"
@@ -4070,14 +4071,16 @@ void API::cancelIngestionJob(
 
 		MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
-					workspace->_workspaceKey, ingestionJobKey);
+		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+			string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
+			workspace->_workspaceKey, ingestionJobKey);
 		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
 
-		if (!forceCancel && ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+		if (!forceCancel && ingestionStatus !=
+			MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 		{
-			string errorMessage = string("The IngestionJob cannot be removed because of his Status")
+			string errorMessage =
+				string("The IngestionJob cannot be removed because of his Status")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
 			;
@@ -4370,6 +4373,654 @@ void API::updateIngestionJob(
             throw runtime_error(errorMessage);
         }
     }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::changeLiveProxyPlaylist(
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	string requestBody)
+{
+	string api = "changeLiveProxyPlaylist";
+
+	_logger->info(__FILEREF__ + "Received " + api
+		+ ", requestBody: " + requestBody
+	);
+
+    try
+    {
+        int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+        {
+			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+        }
+		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
+		// check of ingestion job and retrieve some fields
+		int64_t utcBroadcasterStart;
+		int64_t utcBroadcasterEnd;
+		Json::Value defaultChannelInputRoot = Json::nullValue;
+		int64_t broadcastIngestionJobKey;
+        try
+        {
+            _logger->info(__FILEREF__ + "getIngestionJobDetails"
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
+					workspace->_workspaceKey, ingestionJobKey);
+
+			MMSEngineDBFacade::IngestionType	ingestionType;
+			string			metaDataContent;
+
+			tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
+
+			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
+			{
+				string errorMessage = string("Ingestion type is not a LiveProxy")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			Json::Value metadataContentRoot;
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
+					metaDataContent.c_str() + metaDataContent.size(), 
+					&metadataContentRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = string("Json metadata failed during the parsing")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", json data: " + metaDataContent
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("Json metadata failed during the parsing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", json data: " + metaDataContent
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string field = "broadcaster";
+			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
+			{
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			Json::Value broadcasterRoot = metadataContentRoot[field];
+
+			field = "broadcastDefaultChannelConfigurationLabel";
+			if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
+			{
+				string broadcastDefaultChannelConfigurationLabel =
+					broadcasterRoot.get(field, "").asString();
+				int maxWidth = -1;
+				string userAgent;
+				string otherInputOptions;
+
+				defaultChannelInputRoot =
+					_mmsEngineDBFacade->getChannelInputRoot(
+					workspace->_workspaceKey, broadcastDefaultChannelConfigurationLabel,
+					maxWidth, userAgent, otherInputOptions);
+			}
+			else
+			{
+                string errorMessage = __FILEREF__ + "No any default media for the broadcaster"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+			field = "broadcastIngestionJobKey";
+			broadcastIngestionJobKey = JSONUtils::asBool(broadcasterRoot, field, 0);
+			if (broadcastIngestionJobKey == 0)
+			{
+                string errorMessage = __FILEREF__ + "No broadcastIngestionJobKey found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+			field = "ProxyPeriod";
+			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
+			{
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+			Json::Value proxyPeriodRoot = metadataContentRoot[field];
+
+			field = "TimePeriod";
+			bool timePeriod = JSONUtils::asBool(proxyPeriodRoot, field, false);
+			if (!timePeriod)
+			{
+                string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have TimePeriod"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", timePeriod: " + to_string(timePeriod);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+			field = "Start";
+			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();                      
+			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);                      
+
+			field = "End";
+			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();                      
+			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);                      
+		}
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		// check/build the new playlist
+		Json::Value newPlaylistRoot(Json::arrayValue);
+        try
+        {
+			Json::Value newReceivedPlaylistRoot;
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(requestBody.c_str(),
+					requestBody.c_str() + requestBody.size(), 
+					&newReceivedPlaylistRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = string("Json metadata failed during the parsing")
+						+ ", errors: " + errors
+						+ ", json data: " + requestBody
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("Json metadata failed during the parsing"
+					", json data: " + requestBody
+				);
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
+
+			for (int newPlaylistIndex = 0;
+				newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
+			{
+				Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[newPlaylistIndex];
+
+				// correct values have to be:
+				//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
+				// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
+				string field = "utcProxyPeriodStart";
+				int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
+				field = "utcProxyPeriodEnd";
+				int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
+				if (utcCurrentBroadcasterStart > utcProxyPeriodStart
+					|| utcProxyPeriodEnd >= utcProxyPeriodStart
+					|| utcProxyPeriodEnd > utcBroadcasterEnd)
+				{
+					string errorMessage = __FILEREF__ + "newReceivedPlaylistItemRoot"
+						+ ", newPlaylistIndex: " + to_string(newPlaylistIndex)
+						+ ", utcCurrentBroadcasterStart: " + to_string(utcCurrentBroadcasterStart)
+						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+						+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+						+ ", utcBroadcasterEnd: " + to_string(utcBroadcasterEnd)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				if (utcProxyPeriodStart == utcCurrentBroadcasterStart)
+				{
+					newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+				}
+				else // if (utcCurrentBroadcasterStart < utcProxyPeriodStart)
+				{
+					Json::Value newdPlaylistItemToBeAddedRoot;
+
+					field = "timePeriod";
+					newdPlaylistItemToBeAddedRoot[field] = true;
+
+					field = "utcProxyPeriodStart";
+					newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
+
+					field = "utcProxyPeriodEnd";
+					newdPlaylistItemToBeAddedRoot[field] = utcProxyPeriodStart;
+
+					if (defaultChannelInputRoot != Json::nullValue)
+						newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
+					else
+					{
+						string errorMessage = __FILEREF__ + "No any default media present"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+
+					newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+				}
+				utcCurrentBroadcasterStart = utcProxyPeriodEnd;
+			}
+
+			if (newReceivedPlaylistRoot.size() == 0)
+			{
+				// no items inside the playlist
+
+				Json::Value newdPlaylistItemToBeAddedRoot;
+
+				string field = "timePeriod";
+				newdPlaylistItemToBeAddedRoot[field] = true;
+
+				field = "utcProxyPeriodStart";
+				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterStart;
+
+				field = "utcProxyPeriodEnd";
+				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
+
+				if (defaultChannelInputRoot != Json::nullValue)
+					newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
+				else
+				{
+					string errorMessage = __FILEREF__ + "No any default media present"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+			}
+			else if (utcCurrentBroadcasterStart < utcBroadcasterEnd)
+			{
+				// last period has to be added
+
+				Json::Value newdPlaylistItemToBeAddedRoot;
+
+				string field = "timePeriod";
+				newdPlaylistItemToBeAddedRoot[field] = true;
+
+				field = "utcProxyPeriodStart";
+				newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
+
+				field = "utcProxyPeriodEnd";
+				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
+
+				if (defaultChannelInputRoot != Json::nullValue)
+					newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
+				else
+				{
+					string errorMessage = __FILEREF__ + "No any default media present"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+			}
+		}
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		// update the playlist of broadcastIngestionJobKey
+		string ffmpegEncoderURL;
+		ostringstream response;
+		try
+		{
+            _logger->info(__FILEREF__ + "getIngestionJobDetails"
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                + ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+            );
+
+			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
+					workspace->_workspaceKey, broadcastIngestionJobKey);
+
+			MMSEngineDBFacade::IngestionType	ingestionType;
+			MMSEngineDBFacade::IngestionStatus	ingestionStatus;
+			string			metaDataContent;
+
+			tie(ignore, ingestionType, ingestionStatus, metaDataContent, ignore) = ingestionJobDetails;
+
+			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
+			{
+				string errorMessage = string("Ingestion type is not a LiveProxy")
+					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+			{
+				Json::Value metadataContentRoot;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
+						metaDataContent.c_str() + metaDataContent.size(), 
+						&metadataContentRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = string("Json metadata failed during the parsing")
+							+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+							+ ", errors: " + errors
+							+ ", json data: " + metaDataContent
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(exception e)
+				{
+					string errorMessage = string("Json metadata failed during the parsing")
+						+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+						+ ", json data: " + metaDataContent
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				// update of the parameters
+				Json::Value mmsInternalRoot;
+			
+				string field = "broadcasterInputsRoot";
+				mmsInternalRoot[field] = newPlaylistRoot;
+
+				field = "internalMMS";
+				metadataContentRoot[field] = mmsInternalRoot;
+
+				Json::StreamWriterBuilder wbuilder;
+				string newMetadataContentRoot = Json::writeString(wbuilder, metadataContentRoot);
+
+				_mmsEngineDBFacade->updateIngestionJobMetadataContent(
+					broadcastIngestionJobKey, newMetadataContentRoot);
+			}
+			else if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::EncodingQueued)
+			{
+				// update of the running encoding playlist
+				Json::StreamWriterBuilder wbuilder;
+				string newPlaylist = Json::writeString(wbuilder, newPlaylistRoot);
+
+				pair<int64_t, int64_t> encodingJobDetails =
+					_mmsEngineDBFacade->getEncodingJobDetailsByIngestionJobKey(
+					broadcastIngestionJobKey);
+
+				int64_t encodingJobKey;
+				int64_t encoderKey;
+				tie(ingestionJobKey, encoderKey) = encodingJobDetails;
+
+				string transcoderHost = _mmsEngineDBFacade->getEncoderURL(encoderKey);
+
+				ffmpegEncoderURL = 
+					transcoderHost
+					+ _ffmpegEncoderChangeLiveProxyPlaylistURI
+					+ "/" + to_string(encodingJobKey)
+				;
+
+				list<string> header;
+
+				{
+					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
+						+ _ffmpegEncoderPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+					header.push_back(basicAuthorization);
+				}
+            
+				curlpp::Cleanup cleaner;
+				curlpp::Easy request;
+
+				// Setting the URL to retrive.
+				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+				request.setOpt(new curlpp::options::CustomRequest("PUT"));
+
+				// timeout consistent with nginx configuration (fastcgi_read_timeout)
+				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
+				// if (_ffmpegEncoderProtocol == "https")
+				string httpsPrefix("https");
+				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
+				{
+					// disconnect if we can't validate server's cert
+					bool bSslVerifyPeer = false;
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+					request.setOpt(sslVerifyPeer);
+              
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+					request.setOpt(sslVerifyHost);
+
+					// request.setOpt(new curlpp::options::SslEngineDefault());
+				}
+
+				request.setOpt(new curlpp::options::HttpHeader(header));
+				request.setOpt(new curlpp::options::PostFields(newPlaylist));
+				request.setOpt(new curlpp::options::PostFieldSize(newPlaylist.length()));
+
+				request.setOpt(new curlpp::options::WriteStream(&response));
+
+				chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+				_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
+					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+				);
+				request.perform();
+				chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+				_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
+					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+					+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+					+ ", response.str: " + response.str()
+				);
+
+				string sResponse = response.str();
+
+				// LF and CR create problems to the json parser...
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+					sResponse.pop_back();
+	
+				{
+					string message = __FILEREF__ + "changeLiveProxyPlaylist encoding response"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", sResponse: " + sResponse
+					;
+					_logger->info(message);
+				}
+
+				long responseCode = curlpp::infos::ResponseCode::get(request);                                        
+				if (responseCode != 200)
+				{
+					string errorMessage = __FILEREF__ + "changeLiveProxyPlaylist encoding URL failed"                                       
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", sResponse: " + sResponse                                                                 
+						+ ", responseCode: " + to_string(responseCode)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		catch (curlpp::LogicError & e) 
+		{
+			_logger->error(__FILEREF__ + "changeLiveProxyPlaylist URL failed (LogicError)"
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			);
+           
+			throw e;
+		}
+		catch (curlpp::RuntimeError & e) 
+		{ 
+			string errorMessage = string("changeLiveProxyPlaylist URL failed (RuntimeError)")
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			;
+         
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch (runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "changeLiveProxyPlaylist URL failed (runtime_error)"
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			);
+
+			throw e;
+		}
+		catch (exception e)
+		{
+			_logger->error(__FILEREF__ + "changeLiveProxyPlaylist URL failed (exception)"
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			);
+
+			throw e;
+		}
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "API failed"

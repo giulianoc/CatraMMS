@@ -316,52 +316,8 @@ public:
 		// int monitorVirtualVODPlaylistEntriesNumber,
 		// int monitorVirtualVODSegmentDurationInSeconds,
 
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
 
-		pid_t* pChildPid);
-
-	void liveProxyByHTTPStreaming(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		int maxWidth,
-
-		bool actAsServer,
-        string liveURL,
-		int listenTimeoutInSeconds,
-
-		string userAgent,
-		string otherOutputOptions,
-
-		Json::Value encodingProfileDetailsRoot,
-		bool isVideo,
-
-		string outputType,	// HLS or DASH
-
-		// next are parameters for the output
-		int segmentDurationInSeconds,
-		int playlistEntriesNumber,
-		string manifestDirectoryPath,                                                                        
-		string manifestFileName,
-		pid_t* pChildPid);
-
-	void liveProxyByStream(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		int maxWidth,
-
-		bool actAsServer,
-        string liveURL,
-		int listenTimeoutInSeconds,
-
-		string userAgent,
-		// double itsoffset,
-		string otherInputOptions,
-		string otherOutputOptions,
-
-		Json::Value encodingProfileDetailsRoot,
-		bool isVideo,
-
-		string rtmpUrl,
 		pid_t* pChildPid);
 
 	void liveProxy(
@@ -405,7 +361,18 @@ public:
 		//      Json::Value encodingProfileDetailsRoot,
 		//      string rtmpUrl,
 		//
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
+
+		pid_t* pChildPid);
+
+	void liveProxy2(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+
+		mutex* inputsRootMutex,
+		Json::Value* inputsRoot,
+
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
 
 		pid_t* pChildPid);
 
@@ -440,27 +407,7 @@ public:
 		//      string encodingProfileContentType
 		//      string rtmpUrl,
 		//
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
-
-		pid_t* pChildPid);
-
-	void yourTV(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-
-		long port,
-
-		Json::Value encodingProfileDetailsRoot,
-
-		string outputType,
-		string otherOutputOptions,
-		string audioVolumeChange,
-		string manifestDirectoryPath,
-		string manifestFileName,
-		int segmentDurationInSeconds,
-		int playlistEntriesNumber,
-		bool isVideo,
-		string rtmpUrl,
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
 
 		pid_t* pChildPid);
 
@@ -492,6 +439,7 @@ public:
 		int playlistEntriesNumber,
 		bool isVideo,
 		string rtmpUrl,
+		string udpUrl,
 
 		pid_t* pChildPid);
 
@@ -600,6 +548,18 @@ private:
 		string mmsSourceAssetPathName = "",
 		string stagingEncodedAssetPathName = ""
 	);
+
+	int getNextLiveProxyInput(Json::Value* inputsRoot, mutex* inputsRootMutex,
+		int currentInputIndex, Json::Value* newInputRoot);
+
+	pair<long, string> liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
+		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
+
+	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
+		string otherOutputOptionsBecauseOfMaxWidth,
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool,
+			string, string>>& outputRoots,
+		vector<string>& ffmpegOutputArgumentList);
 
     void settingFfmpegParameters(
         Json::Value encodingProfileDetailsRoot,

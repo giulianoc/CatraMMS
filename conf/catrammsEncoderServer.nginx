@@ -57,6 +57,9 @@
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /encoder?version=$1&method=killEncodingJob&encodingJobKey=$2 last;
 		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/playlist/([0-9]+)/?$ /encoder?version=$1&method=changeLiveProxyPlaylist&encodingJobKey=$2 last;
+		}
 	}
 
 	location /encoder {

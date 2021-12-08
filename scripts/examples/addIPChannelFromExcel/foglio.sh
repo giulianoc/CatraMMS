@@ -18,5 +18,6 @@ apiKey=$3
 #for cibortv: mms-api.restream.ovh
 mmsApiHostname=$4
 
-awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/movie.awk $tsvPathName
+#awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/movie.awk $tsvPathName
+awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/serie.awk $tsvPathName
 

@@ -318,7 +318,7 @@ int main(int argc, char** argv)
 }
 
 FFMPEGEncoder::FFMPEGEncoder(
-		
+
 		Json::Value configuration, 
 		// string encoderCapabilityConfigurationPathName,
 
@@ -3345,6 +3345,141 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
 			+ ", \"pid\": " + to_string(pidToBeKilled)
 			+ "}";
+
+        sendSuccess(request, 200, responseBody);
+    }
+    else if (method == "changeLiveProxyPlaylist")
+    {
+        /*
+        bool isAdminAPI = get<1>(workspaceAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + to_string(isAdminAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+
+		_logger->info(__FILEREF__ + "Received changeLiveProxyPlaylist"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		);
+
+		bool			encodingFound = false;
+
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			{
+				if (liveProxy->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					selectedLiveProxy = liveProxy;
+
+					break;
+				}
+			}
+			#else	// __MAP__
+			map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
+				_liveProxiesCapability->find(encodingJobKey);
+			if (it != _liveProxiesCapability->end())
+			{
+				encodingFound = true;
+				selectedLiveProxy = it->second;
+			}
+			#endif
+
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + NoEncodingJobKeyFound().what();
+            
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+				return;
+			}
+
+			Json::Value newInputsRoot;
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(requestBody.c_str(),
+					requestBody.c_str() + requestBody.size(), 
+					&newInputsRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", errors: " + errors
+						+ ", requestBody: " + requestBody
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(...)
+			{
+				string errorMessage = string("Parsing new LiveProxy playlist failed")
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", requestBody: " + requestBody
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				_logger->info(__FILEREF__ + "Replacing the LiveProxy playlist"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				);
+
+				lock_guard<mutex> locker(selectedLiveProxy->_inputsRootMutex);
+
+				selectedLiveProxy->_inputsRoot = newInputsRoot;
+			}
+		}
+
+		string responseBody;
+		{
+			Json::Value responseBodyRoot;
+
+			string field = "encodingJobKey";
+			responseBodyRoot[field] = encodingJobKey;
+
+			Json::StreamWriterBuilder wbuilder;
+			responseBody = Json::writeString(wbuilder, responseBodyRoot);
+		}
 
         sendSuccess(request, 200, responseBody);
     }
@@ -6549,6 +6684,7 @@ void FFMPEGEncoder::liveRecorderThread(
 				int playlistEntriesNumber = -1;
 				bool isVideo = true;
 				string rtmpUrl;
+				string udpUrl;
 
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
@@ -6587,6 +6723,19 @@ void FFMPEGEncoder::liveRecorderThread(
 						outputRoot.get("encodingProfileContentType", "Video").asString();
 					isVideo = encodingProfileContentType == "Video" ? true : false;
 				}
+				else if (outputType == "UDP_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
+						asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
+						asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					udpUrl = outputRoot.get("udpUrl", "").asString();
+
+					string encodingProfileContentType =
+						outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
 				else
 				{
 					string errorMessage = __FILEREF__ + "liveRecorder. Wrong output type"
@@ -6600,11 +6749,11 @@ void FFMPEGEncoder::liveRecorderThread(
 				}
 
 				tuple<string, string, string, Json::Value, string, string, int, int,
-					bool, string> tOutputRoot
+					bool, string, string> tOutputRoot
 					= make_tuple(outputType, otherOutputOptions, audioVolumeChange,
 						encodingProfileDetailsRoot, manifestDirectoryPath,
 						manifestFileName, localSegmentDurationInSeconds,
-						playlistEntriesNumber, isVideo, rtmpUrl);
+						playlistEntriesNumber, isVideo, rtmpUrl, udpUrl);
 
 				liveRecording->_liveRecorderOutputRoots.push_back(tOutputRoot);
 
@@ -10077,6 +10226,7 @@ void FFMPEGEncoder::liveProxyThread(
 				int playlistEntriesNumber = -1;
 				bool isVideo = true;
 				string rtmpUrl;
+				string udpUrl;
 
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
@@ -10106,6 +10256,16 @@ void FFMPEGEncoder::liveProxyThread(
 					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
 					isVideo = encodingProfileContentType == "Video" ? true : false;
 				}
+				else if (outputType == "UDP_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					udpUrl = outputRoot.get("udpUrl", "").asString();
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
 				else
 				{
 					string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
@@ -10117,10 +10277,11 @@ void FFMPEGEncoder::liveProxyThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
-					= make_tuple(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
-						manifestDirectoryPath, manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
-						isVideo, rtmpUrl);
+				tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
+					string> tOutputRoot = make_tuple(outputType, otherOutputOptions,
+						audioVolumeChange, encodingProfileDetailsRoot, manifestDirectoryPath,
+						manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
+						isVideo, rtmpUrl, udpUrl);
 
 				liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
 
@@ -10343,6 +10504,20 @@ void FFMPEGEncoder::liveProxyThread(
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
 				liveProxy->_liveProxyOutputRoots,
 				&(liveProxy->_childPid));
+
+			
+			/*
+			liveProxy->_inputsRoot = 
+				liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
+	
+			liveProxy->_ffmpeg->liveProxy2(
+				liveProxy->_ingestionJobKey,
+				encodingJobKey,
+				&(liveProxy->_inputsRootMutex),
+				&(liveProxy->_inputsRoot),
+				liveProxy->_liveProxyOutputRoots,
+				&(liveProxy->_childPid));
+			*/
 		}
 
 		if (liveProxy->_channelSourceType == "Satellite"
@@ -10875,6 +11050,7 @@ void FFMPEGEncoder::vodProxyThread(
 				int playlistEntriesNumber = -1;
 				bool isVideo = true;
 				string rtmpUrl;
+				string udpUrl;
 
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
@@ -10904,6 +11080,16 @@ void FFMPEGEncoder::vodProxyThread(
 					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
 					isVideo = encodingProfileContentType == "Video" ? true : false;
 				}
+				else if (outputType == "UDL_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					udpUrl = outputRoot.get("udpUrl", "").asString();
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
 				else
 				{
 					string errorMessage = __FILEREF__ + "vodProxy. Wrong output type"
@@ -10915,10 +11101,10 @@ void FFMPEGEncoder::vodProxyThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
+				tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> tOutputRoot
 					= make_tuple(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
 						manifestDirectoryPath, manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
-						isVideo, rtmpUrl);
+						isVideo, rtmpUrl, udpUrl);
 
 				vodProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
 
@@ -11310,6 +11496,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 		int playlistEntriesNumber = -1;
 		bool isVideo = true;
 		string rtmpUrl;
+		string udpUrl;
 		{
 			outputType = awaitingTheBeginningMetadata.get("outputType", "").asString();
 
@@ -11337,6 +11524,16 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 				string encodingProfileContentType = awaitingTheBeginningMetadata.get("encodingProfileContentType", "Video").asString();
 				isVideo = encodingProfileContentType == "Video" ? true : false;
 			}
+			else if (outputType == "UDP_Stream")
+			{
+				// otherOutputOptions is not used by awaitingTheBeginning
+				// otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+				encodingProfileDetailsRoot = awaitingTheBeginningMetadata["encodingProfileDetails"];
+				udpUrl = awaitingTheBeginningMetadata.get("udpUrl", "").asString();
+
+				string encodingProfileContentType = awaitingTheBeginningMetadata.get("encodingProfileContentType", "Video").asString();
+				isVideo = encodingProfileContentType == "Video" ? true : false;
+			}
 			else
 			{
 				string errorMessage = __FILEREF__ + "awaitingTheBegining. Wrong output type"
@@ -11353,11 +11550,12 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 		{
 			liveProxy->_liveProxyOutputRoots.clear();
 
-			tuple<string, string, string, Json::Value, string, string, int, int, bool, string>
+			tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>
 				tOutputRoot
 				= make_tuple(outputType, otherOutputOptions, audioVolumeChange,
 					encodingProfileDetailsRoot, manifestDirectoryPath,
-					manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl);
+					manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
+					isVideo, rtmpUrl, udpUrl);
 
 			liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
 		}
@@ -11495,6 +11693,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 				playlistEntriesNumber,
 				isVideo,
 				rtmpUrl,
+				udpUrl,
 
 				&(liveProxy->_childPid));
 		}
@@ -12328,7 +12527,7 @@ void FFMPEGEncoder::monitorThread()
 					bool rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
@@ -12341,11 +12540,12 @@ void FFMPEGEncoder::monitorThread()
 							int playlistEntriesNumber;
 							bool isVideo;
 							string rtmpUrl;
+							string udpUrl;
 
 							tie(outputType, otherOutputOptions, audioVolumeChange,
 								encodingProfileDetailsRoot, manifestDirectoryPath,       
 								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl)
+								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)
@@ -12502,7 +12702,7 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
@@ -12515,11 +12715,12 @@ void FFMPEGEncoder::monitorThread()
 							int playlistEntriesNumber;
 							bool isVideo;
 							string rtmpUrl;
+							string udpUrl;
 
 							tie(outputType, otherOutputOptions, audioVolumeChange,
 								encodingProfileDetailsRoot, manifestDirectoryPath,       
 								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl)
+								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)
@@ -12866,7 +13067,7 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
@@ -12879,11 +13080,12 @@ void FFMPEGEncoder::monitorThread()
 							int playlistEntriesNumber;
 							bool isVideo;
 							string rtmpUrl;
+							string udpUrl;
 
 							tie(outputType, otherOutputOptions, audioVolumeChange,
 								encodingProfileDetailsRoot, manifestDirectoryPath,       
 								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl)
+								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)
@@ -12956,7 +13158,8 @@ void FFMPEGEncoder::monitorThread()
 
 						try
 						{
-							ProcessUtility::killProcess(liveProxy->_childPid);
+							// ProcessUtility::killProcess(liveProxy->_childPid);
+							ProcessUtility::quitProcess(liveProxy->_childPid);
 							liveProxy->_killedBecauseOfNotWorking = true;
 							{
 								char strDateTime [64];
@@ -12980,7 +13183,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(runtime_error e)
 						{
-							string errorMessage = string("ProcessUtility::killProcess failed")
+							string errorMessage = string("ProcessUtility::kill/quit Process failed")
 								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
@@ -13178,8 +13381,8 @@ void FFMPEGEncoder::monitorThread()
 					bool rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
-							liveRecording->_liveRecorderOutputRoots)
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
+							string, string> outputRoot: liveRecording->_liveRecorderOutputRoots)
 						{
 							string outputType;
 							string otherOutputOptions;
@@ -13191,11 +13394,12 @@ void FFMPEGEncoder::monitorThread()
 							int playlistEntriesNumber;
 							bool isVideo;
 							string rtmpUrl;
+							string udpUrl;
 
 							tie(outputType, otherOutputOptions, audioVolumeChange,
 								encodingProfileDetailsRoot, manifestDirectoryPath,       
 								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl)
+								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
 
 							if (!liveRecorderWorking)
@@ -13341,8 +13545,8 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
-							liveRecording->_liveRecorderOutputRoots)
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
+							string, string> outputRoot: liveRecording->_liveRecorderOutputRoots)
 						{
 							string outputType;
 							string otherOutputOptions;
@@ -13354,11 +13558,12 @@ void FFMPEGEncoder::monitorThread()
 							int playlistEntriesNumber;
 							bool isVideo;
 							string rtmpUrl;
+							string udpUrl;
 
 							tie(outputType, otherOutputOptions, audioVolumeChange,
 								encodingProfileDetailsRoot, manifestDirectoryPath,       
 								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl)
+								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
 
 							if (!liveRecorderWorking)
@@ -13691,7 +13896,8 @@ void FFMPEGEncoder::monitorThread()
 
 						try
 						{
-							ProcessUtility::killProcess(liveRecording->_childPid);
+							// ProcessUtility::killProcess(liveRecording->_childPid);
+							ProcessUtility::quitProcess(liveRecording->_childPid);
 							liveRecording->_killedBecauseOfNotWorking = true;
 							{
 								char strDateTime [64];
@@ -13715,7 +13921,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(runtime_error e)
 						{
-							string errorMessage = string("ProcessUtility::killProcess failed")
+							string errorMessage = string("ProcessUtility::kill/quit Process failed")
 								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 								+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)

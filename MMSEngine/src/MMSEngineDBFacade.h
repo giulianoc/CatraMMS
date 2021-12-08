@@ -1308,6 +1308,9 @@ public:
 
 	long getIngestionJobOutputsCount(int64_t ingestionJobKey);
 
+	pair<int64_t, int64_t> getEncodingJobDetailsByIngestionJobKey(
+		int64_t ingestionJobKey);
+
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
@@ -1767,7 +1770,7 @@ public:
 		int64_t ingestionJobKey, string ingestionJobLabel,
 		string channelSourceType,
 		// bool highAvailability,
-		string configurationLabel, int64_t confKey, string url,
+		string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
 		string userAgent,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
@@ -1796,8 +1799,9 @@ public:
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		Json::Value inputsRoot,
 		string channelSourceType,
-		int64_t liveURLConfKey, string configurationLabel, string url,
+		int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
 
 		int pushListenTimeout,
 		int captureVideoDeviceNumber,
@@ -2119,6 +2123,7 @@ public:
         int64_t workspaceKey,
         string label,
 		string sourceType,
+		string encodersPoolLabel,
 		string url,
 		string pushProtocol,
 		string pushServerName,
@@ -2148,6 +2153,7 @@ public:
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
 		bool sourceTypeToBeModified, string sourceType,
+		bool encodersPoolLabelToBeModified, string encodersPoolLabel,
 		bool urlToBeModified, string url,
 		bool pushProtocolToBeModified, string pushProtocol,
 		bool pushServerNameToBeModified, string pushServerName,
@@ -2182,7 +2188,7 @@ public:
 		string name, string region, string country, string url,
 		string labelOrder);
 
-	tuple<int64_t, string, string, string, string, int, string, int,
+	tuple<int64_t, string, string, string, string, string, int, string, int,
 		int, string, int, int, int, int, int, int64_t>
 		getChannelConfDetails(
 			int64_t workspaceKey, string label, bool warningIfMissing);
@@ -2397,6 +2403,10 @@ public:
 	void getPartitionsInfo(vector<pair<int, int64_t>>& partitionsInfo);
 
 	static int64_t parseRetention(string retention);
+
+	Json::Value getChannelInputRoot(
+		int64_t workspaceKey, string configurationLabel,
+		int maxWidth, string userAgent, string otherInputOptions);
 
 private:
     shared_ptr<spdlog::logger>                          _logger;

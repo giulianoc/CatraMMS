@@ -34,19 +34,7 @@ if [ "$deploy" == "y" ]; then
 	echo "mms-t-transcoder-fr-1"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
 	date
-
-	#echo "192.168.0.121"
-	#scp /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.121:/opt/catramms
-	#date
 fi
-
-#echo -n "deploy su rsis-lab-mmst? " 
-#read deploy
-#if [ "$deploy" == "y" ]; then
-#	echo "rsis-lab-mmst"
-#	scp /opt/catrasoftware/deploy/$tarFileName mms@rsis-lab-mmst:/opt/catramms
-#	date
-#fi
 
 echo -n "deploy su cibor? " 
 read deploy
@@ -69,10 +57,6 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-engine-db-3"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-3:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-es-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-es-1:/opt/catramms
 	date
 
 	echo "cibortv-mms-transcoder-fr-1"
@@ -119,17 +103,4 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-sat-1:/opt/catramms
 	date
 fi
-
-#echo -n "deploy su mms icml? " 
-#read deploy
-#if [ "$deploy" == "y" ]; then
-#	echo "icml-1"
-#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-1:/opt/catramms
-#	date
-
-#	echo "icml-2"
-#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-2:/opt/catramms
-#	date
-
-#fi
 

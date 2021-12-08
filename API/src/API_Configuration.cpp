@@ -1046,6 +1046,7 @@ void API::addChannelConf(
         string label;
 		string sourceType;
 
+        string encodersPoolLabel;
         string url;
         string pushProtocol;
         string pushServerName;
@@ -1118,6 +1119,10 @@ void API::addChannelConf(
                 throw runtime_error(errorMessage);
             }    
             sourceType = requestBodyRoot.get(field, "").asString();            
+
+            field = "encodersPoolLabel";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				encodersPoolLabel = requestBodyRoot.get(field, "").asString();            
 
             field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1237,6 +1242,7 @@ void API::addChannelConf(
 			Json::Value channelConfRoot = _mmsEngineDBFacade->addChannelConf(
                 workspace->_workspaceKey, label,
 				sourceType,
+				encodersPoolLabel,
 				url,
 				pushProtocol,
 				pushServerName,
@@ -1327,6 +1333,7 @@ void API::modifyChannelConf(
         string label;
 		string sourceType;
 
+        string encodersPoolLabel;
         string url;
         string pushProtocol;
         string pushServerName;
@@ -1354,6 +1361,7 @@ void API::modifyChannelConf(
         
 		bool labelToBeModified;
 		bool sourceTypeToBeModified;
+		bool encodersPoolLabelToBeModified;
 		bool urlToBeModified;
 		bool pushProtocolToBeModified;
 		bool pushServerNameToBeModified;
@@ -1426,6 +1434,14 @@ void API::modifyChannelConf(
             }    
             sourceType = requestBodyRoot.get(field, "").asString();            
 			sourceTypeToBeModified = true;
+
+			encodersPoolLabelToBeModified = false;
+            field = "encodersPoolLabel";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				encodersPoolLabel = requestBodyRoot.get(field, "").asString();            
+				encodersPoolLabelToBeModified = true;
+			}
 
 			urlToBeModified = false;
             field = "url";
@@ -1651,6 +1667,7 @@ void API::modifyChannelConf(
                 confKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
+				encodersPoolLabelToBeModified, encodersPoolLabel,
 				urlToBeModified, url,
 				pushProtocolToBeModified, pushProtocol,
 				pushServerNameToBeModified, pushServerName,

@@ -57,7 +57,9 @@
 		"OutputFileFormat": "ts",
 
 		// optional. To be set with the EncodersPool label only in case 
-		// a specific encoders pool has to be used
+		// a specific encoders pool has to be used.
+		// In case this field is initialized here, it overrides the one specified by the channel
+		// configuration label
 		"EncodersPool": "",
 
 		// optional. the LiveRecorderVOD is the Media Item updated continuously containing

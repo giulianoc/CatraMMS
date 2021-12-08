@@ -1476,6 +1476,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
     int64_t workspaceKey,
     string label,
 	string sourceType,
+	string encodersPoolLabel,
 	string url,
 	string pushProtocol,
 	string pushServerName,
@@ -1522,7 +1523,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 
             lastSQLCommand = 
                 "insert into MMS_Conf_IPChannel(workspaceKey, label, sourceType, "
-				"url, "
+				"encodersPoolLabel, url, "
 				"pushProtocol, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
@@ -1531,7 +1532,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 				"type, description, name, "
 				"region, country, imageMediaItemKey, imageUniqueName, "
 				"position, channelData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
 				"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -1540,6 +1541,10 @@ Json::Value MMSEngineDBFacade::addChannelConf(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, sourceType);
+			if (encodersPoolLabel == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
 			if (url == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1647,6 +1652,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
+				+ ", encodersPoolLabel: " + encodersPoolLabel
 				+ ", url: " + url
 				+ ", type: " + type
 				+ ", description: " + description
@@ -1678,7 +1684,8 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 			string labelOrder;
 			Json::Value channelConfListRoot = getChannelConfList (
 				workspaceKey, confKey,
-				start, rows, label, url, sourceType, type, name, region, country, labelOrder);
+				start, rows, label, url, sourceType, type, name,
+				region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
@@ -1785,6 +1792,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
     bool labelToBeModified, string label,
 
 	bool sourceTypeToBeModified, string sourceType,
+	bool encodersPoolLabelToBeModified, string encodersPoolLabel,
 	bool urlToBeModified, string url,
 	bool pushProtocolToBeModified, string pushProtocol,
 	bool pushServerNameToBeModified, string pushServerName,
@@ -1837,6 +1845,14 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += ("sourceType = ?");
+				oneParameterPresent = true;
+			}
+
+			if (encodersPoolLabelToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("encodersPoolLabel = ?");
 				oneParameterPresent = true;
 			}
 
@@ -2045,6 +2061,14 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 				preparedStatement->setString(queryParameterIndex++, label);
 			if (sourceTypeToBeModified)
 				preparedStatement->setString(queryParameterIndex++, sourceType);
+			if (encodersPoolLabelToBeModified)
+			{
+				if (encodersPoolLabel == "")
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
+			}
 			if (urlToBeModified)
 			{
 				if (url == "")
@@ -2251,6 +2275,8 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 				+ ", label (" + to_string(labelToBeModified) + "): " + label
 				+ ", sourceType (" + to_string(sourceTypeToBeModified) + "): "
 					+ sourceType
+				+ ", encodersPoolLabel (" + to_string(encodersPoolLabelToBeModified) + "): "
+					+ encodersPoolLabel
 				+ ", url (" + to_string(urlToBeModified) + "): " + url
 				+ ", pushProtocol (" + to_string(pushProtocolToBeModified) + "): "
 					+ pushProtocol
@@ -2719,7 +2745,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string("select confKey, label, sourceType, url, "
+                string("select confKey, label, sourceType, encodersPoolLabel, url, "
 						"pushProtocol, pushServerName, pushServerPort, pushUri, "
 						"pushListenTimeout, captureLiveVideoDeviceNumber, "
 						"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
@@ -2794,6 +2820,13 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
                 field = "sourceType";
                 channelConfRoot[field] = static_cast<string>(
 					resultSet->getString("sourceType"));
+
+                field = "encodersPoolLabel";
+				if (resultSet->isNull("encodersPoolLabel"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("encodersPoolLabel"));
 
                 field = "url";
 				if (resultSet->isNull("url"))
@@ -2896,7 +2929,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				if (resultSet->isNull("description"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("description"));
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("description"));
 
                 field = "name";
 				if (resultSet->isNull("name"))
@@ -2914,7 +2948,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				if (resultSet->isNull("country"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("country"));
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("country"));
 
                 field = "imageMediaItemKey";
 				if (resultSet->isNull("imageMediaItemKey"))
@@ -2926,7 +2961,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				if (resultSet->isNull("imageUniqueName"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("imageUniqueName"));
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("imageUniqueName"));
 
                 field = "position";
 				if (resultSet->isNull("position"))
@@ -2938,7 +2974,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				if (resultSet->isNull("channelData"))
 					channelConfRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("channelData"));
+					channelConfRoot[field] = static_cast<string>(
+						resultSet->getString("channelData"));
 
                 channelRoot.append(channelConfRoot);
             }
@@ -3018,7 +3055,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
     return channelConfListRoot;
 }
 
-tuple<int64_t, string, string, string, string, int, string, int,
+tuple<int64_t, string, string, string, string, string, int, string, int,
 	int, string, int, int, int, int, int, int64_t>
 	MMSEngineDBFacade::getChannelConfDetails(
     int64_t workspaceKey, string label,
@@ -3043,6 +3080,7 @@ tuple<int64_t, string, string, string, string, int, string, int,
 
 		int64_t confKey;
 		string sourceType;
+		string encodersPoolLabel;
 		string url;
 		string pushProtocol;
 		string pushServerName;
@@ -3059,7 +3097,7 @@ tuple<int64_t, string, string, string, string, int, string, int,
 		int64_t satSourceSATConfKey = -1;
 		{
 			lastSQLCommand = "select confKey, sourceType, "
-				"url, "
+				"encodersPoolLabel, url, "
 				"pushProtocol, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, satSourceSATConfKey, captureLiveVideoDeviceNumber, "
 				"captureLiveVideoInputFormat, "
@@ -3101,6 +3139,8 @@ tuple<int64_t, string, string, string, string, int, string, int,
 
 			confKey = resultSet->getInt64("confKey");
 			sourceType = resultSet->getString("sourceType");
+			if (!resultSet->isNull("encodersPoolLabel"))
+				encodersPoolLabel = resultSet->getString("encodersPoolLabel");
 			if (!resultSet->isNull("url"))
 				url = resultSet->getString("url");
 			if (!resultSet->isNull("pushProtocol"))
@@ -3139,7 +3179,7 @@ tuple<int64_t, string, string, string, string, int, string, int,
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(confKey, sourceType, url,
+		return make_tuple(confKey, sourceType, encodersPoolLabel, url,
 			pushProtocol, pushServerName, pushServerPort, pushUri, pushListenTimeout,
 			captureLiveVideoDeviceNumber, captureLiveVideoInputFormat,
             captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
@@ -6106,5 +6146,167 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
     } 
     
     return email;
+}
+
+// this method is added here just because it is called by both API and MMSServiceProcessor
+Json::Value MMSEngineDBFacade::getChannelInputRoot(
+	int64_t workspaceKey, string configurationLabel,
+	int maxWidth, string userAgent, string otherInputOptions
+)
+{
+	Json::Value channelInputRoot;
+
+    try
+    {
+		int64_t confKey = -1;
+		string channelSourceType;
+		string encodersPoolLabel;
+		string pullUrl;
+		string pushProtocol;
+		string pushServerName;
+		int pushServerPort = -1;
+		string pushUri;
+		int pushListenTimeout = -1;
+		int captureVideoDeviceNumber = -1;
+		string captureVideoInputFormat;
+		int captureFrameRate = -1;
+		int captureWidth = -1;
+		int captureHeight = -1;
+		int captureAudioDeviceNumber = -1;
+		int captureChannelsNumber = -1;
+		int64_t satSourceSATConfKey = -1;
+
+		{
+			bool warningIfMissing = false;
+			tuple<int64_t, string, string, string, string, string, int, string, int,
+				int, string, int, int, int, int, int, int64_t>
+				channelConfDetails = getChannelConfDetails(
+				workspaceKey, configurationLabel, warningIfMissing);
+			tie(confKey, channelSourceType,
+				encodersPoolLabel,
+				pullUrl,
+				pushProtocol, pushServerName, pushServerPort, pushUri,
+				pushListenTimeout,
+				captureVideoDeviceNumber,
+				captureVideoInputFormat,
+				captureFrameRate, captureWidth, captureHeight,
+				captureAudioDeviceNumber, captureChannelsNumber,
+				satSourceSATConfKey) = channelConfDetails;
+
+			// default is IP_PULL
+			if (channelSourceType == "")
+				channelSourceType = "IP_PULL";
+		}
+
+		int64_t satelliteServiceId = -1;
+		int64_t satelliteFrequency = -1;
+		int64_t satelliteSymbolRate = -1;
+		string satelliteModulation;
+		int satelliteVideoPid = -1;
+		int satelliteAudioItalianPid = -1;
+		string liveURL;
+
+		if (channelSourceType == "IP_PULL")
+			liveURL = pullUrl;
+		else if (channelSourceType == "IP_PUSH")
+		{
+			liveURL = pushProtocol + "://" + pushServerName
+				+ ":" + to_string(pushServerPort) + pushUri;
+		}
+		else if (channelSourceType == "Satellite")
+		{
+			bool warningIfMissing = false;
+			tuple<int64_t, int64_t, int64_t, string, int, int>
+				satChannelConfDetails = getSourceSATChannelConfDetails(
+				satSourceSATConfKey, warningIfMissing);
+
+			tie(satelliteServiceId, satelliteFrequency,
+				satelliteSymbolRate, satelliteModulation,
+				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
+		}
+
+		string field = "channelConfKey";
+		channelInputRoot[field] = confKey;
+
+		field = "channelConfigurationLabel";
+		channelInputRoot[field] = configurationLabel;
+
+		field = "channelSourceType";
+		channelInputRoot[field] = channelSourceType;
+
+		field = "encodersPoolLabel";
+		channelInputRoot[field] = encodersPoolLabel;
+
+		field = "url";
+		channelInputRoot[field] = liveURL;
+
+		field = "maxWidth";
+		channelInputRoot[field] = maxWidth;
+
+		field = "userAgent";
+		channelInputRoot[field] = userAgent;
+
+		field = "otherInputOptions";
+		channelInputRoot[field] = otherInputOptions;
+
+		field = "pushListenTimeout";
+		channelInputRoot[field] = pushListenTimeout;
+
+		field = "captureVideoDeviceNumber";
+		channelInputRoot[field] = captureVideoDeviceNumber;
+
+		field = "captureVideoInputFormat";
+		channelInputRoot[field] = captureVideoInputFormat;
+
+		field = "captureFrameRate";
+		channelInputRoot[field] = captureFrameRate;
+
+		field = "captureWidth";
+		channelInputRoot[field] = captureWidth;
+
+		field = "captureHeight";
+		channelInputRoot[field] = captureHeight;
+
+		field = "captureAudioDeviceNumber";
+		channelInputRoot[field] = captureAudioDeviceNumber;
+
+		field = "captureChannelsNumber";
+		channelInputRoot[field] = captureChannelsNumber;
+
+		field = "satelliteServiceId";
+		channelInputRoot[field] = satelliteServiceId;
+
+		field = "satelliteFrequency";
+		channelInputRoot[field] = satelliteFrequency;
+
+		field = "satelliteSymbolRate";
+		channelInputRoot[field] = satelliteSymbolRate;
+
+		field = "satelliteModulation";
+		channelInputRoot[field] = satelliteModulation;
+
+		field = "satelliteVideoPid";
+		channelInputRoot[field] = satelliteVideoPid;
+
+		field = "satelliteAudioItalianPid";
+		channelInputRoot[field] = satelliteAudioItalianPid;
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getChannelInputRoot failed"
+            + ", e.what(): " + e.what()
+        );
+ 
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "getChannelInputRoot failed"
+        );
+        
+        throw e;
+    }
+
+	return channelInputRoot;
 }
 
