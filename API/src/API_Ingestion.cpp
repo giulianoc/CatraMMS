@@ -4430,8 +4430,11 @@ void API::changeLiveProxyPlaylist(
 		// check of ingestion job and retrieve some fields
 		int64_t utcBroadcasterStart;
 		int64_t utcBroadcasterEnd;
-		Json::Value defaultChannelInputRoot = Json::nullValue;
+
 		int64_t broadcastIngestionJobKey;
+		string broadcastDefaultMediaType;	// options: Live Channel, Media, Countdown
+		Json::Value broadcastDefaultChannelInputRoot = Json::nullValue; // used in case mediaType is Live Channel
+		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;	// used in case mediaType is Media
         try
         {
             _logger->info(__FILEREF__ + "getIngestionJobDetails"
@@ -4506,23 +4509,89 @@ void API::changeLiveProxyPlaylist(
             }
 			Json::Value broadcasterRoot = metadataContentRoot[field];
 
-			field = "broadcastDefaultChannelConfigurationLabel";
+			field = "broadcastDefaultPlaylistItem";
 			if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
 			{
-				string broadcastDefaultChannelConfigurationLabel =
-					broadcasterRoot.get(field, "").asString();
-				int maxWidth = -1;
-				string userAgent;
-				string otherInputOptions;
+				Json::Value broadcastDefaultPlaylistItemRoot = broadcasterRoot[field];
 
-				defaultChannelInputRoot =
-					_mmsEngineDBFacade->getChannelInputRoot(
-					workspace->_workspaceKey, broadcastDefaultChannelConfigurationLabel,
-					maxWidth, userAgent, otherInputOptions);
+				field = "mediaType";
+				if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+				{
+					broadcastDefaultMediaType = broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+
+					if (broadcastDefaultMediaType == "Live Channel")
+					{
+						string broadcastDefaultChannelConfigurationLabel =
+							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+						int maxWidth = -1;
+						string userAgent;
+						string otherInputOptions;
+
+						broadcastDefaultChannelInputRoot =
+							_mmsEngineDBFacade->getChannelInputRoot(
+							workspace->_workspaceKey, broadcastDefaultChannelConfigurationLabel,
+							maxWidth, userAgent, otherInputOptions);
+					}
+					else if (broadcastDefaultMediaType == "Media")
+					{
+						int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(
+							broadcastDefaultPlaylistItemRoot, field, -1);
+
+						MMSEngineDBFacade::ContentType vodContentType;
+						string sourcePhysicalPathName;
+						{
+							tuple<string, int, string, string, int64_t, string>
+								physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+								broadcastDefaultPhysicalPathKey);
+							tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+								= physicalPathDetails;
+
+							bool warningIfMissing = false;
+							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+								string, string> mediaItemKeyDetails =
+								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+									workspace->_workspaceKey, broadcastDefaultPhysicalPathKey, warningIfMissing);
+							tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore)
+								= mediaItemKeyDetails;
+						}
+
+						// the same json structure is used in MMSEngineProcessor::manageVODProxy
+						{
+							Json::Value vodInputRoot;
+
+							string field = "vodContentType";
+							vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+
+							field = "sourcePhysicalPathName";
+							vodInputRoot[field] = sourcePhysicalPathName;
+
+							broadcastDefaultVodInputRoot = vodInputRoot;
+						}
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "Broadcaster data: no mediaType is present"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
 			else
 			{
-                string errorMessage = __FILEREF__ + "No any default media for the broadcaster"
+				string errorMessage = __FILEREF__ + "Broadcaster data: no broadcastDefaultPlaylistItem is present"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				;
                 _logger->error(errorMessage);
@@ -4638,59 +4707,212 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 
-			int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
-
-			for (int newPlaylistIndex = 0;
-				newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
+			// in case of vodInput, the physicalPathKey is received but we need to set
+			// vodContentType and sourcePhysicalPathName
 			{
-				Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[newPlaylistIndex];
-
-				// correct values have to be:
-				//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
-				// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
-				string field = "utcProxyPeriodStart";
-				int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
-				field = "utcProxyPeriodEnd";
-				int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
-				if (utcCurrentBroadcasterStart > utcProxyPeriodStart
-					|| utcProxyPeriodEnd >= utcProxyPeriodStart
-					|| utcProxyPeriodEnd > utcBroadcasterEnd)
+				for (int newPlaylistIndex = 0;
+					newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
 				{
-					string errorMessage = __FILEREF__ + "newReceivedPlaylistItemRoot"
-						+ ", newPlaylistIndex: " + to_string(newPlaylistIndex)
-						+ ", utcCurrentBroadcasterStart: " + to_string(utcCurrentBroadcasterStart)
-						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-						+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-						+ ", utcBroadcasterEnd: " + to_string(utcBroadcasterEnd)
-					;
-					_logger->error(errorMessage);
+					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
+						newPlaylistIndex];
+					{
+						string field = "vodInput";
+						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, field))
+						{
+							Json::Value vodInputRoot = newReceivedPlaylistItemRoot[field];
 
-					throw runtime_error(errorMessage);
+							field = "physicalPathKey";
+							if (JSONUtils::isMetadataPresent(vodInputRoot, field))
+							{
+								int64_t physicalPathKey = JSONUtils::asInt64(vodInputRoot, field, -1);
+
+								string sourcePhysicalPathName;
+								MMSEngineDBFacade::ContentType vodContentType;
+
+								tuple<string, int, string, string, int64_t, string>
+									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+									physicalPathKey);
+								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+									= physicalPathDetails;
+
+								bool warningIfMissing = false;
+								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+									string,int64_t, string, string> mediaItemKeyDetails =
+									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+										workspace->_workspaceKey, physicalPathKey,
+										warningIfMissing);
+
+								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
+									ignore, ignore) = mediaItemKeyDetails;
+
+								field = "vodContentType";
+								vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+
+								field = "sourcePhysicalPathName";
+								vodInputRoot[field] = sourcePhysicalPathName;
+
+								field = "vodInput";
+								newReceivedPlaylistItemRoot[field] = vodInputRoot;
+
+								newReceivedPlaylistRoot[newPlaylistIndex]
+									= newReceivedPlaylistItemRoot;
+							}
+						}
+					}
+				}
+			}
+
+			// add the default media in case of hole
+			{
+				int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
+
+				for (int newPlaylistIndex = 0;
+					newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
+				{
+					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
+						newPlaylistIndex];
+
+					// correct values have to be:
+					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
+					// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
+					string field = "utcProxyPeriodStart";
+					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
+						field, -1);
+					field = "utcProxyPeriodEnd";
+					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
+						field, -1);
+					if (utcCurrentBroadcasterStart > utcProxyPeriodStart
+						|| utcProxyPeriodEnd >= utcProxyPeriodStart
+						|| utcProxyPeriodEnd > utcBroadcasterEnd)
+					{
+						string errorMessage = __FILEREF__ + "newReceivedPlaylistItemRoot"
+							+ ", newPlaylistIndex: " + to_string(newPlaylistIndex)
+							+ ", utcCurrentBroadcasterStart: " + to_string(utcCurrentBroadcasterStart)
+							+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+							+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+							+ ", utcBroadcasterEnd: " + to_string(utcBroadcasterEnd)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					if (utcProxyPeriodStart == utcCurrentBroadcasterStart)
+						newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+					else // if (utcCurrentBroadcasterStart < utcProxyPeriodStart)
+					{
+						Json::Value newdPlaylistItemToBeAddedRoot;
+
+						field = "timePeriod";
+						newdPlaylistItemToBeAddedRoot[field] = true;
+
+						field = "utcProxyPeriodStart";
+						newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
+
+						field = "utcProxyPeriodEnd";
+						newdPlaylistItemToBeAddedRoot[field] = utcProxyPeriodStart;
+
+						if (broadcastDefaultMediaType == "Live Channel")
+						{
+							if (broadcastDefaultChannelInputRoot != Json::nullValue)
+								newdPlaylistItemToBeAddedRoot["channelInput"]
+									= broadcastDefaultChannelInputRoot;
+							else
+							{
+								string errorMessage = __FILEREF__
+									+ "Broadcaster data: no default Live Channel present"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						else if (broadcastDefaultMediaType == "Media")
+						{
+							if (broadcastDefaultVodInputRoot != Json::nullValue)
+								newdPlaylistItemToBeAddedRoot["vodInput"]
+								= broadcastDefaultVodInputRoot;
+							else
+							{
+								string errorMessage = __FILEREF__
+									+ "Broadcaster data: no default Media present"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+
+						newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+					}
+					utcCurrentBroadcasterStart = utcProxyPeriodEnd;
 				}
 
-				if (utcProxyPeriodStart == utcCurrentBroadcasterStart)
+				if (newReceivedPlaylistRoot.size() == 0)
 				{
-					newPlaylistRoot.append(newReceivedPlaylistItemRoot);
-				}
-				else // if (utcCurrentBroadcasterStart < utcProxyPeriodStart)
-				{
+					// no items inside the playlist
+
 					Json::Value newdPlaylistItemToBeAddedRoot;
 
-					field = "timePeriod";
+					string field = "timePeriod";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
 					field = "utcProxyPeriodStart";
-					newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
+					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterStart;
 
 					field = "utcProxyPeriodEnd";
-					newdPlaylistItemToBeAddedRoot[field] = utcProxyPeriodStart;
+					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
 
-					if (defaultChannelInputRoot != Json::nullValue)
-						newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
+					if (broadcastDefaultMediaType == "Live Channel")
+					{
+						if (broadcastDefaultChannelInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["channelInput"]
+							= broadcastDefaultChannelInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Live Channel present"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (broadcastDefaultMediaType == "Media")
+					{
+						if (broadcastDefaultVodInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Media present"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "No any default media present"
+						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
 						;
 						_logger->error(errorMessage);
 
@@ -4698,69 +4920,66 @@ void API::changeLiveProxyPlaylist(
 					}
 
 					newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
-
-					newPlaylistRoot.append(newReceivedPlaylistItemRoot);
 				}
-				utcCurrentBroadcasterStart = utcProxyPeriodEnd;
-			}
-
-			if (newReceivedPlaylistRoot.size() == 0)
-			{
-				// no items inside the playlist
-
-				Json::Value newdPlaylistItemToBeAddedRoot;
-
-				string field = "timePeriod";
-				newdPlaylistItemToBeAddedRoot[field] = true;
-
-				field = "utcProxyPeriodStart";
-				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterStart;
-
-				field = "utcProxyPeriodEnd";
-				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
-
-				if (defaultChannelInputRoot != Json::nullValue)
-					newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
-				else
+				else if (utcCurrentBroadcasterStart < utcBroadcasterEnd)
 				{
-					string errorMessage = __FILEREF__ + "No any default media present"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
-					_logger->error(errorMessage);
+					// last period has to be added
 
-					throw runtime_error(errorMessage);
+					Json::Value newdPlaylistItemToBeAddedRoot;
+
+					string field = "timePeriod";
+					newdPlaylistItemToBeAddedRoot[field] = true;
+
+					field = "utcProxyPeriodStart";
+					newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
+
+					field = "utcProxyPeriodEnd";
+					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
+
+					if (broadcastDefaultMediaType == "Live Channel")
+					{
+						if (broadcastDefaultChannelInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["channelInput"]
+							= broadcastDefaultChannelInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Live Channel present"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (broadcastDefaultMediaType == "Media")
+					{
+						if (broadcastDefaultVodInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Media present"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
 				}
-
-				newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
-			}
-			else if (utcCurrentBroadcasterStart < utcBroadcasterEnd)
-			{
-				// last period has to be added
-
-				Json::Value newdPlaylistItemToBeAddedRoot;
-
-				string field = "timePeriod";
-				newdPlaylistItemToBeAddedRoot[field] = true;
-
-				field = "utcProxyPeriodStart";
-				newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
-
-				field = "utcProxyPeriodEnd";
-				newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
-
-				if (defaultChannelInputRoot != Json::nullValue)
-					newdPlaylistItemToBeAddedRoot["channelInput"] = defaultChannelInputRoot;
-				else
-				{
-					string errorMessage = __FILEREF__ + "No any default media present"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
 			}
 		}
         catch(runtime_error e)

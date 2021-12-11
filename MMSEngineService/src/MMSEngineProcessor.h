@@ -155,6 +155,10 @@ private:
 	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
 
+	Json::Value getReviewedOutputsRoot(
+		Json::Value outputsRoot, shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey, bool encodingProfileMandatory);
+
 	int getMaxAdditionalProcessorThreads();
 
 	bool isMaintenanceMode();

@@ -10134,6 +10134,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	return segmentsNumber;
 }
 
+// to be removed
+/*
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
 	shared_ptr<LiveProxyAndGrid> liveProxy,
@@ -10438,18 +10440,6 @@ void FFMPEGEncoder::liveProxyThread(
 			liveURL = liveProxyMetadata.get("liveURL", "").asString();
 		}
 
-		/*
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
-        MMSEngineDBFacade::ContentType contentType;
-		int64_t encodingProfileKey;
-        if (JSONUtils::isMetadataPresent(liveProxyMetadata, "encodingProfileDetails"))
-		{
-			encodingProfileDetailsRoot = liveProxyMetadata["encodingProfileDetails"];
-			contentType = MMSEngineDBFacade::toContentType(liveProxyMetadata.get("contentType", "").asString());
-			encodingProfileKey = JSONUtils::asInt64(liveProxyMetadata, "encofingProfileKey", -1);
-		}
-		*/
-
 		{
 			// based on liveProxy->_proxyStart, the monitor thread starts the checkings
 			// In case of IP_PUSH, the checks should be done after the ffmpeg server
@@ -10504,20 +10494,6 @@ void FFMPEGEncoder::liveProxyThread(
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
 				liveProxy->_liveProxyOutputRoots,
 				&(liveProxy->_childPid));
-
-			
-			/*
-			liveProxy->_inputsRoot = 
-				liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
-	
-			liveProxy->_ffmpeg->liveProxy2(
-				liveProxy->_ingestionJobKey,
-				encodingJobKey,
-				&(liveProxy->_inputsRootMutex),
-				&(liveProxy->_inputsRoot),
-				liveProxy->_liveProxyOutputRoots,
-				&(liveProxy->_childPid));
-			*/
 		}
 
 		if (liveProxy->_channelSourceType == "Satellite"
@@ -10900,6 +10876,944 @@ void FFMPEGEncoder::liveProxyThread(
 				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
 				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
 				false);
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+*/
+
+void FFMPEGEncoder::liveProxyThread(
+	// FCGX_Request& request,
+	shared_ptr<LiveProxyAndGrid> liveProxy,
+	int64_t encodingJobKey,
+	string requestBody)
+{
+    string api = "liveProxy";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+	string satelliteMulticastIP;
+	string satelliteMulticastPort;
+	int64_t satelliteServiceId = -1;
+	int64_t satelliteFrequency = -1;
+	int64_t satelliteSymbolRate = -1;
+	string satelliteModulation;
+	int satelliteVideoPid = -1;
+	int satelliteAudioItalianPid = -1;
+    try
+    {
+		liveProxy->_killedBecauseOfNotWorking = false;
+		liveProxy->_errorMessage = "";
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value liveProxyMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &liveProxyMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(
+			liveProxyMetadata, "ingestionJobKey", -1);
+
+		liveProxy->_liveProxyOutputRoots.clear();
+		{
+			Json::Value outputsRoot =
+				liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
+
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
+
+				_logger->info(__FILEREF__ + "liveProxy. outputsRoot"
+					+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sOutputsRoot: " + sOutputsRoot
+				);
+			}
+
+			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			{
+				string otherOutputOptions;
+				string audioVolumeChange;
+				Json::Value encodingProfileDetailsRoot = Json::nullValue;
+				string manifestDirectoryPath;
+				string manifestFileName;
+				int segmentDurationInSeconds = -1;
+				int playlistEntriesNumber = -1;
+				bool isVideo = true;
+				string rtmpUrl;
+				string udpUrl;
+
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+					manifestFileName = outputRoot.get("manifestFileName", "").asString();
+					segmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
+					playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
+				else if (outputType == "RTMP_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
+				else if (outputType == "UDP_Stream")
+				{
+					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+					udpUrl = outputRoot.get("udpUrl", "").asString();
+
+					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
+					isVideo = encodingProfileContentType == "Video" ? true : false;
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
+						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", outputType: " + outputType;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
+					string> tOutputRoot = make_tuple(outputType, otherOutputOptions,
+						audioVolumeChange, encodingProfileDetailsRoot, manifestDirectoryPath,
+						manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
+						isVideo, rtmpUrl, udpUrl);
+
+				liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					if (FileIO::directoryExisting(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+		}
+
+		liveProxy->_ingestedParametersRoot = liveProxyMetadata["ingestedParametersRoot"];
+
+		// non serve
+		liveProxy->_channelLabel = "";
+
+		liveProxy->_channelSourceType = liveProxyMetadata["encodingParametersRoot"].
+			get("channelSourceType", "IP_PULL").asString();
+
+		liveProxy->_inputsRoot = liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
+
+		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+		{
+			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+			if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				continue;
+			Json::Value channelInputRoot = inputRoot["channelInput"];
+
+			string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+			if (channelSourceType == "Satellite")
+			{
+				int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+				int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+				int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+				string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+				int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					"satelliteAudioItalianPid", -1);
+
+				// In case ffmpeg crashes and is automatically restarted, it should use the same
+				// IP-PORT it was using before because we already have a dbvlast sending the stream
+				// to the specified IP-PORT.
+				// For this reason, before to generate a new IP-PORT, let's look for the serviceId
+				// inside the dvblast conf. file to see if it was already running before
+
+				string satelliteMulticastIP;
+				string satelliteMulticastPort;
+
+				pair<string, string> satelliteMulticast = getSatelliteMulticastFromDvblastConfigurationFile(
+					liveProxy->_ingestionJobKey, encodingJobKey,
+					satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+					satelliteModulation);
+				tie(satelliteMulticastIP, satelliteMulticastPort) = satelliteMulticast;
+
+				if (satelliteMulticastIP == "")
+				{
+					lock_guard<mutex> locker(*_satelliteChannelsPortsMutex);
+
+					satelliteMulticastIP = "239.255.1.1";
+					satelliteMulticastPort = to_string(*_satelliteChannelPort_CurrentOffset
+						+ _satelliteChannelPort_Start);
+
+					*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
+						% _satelliteChannelPort_MaxNumberOfOffsets;
+				}
+
+				string newURL = string("udp://@") + satelliteMulticastIP + ":" + satelliteMulticastPort;
+
+				channelInputRoot["url"] = newURL;
+				channelInputRoot["satelliteMulticastIP"] = satelliteMulticastIP;
+				channelInputRoot["satelliteMulticastPort"] = satelliteMulticastPort;
+				inputRoot["channelInput"] = channelInputRoot;
+				liveProxy->_inputsRoot[inputIndex] = inputRoot;
+
+				createOrUpdateSatelliteDvbLastConfigurationFile(
+					liveProxy->_ingestionJobKey, encodingJobKey,
+					satelliteMulticastIP, satelliteMulticastPort,
+					satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+					satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+					true);
+			}
+		}
+
+		{
+			// based on liveProxy->_proxyStart, the monitor thread starts the checkings
+			// In case of IP_PUSH, the checks should be done after the ffmpeg server
+			// receives the stream and we do not know what it happens.
+			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
+			if (liveProxy->_inputsRoot.size() > 0)	// it has to be > 0
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[0];
+
+				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
+
+				if (JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				{
+					Json::Value channelInputRoot = inputRoot["channelInput"];
+
+					string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+
+					if (channelSourceType == "IP_PUSH")
+					{
+						int pushListenTimeout = JSONUtils::asInt64(channelInputRoot, "pushListenTimeout", -1);
+
+						if (utcProxyPeriodStart != -1)
+						{
+							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
+								liveProxy->_proxyStart = chrono::system_clock::now() +
+									chrono::seconds(pushListenTimeout);
+							else
+								liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) +
+									chrono::seconds(pushListenTimeout);
+						}
+						else
+							liveProxy->_proxyStart = chrono::system_clock::now() +
+								chrono::seconds(pushListenTimeout);
+					}
+					else
+					{
+						if (utcProxyPeriodStart != -1)
+						{
+							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+									chrono::system_clock::now())
+								liveProxy->_proxyStart = chrono::system_clock::now();
+							else
+								liveProxy->_proxyStart = chrono::system_clock::from_time_t(
+									utcProxyPeriodStart);
+						}
+						else
+							liveProxy->_proxyStart = chrono::system_clock::now();
+					}
+				}
+				else
+				{
+					if (utcProxyPeriodStart != -1)
+					{
+						if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+								chrono::system_clock::now())
+							liveProxy->_proxyStart = chrono::system_clock::now();
+						else
+							liveProxy->_proxyStart = chrono::system_clock::from_time_t(
+								utcProxyPeriodStart);
+					}
+					else
+						liveProxy->_proxyStart = chrono::system_clock::now();
+				}
+			}
+
+			liveProxy->_ffmpeg->liveProxy2(
+				liveProxy->_ingestionJobKey,
+				encodingJobKey,
+				&(liveProxy->_inputsRootMutex),
+				&(liveProxy->_inputsRoot),
+				liveProxy->_liveProxyOutputRoots,
+				&(liveProxy->_childPid));
+		}
+
+		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+		{
+			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+			if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				continue;
+			Json::Value channelInputRoot = inputRoot["channelInput"];
+
+			string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+			if (channelSourceType == "Satellite")
+			{
+				string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+				string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+				int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+				int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+				int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+				string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+				int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					"satelliteAudioItalianPid", -1);
+
+				if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+				{
+					// remove configuration from dvblast configuration file
+					createOrUpdateSatelliteDvbLastConfigurationFile(
+						liveProxy->_ingestionJobKey, encodingJobKey,
+						satelliteMulticastIP, satelliteMulticastPort,
+						satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+						satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+						false);
+				}
+			}
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+        liveProxy->_childPid = 0;
+		liveProxy->_killedBecauseOfNotWorking = false;
+        
+        _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHTTPStreaming finished"
+			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+			completedWithError, liveProxy->_errorMessage, killedByUser,
+			urlForbidden, urlNotFound);
+
+		liveProxy->_ingestionJobKey = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__
+					+ "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+		if (liveProxy->_channelSourceType == "Satellite"
+			&& satelliteServiceId != -1
+			// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+		if (liveProxy->_inputsRoot != Json::nullValue)
+		{
+			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+					continue;
+				Json::Value channelInputRoot = inputRoot["channelInput"];
+
+				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+				if (channelSourceType == "Satellite")
+				{
+					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+						"satelliteAudioItalianPid", -1);
+
+					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+					{
+						// remove configuration from dvblast configuration file
+						createOrUpdateSatelliteDvbLastConfigurationFile(
+							liveProxy->_ingestionJobKey, encodingJobKey,
+							satelliteMulticastIP, satelliteMulticastPort,
+							satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+							satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+							false);
+					}
+				}
+			}
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser;
+		if (liveProxy->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			completedWithError			= true;
+			liveProxy->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser				= true;
+		}
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(liveProxy->_encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+    }
+    catch(FFMpegURLForbidden e)
+    {
+		if (liveProxy->_inputsRoot != Json::nullValue)
+		{
+			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+					continue;
+				Json::Value channelInputRoot = inputRoot["channelInput"];
+
+				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+				if (channelSourceType == "Satellite")
+				{
+					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+						"satelliteAudioItalianPid", -1);
+
+					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+					{
+						// remove configuration from dvblast configuration file
+						createOrUpdateSatelliteDvbLastConfigurationFile(
+							liveProxy->_ingestionJobKey, encodingJobKey,
+							satelliteMulticastIP, satelliteMulticastPort,
+							satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+							satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+							false);
+					}
+				}
+			}
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= true;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(FFMpegURLNotFound e)
+    {
+		if (liveProxy->_inputsRoot != Json::nullValue)
+		{
+			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+					continue;
+				Json::Value channelInputRoot = inputRoot["channelInput"];
+
+				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+				if (channelSourceType == "Satellite")
+				{
+					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+						"satelliteAudioItalianPid", -1);
+
+					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+					{
+						// remove configuration from dvblast configuration file
+						createOrUpdateSatelliteDvbLastConfigurationFile(
+							liveProxy->_ingestionJobKey, encodingJobKey,
+							satelliteMulticastIP, satelliteMulticastPort,
+							satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+							satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+							false);
+					}
+				}
+			}
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(runtime_error e)
+    {
+		if (liveProxy->_inputsRoot != Json::nullValue)
+		{
+			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+					continue;
+				Json::Value channelInputRoot = inputRoot["channelInput"];
+
+				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+				if (channelSourceType == "Satellite")
+				{
+					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+						"satelliteAudioItalianPid", -1);
+
+					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+					{
+						// remove configuration from dvblast configuration file
+						createOrUpdateSatelliteDvbLastConfigurationFile(
+							liveProxy->_ingestionJobKey, encodingJobKey,
+							satelliteMulticastIP, satelliteMulticastPort,
+							satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+							satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+							false);
+					}
+				}
+			}
+		}
+
+        liveProxy->_running = false;
+		liveProxy->_method = "";
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+		if (liveProxy->_inputsRoot != Json::nullValue)
+		{
+			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
+			{
+				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
+
+				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+					continue;
+				Json::Value channelInputRoot = inputRoot["channelInput"];
+
+				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+				if (channelSourceType == "Satellite")
+				{
+					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+
+					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+						"satelliteAudioItalianPid", -1);
+
+					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
+					{
+						// remove configuration from dvblast configuration file
+						createOrUpdateSatelliteDvbLastConfigurationFile(
+							liveProxy->_ingestionJobKey, encodingJobKey,
+							satelliteMulticastIP, satelliteMulticastPort,
+							satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+							satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+							false);
+					}
+				}
+			}
 		}
 
         liveProxy->_running = false;

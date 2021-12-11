@@ -1821,6 +1821,7 @@ public:
 	void addEncoding_VODProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		Json::Value inputsRoot,
 
 		MMSEngineDBFacade::ContentType vodContentType,
 		string sourcePhysicalPathName,

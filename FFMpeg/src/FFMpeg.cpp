@@ -9222,7 +9222,7 @@ void FFMpeg::liveRecorder(
 			// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
 			if (
 				liveURL.find("http://") != string::npos
-				|| liveURL.find("rtsp://") != string::npos
+				|| liveURL.find("rtmp://") != string::npos
 			)
 			{
 				ffmpegArgumentList.push_back("-listen");
@@ -9247,7 +9247,7 @@ void FFMpeg::liveRecorder(
 			}
 			else
 			{
-				_logger->warn(__FILEREF__ + "listen/timeout not managed yet for the current protocol"
+				_logger->error(__FILEREF__ + "listen/timeout not managed yet for the current protocol"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", liveURL: " + liveURL
@@ -12966,7 +12966,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 				// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
 				if (
 					url.find("http://") != string::npos
-					|| url.find("rtsp://") != string::npos
+					|| url.find("rtmp://") != string::npos
 				)
 				{
 					ffmpegInputArgumentList.push_back("-listen");
@@ -12991,7 +12991,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 				}
 				else
 				{
-					_logger->warn(__FILEREF__ + "listen/timeout not managed yet for the current protocol"
+					_logger->error(__FILEREF__ + "listen/timeout not managed yet for the current protocol"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", url: " + url

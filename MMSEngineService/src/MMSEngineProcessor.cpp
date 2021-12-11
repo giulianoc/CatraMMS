@@ -12497,7 +12497,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
-		Json::Value localOutputsRoot(Json::arrayValue);
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey, false);
 
 		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
 		// this will be "translate"
@@ -12661,247 +12662,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			localOutputRoot[field] = string("");
 
 			localOutputsRoot.append(localOutputRoot);
-		}
-
-		if (outputsRoot != Json::nullValue)
-		{
-			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
-
-
-				string outputType;
-				string otherOutputOptions;
-				string audioVolumeChange;
-				int64_t deliveryCode;
-				int segmentDurationInSeconds = 0;
-				int playlistEntriesNumber = 0;
-				int64_t encodingProfileKey = -1;
-				Json::Value encodingProfileDetailsRoot = Json::nullValue;
-				MMSEngineDBFacade::ContentType encodingProfileContentType =
-					MMSEngineDBFacade::ContentType::Video;
-				string manifestDirectoryPath;
-				string manifestFileName;
-				string rtmpUrl;
-
-
-				string field = "OutputType";
-				if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					outputType = "HLS";
-				else
-					outputType = outputRoot.get(field, "HLS").asString();
-
-				field = "OtherOutputOptions";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					otherOutputOptions = outputRoot.get(field, "").asString();
-
-				field = "AudioVolumeChange";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					audioVolumeChange = outputRoot.get(field, "").asString();
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					field = "DeliveryCode";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					{
-						if (channelSourceType == "IP_PULL")
-						{
-							_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
-							// deliveryCode shall be mandatory. Just for backward compatibility
-							// (cibor project), in case it is missing and it is IP_PULL, we set it 
-							// with confKey
-							deliveryCode = confKey;
-						}
-						else
-						{
-							string errorMessage =
-								__FILEREF__ + "Field is not present or it is null"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", Field: " + field;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-					else
-						deliveryCode = outputRoot.get(field, 0).asInt64();
-
-					field = "SegmentDurationInSeconds";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						segmentDurationInSeconds = 10;
-					else
-						segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
-
-					field = "PlaylistEntriesNumber";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						playlistEntriesNumber = 6;
-					else
-						playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
-
-					string manifestExtension;
-					if (outputType == "HLS")
-						manifestExtension = "m3u8";
-					else if (outputType == "DASH")
-						manifestExtension = "mpd";
-
-					if (channelSourceType == "IP_PULL")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "Satellite")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "IP_PUSH")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "CaptureLive")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-
-					/*
-						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
-							_mmsEngineDBFacade, to_string(liveURLConfKey),
-							manifestExtension, _encodingItem->_workspace);
-					*/
-				}
-				else
-				{
-					field = "RtmpUrl";
-					rtmpUrl = outputRoot.get(field, "").asString();
-				}
-
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
-				string contentTypeField = "ContentType";
-				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
-				{
-					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
-				{
-					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
-
-					MMSEngineDBFacade::ContentType contentType;
-					if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
-					{
-						contentType = MMSEngineDBFacade::toContentType(
-							outputRoot.get(contentTypeField, "").asString());
-
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel);
-					}
-					else
-					{
-						bool contentTypeToBeUsed = false;
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
-					}
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileLabel: " + encodingProfileLabel
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-
-				if (encodingProfileKey != -1)
-				{
-					string jsonEncodingProfile;
-
-					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-						workspace->_workspaceKey, encodingProfileKey);
-					tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
-
-					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-							&encodingProfileDetailsRoot,
-							&errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", errors: " + errors
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-				}
-
-				Json::Value localOutputRoot;
-
-				field = "outputType";
-				localOutputRoot[field] = outputType;
-
-				field = "otherOutputOptions";
-				localOutputRoot[field] = otherOutputOptions;
-
-				field = "audioVolumeChange";
-				localOutputRoot[field] = audioVolumeChange;
-
-				field = "segmentDurationInSeconds";
-				localOutputRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				localOutputRoot[field] = playlistEntriesNumber;
-
-				{
-					field = "encodingProfileKey";
-					localOutputRoot[field] = encodingProfileKey;
-
-					field = "encodingProfileDetails";
-					localOutputRoot[field] = encodingProfileDetailsRoot;
-
-					field = "encodingProfileContentType";
-					outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
-				}
-
-				field = "manifestDirectoryPath";
-				localOutputRoot[field] = manifestDirectoryPath;
-
-				field = "manifestFileName";
-				localOutputRoot[field] = manifestFileName;
-
-				field = "rtmpUrl";
-				localOutputRoot[field] = rtmpUrl;
-
-				localOutputsRoot.append(localOutputRoot);
-			}
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
@@ -13176,255 +12936,8 @@ void MMSEngineProcessor::manageLiveProxy(
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
 
-		Json::Value localOutputsRoot(Json::arrayValue);
-		{
-			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
-
-
-				string outputType;
-				string otherOutputOptions;
-				string audioVolumeChange;
-				int64_t deliveryCode;
-				int segmentDurationInSeconds = 0;
-				int playlistEntriesNumber = 0;
-				int64_t encodingProfileKey = -1;
-				Json::Value encodingProfileDetailsRoot = Json::nullValue;
-				MMSEngineDBFacade::ContentType encodingProfileContentType =
-					MMSEngineDBFacade::ContentType::Video;
-				string manifestDirectoryPath;
-				string manifestFileName;
-				string rtmpUrl;
-				string udpUrl;
-
-
-				string field = "OutputType";
-				if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					outputType = "HLS";
-				else
-					outputType = outputRoot.get(field, "HLS").asString();
-
-				field = "OtherOutputOptions";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					otherOutputOptions = outputRoot.get(field, "").asString();
-
-				field = "AudioVolumeChange";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					audioVolumeChange = outputRoot.get(field, "").asString();
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					field = "DeliveryCode";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					{
-						if (channelSourceType == "IP_PULL")
-						{
-							_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
-							// deliveryCode shall be mandatory. Just for backward compatibility
-							// (cibor project), in case it is missing and it is IP_PULL, we set it 
-							// with confKey
-							deliveryCode = confKey;
-						}
-						else
-						{
-							string errorMessage =
-								__FILEREF__ + "Field is not present or it is null"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", Field: " + field;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-					else
-						deliveryCode = outputRoot.get(field, 0).asInt64();
-
-					field = "SegmentDurationInSeconds";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						segmentDurationInSeconds = 10;
-					else
-						segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
-
-					field = "PlaylistEntriesNumber";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						playlistEntriesNumber = 6;
-					else
-						playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
-
-					string manifestExtension;
-					if (outputType == "HLS")
-						manifestExtension = "m3u8";
-					else if (outputType == "DASH")
-						manifestExtension = "mpd";
-
-					if (channelSourceType == "IP_PULL")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "Satellite")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "IP_PUSH")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-					else if (channelSourceType == "CaptureLive")
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-
-					/*
-						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
-							_mmsEngineDBFacade, to_string(liveURLConfKey),
-							manifestExtension, _encodingItem->_workspace);
-					*/
-				}
-				else if (outputType == "RTMP_Stream")
-				{
-					field = "RtmpUrl";
-					rtmpUrl = outputRoot.get(field, "").asString();
-				}
-				else // if (outputType == "UDP_Stream")
-				{
-					field = "udpUrl";
-					udpUrl = outputRoot.get(field, "").asString();
-				}
-
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
-				string contentTypeField = "ContentType";
-				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
-				{
-					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
-				{
-					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
-
-					MMSEngineDBFacade::ContentType contentType;
-					if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
-					{
-						contentType = MMSEngineDBFacade::toContentType(
-							outputRoot.get(contentTypeField, "").asString());
-
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel);
-					}
-					else
-					{
-						bool contentTypeToBeUsed = false;
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
-					}
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileLabel: " + encodingProfileLabel
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-
-				if (encodingProfileKey != -1)
-				{
-					string jsonEncodingProfile;
-
-					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-						workspace->_workspaceKey, encodingProfileKey);
-					tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
-
-					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-							&encodingProfileDetailsRoot,
-							&errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", errors: " + errors
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-				}
-
-				Json::Value localOutputRoot;
-
-				field = "outputType";
-				localOutputRoot[field] = outputType;
-
-				field = "otherOutputOptions";
-				localOutputRoot[field] = otherOutputOptions;
-
-				field = "audioVolumeChange";
-				localOutputRoot[field] = audioVolumeChange;
-
-				field = "segmentDurationInSeconds";
-				localOutputRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				localOutputRoot[field] = playlistEntriesNumber;
-
-				{
-					field = "encodingProfileKey";
-					localOutputRoot[field] = encodingProfileKey;
-
-					field = "encodingProfileDetails";
-					localOutputRoot[field] = encodingProfileDetailsRoot;
-
-					field = "encodingProfileContentType";
-					outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
-				}
-
-				field = "manifestDirectoryPath";
-				localOutputRoot[field] = manifestDirectoryPath;
-
-				field = "manifestFileName";
-				localOutputRoot[field] = manifestFileName;
-
-				field = "rtmpUrl";
-				localOutputRoot[field] = rtmpUrl;
-
-				field = "udpUrl";
-				localOutputRoot[field] = udpUrl;
-
-				localOutputsRoot.append(localOutputRoot);
-			}
-		}
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey, false);
 
 		Json::Value channelInputRoot = _mmsEngineDBFacade->getChannelInputRoot(
 			workspace->_workspaceKey, configurationLabel,
@@ -13677,219 +13190,42 @@ void MMSEngineProcessor::manageVODProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		Json::Value localOutputsRoot(Json::arrayValue);
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey,
+			vodContentType == MMSEngineDBFacade::ContentType::Image ? true : false
+		);
+
+		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
+		Json::Value vodInputRoot;
 		{
-			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+			string field = "vodContentType";
+			vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
 
-
-				string outputType;
-				string otherOutputOptions;
-				string audioVolumeChange;
-				int64_t deliveryCode;
-				int segmentDurationInSeconds = 0;
-				int playlistEntriesNumber = 0;
-				int64_t encodingProfileKey = -1;
-				Json::Value encodingProfileDetailsRoot = Json::nullValue;
-				MMSEngineDBFacade::ContentType encodingProfileContentType =
-					MMSEngineDBFacade::ContentType::Video;
-				string manifestDirectoryPath;
-				string manifestFileName;
-				string rtmpUrl;
-
-
-				string field = "OutputType";
-				if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					outputType = "HLS";
-				else
-					outputType = outputRoot.get(field, "HLS").asString();
-
-				field = "OtherOutputOptions";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					otherOutputOptions = outputRoot.get(field, "").asString();
-
-				field = "AudioVolumeChange";
-				if (JSONUtils::isMetadataPresent(outputRoot, field))
-					audioVolumeChange = outputRoot.get(field, "").asString();
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					field = "DeliveryCode";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					{
-						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					deliveryCode = outputRoot.get(field, 0).asInt64();
-
-					field = "SegmentDurationInSeconds";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						segmentDurationInSeconds = 10;
-					else
-						segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
-
-					field = "PlaylistEntriesNumber";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						playlistEntriesNumber = 6;
-					else
-						playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
-
-					string manifestExtension;
-					if (outputType == "HLS")
-						manifestExtension = "m3u8";
-					else if (outputType == "DASH")
-						manifestExtension = "mpd";
-
-					{
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							to_string(deliveryCode),
-							workspace);
-
-						manifestFileName = to_string(deliveryCode) + ".m3u8";
-					}
-				}
-				else
-				{
-					field = "RtmpUrl";
-					rtmpUrl = outputRoot.get(field, "").asString();
-				}
-
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
-				string contentTypeField = "ContentType";
-				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
-				{
-					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
-				{
-					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
-
-					MMSEngineDBFacade::ContentType contentType;
-					if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
-					{
-						contentType = MMSEngineDBFacade::toContentType(
-							outputRoot.get(contentTypeField, "").asString());
-
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel);
-					}
-					else
-					{
-						bool contentTypeToBeUsed = false;
-						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
-					}
-
-					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingProfileLabel: " + encodingProfileLabel
-						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					);
-				}
-
-				if (encodingProfileKey != -1)
-				{
-					string jsonEncodingProfile;
-
-					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-						workspace->_workspaceKey, encodingProfileKey);
-					tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
-
-					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-							&encodingProfileDetailsRoot,
-							&errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", errors: " + errors
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-				}
-				else
-				{
-					// in case we have an Image as input, the encoding profile has to be mandatory
-					if (vodContentType == MMSEngineDBFacade::ContentType::Image)
-					{
-						string errorMessage = __FILEREF__
-							+ "EncodingProfile is mandatory in case of Image"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-
-				Json::Value localOutputRoot;
-
-				field = "outputType";
-				localOutputRoot[field] = outputType;
-
-				field = "otherOutputOptions";
-				localOutputRoot[field] = otherOutputOptions;
-
-				field = "audioVolumeChange";
-				localOutputRoot[field] = audioVolumeChange;
-
-				field = "segmentDurationInSeconds";
-				localOutputRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				localOutputRoot[field] = playlistEntriesNumber;
-
-				{
-					field = "encodingProfileKey";
-					localOutputRoot[field] = encodingProfileKey;
-
-					field = "encodingProfileDetails";
-					localOutputRoot[field] = encodingProfileDetailsRoot;
-
-					field = "encodingProfileContentType";
-					outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
-				}
-
-				field = "manifestDirectoryPath";
-				localOutputRoot[field] = manifestDirectoryPath;
-
-				field = "manifestFileName";
-				localOutputRoot[field] = manifestFileName;
-
-				field = "rtmpUrl";
-				localOutputRoot[field] = rtmpUrl;
-
-				localOutputsRoot.append(localOutputRoot);
-			}
+			field = "sourcePhysicalPathName";
+			vodInputRoot[field] = sourcePhysicalPathName;
 		}
 
+		Json::Value inputRoot;
+		{
+			string field = "vodInput";
+			inputRoot[field] = vodInputRoot;
+
+			field = "timePeriod";
+			inputRoot[field] = timePeriod;
+
+			field = "utcProxyPeriodStart";
+			inputRoot[field] = utcProxyPeriodStart;
+
+			field = "utcProxyPeriodEnd";
+			inputRoot[field] = utcProxyPeriodEnd;
+		}
+
+		Json::Value inputsRoot(Json::arrayValue);
+		inputsRoot.append(inputRoot);
+
 		_mmsEngineDBFacade->addEncoding_VODProxyJob(workspace, ingestionJobKey,
+			inputsRoot,
+
 			vodContentType,
 			sourcePhysicalPathName,
 
@@ -14193,6 +13529,238 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 
         throw e;
     }
+}
+
+Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
+	Json::Value outputsRoot,
+	shared_ptr<Workspace> workspace,
+	int64_t ingestionJobKey,
+	bool encodingProfileMandatory)
+{
+	Json::Value localOutputsRoot(Json::arrayValue);
+
+	if (outputsRoot == Json::nullValue)
+		return localOutputsRoot;
+
+	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	{
+		Json::Value outputRoot = outputsRoot[outputIndex];
+
+
+		string outputType;
+		string otherOutputOptions;
+		string audioVolumeChange;
+		int64_t deliveryCode;
+		int segmentDurationInSeconds = 0;
+		int playlistEntriesNumber = 0;
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		MMSEngineDBFacade::ContentType encodingProfileContentType =
+			MMSEngineDBFacade::ContentType::Video;
+		string manifestDirectoryPath;
+		string manifestFileName;
+		string rtmpUrl;
+		string udpUrl;
+
+
+		string field = "OutputType";
+		if (!JSONUtils::isMetadataPresent(outputRoot, field))
+			outputType = "HLS";
+		else
+			outputType = outputRoot.get(field, "HLS").asString();
+
+		field = "OtherOutputOptions";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			otherOutputOptions = outputRoot.get(field, "").asString();
+
+		field = "AudioVolumeChange";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			audioVolumeChange = outputRoot.get(field, "").asString();
+
+		if (outputType == "HLS" || outputType == "DASH")
+		{
+			field = "DeliveryCode";
+			if (!JSONUtils::isMetadataPresent(outputRoot, field))
+			{
+				string errorMessage =
+					__FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else
+				deliveryCode = outputRoot.get(field, 0).asInt64();
+
+			field = "SegmentDurationInSeconds";
+			if (!JSONUtils::isMetadataPresent(outputRoot, field))
+				segmentDurationInSeconds = 10;
+			else
+				segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
+
+			field = "PlaylistEntriesNumber";
+			if (!JSONUtils::isMetadataPresent(outputRoot, field))
+				playlistEntriesNumber = 6;
+			else
+				playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
+
+			string manifestExtension;
+			if (outputType == "HLS")
+				manifestExtension = "m3u8";
+			else if (outputType == "DASH")
+				manifestExtension = "mpd";
+
+			{
+				manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+					to_string(deliveryCode),
+					workspace);
+
+				manifestFileName = to_string(deliveryCode) + ".m3u8";
+			}
+		}
+		else if (outputType == "RTMP_Stream")
+		{
+			field = "RtmpUrl";
+			rtmpUrl = outputRoot.get(field, "").asString();
+		}
+		else // if (outputType == "UDP_Stream")
+		{
+			field = "udpUrl";
+			udpUrl = outputRoot.get(field, "").asString();
+		}
+
+		string keyField = "EncodingProfileKey";
+		string labelField = "EncodingProfileLabel";
+		string contentTypeField = "ContentType";
+		if (JSONUtils::isMetadataPresent(outputRoot, keyField))
+		{
+			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
+
+			_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+			);
+		}
+		else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
+		{
+			string encodingProfileLabel = outputRoot.get(labelField, "").asString();
+
+			MMSEngineDBFacade::ContentType contentType;
+			if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+			{
+				contentType = MMSEngineDBFacade::toContentType(
+					outputRoot.get(contentTypeField, "").asString());
+
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, contentType, encodingProfileLabel);
+			}
+			else
+			{
+				bool contentTypeToBeUsed = false;
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
+			}
+
+			_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingProfileLabel: " + encodingProfileLabel
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+			);
+		}
+
+		if (encodingProfileKey != -1)
+		{
+			string jsonEncodingProfile;
+
+			tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+				encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+				workspace->_workspaceKey, encodingProfileKey);
+			tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+					jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+					&encodingProfileDetailsRoot,
+					&errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else
+		{
+			if (encodingProfileMandatory)
+			{
+				string errorMessage = __FILEREF__
+					+ "EncodingProfile is mandatory in case of Image"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		Json::Value localOutputRoot;
+
+		field = "outputType";
+		localOutputRoot[field] = outputType;
+
+		field = "otherOutputOptions";
+		localOutputRoot[field] = otherOutputOptions;
+
+		field = "audioVolumeChange";
+		localOutputRoot[field] = audioVolumeChange;
+
+		field = "segmentDurationInSeconds";
+		localOutputRoot[field] = segmentDurationInSeconds;
+
+		field = "playlistEntriesNumber";
+		localOutputRoot[field] = playlistEntriesNumber;
+
+		{
+			field = "encodingProfileKey";
+			localOutputRoot[field] = encodingProfileKey;
+
+			field = "encodingProfileDetails";
+			localOutputRoot[field] = encodingProfileDetailsRoot;
+
+			field = "encodingProfileContentType";
+			outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+		}
+
+		field = "manifestDirectoryPath";
+		localOutputRoot[field] = manifestDirectoryPath;
+
+		field = "manifestFileName";
+		localOutputRoot[field] = manifestFileName;
+
+		field = "rtmpUrl";
+		localOutputRoot[field] = rtmpUrl;
+
+		field = "udpUrl";
+		localOutputRoot[field] = udpUrl;
+
+		localOutputsRoot.append(localOutputRoot);
+	}
+
+	return localOutputsRoot;
 }
 
 void MMSEngineProcessor::manageLiveGrid(

@@ -13121,7 +13121,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 		string field = "inputsRoot";
 		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
-		if (inputsRoot.size() == 0)
+		if (inputsRoot == Json::nullValue || inputsRoot.size() == 0)
 		{
 			string errorMessage = __FILEREF__ + "No inputsRoot are present"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -14785,6 +14785,7 @@ bool EncoderVideoAudioProxy::vodProxy()
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
+	/*
 	{
 		string field = "timePeriod";
 		timePeriod = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot, field, false);
@@ -14796,6 +14797,48 @@ bool EncoderVideoAudioProxy::vodProxy()
 
 			field = "utcProxyPeriodEnd";
 			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_ingestedParametersRoot, field, -1);
+		}
+	}
+	*/
+	{
+		string field = "inputsRoot";
+		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+
+		if (inputsRoot == Json::nullValue || inputsRoot.size() == 0)
+		{
+			string errorMessage = __FILEREF__ + "No inputsRoot are present"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", inputsRoot.size: " + to_string(inputsRoot.size())
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			Json::Value firstInputRoot = inputsRoot[0];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				string field = "utcProxyPeriodStart";
+				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+			}
+
+			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+
+			field = "timePeriod";
+			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+
+			if (timePeriod)
+			{
+				field = "utcProxyPeriodEnd";
+				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+			}
 		}
 	}
 
@@ -14869,20 +14912,10 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	{
-		// string sContentType
-		// 	= _encodingItem->_encodingParametersRoot.get("contentType", "").asString();
-		// contentType = MMSEngineDBFacade::toContentType(sContentType);
-
-		// string field = "sourcePhysicalPaths";
-		// sourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
-
 		string field = "EncodersPool";
 		encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
-        // field = "OtherInputOptions";
-		// if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
-		// 	otherInputOptions = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
+		/*
 		field = "timePeriod";
 		timePeriod = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
@@ -14893,6 +14926,49 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 
 			field = "utcProxyPeriodEnd";
 			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		}
+		*/
+
+		{
+			string field = "inputsRoot";
+			Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+
+			if (inputsRoot == Json::nullValue || inputsRoot.size() == 0)
+			{
+				string errorMessage = __FILEREF__ + "No inputsRoot are present"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", inputsRoot.size: " + to_string(inputsRoot.size())
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				Json::Value firstInputRoot = inputsRoot[0];
+
+				field = "timePeriod";
+				timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+
+				if (timePeriod)
+				{
+					string field = "utcProxyPeriodStart";
+					utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+				}
+
+				Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+
+				field = "timePeriod";
+				timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+
+				if (timePeriod)
+				{
+					field = "utcProxyPeriodEnd";
+					utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+				}
+			}
 		}
 	}
 
@@ -14918,7 +14994,7 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 		// }
 
 		string ffmpegEncoderURL;
-		string ffmpegURI = _ffmpegVODProxyURI;
+		string ffmpegURI = _ffmpegLiveProxyURI;
 		ostringstream response;
 		bool responseInitialized = false;
 		try
@@ -14956,10 +15032,6 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 
 					vodProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-					// vodProxyMetadata["timePeriod"] = timePeriod;
-					// vodProxyMetadata["utcProxyPeriodStart"] = utcProxyPeriodStart;
-					// vodProxyMetadata["utcProxyPeriodEnd"] = utcProxyPeriodEnd;
-					// vodProxyMetadata["otherInputOptions"] = otherInputOptions;
 					vodProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 					vodProxyMetadata["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;

@@ -521,6 +521,14 @@ firewall-rules()
 	#to allow traffic from a subnet (client) and a specific port
 	#ufw allow from 203.0.113.0/24 to any port 22
 
+	#To block or deny all packets from 192.168.1.5
+	#sudo ufw deny from 192.168.1.5 to any
+
+	#Instead of deny rule we can reject connection from any IP
+	#Reject sends a reject response to the source, while the deny
+	#(DROP) target sends nothing at all.
+	#sudo ufw reject from 192.168.1.5 to any
+
 	#status of UFW
 	#ufw status verbose
 
