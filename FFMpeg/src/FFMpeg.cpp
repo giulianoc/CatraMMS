@@ -12291,9 +12291,9 @@ void FFMpeg::liveProxy2(
 
 			ffmpegArgumentList.push_back("ffmpeg");
 			for (string parameter: ffmpegInputArgumentList)
-				addToArguments(parameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(parameter);
 			for (string parameter: ffmpegOutputArgumentList)
-				addToArguments(parameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(parameter);
 
 			time_t utcNow;
 			{
