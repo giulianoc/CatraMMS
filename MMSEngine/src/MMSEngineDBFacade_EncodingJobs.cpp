@@ -5176,8 +5176,153 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
     }
 }
 
-int64_t MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
-	bool isEncodingJobKeyMain, int64_t encodingJobKey)
+void MMSEngineDBFacade::updateEncodingJobParameters (
+	int64_t encodingJobKey,
+	string parameters
+)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_EncodingJob set parameters = ? where encodingJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, parameters);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", parameters: " + parameters
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", parameters: " + parameters
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "EncodingJob updated successful"
+            + ", parameters: " + parameters
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
+
+tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey)
 {
     
     string      lastSQLCommand;
@@ -5191,23 +5336,23 @@ int64_t MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		int64_t otherEncodingJobKey;
+		int64_t		ingestionJobKey;
+		string      type;
+		int64_t		encoderKey;
+		// default initialization, important in case the calling methid calls the tie function
+		EncodingStatus	status = EncodingStatus::ToBeProcessed;
         {
-			if (isEncodingJobKeyMain)
-				lastSQLCommand = 
-					"select JSON_EXTRACT(parameters, '$.backupEncodingJobKey') as otherEncodingJobKey "
-					"from MMS_EncodingJob where encodingJobKey = ?";
-			else
-				lastSQLCommand = 
-					"select JSON_EXTRACT(parameters, '$.mainEncodingJobKey') as otherEncodingJobKey "
-					"from MMS_EncodingJob where encodingJobKey = ?";
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+            lastSQLCommand = 
+                "select ingestionJobKey, type, encoderKey, status "
+				"from MMS_EncodingJob "
+				"where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5215,68 +5360,27 @@ int64_t MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-			if (resultSet->next())
-			{
-				if (resultSet->isNull("otherEncodingJobKey"))
-				{
-					string errorMessage = __FILEREF__ + "otherEncodingJobKey is null"
-                       + ", EncodingJobKey: " + to_string(encodingJobKey)
-                       + ", lastSQLCommand: " + lastSQLCommand
-					;
-					_logger->error(errorMessage);
+            if (resultSet->next())
+            {
+                ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+                type = resultSet->getString("type");
+				if (resultSet->isNull("encoderKey"))
+					encoderKey = -1;
+				else
+					encoderKey = resultSet->getInt64("encoderKey");
+                status = toEncodingStatus(resultSet->getString("status"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);                    
-				}
-
-				otherEncodingJobKey = resultSet->getInt64("otherEncodingJobKey");
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "EncodingJob not found"
-                       + ", EncodingJobKey: " + to_string(encodingJobKey)
-                       + ", lastSQLCommand: " + lastSQLCommand
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);                    
-			}
-		}
-
-		int64_t otherEncoderKey = -1;
-        {
-			lastSQLCommand = 
-				"select encoderKey "
-				"from MMS_EncodingJob where encodingJobKey = ?";
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, otherEncodingJobKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", otherEncodingJobKey: " + to_string(otherEncodingJobKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-			if (resultSet->next())
-			{
-				if (!resultSet->isNull("encoderKey"))
-					otherEncoderKey = resultSet->getInt64("encoderKey");
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "EncodingJob not found"
-                       + ", EncodingJobKey: " + to_string(encodingJobKey)
-                       + ", lastSQLCommand: " + lastSQLCommand
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);                    
-			}
-		}
+                throw runtime_error(errorMessage);                    
+            }
+        }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -5284,7 +5388,9 @@ int64_t MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return otherEncoderKey;
+		// return make_tuple(ingestionJobKey, type, encoderKey, status, highAvailability, main,
+		//		theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
+		return make_tuple(ingestionJobKey, type, encoderKey, status);
     }
     catch(sql::SQLException se)
     {
@@ -5349,13 +5455,14 @@ int64_t MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
     }
 }
 
-
-tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
-	int64_t, MMSEngineDBFacade::EncodingStatus, int64_t>
-	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey)
+tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngestionJobKey(
+	int64_t ingestionJobKey
+)
 {
-    
     string      lastSQLCommand;
+    int64_t		encoderKey = -1;
+    int64_t		encodingJobKey = -1;
+	string		parameters;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -5366,133 +5473,46 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		int64_t		ingestionJobKey;
-		string      type;
-		int64_t		encoderKey;
-		// default initialization, important in case the calling methid calls the tie function
-		EncodingStatus	status = EncodingStatus::ToBeProcessed;
-		bool		highAvailability = false;
-		bool		main = false;
-		int64_t		theOtherEncodingJobKey = 0;
-        {
-            lastSQLCommand = 
-                "select ingestionJobKey, type, encoderKey, status, "
-				"CAST(JSON_EXTRACT(parameters, '$.highAvailability') AS SIGNED INTEGER) as highAvailability, "
-				"CAST(JSON_EXTRACT(parameters, '$.main') AS SIGNED INTEGER) as main, "
-				"JSON_EXTRACT(parameters, '$.mainEncodingJobKey') as mainEncodingJobKey, "
-				"JSON_EXTRACT(parameters, '$.backupEncodingJobKey') as backupEncodingJobKey "
-				"from MMS_EncodingJob "
-				"where encodingJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+		{
+			lastSQLCommand = "select encodingJobKey, encoderKey, parameters "
+				"from MMS_EncodingJob where ingestionJobKey = ? ";
 
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-            if (resultSet->next())
+            if (!resultSet->next())
             {
-                ingestionJobKey = resultSet->getInt64("ingestionJobKey");
-                type = resultSet->getString("type");
-				if (resultSet->isNull("encoderKey"))
-					encoderKey = -1;
-				else
-					encoderKey = resultSet->getInt64("encoderKey");
-                status = toEncodingStatus(resultSet->getString("status"));
+				string errorMessage = __FILEREF__ + "select count(*) failed";
 
-				if (!resultSet->isNull("highAvailability"))
-					highAvailability = resultSet->getInt("highAvailability") == 1 ? true : false;
-				if (highAvailability)
-				{
-					if (!resultSet->isNull("main"))
-						main = resultSet->getInt("main") == 1 ? true : false;
+				_logger->error(errorMessage);
 
-					if (type == "LiveRecorder")
-					{
-						if (main)
-						{
-							if (!resultSet->isNull("backupEncodingJobKey"))
-								theOtherEncodingJobKey = resultSet->getInt64("backupEncodingJobKey");
-						}
-						else
-						{
-							if (!resultSet->isNull("mainEncodingJobKey"))
-								theOtherEncodingJobKey = resultSet->getInt64("mainEncodingJobKey");
-						}
-					}
-				}
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "EncodingJob not found"
-                        + ", EncodingJobKey: " + to_string(encodingJobKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-		int64_t theOtherEncoderKey;
-		// default initialization, important in case the calling methid calls the tie function
-		EncodingStatus theOtherStatus = EncodingStatus::ToBeProcessed;
-		if (type == "LiveRecorder" && highAvailability)
-        {
-			// select to get the other encodingJobKey
-
-			if (theOtherEncodingJobKey == 0)
-            {
-                string errorMessage = __FILEREF__ + "theOtherEncodingJobKey had to be initialized!!!"
-                        + ", EncodingJobKey: " + to_string(encodingJobKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
+				throw runtime_error(errorMessage);
             }
 
-            lastSQLCommand = 
-                "select encoderKey, status from MMS_EncodingJob "
-				"where encodingJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, theOtherEncodingJobKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
+			encodingJobKey = resultSet->getInt64("encodingJobKey");
+			encoderKey = resultSet->getInt64("encoderKey");
+			parameters = resultSet->getString("parameters");
+            if (encodingJobKey <= 0 || encoderKey <= 0)
             {
-				if (resultSet->isNull("encoderKey"))
-					theOtherEncoderKey = -1;
-				else
-					theOtherEncoderKey = resultSet->getInt64("EncoderKey");
-                theOtherStatus = toEncodingStatus(resultSet->getString("status"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "EncodingJob not found"
-                        + ", EncodingJobKey: " + to_string(encodingJobKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+				string errorMessage = __FILEREF__
+					+ "encodingJobKey/encoderKey is wrongly initialized"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encoderKey: " + to_string(encoderKey)
+				;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+				throw runtime_error(errorMessage);
             }
         }
 
@@ -5501,18 +5521,12 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
-
-		// return make_tuple(ingestionJobKey, type, encoderKey, status, highAvailability, main,
-		//		theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
-		return make_tuple(ingestionJobKey, type, encoderKey, status, highAvailability, main,
-				theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
     }
     catch(sql::SQLException se)
     {
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -5528,11 +5542,10 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
         }
 
         throw se;
-    }
+    }    
     catch(runtime_error e)
-    {
+    {        
         _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -5546,13 +5559,12 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
             _connectionPool->unborrow(conn);
 			conn = nullptr;
         }
-        
+
         throw e;
-    }
+    } 
     catch(exception e)
-    {
+    {        
         _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -5565,9 +5577,11 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
             _connectionPool->unborrow(conn);
 			conn = nullptr;
         }
-        
+
         throw e;
-    }
+    } 
+    
+    return make_tuple(encodingJobKey, encoderKey, parameters);
 }
 
 Json::Value MMSEngineDBFacade::getEncodingJobsStatus (

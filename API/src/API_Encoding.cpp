@@ -391,22 +391,15 @@ void API::killOrCancelEncodingJob(
         }
 
         {
-			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
-				int64_t, MMSEngineDBFacade::EncodingStatus, int64_t> encodingJobDetails =
-				_mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
+			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+				encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
 
 			int64_t ingestionJobKey;
 			string type;
 			int64_t encoderKey;
 			MMSEngineDBFacade::EncodingStatus status;
-			bool highAvailability;
-			bool main;
-			int64_t theOtherEncodingJobKey;
-			int64_t theOtherEncoderKey;
-			MMSEngineDBFacade::EncodingStatus theOtherStatus;
 
-			tie(ingestionJobKey, type, encoderKey, status, highAvailability, main,
-				theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
+			tie(ingestionJobKey, type, encoderKey, status) = encodingJobDetails;
 
 			_logger->info(__FILEREF__ + "getEncodingJobDetails"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -414,11 +407,6 @@ void API::killOrCancelEncodingJob(
 				+ ", type: " + type
 				+ ", encoderKey: " + to_string(encoderKey)
 				+ ", status: " + MMSEngineDBFacade::toString(status)
-				+ ", highAvailability: " + to_string(highAvailability)
-				+ ", main: " + to_string(main)
-				+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
-				+ ", theOtherStatus: " + MMSEngineDBFacade::toString(theOtherStatus)
-				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
 			);
 
 			if (type == "LiveRecorder")

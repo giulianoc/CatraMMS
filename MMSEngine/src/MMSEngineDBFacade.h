@@ -1308,7 +1308,7 @@ public:
 
 	long getIngestionJobOutputsCount(int64_t ingestionJobKey);
 
-	pair<int64_t, int64_t> getEncodingJobDetailsByIngestionJobKey(
+	tuple<int64_t, int64_t, string> getEncodingJobDetailsByIngestionJobKey(
 		int64_t ingestionJobKey);
 
     int64_t addEncodingProfilesSet (
@@ -1949,11 +1949,11 @@ public:
 		int64_t encoderKey,
 		string stagingEncodedAssetPathName);
 
-	int64_t getLiveRecorderOtherTranscoder (
-		bool isEncodingJobKeyMain, int64_t encodingJobKey);
+	void updateEncodingJobParameters (
+		int64_t encodingJobKey,
+		string parameters);
 
-	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
-		int64_t, MMSEngineDBFacade::EncodingStatus, int64_t>
+	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
     void checkWorkspaceStorageAndMaxIngestionNumber (int64_t workspaceKey);

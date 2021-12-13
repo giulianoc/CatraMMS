@@ -12137,19 +12137,68 @@ void FFMpeg::liveProxy2(
 		throw runtime_error(errorMessage);
 	}
 
+	_logger->info(__FILEREF__ + "Calculating timedInput"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", inputsRoot->size: " + to_string(inputsRoot->size())
+	);
+	bool timedInput = true;
+	{
+		lock_guard<mutex> locker(*inputsRootMutex);
+
+		for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
+		{
+			Json::Value inputRoot = (*inputsRoot)[inputIndex];
+
+			bool timePeriod = false;
+			string field = "timePeriod";
+			if (isMetadataPresent(inputRoot, field))
+				timePeriod = asBool(inputRoot, field, false);
+
+			int64_t utcProxyPeriodStart = -1;
+			field = "utcProxyPeriodStart";
+			if (isMetadataPresent(inputRoot, field))
+				utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+
+			int64_t utcProxyPeriodEnd = -1;
+			field = "utcProxyPeriodEnd";
+			if (isMetadataPresent(inputRoot, field))
+				utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+
+			if (!timePeriod || utcProxyPeriodStart == -1 || utcProxyPeriodEnd == -1)
+			{
+				timedInput = false;
+
+				break;
+			}
+		}
+	}
+	_logger->info(__FILEREF__ + "Calculated timedInput"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", inputsRoot->size: " + to_string(inputsRoot->size())
+		+ ", timedInput: " + to_string(timedInput)
+	);
+
 	int maxTimesRepeatingSameInput = 1;
 	int currentNumberOfRepeatingSameInput = 0;
 	int sleepInSecondsInCaseOfRepeating = 5;
 	int currentInputIndex = -1;
 	Json::Value currentInputRoot;
 	while ((currentInputIndex = getNextLiveProxyInput(inputsRoot,
-		inputsRootMutex, currentInputIndex, &currentInputRoot)) != -1)
+		inputsRootMutex, currentInputIndex, timedInput, &currentInputRoot)) != -1)
 	{
 		vector<string> ffmpegInputArgumentList;
 		long streamingDuration = -1;
 		string otherOutputOptionsBecauseOfMaxWidth;
 		try
 		{
+			_logger->info(__FILEREF__ + "liveProxyInput..."
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", inputsRoot->size: " + to_string(inputsRoot->size())
+				+ ", timedInput: " + to_string(timedInput)
+			);
 			pair<long, string> inputDetils = liveProxyInput(ingestionJobKey, encodingJobKey,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDuration, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
@@ -12186,6 +12235,11 @@ void FFMpeg::liveProxy2(
 		vector<string> ffmpegOutputArgumentList;
 		try
 		{
+			_logger->info(__FILEREF__ + "liveProxyOutput..."
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", outputRoots.size: " + to_string(outputRoots.size())
+			);
 			liveProxyOutput(ingestionJobKey, encodingJobKey,
 				otherOutputOptionsBecauseOfMaxWidth,
 				outputRoots, ffmpegOutputArgumentList);
@@ -12574,19 +12628,52 @@ void FFMpeg::liveProxy2(
 	}
 }
 
-int FFMpeg::getNextLiveProxyInput(Json::Value* inputsRoot, mutex* inputsRootMutex,
-	int currentInputIndex, Json::Value* newInputRoot)
+// return the index of the selected input
+int FFMpeg::getNextLiveProxyInput(
+	Json::Value* inputsRoot,	// IN: list of inputs
+	mutex* inputsRootMutex,		// IN: mutex
+	int currentInputIndex,		// IN: current index on the inputs
+	bool timedInput,			// IN: specify if the input is "timed". If "timed", next input is calculated based on the current time, otherwise it is retrieved simply the next
+	Json::Value* newInputRoot	// OUT: refer the input to be run
+)
 {
 	lock_guard<mutex> locker(*inputsRootMutex);
 
+	int newInputIndex = -1;
 	*newInputRoot = Json::nullValue;
 
-	int newInputIndex = currentInputIndex + 1;
+	if (timedInput)
+	{
+		int64_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
-	if (newInputIndex < inputsRoot->size())
-		*newInputRoot = (*inputsRoot)[newInputIndex];
+		for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
+		{
+			Json::Value inputRoot = (*inputsRoot)[inputIndex];
+
+			string field = "utcProxyPeriodStart";
+			int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+
+			field = "utcProxyPeriodEnd";
+			int64_t utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+
+			if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)
+			{
+				*newInputRoot = (*inputsRoot)[inputIndex];
+				newInputIndex = inputIndex;
+
+				break;
+			}
+		}
+	}
 	else
-		newInputIndex = -1;
+	{
+		newInputIndex = currentInputIndex + 1;
+
+		if (newInputIndex < inputsRoot->size())
+			*newInputRoot = (*inputsRoot)[newInputIndex];
+		else
+			newInputIndex = -1;
+	}
 
 	return newInputIndex;
 }
@@ -12605,7 +12692,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 	//	"timePeriod": false, "utcProxyPeriodEnd": -1, "utcProxyPeriodStart": -1 
 	// }
 
-	bool timePeriod = -1;
+	bool timePeriod = false;
 	string field = "timePeriod";
 	if (isMetadataPresent(inputRoot, field))
 		timePeriod = asBool(inputRoot, field, false);
@@ -16222,7 +16309,7 @@ void FFMpeg::streamingToFile(
 		if (regenerateTimestamps)
 			ffmpegExecuteCommand += "-fflags +genpts ";
 		ffmpegExecuteCommand +=
-			string("-i \"" + sourceReferenceURL + "\" ")
+			string("-y -i \"" + sourceReferenceURL + "\" ")
 			// -map 0:v and -map 0:a is to get all video-audio tracks
             + "-map 0:v -c:v copy -map 0:a -c:a copy "
 			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
@@ -16253,10 +16340,45 @@ void FFMpeg::streamingToFile(
             ;
             _logger->error(errorMessage);
 
-			// to hide the ffmpeg staff
-            errorMessage = __FILEREF__ + "streamingToFile: command failed"
-            ;
-            throw runtime_error(errorMessage);
+			// 2021-12-13: sometimes we have one track creating problems and the command fails
+			// in this case it is enought to avoid to copy all the tracks, leave ffmpeg
+			// to choice the track and it works
+			{
+				ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
+				if (regenerateTimestamps)
+					ffmpegExecuteCommand += "-fflags +genpts ";
+				ffmpegExecuteCommand +=
+					string("-y -i \"" + sourceReferenceURL + "\" ")
+					+ "-c:v copy -c:a copy "
+					//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
+					+ "-q 0 "
+					+ destinationPathName + " "
+					+ "> " + _outputFfmpegPathFileName + " "
+					+ "2>&1"
+				;
+
+				_logger->info(__FILEREF__ + "streamingToFile: Executing ffmpeg command"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+				);
+
+				chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+				executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+				if (executeCommandStatus != 0)
+				{
+					string errorMessage = __FILEREF__ + "streamingToFile: ffmpeg command failed"
+						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+						+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+					;
+					_logger->error(errorMessage);
+
+					// to hide the ffmpeg staff
+					errorMessage = __FILEREF__ + "streamingToFile: command failed"
+					;
+					throw runtime_error(errorMessage);
+				}
+			}
         }
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();

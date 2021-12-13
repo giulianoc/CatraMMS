@@ -3467,6 +3467,21 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				lock_guard<mutex> locker(selectedLiveProxy->_inputsRootMutex);
 
 				selectedLiveProxy->_inputsRoot = newInputsRoot;
+
+				try
+				{
+					ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("ProcessUtility::kill/quit Process failed")
+						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
+						+ ", _childPid: " + to_string(selectedLiveProxy->_childPid)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+				}
 			}
 		}
 

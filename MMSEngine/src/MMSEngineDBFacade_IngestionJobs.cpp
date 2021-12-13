@@ -1899,9 +1899,9 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                // throw runtime_error(errorMessage);                    
             }
         }
         
@@ -4293,132 +4293,6 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
     } 
     
     return ingestionJobOutputsCount;
-}
-
-pair<int64_t, int64_t> MMSEngineDBFacade::getEncodingJobDetailsByIngestionJobKey(
-	int64_t ingestionJobKey
-)
-{
-    string      lastSQLCommand;
-    int64_t		encoderKey = -1;
-    int64_t		encodingJobKey = -1;
-    
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
-		{
-			lastSQLCommand = "select encodingJobKey, encoderKey from MMS_EncodingJob "
-				"where ingestionJobKey = ? ";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (!resultSet->next())
-            {
-				string errorMessage = __FILEREF__ + "select count(*) failed";
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-            }
-
-			encodingJobKey = resultSet->getInt64("encodingJobKey");
-			encoderKey = resultSet->getInt64("encoderKey");
-            if (encodingJobKey <= 0 || encoderKey <= 0)
-            {
-				string errorMessage = __FILEREF__ + "encodingJobKey/encoderKey is wrongly initialized"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", encoderKey: " + to_string(encoderKey)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-            }
-        }
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    
-    return make_pair(encodingJobKey, encoderKey);
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (

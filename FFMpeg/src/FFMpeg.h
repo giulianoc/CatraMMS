@@ -550,7 +550,7 @@ private:
 	);
 
 	int getNextLiveProxyInput(Json::Value* inputsRoot, mutex* inputsRootMutex,
-		int currentInputIndex, Json::Value* newInputRoot);
+		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
 	pair<long, string> liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
