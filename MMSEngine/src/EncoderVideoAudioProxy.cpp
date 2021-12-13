@@ -13100,6 +13100,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
+	/*
 	{
 		string field = "timePeriod";
 		timePeriod = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot,
@@ -13116,7 +13117,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 				_encodingItem->_ingestedParametersRoot, field, -1);
 		}
 	}
-	/*
+	*/
 	{
 		string field = "inputsRoot";
 		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
@@ -13158,7 +13159,6 @@ bool EncoderVideoAudioProxy::liveProxy()
 			}
 		}
 	}
-	*/
 
 	if (timePeriod)
 	{
@@ -13235,6 +13235,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
+	/*
 	{
         // string field = "EncodersPool";
         // encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
@@ -13276,7 +13277,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				_encodingItem->_encodingParametersRoot, field, -1);
 		}
 	}
-	/*
+	*/
 	{
 		string field = "inputsRoot";
 		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
@@ -13330,7 +13331,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			}
 		}
 	}
-	*/
 
 	bool killedByUser = false;
 	bool urlForbidden = false;
