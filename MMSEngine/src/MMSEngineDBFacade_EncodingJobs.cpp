@@ -124,53 +124,6 @@ void MMSEngineDBFacade::getEncodingJobs(
 					encodingItem->_stagingEncodedAssetPathName =
 						encodingResultSet->getString("stagingEncodedAssetPathName");
 
-                if (encodingItem->_encodingParameters == "")
-                {
-                    string errorMessage = __FILEREF__
-						+ "encodingItem->_encodingParameters is empty"
-						+ ", encodingItem->_encodingJobKey: "
-							+ to_string(encodingItem->_encodingJobKey)
-						+ ", encodingItem->_encodingParameters: "
-							+ encodingItem->_encodingParameters
-					;
-                    _logger->error(errorMessage);
-
-                    // in case an encoding job row generate an error, we have to make it to Failed
-                    // otherwise we will indefinitely get this error
-                    {
-						_logger->info(__FILEREF__ + "EncodingJob update"
-                            + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-                            + ", status: "
-								+ MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-						);
-                        lastSQLCommand = 
-                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementUpdate->setString(queryParameterIndex++,
-							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                        preparedStatementUpdate->setInt64(queryParameterIndex++,
-							encodingItem->_encodingJobKey);
-
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", lastSQLCommand: " + lastSQLCommand
-							+ ", EncodingStatus::End_Failed: "
-								+ MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @"
-								+ to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-                    }
-                    
-                    continue;
-                    // throw runtime_error(errorMessage);
-                }
-                
                 {
                     Json::CharReaderBuilder builder;
                     Json::CharReader* reader = builder.newCharReader();
@@ -5321,7 +5274,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters (
 }
 
 
-tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey)
 {
     
@@ -5339,11 +5292,12 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
 		int64_t		ingestionJobKey;
 		string      type;
 		int64_t		encoderKey;
+		string		parameters;
 		// default initialization, important in case the calling methid calls the tie function
 		EncodingStatus	status = EncodingStatus::ToBeProcessed;
         {
             lastSQLCommand = 
-                "select ingestionJobKey, type, encoderKey, status "
+                "select ingestionJobKey, type, encoderKey, status, parameters "
 				"from MMS_EncodingJob "
 				"where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -5369,6 +5323,7 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
 				else
 					encoderKey = resultSet->getInt64("encoderKey");
                 status = toEncodingStatus(resultSet->getString("status"));
+                parameters = resultSet->getString("parameters");
             }
             else
             {
@@ -5390,7 +5345,7 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
 
 		// return make_tuple(ingestionJobKey, type, encoderKey, status, highAvailability, main,
 		//		theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
-		return make_tuple(ingestionJobKey, type, encoderKey, status);
+		return make_tuple(ingestionJobKey, type, encoderKey, status, parameters);
     }
     catch(sql::SQLException se)
     {
@@ -9183,6 +9138,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t ingestionJobKey,
 	Json::Value inputsRoot,
 	string channelSourceType,
+	/*
 	int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
 
 	int pushListenTimeout,
@@ -9194,7 +9150,9 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
 	string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
 
-	bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
+	bool timePeriod, 
+	*/
+	int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
 )
@@ -9210,9 +9168,11 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", channelSourceType: " + channelSourceType
+/*
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
+*/
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
             + ", outputsRoot.size: " + to_string(outputsRoot.size())
@@ -9246,6 +9206,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "channelSourceType";
 				parametersRoot[field] = channelSourceType;
 
+				/*
 				field = "liveURLConfKey";
 				parametersRoot[field] = liveURLConfKey;
 
@@ -9302,12 +9263,13 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "timePeriod";
 				parametersRoot[field] = timePeriod;
+				*/
 
 				field = "utcProxyPeriodStart";
 				parametersRoot[field] = utcProxyPeriodStart;
 
-				field = "utcProxyPeriodEnd";
-				parametersRoot[field] = utcProxyPeriodEnd;
+				// field = "utcProxyPeriodEnd";
+				// parametersRoot[field] = utcProxyPeriodEnd;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;

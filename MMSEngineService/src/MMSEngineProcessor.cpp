@@ -12962,8 +12962,10 @@ void MMSEngineProcessor::manageLiveProxy(
 		inputsRoot.append(inputRoot);
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			inputsRoot,
-			channelSourceType, confKey, configurationLabel, liveURL, encodersPoolLabel,
+			inputsRoot,	// used by FFMPEGEncoder
+			channelSourceType,	// used by FFMPEGEncoder
+			/*
+			confKey, configurationLabel, liveURL, encodersPoolLabel,
 
 			pushListenTimeout,
 			captureVideoDeviceNumber,
@@ -12974,9 +12976,14 @@ void MMSEngineProcessor::manageLiveProxy(
 			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
 			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
 
-			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
-			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
-			localOutputsRoot);
+			timePeriod,
+			*/
+			utcProxyPeriodStart,	// used in MMSEngineDBFacade::getEncodingJobs
+			// utcProxyPeriodEnd,
+			maxAttemptsNumberInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
+			waitingSecondsBetweenAttemptsInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
+			localOutputsRoot		// used by FFMPEGEncoder
+		);
 	}
     catch(ConfKeyNotFound e)
     {

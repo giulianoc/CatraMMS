@@ -6240,56 +6240,74 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 		field = "url";
 		channelInputRoot[field] = liveURL;
 
-		field = "maxWidth";
-		channelInputRoot[field] = maxWidth;
+		if (maxWidth != -1)
+		{
+			field = "maxWidth";
+			channelInputRoot[field] = maxWidth;
+		}
 
-		field = "userAgent";
-		channelInputRoot[field] = userAgent;
+		if (userAgent != "")
+		{
+			field = "userAgent";
+			channelInputRoot[field] = userAgent;
+		}
 
-		field = "otherInputOptions";
-		channelInputRoot[field] = otherInputOptions;
+		if (otherInputOptions != "")
+		{
+			field = "otherInputOptions";
+			channelInputRoot[field] = otherInputOptions;
+		}
 
-		field = "pushListenTimeout";
-		channelInputRoot[field] = pushListenTimeout;
+		if (channelSourceType == "IP_PUSH")
+		{
+			field = "pushListenTimeout";
+			channelInputRoot[field] = pushListenTimeout;
+		}
 
-		field = "captureVideoDeviceNumber";
-		channelInputRoot[field] = captureVideoDeviceNumber;
+		if (channelSourceType == "CaptureLive")
+		{
+			field = "captureVideoDeviceNumber";
+			channelInputRoot[field] = captureVideoDeviceNumber;
 
-		field = "captureVideoInputFormat";
-		channelInputRoot[field] = captureVideoInputFormat;
+			field = "captureVideoInputFormat";
+			channelInputRoot[field] = captureVideoInputFormat;
 
-		field = "captureFrameRate";
-		channelInputRoot[field] = captureFrameRate;
+			field = "captureFrameRate";
+			channelInputRoot[field] = captureFrameRate;
 
-		field = "captureWidth";
-		channelInputRoot[field] = captureWidth;
+			field = "captureWidth";
+			channelInputRoot[field] = captureWidth;
 
-		field = "captureHeight";
-		channelInputRoot[field] = captureHeight;
+			field = "captureHeight";
+			channelInputRoot[field] = captureHeight;
 
-		field = "captureAudioDeviceNumber";
-		channelInputRoot[field] = captureAudioDeviceNumber;
+			field = "captureAudioDeviceNumber";
+			channelInputRoot[field] = captureAudioDeviceNumber;
 
-		field = "captureChannelsNumber";
-		channelInputRoot[field] = captureChannelsNumber;
+			field = "captureChannelsNumber";
+			channelInputRoot[field] = captureChannelsNumber;
+		}
 
-		field = "satelliteServiceId";
-		channelInputRoot[field] = satelliteServiceId;
+		if (channelSourceType == "Satellite")
+		{
+			field = "satelliteServiceId";
+			channelInputRoot[field] = satelliteServiceId;
 
-		field = "satelliteFrequency";
-		channelInputRoot[field] = satelliteFrequency;
+			field = "satelliteFrequency";
+			channelInputRoot[field] = satelliteFrequency;
 
-		field = "satelliteSymbolRate";
-		channelInputRoot[field] = satelliteSymbolRate;
+			field = "satelliteSymbolRate";
+			channelInputRoot[field] = satelliteSymbolRate;
 
-		field = "satelliteModulation";
-		channelInputRoot[field] = satelliteModulation;
+			field = "satelliteModulation";
+			channelInputRoot[field] = satelliteModulation;
 
-		field = "satelliteVideoPid";
-		channelInputRoot[field] = satelliteVideoPid;
+			field = "satelliteVideoPid";
+			channelInputRoot[field] = satelliteVideoPid;
 
-		field = "satelliteAudioItalianPid";
-		channelInputRoot[field] = satelliteAudioItalianPid;
+			field = "satelliteAudioItalianPid";
+			channelInputRoot[field] = satelliteAudioItalianPid;
+		}
 	}
     catch(runtime_error e)
     {

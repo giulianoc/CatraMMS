@@ -1801,6 +1801,7 @@ public:
 		int64_t ingestionJobKey,
 		Json::Value inputsRoot,
 		string channelSourceType,
+		/*
 		int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
 
 		int pushListenTimeout,
@@ -1813,7 +1814,7 @@ public:
 		int64_t satelliteSymbolRate, string satelliteModulation, int satelliteVideoPid,
 		int satelliteAudioItalianPid,
 
-		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
+		bool timePeriod, */ int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
 		long maxAttemptsNumberInCaseOfErrors,
 		long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);
@@ -1953,7 +1954,7 @@ public:
 		int64_t encodingJobKey,
 		string parameters);
 
-	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
     void checkWorkspaceStorageAndMaxIngestionNumber (int64_t workspaceKey);

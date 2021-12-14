@@ -166,7 +166,7 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegLiveProxyURI;
-    string                              _ffmpegVODProxyURI;
+    // string                              _ffmpegVODProxyURI;
     string								_ffmpegAwaitingTheBeginningURI;
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
@@ -265,13 +265,13 @@ private:
 		Json::Value liveRecorderParametersRoot);
 	*/
 
-	bool liveProxy();
-	bool liveProxy_through_ffmpeg();
+	bool liveProxy(bool vodProxy);
+	bool liveProxy_through_ffmpeg(bool vodProxy);
     void processLiveProxy(bool killedByUser);
 
-	bool vodProxy();
-	bool vodProxy_through_ffmpeg();
-    void processVODProxy(bool killedByUser);
+	// bool vodProxy();
+	// bool vodProxy_through_ffmpeg();
+    // void processVODProxy(bool killedByUser);
 
 	bool awaitingTheBeginning();
 	bool awaitingTheBeginning_through_ffmpeg();

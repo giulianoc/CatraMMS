@@ -391,7 +391,7 @@ void API::killOrCancelEncodingJob(
         }
 
         {
-			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 				encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
 
 			int64_t ingestionJobKey;
@@ -399,7 +399,7 @@ void API::killOrCancelEncodingJob(
 			int64_t encoderKey;
 			MMSEngineDBFacade::EncodingStatus status;
 
-			tie(ingestionJobKey, type, encoderKey, status) = encodingJobDetails;
+			tie(ingestionJobKey, type, encoderKey, status, ignore) = encodingJobDetails;
 
 			_logger->info(__FILEREF__ + "getEncodingJobDetails"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)

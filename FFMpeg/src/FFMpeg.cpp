@@ -12180,6 +12180,15 @@ void FFMpeg::liveProxy2(
 		+ ", timedInput: " + to_string(timedInput)
 	);
 
+	// max repeating is 1 because:
+	//	- we have to return to the engine because the engine has to register the failure
+	//	- if we increase 'max repeating':
+	//		- transcoder does not return to engine even in case of failure (max repeating is > 1)
+	//		- engine calls getEncodingStatus and get a 'success' (transcoding is repeating and the failure is not raised to the engine). So failures number engine variable is set to 0
+	//		- transcoder, after repeating, raise the failure to engine but the engine,
+	//			as mentioned before, already reset failures number to 0
+	//	The result is that engine never reach max number of failures and encoding request,
+	//	even if it is failing, never exit from the engine loop (EncoderVideoAudioProxy.cpp)
 	int maxTimesRepeatingSameInput = 1;
 	int currentNumberOfRepeatingSameInput = 0;
 	int sleepInSecondsInCaseOfRepeating = 5;
@@ -12198,6 +12207,7 @@ void FFMpeg::liveProxy2(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", inputsRoot->size: " + to_string(inputsRoot->size())
 				+ ", timedInput: " + to_string(timedInput)
+				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
 			pair<long, string> inputDetils = liveProxyInput(ingestionJobKey, encodingJobKey,
 				currentInputRoot, ffmpegInputArgumentList);
@@ -12364,8 +12374,8 @@ void FFMpeg::liveProxy2(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			);
 
-			for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>
-				tOutputRoot: outputRoots)
+			for (tuple<string, string, string, Json::Value, string, string, int, int,
+				bool, string, string> tOutputRoot: outputRoots)
 			{
 				string outputType;
 				string manifestDirectoryPath;
@@ -12386,7 +12396,8 @@ void FFMpeg::liveProxy2(
 									+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								);
 								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+								FileIO::removeDirectory(manifestDirectoryPath,
+									bRemoveRecursively);
 							}
 							catch(runtime_error e)
 							{
@@ -12749,39 +12760,48 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			otherInputOptions = channelInputRoot.get(field, "").asString();
 
 		string captureLive_videoInputFormat;
-		field = "captureLive_videoInputFormat";
+		field = "captureVideoInputFormat";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_videoInputFormat = channelInputRoot.get(field, "").asString();
 
 		int captureLive_frameRate = -1;
-		field = "captureLive_frameRate";
+		field = "captureFrameRate";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_frameRate = asInt(channelInputRoot, field, -1);
 
 		int captureLive_width = -1;
-		field = "captureLive_width";
+		field = "captureWidth";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_width = asInt(channelInputRoot, field, -1);
 
 		int captureLive_height = -1;
-		field = "captureLive_height";
+		field = "captureHeight";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_height = asInt(channelInputRoot, field, -1);
 
 		int captureLive_videoDeviceNumber = -1;
-		field = "captureLive_videoDeviceNumber";
+		field = "captureVideoDeviceNumber";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_videoDeviceNumber = asInt(channelInputRoot, field, -1);
 
 		int captureLive_channelsNumber = -1;
-		field = "captureLive_channelsNumber";
+		field = "captureChannelsNumber";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_channelsNumber = asInt(channelInputRoot, field, -1);
 
 		int captureLive_audioDeviceNumber = -1;
-		field = "captureLive_audioDeviceNumber";
+		field = "captureAudioDeviceNumber";
 		if (isMetadataPresent(channelInputRoot, field))
 			captureLive_audioDeviceNumber = asInt(channelInputRoot, field, -1);
+
+		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", timePeriod: " + to_string(timePeriod)
+			+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+			+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+			+ ", channelSourceType: " + channelSourceType
+		);
 
 		if (channelSourceType == "IP_PULL" && maxWidth != -1)
 		{

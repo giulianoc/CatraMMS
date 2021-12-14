@@ -4430,7 +4430,6 @@ void API::changeLiveProxyPlaylist(
 	*/
     try
     {
-        int64_t ingestionJobKey = -1;
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
         if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
         {
@@ -4441,7 +4440,7 @@ void API::changeLiveProxyPlaylist(
 
 			throw runtime_error(errorMessage);
         }
-		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
 
 		// check of ingestion job and retrieve some fields
 		int64_t utcBroadcasterStart;
@@ -4455,12 +4454,12 @@ void API::changeLiveProxyPlaylist(
         {
             _logger->info(__FILEREF__ + "getIngestionJobDetails"
 				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
             );
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
-					workspace->_workspaceKey, ingestionJobKey);
+					workspace->_workspaceKey, broadcasterIngestionJobKey);
 
 			MMSEngineDBFacade::IngestionType	ingestionType;
 			string			metaDataContent;
@@ -4469,8 +4468,8 @@ void API::changeLiveProxyPlaylist(
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 			{
-				string errorMessage = string("Ingestion type is not a LiveProxy")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				string errorMessage = string("Ingestion type is not a Live/VODProxy")
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
 				;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -4493,7 +4492,7 @@ void API::changeLiveProxyPlaylist(
 				if (!parsingSuccessful)
 				{
 					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 						+ ", errors: " + errors
 						+ ", json data: " + metaDataContent
 					;
@@ -4505,7 +4504,7 @@ void API::changeLiveProxyPlaylist(
 			catch(exception e)
 			{
 				string errorMessage = string("Json metadata failed during the parsing")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					+ ", json data: " + metaDataContent
 				;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -4517,7 +4516,7 @@ void API::changeLiveProxyPlaylist(
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
                     + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -4529,7 +4528,7 @@ void API::changeLiveProxyPlaylist(
 			if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
 			{
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
                     + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -4602,7 +4601,7 @@ void API::changeLiveProxyPlaylist(
 					else
 					{
 						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
 						;
 						_logger->error(errorMessage);
@@ -4613,7 +4612,7 @@ void API::changeLiveProxyPlaylist(
 				else
 				{
 					string errorMessage = __FILEREF__ + "Broadcaster data: no mediaType is present"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					;
 					_logger->error(errorMessage);
 
@@ -4623,7 +4622,7 @@ void API::changeLiveProxyPlaylist(
 			else
 			{
 				string errorMessage = __FILEREF__ + "Broadcaster data: no broadcastDefaultPlaylistItem is present"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 				;
                 _logger->error(errorMessage);
 
@@ -4635,7 +4634,7 @@ void API::changeLiveProxyPlaylist(
 			if (broadcastIngestionJobKey == 0)
 			{
                 string errorMessage = __FILEREF__ + "No broadcastIngestionJobKey found"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey);
                 _logger->error(errorMessage);
 
@@ -4646,7 +4645,7 @@ void API::changeLiveProxyPlaylist(
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
                     + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -4659,7 +4658,7 @@ void API::changeLiveProxyPlaylist(
 			if (!timePeriod)
 			{
                 string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have TimePeriod"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					+ ", timePeriod: " + to_string(timePeriod);
                 _logger->error(errorMessage);
 
@@ -4793,15 +4792,16 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 
-			// add the default media in case of hole
+			// add the default media in case of hole filling newPlaylistRoot
 			{
 				int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
 
-				for (int newPlaylistIndex = 0;
-					newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
+				for (int newReceivedPlaylistIndex = 0;
+					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
+					newReceivedPlaylistIndex++)
 				{
 					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
-						newPlaylistIndex];
+						newReceivedPlaylistIndex];
 
 					// correct values have to be:
 					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
@@ -4826,7 +4826,7 @@ void API::changeLiveProxyPlaylist(
 							partialMessage = "utcProxyPeriodEnd > utcBroadcasterEnd";
 
 						string errorMessage = __FILEREF__ + "Wrong dates (" + partialMessage + ")"
-							+ ", newPlaylistIndex: " + to_string(newPlaylistIndex)
+							+ ", newReceivedPlaylistIndex: " + to_string(newReceivedPlaylistIndex)
 							+ ", utcCurrentBroadcasterStart: "
 								+ to_string(utcCurrentBroadcasterStart)
 							+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
@@ -4843,6 +4843,9 @@ void API::changeLiveProxyPlaylist(
 					else // if (utcCurrentBroadcasterStart < utcProxyPeriodStart)
 					{
 						Json::Value newdPlaylistItemToBeAddedRoot;
+
+						field = "addedAsDefault";
+						newdPlaylistItemToBeAddedRoot[field] = true;
 
 						field = "timePeriod";
 						newdPlaylistItemToBeAddedRoot[field] = true;
@@ -4862,7 +4865,7 @@ void API::changeLiveProxyPlaylist(
 							{
 								string errorMessage = __FILEREF__
 									+ "Broadcaster data: no default Live Channel present"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 								;
 								_logger->error(errorMessage);
 
@@ -4878,7 +4881,7 @@ void API::changeLiveProxyPlaylist(
 							{
 								string errorMessage = __FILEREF__
 									+ "Broadcaster data: no default Media present"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 								;
 								_logger->error(errorMessage);
 
@@ -4888,12 +4891,26 @@ void API::changeLiveProxyPlaylist(
 						else
 						{
 							string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 								+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
 							;
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
+						}
+
+						// update the end time of the last entry with the start time
+						// of the entry we are adding
+						if (newPlaylistRoot.size() > 0)
+						{
+							Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
+								newPlaylistRoot.size() - 1];
+
+							field = "utcProxyPeriodEnd";
+							newLastPlaylistRoot[field] = utcCurrentBroadcasterStart;
+
+							newReceivedPlaylistRoot[newPlaylistRoot.size() - 1]
+								= newLastPlaylistRoot;
 						}
 
 						newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
@@ -4909,7 +4926,10 @@ void API::changeLiveProxyPlaylist(
 
 					Json::Value newdPlaylistItemToBeAddedRoot;
 
-					string field = "timePeriod";
+					string field = "addedAsDefault";
+					newdPlaylistItemToBeAddedRoot[field] = true;
+
+					field = "timePeriod";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
 					field = "utcProxyPeriodStart";
@@ -4927,7 +4947,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Live Channel present"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
 
@@ -4942,7 +4962,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Media present"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
 
@@ -4952,7 +4972,7 @@ void API::changeLiveProxyPlaylist(
 					else
 					{
 						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
 						;
 						_logger->error(errorMessage);
@@ -4968,7 +4988,10 @@ void API::changeLiveProxyPlaylist(
 
 					Json::Value newdPlaylistItemToBeAddedRoot;
 
-					string field = "timePeriod";
+					string field = "addedAsDefault";
+					newdPlaylistItemToBeAddedRoot[field] = true;
+
+					field = "timePeriod";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
 					field = "utcProxyPeriodStart";
@@ -4986,7 +5009,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Live Channel present"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
 
@@ -5001,7 +5024,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Media present"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
 
@@ -5011,12 +5034,26 @@ void API::changeLiveProxyPlaylist(
 					else
 					{
 						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							+ ", broadcastDefaultMediaType: " + broadcastDefaultMediaType
 						;
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
+					}
+
+					// update the end time of the last entry with the start time
+					// of the entry we are adding
+					if (newPlaylistRoot.size() > 0)
+					{
+						Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
+							newPlaylistRoot.size() - 1];
+
+						field = "utcProxyPeriodEnd";
+						newLastPlaylistRoot[field] = utcCurrentBroadcasterStart;
+
+						newReceivedPlaylistRoot[newPlaylistRoot.size() - 1]
+							= newLastPlaylistRoot;
 					}
 
 					newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
@@ -5071,7 +5108,8 @@ void API::changeLiveProxyPlaylist(
 			tie(ignore, ingestionType, ingestionStatus, metaDataContent, ignore)
 				= ingestionJobDetails;
 
-			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
+			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
+				&& ingestionType != MMSEngineDBFacade::IngestionType::VODProxy)
 			{
 				string errorMessage = string("Ingestion type is not a LiveProxy")
 					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
@@ -5083,6 +5121,7 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			// if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+			/*
 			{
 				Json::Value metadataContentRoot;
 				try
@@ -5138,7 +5177,18 @@ void API::changeLiveProxyPlaylist(
 				_mmsEngineDBFacade->updateIngestionJobMetadataContent(
 					broadcastIngestionJobKey, newMetadataContentRoot);
 			}
-			if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::EncodingQueued)
+			*/
+			if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
+			{
+				string errorMessage = string("IngestionJob is not in the EncodingQueued status")
+					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+					+ ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			
 			{
 				// update of the running encoding playlist
 				// and update the encoding metadata into DB (in case of crash

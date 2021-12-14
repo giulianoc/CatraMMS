@@ -168,10 +168,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveProxyURI: " + _ffmpegLiveProxyURI
     );
-    _ffmpegVODProxyURI = _configuration["ffmpeg"].get("vodProxyURI", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->vodProxyURI: " + _ffmpegVODProxyURI
-    );
+    // _ffmpegVODProxyURI = _configuration["ffmpeg"].get("vodProxyURI", "").asString();
+    // _logger->info(__FILEREF__ + "Configuration item"
+    //     + ", ffmpeg->vodProxyURI: " + _ffmpegVODProxyURI
+    // );
     _ffmpegAwaitingTheBeginningURI = _configuration["ffmpeg"].get("awaitingTheBeginningURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->awaitingTheBeginningURI: " + _ffmpegAwaitingTheBeginningURI
@@ -344,11 +344,14 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
         {
-			killedByUser = liveProxy();
+			bool vodProxy = false;
+			killedByUser = liveProxy(vodProxy);
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VODProxy)
         {
-			killedByUser = vodProxy();
+			bool vodProxy = true;
+			killedByUser = liveProxy(vodProxy);
+			// killedByUser = vodProxy();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AwaitingTheBeginning)
         {
@@ -1015,7 +1018,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VODProxy)
         {
-            processVODProxy(killedByUser);
+            processLiveProxy(killedByUser);
+            // processVODProxy(killedByUser);
             
 			isIngestionJobCompleted = false;	// file has still to be ingested
 		}
@@ -13094,7 +13098,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
     }
 }
 
-bool EncoderVideoAudioProxy::liveProxy()
+bool EncoderVideoAudioProxy::liveProxy(bool vodProxy)
 {
 
 	bool timePeriod = false;
@@ -13206,7 +13210,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 		}
 	}
 
-	bool killedByUser = liveProxy_through_ffmpeg();
+	bool killedByUser = liveProxy_through_ffmpeg(vodProxy);
 	if (killedByUser)
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
@@ -13222,13 +13226,11 @@ bool EncoderVideoAudioProxy::liveProxy()
 	return killedByUser;
 }
 
-bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
+bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(bool vodProxy)
 {
 
-	// string channelSourceType;
 	string encodersPool;
-	int64_t liveURLConfKey;
-	string configurationLabel;
+	int64_t liveURLConfKey = -1;
 	string liveURL;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
@@ -13284,20 +13286,28 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 		Json::Value firstInputRoot = inputsRoot[0];
 
-		field = "channelInput";
+		if (vodProxy)
+			field = "vodInput";
+		else
+			field = "channelInput";
 		Json::Value channelInputRoot = firstInputRoot[field];
 
-        field = "encodersPoolLabel";
-        encodersPool = channelInputRoot.get(field, "").asString();
+		if (vodProxy)
+		{
+			field = "EncodersPool";
+			encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+		}
+		else
+		{
+			field = "encodersPoolLabel";
+			encodersPool = channelInputRoot.get(field, "").asString();
 
-        field = "channelConfKey";
-        liveURLConfKey = JSONUtils::asInt64(channelInputRoot, field, 0);
+	        field = "channelConfKey";
+			liveURLConfKey = JSONUtils::asInt64(channelInputRoot, field, 0);
 
-        field = "channelConfigurationLabel";
-        configurationLabel = channelInputRoot.get(field, "").asString();
-
-        field = "url";
-        liveURL = channelInputRoot.get(field, "").asString();
+			field = "url";
+			liveURL = channelInputRoot.get(field, "").asString();
+		}
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
         waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
@@ -13438,6 +13448,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				string body;
 				{
 					// in case of youtube url, the real URL to be used has to be calcolated
+					if (!vodProxy)
 					{
 						string youTubePrefix1 ("https://www.youtube.com/");
 						string youTubePrefix2 ("https://youtu.be/");
@@ -13603,6 +13614,75 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 
 							liveURL = streamingYouTubeLiveURL;
+						}
+					}
+
+					// 2021-12-14: we have to read again encodingParametersRoot because,
+					//	in case the playlist (inputsRoot) is changed, the updated inputsRoot
+					//	is into DB
+					{
+						try
+						{
+							tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus,
+								string> encodingJobDetails
+								= _mmsEngineDBFacade->getEncodingJobDetails(
+								_encodingItem->_encodingJobKey);
+
+							string encodingParameters;
+
+							tie(ignore, ignore, ignore, ignore, encodingParameters)
+								= encodingJobDetails;
+
+							{
+								Json::CharReaderBuilder builder;
+								Json::CharReader* reader = builder.newCharReader();
+								string errors;
+
+								bool parsingSuccessful = reader->parse(
+									encodingParameters.c_str(),
+									encodingParameters.c_str() + encodingParameters.size(), 
+									&(_encodingItem->_encodingParametersRoot), &errors);
+								delete reader;
+
+								if (!parsingSuccessful)
+								{
+									string errorMessage = __FILEREF__
+										+ "failed to parse 'parameters'"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", encodingItem->_encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", errors: " + errors
+										+ ", encodingParameters: " + encodingParameters
+									;
+									_logger->error(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+							);
+
+							throw e;
 						}
 					}
 
@@ -14009,7 +14089,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								+ to_string(_encodingItem->_encodingJobKey)
 							+ ", _currentUsedFFMpegEncoderHost: "
 								+ _currentUsedFFMpegEncoderHost
-							+ ", configurationLabel: " + configurationLabel
 							+ ", encodingErrorMessage: " + encodingErrorMessage
 						;
 						_logger->error(errorMessage);
@@ -14274,7 +14353,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", encoderNotReachableFailures: "
 							+ to_string(encoderNotReachableFailures)
 						+ ", _maxEncoderNotReachableFailures: "
@@ -14291,7 +14369,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", _currentUsedFFMpegEncoderHost: "
 							+ _currentUsedFFMpegEncoderHost
@@ -14317,7 +14394,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", still remaining seconds (utcProxyPeriodEnd - utcNow): "
 							+ to_string(utcProxyPeriodEnd - utcNowCheckToExit)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
@@ -14378,7 +14454,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
@@ -14397,7 +14472,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    + ", configurationLabel: " + configurationLabel
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
@@ -14714,7 +14788,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ to_string(currentAttemptsNumberInCaseOfErrors) 
             + ", maxAttemptsNumberInCaseOfErrors: "
 				+ to_string(maxAttemptsNumberInCaseOfErrors) 
-			+ ", configurationLabel: " + configurationLabel
             ;
 		_logger->error(errorMessage);
         
@@ -14779,27 +14852,13 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
     }
 }
 
+/*
 bool EncoderVideoAudioProxy::vodProxy()
 {
 
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
-	/*
-	{
-		string field = "timePeriod";
-		timePeriod = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot, field, false);
-
-		if (timePeriod)
-		{
-			string field = "utcProxyPeriodStart";
-			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_ingestedParametersRoot, field, -1);
-
-			field = "utcProxyPeriodEnd";
-			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_ingestedParametersRoot, field, -1);
-		}
-	}
-	*/
 	{
 		string field = "inputsRoot";
 		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
@@ -14900,7 +14959,9 @@ bool EncoderVideoAudioProxy::vodProxy()
     
 	return killedByUser;
 }
+*/
 
+/*
 bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 {
 
@@ -14914,20 +14975,6 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 	{
 		string field = "EncodersPool";
 		encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-		/*
-		field = "timePeriod";
-		timePeriod = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
-
-		if (timePeriod)
-		{
-			field = "utcProxyPeriodStart";
-			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
-
-			field = "utcProxyPeriodEnd";
-			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
-		}
-		*/
 
 		{
 			string field = "inputsRoot";
@@ -15028,11 +15075,81 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 
 				string body;
 				{
+					// 2021-12-14: we have to read again encodingParametersRoot because,
+					//	in case the playlist (inputsRoot) is changed, the updated inputsRoot
+					//	is into DB
+					{
+						try
+						{
+							tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus,
+								string> encodingJobDetails
+								= _mmsEngineDBFacade->getEncodingJobDetails(
+								_encodingItem->_encodingJobKey);
+
+							string encodingParameters;
+
+							tie(ignore, ignore, ignore, ignore, encodingParameters)
+								= encodingJobDetails;
+
+							{
+								Json::CharReaderBuilder builder;
+								Json::CharReader* reader = builder.newCharReader();
+								string errors;
+
+								bool parsingSuccessful = reader->parse(
+									encodingParameters.c_str(),
+									encodingParameters.c_str() + encodingParameters.size(), 
+									&(_encodingItem->_encodingParametersRoot), &errors);
+								delete reader;
+
+								if (!parsingSuccessful)
+								{
+									string errorMessage = __FILEREF__
+										+ "failed to parse 'parameters'"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", encodingItem->_encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", errors: " + errors
+										+ ", encodingParameters: " + encodingParameters
+									;
+									_logger->error(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+							);
+
+							throw e;
+						}
+					}
+
 					Json::Value vodProxyMetadata;
 
 					vodProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-					vodProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
+					vodProxyMetadata["ingestedParametersRoot"]
+						= _encodingItem->_ingestedParametersRoot;
 					vodProxyMetadata["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
 					{
@@ -15066,58 +15183,6 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
-					/*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-					*/
-                                                                                                  
-                
-					/*
-					// cert is stored PEM coded in file... 
-					// since PEM is default, we needn't set it for PEM 
-					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-					curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-					equest.setOpt(sslCertType);
-
-					// set the cert for client authentication
-					// "testcert.pem"
-					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-					curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-					request.setOpt(sslCert);
-					*/
-
-					/*
-					// sorry, for engine we must set the passphrase
-					//   (if the key has one...)
-					// const char *pPassphrase = NULL;
-					if(pPassphrase)
-						curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-					// if we use a key stored in a crypto engine,
-					//   we must set the key type to "ENG"
-					// pKeyType  = "PEM";
-					curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-					// set the private key (file or ID in engine)
-					// pKeyName  = "testkey.pem";
-					curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-					// set the file with the certs vaildating the server
-					// *pCACertFile = "cacert.pem";
-					curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-					*/
-                
 					// disconnect if we can't validate server's cert
 					bool bSslVerifyPeer = false;
 					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -15336,7 +15401,7 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 				try
 				{
 					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
-						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+						getEncodingStatus();
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						ignore, ignore, ignore, encodingPid) = encodingStatus;
 					_logger->info(__FILEREF__ + "getEncodingStatus"
@@ -15706,7 +15771,9 @@ bool EncoderVideoAudioProxy::vodProxy_through_ffmpeg()
 
     return killedByUser;
 }
+*/
 
+/*
 void EncoderVideoAudioProxy::processVODProxy(bool killedByUser)
 {
     try
@@ -15760,6 +15827,7 @@ void EncoderVideoAudioProxy::processVODProxy(bool killedByUser)
         throw e;
     }
 }
+*/
 
 bool EncoderVideoAudioProxy::awaitingTheBeginning()
 {
