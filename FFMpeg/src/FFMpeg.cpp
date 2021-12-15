@@ -13091,7 +13091,28 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 				{
 					if (pushListenTimeout > 0)
 					{
-						int64_t listenTimeoutInMicroSeconds = pushListenTimeout;
+						// About the timeout url parameter, ffmpeg docs says: This option is only relevant
+						//	in read mode: if no data arrived in more than this time interval, raise error
+						// This parameter accepts microseconds and we cannot provide a huge number
+						// i.e. 1h in microseconds because it will not work (it will be the max number
+						// of a 'long' type).
+						// For this reason we have to set max 30 minutes
+						//
+						// Remark: this is just a read timeout, then we have below the -t parameter
+						//	that will stop the ffmpeg command after a specified time.
+						//  So, in case for example we have to run this command for 1h, we will have
+						//  ?timeout=1800000000 (30 mins) and -t 3600
+						//  ONLY in case it is not received any data for 30 mins, this command will exit
+						//  after 30 mins (because of the ?timeout parameter) and the system will run
+						// again the command again for the remaining 30 minutes:
+						//  ?timeout=1800000000 (30 mins) and -t 180
+
+						int maxPushTimeout = 180;	// 30 mins
+						int64_t listenTimeoutInMicroSeconds;
+						if (pushListenTimeout > maxPushTimeout)
+							listenTimeoutInMicroSeconds = maxPushTimeout;
+						else
+							listenTimeoutInMicroSeconds = pushListenTimeout;
 						listenTimeoutInMicroSeconds *= 1000000;
 						url += "?timeout=" + to_string(listenTimeoutInMicroSeconds);
 					}
