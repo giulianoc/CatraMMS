@@ -44,14 +44,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 		int liveProxyToBeEncoded = 0;
 		int liveRecorderToBeEncoded = 0;
-		int awaitingTheBeginningToBeEncoded = 0;
 		int othersToBeEncoded = 0;
 
 		encodingItems.clear();
 
-		// first Live-Proxy/VOD-Proxy because if we have many Live-Recording, Live-Proxy will never start
+		// first Live-Proxy/VOD-Proxy/Countdown because if we have many Live-Recording, Live-Proxy will never start
         {
-			_logger->info(__FILEREF__ + "getEncodingJobs for LiveProxy/VODProxy");
+			_logger->info(__FILEREF__ + "getEncodingJobs for LiveProxy/VODProxy/Countdown");
 
             lastSQLCommand =
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
@@ -62,7 +61,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
-				"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy') "
+				"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy', 'Countdown') "
 				"order by JSON_EXTRACT(ej.parameters, '$.utcProxyPeriodStart') asc"
 			;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
@@ -430,6 +429,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         }
 
 		// next Awaiting-The-Beginning ...because if we have many Live-Recording, Live-Proxy will never start
+		/*
         {
 			_logger->info(__FILEREF__ + "getEncodingJobs for Awaiting-The-Beginning");
 
@@ -777,17 +777,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                     encodingItem->_awaitingTheBeginningData = make_shared<EncodingItem::AwaitingTheBeginningData>();
 
 					{
-						/*
-						{
-							Json::StreamWriterBuilder wbuilder;
-							string sOutputRoot = Json::writeString(wbuilder, outputRoot);
-							_logger->info(__FILEREF__ + "outputsRoot encodingProfileKey check"
-								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-								+ ", sOutputRoot: " + sOutputRoot
-							);
-						}
-						*/
-
 						string field = "encodingProfileKey";	// added by MMSEngineProcessor
 						// if not present it will be -1
 						encodingItem->_awaitingTheBeginningData->_encodingProfileKey
@@ -973,6 +962,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
             }
         }
+		*/
 
 		// 2019-12-14: we have a long list of encodings to be done (113 encodings) and
 		//	among these we have some live recordings. These has to be managed before the others encodings
@@ -1408,7 +1398,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
-				"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy' and ij.ingestionType != 'Awaiting-The-Beginning') "
+				"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy' and ij.ingestionType != 'VOD-Proxy' and ij.ingestionType != 'Countdown') "
 				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
 				"limit ? offset ?"
 
@@ -2621,7 +2611,6 @@ void MMSEngineDBFacade::getEncodingJobs(
 			+ ", encodingItems.size: " + to_string(encodingItems.size())
 			+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
 			+ ", liveProxyToBeEncoded: " + to_string(liveProxyToBeEncoded)
-			+ ", awaitingTheBeginningToBeEncoded: " + to_string(awaitingTheBeginningToBeEncoded)
 			+ ", liveRecorderToBeEncoded: " + to_string(liveRecorderToBeEncoded)
 			+ ", othersToBeEncoded: " + to_string(othersToBeEncoded)
 			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
@@ -9138,21 +9127,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t ingestionJobKey,
 	Json::Value inputsRoot,
 	string channelSourceType,
-	/*
-	int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
-
-	int pushListenTimeout,
-	int captureVideoDeviceNumber,
-	string captureVideoInputFormat, int captureFrameRate,
-	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
-	int captureChannelsNumber,
-
-	int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
-	string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
-
-	bool timePeriod, 
-	*/
-	int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
+	int64_t utcProxyPeriodStart,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
 )
@@ -9206,70 +9181,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "channelSourceType";
 				parametersRoot[field] = channelSourceType;
 
-				/*
-				field = "liveURLConfKey";
-				parametersRoot[field] = liveURLConfKey;
-
-				field = "configurationLabel";
-				parametersRoot[field] = configurationLabel;
-
-				field = "url";
-				parametersRoot[field] = url;
-
-				field = "encodersPoolLabel";
-				parametersRoot[field] = encodersPoolLabel;
-
-				field = "pushListenTimeout";
-				parametersRoot[field] = pushListenTimeout;
-
-				field = "captureVideoDeviceNumber";
-				parametersRoot[field] = captureVideoDeviceNumber;
-
-				field = "captureVideoInputFormat";
-				parametersRoot[field] = captureVideoInputFormat;
-
-				field = "captureFrameRate";
-				parametersRoot[field] = captureFrameRate;
-
-				field = "captureWidth";
-				parametersRoot[field] = captureWidth;
-
-				field = "captureHeight";
-				parametersRoot[field] = captureHeight;
-
-				field = "captureAudioDeviceNumber";
-				parametersRoot[field] = captureAudioDeviceNumber;
-
-				field = "captureChannelsNumber";
-				parametersRoot[field] = captureChannelsNumber;
-
-				field = "satelliteServiceId";
-				parametersRoot[field] = satelliteServiceId;
-
-				field = "satelliteFrequency";
-				parametersRoot[field] = satelliteFrequency;
-
-				field = "satelliteSymbolRate";
-				parametersRoot[field] = satelliteSymbolRate;
-
-				field = "satelliteModulation";
-				parametersRoot[field] = satelliteModulation;
-
-				field = "satelliteVideoPid";
-				parametersRoot[field] = satelliteVideoPid;
-
-				field = "satelliteAudioItalianPid";
-				parametersRoot[field] = satelliteAudioItalianPid;
-
-				field = "timePeriod";
-				parametersRoot[field] = timePeriod;
-				*/
-
 				field = "utcProxyPeriodStart";
 				parametersRoot[field] = utcProxyPeriodStart;
-
-				// field = "utcProxyPeriodEnd";
-				// parametersRoot[field] = utcProxyPeriodEnd;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
@@ -9527,13 +9440,9 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	Json::Value inputsRoot,
-
-	MMSEngineDBFacade::ContentType vodContentType,
-	string sourcePhysicalPathName,
-
-	MMSEngineDBFacade::EncodingPriority encodingPriority,
-	bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
-	Json::Value outputsRoot
+	int64_t utcProxyPeriodStart,
+	Json::Value outputsRoot,
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 )
 {
 
@@ -9546,9 +9455,6 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_VODProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-
-            + ", vodContentType: " + MMSEngineDBFacade::toString(vodContentType)
-            + ", sourcePhysicalPathName: " + sourcePhysicalPathName
 
             + ", outputsRoot.size: " + to_string(outputsRoot.size())
         );
@@ -9578,27 +9484,25 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
 
-				field = "contentType";
-				parametersRoot[field] = MMSEngineDBFacade::toString(vodContentType);
-
-				field = "sourcePhysicalPathName";
-				parametersRoot[field] = sourcePhysicalPathName;
-
-				field = "timePeriod";
-				parametersRoot[field] = timePeriod;
-
 				field = "utcProxyPeriodStart";
 				parametersRoot[field] = utcProxyPeriodStart;
-
-				field = "utcProxyPeriodEnd";
-				parametersRoot[field] = utcProxyPeriodEnd;
 
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
 
+				field = "maxAttemptsNumberInCaseOfErrors";
+				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
+
+				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);
 			}
+
+			// 2019-11-06: we will force the encoding priority to high to be sure this EncodingJob
+			//	will be managed as soon as possible
+			int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
 				+ ", parameters.length: " + to_string(parameters.length()));
@@ -9618,8 +9522,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 				preparedStatement->setString(queryParameterIndex++, toString(encodingType));
 				preparedStatement->setString(queryParameterIndex++, parameters);
-				preparedStatement->setInt(queryParameterIndex++,
-					static_cast<int>(encodingPriority));
+				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
 				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
@@ -9630,7 +9533,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingType: " + toString(encodingType)
 					+ ", parameters: " + parameters
-					+ ", encodingPriority: " + toString(encodingPriority)
+					+ ", encodingPriority: " + to_string(savedEncodingPriority)
 					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
@@ -9838,18 +9741,12 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
     }
 }
 
-void MMSEngineDBFacade::addEncoding_AwaitingTheBeginningJob (
+void MMSEngineDBFacade::addEncoding_CountdownJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string mmsSourceVideoAssetPathName,
-	int64_t videoDurationInMilliSeconds,
-	int64_t utcIngestionJobStartProcessing,
-	int64_t utcCountDownEnd,
-	int64_t deliveryCode,
-	string outputType,
-	int segmentDurationInSeconds, int playlistEntriesNumber,
-	int64_t encodingProfileKey,
-	string manifestDirectoryPath, string manifestFileName, string rtmpUrl,
+	Json::Value inputsRoot,
+	int64_t utcProxyPeriodStart,
+	Json::Value outputsRoot,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors)
 {
 
@@ -9876,47 +9773,20 @@ void MMSEngineDBFacade::addEncoding_AwaitingTheBeginningJob (
         }
 
 		{
-			EncodingType encodingType = EncodingType::AwaitingTheBeginning;
+			EncodingType encodingType = EncodingType::Countdown;
         
 			string parameters;
 			{
 				Json::Value parametersRoot;
 
-				string field = "mmsSourceVideoAssetPathName";
-				parametersRoot[field] = mmsSourceVideoAssetPathName;
+				string field = "inputsRoot";
+				parametersRoot[field] = inputsRoot;
 
-				field = "videoDurationInMilliSeconds";
-				parametersRoot[field] = videoDurationInMilliSeconds;
+				field = "utcProxyPeriodStart";
+				parametersRoot[field] = utcProxyPeriodStart;
 
-				field = "utcIngestionJobStartProcessing";
-				parametersRoot[field] = utcIngestionJobStartProcessing;
-
-				field = "utcCountDownEnd";
-				parametersRoot[field] = utcCountDownEnd;
-
-				field = "deliveryCode";
-				parametersRoot[field] = deliveryCode;
-
-				field = "outputType";
-				parametersRoot[field] = outputType;
-
-				field = "segmentDurationInSeconds";
-				parametersRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				parametersRoot[field] = playlistEntriesNumber;
-
-				field = "encodingProfileKey";
-				parametersRoot[field] = encodingProfileKey;
-
-				field = "manifestDirectoryPath";
-				parametersRoot[field] = manifestDirectoryPath;
-
-				field = "manifestFileName";
-				parametersRoot[field] = manifestFileName;
-
-				field = "rtmpUrl";
-				parametersRoot[field] = rtmpUrl;
+				field = "outputsRoot";
+				parametersRoot[field] = outputsRoot;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;

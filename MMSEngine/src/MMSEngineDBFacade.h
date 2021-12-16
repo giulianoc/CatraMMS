@@ -312,7 +312,7 @@ public:
 		PictureInPicture	= 10,
 		LiveProxy			= 11,
 		LiveGrid			= 12,
-		AwaitingTheBeginning	= 13,
+		Countdown			= 13,
 		IntroOutroOverlay	= 14,
 		CutFrameAccurate	= 15,
 		VODProxy			= 16
@@ -347,8 +347,8 @@ public:
                 return "LiveProxy";
             case EncodingType::LiveGrid:
                 return "LiveGrid";
-            case EncodingType::AwaitingTheBeginning:
-                return "AwaitingTheBeginning";
+            case EncodingType::Countdown:
+                return "Countdown";
             case EncodingType::IntroOutroOverlay:
                 return "IntroOutroOverlay";
             case EncodingType::CutFrameAccurate:
@@ -392,8 +392,8 @@ public:
             return EncodingType::LiveProxy;
         else if (lowerCase == "livegrid")
             return EncodingType::LiveGrid;
-        else if (lowerCase == "awaitingthebeginning")
-            return EncodingType::AwaitingTheBeginning;
+        else if (lowerCase == "countdown")
+            return EncodingType::Countdown;
         else if (lowerCase == "introoutrooverlay")
             return EncodingType::IntroOutroOverlay;
         else if (lowerCase == "cutframeaccurate")
@@ -679,11 +679,11 @@ public:
 			// Json::Value								_outputsRoot;
 		// };
 
-		struct AwaitingTheBeginningData {
-			int64_t									_encodingProfileKey;
-			ContentType								_encodingProfileContentType;
-			Json::Value								_encodingProfileDetailsRoot;
-		};
+		// struct AwaitingTheBeginningData {
+		// 	int64_t									_encodingProfileKey;
+		// 	ContentType								_encodingProfileContentType;
+		// 	Json::Value								_encodingProfileDetailsRoot;
+		// };
 
 		struct LiveGridData {
 			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
@@ -702,7 +702,7 @@ public:
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		// shared_ptr<IntroOutroOverlayData>			_introOutroOverlayData;
 		// shared_ptr<LiveProxyData>					_liveProxyData;
-		shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
+		// shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
@@ -742,7 +742,7 @@ public:
         LiveProxy				= 26,
         LiveCut					= 27,
         LiveGrid				= 28,
-        AwaitingTheBeginning	= 29,
+        Countdown				= 29,
         IntroOutroOverlay		= 30,
         VODProxy				= 31,
         YouTubeLiveBroadcast	= 32,
@@ -818,8 +818,8 @@ public:
 				return "Live-Cut";
 			case IngestionType::LiveGrid:
 				return "Live-Grid";
-			case IngestionType::AwaitingTheBeginning:
-				return "Awaiting-The-Beginning";
+			case IngestionType::Countdown:
+				return "Countdown";
 			case IngestionType::IntroOutroOverlay:
 				return "Intro-Outro-Overlay";
 			case IngestionType::VODProxy:
@@ -911,8 +911,8 @@ public:
             return IngestionType::LiveCut;
         else if (lowerCase == "live-grid")
             return IngestionType::LiveGrid;
-        else if (lowerCase == "awaiting-the-beginning")
-            return IngestionType::AwaitingTheBeginning;
+        else if (lowerCase == "countdown")
+            return IngestionType::Countdown;
         else if (lowerCase == "intro-outro-overlay")
             return IngestionType::IntroOutroOverlay;
         else if (lowerCase == "vod-proxy")
@@ -1823,26 +1823,16 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		Json::Value inputsRoot,
+		int64_t utcProxyPeriodStart,
+		Json::Value outputsRoot,
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
-		MMSEngineDBFacade::ContentType vodContentType,
-		string sourcePhysicalPathName,
-
-		MMSEngineDBFacade::EncodingPriority encodingPriority,
-		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
-		Json::Value outputsRoot);
-
-	void addEncoding_AwaitingTheBeginningJob (
+	void addEncoding_CountdownJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string mmsSourceVideoAssetPathName,
-		int64_t videoDurationInMilliSeconds,
-		int64_t utcIngestionJobStartProcessing,
-		int64_t utcCountDownEnd,
-		int64_t deliveryCode,
-		string outputType,
-		int segmentDurationInSeconds, int playlistEntriesNumber,
-		int64_t encodingProfileKey,
-		string manifestDirectoryPath, string manifestFileName, string rtmpUrl,
+		Json::Value inputsRoot,
+		int64_t utcProxyPeriodStart,
+		Json::Value outputsRoot,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
 	void addEncoding_LiveGridJob (

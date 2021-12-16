@@ -275,7 +275,7 @@ private:
 			dependencies
 	);
 
-	void manageAwaitingTheBeginning(
+	void manageCountdown(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
 		string ingestionDate,

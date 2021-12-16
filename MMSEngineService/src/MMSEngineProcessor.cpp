@@ -4953,11 +4953,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
                         {
                             try
                             {
-								manageAwaitingTheBeginning(
+								manageCountdown(
 									ingestionJobKey, 
 									ingestionStatus,
 									ingestionDate,
@@ -4967,7 +4967,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+                                _logger->error(__FILEREF__ + "manageCountdown failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -5012,7 +5012,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+                                _logger->error(__FILEREF__ + "manageCountdown failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -13107,21 +13107,6 @@ void MMSEngineProcessor::manageVODProxy(
             }
 		}
 
-        MMSEngineDBFacade::EncodingPriority encodingPriority;
-		{
-			string field = "EncodingPriority";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
-					workspace->_maxEncodingPriority);
-			}
-			else
-			{
-				encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-						parametersRoot.get(field, "").asString());
-			}
-		}
-
 		Json::Value outputsRoot;
 		bool timePeriod;
 		int64_t utcProxyPeriodStart = -1;
@@ -13230,15 +13215,16 @@ void MMSEngineProcessor::manageVODProxy(
 		Json::Value inputsRoot(Json::arrayValue);
 		inputsRoot.append(inputRoot);
 
+		// the only reason we may have a failure should be in case the vod is missing/removed
+		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;
+		long maxAttemptsNumberInCaseOfErrors = 3;
+
 		_mmsEngineDBFacade->addEncoding_VODProxyJob(workspace, ingestionJobKey,
 			inputsRoot,
 
-			vodContentType,
-			sourcePhysicalPathName,
-
-			encodingPriority,
-			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
-			localOutputsRoot);
+			utcProxyPeriodStart,
+			localOutputsRoot,
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)
     {
@@ -13265,8 +13251,7 @@ void MMSEngineProcessor::manageVODProxy(
     }
 }
 
-void MMSEngineProcessor::manageAwaitingTheBeginning(
-	int64_t ingestionJobKey,
+void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 	MMSEngineDBFacade::IngestionStatus ingestionStatus,
 	string ingestionDate,
 	shared_ptr<Workspace> workspace,
@@ -13277,25 +13262,9 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 {
     try
     {
-		/*
-		 * commented because it will be High by default
-		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
-			encodingPriority = 
-				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
-		}
-		else
-		{
-			encodingPriority =
-				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
-		}
-		*/
-
         if (dependencies.size() != 1)
         {
-            string errorMessage = __FILEREF__ + "Wrong media number for awaitingTheBeginnin"
+            string errorMessage = __FILEREF__ + "Wrong media number for Countdown"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependencies.size: " + to_string(dependencies.size());
@@ -13361,11 +13330,11 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 			sourceMediaItemKey, sourcePhysicalPathKey);
 
-		int64_t utcCountDownEnd = -1;
+		bool timePeriod = true;
+		int64_t utcProxyPeriodStart = -1;
+		int64_t utcProxyPeriodEnd = -1;
         {
-			// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-
-			string field = "CountDownEnd";
+			string field = "ProxyPeriod";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13375,147 +13344,193 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 
 				throw runtime_error(errorMessage);
 			}
-			string sCountDownEnd = parametersRoot.get(field, "").asString();
-			utcCountDownEnd = DateTime::sDateSecondsToUtc(sCountDownEnd);
-		}
 
-		int64_t utcIngestionJobStartProcessing = -1;
-        {
 			// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-			utcIngestionJobStartProcessing = DateTime::sDateSecondsToUtc(ingestionDate);
-		}
+			Json::Value proxyPeriodRoot = parametersRoot[field];
 
-		string outputType;
-		int64_t deliveryCode;
-		int segmentDurationInSeconds = 0;
-		int playlistEntriesNumber = 0;
-		int64_t encodingProfileKey = -1;
-		string manifestDirectoryPath;
-		string manifestFileName;
-		string rtmpUrl;
-		{
-			string field = "OutputType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputType = "HLS";
-			else
-				outputType = parametersRoot.get(field, "HLS").asString();
-
-			if (outputType == "HLS" || outputType == "DASH")
+			field = "Start";
+			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 			{
-				field = "DeliveryCode";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				deliveryCode = parametersRoot.get(field, 0).asInt64();
-
-				field = "SegmentDurationInSeconds";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					segmentDurationInSeconds = 10;
-				else
-					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-
-				field = "PlaylistEntriesNumber";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					playlistEntriesNumber = 6;
-				else
-					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-
-				string manifestExtension;
-				if (outputType == "HLS")
-					manifestExtension = "m3u8";
-				else if (outputType == "DASH")
-					manifestExtension = "mpd";
-
-				{
-					manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-						to_string(deliveryCode),
-						workspace);
-
-					manifestFileName = to_string(deliveryCode) + ".m3u8";
-				}
-			}
-			else
-			{
-				field = "RtmpUrl";
-				rtmpUrl = parametersRoot.get(field, "").asString();
-			}
-
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
-			string contentTypeField = "ContentType";
-			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
-			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
-
-				_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-				);
-			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
-			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
-
-				MMSEngineDBFacade::ContentType contentType;
-				if (JSONUtils::isMetadataPresent(parametersRoot, contentTypeField))
-				{
-					contentType = MMSEngineDBFacade::toContentType(
-						parametersRoot.get(contentTypeField, "").asString());
-
-					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace->_workspaceKey, contentType, encodingProfileLabel);
-				}
-				else
-				{
-					bool contentTypeToBeUsed = false;
-					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
-				}
-
-				_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingProfileLabel: " + encodingProfileLabel
-					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-				);
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + keyField
-                    + ", Field: " + labelField
-				;
+					+ ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+
+			field = "End";
+			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
+
+		Json::Value outputsRoot;
+		{
+			string field = "Outputs";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			outputsRoot = parametersRoot[field];
+        }
+
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey,
+			referenceContentType == MMSEngineDBFacade::ContentType::Image ? true : false
+		);
+
+		string text;
+		string textPosition_X_InPixel;
+		string textPosition_Y_InPixel;
+		string fontType;
+		int fontSize = 22;
+		string fontColor;
+		int textPercentageOpacity = -1;
+		bool boxEnable = false;
+		string boxColor;
+		int boxPercentageOpacity = 20;
+		{
+			string field = "Text";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			text = parametersRoot.get(field, "").asString();
+
+			field = "TextPosition_X_InPixel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				textPosition_X_InPixel = parametersRoot.get(field, "").asString();
+
+			field = "TextPosition_Y_InPixel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				textPosition_Y_InPixel = parametersRoot.get(field, "").asString();
+
+			field = "FontType";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				fontType = parametersRoot.get(field, "").asString();
+
+			field = "FontSize";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				fontSize = JSONUtils::asInt(parametersRoot, field, 22);
+
+			field = "FontColor";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				fontColor = parametersRoot.get(field, "").asString();
+
+			field = "TextPercentageOpacity";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				textPercentageOpacity = JSONUtils::asInt(parametersRoot, field, -1);
+
+			field = "BoxEnable";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				boxEnable = JSONUtils::asBool(parametersRoot, field, false);
+
+			field = "BoxColor";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				boxColor = parametersRoot.get(field, "").asString();
+
+			field = "BoxPercentageOpacity";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 20);
+		}
+
+		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
+		Json::Value countdownInputRoot;
+		{
+			string field = "mmsSourceVideoAssetPathName";
+			countdownInputRoot[field] = mmsSourceVideoAssetPathName;
+
+			field = "videoDurationInMilliSeconds";
+			countdownInputRoot[field] = videoDurationInMilliSeconds;
+
+			field = "videoDurationInMilliSeconds";
+			countdownInputRoot[field] = videoDurationInMilliSeconds;
+
+			field = "text";
+			countdownInputRoot[field] = text;
+
+			field = "textPosition_X_InPixel";
+			countdownInputRoot[field] = textPosition_X_InPixel;
+
+			field = "textPosition_Y_InPixel";
+			countdownInputRoot[field] = textPosition_Y_InPixel;
+
+			field = "fontType";
+			countdownInputRoot[field] = fontType;
+
+			field = "fontSize";
+			countdownInputRoot[field] = fontSize;
+
+			field = "fontColor";
+			countdownInputRoot[field] = fontColor;
+
+			field = "textPercentageOpacity";
+			countdownInputRoot[field] = textPercentageOpacity;
+
+			field = "boxEnable";
+			countdownInputRoot[field] = boxEnable;
+
+			field = "boxColor";
+			countdownInputRoot[field] = boxColor;
+
+			field = "boxPercentageOpacity";
+			countdownInputRoot[field] = boxPercentageOpacity;
+		}
+
+		Json::Value inputRoot;
+		{
+			string field = "countdownInput";
+			inputRoot[field] = countdownInputRoot;
+
+			field = "timePeriod";
+			inputRoot[field] = timePeriod;
+
+			field = "utcProxyPeriodStart";
+			inputRoot[field] = utcProxyPeriodStart;
+
+			field = "utcProxyPeriodEnd";
+			inputRoot[field] = utcProxyPeriodEnd;
+		}
+
+		Json::Value inputsRoot(Json::arrayValue);
+		inputsRoot.append(inputRoot);
+
 
 		// the only reason we may have a failure should be in case the image is missing/removed
 		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;
 		long maxAttemptsNumberInCaseOfErrors = 3;
 
-		_mmsEngineDBFacade->addEncoding_AwaitingTheBeginningJob(workspace, ingestionJobKey,
-			mmsSourceVideoAssetPathName, videoDurationInMilliSeconds,
-			utcIngestionJobStartProcessing, utcCountDownEnd,
-			deliveryCode,
-			outputType, segmentDurationInSeconds, playlistEntriesNumber, encodingProfileKey,
-			manifestDirectoryPath, manifestFileName, rtmpUrl,
+		_mmsEngineDBFacade->addEncoding_CountdownJob(workspace, ingestionJobKey,
+			inputsRoot,
+			utcProxyPeriodStart,
+			localOutputsRoot,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+        _logger->error(__FILEREF__ + "manageCountdown failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -13527,7 +13542,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+        _logger->error(__FILEREF__ + "manageCountdown failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

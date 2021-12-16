@@ -167,7 +167,7 @@ private:
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegLiveProxyURI;
     // string                              _ffmpegVODProxyURI;
-    string								_ffmpegAwaitingTheBeginningURI;
+    // string								_ffmpegAwaitingTheBeginningURI;
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
@@ -265,17 +265,17 @@ private:
 		Json::Value liveRecorderParametersRoot);
 	*/
 
-	bool liveProxy(bool vodProxy);
-	bool liveProxy_through_ffmpeg(bool vodProxy);
+	bool liveProxy(string proxyType);
+	bool liveProxy_through_ffmpeg(string proxyType);
     void processLiveProxy(bool killedByUser);
 
 	// bool vodProxy();
 	// bool vodProxy_through_ffmpeg();
     // void processVODProxy(bool killedByUser);
 
-	bool awaitingTheBeginning();
-	bool awaitingTheBeginning_through_ffmpeg();
-    void processAwaitingTheBeginning(bool killedByUser);
+	// bool awaitingTheBeginning();
+	// bool awaitingTheBeginning_through_ffmpeg();
+    // void processAwaitingTheBeginning(bool killedByUser);
 
 	pair<long,string> getLastYouTubeURLDetails(
 		int64_t ingestionKey,

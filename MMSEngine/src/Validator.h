@@ -206,7 +206,7 @@ public:
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
-    void validateAwaitingTheBeginningMetadata(int64_t workspaceKey, string label,
+    void validateCountdownMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
 

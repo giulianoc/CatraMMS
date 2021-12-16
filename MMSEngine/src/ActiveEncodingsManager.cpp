@@ -519,7 +519,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 		|| encodingJob->_encodingItem->_encodingType ==
 			MMSEngineDBFacade::EncodingType::VODProxy
 		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::AwaitingTheBeginning
+			MMSEngineDBFacade::EncodingType::Countdown
 		|| encodingJob->_encodingItem->_encodingType ==
 			MMSEngineDBFacade::EncodingType::LiveGrid
 	)

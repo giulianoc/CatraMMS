@@ -1082,9 +1082,9 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
-    else if (type == "Awaiting-The-Beginning")
+    else if (type == "Countdown")
     {
-        ingestionType = MMSEngineDBFacade::IngestionType::AwaitingTheBeginning;
+        ingestionType = MMSEngineDBFacade::IngestionType::Countdown;
         
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -1101,7 +1101,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot,
+        validateCountdownMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
     else if (type == "Live-Grid")
@@ -1347,9 +1347,9 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
         validateVODProxyMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);
     }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
     {
-        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot, 
+        validateCountdownMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
@@ -4725,12 +4725,14 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	}
 }
 
-void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, string label,
+void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
 {
+
+	MMSEngineDBFacade::ContentType referenceContentType = MMSEngineDBFacade::ContentType::Video;
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
@@ -4784,24 +4786,63 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
         }
     }
 
-    string encodingProfileKeyField = "EncodingProfileKey";
-    string encodingProfileLabelField = "EncodingProfileLabel";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
-		&& !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
-    {
-        string errorMessage = __FILEREF__ + "Neither of the following fields are present"
-                + ", Field: " + encodingProfileLabelField
-                + ", Field: " + encodingProfileKeyField
-                + ", label: " + label
-                ;
-        _logger->error(errorMessage);
+    field = "ProxyPeriod";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+        
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+			;
+		_logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
+	{
+		Json::Value proxyPeriodRoot = parametersRoot[field];
+
+		time_t utcProxyPeriodStart = -1;
+		time_t utcProxyPeriodEnd = -1;
+
+		field = "Start";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+		}
+
+		field = "End";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+		}
+
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
+			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__
+				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
 
 	{
 		vector<string> mandatoryFields = {
-			"CountDownEnd"
+			"Text"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -4809,12 +4850,12 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-          
+            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -4822,23 +4863,52 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 		}
 	}
 
+	field = "Outputs";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		field = "CountDownEnd";
-		string countDownEnd = parametersRoot.get(field, "").asString();
-		time_t utcCountDownEnd = DateTime::sDateSecondsToUtc(countDownEnd);
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	Json::Value outputsRoot = parametersRoot[field];
+
+	if (outputsRoot.size() == 0)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
+	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
+		Json::Value outputRoot = outputsRoot[outputIndex];
+
 		field = "OutputType";
-		string outputType;
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		string liveProxyOutputType;
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
 		{
-			outputType = parametersRoot.get(field, "").asString();
-			if (!isLiveProxyOutputTypeValid(outputType))
+			liveProxyOutputType = outputRoot.get(field, "").asString();
+			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 			{
 				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 					+ ", Field: " + field
-					+ ", outputType: " + outputType
+					+ ", liveProxyOutputType: " + liveProxyOutputType
 					+ ", label: " + label
 					;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -4847,17 +4917,17 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 			}
 		}
 
-		if (outputType == "HLS")
+		if (liveProxyOutputType == "HLS")
 		{
 			vector<string> mandatoryFields = {
 				"DeliveryCode"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 				{
 					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
             
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField
@@ -4869,18 +4939,42 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 					throw runtime_error(errorMessage);
 				}
 			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
 		}
-		else if (outputType == "RTMP_Stream")
+		else if (liveProxyOutputType == "RTMP_Stream")
 		{
 			vector<string> mandatoryFields = {
 				"RtmpUrl"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 				{
 					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
             
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField
@@ -4892,18 +4986,42 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 					throw runtime_error(errorMessage);
 				}
 			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
 		}
-		else if (outputType == "UDP_Stream")
+		else if (liveProxyOutputType == "UDP_Stream")
 		{
 			vector<string> mandatoryFields = {
 				"udpUrl"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 				{
 					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
             
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField
@@ -4915,6 +5033,30 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 					throw runtime_error(errorMessage);
 				}
 			}
+
+			// check that, in case of an Image, the encoding profile is mandatory
+            {
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				{
+					string keyField = "EncodingProfileKey";
+					string labelField = "EncodingProfileLabel";
+					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__
+							+ "In case of Image, the EncodingProfile is mandatory"
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
 		}
 	}
 

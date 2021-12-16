@@ -2904,7 +2904,7 @@ pair<string, string> API::createDeliveryAuthorization(
 		if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
 			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
 			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder
-			&& ingestionType != MMSEngineDBFacade::IngestionType::AwaitingTheBeginning
+			&& ingestionType != MMSEngineDBFacade::IngestionType::Countdown
 		)
 		{
 			string errorMessage = string("ingestionJob is not a LiveProxy")
@@ -2949,8 +2949,11 @@ pair<string, string> API::createDeliveryAuthorization(
 			throw runtime_error(errorMessage);
 		}
 
-		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
+		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy
+			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy
+			|| ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
 		{
+			/*
 			string field = "ConfigurationLabel";
 			string configurationLabel = ingestionJobRoot.get(field, "").asString();
 
@@ -2970,8 +2973,9 @@ pair<string, string> API::createDeliveryAuthorization(
 				ignore, ignore, ignore,
 				ignore, ignore,
 				ignore) = channelConfDetails;
+			*/
 
-			field = "Outputs";
+			string field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage = string("A Live-Proxy without Outputs cannot be delivered")
@@ -3017,6 +3021,7 @@ pair<string, string> API::createDeliveryAuthorization(
 			{
 				if (outputsDeliveryCodesAndOutputTypes.size() == 0)
 				{
+					/*
 					if (channelSourceType == "IP_PULL")
 					{
 						_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
@@ -3027,6 +3032,7 @@ pair<string, string> API::createDeliveryAuthorization(
 						deliveryCode = liveURLConfKey;
 					}
 					else
+					*/
 					{
 						string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3344,7 +3350,8 @@ pair<string, string> API::createDeliveryAuthorization(
 				+ ", deliveryURL: " + deliveryURL
 			);
 		}
-		else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+		/*
+		else if (ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
 		{
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -3423,6 +3430,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				+ ", deliveryURL: " + deliveryURL
 			);
 		}
+		*/
 		else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
 		{
 			string field = "DeliveryCode";

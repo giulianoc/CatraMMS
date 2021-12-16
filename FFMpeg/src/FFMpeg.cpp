@@ -405,7 +405,8 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+					ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-threads");
 				ffmpegArgumentList.push_back("0");
 				ffmpegArgumentList.push_back("-pass");
@@ -588,7 +589,8 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+					ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-threads");
 				ffmpegArgumentList.push_back("0");
 				ffmpegArgumentList.push_back("-pass");
@@ -800,7 +802,8 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+					ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-threads");
 				ffmpegArgumentList.push_back("0");
 
@@ -1090,7 +1093,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 
 					// It should be useless to add the audio parameters in phase 1 but,
 					// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
@@ -1309,7 +1313,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 
 					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
 					if (audioBitRatesInfo.size() > videoIndex)
@@ -1604,7 +1609,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -1905,7 +1911,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					ffmpegArgumentList.push_back("-pass");
@@ -2097,7 +2104,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					ffmpegArgumentList.push_back("-pass");
@@ -2358,7 +2366,8 @@ void FFMpeg::encodeContent(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						ffmpegArgumentList);
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -3468,9 +3477,25 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		}
 	}
 
+	_logger->info(__FILEREF__ + "getDrawTextVideoFilterDescription"
+		+ ", text: " + text
+		+ ", textPosition_X_InPixel: " + textPosition_X_InPixel
+		+ ", textPosition_Y_InPixel: " + textPosition_Y_InPixel
+		+ ", fontType: " + fontType
+		+ ", fontSize: " + to_string(fontSize)
+		+ ", fontColor: " + fontColor
+		+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+		+ ", boxEnable: " + to_string(boxEnable)
+		+ ", boxColor: " + boxColor
+		+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+		+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+		+ ", ffmpegDrawTextFilter: " + ffmpegDrawTextFilter
+	);
+
 	return ffmpegDrawTextFilter;
 }
 
+/*
 void FFMpeg::awaitingTheBegining(
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -3512,9 +3537,6 @@ void FFMpeg::awaitingTheBegining(
 		encodingJobKey,
 		videoDurationInMilliSeconds,
 		mmsSourceVideoAssetPathName
-		/*
-		stagingEncodedAssetPathName
-		*/
 	);
 
     try
@@ -3652,30 +3674,8 @@ void FFMpeg::awaitingTheBegining(
 
 				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-				/*
-				if (httpStreamingFileFormat != "")
-				{
-					string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				else */
 				if (twoPasses)
 				{
-					/*
-					string errorMessage = __FILEREF__ + "in case of awaitingTheBeginning it is not possible to have a two passes encoding"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", twoPasses: " + to_string(twoPasses)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-					*/
 					twoPasses = false;
 
 					string errorMessage = __FILEREF__ + "in case of awaitingTheBeginning it is not possible to have a two passes encoding. Change it to false"
@@ -4167,6 +4167,7 @@ void FFMpeg::awaitingTheBegining(
         throw e;
     }
 }
+*/
 
 void FFMpeg::videoSpeed(
         string mmsSourceVideoAssetPathName,
@@ -9527,7 +9528,8 @@ void FFMpeg::liveRecorder(
 						addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+						addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+							ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
 						addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -9785,7 +9787,8 @@ void FFMpeg::liveRecorder(
 						addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+						addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+							ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
 						addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -9964,7 +9967,8 @@ void FFMpeg::liveRecorder(
 						addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+						addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+							ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
 						addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -10685,6 +10689,7 @@ void FFMpeg::liveRecorder(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+/*
 void FFMpeg::liveProxy(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
@@ -10764,11 +10769,6 @@ void FFMpeg::liveProxy(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey
-		/*
-		videoDurationInMilliSeconds,
-		mmsAssetPathName
-		stagingEncodedAssetPathName
-		*/
 	);
 
 	string otherOutputOptionsBecauseOfMaxWidth;
@@ -11226,28 +11226,8 @@ void FFMpeg::liveProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -11485,28 +11465,8 @@ void FFMpeg::liveProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -11666,28 +11626,8 @@ void FFMpeg::liveProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -12058,6 +11998,7 @@ void FFMpeg::liveProxy(
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
+*/
 
 void FFMpeg::liveProxy2(
 	int64_t ingestionJobKey,
@@ -12065,8 +12006,8 @@ void FFMpeg::liveProxy2(
 
 	// only one between channelInput and vodInput has to be present
 	// array of: "inputRoot": {
-	//	"channelInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "channelConfKey": 2464, "channelConfigurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "channelSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
-	//	"vodInput": { "vodContentType": "", "sourcePhysicalPathName": "...", "otherInputOptions": "" },
+	//	"channelInput": { },
+	//	"vodInput": { },
 	//	"timePeriod": false, "utcProxyPeriodEnd": -1, "utcProxyPeriodStart": -1 
 	// }
 	mutex* inputsRootMutex,
@@ -12137,11 +12078,11 @@ void FFMpeg::liveProxy2(
 		throw runtime_error(errorMessage);
 	}
 
-	_logger->info(__FILEREF__ + "Calculating timedInput"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", inputsRoot->size: " + to_string(inputsRoot->size())
-	);
+	// _logger->info(__FILEREF__ + "Calculating timedInput"
+	// 	+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+	// 	+ ", encodingJobKey: " + to_string(encodingJobKey)
+	// 	+ ", inputsRoot->size: " + to_string(inputsRoot->size())
+	// );
 	bool timedInput = true;
 	{
 		lock_guard<mutex> locker(*inputsRootMutex);
@@ -12194,11 +12135,12 @@ void FFMpeg::liveProxy2(
 	int sleepInSecondsInCaseOfRepeating = 5;
 	int currentInputIndex = -1;
 	Json::Value currentInputRoot;
-	while ((currentInputIndex = getNextLiveProxyInput(inputsRoot,
+	while ((currentInputIndex = getNextLiveProxyInput(ingestionJobKey, encodingJobKey,
+		inputsRoot,
 		inputsRootMutex, currentInputIndex, timedInput, &currentInputRoot)) != -1)
 	{
 		vector<string> ffmpegInputArgumentList;
-		long streamingDuration = -1;
+		long streamingDurationInSeconds = -1;
 		string otherOutputOptionsBecauseOfMaxWidth;
 		try
 		{
@@ -12211,7 +12153,7 @@ void FFMpeg::liveProxy2(
 			);
 			pair<long, string> inputDetils = liveProxyInput(ingestionJobKey, encodingJobKey,
 				currentInputRoot, ffmpegInputArgumentList);
-			tie(streamingDuration, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
+			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
 		}
 		catch(runtime_error e)
 		{
@@ -12252,6 +12194,7 @@ void FFMpeg::liveProxy2(
 			);
 			liveProxyOutput(ingestionJobKey, encodingJobKey,
 				otherOutputOptionsBecauseOfMaxWidth,
+				currentInputRoot, streamingDurationInSeconds,
 				outputRoots, ffmpegOutputArgumentList);
 		}
 		catch(runtime_error e)
@@ -12434,8 +12377,8 @@ void FFMpeg::liveProxy2(
 				}
 			}
 
-			if (streamingDuration != -1 &&
-				endFfmpegCommand - startFfmpegCommand < chrono::seconds(streamingDuration - 60))
+			if (streamingDurationInSeconds != -1 &&
+				endFfmpegCommand - startFfmpegCommand < chrono::seconds(streamingDurationInSeconds - 60))
 			{
 				throw runtime_error(
 					string("liveProxy exit before unexpectly, tried ")
@@ -12641,6 +12584,7 @@ void FFMpeg::liveProxy2(
 
 // return the index of the selected input
 int FFMpeg::getNextLiveProxyInput(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
 	Json::Value* inputsRoot,	// IN: list of inputs
 	mutex* inputsRootMutex,		// IN: mutex
 	int currentInputIndex,		// IN: current index on the inputs
@@ -12686,23 +12630,28 @@ int FFMpeg::getNextLiveProxyInput(
 			newInputIndex = -1;
 	}
 
+	_logger->info(__FILEREF__ + "getNextLiveProxyInput"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", currentInputIndex: " + to_string(currentInputIndex)
+		+ ", timedInput: " + to_string(timedInput)
+		+ ", newInputIndex: " + to_string(newInputIndex)
+	);
+
 	return newInputIndex;
 }
 
 pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
-	long streamingDuration = -1;
+	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
 
 
-	// only one between channelInput and vodInput has to be present
 	// "inputRoot": {
-	//	"channelInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "channelConfKey": 2464, "channelConfigurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "channelSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
-	//	"vodInput": { "vodContentType": "", "sourcePhysicalPathName": "...", "otherInputOptions": "" },
 	//	"timePeriod": false, "utcProxyPeriodEnd": -1, "utcProxyPeriodStart": -1 
+	//	...
 	// }
-
 	bool timePeriod = false;
 	string field = "timePeriod";
 	if (isMetadataPresent(inputRoot, field))
@@ -12718,6 +12667,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 	if (isMetadataPresent(inputRoot, field))
 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
 
+	//	"channelInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "channelConfKey": 2464, "channelConfigurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "channelSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
 	if (isMetadataPresent(inputRoot, "channelInput"))
 	{
 		field = "channelInput";
@@ -12989,7 +12939,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 		{
 			if (timePeriod)
 			{
-				streamingDuration = utcProxyPeriodEnd - utcNow;
+				streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
 
 				_logger->info(__FILEREF__ + "LiveProxy timing. "
 					+ "Streaming duration"
@@ -12998,30 +12948,30 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 					+ ", utcNow: " + to_string(utcNow)
 					+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
 					+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-					+ ", streamingDuration: " + to_string(streamingDuration)
+					+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
 				);
 
 				if (channelSourceType == "IP_PUSH" || channelSourceType == "Satellite")
 				{
-					if (pushListenTimeout > 0 && pushListenTimeout > streamingDuration)
+					if (pushListenTimeout > 0 && pushListenTimeout > streamingDurationInSeconds)
 					{
 						// 2021-02-02: sceanrio:
 						//	streaming duration is 25 seconds
 						//	timeout: 3600 seconds
 						//	The result is that the process will finish after 3600 seconds, not after 25 seconds
-						//	To avoid that, in this scenario, we will set the timeout equals to streamingDuration
+						//	To avoid that, in this scenario, we will set the timeout equals to streamingDurationInSeconds
 						_logger->info(__FILEREF__ + "LiveProxy timing. "
-							+ "Listen timeout in seconds is reduced because max after 'streamingDuration' the process has to finish"
+							+ "Listen timeout in seconds is reduced because max after 'streamingDurationInSeconds' the process has to finish"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", utcNow: " + to_string(utcNow)
 							+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
 							+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-							+ ", streamingDuration: " + to_string(streamingDuration)
+							+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
 							+ ", pushListenTimeout: " + to_string(pushListenTimeout)
 						);
 
-						pushListenTimeout = streamingDuration;
+						pushListenTimeout = streamingDurationInSeconds;
 					}
 				}
 			}
@@ -13192,7 +13142,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			if (timePeriod)
 			{
 				ffmpegInputArgumentList.push_back("-t");
-				ffmpegInputArgumentList.push_back(to_string(streamingDuration));
+				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
 	}
@@ -13304,11 +13254,9 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 		}
 
 		{
-			time_t streamingDuration = 0;
-
 			if (timePeriod)
 			{
-				streamingDuration = utcProxyPeriodEnd - utcNow;
+				streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
 
 				_logger->info(__FILEREF__ + "VODProxy timing. "
 					+ "Streaming duration"
@@ -13317,7 +13265,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 					+ ", utcNow: " + to_string(utcNow)
 					+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
 					+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-					+ ", streamingDuration: " + to_string(streamingDuration)
+					+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
 				);
 			}
 
@@ -13360,18 +13308,18 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			if (timePeriod)
 			{
 				ffmpegInputArgumentList.push_back("-t");
-				ffmpegInputArgumentList.push_back(to_string(streamingDuration));
+				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
 	}
-	//	"awaitingTheBeginningInput": { "mmsSourceVideoAssetPathName": "", "videoDurationInMilliSeconds": 123, "text": "", "textPosition_X_InPixel": "", "textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor": "", "boxPercentageOpacity": 20 },
-	else if (isMetadataPresent(inputRoot, "awaitingTheBeginningInput"))
+	//	"countdownInput": { "mmsSourceVideoAssetPathName": "", "videoDurationInMilliSeconds": 123, "text": "", "textPosition_X_InPixel": "", "textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor": "", "boxPercentageOpacity": 20 },
+	else if (isMetadataPresent(inputRoot, "countdownInput"))
 	{
-		string field = "awaitingTheBeginningInput";
-		Json::Value awaitingTheBeginningInputRoot = inputRoot[field];
+		string field = "countdownInput";
+		Json::Value countdownInputRoot = inputRoot[field];
 
 		field = "mmsSourceVideoAssetPathName";
-		if (!isMetadataPresent(awaitingTheBeginningInputRoot, field))
+		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field;
@@ -13379,10 +13327,10 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 
 			throw runtime_error(errorMessage);
 		}
-		string mmsSourceVideoAssetPathName = awaitingTheBeginningInputRoot.get(field, "").asString();
+		string mmsSourceVideoAssetPathName = countdownInputRoot.get(field, "").asString();
 
 		field = "videoDurationInMilliSeconds";
-		if (!isMetadataPresent(awaitingTheBeginningInputRoot, field))
+		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field;
@@ -13390,10 +13338,11 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 
 			throw runtime_error(errorMessage);
 		}
-		int64_t videoDurationInMilliSeconds = asInt64(awaitingTheBeginningInputRoot, field, -1);
+		int64_t videoDurationInMilliSeconds = asInt64(countdownInputRoot, field, -1);
 
+		/*
 		field = "text";
-		if (!isMetadataPresent(awaitingTheBeginningInputRoot, field))
+		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field;
@@ -13401,53 +13350,53 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 
 			throw runtime_error(errorMessage);
 		}
-		string text = awaitingTheBeginningInputRoot.get(field, "").asString();
+		string text = countdownInputRoot.get(field, "").asString();
 
 		string textPosition_X_InPixel = "";
 		field = "textPosition_X_InPixel";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			textPosition_X_InPixel = awaitingTheBeginningInputRoot.get(field, "").asString();
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
 
 		string textPosition_Y_InPixel = "";
 		field = "textPosition_Y_InPixel";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			textPosition_Y_InPixel = awaitingTheBeginningInputRoot.get(field, "").asString();
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
 
 		string fontType = "";
 		field = "fontType";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			fontType = awaitingTheBeginningInputRoot.get(field, "").asString();
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontType = countdownInputRoot.get(field, "").asString();
 
 		int fontSize = -1;
 		field = "fontSize";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			fontSize = asInt(awaitingTheBeginningInputRoot, field, -1);
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontSize = asInt(countdownInputRoot, field, -1);
 
 		string fontColor = "";
 		field = "fontColor";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			fontColor = awaitingTheBeginningInputRoot.get(field, "").asString();
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontColor = countdownInputRoot.get(field, "").asString();
 
 		int textPercentageOpacity = -1;
 		field = "textPercentageOpacity";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			textPercentageOpacity = asInt(awaitingTheBeginningInputRoot, field, -1);
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPercentageOpacity = asInt(countdownInputRoot, field, -1);
 
 		bool boxEnable = false;
 		field = "boxEnable";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			boxEnable = asBool(awaitingTheBeginningInputRoot, field, false);
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxEnable = asBool(countdownInputRoot, field, false);
 
 		string boxColor = "";
 		field = "boxColor";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			boxColor = awaitingTheBeginningInputRoot.get(field, "").asString();
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxColor = countdownInputRoot.get(field, "").asString();
 
 		int boxPercentageOpacity = -1;
 		field = "boxPercentageOpacity";
-		if (isMetadataPresent(awaitingTheBeginningInputRoot, field))
-			boxPercentageOpacity = asInt(awaitingTheBeginningInputRoot, field, -1);
-
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
+		*/
 
 		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
 			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
@@ -13476,7 +13425,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			{
 				time_t tooLateTime = utcNow - utcCountDownEnd;
 
-				string errorMessage = __FILEREF__ + "AwaitingTheBeginning timing. "
+				string errorMessage = __FILEREF__ + "Countdown timing. "
 					+ "Too late to start"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -13490,12 +13439,11 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			}
 		}
 
-		time_t streamingDurationInSeconds;
 		int streamLoopNumber;
 		{
 			streamingDurationInSeconds = utcCountDownEnd - utcNow;
 
-			_logger->info(__FILEREF__ + "AwaitingTheBeginning timing. "
+			_logger->info(__FILEREF__ + "Countdown timing. "
 				+ "Streaming duration"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -13505,15 +13453,20 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 				+ ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
 			);
 
+			float fVideoDurationInMilliSeconds = videoDurationInMilliSeconds;
+			fVideoDurationInMilliSeconds /= 1000;
+
 			streamLoopNumber = streamingDurationInSeconds
-				/ (videoDurationInMilliSeconds / 1000);
+				/ fVideoDurationInMilliSeconds;
 			streamLoopNumber += 2;
 		}
 
+		/*
 		string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
 			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
 			streamingDurationInSeconds);
+		*/
 
 		{
 			// global options
@@ -13526,23 +13479,24 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			ffmpegInputArgumentList.push_back("-t");
 			ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 
-			ffmpegInputArgumentList.push_back("-vf");
-			ffmpegInputArgumentList.push_back(ffmpegDrawTextFilter);
+			// ffmpegInputArgumentList.push_back("-vf");
+			// ffmpegInputArgumentList.push_back(ffmpegDrawTextFilter);
 		}
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "both channelInput and vodInput are not present";
+		string errorMessage = __FILEREF__ + "channelInput or vodInput or countdownInput is not present";
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 
-	return make_pair(streamingDuration, otherOutputOptionsBecauseOfMaxWidth);
+	return make_pair(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth);
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	string otherOutputOptionsBecauseOfMaxWidth,
+	Json::Value inputRoot, long streamingDurationInSeconds,
 	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool,
 		string, string>>& outputRoots,
 	vector<string>& ffmpegOutputArgumentList)
@@ -13567,255 +13521,349 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 			= tOutputRoot;
 
-		if (outputType == "HLS" || outputType == "DASH")
+		string ffmpegDrawTextFilter;
+		if (isMetadataPresent(inputRoot, "countdownInput"))
 		{
-			if (audioVolumeChange != "")
+			string field = "countdownInput";
+			Json::Value countdownInputRoot = inputRoot[field];
+
+			field = "text";
+			if (!isMetadataPresent(countdownInputRoot, field))
 			{
-				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(string("volume=") + audioVolumeChange);
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
 			}
+			string text = countdownInputRoot.get(field, "").asString();
 
-			vector<string> ffmpegEncodingProfileArgumentList;
-			if (encodingProfileDetailsRoot != Json::nullValue)
+			string textPosition_X_InPixel = "";
+			field = "textPosition_X_InPixel";
+			if (isMetadataPresent(countdownInputRoot, field))
+				textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
+
+			string textPosition_Y_InPixel = "";
+			field = "textPosition_Y_InPixel";
+			if (isMetadataPresent(countdownInputRoot, field))
+				textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
+
+			string fontType = "";
+			field = "fontType";
+			if (isMetadataPresent(countdownInputRoot, field))
+				fontType = countdownInputRoot.get(field, "").asString();
+
+			int fontSize = -1;
+			field = "fontSize";
+			if (isMetadataPresent(countdownInputRoot, field))
+				fontSize = asInt(countdownInputRoot, field, -1);
+
+			string fontColor = "";
+			field = "fontColor";
+			if (isMetadataPresent(countdownInputRoot, field))
+				fontColor = countdownInputRoot.get(field, "").asString();
+
+			int textPercentageOpacity = -1;
+			field = "textPercentageOpacity";
+			if (isMetadataPresent(countdownInputRoot, field))
+				textPercentageOpacity = asInt(countdownInputRoot, field, -1);
+
+			bool boxEnable = false;
+			field = "boxEnable";
+			if (isMetadataPresent(countdownInputRoot, field))
+				boxEnable = asBool(countdownInputRoot, field, false);
+
+			string boxColor = "";
+			field = "boxColor";
+			if (isMetadataPresent(countdownInputRoot, field))
+				boxColor = countdownInputRoot.get(field, "").asString();
+
+			int boxPercentageOpacity = -1;
+			field = "boxPercentageOpacity";
+			if (isMetadataPresent(countdownInputRoot, field))
+				boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
+
+			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
+				streamingDurationInSeconds);
+		}
+
+		string httpStreamingFileFormat;    
+		string ffmpegHttpStreamingParameter = "";
+
+		string ffmpegFileFormatParameter = "";
+
+		string ffmpegVideoCodecParameter = "";
+		string ffmpegVideoProfileParameter = "";
+		string ffmpegVideoResolutionParameter = "";
+		int videoBitRateInKbps = -1;
+		string ffmpegVideoBitRateParameter = "";
+		string ffmpegVideoOtherParameters = "";
+		string ffmpegVideoMaxRateParameter = "";
+		string ffmpegVideoBufSizeParameter = "";
+		string ffmpegVideoFrameRateParameter = "";
+		string ffmpegVideoKeyFramesRateParameter = "";
+		bool twoPasses;
+		vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+		string ffmpegAudioCodecParameter = "";
+		string ffmpegAudioBitRateParameter = "";
+		string ffmpegAudioOtherParameters = "";
+		string ffmpegAudioChannelsParameter = "";
+		string ffmpegAudioSampleRateParameter = "";
+		vector<string> audioBitRatesInfo;
+
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			try
 			{
-				try
+				settingFfmpegParameters(
+					encodingProfileDetailsRoot,
+					isVideo,
+
+					httpStreamingFileFormat,
+					ffmpegHttpStreamingParameter,
+
+					ffmpegFileFormatParameter,
+
+					ffmpegVideoCodecParameter,
+					ffmpegVideoProfileParameter,
+					ffmpegVideoOtherParameters,
+					twoPasses,
+					ffmpegVideoFrameRateParameter,
+					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
+
+					ffmpegAudioCodecParameter,
+					ffmpegAudioOtherParameters,
+					ffmpegAudioChannelsParameter,
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
+				);
+
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter)
+					= videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+
+				/*
+				if (httpStreamingFileFormat != "")
 				{
-					string httpStreamingFileFormat;    
-					string ffmpegHttpStreamingParameter = "";
-
-					string ffmpegFileFormatParameter = "";
-
-					string ffmpegVideoCodecParameter = "";
-					string ffmpegVideoProfileParameter = "";
-					string ffmpegVideoResolutionParameter = "";
-					int videoBitRateInKbps = -1;
-					string ffmpegVideoBitRateParameter = "";
-					string ffmpegVideoOtherParameters = "";
-					string ffmpegVideoMaxRateParameter = "";
-					string ffmpegVideoBufSizeParameter = "";
-					string ffmpegVideoFrameRateParameter = "";
-					string ffmpegVideoKeyFramesRateParameter = "";
-					bool twoPasses;
-					vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
-
-					string ffmpegAudioCodecParameter = "";
-					string ffmpegAudioBitRateParameter = "";
-					string ffmpegAudioOtherParameters = "";
-					string ffmpegAudioChannelsParameter = "";
-					string ffmpegAudioSampleRateParameter = "";
-					vector<string> audioBitRatesInfo;
-
-
-					settingFfmpegParameters(
-						encodingProfileDetailsRoot,
-						isVideo,
-
-						httpStreamingFileFormat,
-						ffmpegHttpStreamingParameter,
-
-						ffmpegFileFormatParameter,
-
-						ffmpegVideoCodecParameter,
-						ffmpegVideoProfileParameter,
-						ffmpegVideoOtherParameters,
-						twoPasses,
-						ffmpegVideoFrameRateParameter,
-						ffmpegVideoKeyFramesRateParameter,
-						videoBitRatesInfo,
-
-						ffmpegAudioCodecParameter,
-						ffmpegAudioOtherParameters,
-						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter,
-						audioBitRatesInfo
-					);
-
-					tuple<string, int, int, int, string, string, string> videoBitRateInfo
-						= videoBitRatesInfo[0];
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
-						ffmpegVideoBitRateParameter,
-						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter)
-						= videoBitRateInfo;
-
-					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-
-					/*
-					if (httpStreamingFileFormat != "")
-					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
-						twoPasses = false;
-
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", twoPasses: " + to_string(twoPasses)
-						;
-						_logger->warn(errorMessage);
-					}
-
-					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
-					ffmpegEncodingProfileArgumentList.push_back("-threads");
-					ffmpegEncodingProfileArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
 					;
 					_logger->error(errorMessage);
 
-					throw e;
+					throw runtime_error(errorMessage);
+				}
+				else */ if (twoPasses)
+				{
+					/*
+					string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
 				}
 			}
-
+			catch(runtime_error e)
 			{
-				string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+				throw e;
+			}
+		}
+
+		// map output
+		if (otherOutputOptions.find("-map") == string::npos
+			&& otherOutputOptionsBecauseOfMaxWidth != "")
+			addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+				ffmpegOutputArgumentList);
+		else
+			addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
+
+		// video output
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoOtherParameters, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoMaxRateParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoBufSizeParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
+			// ffmpegVideoResolutionParameter is -vf scale=w=1280:h=720
+			// Since we canno thave more than one -vf (otherwise ffmpeg will use
+			// only the last one), in case we have ffmpegDrawTextFilter,
+			// we will append it here
+			if (ffmpegDrawTextFilter == "")
+				addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+					ffmpegOutputArgumentList);
+			else
+			{
+				if (ffmpegVideoResolutionParameter != "")
+				{
+					ffmpegOutputArgumentList.push_back("-vf");
+					ffmpegOutputArgumentList.push_back(
+						ffmpegVideoResolutionParameter + "," + ffmpegDrawTextFilter);
+				}
+				else
+				{
+					ffmpegOutputArgumentList.push_back("-vf");
+					ffmpegOutputArgumentList.push_back(ffmpegDrawTextFilter);
+				}
+			}
+			ffmpegOutputArgumentList.push_back("-threads");
+			ffmpegOutputArgumentList.push_back("0");
+		}
+		else if (ffmpegDrawTextFilter != "")
+		{
+			ffmpegOutputArgumentList.push_back("-vf");
+			ffmpegOutputArgumentList.push_back(ffmpegDrawTextFilter);
+		}
+		else if (otherOutputOptions.find("-filter:v") == string::npos)
+		{
+			// it is not possible to have -c:v copy and -filter:v toghether
+			ffmpegOutputArgumentList.push_back("-c:v");
+			ffmpegOutputArgumentList.push_back("copy");
+		}
+
+
+		// audio output
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
+			addToArguments(ffmpegAudioChannelsParameter, ffmpegOutputArgumentList);
+			addToArguments(ffmpegAudioSampleRateParameter, ffmpegOutputArgumentList);
+		}
+		else 
+		{
+			// it is not possible to have -c:a copy and -filter:a toghether
+			ffmpegOutputArgumentList.push_back("-c:a");
+			ffmpegOutputArgumentList.push_back("copy");
+		}
+
+		if (audioVolumeChange != "")
+		{
+			ffmpegOutputArgumentList.push_back("-filter:a");
+			ffmpegOutputArgumentList.push_back(string("volume=") + audioVolumeChange);
+		}
+
+
+		// output file
+		if (outputType == "HLS" || outputType == "DASH")
+		{
+			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+
+			_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", manifestDirectoryPath: " + manifestDirectoryPath
+			);
+
+			// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+			// I saw just once that the directory was not created and the liveencoder remains in the loop
+			// where:
+			//	1. the encoder returns an error because of the missing directory
+			//	2. EncoderVideoAudioProxy calls again the encoder
+			// So, for this reason, the below check is done
+			if (!FileIO::directoryExisting(manifestDirectoryPath))
+			{
+				_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", manifestDirectoryPath: " + manifestDirectoryPath
 				);
 
-				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-				// I saw just once that the directory was not created and the liveencoder remains in the loop
-				// where:
-				//	1. the encoder returns an error because of the missing directory
-				//	2. EncoderVideoAudioProxy calls again the encoder
-				// So, for this reason, the below check is done
-				if (!FileIO::directoryExisting(manifestDirectoryPath))
-				{
-					_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
-
-					_logger->info(__FILEREF__ + "Create directory"
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					FileIO::createDirectory(manifestDirectoryPath,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP |
-						S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-
-				if (otherOutputOptions.find("-map") == string::npos
-					&& otherOutputOptionsBecauseOfMaxWidth != "")
-					addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
-						ffmpegOutputArgumentList);
-				else
-					addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
-
-				if (ffmpegEncodingProfileArgumentList.size() > 0)
-				{
-					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegOutputArgumentList);
-				}
-				else
-				{
-					if (otherOutputOptions.find("-filter:v") == string::npos)
-					{
-						// it is not possible to have -c:v copy and -filter:v toghether
-						ffmpegOutputArgumentList.push_back("-c:v");
-						ffmpegOutputArgumentList.push_back("copy");
-					}
-					if (otherOutputOptions.find("-filter:a") == string::npos)
-					{
-						// it is not possible to have -c:a copy and -filter:a toghether
-						ffmpegOutputArgumentList.push_back("-c:a");
-						ffmpegOutputArgumentList.push_back("copy");
-					}
-				}
-				if (outputType == "HLS")
-				{
-					ffmpegOutputArgumentList.push_back("-hls_flags");
-					ffmpegOutputArgumentList.push_back("append_list");
-					ffmpegOutputArgumentList.push_back("-hls_time");
-					ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-					ffmpegOutputArgumentList.push_back("-hls_list_size");
-					ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-					// Segment files removed from the playlist are deleted after a period of time
-					// equal to the duration of the segment plus the duration of the playlist
-					ffmpegOutputArgumentList.push_back("-hls_flags");
-					ffmpegOutputArgumentList.push_back("delete_segments");
-
-					// Set the number of unreferenced segments to keep on disk
-					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
-					// to download segments which were recently referenced in the playlist.
-					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
-					ffmpegOutputArgumentList.push_back("-hls_delete_threshold");
-					ffmpegOutputArgumentList.push_back(to_string(1));
-
-
-					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
-					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
-					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-					// 2020-07-19: commented, if it is needed just test it
-					// ffmpegArgumentList.push_back("-hls_start_number_source");
-					// ffmpegArgumentList.push_back("datetime");
-
-					// 2020-07-19: commented, if it is needed just test it
-					// ffmpegArgumentList.push_back("-start_number");
-					// ffmpegArgumentList.push_back(to_string(10));
-				}
-				else if (outputType == "DASH")
-				{
-					ffmpegOutputArgumentList.push_back("-seg_duration");
-					ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-					ffmpegOutputArgumentList.push_back("-window_size");
-					ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-					// it is important to specify -init_seg_name because those files
-					// will not be removed in EncoderVideoAudioProxy.cpp
-					ffmpegOutputArgumentList.push_back("-init_seg_name");
-					ffmpegOutputArgumentList.push_back("init-stream$RepresentationID$.$ext$");
-
-					// the only difference with the ffmpeg default is that default is $Number%05d$
-					// We had to change it to $Number%01d$ because otherwise the generated file containing
-					// 00001 00002 ... but the videojs player generates file name like 1 2 ...
-					// and the streaming was not working
-					ffmpegOutputArgumentList.push_back("-media_seg_name");
-					ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
-				}
-				ffmpegOutputArgumentList.push_back(manifestFilePathName);
+				_logger->info(__FILEREF__ + "Create directory"
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
+				);
+				bool noErrorIfExists = true;
+				bool recursive = true;
+				FileIO::createDirectory(manifestDirectoryPath,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP |
+					S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 			}
+
+			if (outputType == "HLS")
+			{
+				ffmpegOutputArgumentList.push_back("-hls_flags");
+				ffmpegOutputArgumentList.push_back("append_list");
+				ffmpegOutputArgumentList.push_back("-hls_time");
+				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
+				ffmpegOutputArgumentList.push_back("-hls_list_size");
+				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
+
+				// Segment files removed from the playlist are deleted after a period of time
+				// equal to the duration of the segment plus the duration of the playlist
+				ffmpegOutputArgumentList.push_back("-hls_flags");
+				ffmpegOutputArgumentList.push_back("delete_segments");
+
+				// Set the number of unreferenced segments to keep on disk
+				// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+				// to download segments which were recently referenced in the playlist.
+				// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+				ffmpegOutputArgumentList.push_back("-hls_delete_threshold");
+				ffmpegOutputArgumentList.push_back(to_string(1));
+
+
+				// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+				// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+				// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+				// 2020-07-19: commented, if it is needed just test it
+				// ffmpegArgumentList.push_back("-hls_start_number_source");
+				// ffmpegArgumentList.push_back("datetime");
+
+				// 2020-07-19: commented, if it is needed just test it
+				// ffmpegArgumentList.push_back("-start_number");
+				// ffmpegArgumentList.push_back(to_string(10));
+			}
+			else if (outputType == "DASH")
+			{
+				ffmpegOutputArgumentList.push_back("-seg_duration");
+				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
+				ffmpegOutputArgumentList.push_back("-window_size");
+				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
+
+				// it is important to specify -init_seg_name because those files
+				// will not be removed in EncoderVideoAudioProxy.cpp
+				ffmpegOutputArgumentList.push_back("-init_seg_name");
+				ffmpegOutputArgumentList.push_back("init-stream$RepresentationID$.$ext$");
+
+				// the only difference with the ffmpeg default is that default is $Number%05d$
+				// We had to change it to $Number%01d$ because otherwise the generated file containing
+				// 00001 00002 ... but the videojs player generates file name like 1 2 ...
+				// and the streaming was not working
+				ffmpegOutputArgumentList.push_back("-media_seg_name");
+				ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
+			}
+			ffmpegOutputArgumentList.push_back(manifestFilePathName);
 		}
 		else if (outputType == "RTMP_Stream")
 		{
@@ -13831,164 +13879,6 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				throw runtime_error(errorMessage);
 			}
 
-			if (audioVolumeChange != "")
-			{
-				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(string("volume=") + audioVolumeChange);
-			}
-
-			vector<string> ffmpegEncodingProfileArgumentList;
-			if (encodingProfileDetailsRoot != Json::nullValue)
-			{
-				try
-				{
-					string httpStreamingFileFormat;    
-					string ffmpegHttpStreamingParameter = "";
-
-					string ffmpegFileFormatParameter = "";
-
-					string ffmpegVideoCodecParameter = "";
-					string ffmpegVideoProfileParameter = "";
-					string ffmpegVideoResolutionParameter = "";
-					int videoBitRateInKbps = -1;
-					string ffmpegVideoBitRateParameter = "";
-					string ffmpegVideoOtherParameters = "";
-					string ffmpegVideoMaxRateParameter = "";
-					string ffmpegVideoBufSizeParameter = "";
-					string ffmpegVideoFrameRateParameter = "";
-					string ffmpegVideoKeyFramesRateParameter = "";
-					bool twoPasses;
-					vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
-
-					string ffmpegAudioCodecParameter = "";
-					string ffmpegAudioBitRateParameter = "";
-					string ffmpegAudioOtherParameters = "";
-					string ffmpegAudioChannelsParameter = "";
-					string ffmpegAudioSampleRateParameter = "";
-					vector<string> audioBitRatesInfo;
-
-
-					settingFfmpegParameters(
-						encodingProfileDetailsRoot,
-						isVideo,
-
-						httpStreamingFileFormat,
-						ffmpegHttpStreamingParameter,
-
-						ffmpegFileFormatParameter,
-
-						ffmpegVideoCodecParameter,
-						ffmpegVideoProfileParameter,
-						ffmpegVideoOtherParameters,
-						twoPasses,
-						ffmpegVideoFrameRateParameter,
-						ffmpegVideoKeyFramesRateParameter,
-						videoBitRatesInfo,
-
-						ffmpegAudioCodecParameter,
-						ffmpegAudioOtherParameters,
-						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter,
-						audioBitRatesInfo
-					);
-
-					tuple<string, int, int, int, string, string, string> videoBitRateInfo
-						= videoBitRatesInfo[0];
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
-						ffmpegVideoBitRateParameter,
-						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-
-					/*
-					if (httpStreamingFileFormat != "")
-					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
-						twoPasses = false;
-
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", twoPasses: " + to_string(twoPasses)
-						;
-						_logger->warn(errorMessage);
-					}
-
-					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
-					ffmpegEncodingProfileArgumentList.push_back("-threads");
-					ffmpegEncodingProfileArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					throw e;
-				}
-			}
-
-			if (otherOutputOptions.find("-map") == string::npos
-				&& otherOutputOptionsBecauseOfMaxWidth != "")
-				addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
-					ffmpegOutputArgumentList);
-			else
-				addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
-
-			if (ffmpegEncodingProfileArgumentList.size() > 0)
-			{
-				for (string parameter: ffmpegEncodingProfileArgumentList)
-					addToArguments(parameter, ffmpegOutputArgumentList);
-			}
-			else
-			{
-				if (otherOutputOptions.find("-filter:v") == string::npos)
-				{
-					// it is not possible to have -c:v copy and -filter:v toghether
-					ffmpegOutputArgumentList.push_back("-c:v");
-					ffmpegOutputArgumentList.push_back("copy");
-				}
-				if (otherOutputOptions.find("-filter:a") == string::npos)
-				{
-					// it is not possible to have -c:a copy and -filter:a toghether
-					ffmpegOutputArgumentList.push_back("-c:a");
-					ffmpegOutputArgumentList.push_back("copy");
-				}
-			}
 			ffmpegOutputArgumentList.push_back("-bsf:a");
 			ffmpegOutputArgumentList.push_back("aac_adtstoasc");
 			// 2020-08-13: commented bacause -c:v copy is already present
@@ -14014,171 +13904,6 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				throw runtime_error(errorMessage);
 			}
 
-			if (audioVolumeChange != "")
-			{
-				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(string("volume=") + audioVolumeChange);
-			}
-
-			vector<string> ffmpegEncodingProfileArgumentList;
-			if (encodingProfileDetailsRoot != Json::nullValue)
-			{
-				try
-				{
-					string httpStreamingFileFormat;    
-					string ffmpegHttpStreamingParameter = "";
-
-					string ffmpegFileFormatParameter = "";
-
-					string ffmpegVideoCodecParameter = "";
-					string ffmpegVideoProfileParameter = "";
-					string ffmpegVideoResolutionParameter = "";
-					int videoBitRateInKbps = -1;
-					string ffmpegVideoBitRateParameter = "";
-					string ffmpegVideoOtherParameters = "";
-					string ffmpegVideoMaxRateParameter = "";
-					string ffmpegVideoBufSizeParameter = "";
-					string ffmpegVideoFrameRateParameter = "";
-					string ffmpegVideoKeyFramesRateParameter = "";
-					bool twoPasses;
-					vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
-
-					string ffmpegAudioCodecParameter = "";
-					string ffmpegAudioBitRateParameter = "";
-					string ffmpegAudioOtherParameters = "";
-					string ffmpegAudioChannelsParameter = "";
-					string ffmpegAudioSampleRateParameter = "";
-					vector<string> audioBitRatesInfo;
-
-
-					settingFfmpegParameters(
-						encodingProfileDetailsRoot,
-						isVideo,
-
-						httpStreamingFileFormat,
-						ffmpegHttpStreamingParameter,
-
-						ffmpegFileFormatParameter,
-
-						ffmpegVideoCodecParameter,
-						ffmpegVideoProfileParameter,
-						ffmpegVideoOtherParameters,
-						twoPasses,
-						ffmpegVideoFrameRateParameter,
-						ffmpegVideoKeyFramesRateParameter,
-						videoBitRatesInfo,
-
-						ffmpegAudioCodecParameter,
-						ffmpegAudioOtherParameters,
-						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter,
-						audioBitRatesInfo
-					);
-
-					tuple<string, int, int, int, string, string, string> videoBitRateInfo
-						= videoBitRatesInfo[0];
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
-						ffmpegVideoBitRateParameter,
-						ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-
-					/*
-					if (httpStreamingFileFormat != "")
-					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
-						twoPasses = false;
-
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", twoPasses: " + to_string(twoPasses)
-						;
-						_logger->warn(errorMessage);
-					}
-
-					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
-					ffmpegEncodingProfileArgumentList.push_back("-threads");
-					ffmpegEncodingProfileArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					throw e;
-				}
-			}
-
-			if (otherOutputOptions.find("-map") == string::npos
-				&& otherOutputOptionsBecauseOfMaxWidth != "")
-				addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
-					ffmpegOutputArgumentList);
-			else
-				addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
-
-			if (ffmpegEncodingProfileArgumentList.size() > 0)
-			{
-				for (string parameter: ffmpegEncodingProfileArgumentList)
-					addToArguments(parameter, ffmpegOutputArgumentList);
-			}
-			else
-			{
-				if (otherOutputOptions.find("-filter:v") == string::npos)
-				{
-					// it is not possible to have -c:v copy and -filter:v toghether
-					ffmpegOutputArgumentList.push_back("-c:v");
-					ffmpegOutputArgumentList.push_back("copy");
-				}
-				if (otherOutputOptions.find("-filter:a") == string::npos)
-				{
-					// it is not possible to have -c:a copy and -filter:a toghether
-					ffmpegOutputArgumentList.push_back("-c:a");
-					ffmpegOutputArgumentList.push_back("copy");
-				}
-			}
-			// ffmpegOutputArgumentList.push_back("-bsf:a");
-			// ffmpegOutputArgumentList.push_back("aac_adtstoasc");
-			// 2020-08-13: commented bacause -c:v copy is already present
-			// ffmpegArgumentList.push_back("-vcodec");
-			// ffmpegArgumentList.push_back("copy");
-
-			// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
 			ffmpegOutputArgumentList.push_back("-f");
 			ffmpegOutputArgumentList.push_back("mpegts");
 			ffmpegOutputArgumentList.push_back(udpUrl);
@@ -14545,7 +14270,7 @@ void FFMpeg::vodProxy(
 							ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoKeyFramesRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoResolutionParameter,
+						addToArguments("-vf " + ffmpegVideoResolutionParameter,
 							ffmpegEncodingProfileArgumentList);
 					}
 					ffmpegEncodingProfileArgumentList.push_back("-threads");
@@ -14811,7 +14536,8 @@ void FFMpeg::vodProxy(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments("-vf " + ffmpegVideoResolutionParameter,
+						ffmpegEncodingProfileArgumentList);
 					ffmpegEncodingProfileArgumentList.push_back("-threads");
 					ffmpegEncodingProfileArgumentList.push_back("0");
 					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -14989,7 +14715,8 @@ void FFMpeg::vodProxy(
 					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
 					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
 					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments("-vf " + ffmpegVideoResolutionParameter,
+						ffmpegEncodingProfileArgumentList);
 					ffmpegEncodingProfileArgumentList.push_back("-threads");
 					ffmpegEncodingProfileArgumentList.push_back("0");
 					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -17489,7 +17216,8 @@ void FFMpeg::settingFfmpegParameters(
 
 					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
 
-					ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
+					// ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
+					ffmpegVideoResolution = "scale=w=" + to_string(videoWidth)
 						+ ":h=" + to_string(videoHeight);
 					if (forceOriginalAspectRatio != "")
 					{
@@ -17500,7 +17228,7 @@ void FFMpeg::settingFfmpegParameters(
 								+ ":(ow-iw)/2:(oh-ih)/2");
 					}
 
-					ffmpegVideoResolution += " ";
+					// ffmpegVideoResolution += " ";
 				}
 
 				string ffmpegVideoBitRate;

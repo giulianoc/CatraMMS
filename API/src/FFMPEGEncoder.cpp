@@ -2534,9 +2534,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
     }
     else if (method == "liveProxy"
-		|| method == "vodProxy"
+		// || method == "vodProxy"
 		|| method == "liveGrid"
-		|| method == "awaitingTheBeginning"
+		// || method == "countdown"
 	)
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -2686,6 +2686,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					liveProxyThread.detach();
 				}
+				/*
 				else if (method == "vodProxy")
 				{
 					_logger->info(__FILEREF__ + "Creating vodProxy thread"
@@ -2696,6 +2697,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					vodProxyThread.detach();
 				}
+				*/
 				else if (method == "liveGrid")
 				{
 					_logger->info(__FILEREF__ + "Creating liveGrid thread"
@@ -2706,9 +2708,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					liveGridThread.detach();
 				}
-				else // if (method == "awaitingTheBeginning")
+				/*
+				else // if (method == "countdown")
 				{
-					_logger->info(__FILEREF__ + "Creating awaitingTheBeginning thread"
+					_logger->info(__FILEREF__ + "Creating countdown thread"
 						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 						+ ", requestBody: " + requestBody
 					);
@@ -2716,6 +2719,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					awaitingTheBeginningThread.detach();
 				}
+				*/
 
 				#ifdef __VECTOR__
 				#else	// __MAP__
@@ -11032,6 +11036,7 @@ void FFMPEGEncoder::liveProxyThread(
 			Json::Value outputsRoot =
 				liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 
+			/*
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
@@ -11042,6 +11047,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", sOutputsRoot: " + sOutputsRoot
 				);
 			}
+			*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -11341,7 +11347,7 @@ void FFMPEGEncoder::liveProxyThread(
         liveProxy->_childPid = 0;
 		liveProxy->_killedBecauseOfNotWorking = false;
         
-        _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHTTPStreaming finished"
+        _logger->info(__FILEREF__ + "_ffmpeg->liveProxy finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
@@ -11899,6 +11905,7 @@ void FFMPEGEncoder::liveProxyThread(
     }
 }
 
+/*
 void FFMPEGEncoder::vodProxyThread(
 	// FCGX_Request& request,
 	shared_ptr<LiveProxyAndGrid> vodProxy,
@@ -12362,7 +12369,9 @@ void FFMPEGEncoder::vodProxyThread(
         // throw runtime_error(errorMessage);
     }
 }
+*/
 
+/*
 void FFMPEGEncoder::awaitingTheBeginningThread(
 	// FCGX_Request& request,
 	shared_ptr<LiveProxyAndGrid> liveProxy,
@@ -12866,6 +12875,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
         // throw runtime_error(errorMessage);
     }
 }
+*/
 
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,

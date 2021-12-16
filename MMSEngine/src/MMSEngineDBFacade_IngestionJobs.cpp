@@ -66,7 +66,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
-			// first Live-Proxy/VOD-Proxy (because if we have many many Live-Recorder,
+			// first Live-Proxy/VOD-Proxy/Countdown (because if we have many many Live-Recorder,
 			// Live-Proxy will never start)
 			// We will add also the YouTube-Live-Broadcast because this task has also a Schedule
 			{
@@ -79,7 +79,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 					"where ir.ingestionRootKey = ij.ingestionRootKey and "
 					"ij.processorMMS is null "
-					"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy', 'YouTube-Live-Broadcast') "
+					"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy', 'Countdown', 'YouTube-Live-Broadcast') "
 					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
 					"and ij.sourceBinaryTransferred = 1)) "
 					// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
@@ -350,7 +350,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							", 'Face-Identification'"
 							// ", 'Live-Recorder'"	already asked before
 							// ", 'Live-Proxy', 'VODProxy'"	already asked before
-							", 'Awaiting-The-Beginning'"
+							// ", 'Countdown'"
 							", 'Live-Grid'"
 						;
 						lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
@@ -360,7 +360,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						// everything but Live-Recorder, Live-Proxy, VOD-Proxy
 						// already asked before
 						lastSQLCommand +=
-							"and ij.ingestionType not in ('Live-Recorder', 'Live-Proxy', 'VOD-Proxy', 'YouTube-Live-Broadcast') ";
+							"and ij.ingestionType not in ('Live-Recorder', 'Live-Proxy', 'VOD-Proxy', 'Countdown', 'YouTube-Live-Broadcast') ";
 					}
 					lastSQLCommand +=
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
@@ -5137,7 +5137,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::LiveProxy
                 || ingestionType == IngestionType::VODProxy
                 || ingestionType == IngestionType::LiveGrid
-                || ingestionType == IngestionType::AwaitingTheBeginning
+                || ingestionType == IngestionType::Countdown
 				// IngestionType::Cut has the EncodingJob only in case of FrameAccurate
                 || ingestionType == IngestionType::Cut
                 )

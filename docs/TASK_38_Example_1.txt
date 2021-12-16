@@ -1,9 +1,8 @@
 "Task": {
-	"Label"="My Live Proxy",
+	"Label"="My Countdown",
 
-	"Type": "Live-Proxy",
+	"Type": "Countdown",
 
 	"Parameters": {
-		"ConfigurationLabel": "my live proxy"
 	}
 }

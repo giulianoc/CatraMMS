@@ -320,6 +320,7 @@ public:
 
 		pid_t* pChildPid);
 
+/*
 	void liveProxy(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
@@ -364,6 +365,7 @@ public:
 		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
 
 		pid_t* pChildPid);
+*/
 
 	void liveProxy2(
 		int64_t ingestionJobKey,
@@ -411,6 +413,7 @@ public:
 
 		pid_t* pChildPid);
 
+/*
 	void awaitingTheBegining(
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -442,6 +445,7 @@ public:
 		string udpUrl,
 
 		pid_t* pChildPid);
+*/
 
 	void liveGrid(
 		int64_t ingestionJobKey,
@@ -549,7 +553,8 @@ private:
 		string stagingEncodedAssetPathName = ""
 	);
 
-	int getNextLiveProxyInput(Json::Value* inputsRoot, mutex* inputsRootMutex,
+	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
+		Json::Value* inputsRoot, mutex* inputsRootMutex,
 		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
 	pair<long, string> liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
@@ -557,6 +562,7 @@ private:
 
 	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		string otherOutputOptionsBecauseOfMaxWidth,
+		Json::Value inputRoot, long streamingDurationInSeconds,
 		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool,
 			string, string>>& outputRoots,
 		vector<string>& ffmpegOutputArgumentList);
