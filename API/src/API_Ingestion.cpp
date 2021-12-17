@@ -4412,22 +4412,6 @@ void API::changeLiveProxyPlaylist(
 		+ ", requestBody: " + requestBody
 	);
 
-	/*
-		Broadcaster Ingestion Job Parameters:
-			"internalMMS" : {
-				"broadcaster" : {
-					"broadcastDefaultPlaylistItem" : {
-						"channelConfigurationLabel" : "R101",
-						"mediaType" : "Live Channel"
-					},
-					"broadcastIngestionJobKey" : 5629473
-				}
-			}
-		Broadcast Ingestion Job Parameters:
-			"internalMMS" : {
-				"broadcasterInputsRoot" : [ ... ]
-			}
-	*/
     try
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
@@ -4448,8 +4432,12 @@ void API::changeLiveProxyPlaylist(
 
 		int64_t broadcastIngestionJobKey;
 		string broadcastDefaultMediaType;	// options: Live Channel, Media, Countdown
-		Json::Value broadcastDefaultChannelInputRoot = Json::nullValue; // used in case mediaType is Live Channel
-		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;	// used in case mediaType is Media
+		// // used in case mediaType is Live Channel
+		Json::Value broadcastDefaultChannelInputRoot = Json::nullValue;
+		// used in case mediaType is Media
+		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;
+		// used in case mediaType is Countdown
+		Json::Value broadcastDefaultCountdownInputRoot = Json::nullValue;
         try
         {
             _logger->info(__FILEREF__ + "getIngestionJobDetails"
@@ -4577,26 +4565,62 @@ void API::changeLiveProxyPlaylist(
 								= physicalPathDetails;
 
 							bool warningIfMissing = false;
-							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
-								string, string> mediaItemKeyDetails =
+							tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
+								string, int64_t, string, string> mediaItemKeyDetails =
 								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-									workspace->_workspaceKey, broadcastDefaultPhysicalPathKey, warningIfMissing);
-							tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore)
-								= mediaItemKeyDetails;
+									workspace->_workspaceKey, broadcastDefaultPhysicalPathKey,
+									warningIfMissing);
+							tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore,
+								ignore) = mediaItemKeyDetails;
 						}
 
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
+						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
+							vodContentType, sourcePhysicalPathName,
+							broadcastDefaultPhysicalPathKey);
+					}
+					else if (broadcastDefaultMediaType == "Countdown")
+					{
+						field = "physicalPathKey";
+						int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(
+							broadcastDefaultPlaylistItemRoot, field, -1);
+						field = "text";
+						string broadcastDefaultText =
+							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+
+						MMSEngineDBFacade::ContentType vodContentType;
+						string sourcePhysicalPathName;
+						int64_t videoDurationInMilliSeconds;
 						{
-							Json::Value vodInputRoot;
+							tuple<string, int, string, string, int64_t, string>
+								physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+								broadcastDefaultPhysicalPathKey);
+							tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+								= physicalPathDetails;
 
-							string field = "vodContentType";
-							vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
-
-							field = "sourcePhysicalPathName";
-							vodInputRoot[field] = sourcePhysicalPathName;
-
-							broadcastDefaultVodInputRoot = vodInputRoot;
+						int64_t sourceMediaItemKey = -1;
+						videoDurationInMilliSeconds = _mmsEngineDBFacade->
+							getMediaDurationInMilliseconds(sourceMediaItemKey,
+							broadcastDefaultPhysicalPathKey);
 						}
+
+						string textPosition_X_InPixel = "(video_width-text_width)/2";
+						string textPosition_Y_InPixel = "(video_height-text_height)/2";
+						string fontType = "OpenSans-ExtraBold.ttf";
+						int fontSize = 48;
+						string fontColor = "orange";
+						int textPercentageOpacity = 100;
+						bool boxEnable = false;
+						string boxColor;
+						int boxPercentageOpacity = -1;
+						// the same json structure is used in MMSEngineProcessor::manageVODProxy
+						broadcastDefaultCountdownInputRoot
+							= _mmsEngineDBFacade->getCountdownInputRoot(
+							sourcePhysicalPathName, broadcastDefaultPhysicalPathKey,
+							videoDurationInMilliSeconds, broadcastDefaultText,
+							textPosition_X_InPixel, textPosition_Y_InPixel,
+							fontType, fontSize, fontColor, textPercentageOpacity,
+							boxEnable, boxColor, boxPercentageOpacity);
 					}
 					else
 					{
@@ -4888,6 +4912,22 @@ void API::changeLiveProxyPlaylist(
 								throw runtime_error(errorMessage);
 							}
 						}
+						else if (broadcastDefaultMediaType == "Countdown")
+						{
+							if (broadcastDefaultCountdownInputRoot != Json::nullValue)
+								newdPlaylistItemToBeAddedRoot["countdownInput"]
+								= broadcastDefaultCountdownInputRoot;
+							else
+							{
+								string errorMessage = __FILEREF__
+									+ "Broadcaster data: no default Countdown present"
+									+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
 						else
 						{
 							string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
@@ -4969,6 +5009,22 @@ void API::changeLiveProxyPlaylist(
 							throw runtime_error(errorMessage);
 						}
 					}
+					else if (broadcastDefaultMediaType == "Countdown")
+					{
+						if (broadcastDefaultCountdownInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["countdownInput"]
+							= broadcastDefaultCountdownInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Countdown present"
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
 					else
 					{
 						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
@@ -5024,6 +5080,22 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Media present"
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (broadcastDefaultMediaType == "Countdown")
+					{
+						if (broadcastDefaultCountdownInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["countdownInput"]
+							= broadcastDefaultCountdownInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Countdown present"
 								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
@@ -5109,9 +5181,10 @@ void API::changeLiveProxyPlaylist(
 				= ingestionJobDetails;
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
-				&& ingestionType != MMSEngineDBFacade::IngestionType::VODProxy)
+				&& ingestionType != MMSEngineDBFacade::IngestionType::VODProxy
+				&& ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 			{
-				string errorMessage = string("Ingestion type is not a LiveProxy")
+				string errorMessage = string("Ingestion type is not a LiveProxy-VODProxy-Countdown")
 					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
 					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
 				;

@@ -13051,6 +13051,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 		MMSEngineDBFacade::ContentType vodContentType;
 		string sourcePhysicalPathName;
+		int64_t sourcePhysicalPathKey;
 
 		// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 		// 	keyAndDependencyType: dependencies)
@@ -13073,7 +13074,6 @@ void MMSEngineProcessor::manageVODProxy(
 			);
 
             int64_t sourceMediaItemKey;
-            int64_t sourcePhysicalPathKey;
             // string sourcePhysicalPath;
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -13188,14 +13188,8 @@ void MMSEngineProcessor::manageVODProxy(
 		);
 
 		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
-		Json::Value vodInputRoot;
-		{
-			string field = "vodContentType";
-			vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
-
-			field = "sourcePhysicalPathName";
-			vodInputRoot[field] = sourcePhysicalPathName;
-		}
+		Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
+			vodContentType, sourcePhysicalPathName, sourcePhysicalPathKey);
 
 		Json::Value inputRoot;
 		{
@@ -13294,12 +13288,12 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
 					_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPath;
+				tie(sourcePhysicalPathKey, mmsSourceVideoAssetPathName, ignore, ignore,
+					ignore, ignore, ignore) = physicalPath;
 
 				sourceMediaItemKey = key;
 
-				sourcePhysicalPathKey = -1;
+				// sourcePhysicalPathKey = -1;
 			}
 			else
 			{
@@ -13457,47 +13451,10 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		}
 
 		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
-		Json::Value countdownInputRoot;
-		{
-			string field = "mmsSourceVideoAssetPathName";
-			countdownInputRoot[field] = mmsSourceVideoAssetPathName;
-
-			field = "videoDurationInMilliSeconds";
-			countdownInputRoot[field] = videoDurationInMilliSeconds;
-
-			field = "videoDurationInMilliSeconds";
-			countdownInputRoot[field] = videoDurationInMilliSeconds;
-
-			field = "text";
-			countdownInputRoot[field] = text;
-
-			field = "textPosition_X_InPixel";
-			countdownInputRoot[field] = textPosition_X_InPixel;
-
-			field = "textPosition_Y_InPixel";
-			countdownInputRoot[field] = textPosition_Y_InPixel;
-
-			field = "fontType";
-			countdownInputRoot[field] = fontType;
-
-			field = "fontSize";
-			countdownInputRoot[field] = fontSize;
-
-			field = "fontColor";
-			countdownInputRoot[field] = fontColor;
-
-			field = "textPercentageOpacity";
-			countdownInputRoot[field] = textPercentageOpacity;
-
-			field = "boxEnable";
-			countdownInputRoot[field] = boxEnable;
-
-			field = "boxColor";
-			countdownInputRoot[field] = boxColor;
-
-			field = "boxPercentageOpacity";
-			countdownInputRoot[field] = boxPercentageOpacity;
-		}
+		Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
+			mmsSourceVideoAssetPathName, sourcePhysicalPathKey, videoDurationInMilliSeconds,
+			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity);
 
 		Json::Value inputRoot;
 		{

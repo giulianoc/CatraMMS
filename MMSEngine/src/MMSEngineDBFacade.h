@@ -2400,6 +2400,26 @@ public:
 		int64_t workspaceKey, string configurationLabel,
 		int maxWidth, string userAgent, string otherInputOptions);
 
+	Json::Value getVodInputRoot(
+		MMSEngineDBFacade::ContentType vodContentType,
+		string sourcePhysicalPathName,
+		int64_t physicalPathKey);
+
+	Json::Value getCountdownInputRoot(
+		string mmsSourceVideoAssetPathName,
+		int64_t physicalPathKey,
+		int64_t videoDurationInMilliSeconds,
+		string text,
+		string textPosition_X_InPixel,
+		string textPosition_Y_InPixel,
+		string fontType,
+		int fontSize,
+		string fontColor,
+		int textPercentageOpacity,
+		bool boxEnable,
+		string boxColor,
+		int boxPercentageOpacity);
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

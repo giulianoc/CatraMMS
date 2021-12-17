@@ -6328,3 +6328,120 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 	return channelInputRoot;
 }
 
+// this method is added here just because it is called by both API and MMSServiceProcessor
+Json::Value MMSEngineDBFacade::getVodInputRoot(
+	MMSEngineDBFacade::ContentType vodContentType,
+	string sourcePhysicalPathName,
+	int64_t physicalPathKey
+)
+{
+	Json::Value vodInputRoot;
+
+    try
+    {
+		string field = "vodContentType";
+		vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+
+		field = "sourcePhysicalPathName";
+		vodInputRoot[field] = sourcePhysicalPathName;
+
+		field = "physicalPathKey";
+		vodInputRoot[field] = physicalPathKey;
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getVodInputRoot failed"
+            + ", e.what(): " + e.what()
+        );
+ 
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "getVodInputRoot failed"
+        );
+        
+        throw e;
+    }
+
+	return vodInputRoot;
+}
+
+// this method is added here just because it is called by both API and MMSServiceProcessor
+Json::Value MMSEngineDBFacade::getCountdownInputRoot(
+	string mmsSourceVideoAssetPathName,
+	int64_t physicalPathKey,
+	int64_t videoDurationInMilliSeconds,
+	string text,
+	string textPosition_X_InPixel,
+	string textPosition_Y_InPixel,
+	string fontType,
+	int fontSize,
+	string fontColor,
+	int textPercentageOpacity,
+	bool boxEnable,
+	string boxColor,
+	int boxPercentageOpacity)
+{
+	Json::Value countdownInputRoot;
+
+    try
+    {
+		string field = "mmsSourceVideoAssetPathName";
+		countdownInputRoot[field] = mmsSourceVideoAssetPathName;
+
+		field = "physicalPathKey";
+		countdownInputRoot[field] = physicalPathKey;
+
+		field = "videoDurationInMilliSeconds";
+		countdownInputRoot[field] = videoDurationInMilliSeconds;
+
+		field = "text";
+		countdownInputRoot[field] = text;
+
+		field = "textPosition_X_InPixel";
+		countdownInputRoot[field] = textPosition_X_InPixel;
+
+		field = "textPosition_Y_InPixel";
+		countdownInputRoot[field] = textPosition_Y_InPixel;
+
+		field = "fontType";
+		countdownInputRoot[field] = fontType;
+
+		field = "fontSize";
+		countdownInputRoot[field] = fontSize;
+
+		field = "fontColor";
+		countdownInputRoot[field] = fontColor;
+
+		field = "textPercentageOpacity";
+		countdownInputRoot[field] = textPercentageOpacity;
+
+		field = "boxEnable";
+		countdownInputRoot[field] = boxEnable;
+
+		field = "boxColor";
+		countdownInputRoot[field] = boxColor;
+
+		field = "boxPercentageOpacity";
+		countdownInputRoot[field] = boxPercentageOpacity;
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getCountdownInputRoot failed"
+            + ", e.what(): " + e.what()
+        );
+ 
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "getVodInputRoot failed"
+        );
+        
+        throw e;
+    }
+
+	return countdownInputRoot;
+}
+

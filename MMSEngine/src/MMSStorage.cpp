@@ -311,8 +311,9 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathD
 {
     try
     {
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
-			string, string, int64_t, bool> storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
+			string, string, string, string, int64_t, bool> storageDetails =
+			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
