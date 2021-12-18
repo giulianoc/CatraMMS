@@ -974,9 +974,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
             + responseBody;
 	}
 
-    _logger->info(__FILEREF__ + "HTTP Success"
-        + ", response: " + completeHttpResponse
-    );
+    // _logger->info(__FILEREF__ + "HTTP Success"
+    //     + ", response: " + completeHttpResponse
+    // );
     _logger->debug(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
     );
