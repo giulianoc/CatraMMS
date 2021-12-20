@@ -2355,12 +2355,31 @@ void API::createDeliveryAuthorization(
 			}
 			else
 			{
+				Json::Value responseRoot;
+
+				string field = "deliveryURL";
+				responseRoot[field] = deliveryURL;
+
+				field = "deliveryFileName";
+				responseRoot[field] = deliveryFileName;
+
+				field = "ttlInSeconds";
+				responseRoot[field] = ttlInSeconds;
+
+				field = "maxRetries";
+				responseRoot[field] = maxRetries;
+
+				Json::StreamWriterBuilder wbuilder;                                                               
+				string responseBody = Json::writeString(wbuilder, responseRoot);
+
+				/*
 				string responseBody = string("{ ")
 					+ "\"deliveryURL\": \"" + deliveryURL + "\""
 					+ ", \"deliveryFileName\": \"" + deliveryFileName + "\""
 					+ ", \"ttlInSeconds\": " + to_string(ttlInSeconds)
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
+				*/
 				sendSuccess(request, 201, responseBody);
 			}
         }
@@ -2953,28 +2972,6 @@ pair<string, string> API::createDeliveryAuthorization(
 			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy
 			|| ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
 		{
-			/*
-			string field = "ConfigurationLabel";
-			string configurationLabel = ingestionJobRoot.get(field, "").asString();
-
-			int64_t liveURLConfKey;
-			string channelSourceType;
-			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, string, int, string, int,
-				int, string, int, int, int, int, int, int64_t>
-				channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
-					requestWorkspace->_workspaceKey, configurationLabel,
-					warningIfMissing);
-			tie(liveURLConfKey, channelSourceType,
-				ignore,
-				ignore, ignore, ignore, ignore, ignore,
-				ignore,
-				ignore, ignore,
-				ignore, ignore, ignore,
-				ignore, ignore,
-				ignore) = channelConfDetails;
-			*/
-
 			string field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
@@ -2987,90 +2984,85 @@ pair<string, string> API::createDeliveryAuthorization(
 			}
 			Json::Value outputsRoot = ingestionJobRoot[field];
 
-			vector<pair<int64_t, string>> outputsDeliveryCodesAndOutputTypes;
+			// Option 1: OutputType HLS with deliveryCode
+			// Option 2: OutputType RTMP_Stream with playURL
+			// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
+			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
+			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+				string outputType;
+				int64_t localDeliveryCode = -1;
+				string playURL;
+
+				field = "OutputType";
+				if (!JSONUtils::isMetadataPresent(outputRoot, field))
+					outputType = "HLS";
+				else
+					outputType = outputRoot.get(field, "HLS").asString();
+
+				if (outputType == "HLS" || outputType == "DASH")
 				{
-					Json::Value outputRoot = outputsRoot[outputIndex];
-
-					string outputType;
-
-					field = "OutputType";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						outputType = "HLS";
-					else
-						outputType = outputRoot.get(field, "HLS").asString();
-
-					if (outputType == "HLS" || outputType == "DASH")
+					field = "DeliveryCode";
+					if (JSONUtils::isMetadataPresent(outputRoot, field))
 					{
-						field = "DeliveryCode";
-						if (JSONUtils::isMetadataPresent(outputRoot, field))
-						{
-							int64_t localDeliveryCode = outputRoot.get(field, 0).asInt64();
+						localDeliveryCode = outputRoot.get(field, 0).asInt64();
 
-							outputsDeliveryCodesAndOutputTypes.push_back(
-								make_pair(localDeliveryCode, outputType));
-						}
 					}
 				}
+				else if (outputType == "RTMP_Stream")
+				{
+					field = "PlayUrl";
+					playURL = outputRoot.get(field, "").asString();
+					if (playURL == "")
+						continue;
+				}
+
+				outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
 			}
 
-			string outputType = "HLS";	// default HLS
+			string outputType;
+			string playURL;
 
 			if (deliveryCode == -1)	// requested delivery code (it is an input)
 			{
-				if (outputsDeliveryCodesAndOutputTypes.size() == 0)
+				if (outputDeliveryOptions.size() == 0)
 				{
-					/*
-					if (channelSourceType == "IP_PULL")
-					{
-						_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
-						// deliveryCode shall be mandatory. Just for backward
-						// compatibility (cibor project), in case it is missing
-						// and it is IP_PULL, we set it with confKey
+					string errorMessage = string("No outputDeliveryOptions, it cannot be delivered")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
 
-						deliveryCode = liveURLConfKey;
-					}
-					else
-					*/
-					{
-						string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
+					throw runtime_error(errorMessage);
 				}
-				else if (outputsDeliveryCodesAndOutputTypes.size() > 1)
+				else if (outputDeliveryOptions.size() > 1)
 				{
-					string errorMessage = string("Live authorization with several delivery code. Just get the first")
+					string errorMessage = string("Live authorization with several option. Just get the first")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					;
 					_logger->warn(__FILEREF__ + errorMessage);
 
-					deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
-					outputType = outputsDeliveryCodesAndOutputTypes[0].second;
+					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
 				}
 				else
 				{
 					// we have just one delivery code, it will be this one
-					deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
-					outputType = outputsDeliveryCodesAndOutputTypes[0].second;
+					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
 				}
 			}
 			else
 			{
 				bool deliveryCodeFound = false;
 
-				for (pair<int64_t, string> deliveryCodeAndOutputType:
-					outputsDeliveryCodesAndOutputTypes)
+				for (tuple<string, int64_t, string> outputDeliveryOption: outputDeliveryOptions)
 				{
-					if (deliveryCodeAndOutputType.first == deliveryCode)
+					int64_t localDeliveryCode;
+					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOptions[0];
+
+					if (outputType == "HLS" && localDeliveryCode == deliveryCode)
 					{
 						deliveryCodeFound = true;
-
-						outputType = deliveryCodeAndOutputType.second;
 
 						break;
 					}
@@ -3087,69 +3079,76 @@ pair<string, string> API::createDeliveryAuthorization(
 				}
 			}
 
-			string deliveryURI;
-			string liveFileExtension;
-			if (outputType == "HLS")
-				liveFileExtension = "m3u8";
-			else
-				liveFileExtension = "mpd";
-
-			tuple<string, string, string> liveDeliveryDetails
-				= _mmsStorage->getLiveDeliveryDetails(
-				to_string(deliveryCode),
-				liveFileExtension, requestWorkspace);
-			tie(deliveryURI, ignore, deliveryFileName) =
-				liveDeliveryDetails;
-
-			if (authorizationThroughPath)
+			if (outputType == "RTMP_Stream")
 			{
-				time_t expirationTime = chrono::system_clock::to_time_t(
-					chrono::system_clock::now());
-				expirationTime += ttlInSeconds;
-
-				string uriToBeSigned;
-				{
-					string m3u8Suffix(".m3u8");
-					if (deliveryURI.size() >= m3u8Suffix.size()
-						&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-					{
-						size_t endPathIndex = deliveryURI.find_last_of("/");
-						if (endPathIndex == string::npos)
-							uriToBeSigned = deliveryURI;
-						else
-							uriToBeSigned = deliveryURI.substr(0, endPathIndex);
-					}
-					else
-						uriToBeSigned = deliveryURI;
-				}
-				string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
-
-				deliveryURL = 
-					_deliveryProtocol
-					+ "://" 
-					+ _deliveryHost_authorizationThroughPath
-					+ "/token_" + md5Base64 + "," + to_string(expirationTime)
-					+ deliveryURI
-				;
+				deliveryURL = playURL;
 			}
 			else
 			{
-				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey,
-					clientIPAddress,
-					-1,	// physicalPathKey,	vod key
-					deliveryCode,		// live key
-					deliveryURI,
-					ttlInSeconds,
-					maxRetries);
+				string deliveryURI;
+				string liveFileExtension;
+				if (outputType == "HLS")
+					liveFileExtension = "m3u8";
+				else
+					liveFileExtension = "mpd";
 
-				deliveryURL = 
-					_deliveryProtocol
-					+ "://" 
-					+ _deliveryHost_authorizationThroughParameter
-					+ deliveryURI
-					+ "?token=" + to_string(authorizationKey)
-				;
+				tuple<string, string, string> liveDeliveryDetails
+					= _mmsStorage->getLiveDeliveryDetails(
+					to_string(deliveryCode),
+					liveFileExtension, requestWorkspace);
+				tie(deliveryURI, ignore, deliveryFileName) =
+					liveDeliveryDetails;
+
+				if (authorizationThroughPath)
+				{
+					time_t expirationTime = chrono::system_clock::to_time_t(
+						chrono::system_clock::now());
+					expirationTime += ttlInSeconds;
+
+					string uriToBeSigned;
+					{
+						string m3u8Suffix(".m3u8");
+						if (deliveryURI.size() >= m3u8Suffix.size()
+							&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						{
+							size_t endPathIndex = deliveryURI.find_last_of("/");
+							if (endPathIndex == string::npos)
+								uriToBeSigned = deliveryURI;
+							else
+								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+						}
+						else
+							uriToBeSigned = deliveryURI;
+					}
+					string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughPath
+						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+						+ deliveryURI
+					;
+				}
+				else
+				{
+					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						-1,	// physicalPathKey,	vod key
+						deliveryCode,		// live key
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughParameter
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+				}
 			}
 		}
 		else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)

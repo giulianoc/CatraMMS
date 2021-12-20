@@ -51,8 +51,9 @@ struct LiveProxyAndGrid
 
 		string					_liveGridOutputType;	// only for LiveGrid
 		// Json::Value				_liveProxyOutputsRoot;	// only for LiveProxy
-		vector<tuple<string, string, string, Json::Value, string, string, int, int,
-			bool, string, string>> _liveProxyOutputRoots;
+		// vector<tuple<string, string, string, Json::Value, string, string, int, int,
+		// 	bool, string, string>> _liveProxyOutputRoots;
+		Json::Value				_outputsRoot;
 
 		int64_t					_ingestionJobKey;
 		Json::Value				_ingestedParametersRoot;
@@ -77,8 +78,8 @@ struct LiveRecording
 
 		string					_errorMessage;
 
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
-			string>> _liveRecorderOutputRoots;
+		// vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
+		// 	string>> _liveRecorderOutputRoots;
 		// vector<string>			_manifestFilePathNames;
 		int64_t					_ingestionJobKey;
 		Json::Value				_encodingParametersRoot;

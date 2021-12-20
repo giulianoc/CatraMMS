@@ -8972,7 +8972,7 @@ void FFMpeg::liveRecorder(
 	//      string encodingProfileContentType
 	//      string rtmpUrl,
 	//
-	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
+	Json::Value outputsRoot,
 
 	pid_t* pChildPid)
 {
@@ -9395,28 +9395,27 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back(segmentListPathName);
 		}
 
-		for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-			string, string> tOutputRoot: outputRoots)
+		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			string outputType;
-			string otherOutputOptions;
-			string audioVolumeChange;
-			Json::Value encodingProfileDetailsRoot;
-			string manifestDirectoryPath;
-			string manifestFileName;
-			int segmentDurationInSeconds;
-			int playlistEntriesNumber;
-			bool isVideo;
-			string rtmpUrl;
-			string udpUrl;
+			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			tie(outputType, otherOutputOptions, audioVolumeChange,
-				encodingProfileDetailsRoot, manifestDirectoryPath,       
-				manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
-				isVideo, rtmpUrl, udpUrl) = tOutputRoot;
+			string outputType = outputRoot.get("outputType", "").asString();
+			string audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+
+			string encodingProfileContentType =
+				outputRoot.get("encodingProfileContentType", "Video").asString();
+			bool isVideo = encodingProfileContentType == "Video" ? true : false;
+			string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
+				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+				string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+				int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
+
+
+
 				if (audioVolumeChange != "")
 				{
 					ffmpegArgumentList.push_back("-filter:a");
@@ -9665,6 +9664,8 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "RTMP_Stream")
 			{
+				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+
 				if (rtmpUrl == "")
 				{
 					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -9845,6 +9846,8 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "UDP_Stream")
 			{
+				string udpUrl = outputRoot.get("udpUrl", "").asString();
+
 				if (udpUrl == "")
 				{
 					string errorMessage = __FILEREF__ + "udpUrl cannot be empty"
@@ -10293,26 +10296,16 @@ void FFMpeg::liveRecorder(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 
-		for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-			string, string> tOutputRoot: outputRoots)
+		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			string outputType;
-			// string otherOutputOptions;
-			// string audioVolumeChange;
-			// Json::Value encodingProfileDetailsRoot;
-			string manifestDirectoryPath;
-			// string manifestFileName;
-			// int segmentDurationInSeconds;
-			// int playlistEntriesNumber;
-			// bool isVideo;
-			// string rtmpUrl;
+			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
-				ignore, ignore, ignore, ignore, ignore, ignore)
-				= tOutputRoot;
+			string outputType = outputRoot.get("outputType", "").asString();
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
+				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+
 				if (manifestDirectoryPath != "")
 				{
 					if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -10503,89 +10496,16 @@ void FFMpeg::liveRecorder(
 			+ ", segmentListPathName: " + segmentListPathName);
 		FileIO::remove(segmentListPathName, exceptionInCaseOfError);
 
-		/*
-		if (segmentListPath != "")
-    	{
-        	// get files from file system
-    
-        	FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        	shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (segmentListPath + "/");
-
-        	bool scanDirectoryFinished = false;
-        	while (!scanDirectoryFinished)
-        	{
-            	string directoryEntry;
-            	try
-            	{
-                	string directoryEntry = FileIO::readDirectory (directory,
-                    	&detDirectoryEntryType);
-                
-                	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    	continue;
-
-                	if (directoryEntry.size() >= recordedFileNamePrefix.size()
-						&& 0 == directoryEntry.compare(0, recordedFileNamePrefix.size(), recordedFileNamePrefix))
-					{
-						string recordedPathNameToBeRemoved = segmentListPath + "/" + directoryEntry;
-        				_logger->info(__FILEREF__ + "Remove"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-            				+ ", recordedPathNameToBeRemoved: " + recordedPathNameToBeRemoved);
-        				FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
-					}
-            	}
-            	catch(DirectoryListFinished e)
-            	{
-                	scanDirectoryFinished = true;
-            	}
-            	catch(runtime_error e)
-            	{
-                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-                       	+ ", e.what(): " + e.what()
-                	;
-                	_logger->error(errorMessage);
-
-                	// throw e;
-            	}
-            	catch(exception e)
-            	{
-                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-                	;
-                	_logger->error(errorMessage);
-
-                	// throw e;
-            	}
-        	}
-
-        	FileIO::closeDirectory (directory);
-    	}
-		*/
-
-		for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-			string, string> tOutputRoot: outputRoots)
+		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			string outputType;
-			// string otherOutputOptions;
-			// string audioVolumeChange;
-			// Json::Value encodingProfileDetailsRoot;
-			string manifestDirectoryPath;
-			// string manifestFileName;
-			// int segmentDurationInSeconds;
-			// int playlistEntriesNumber;
-			// bool isVideo;
-			// string rtmpUrl;
+			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
-				ignore, ignore, ignore, ignore, ignore, ignore)
-				= tOutputRoot;
+			string outputType = outputRoot.get("outputType", "").asString();
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
+				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+
 				if (manifestDirectoryPath != "")
 				{
 					if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -12031,7 +11951,7 @@ void FFMpeg::liveProxy2(
 	//      string encodingProfileContentType
 	//      string rtmpUrl,
 	//
-	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
+	Json::Value outputsRoot,
 
 	pid_t* pChildPid)
 {
@@ -12066,12 +11986,12 @@ void FFMpeg::liveProxy2(
 		throw runtime_error(errorMessage);
 	}
 
-	if (outputRoots.size() == 0)
+	if (outputsRoot.size() == 0)
 	{
 		string errorMessage = __FILEREF__ + "liveProxy. No output parameters"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", outputRoots.size: " + to_string(outputRoots.size())
+			+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 		;
 		_logger->error(errorMessage);
 
@@ -12190,12 +12110,12 @@ void FFMpeg::liveProxy2(
 			_logger->info(__FILEREF__ + "liveProxyOutput..."
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", outputRoots.size: " + to_string(outputRoots.size())
+				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
 			liveProxyOutput(ingestionJobKey, encodingJobKey,
 				otherOutputOptionsBecauseOfMaxWidth,
 				currentInputRoot, streamingDurationInSeconds,
-				outputRoots, ffmpegOutputArgumentList);
+				outputsRoot, ffmpegOutputArgumentList);
 		}
 		catch(runtime_error e)
 		{
@@ -12280,7 +12200,7 @@ void FFMpeg::liveProxy2(
 				pChildPid, &iReturnedStatus);
 			if (iReturnedStatus != 0)
 			{
-				string errorMessage = __FILEREF__ + "liveProxy: ffmpeg command failed"
+				string errorMessage = __FILEREF__ + "liveProxy: Executed ffmpeg command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -12317,18 +12237,17 @@ void FFMpeg::liveProxy2(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			);
 
-			for (tuple<string, string, string, Json::Value, string, string, int, int,
-				bool, string, string> tOutputRoot: outputRoots)
+			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				string outputType;
-				string manifestDirectoryPath;
+				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
-					ignore, ignore, ignore, ignore, ignore, ignore)
-					= tOutputRoot;
+				string outputType = outputRoot.get("outputType", "").asString();
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
+					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
+						.asString();
+
 					if (manifestDirectoryPath != "")
 					{
 						if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -12390,6 +12309,8 @@ void FFMpeg::liveProxy2(
 		}
 		catch(runtime_error e)
 		{
+			bool stoppedBySigQuit = false;
+
 			string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 				_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 			string errorMessage;
@@ -12410,17 +12331,37 @@ void FFMpeg::liveProxy2(
 			}
 			else
 			{
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", currentInputIndex: " + to_string(currentInputIndex)
-					+ ", currentNumberOfRepeatingSameInput: "
-						+ to_string(currentNumberOfRepeatingSameInput)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
+				if (lastPartOfFfmpegOutputFile.find("signal 3") == string::npos)
+				{
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", currentInputIndex: " + to_string(currentInputIndex)
+						+ ", currentNumberOfRepeatingSameInput: "
+							+ to_string(currentNumberOfRepeatingSameInput)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
+				}
+				else
+				{
+					stoppedBySigQuit = true;
+
+					errorMessage = __FILEREF__
+						+ "ffmpeg stopped by SIGQUIT (3): ffmpeg command failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", currentInputIndex: " + to_string(currentInputIndex)
+						+ ", currentNumberOfRepeatingSameInput: "
+							+ to_string(currentNumberOfRepeatingSameInput)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
+				}
 			}
 			_logger->error(errorMessage);
 
@@ -12470,18 +12411,17 @@ void FFMpeg::liveProxy2(
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-			for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-				string, string> tOutputRoot: outputRoots)
+			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				string outputType;
-				string manifestDirectoryPath;
+				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
-					ignore, ignore, ignore, ignore, ignore, ignore)
-					= tOutputRoot;
+				string outputType = outputRoot.get("outputType", "").asString();
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
+					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
+						.asString();
+
 					if (manifestDirectoryPath != "")
 					{
 						if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -12535,7 +12475,7 @@ void FFMpeg::liveProxy2(
 				throw FFMpegURLForbidden();
 			else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
 				throw FFMpegURLNotFound();
-			else
+			else if (!stoppedBySigQuit)
 			{
 				currentNumberOfRepeatingSameInput++;
 				if (currentNumberOfRepeatingSameInput >= maxTimesRepeatingSameInput)
@@ -13497,96 +13437,100 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	string otherOutputOptionsBecauseOfMaxWidth,
 	Json::Value inputRoot, long streamingDurationInSeconds,
-	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool,
-		string, string>>& outputRoots,
+	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
 {
-	for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-		string, string> tOutputRoot: outputRoots)
+	string ffmpegDrawTextFilter;
+	if (isMetadataPresent(inputRoot, "countdownInput"))
 	{
-		string outputType;
-		string otherOutputOptions;
-		string audioVolumeChange;
-		Json::Value encodingProfileDetailsRoot;
-		string manifestDirectoryPath;
-		string manifestFileName;
-		int segmentDurationInSeconds;
-		int playlistEntriesNumber;
-		bool isVideo;
-		string rtmpUrl;
-		string udpUrl;
+		string field = "countdownInput";
+		Json::Value countdownInputRoot = inputRoot[field];
 
-		tie(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
-			manifestDirectoryPath, manifestFileName, segmentDurationInSeconds,
-			playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-			= tOutputRoot;
-
-		string ffmpegDrawTextFilter;
-		if (isMetadataPresent(inputRoot, "countdownInput"))
+		field = "text";
+		if (!isMetadataPresent(countdownInputRoot, field))
 		{
-			string field = "countdownInput";
-			Json::Value countdownInputRoot = inputRoot[field];
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
 
-			field = "text";
-			if (!isMetadataPresent(countdownInputRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		string text = countdownInputRoot.get(field, "").asString();
 
-				throw runtime_error(errorMessage);
-			}
-			string text = countdownInputRoot.get(field, "").asString();
+		string textPosition_X_InPixel = "";
+		field = "textPosition_X_InPixel";
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
 
-			string textPosition_X_InPixel = "";
-			field = "textPosition_X_InPixel";
-			if (isMetadataPresent(countdownInputRoot, field))
-				textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
+		string textPosition_Y_InPixel = "";
+		field = "textPosition_Y_InPixel";
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
 
-			string textPosition_Y_InPixel = "";
-			field = "textPosition_Y_InPixel";
-			if (isMetadataPresent(countdownInputRoot, field))
-				textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
+		string fontType = "";
+		field = "fontType";
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontType = countdownInputRoot.get(field, "").asString();
 
-			string fontType = "";
-			field = "fontType";
-			if (isMetadataPresent(countdownInputRoot, field))
-				fontType = countdownInputRoot.get(field, "").asString();
+		int fontSize = -1;
+		field = "fontSize";
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontSize = asInt(countdownInputRoot, field, -1);
 
-			int fontSize = -1;
-			field = "fontSize";
-			if (isMetadataPresent(countdownInputRoot, field))
-				fontSize = asInt(countdownInputRoot, field, -1);
+		string fontColor = "";
+		field = "fontColor";
+		if (isMetadataPresent(countdownInputRoot, field))
+			fontColor = countdownInputRoot.get(field, "").asString();
 
-			string fontColor = "";
-			field = "fontColor";
-			if (isMetadataPresent(countdownInputRoot, field))
-				fontColor = countdownInputRoot.get(field, "").asString();
+		int textPercentageOpacity = -1;
+		field = "textPercentageOpacity";
+		if (isMetadataPresent(countdownInputRoot, field))
+			textPercentageOpacity = asInt(countdownInputRoot, field, -1);
 
-			int textPercentageOpacity = -1;
-			field = "textPercentageOpacity";
-			if (isMetadataPresent(countdownInputRoot, field))
-				textPercentageOpacity = asInt(countdownInputRoot, field, -1);
+		bool boxEnable = false;
+		field = "boxEnable";
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxEnable = asBool(countdownInputRoot, field, false);
 
-			bool boxEnable = false;
-			field = "boxEnable";
-			if (isMetadataPresent(countdownInputRoot, field))
-				boxEnable = asBool(countdownInputRoot, field, false);
+		string boxColor = "";
+		field = "boxColor";
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxColor = countdownInputRoot.get(field, "").asString();
 
-			string boxColor = "";
-			field = "boxColor";
-			if (isMetadataPresent(countdownInputRoot, field))
-				boxColor = countdownInputRoot.get(field, "").asString();
+		int boxPercentageOpacity = -1;
+		field = "boxPercentageOpacity";
+		if (isMetadataPresent(countdownInputRoot, field))
+			boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
 
-			int boxPercentageOpacity = -1;
-			field = "boxPercentageOpacity";
-			if (isMetadataPresent(countdownInputRoot, field))
-				boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
+		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
+			streamingDurationInSeconds);
+	}
 
-			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
-				streamingDurationInSeconds);
+	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	{
+		Json::Value outputRoot = outputsRoot[outputIndex];
+
+		string outputType = outputRoot.get("outputType", "").asString();
+		Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+		string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+		string audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
+
+		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
+			.asString();
+		bool isVideo = encodingProfileContentType == "Video" ? true : false;
+
+
+		int fadeDuration = asInt(outputRoot, "fadeDuration", -1);
+		string ffmpegFadeFilter;
+		if (fadeDuration > 0 && streamingDurationInSeconds >= fadeDuration)
+		{
+			// fade=type=in:duration=3,fade=type=out:duration=3:start_time=27
+			ffmpegFadeFilter =
+				string("fade=type=in:duration=") + to_string(fadeDuration)
+				+ ",fade=type=out:duration=" + to_string(fadeDuration)
+				+ ":start_time=" + to_string(streamingDurationInSeconds - fadeDuration);
 		}
 
 		string httpStreamingFileFormat;    
@@ -13704,6 +13648,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		else
 			addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 
+		string ffmpegVideoFilter;
+
 		// video output
 		if (encodingProfileDetailsRoot != Json::nullValue)
 		{
@@ -13716,41 +13662,74 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
 			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
 			// ffmpegVideoResolutionParameter is -vf scale=w=1280:h=720
-			// Since we canno thave more than one -vf (otherwise ffmpeg will use
+			// Since we cannot have more than one -vf (otherwise ffmpeg will use
 			// only the last one), in case we have ffmpegDrawTextFilter,
 			// we will append it here
-			if (ffmpegDrawTextFilter == "")
-				addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-					ffmpegOutputArgumentList);
-			else
 			{
+				if (ffmpegDrawTextFilter != "")
+				{
+					if (ffmpegVideoFilter != "")
+						ffmpegVideoFilter += ("," + ffmpegDrawTextFilter);
+					else
+						ffmpegVideoFilter = ffmpegDrawTextFilter;
+				}
+				if (ffmpegFadeFilter != "")
+				{
+					if (ffmpegVideoFilter != "")
+						ffmpegVideoFilter += ("," + ffmpegFadeFilter);
+					else
+						ffmpegVideoFilter = ffmpegFadeFilter;
+				}
 				if (ffmpegVideoResolutionParameter != "")
 				{
-					ffmpegOutputArgumentList.push_back("-vf");
-					ffmpegOutputArgumentList.push_back(
-						ffmpegVideoResolutionParameter + "," + ffmpegDrawTextFilter);
+					if (ffmpegVideoFilter != "")
+						ffmpegVideoFilter += ("," + ffmpegVideoResolutionParameter);
+					else
+						ffmpegVideoFilter = ffmpegVideoResolutionParameter;
 				}
-				else
+
+				if (ffmpegVideoFilter != "")
 				{
 					ffmpegOutputArgumentList.push_back("-vf");
-					ffmpegOutputArgumentList.push_back(ffmpegDrawTextFilter);
+					ffmpegOutputArgumentList.push_back(ffmpegVideoFilter);
 				}
 			}
+
 			ffmpegOutputArgumentList.push_back("-threads");
 			ffmpegOutputArgumentList.push_back("0");
 		}
-		else if (ffmpegDrawTextFilter != "")
+		else
 		{
-			ffmpegOutputArgumentList.push_back("-vf");
-			ffmpegOutputArgumentList.push_back(ffmpegDrawTextFilter);
-		}
-		else if (otherOutputOptions.find("-filter:v") == string::npos)
-		{
-			// it is not possible to have -c:v copy and -filter:v toghether
-			ffmpegOutputArgumentList.push_back("-c:v");
-			ffmpegOutputArgumentList.push_back("copy");
-		}
+			{
+				if (ffmpegDrawTextFilter != "")
+				{
+					if (ffmpegVideoFilter != "")
+						ffmpegVideoFilter += ("," + ffmpegDrawTextFilter);
+					else
+						ffmpegVideoFilter = ffmpegDrawTextFilter;
+				}
+				if (ffmpegFadeFilter != "")
+				{
+					if (ffmpegVideoFilter != "")
+						ffmpegVideoFilter += ("," + ffmpegFadeFilter);
+					else
+						ffmpegVideoFilter = ffmpegFadeFilter;
+				}
 
+				if (ffmpegVideoFilter != "")
+				{
+					ffmpegOutputArgumentList.push_back("-vf");
+					ffmpegOutputArgumentList.push_back(ffmpegVideoFilter);
+				}
+
+				if (otherOutputOptions.find("-filter:v") == string::npos && ffmpegVideoFilter == "")
+				{
+					// it is not possible to have -c:v copy and -filter:v toghether
+					ffmpegOutputArgumentList.push_back("-c:v");
+					ffmpegOutputArgumentList.push_back("copy");
+				}
+			}
+		}
 
 		// audio output
 		if (encodingProfileDetailsRoot != Json::nullValue)
@@ -13778,6 +13757,13 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		// output file
 		if (outputType == "HLS" || outputType == "DASH")
 		{
+			string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
+				.asString();
+			string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+			int segmentDurationInSeconds = asInt(outputRoot,
+				"segmentDurationInSeconds", 10);
+			int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
+
 			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
 			_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
@@ -13867,6 +13853,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 		else if (outputType == "RTMP_Stream")
 		{
+			string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+
 			if (rtmpUrl == "")
 			{
 				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -13892,6 +13880,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 		else if (outputType == "UDP_Stream")
 		{
+			string udpUrl = outputRoot.get("udpUrl", "").asString();
+
 			if (udpUrl == "")
 			{
 				string errorMessage = __FILEREF__ + "udpUrl cannot be empty"

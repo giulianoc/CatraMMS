@@ -4761,14 +4761,15 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 
+			// check the received playlist
 			// in case of vodInput, the physicalPathKey is received but we need to set
 			// vodContentType and sourcePhysicalPathName
 			{
-				for (int newPlaylistIndex = 0;
-					newPlaylistIndex < newReceivedPlaylistRoot.size(); newPlaylistIndex++)
+				for (int newReceivedPlaylistIndex = 0;
+					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size(); newReceivedPlaylistIndex++)
 				{
 					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
-						newPlaylistIndex];
+						newReceivedPlaylistIndex];
 					{
 						string field = "vodInput";
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, field))
@@ -4808,7 +4809,7 @@ void API::changeLiveProxyPlaylist(
 								field = "vodInput";
 								newReceivedPlaylistItemRoot[field] = vodInputRoot;
 
-								newReceivedPlaylistRoot[newPlaylistIndex]
+								newReceivedPlaylistRoot[newReceivedPlaylistIndex]
 									= newReceivedPlaylistItemRoot;
 							}
 						}
@@ -4816,6 +4817,7 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 
+			// build the new playlist
 			// add the default media in case of hole filling newPlaylistRoot
 			{
 				int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
@@ -4826,6 +4828,12 @@ void API::changeLiveProxyPlaylist(
 				{
 					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
 						newReceivedPlaylistIndex];
+
+					_logger->info(__FILEREF__ + "Processing newReceivedPlaylistRoot"
+						+ ", newReceivedPlaylistRoot: "
+						+ to_string(newReceivedPlaylistIndex) + "/"
+						+ to_string(newReceivedPlaylistRoot.size())
+					);
 
 					// correct values have to be:
 					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
@@ -4941,6 +4949,7 @@ void API::changeLiveProxyPlaylist(
 
 						// update the end time of the last entry with the start time
 						// of the entry we are adding
+						/* 2021-12-19: non ho capito il controllo sotto!!!
 						if (newPlaylistRoot.size() > 0)
 						{
 							Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
@@ -4952,6 +4961,7 @@ void API::changeLiveProxyPlaylist(
 							newReceivedPlaylistRoot[newPlaylistRoot.size() - 1]
 								= newLastPlaylistRoot;
 						}
+						*/
 
 						newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
 
@@ -5116,6 +5126,7 @@ void API::changeLiveProxyPlaylist(
 
 					// update the end time of the last entry with the start time
 					// of the entry we are adding
+					/* 2021-12-19: non ho capito il controllo sotto
 					if (newPlaylistRoot.size() > 0)
 					{
 						Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
@@ -5127,6 +5138,7 @@ void API::changeLiveProxyPlaylist(
 						newReceivedPlaylistRoot[newPlaylistRoot.size() - 1]
 							= newLastPlaylistRoot;
 					}
+					*/
 
 					newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
 				}
@@ -5193,6 +5205,11 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 
+			// 2021-12-20: We shall always have IngestionJob and EncodingJob.
+			//		The EncodingJob may be running or not based on the timing
+			//		(may be it is configured to run in the future)
+			//		For this reason it is usless to update the metadata of the IngestionJob,
+			//		we will update the metadata only of the EncodingJob
 			// if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 			/*
 			{
@@ -5233,13 +5250,21 @@ void API::changeLiveProxyPlaylist(
 
 				// update of the parameters
 				Json::Value mmsInternalRoot;
+				Json::Value broadcasterRoot;
 
 				string field = "internalMMS";
 				if (JSONUtils::isMetadataPresent(metadataContentRoot, field))
 					mmsInternalRoot = metadataContentRoot[field];
 
+				field = "broadcaster";
+				if (JSONUtils::isMetadataPresent(mmsInternalRoot, field))
+					broadcasterRoot = mmsInternalRoot[field];
+
 				field = "broadcasterInputsRoot";
-				mmsInternalRoot[field] = newPlaylistRoot;
+				broadcasterRoot[field] = newPlaylistRoot;
+
+				field = "broadcaster";
+				mmsInternalRoot[field] = broadcasterRoot;
 
 				field = "internalMMS";
 				metadataContentRoot[field] = mmsInternalRoot;
@@ -5251,17 +5276,10 @@ void API::changeLiveProxyPlaylist(
 					broadcastIngestionJobKey, newMetadataContentRoot);
 			}
 			*/
-			if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
-			{
-				string errorMessage = string("IngestionJob is not in the EncodingQueued status")
-					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
-					+ ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-				;
-				_logger->error(__FILEREF__ + errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-			
+			// 2021-12-19: even if the encodingJob will be executed in the future,
+			//		in case it is present, the inputsRoot is updated
+			// if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::EncodingQueued)
 			{
 				// update of the running encoding playlist
 				// and update the encoding metadata into DB (in case of crash
@@ -5269,156 +5287,188 @@ void API::changeLiveProxyPlaylist(
 				Json::StreamWriterBuilder wbuilder;
 				string newPlaylist = Json::writeString(wbuilder, newPlaylistRoot);
 
-				tuple<int64_t, int64_t, string> encodingJobDetails =
-					_mmsEngineDBFacade->getEncodingJobDetailsByIngestionJobKey(
-					broadcastIngestionJobKey);
-
-				int64_t broadcastEncodingJobKey;
-				int64_t broadcastEncoderKey;
 				string broadcastParameters;
-				tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParameters)
-					= encodingJobDetails;
+				int64_t broadcastEncodingJobKey = -1;
+				int64_t broadcastEncoderKey = -1;
+				try
+				{
+					tuple<int64_t, int64_t, string> encodingJobDetails =
+						_mmsEngineDBFacade->getEncodingJobDetailsByIngestionJobKey(
+						broadcastIngestionJobKey);
+
+					tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParameters)
+						= encodingJobDetails;
+				}
+				catch(runtime_error e)
+				{
+					_logger->warn(__FILEREF__ + e.what());
+
+					// throw runtime_error(errorMessage);
+				}
 
 				// update encoding DB metadata
 				{
-					Json::Value broadcastParametersRoot;
-					try
+					// we may have the scenario where the encodingJob is present but is not running
+					// (timing to be run in the future).
+					// In this case we will just update the metadata into the DB
+					if (broadcastEncodingJobKey != -1
+						&& broadcastParameters != "")
 					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
+						Json::Value broadcastParametersRoot;
+						try
+						{
+							Json::CharReaderBuilder builder;
+							Json::CharReader* reader = builder.newCharReader();
+							string errors;
 
-						bool parsingSuccessful = reader->parse(broadcastParameters.c_str(),
-							broadcastParameters.c_str() + broadcastParameters.size(), 
-							&broadcastParametersRoot, &errors);
-						delete reader;
+							bool parsingSuccessful = reader->parse(broadcastParameters.c_str(),
+								broadcastParameters.c_str() + broadcastParameters.size(), 
+								&broadcastParametersRoot, &errors);
+							delete reader;
 
-						if (!parsingSuccessful)
+							if (!parsingSuccessful)
+							{
+								string errorMessage = string("Json metadata failed during the parsing")
+									+ ", broadcastEncodingJobKey: "
+										+ to_string(broadcastEncodingJobKey)
+									+ ", errors: " + errors
+									+ ", json data: " + broadcastParameters
+								;
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						catch(exception e)
 						{
 							string errorMessage = string("Json metadata failed during the parsing")
-								+ ", broadcastEncodingJobKey: "
-									+ to_string(broadcastEncodingJobKey)
-								+ ", errors: " + errors
+								+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
 								+ ", json data: " + broadcastParameters
 							;
 							_logger->error(__FILEREF__ + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
+
+						// update of the parameters
+						string field = "inputsRoot";
+						broadcastParametersRoot[field] = newPlaylistRoot;
+
+						Json::StreamWriterBuilder wbuilder;
+						string newBroadcastParameters = Json::writeString(wbuilder,
+							broadcastParametersRoot);
+
+						_mmsEngineDBFacade->updateEncodingJobParameters(
+							broadcastEncodingJobKey, newBroadcastParameters);
 					}
-					catch(exception e)
+					else
 					{
-						string errorMessage = string("Json metadata failed during the parsing")
+						string errorMessage = string("The Broadcast EncodingJob was not found")
+							+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
 							+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
-							+ ", json data: " + broadcastParameters
+							+ ", broadcastParameters: " + broadcastParameters
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
-					// update of the parameters
-					string field = "inputsRoot";
-					broadcastParametersRoot[field] = newPlaylistRoot;
+					// we may have the scenario where the encodingJob is present but is not running
+					// (timing to be run in the future). In this case broadcastEncoderKey will be -1
+					if (broadcastEncodingJobKey != -1 && broadcastEncoderKey > 0)
+					{
+						string transcoderHost = _mmsEngineDBFacade->getEncoderURL(broadcastEncoderKey);
 
-					Json::StreamWriterBuilder wbuilder;
-					string newBroadcastParameters = Json::writeString(wbuilder,
-						broadcastParametersRoot);
+						ffmpegEncoderURL = 
+							transcoderHost
+							+ _ffmpegEncoderChangeLiveProxyPlaylistURI
+							+ "/" + to_string(broadcastEncodingJobKey)
+						;
 
-					_mmsEngineDBFacade->updateEncodingJobParameters(
-						broadcastEncodingJobKey, newBroadcastParameters);
-				}
+						list<string> header;
 
-				string transcoderHost = _mmsEngineDBFacade->getEncoderURL(broadcastEncoderKey);
+						{
+							string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
+								+ _ffmpegEncoderPassword);
+							string basicAuthorization = string("Authorization: Basic ")
+								+ userPasswordEncoded;
 
-				ffmpegEncoderURL = 
-					transcoderHost
-					+ _ffmpegEncoderChangeLiveProxyPlaylistURI
-					+ "/" + to_string(broadcastEncodingJobKey)
-				;
-
-				list<string> header;
-
-				{
-					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
-						+ _ffmpegEncoderPassword);
-					string basicAuthorization = string("Authorization: Basic ")
-						+ userPasswordEncoded;
-
-					header.push_back(basicAuthorization);
-				}
+							header.push_back(basicAuthorization);
+						}
             
-				curlpp::Cleanup cleaner;
-				curlpp::Easy request;
+						curlpp::Cleanup cleaner;
+						curlpp::Easy request;
 
-				// Setting the URL to retrive.
-				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-				request.setOpt(new curlpp::options::CustomRequest("PUT"));
+						// Setting the URL to retrive.
+						request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+						request.setOpt(new curlpp::options::CustomRequest("PUT"));
 
-				// timeout consistent with nginx configuration (fastcgi_read_timeout)
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+						// timeout consistent with nginx configuration (fastcgi_read_timeout)
+						request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
-				// if (_ffmpegEncoderProtocol == "https")
-				string httpsPrefix("https");
-				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-				{
-					// disconnect if we can't validate server's cert
-					bool bSslVerifyPeer = false;
-					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-					request.setOpt(sslVerifyPeer);
+						// if (_ffmpegEncoderProtocol == "https")
+						string httpsPrefix("https");
+						if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+							&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
+						{
+							// disconnect if we can't validate server's cert
+							bool bSslVerifyPeer = false;
+							curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+							request.setOpt(sslVerifyPeer);
               
-					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-					request.setOpt(sslVerifyHost);
+							curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+							request.setOpt(sslVerifyHost);
 
-					// request.setOpt(new curlpp::options::SslEngineDefault());
-				}
+							// request.setOpt(new curlpp::options::SslEngineDefault());
+						}
 
-				request.setOpt(new curlpp::options::HttpHeader(header));
-				request.setOpt(new curlpp::options::PostFields(newPlaylist));
-				request.setOpt(new curlpp::options::PostFieldSize(newPlaylist.length()));
+						request.setOpt(new curlpp::options::HttpHeader(header));
+						request.setOpt(new curlpp::options::PostFields(newPlaylist));
+						request.setOpt(new curlpp::options::PostFieldSize(newPlaylist.length()));
 
-				request.setOpt(new curlpp::options::WriteStream(&response));
+						request.setOpt(new curlpp::options::WriteStream(&response));
 
-				chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+						chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-				_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
-					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-				);
-				request.perform();
-				chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
-					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-					+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
-					+ ", response.str: " + response.str()
-				);
+						_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
+							+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+						);
+						request.perform();
+						chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+						_logger->info(__FILEREF__ + "changeLiveProxyPlaylist"
+							+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+							+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+							+ ", response.str: " + response.str()
+						);
 
-				string sResponse = response.str();
+						string sResponse = response.str();
 
-				// LF and CR create problems to the json parser...
-				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-					sResponse.pop_back();
+						// LF and CR create problems to the json parser...
+						while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+							sResponse.pop_back();
 	
-				{
-					string message = __FILEREF__ + "changeLiveProxyPlaylist encoding response"
-						+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
-						+ ", sResponse: " + sResponse
-					;
-					_logger->info(message);
-				}
+						{
+							string message = __FILEREF__ + "changeLiveProxyPlaylist encoding response"
+								+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
+								+ ", sResponse: " + sResponse
+							;
+							_logger->info(message);
+						}
 
-				long responseCode = curlpp::infos::ResponseCode::get(request);                                        
-				if (responseCode != 200)
-				{
-					string errorMessage = __FILEREF__
-						+ "changeLiveProxyPlaylist encoding URL failed"
-						+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
-						+ ", sResponse: " + sResponse
-						+ ", responseCode: " + to_string(responseCode)
-					;
-					_logger->error(errorMessage);
+						long responseCode = curlpp::infos::ResponseCode::get(request);                                        
+						if (responseCode != 200)
+						{
+							string errorMessage = __FILEREF__
+								+ "changeLiveProxyPlaylist encoding URL failed"
+								+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
+								+ ", sResponse: " + sResponse
+								+ ", responseCode: " + to_string(responseCode)
+							;
+							_logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
+					}
 				}
 			}
 

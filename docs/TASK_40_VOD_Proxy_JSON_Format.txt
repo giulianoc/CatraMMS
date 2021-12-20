@@ -74,6 +74,10 @@
 				// mandatory only in case of RTMP_Stream
 				"RtmpUrl": "...",
 
+				// optional only in case of RTMP_Stream. It specifies the url to be used
+				//		to play the stream sent through the rtmp 
+				"PlayUrl": "...",
+
 				// optional: It is possible to use this field to specify any other output options.
 				// Examples:
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output

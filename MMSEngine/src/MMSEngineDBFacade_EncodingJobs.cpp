@@ -5436,7 +5436,9 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
 			);
             if (!resultSet->next())
             {
-				string errorMessage = __FILEREF__ + "select count(*) failed";
+				string errorMessage = __FILEREF__ + "No EncodingJob found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
 
 				_logger->error(errorMessage);
 
@@ -5444,20 +5446,9 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
             }
 
 			encodingJobKey = resultSet->getInt64("encodingJobKey");
-			encoderKey = resultSet->getInt64("encoderKey");
+			if (!resultSet->isNull("encoderKey"))
+				encoderKey = resultSet->getInt64("encoderKey");
 			parameters = resultSet->getString("parameters");
-            if (encodingJobKey <= 0 || encoderKey <= 0)
-            {
-				string errorMessage = __FILEREF__
-					+ "encodingJobKey/encoderKey is wrongly initialized"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", encoderKey: " + to_string(encoderKey)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-            }
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"

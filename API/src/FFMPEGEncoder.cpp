@@ -6682,11 +6682,12 @@ void FFMPEGEncoder::liveRecorderThread(
 					utcRecordingPeriodStart);
 		}
 
-		liveRecording->_liveRecorderOutputRoots.clear();
-		{
-			Json::Value outputsRoot =
-				liveRecording->_encodingParametersRoot["outputsRoot"];
+		Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
 
+		// liveRecording->_liveRecorderOutputRoots.clear();
+		{
+
+			/*
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
@@ -6697,9 +6698,16 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", sOutputsRoot: " + sOutputsRoot
 				);
 			}
+			*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+					asString();
+				/*
 				string otherOutputOptions;
 				string audioVolumeChange;
 				Json::Value encodingProfileDetailsRoot = Json::nullValue;
@@ -6711,9 +6719,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				string rtmpUrl;
 				string udpUrl;
 
-				Json::Value outputRoot = outputsRoot[outputIndex];
-
-				string outputType = outputRoot.get("outputType", "").asString();
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
@@ -6722,8 +6727,6 @@ void FFMPEGEncoder::liveRecorderThread(
 					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
 						asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-						asString();
 					manifestFileName = outputRoot.get("manifestFileName", "").asString();
 					localSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
 						"segmentDurationInSeconds", 10);
@@ -6781,6 +6784,7 @@ void FFMPEGEncoder::liveRecorderThread(
 						playlistEntriesNumber, isVideo, rtmpUrl, udpUrl);
 
 				liveRecording->_liveRecorderOutputRoots.push_back(tOutputRoot);
+				*/
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
@@ -6863,7 +6867,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			monitorHLS,
 			liveRecording->_virtualVOD,
 
-			liveRecording->_liveRecorderOutputRoots,
+			outputsRoot,
 
 			&(liveRecording->_childPid)
 		);
@@ -6898,7 +6902,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
         liveRecording->_ingestionJobKey		= 0;
 		liveRecording->_channelLabel		= "";
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;
@@ -6964,7 +6968,7 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -7060,7 +7064,7 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -7147,7 +7151,7 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -7234,7 +7238,7 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -7321,7 +7325,7 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
-		liveRecording->_liveRecorderOutputRoots.clear();
+		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -11031,10 +11035,9 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = JSONUtils::asInt64(
 			liveProxyMetadata, "ingestionJobKey", -1);
 
-		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
+		// liveProxy->_liveProxyOutputRoots.clear();
 		{
-			Json::Value outputsRoot =
-				liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 
 			/*
 			{
@@ -11049,8 +11052,13 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 			*/
 
-			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size(); outputIndex++)
 			{
+				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+
+				/*
 				string otherOutputOptions;
 				string audioVolumeChange;
 				Json::Value encodingProfileDetailsRoot = Json::nullValue;
@@ -11062,16 +11070,13 @@ void FFMPEGEncoder::liveProxyThread(
 				string rtmpUrl;
 				string udpUrl;
 
-				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				string outputType = outputRoot.get("outputType", "").asString();
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 					manifestFileName = outputRoot.get("manifestFileName", "").asString();
 					segmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
 					playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
@@ -11118,9 +11123,13 @@ void FFMPEGEncoder::liveProxyThread(
 						isVideo, rtmpUrl, udpUrl);
 
 				liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
+				*/
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
+					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
+						.asString();
+
 					if (FileIO::directoryExisting(manifestDirectoryPath))
 					{
 						try
@@ -11303,7 +11312,7 @@ void FFMPEGEncoder::liveProxyThread(
 				encodingJobKey,
 				&(liveProxy->_inputsRootMutex),
 				&(liveProxy->_inputsRoot),
-				liveProxy->_liveProxyOutputRoots,
+				liveProxy->_outputsRoot,
 				&(liveProxy->_childPid));
 		}
 
@@ -11363,7 +11372,7 @@ void FFMPEGEncoder::liveProxyThread(
 
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -11443,7 +11452,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -11548,7 +11557,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -11648,7 +11657,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -11748,7 +11757,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -11848,7 +11857,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_channelLabel = "";
-		liveProxy->_liveProxyOutputRoots.clear();
+		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -13472,32 +13481,23 @@ void FFMPEGEncoder::monitorThread()
 					bool rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
-							liveProxy->_liveProxyOutputRoots)
+						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+							outputIndex++)
 						{
-							string outputType;
-							string otherOutputOptions;
-							string audioVolumeChange;
-							Json::Value encodingProfileDetailsRoot;
-							string manifestDirectoryPath;
-							string manifestFileName;
-							int segmentDurationInSeconds;
-							int playlistEntriesNumber;
-							bool isVideo;
-							string rtmpUrl;
-							string udpUrl;
+							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
 
-							tie(outputType, otherOutputOptions, audioVolumeChange,
-								encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-								= outputRoot;
+							string outputType = outputRoot.get("outputType", "").asString();
 
 							if (!liveProxyWorking)
 								break;
 
 							if (outputType == "HLS" || outputType == "DASH")
 							{
+								string manifestDirectoryPath = outputRoot
+									.get("manifestDirectoryPath", "").asString();
+								string manifestFileName = outputRoot
+									.get("manifestFileName", "").asString();
+
 								try
 								{
 									// First health check (HLS/DASH) looking the manifests path name timestamp
@@ -13647,32 +13647,23 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
-							liveProxy->_liveProxyOutputRoots)
+						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+							outputIndex++)
 						{
-							string outputType;
-							string otherOutputOptions;
-							string audioVolumeChange;
-							Json::Value encodingProfileDetailsRoot;
-							string manifestDirectoryPath;
-							string manifestFileName;
-							int segmentDurationInSeconds;
-							int playlistEntriesNumber;
-							bool isVideo;
-							string rtmpUrl;
-							string udpUrl;
+							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
 
-							tie(outputType, otherOutputOptions, audioVolumeChange,
-								encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-								= outputRoot;
+							string outputType = outputRoot.get("outputType", "").asString();
 
 							if (!liveProxyWorking)
 								break;
 
 							if (outputType == "HLS" || outputType == "DASH")
 							{
+								string manifestDirectoryPath = outputRoot
+									.get("manifestDirectoryPath", "").asString();
+								string manifestFileName = outputRoot
+									.get("manifestFileName", "").asString();
+
 								try
 								{
 									/*
@@ -14012,26 +14003,12 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string> outputRoot:
-							liveProxy->_liveProxyOutputRoots)
+						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+							outputIndex++)
 						{
-							string outputType;
-							string otherOutputOptions;
-							string audioVolumeChange;
-							Json::Value encodingProfileDetailsRoot;
-							string manifestDirectoryPath;
-							string manifestFileName;
-							int segmentDurationInSeconds;
-							int playlistEntriesNumber;
-							bool isVideo;
-							string rtmpUrl;
-							string udpUrl;
+							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
 
-							tie(outputType, otherOutputOptions, audioVolumeChange,
-								encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-								= outputRoot;
+							string outputType = outputRoot.get("outputType", "").asString();
 
 							if (!liveProxyWorking)
 								break;
@@ -14331,15 +14308,20 @@ void FFMPEGEncoder::monitorThread()
 					bool rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-							string, string> outputRoot: liveRecording->_liveRecorderOutputRoots)
+						Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
+						for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 						{
-							string outputType;
+							Json::Value outputRoot = outputsRoot[outputIndex];
+
+							string outputType = outputRoot.get("outputType", "").asString();
+							string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+								asString();
+							string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+
+							/*
 							string otherOutputOptions;
 							string audioVolumeChange;
 							Json::Value encodingProfileDetailsRoot;
-							string manifestDirectoryPath;
-							string manifestFileName;
 							int segmentDurationInSeconds;
 							int playlistEntriesNumber;
 							bool isVideo;
@@ -14351,6 +14333,7 @@ void FFMPEGEncoder::monitorThread()
 								manifestFileName, segmentDurationInSeconds,
 								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
 								= outputRoot;
+							*/
 
 							if (!liveRecorderWorking)
 								break;
@@ -14495,26 +14478,15 @@ void FFMPEGEncoder::monitorThread()
 					rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
-						for (tuple<string, string, string, Json::Value, string, string, int, int, bool,
-							string, string> outputRoot: liveRecording->_liveRecorderOutputRoots)
+						Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
+						for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 						{
-							string outputType;
-							string otherOutputOptions;
-							string audioVolumeChange;
-							Json::Value encodingProfileDetailsRoot;
-							string manifestDirectoryPath;
-							string manifestFileName;
-							int segmentDurationInSeconds;
-							int playlistEntriesNumber;
-							bool isVideo;
-							string rtmpUrl;
-							string udpUrl;
+							Json::Value outputRoot = outputsRoot[outputIndex];
 
-							tie(outputType, otherOutputOptions, audioVolumeChange,
-								encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-								= outputRoot;
+							string outputType = outputRoot.get("outputType", "").asString();
+							string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+								asString();
+							string manifestFileName = outputRoot.get("manifestFileName", "").asString();
 
 							if (!liveRecorderWorking)
 								break;

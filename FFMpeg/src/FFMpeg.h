@@ -316,7 +316,7 @@ public:
 		// int monitorVirtualVODPlaylistEntriesNumber,
 		// int monitorVirtualVODSegmentDurationInSeconds,
 
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
+		Json::Value outputsRoot,
 
 		pid_t* pChildPid);
 
@@ -374,7 +374,7 @@ public:
 		mutex* inputsRootMutex,
 		Json::Value* inputsRoot,
 
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
+		Json::Value outputsRoot,
 
 		pid_t* pChildPid);
 
@@ -563,8 +563,7 @@ private:
 	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		string otherOutputOptionsBecauseOfMaxWidth,
 		Json::Value inputRoot, long streamingDurationInSeconds,
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool,
-			string, string>>& outputRoots,
+		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);
 
     void settingFfmpegParameters(

@@ -12218,7 +12218,6 @@ void MMSEngineProcessor::manageLiveRecorder(
         bool autoRenew;
 		int segmentDurationInSeconds;
 		string outputFileFormat;
-		// bool highAvailability = false;
 		bool liveRecorderVirtualVOD = false;
 		int liveRecorderVirtualVODMaxDurationInMinutes = 30;
 		int64_t virtualVODEncodingProfileKey = -1;
@@ -12659,6 +12658,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 			localOutputRoot[field] = monitorManifestFileName;
 
 			field = "rtmpUrl";
+			localOutputRoot[field] = string("");
+
+			field = "playUrl";
 			localOutputRoot[field] = string("");
 
 			localOutputsRoot.append(localOutputRoot);
@@ -13529,6 +13531,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string outputType;
 		string otherOutputOptions;
 		string audioVolumeChange;
+		int fadeDuration;
 		int64_t deliveryCode;
 		int segmentDurationInSeconds = 0;
 		int playlistEntriesNumber = 0;
@@ -13539,6 +13542,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string manifestDirectoryPath;
 		string manifestFileName;
 		string rtmpUrl;
+		string playUrl;
 		string udpUrl;
 
 
@@ -13555,6 +13559,10 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "AudioVolumeChange";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			audioVolumeChange = outputRoot.get(field, "").asString();
+
+		field = "fadeDuration";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			fadeDuration = JSONUtils::asInt(outputRoot, field, -1);
 
 		if (outputType == "HLS" || outputType == "DASH")
 		{
@@ -13602,6 +13610,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			field = "RtmpUrl";
 			rtmpUrl = outputRoot.get(field, "").asString();
+
+			field = "PlayUrl";
+			playUrl = outputRoot.get(field, "").asString();
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13732,6 +13743,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "rtmpUrl";
 		localOutputRoot[field] = rtmpUrl;
+
+		field = "playUrl";
+		localOutputRoot[field] = playUrl;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;
@@ -15595,7 +15609,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			// just waiting if the last chunk was not finished yet
 			if (!lastRequestedChunk)
 			{
-				chrono::system_clock::time_point now;
+				chrono::system_clock::time_point now = chrono::system_clock::now();
 				if (chrono::duration_cast<chrono::seconds>(
 					now - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
 				{
