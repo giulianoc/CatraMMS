@@ -12517,7 +12517,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 
 			Json::Value encodingProfileDetailsRoot = Json::nullValue;
-			MMSEngineDBFacade::ContentType encodingProfileContentType;
+			MMSEngineDBFacade::ContentType encodingProfileContentType =
+				MMSEngineDBFacade::ContentType::Video;
 			if (monitorVirtualVODEncodingProfileKey != -1)
 			{
 				string jsonEncodingProfile;
@@ -12941,47 +12942,46 @@ void MMSEngineProcessor::manageLiveProxy(
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
 			workspace, ingestionJobKey, false);
 
-		Json::Value channelInputRoot = _mmsEngineDBFacade->getChannelInputRoot(
-			workspace->_workspaceKey, configurationLabel,
-			maxWidth, userAgent, otherInputOptions);
-
-		Json::Value inputRoot;
+		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
+		Json::Value inputsRoot;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot")
+		)
 		{
-			string field = "channelInput";
-			inputRoot[field] = channelInputRoot;
-
-			field = "timePeriod";
-			inputRoot[field] = timePeriod;
-
-			field = "utcProxyPeriodStart";
-			inputRoot[field] = utcProxyPeriodStart;
-
-			field = "utcProxyPeriodEnd";
-			inputRoot[field] = utcProxyPeriodEnd;
+			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
+		else
+		{
+			Json::Value channelInputRoot = _mmsEngineDBFacade->getChannelInputRoot(
+				workspace->_workspaceKey, configurationLabel,
+				maxWidth, userAgent, otherInputOptions);
 
-		Json::Value inputsRoot(Json::arrayValue);
-		inputsRoot.append(inputRoot);
+			Json::Value inputRoot;
+			{
+				string field = "channelInput";
+				inputRoot[field] = channelInputRoot;
+
+				field = "timePeriod";
+				inputRoot[field] = timePeriod;
+
+				field = "utcProxyPeriodStart";
+				inputRoot[field] = utcProxyPeriodStart;
+
+				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+			}
+
+			Json::Value localInputsRoot(Json::arrayValue);
+			localInputsRoot.append(inputRoot);
+
+			inputsRoot = localInputsRoot;
+		}
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			inputsRoot,	// used by FFMPEGEncoder
 			channelSourceType,	// used by FFMPEGEncoder
-			/*
-			confKey, configurationLabel, liveURL, encodersPoolLabel,
-
-			pushListenTimeout,
-			captureVideoDeviceNumber,
-			captureVideoInputFormat, captureFrameRate,
-			captureWidth, captureHeight, captureAudioDeviceNumber,
-			captureChannelsNumber,
-
-			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
-			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
-
-			timePeriod,
-			*/
 			utcProxyPeriodStart,	// used in MMSEngineDBFacade::getEncodingJobs
-			// utcProxyPeriodEnd,
 			maxAttemptsNumberInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
 			waitingSecondsBetweenAttemptsInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
 			localOutputsRoot		// used by FFMPEGEncoder
@@ -13189,27 +13189,41 @@ void MMSEngineProcessor::manageVODProxy(
 			vodContentType == MMSEngineDBFacade::ContentType::Image ? true : false
 		);
 
-		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
-		Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
-			vodContentType, sourcePhysicalPathName, sourcePhysicalPathKey);
-
-		Json::Value inputRoot;
+		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
+		Json::Value inputsRoot;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot")
+		)
 		{
-			string field = "vodInput";
-			inputRoot[field] = vodInputRoot;
-
-			field = "timePeriod";
-			inputRoot[field] = timePeriod;
-
-			field = "utcProxyPeriodStart";
-			inputRoot[field] = utcProxyPeriodStart;
-
-			field = "utcProxyPeriodEnd";
-			inputRoot[field] = utcProxyPeriodEnd;
+			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
+		else
+		{
+			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
+			Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
+				vodContentType, sourcePhysicalPathName, sourcePhysicalPathKey);
 
-		Json::Value inputsRoot(Json::arrayValue);
-		inputsRoot.append(inputRoot);
+			Json::Value inputRoot;
+			{
+				string field = "vodInput";
+				inputRoot[field] = vodInputRoot;
+
+				field = "timePeriod";
+				inputRoot[field] = timePeriod;
+
+				field = "utcProxyPeriodStart";
+				inputRoot[field] = utcProxyPeriodStart;
+
+				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+			}
+
+			Json::Value localInputsRoot(Json::arrayValue);
+			localInputsRoot.append(inputRoot);
+
+			inputsRoot = localInputsRoot;
+		}
 
 		// the only reason we may have a failure should be in case the vod is missing/removed
 		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;
@@ -13452,30 +13466,43 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 20);
 		}
 
-		// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
-		Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
-			mmsSourceVideoAssetPathName, sourcePhysicalPathKey, videoDurationInMilliSeconds,
-			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity);
-
-		Json::Value inputRoot;
+		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
+		Json::Value inputsRoot;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster")
+			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot")
+		)
 		{
-			string field = "countdownInput";
-			inputRoot[field] = countdownInputRoot;
-
-			field = "timePeriod";
-			inputRoot[field] = timePeriod;
-
-			field = "utcProxyPeriodStart";
-			inputRoot[field] = utcProxyPeriodStart;
-
-			field = "utcProxyPeriodEnd";
-			inputRoot[field] = utcProxyPeriodEnd;
+			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
+		else
+		{
+			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
+			Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
+				mmsSourceVideoAssetPathName, sourcePhysicalPathKey, videoDurationInMilliSeconds,
+				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity);
 
-		Json::Value inputsRoot(Json::arrayValue);
-		inputsRoot.append(inputRoot);
+			Json::Value inputRoot;
+			{
+				string field = "countdownInput";
+				inputRoot[field] = countdownInputRoot;
 
+				field = "timePeriod";
+				inputRoot[field] = timePeriod;
+
+				field = "utcProxyPeriodStart";
+				inputRoot[field] = utcProxyPeriodStart;
+
+				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+			}
+
+			Json::Value localInputsRoot(Json::arrayValue);
+			localInputsRoot.append(inputRoot);
+
+			inputsRoot = localInputsRoot;
+		}
 
 		// the only reason we may have a failure should be in case the image is missing/removed
 		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;
@@ -13531,7 +13558,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string outputType;
 		string otherOutputOptions;
 		string audioVolumeChange;
-		int fadeDuration;
+		int fadeDuration = -1;
 		int64_t deliveryCode;
 		int segmentDurationInSeconds = 0;
 		int playlistEntriesNumber = 0;
@@ -13714,6 +13741,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "otherOutputOptions";
 		localOutputRoot[field] = otherOutputOptions;
+
+		field = "fadeDuration";
+		localOutputRoot[field] = fadeDuration;
 
 		field = "audioVolumeChange";
 		localOutputRoot[field] = audioVolumeChange;

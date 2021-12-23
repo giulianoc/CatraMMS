@@ -90,12 +90,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
 					//	non considera la condizione di job "troppo vecchio"
 					"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-					"and ("
-						"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
-						"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
-						"or (JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = true and "
-							"UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
-					") "
+					// $.ProxyPeriod.Start' is null gets all jobs without period
+					// UNIX_TIMESTAMP... gets all jobs with period
+					"and (JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start') is null or UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
 					// "for update "
 					;
 					// "limit ? offset ?"
@@ -214,7 +211,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
 						//	non considera la condizione di job "troppo vecchio"
 						"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-						"and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0"
+						"and (JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') is not null and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
 						// "for update "
 						;
 						// "limit ? offset ?"

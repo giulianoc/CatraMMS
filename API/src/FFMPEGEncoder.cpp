@@ -6686,20 +6686,6 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// liveRecording->_liveRecorderOutputRoots.clear();
 		{
-
-			/*
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
-
-				_logger->info(__FILEREF__ + "liveRecorder. outputsRoot"
-					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sOutputsRoot: " + sOutputsRoot
-				);
-			}
-			*/
-
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
@@ -6707,84 +6693,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				string outputType = outputRoot.get("outputType", "").asString();
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
 					asString();
-				/*
-				string otherOutputOptions;
-				string audioVolumeChange;
-				Json::Value encodingProfileDetailsRoot = Json::nullValue;
-				string manifestDirectoryPath;
-				string manifestFileName;
-				int localSegmentDurationInSeconds = -1;
-				int playlistEntriesNumber = -1;
-				bool isVideo = true;
-				string rtmpUrl;
-				string udpUrl;
-
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
-						asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
-						asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					manifestFileName = outputRoot.get("manifestFileName", "").asString();
-					localSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
-						"segmentDurationInSeconds", 10);
-					playlistEntriesNumber = JSONUtils::asInt(outputRoot,
-						"playlistEntriesNumber", 5);
-
-					string encodingProfileContentType =
-						outputRoot.get("encodingProfileContentType", "Video").asString();
-
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else if (outputType == "RTMP_Stream")
-				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
-						asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
-						asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
-
-					string encodingProfileContentType =
-						outputRoot.get("encodingProfileContentType", "Video").asString();
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else if (outputType == "UDP_Stream")
-				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").
-						asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").
-						asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					udpUrl = outputRoot.get("udpUrl", "").asString();
-
-					string encodingProfileContentType =
-						outputRoot.get("encodingProfileContentType", "Video").asString();
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else
-				{
-					string errorMessage = __FILEREF__ + "liveRecorder. Wrong output type"
-						+ ", ingestionJobKey: "
-							+ to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", outputType: " + outputType;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				tuple<string, string, string, Json::Value, string, string, int, int,
-					bool, string, string> tOutputRoot
-					= make_tuple(outputType, otherOutputOptions, audioVolumeChange,
-						encodingProfileDetailsRoot, manifestDirectoryPath,
-						manifestFileName, localSegmentDurationInSeconds,
-						playlistEntriesNumber, isVideo, rtmpUrl, udpUrl);
-
-				liveRecording->_liveRecorderOutputRoots.push_back(tOutputRoot);
-				*/
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
