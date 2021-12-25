@@ -640,6 +640,13 @@ void API::mediaItemsList(
 			}
 		}
 
+        int64_t deliveryCode = -1;
+        auto deliveryCodeIt = queryParameters.find("deliveryCode");
+        if (deliveryCodeIt != queryParameters.end() && deliveryCodeIt->second != "")
+        {
+			deliveryCode = stoll(deliveryCodeIt->second);
+        }
+
         string jsonCondition;
         auto jsonConditionIt = queryParameters.find("jsonCondition");
         if (jsonConditionIt != queryParameters.end() && jsonConditionIt->second != "")
@@ -701,13 +708,19 @@ void API::mediaItemsList(
         }
 
         {
+			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
+			int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
+
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
                     workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
-					orderBy, jsonOrderBy, admin);
+                    title, liveRecordingChunk,
+					deliveryCode,
+					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition,
+					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

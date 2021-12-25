@@ -1496,14 +1496,17 @@ public:
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
         string label, string status, bool asc,
-		bool ingestionJobOutputs);
+		bool dependencyInfo, bool ingestionJobOutputs);
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-		string ingestionType, string jsonParametersCondition,
+		string ingestionType,
+		string configurationLabel, string outputChannelLabel, int64_t deliveryCode,
+		bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,
         bool asc, string status,
+		bool dependencyInfo,
 		bool ingestionJobOutputs);
 
     Json::Value getEncodingJobsStatus (
@@ -1540,7 +1543,10 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk,
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
 		string orderBy, string jsonOrderBy, bool admin);
 
@@ -2493,7 +2499,10 @@ private:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk,
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
         string orderBy,
 		string jsonOrderBy,
 		bool admin);
@@ -2506,7 +2515,10 @@ private:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk, 
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,
 		string jsonOrderBy,
@@ -2612,6 +2624,7 @@ private:
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
         int64_t ingestionRootKey,
+		bool dependencyInfo,
 		bool ingestionJobOutputs,
         shared_ptr<MySQLConnection> conn);
 

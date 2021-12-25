@@ -837,6 +837,9 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	string endIngestionDate;
 	string title;
 	int liveRecordingChunk = -1;
+	int64_t deliveryCode = -1;
+	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
+	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 	string jsonCondition;
 	vector<string> tagsIn;
 	vector<string> tagsNotIn;
@@ -849,7 +852,10 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
         start, rows,
         contentTypePresent, contentType,
         startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-        title, liveRecordingChunk, jsonCondition,
+        title, liveRecordingChunk,
+		deliveryCode,
+		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		jsonCondition,
 		tagsIn, tagsNotIn,
         orderBy,
 		jsonOrderBy,
@@ -997,6 +1003,9 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	string endIngestionDate;
 	string title;
 	int liveRecordingChunk = -1;
+	int64_t deliveryCode = -1;
+	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
+	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 	string jsonCondition;
 	vector<string> tagsIn;
 	vector<string> tagsNotIn;
@@ -1009,7 +1018,10 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
         start, rows,
         contentTypePresent, contentType,
         startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-        title, liveRecordingChunk, jsonCondition,
+        title, liveRecordingChunk,
+		deliveryCode,
+		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		jsonCondition,
 		tagsIn, tagsNotIn,
         orderBy,
 		jsonOrderBy,
@@ -1024,7 +1036,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk,
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
 		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
@@ -1058,6 +1073,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
             + ", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
+            + ", deliveryCode: " + to_string(deliveryCode)
             + ", jsonCondition: " + jsonCondition
             + ", orderBy: " + orderBy
             + ", jsonOrderBy: " + jsonOrderBy
@@ -1159,6 +1175,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             {
                 field = "jsonCondition";
                 requestParametersRoot[field] = jsonCondition;
+            }
+
+            if (deliveryCode != -1)
+            {
+                field = "deliveryCode";
+                requestParametersRoot[field] = deliveryCode;
             }
 
             if (orderBy != "")
@@ -1269,7 +1291,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition,
+					title, liveRecordingChunk,
+					deliveryCode,
+					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition,
 					tagsIn, tagsNotIn,
 					orderBy,
 					jsonOrderBy,
@@ -1282,7 +1307,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					conn, workspaceKey, newMediaItemKey, otherMediaItemsKey, start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition,
+					title, liveRecordingChunk,
+					deliveryCode,
+					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition,
 					orderBy,
 					jsonOrderBy,
 					admin
@@ -2256,7 +2284,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk,
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
 		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
 		bool admin
@@ -2305,6 +2336,37 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			else if (liveRecordingChunk == 1)
 				sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
+		if (deliveryCode != -1)
+			sqlWhere += ("and mi.deliveryCode_virtual = ? ");
+
+		if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+		{
+			// SC: Start Chunk
+			// PS: Playout Start, PE: Playout End
+			// --------------SC--------------SC--------------SC--------------SC
+			//                       PS-------------------------------PE
+			
+			sqlWhere += ("and ( ");
+
+			// first chunk of the cut
+			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds
+			sqlWhere += ("(mi.utcStartTimeInMilliSecs_virtual <= ? and ? < mi.utcEndTimeInMilliSecs_virtual) ");
+
+			sqlWhere += ("or ");
+
+			// internal chunk of the cut
+			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+			sqlWhere += ("(? <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= ?) ");
+
+			sqlWhere += ("or ");
+
+			// last chunk of the cut
+			// utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+			sqlWhere += ("(mi.utcStartTimeInMilliSecs_virtual < ? and ? <= mi.utcEndTimeInMilliSecs_virtual) ");
+
+			sqlWhere += (") ");
+		}
+
         if (jsonCondition != "")
             sqlWhere += ("and " + jsonCondition + " ");
         
@@ -2314,7 +2376,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				string("select count(*) from MMS_MediaItem mi ")
 				+ sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (mediaItemKey != -1)
@@ -2331,6 +2394,19 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
             }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (deliveryCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+			{
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -2341,6 +2417,13 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + "%" + title + "%"
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -2405,6 +2488,19 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
             }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (deliveryCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+			{
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+			}
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2417,6 +2513,13 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + "%" + title + "%"
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -2469,7 +2572,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition,
+        string title, int liveRecordingChunk,
+		int64_t deliveryCode,
+		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
 		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
@@ -2564,6 +2670,35 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				else if (liveRecordingChunk == 1)
 					sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 			}
+			if (deliveryCode != -1)
+				sqlWhere += ("and mi.deliveryCode_virtual = ? ");
+			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+			{
+				// SC: Start Chunk
+				// PS: Playout Start, PE: Playout End
+				// --------------SC--------------SC--------------SC--------------SC
+				//                       PS-------------------------------PE
+			
+				sqlWhere += ("and ( ");
+
+				// first chunk of the cut
+				// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds
+				sqlWhere += ("(mi.utcStartTimeInMilliSecs_virtual <= ? and ? < mi.utcEndTimeInMilliSecs_virtual) ");
+
+				sqlWhere += ("or ");
+
+				// internal chunk of the cut
+				// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+				sqlWhere += ("(? <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= ?) ");
+
+				sqlWhere += ("or ");
+
+				// last chunk of the cut
+				// utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+				sqlWhere += ("(mi.utcStartTimeInMilliSecs_virtual < ? and ? <= mi.utcEndTimeInMilliSecs_virtual) ");
+
+				sqlWhere += (") ");
+			}
 			if (jsonCondition != "")
 				sqlWhere += ("and " + jsonCondition + " ");
         
@@ -2593,6 +2728,19 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
 			if (title != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (deliveryCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+			{
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -2603,6 +2751,13 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + title
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
+				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

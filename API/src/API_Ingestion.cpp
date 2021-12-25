@@ -3676,12 +3676,22 @@ void API::ingestionRootsStatus(
                 ingestionJobOutputs = false;
         }
 
+        bool dependencyInfo = true;
+        auto dependencyInfoIt = queryParameters.find("dependencyInfo");
+        if (dependencyInfoIt != queryParameters.end() && dependencyInfoIt->second != "")
+        {
+            if (dependencyInfoIt->second == "true")
+                dependencyInfo = true;
+            else
+                dependencyInfo = false;
+        }
+
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
                     workspace, ingestionRootKey, mediaItemKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    label, status, asc, ingestionJobOutputs
+                    label, status, asc, dependencyInfo, ingestionJobOutputs
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -3929,6 +3939,70 @@ void API::ingestionJobsStatus(
                 ingestionJobOutputs = false;
         }
 
+        bool dependencyInfo = true;
+        auto dependencyInfoIt = queryParameters.find("dependencyInfo");
+        if (dependencyInfoIt != queryParameters.end() && dependencyInfoIt->second != "")
+        {
+            if (dependencyInfoIt->second == "true")
+                dependencyInfo = true;
+            else
+                dependencyInfo = false;
+        }
+
+		// used in case of live-proxy
+        string configurationLabel;
+        auto configurationLabelIt = queryParameters.find("configurationLabel");
+        if (configurationLabelIt != queryParameters.end() && configurationLabelIt->second != "")
+        {
+            configurationLabel = configurationLabelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(configurationLabel, regex(plus), plusDecoded);
+
+			configurationLabel = curlpp::unescape(firstDecoding);
+        }
+
+		// used in case of live-grid
+        string outputChannelLabel;
+        auto outputChannelLabelIt = queryParameters.find("outputChannelLabel");
+        if (outputChannelLabelIt != queryParameters.end() && outputChannelLabelIt->second != "")
+        {
+            outputChannelLabel = outputChannelLabelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(outputChannelLabel, regex(plus), plusDecoded);
+
+			outputChannelLabel = curlpp::unescape(firstDecoding);
+        }
+
+		// used in case of live-recorder
+        int64_t deliveryCode = -1;
+        auto deliveryCodeIt = queryParameters.find("deliveryCode");
+        if (deliveryCodeIt != queryParameters.end() && deliveryCodeIt->second != "")
+        {
+            deliveryCode = stoll(deliveryCodeIt->second);
+        }
+
+		// used in case of broadcaster
+        bool broadcastIngestionJobKeyNotNull = false;
+        auto broadcastIngestionJobKeyNotNullIt = queryParameters.find("broadcastIngestionJobKeyNotNull");
+        if (broadcastIngestionJobKeyNotNullIt != queryParameters.end()
+			&& broadcastIngestionJobKeyNotNullIt->second != "")
+        {
+            if (broadcastIngestionJobKeyNotNullIt->second == "true")
+                broadcastIngestionJobKeyNotNull = true;
+            else
+                broadcastIngestionJobKeyNotNull = false;
+        }
+
         string jsonParametersCondition;
         auto jsonParametersConditionIt = queryParameters.find("jsonParametersCondition");
         if (jsonParametersConditionIt != queryParameters.end() && jsonParametersConditionIt->second != "")
@@ -3954,11 +4028,15 @@ void API::ingestionJobsStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
-                    workspace, ingestionJobKey,
-                    start, rows, label,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    ingestionType, jsonParametersCondition, asc, status, ingestionJobOutputs
-                    );
+				workspace, ingestionJobKey,
+				start, rows, label,
+				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+				ingestionType,
+				configurationLabel, outputChannelLabel,
+				deliveryCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,
+				asc, status,
+				dependencyInfo, ingestionJobOutputs
+			);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

@@ -2903,8 +2903,18 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -4317,8 +4327,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -5353,8 +5373,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -6366,8 +6396,18 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -7187,8 +7227,18 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -7904,8 +7954,18 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -8619,8 +8679,18 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -9412,8 +9482,18 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -10080,8 +10160,18 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 				{
 					try
 					{
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, encodingErrorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -11211,6 +11301,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string endIngestionDate;
 		string title;
 		int liveRecordingChunk = -1;
+		int64 deliveryCode = -1;
+		int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
+		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 		string jsonCondition;
 		string orderBy;
 		string jsonOrderBy;
@@ -11231,8 +11324,11 @@ string EncoderVideoAudioProxy::faceIdentification()
 				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 				otherMediaItemsKey, start, rows, contentTypePresent, contentType,
 				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-				title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
-				orderBy, jsonOrderBy, admin);
+				title, liveRecordingChunk,
+				deliveryCode,
+				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+				jsonCondition,
+				deepLearnedModelTags, tagsNotIn, orderBy, jsonOrderBy, admin);
 
 			field = "response";
 			Json::Value responseRoot = mediaItemsListRoot[field];
@@ -12180,8 +12276,19 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 									try
 									{
+										string firstLineOfErrorMessage;
+										{
+											string firstLine;
+											stringstream ss(errorMessage);
+											if (getline(ss, firstLine))
+												firstLineOfErrorMessage = firstLine;
+											else
+												firstLineOfErrorMessage = errorMessage;
+										}
+
 										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-											_encodingItem->_ingestionJobKey, errorMessage);
+											_encodingItem->_ingestionJobKey,
+											firstLineOfErrorMessage);
 									}
 									catch(runtime_error e)
 									{
@@ -12536,8 +12643,18 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					{
 						try
 						{
+							string firstLineOfEncodingErrorMessage;
+							{
+								string firstLine;
+								stringstream ss(encodingErrorMessage);
+								if (getline(ss, firstLine))
+									firstLineOfEncodingErrorMessage = firstLine;
+								else
+									firstLineOfEncodingErrorMessage = encodingErrorMessage;
+							}
+
 							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-								_encodingItem->_ingestionJobKey, encodingErrorMessage);
+								_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						}
 						catch(runtime_error e)
 						{
@@ -13510,8 +13627,19 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 									try
 									{
+										string firstLineOfErrorMessage;
+										{
+											string firstLine;
+											stringstream ss(errorMessage);
+											if (getline(ss, firstLine))
+												firstLineOfErrorMessage = firstLine;
+											else
+												firstLineOfErrorMessage = errorMessage;
+										}
+
 										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-											_encodingItem->_ingestionJobKey, errorMessage);
+											_encodingItem->_ingestionJobKey,
+											firstLineOfErrorMessage);
 									}
 									catch(runtime_error e)
 									{
@@ -14002,8 +14130,18 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					{
 						try
 						{
+							string firstLineOfEncodingErrorMessage;
+							{
+								string firstLine;
+								stringstream ss(encodingErrorMessage);
+								if (getline(ss, firstLine))
+									firstLineOfEncodingErrorMessage = firstLine;
+								else
+									firstLineOfEncodingErrorMessage = encodingErrorMessage;
+							}
+
 							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-								_encodingItem->_ingestionJobKey, encodingErrorMessage);
+								_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						}
 						catch(runtime_error e)
 						{
@@ -14390,8 +14528,18 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						string errorMessage = string(strDateTime)
 							+ " LiveProxy media file completed unexpected";
 
+						string firstLineOfErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(errorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfErrorMessage = firstLine;
+							else
+								firstLineOfErrorMessage = errorMessage;
+						}
+
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-							_encodingItem->_ingestionJobKey, errorMessage);
+							_encodingItem->_ingestionJobKey, firstLineOfErrorMessage);
 					}
 					catch(runtime_error e)
 					{
@@ -14467,8 +14615,18 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					string errorMessage = string(strDateTime)
 						+ " LiveProxy media file completed unexpected";
 
+					string firstLineOfErrorMessage;
+					{
+						string firstLine;
+						stringstream ss(errorMessage);
+						if (getline(ss, firstLine))
+							firstLineOfErrorMessage = firstLine;
+						else
+							firstLineOfErrorMessage = errorMessage;
+					}
+
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-						_encodingItem->_ingestionJobKey, errorMessage);
+						_encodingItem->_ingestionJobKey, firstLineOfErrorMessage);
 				}
 				catch(runtime_error e)
 				{
@@ -17496,8 +17654,19 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
 									try
 									{
+										string firstLineOfErrorMessage;
+										{
+											string firstLine;
+											stringstream ss(errorMessage);
+											if (getline(ss, firstLine))
+												firstLineOfErrorMessage = firstLine;
+											else
+												firstLineOfErrorMessage = errorMessage;
+										}
+
 										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-											_encodingItem->_ingestionJobKey, errorMessage);
+											_encodingItem->_ingestionJobKey,
+											firstLineOfErrorMessage);
 									}
 									catch(runtime_error e)
 									{
@@ -17910,8 +18079,18 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					{
 						try
 						{
+							string firstLineOfEncodingErrorMessage;
+							{
+								string firstLine;
+								stringstream ss(encodingErrorMessage);
+								if (getline(ss, firstLine))
+									firstLineOfEncodingErrorMessage = firstLine;
+								else
+									firstLineOfEncodingErrorMessage = encodingErrorMessage;
+							}
+
 							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-								_encodingItem->_ingestionJobKey, encodingErrorMessage);
+								_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						}
 						catch(runtime_error e)
 						{

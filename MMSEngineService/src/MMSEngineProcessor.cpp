@@ -14179,20 +14179,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				// --------------SC--------------SC--------------SC--------------SC
 				//                       PS-------------------------------PE
 
-				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
-				/*
-				if (channelSourceType == "IP_PULL")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
-						+ to_string(confKey) + " and (";
-				else if (channelSourceType == "Satellite")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.satConfKey') = "
-						+ to_string(confKey) + " and (";
-				else // if (channelSourceType == "IP_PUSH")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.actAsServerChannelCode') = "
-						+ to_string(actAsServerChannelCode) + " and (";
-				*/
-				jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.deliveryCode') = "
-					+ to_string(deliveryCode) + " and (";
+				jsonCondition = "(";
 
 				// first chunk of the cut
 				jsonCondition += (
@@ -14218,7 +14205,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 						+ "and " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " <= JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 ) "
 					);
 
-				jsonCondition += ") )";
+				jsonCondition += ")";
 			}
 			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc";
 
@@ -14232,13 +14219,18 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			Json::Value mediaItemsRoot;
 			do
 			{
+				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
+				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 				Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
-					orderBy, jsonOrderBy, admin);
+					title, liveRecordingChunk,
+					deliveryCode,
+					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition,
+					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];
@@ -15293,33 +15285,21 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			int liveRecordingChunk = 1;
 			vector<string> tagsIn;
 			vector<string> tagsNotIn;
-			string orderBy = "";
+			string orderBy;
 			bool admin = false;
 
 			firstRequestedChunk = false;
 			lastRequestedChunk = false;
 
 			string jsonCondition;
+			/*
 			{
 				// SC: Start Chunk
 				// PS: Playout Start, PE: Playout End
 				// --------------SC--------------SC--------------SC--------------SC
 				//                       PS-------------------------------PE
 
-				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
-				/*
-				if (channelSourceType == "IP_PULL")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
-						+ to_string(confKey) + " and (";
-				else if (channelSourceType == "Satellite")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.satConfKey') = "
-						+ to_string(confKey) + " and (";
-				else // if (channelSourceType == "IP_PUSH")
-					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.actAsServerChannelCode') = "
-						+ to_string(actAsServerChannelCode) + " and (";
-				*/
-				jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.deliveryCode') = "
-					+ to_string(deliveryCode) + " and (";
+				jsonCondition = "(";
 
 				// first chunk of the cut
 				jsonCondition += (
@@ -15345,9 +15325,12 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 						+ "and " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " <= JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs') ) "
 					);
 
-				jsonCondition += ") )";
+				jsonCondition += ")";
 			}
 			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs') asc";
+			*/
+			string jsonOrderBy;
+			orderBy = "utcStartTimeInMilliSecs_virtual asc";
 
 			long utcPreviousUtcChunkEndTimeInMilliSecs = -1;
 			bool firstRetrievedChunk = true;
@@ -15364,8 +15347,11 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
-					orderBy, jsonOrderBy, admin);
+					title, liveRecordingChunk,
+					deliveryCode,
+					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition,
+					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];

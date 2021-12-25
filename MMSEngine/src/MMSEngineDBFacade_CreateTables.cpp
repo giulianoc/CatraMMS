@@ -1179,7 +1179,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "status           			VARCHAR (64) NOT NULL,"
                     "errorMessage               MEDIUMTEXT NULL,"
 					// added because the channels view was slow
-					"configurationLabel_virtual	VARCHAR(128) GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.ConfigurationLabel'))) NULL,"
+					"configurationLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.ConfigurationLabel'))) NULL,"
+					"outputChannelLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.OutputChannelLabel'))) NULL,"
+					"deliveryCode_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(metaDataContent, '$.DeliveryCode')) NULL,"
+					"broadcastIngestionJobKey_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(metaDataContent, '$.internalMMS.broadcaster.broadcastIngestionJobKey')) NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				
@@ -1298,6 +1301,63 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx7 on MMS_IngestionJob (outputChannelLabel_virtual)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx8 on MMS_IngestionJob (deliveryCode_virtual)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx9 on MMS_IngestionJob (broadcastIngestionJobKey_virtual)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -1556,6 +1616,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					// This is automatically set to false when overrideUniqueName is applied
 					"markedAsRemoved		TINYINT NOT NULL,"
                     "processorMMSForRetention	VARCHAR (128) NULL,"
+					"deliveryCode_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.deliveryCode')) NULL,"
+					"utcStartTimeInMilliSecs_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs')) NULL,"
+					"utcEndTimeInMilliSecs_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs')) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -1619,6 +1682,63 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_MediaItem_idx5 on MMS_MediaItem (deliveryCode_virtual)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_MediaItem_idx6 on MMS_MediaItem (utcStartTimeInMilliSecs_virtual)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
