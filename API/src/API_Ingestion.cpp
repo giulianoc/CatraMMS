@@ -4516,6 +4516,8 @@ void API::changeLiveProxyPlaylist(
 		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;
 		// used in case mediaType is Countdown
 		Json::Value broadcastDefaultCountdownInputRoot = Json::nullValue;
+		// used in case mediaType is Direct URL
+		Json::Value broadcastDefaultDirectURLInputRoot = Json::nullValue;
         try
         {
             _logger->info(__FILEREF__ + "getIngestionJobDetails"
@@ -4699,6 +4701,15 @@ void API::changeLiveProxyPlaylist(
 							textPosition_X_InPixel, textPosition_Y_InPixel,
 							fontType, fontSize, fontColor, textPercentageOpacity,
 							boxEnable, boxColor, boxPercentageOpacity);
+					}
+					else if (broadcastDefaultMediaType == "Direct URL")
+					{
+						field = "url";
+						string broadcastDefaultURL =
+							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+
+						broadcastDefaultDirectURLInputRoot =
+							_mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL);
 					}
 					else
 					{
@@ -5014,6 +5025,22 @@ void API::changeLiveProxyPlaylist(
 								throw runtime_error(errorMessage);
 							}
 						}
+						else if (broadcastDefaultMediaType == "Direct URL")
+						{
+							if (broadcastDefaultDirectURLInputRoot != Json::nullValue)
+								newdPlaylistItemToBeAddedRoot["directURLInput"]
+								= broadcastDefaultDirectURLInputRoot;
+							else
+							{
+								string errorMessage = __FILEREF__
+									+ "Broadcaster data: no default DirectURL present"
+									+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
 						else
 						{
 							string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
@@ -5113,6 +5140,21 @@ void API::changeLiveProxyPlaylist(
 							throw runtime_error(errorMessage);
 						}
 					}
+					else if (broadcastDefaultMediaType == "Direct URL")
+					{
+						if (broadcastDefaultDirectURLInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Direct URL present"
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
 					else
 					{
 						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType"
@@ -5184,6 +5226,21 @@ void API::changeLiveProxyPlaylist(
 						{
 							string errorMessage = __FILEREF__
 								+ "Broadcaster data: no default Countdown present"
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (broadcastDefaultMediaType == "Direct URL")
+					{
+						if (broadcastDefaultDirectURLInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
+						else
+						{
+							string errorMessage = __FILEREF__
+								+ "Broadcaster data: no default Direct URL present"
 								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);

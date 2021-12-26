@@ -6445,3 +6445,34 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	return countdownInputRoot;
 }
 
+// this method is added here just because it is called by both API and MMSServiceProcessor
+Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
+	string url
+)
+{
+	Json::Value directURLInputRoot;
+
+    try
+    {
+		string field = "url";
+		directURLInputRoot[field] = url;
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getDirectURLInputRoot failed"
+            + ", e.what(): " + e.what()
+        );
+ 
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "getDirectURLInputRoot failed"
+        );
+        
+        throw e;
+    }
+
+	return directURLInputRoot;
+}
+

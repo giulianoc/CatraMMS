@@ -11080,10 +11080,10 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["ingestedParametersRoot"];
 
 		// non serve
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 
-		liveProxy->_channelSourceType = liveProxyMetadata["encodingParametersRoot"].
-			get("channelSourceType", "IP_PULL").asString();
+		// liveProxy->_channelSourceType = liveProxyMetadata["encodingParametersRoot"].
+		// 	get("channelSourceType", "IP_PULL").asString();
 
 		liveProxy->_inputsRoot = liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
 
@@ -11267,7 +11267,7 @@ void FFMPEGEncoder::liveProxyThread(
         _logger->info(__FILEREF__ + "_ffmpeg->liveProxy finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
+            // + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
         );
 
 		bool completedWithError			= false;
@@ -11279,7 +11279,7 @@ void FFMPEGEncoder::liveProxyThread(
 			urlForbidden, urlNotFound);
 
 		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 
 		#ifdef __VECTOR__
@@ -11304,19 +11304,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		if (liveProxy->_channelSourceType == "Satellite"
-			&& satelliteServiceId != -1
-			// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateSatelliteDvbLastConfigurationFile(
-				liveProxy->_ingestionJobKey, encodingJobKey,
-				satelliteMulticastIP, satelliteMulticastPort,
-				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
-				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
-				false);
-		}
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -11359,7 +11346,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 
 		char strDateTime [64];
@@ -11464,7 +11451,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
@@ -11564,7 +11551,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
@@ -11664,7 +11651,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
@@ -11764,7 +11751,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
 
@@ -12869,7 +12856,7 @@ void FFMPEGEncoder::liveGridThread(
 		int playlistEntriesNumber = JSONUtils::asInt(encodingParametersRoot, "playlistEntriesNumber", 6);
 		string manifestDirectoryPath = encodingParametersRoot.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = encodingParametersRoot.get("manifestFileName", "").asString();
-		liveProxy->_channelLabel = manifestFileName;
+		// liveProxy->_channelLabel = manifestFileName;
 
 		/*
 		liveProxy->_manifestFilePathNames.clear();
@@ -12973,7 +12960,7 @@ void FFMPEGEncoder::liveGridThread(
         _logger->info(__FILEREF__ + "_ffmpeg->liveGridBy... finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
+            // + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
         );
 
 		bool completedWithError			= false;
@@ -12986,7 +12973,7 @@ void FFMPEGEncoder::liveGridThread(
 
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -13014,7 +13001,7 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 
 		char strDateTime [64];
 		{
@@ -13081,7 +13068,7 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -13143,7 +13130,7 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -13205,7 +13192,7 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -13267,7 +13254,7 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
-		liveProxy->_channelLabel = "";
+		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -13515,7 +13502,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", channelLabel: " + liveProxy->_channelLabel
+									// + ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -13739,7 +13726,7 @@ void FFMPEGEncoder::monitorThread()
 													+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 													+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 													+ ", manifestFilePathName: " + manifestFilePathName
-													+ ", channelLabel: " + liveProxy->_channelLabel
+													// + ", channelLabel: " + liveProxy->_channelLabel
 													+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 												);
 
@@ -13812,7 +13799,7 @@ void FFMPEGEncoder::monitorThread()
 										_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", channelLabel: " + liveProxy->_channelLabel
+											// + ", channelLabel: " + liveProxy->_channelLabel
 											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 										);
 
@@ -13865,7 +13852,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", channelLabel: " + liveProxy->_channelLabel
+									// + ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -13939,7 +13926,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", channelLabel: " + liveProxy->_channelLabel
+									// + ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -13982,7 +13969,7 @@ void FFMPEGEncoder::monitorThread()
 							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 							+ ", localErrorMessage: " + localErrorMessage
-							+ ", channelLabel: " + liveProxy->_channelLabel
+							// + ", channelLabel: " + liveProxy->_channelLabel
 							+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 						);
 
@@ -14012,8 +13999,8 @@ void FFMPEGEncoder::monitorThread()
 										tmDateTime. tm_sec);
 								}
 								liveProxy->_errorMessage = string(strDateTime) + " "
-									+ liveProxy->_channelLabel +
-									localErrorMessage;
+									// + liveProxy->_channelLabel
+									+ localErrorMessage;
 							}
 						}
 						catch(runtime_error e)

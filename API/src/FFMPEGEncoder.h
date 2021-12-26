@@ -61,8 +61,8 @@ struct LiveProxyAndGrid
 		Json::Value				_inputsRoot;
 		mutex					_inputsRootMutex;
 
-        string					_channelSourceType;
-		string					_channelLabel;
+        // string					_channelSourceType;
+		// string					_channelLabel;
 		// vector<string>			_manifestFilePathNames;
 		chrono::system_clock::time_point	_proxyStart;
 };

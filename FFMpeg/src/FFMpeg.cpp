@@ -13086,6 +13086,143 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			}
 		}
 	}
+	//	"directURLInput": { "url": "" },
+	else if (isMetadataPresent(inputRoot, "directURLInput"))
+	{
+		field = "directURLInput";
+		Json::Value channelInputRoot = inputRoot[field];
+
+		string url;
+		field = "url";
+		if (isMetadataPresent(channelInputRoot, field))
+			url = channelInputRoot.get(field, "").asString();
+
+		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", timePeriod: " + to_string(timePeriod)
+			+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+			+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+			+ ", url: " + url
+		);
+
+		time_t utcNow;
+
+		if (timePeriod)
+		{
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+			if (utcNow < utcProxyPeriodStart)
+			{
+				while (utcNow < utcProxyPeriodStart)
+				{
+					time_t sleepTime = utcProxyPeriodStart - utcNow;
+
+					_logger->info(__FILEREF__ + "LiveProxy timing. "
+						+ "Too early to start the LiveProxy, just sleep "
+						+ to_string(sleepTime) + " seconds"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", utcNow: " + to_string(utcNow)
+						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+					);
+
+					this_thread::sleep_for(chrono::seconds(sleepTime));
+
+					{
+						chrono::system_clock::time_point now = chrono::system_clock::now();
+						utcNow = chrono::system_clock::to_time_t(now);
+					}
+				}
+			}
+			else if (utcProxyPeriodEnd <= utcNow)
+			{
+				time_t tooLateTime = utcNow - utcProxyPeriodEnd;
+
+				string errorMessage = __FILEREF__ + "LiveProxy timing. "
+					+ "Too late to start the LiveProxy"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+                    + ", tooLateTime: " + to_string(tooLateTime)
+				;
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				time_t delayTime = utcNow - utcProxyPeriodStart;
+
+				string errorMessage = __FILEREF__ + "LiveProxy timing. "
+					+ "We are a bit late to start the LiveProxy, let's start it"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+                    + ", delayTime: " + to_string(delayTime)
+				;
+
+				_logger->warn(errorMessage);
+			}
+		}
+		else
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		{
+			if (timePeriod)
+			{
+				streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
+
+				_logger->info(__FILEREF__ + "LiveProxy timing. "
+					+ "Streaming duration"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", utcNow: " + to_string(utcNow)
+					+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+					+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+					+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+				);
+			}
+
+			// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+
+			// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
+			//		as fast as possible. This option will slow down the reading of the input(s)
+			//		to the native frame rate of the input(s). It is useful for real-time output
+			//		(e.g. live streaming).
+			// -hls_flags append_list: Append new segments into the end of old segment list
+			//		and remove the #EXT-X-ENDLIST from the old segment list
+			// -hls_time seconds: Set the target segment length in seconds. Segment will be cut on the next key frame
+			//		after this time has passed.
+			// -hls_list_size size: Set the maximum number of playlist entries. If set to 0 the list file
+			//		will contain all the segments. Default value is 5.
+			//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
+			//		in the background process group
+			ffmpegInputArgumentList.push_back("-nostdin");
+			ffmpegInputArgumentList.push_back("-re");
+			{
+				ffmpegInputArgumentList.push_back("-i");
+				ffmpegInputArgumentList.push_back(url);
+			}
+
+			if (timePeriod)
+			{
+				ffmpegInputArgumentList.push_back("-t");
+				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
+			}
+		}
+	}
 	//	"vodInput": { "vodContentType": "", "sourcePhysicalPathName": "...", "otherInputOptions": "" },
 	else if (isMetadataPresent(inputRoot, "vodInput"))
 	{

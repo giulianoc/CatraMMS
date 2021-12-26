@@ -2426,6 +2426,10 @@ public:
 		string boxColor,
 		int boxPercentageOpacity);
 
+	Json::Value getDirectURLInputRoot(
+		string url);
+
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
