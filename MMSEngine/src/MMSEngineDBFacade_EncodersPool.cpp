@@ -8,13 +8,9 @@ int64_t MMSEngineDBFacade::addEncoder(
 	bool external,
 	bool enabled,
     string protocol,
-	string serverName,
+	string publicServerName,
+	string internalServerName,
 	int port
-	/*
-	int maxTranscodingCapability,
-	int maxLiveProxiesCapabilities,
-	int maxLiveRecordingCapabilities
-	*/
 	)
 {
     string      lastSQLCommand;
@@ -31,10 +27,11 @@ int64_t MMSEngineDBFacade::addEncoder(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Encoder(label, external, enabled, protocol, serverName, port "
+                "insert into MMS_Encoder(label, external, enabled, protocol, "
+				"publicServerName, internalServerName, port "
 				// "maxTranscodingCapability, maxLiveProxiesCapabilities, maxLiveRecordingCapabilities"
 				") values ("
-                "?, ?, ?, ?, ?, ?)";
+                "?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -43,7 +40,8 @@ int64_t MMSEngineDBFacade::addEncoder(
             preparedStatement->setInt(queryParameterIndex++, external ? 1 : 0);
             preparedStatement->setInt(queryParameterIndex++, enabled ? 1 : 0);
             preparedStatement->setString(queryParameterIndex++, protocol);
-            preparedStatement->setString(queryParameterIndex++, serverName);
+            preparedStatement->setString(queryParameterIndex++, publicServerName);
+            preparedStatement->setString(queryParameterIndex++, internalServerName);
             preparedStatement->setInt(queryParameterIndex++, port);
             // preparedStatement->setInt(queryParameterIndex++, maxTranscodingCapability);
             // preparedStatement->setInt(queryParameterIndex++, maxLiveProxiesCapabilities);
@@ -57,7 +55,8 @@ int64_t MMSEngineDBFacade::addEncoder(
 				+ ", external: " + to_string(external)
 				+ ", enabled: " + to_string(enabled)
 				+ ", protocol: " + protocol
-				+ ", serverName: " + serverName
+				+ ", publicServerName: " + publicServerName
+				+ ", internalServerName: " + internalServerName
 				+ ", port: " + to_string(port)
 				// + ", maxTranscodingCapability: " + to_string(maxTranscodingCapability)
 				// + ", maxLiveProxiesCapabilities: " + to_string(maxLiveProxiesCapabilities)
@@ -143,11 +142,9 @@ void MMSEngineDBFacade::modifyEncoder(
     bool externalToBeModified, bool external,
     bool enabledToBeModified, bool enabled,
     bool protocolToBeModified, string protocol,
-	bool serverNameToBeModified, string serverName,
+	bool publicServerNameToBeModified, string publicServerName,
+	bool internalServerNameToBeModified, string internalServerName,
 	bool portToBeModified, int port
-	// bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
-	// bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
-	// bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
 	)
 {
     string      lastSQLCommand;
@@ -197,11 +194,19 @@ void MMSEngineDBFacade::modifyEncoder(
 				oneParameterPresent = true;
 			}
 
-			if (serverNameToBeModified)
+			if (publicServerNameToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("serverName = ?");
+				setSQL += ("publicServerName = ?");
+				oneParameterPresent = true;
+			}
+
+			if (internalServerNameToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("internalServerName = ?");
 				oneParameterPresent = true;
 			}
 
@@ -265,8 +270,10 @@ void MMSEngineDBFacade::modifyEncoder(
 				preparedStatement->setInt(queryParameterIndex++, enabled ? 1 : 0);
 			if (protocolToBeModified)
 				preparedStatement->setString(queryParameterIndex++, protocol);
-			if (serverNameToBeModified)
-				preparedStatement->setString(queryParameterIndex++, serverName);
+			if (publicServerNameToBeModified)
+				preparedStatement->setString(queryParameterIndex++, publicServerName);
+			if (internalServerNameToBeModified)
+				preparedStatement->setString(queryParameterIndex++, internalServerName);
 			if (portToBeModified)
 				preparedStatement->setInt(queryParameterIndex++, port);
 			// if (maxTranscodingCapabilityToBeModified)
@@ -285,7 +292,8 @@ void MMSEngineDBFacade::modifyEncoder(
 				+ ", external (" + to_string(externalToBeModified) + "): " + to_string(external)
 				+ ", enabled (" + to_string(enabledToBeModified) + "): " + to_string(enabled)
 				+ ", protocol (" + to_string(protocolToBeModified) + "): " + protocol
-				+ ", serverName (" + to_string(serverNameToBeModified) + "): " + serverName
+				+ ", publicServerName (" + to_string(publicServerNameToBeModified) + "): " + publicServerName
+				+ ", internalServerName (" + to_string(internalServerNameToBeModified) + "): " + internalServerName
 				+ ", port (" + to_string(portToBeModified) + "): " + to_string(port)
 				// + ", maxTranscodingCapability (" + to_string(maxTranscodingCapabilityToBeModified)
 				// 	+ "): " + to_string(maxTranscodingCapability)
@@ -489,7 +497,7 @@ void MMSEngineDBFacade::removeEncoder(
     }        
 }
 
-string MMSEngineDBFacade::getEncoderDetails (
+pair<string, string> MMSEngineDBFacade::getEncoderDetails (
 	int64_t encoderKey
 )
 {
@@ -510,11 +518,12 @@ string MMSEngineDBFacade::getEncoderDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		string serverName;
+		string publicServerName;
+		string internalServerName;
 
 		{
 			lastSQLCommand =
-				"select serverName "
+				"select publicServerName, internalServerName "
 				"from MMS_Encoder "
 				"where encoderKey = ?"
 				;
@@ -535,7 +544,8 @@ string MMSEngineDBFacade::getEncoderDetails (
 			);
             if (resultSet->next())
             {
-				serverName = static_cast<string>(resultSet->getString("serverName"));
+				publicServerName = static_cast<string>(resultSet->getString("publicServerName"));
+				internalServerName = static_cast<string>(resultSet->getString("internalServerName"));
             }
         }
 
@@ -545,7 +555,7 @@ string MMSEngineDBFacade::getEncoderDetails (
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return serverName;
+		return make_pair(publicServerName, internalServerName);
     }
     catch(sql::SQLException se)
     {
@@ -1093,9 +1103,9 @@ Json::Value MMSEngineDBFacade::getEncoderList (
         if (serverName != "")
 		{
 			if (sqlWhere != "")
-				sqlWhere += ("and e.serverName like ? ");
+				sqlWhere += ("and (e.publicServerName like ? or e.internalServerName like ?) ");
 			else
-				sqlWhere += ("e.serverName like ? ");
+				sqlWhere += ("(e.publicServerName like ? or e.internalServerName like ?) ");
 		}
         if (port != -1)
 		{
@@ -1146,7 +1156,10 @@ Json::Value MMSEngineDBFacade::getEncoderList (
             if (label != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (serverName != "")
+			{
                 preparedStatement->setString(queryParameterIndex++, string("%") + serverName + "%");
+                preparedStatement->setString(queryParameterIndex++, string("%") + serverName + "%");
+			}
             if (port != -1)
                 preparedStatement->setInt(queryParameterIndex++, port);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1186,7 +1199,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			if (allEncoders)
 				lastSQLCommand = 
 					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-						"e.serverName, e.port "
+						"e.publicServerName, e.internalServerName, e.port "
 						// ", e.maxTranscodingCapability, "
 						// "e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e ") 
@@ -1196,7 +1209,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			else
 				lastSQLCommand = 
 					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-						"e.serverName, e.port "
+						"e.publicServerName, e.internalServerName, e.port "
 						// ", e.maxTranscodingCapability, "
 						// "e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm ") 
@@ -1214,7 +1227,10 @@ Json::Value MMSEngineDBFacade::getEncoderList (
             if (label != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (serverName != "")
+			{
                 preparedStatement->setString(queryParameterIndex++, string("%") + serverName + "%");
+                preparedStatement->setString(queryParameterIndex++, string("%") + serverName + "%");
+			}
             if (port != -1)
                 preparedStatement->setInt(queryParameterIndex++, port);
             preparedStatement->setInt(queryParameterIndex++, rows);
@@ -1339,22 +1355,14 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 		field = "protocol";
 		encoderRoot[field] = static_cast<string>(resultSet->getString("protocol"));
 
-		field = "serverName";
-		encoderRoot[field] = static_cast<string>(resultSet->getString("serverName"));
+		field = "publicServerName";
+		encoderRoot[field] = static_cast<string>(resultSet->getString("publicServerName"));
+
+		field = "internalServerName";
+		encoderRoot[field] = static_cast<string>(resultSet->getString("internalServerName"));
 
 		field = "port";
 		encoderRoot[field] = resultSet->getInt("port");
-
-		/*
-		field = "maxTranscodingCapability";
-		encoderRoot[field] = resultSet->getInt("maxTranscodingCapability");
-
-		field = "maxLiveProxiesCapabilities";
-		encoderRoot[field] = resultSet->getInt("maxLiveProxiesCapabilities");
-
-		field = "maxLiveRecordingCapabilities";
-		encoderRoot[field] = resultSet->getInt("maxLiveRecordingCapabilities");
-		*/
     }
     catch(sql::SQLException se)
     {
@@ -1416,18 +1424,6 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
         {
             Json::Value requestParametersRoot;
-
-			/*
-			{
-				field = "allEncoders";
-				requestParametersRoot[field] = allEncoders;
-			}
-
-			{
-				field = "workspaceKey";
-				requestParametersRoot[field] = workspaceKey;
-			}
-			*/
 
             if (encodersPoolKey != -1)
 			{
@@ -1582,7 +1578,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 						{
 							lastSQLCommand = 
 								"select encoderKey, label, external, enabled, protocol, "
-								"serverName, port "
+								"publicServerName, internalServerName, port "
 								"from MMS_Encoder "
 								"where encoderKey = ? ";
 
@@ -2275,7 +2271,7 @@ void MMSEngineDBFacade::removeEncodersPool(
     }        
 }
 
-tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
+tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 	int64_t workspaceKey, string encodersPoolLabel,
 	int64_t encoderKeyToBeSkipped)
 {
@@ -2398,7 +2394,8 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 
 		int64_t encoderKey;
 		string protocol;
-		string serverName;
+		string publicServerName;
+		string internalServerName;
 		int port;
 		bool encoderFound = false;
 		int encoderIndex = 0;
@@ -2410,18 +2407,20 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 
 			if (encodersPoolLabel == "")
 				lastSQLCommand = 
-					string("select e.encoderKey, e.enabled, e.protocol, e.serverName, e.port ")
-					+ "from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm " 
-					+ "where e.encoderKey = ewm.encoderKey and ewm.workspaceKey = ? "
-					+ "order by e.serverName "
-					+ "limit 1 offset ?";
+					"select e.encoderKey, e.enabled, e.protocol, "
+					"e.publicServerName, e.internalServerName, e.port "
+					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm " 
+					"where e.encoderKey = ewm.encoderKey and ewm.workspaceKey = ? "
+					"order by e.publicServerName "
+					"limit 1 offset ?";
 			else
 				lastSQLCommand = 
-					string("select e.encoderKey, e.enabled, e.protocol, e.serverName, e.port ")
-					+ "from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm " 
-					+ "where e.encoderKey = eepm.encoderKey and eepm.encodersPoolKey = ? "
-					+ "order by e.serverName "
-					+ "limit 1 offset ?";
+					"select e.encoderKey, e.enabled, e.protocol, "
+					"e.publicServerName, e.internalServerName, e.port "
+					"from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm " 
+					"where e.encoderKey = eepm.encoderKey and eepm.encodersPoolKey = ? "
+					"order by e.publicServerName "
+					"limit 1 offset ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2471,7 +2470,8 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 				}
 
 				protocol = resultSet->getString("protocol");
-				serverName = resultSet->getString("serverName");
+				publicServerName = resultSet->getString("publicServerName");
+				internalServerName = resultSet->getString("internalServerName");
 				port = resultSet->getInt("port");
 
 				encoderFound = true;
@@ -2555,7 +2555,7 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 		conn = nullptr;
 
 
-		return make_tuple(encoderKey, protocol, serverName, port);
+		return make_tuple(encoderKey, protocol, publicServerName, internalServerName, port);
     }
     catch(sql::SQLException se)
     {
@@ -2916,7 +2916,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
     } 
 }
 
-string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
+string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, bool internal)
 {
     string      lastSQLCommand;
     Json::Value encodersPoolListRoot;
@@ -2937,14 +2937,15 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
         );
 
 		string protocol;
-		string serverName;
+		string publicServerName;
+		string internalServerName;
 		int port;
 		{
 			lastSQLCommand = 
-				string("select protocol, serverName, port ")
-					+ "from MMS_Encoder " 
-					+ "where encoderKey = ? "
-					+ "and enabled = 1 ";
+				"select protocol, publicServerName, internalServerName, port "
+				"from MMS_Encoder " 
+				"where encoderKey = ? "
+				"and enabled = 1 ";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2962,7 +2963,8 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
 			if (resultSet->next())
 			{
 				protocol = resultSet->getString("protocol");
-				serverName = resultSet->getString("serverName");
+				publicServerName = resultSet->getString("publicServerName");
+				internalServerName = resultSet->getString("internalServerName");
 				port = resultSet->getInt("port");
 			}
 			else
@@ -2983,7 +2985,11 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
 		conn = nullptr;
 
 
-		string encoderURL = protocol + "://" + serverName + ":" + to_string(port);
+		string encoderURL;
+		if (internal)
+			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
+		else
+			encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
 
         _logger->info(__FILEREF__ + "getEncoderURL"
 			+ ", encoderKey: " + to_string(encoderKey)

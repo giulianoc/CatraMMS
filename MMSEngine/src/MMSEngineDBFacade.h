@@ -2315,11 +2315,9 @@ public:
 		bool external,
 		bool enabled,
 		string protocol,
-		string serverName,
+		string publicServerName,
+		string internalServerName,
 		int port
-		// int maxTranscodingCapability,
-		// int maxLiveProxiesCapabilities,
-		// int maxLiveRecordingCapabilities
 	);
 
 	void modifyEncoder(
@@ -2328,7 +2326,8 @@ public:
 		bool externalToBeModified, bool external,
 		bool enabledToBeModified, bool enabled,
 		bool protocolToBeModified, string protocol,
-		bool serverNameToBeModified, string serverName,
+		bool publicServerNameToBeModified, string publicServerName,
+		bool internalServerNameToBeModified, string internalServerName,
 		bool portToBeModified, int port
 		// bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
 		// bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
@@ -2338,7 +2337,7 @@ public:
 	void removeEncoder(
 		int64_t encoderKey);
 
-	string getEncoderDetails (int64_t encoderKey);
+	pair<string, string> getEncoderDetails (int64_t encoderKey);
 
 	void addAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
@@ -2362,14 +2361,14 @@ public:
 		string labelOrder	// "" or "asc" or "desc"
 	);
 
-	tuple<int64_t, string, string, int> getEncoderByEncodersPool(
+	tuple<int64_t, string, string, string, int> getEncoderByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel,
       int64_t encoderKeyToBeSkipped);
 
 	int getEncodersNumberByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel);
 
-	string getEncoderURL(int64_t encoderKey);
+	string getEncoderURL(int64_t encoderKey, bool internal);
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

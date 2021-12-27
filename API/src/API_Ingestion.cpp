@@ -4509,7 +4509,7 @@ void API::changeLiveProxyPlaylist(
 		int64_t utcBroadcasterEnd;
 
 		int64_t broadcastIngestionJobKey;
-		string broadcastDefaultMediaType;	// options: Live Channel, Media, Countdown
+		string broadcastDefaultMediaType;	// options: Live Channel, Media, Countdown, Direct URL
 		// // used in case mediaType is Live Channel
 		Json::Value broadcastDefaultChannelInputRoot = Json::nullValue;
 		// used in case mediaType is Media
@@ -5419,7 +5419,9 @@ void API::changeLiveProxyPlaylist(
 				// (timing to be run in the future). In this case broadcastEncoderKey will be -1
 				if (broadcastEncoderKey > 0)
 				{
-					string transcoderHost = _mmsEngineDBFacade->getEncoderURL(broadcastEncoderKey);
+					bool internal = false;
+					string transcoderHost = _mmsEngineDBFacade->getEncoderURL(
+						broadcastEncoderKey, internal);
 
 					ffmpegEncoderURL = 
 						transcoderHost

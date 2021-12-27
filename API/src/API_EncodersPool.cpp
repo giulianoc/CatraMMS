@@ -18,9 +18,9 @@
 
 
 void API::addEncoder(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        string requestBody)
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	string requestBody)
 {
     string api = "addEncoder";
 
@@ -35,11 +35,9 @@ void API::addEncoder(
 		bool external;
 		bool enabled;
         string protocol;
-        string serverName;
+        string publicServerName;
+        string internalServerName;
         int port;
-        // int maxTranscodingCapability;
-        // int maxLiveProxiesCapabilities;
-        // int maxLiveRecordingCapabilities;
 
         try
         {
@@ -101,7 +99,7 @@ void API::addEncoder(
             }    
             protocol = requestBodyRoot.get(field, "").asString();            
 
-            field = "ServerName";
+            field = "PublicServerName";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -110,7 +108,19 @@ void API::addEncoder(
 
                 throw runtime_error(errorMessage);
             }    
-            serverName = requestBodyRoot.get(field, "").asString();            
+            publicServerName = requestBodyRoot.get(field, "").asString();            
+
+            field = "InternalServerName";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            internalServerName = requestBodyRoot.get(field, "").asString();            
+
 
             field = "Port";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -149,8 +159,7 @@ void API::addEncoder(
         try
         {
 			int64_t encoderKey = _mmsEngineDBFacade->addEncoder(
-                label, external, enabled, protocol, serverName, port);
-				// maxTranscodingCapability, maxLiveProxiesCapabilities, maxLiveRecordingCapabilities);
+                label, external, enabled, protocol, publicServerName, internalServerName, port);
 
             sResponse = (
                     string("{ ") 
@@ -236,22 +245,14 @@ void API::modifyEncoder(
         string protocol;
 		bool protocolToBeModified;
 
-        string serverName;
-		bool serverNameToBeModified;
+        string publicServerName;
+		bool publicServerNameToBeModified;
+
+        string internalServerName;
+		bool internalServerNameToBeModified;
 
         int port;
 		bool portToBeModified;
-
-		/*
-        int maxTranscodingCapability;
-		bool maxTranscodingCapabilityToBeModified;
-
-        int maxLiveProxiesCapabilities;
-		bool maxLiveProxiesCapabilitiesToBeModified;
-
-        int maxLiveRecordingCapabilities;
-		bool maxLiveRecordingCapabilitiesToBeModified;
-		*/
 
         try
         {
@@ -315,14 +316,23 @@ void API::modifyEncoder(
 			else
 				protocolToBeModified = false;
 
-            field = "ServerName";
+            field = "PublicServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				serverName = requestBodyRoot.get(field, "").asString();            
-				serverNameToBeModified = true;
+				publicServerName = requestBodyRoot.get(field, "").asString();            
+				publicServerNameToBeModified = true;
             }
 			else
-				serverNameToBeModified = false;
+				publicServerNameToBeModified = false;
+
+            field = "InternalServerName";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				internalServerName = requestBodyRoot.get(field, "").asString();            
+				internalServerNameToBeModified = true;
+            }
+			else
+				internalServerNameToBeModified = false;
 
             field = "Port";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -332,35 +342,6 @@ void API::modifyEncoder(
             }
 			else
 				portToBeModified = false;
-
-			/*
-            field = "MaxTranscodingCapability";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				maxTranscodingCapability = requestBodyRoot.get(field, 5).asInt();            
-				maxTranscodingCapabilityToBeModified = true;
-            }
-			else
-				maxTranscodingCapabilityToBeModified = false;
-
-            field = "MaxLiveProxiesCapabilities";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				maxLiveProxiesCapabilities = requestBodyRoot.get(field, 5).asInt();            
-				maxLiveProxiesCapabilitiesToBeModified = true;
-            }
-			else
-				maxLiveProxiesCapabilitiesToBeModified = false;
-
-            field = "MaxLiveRecordingCapabilities";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				maxLiveRecordingCapabilities = requestBodyRoot.get(field, 5).asInt();            
-				maxLiveRecordingCapabilitiesToBeModified = true;
-            }
-			else
-				maxLiveRecordingCapabilitiesToBeModified = false;
-			*/
         }
         catch(runtime_error e)
         {
@@ -404,11 +385,9 @@ void API::modifyEncoder(
 				externalToBeModified, external,
 				enabledToBeModified, enabled,
 				protocolToBeModified, protocol,
-				serverNameToBeModified, serverName,
+				publicServerNameToBeModified, publicServerName,
+				internalServerNameToBeModified, internalServerName,
 				portToBeModified, port
-				// maxTranscodingCapabilityToBeModified, maxTranscodingCapability,
-				// maxLiveProxiesCapabilitiesToBeModified, maxLiveProxiesCapabilities,
-				// maxLiveRecordingCapabilitiesToBeModified, maxLiveRecordingCapabilities
 			);
 
             sResponse = (
