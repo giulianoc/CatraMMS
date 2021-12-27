@@ -9004,11 +9004,6 @@ void FFMpeg::liveRecorder(
 
 		+ ", monitorHLS: " + to_string(monitorHLS)
 		+ ", virtualVOD: " + to_string(virtualVOD)
-		// + ", monitorIsVideo: " + to_string(monitorIsVideo)
-		// + ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-		// + ", monitorManifestFileName: " + monitorManifestFileName
-		// + ", monitorVirtualVODPlaylistEntriesNumber: " + to_string(monitorVirtualVODPlaylistEntriesNumber)
-		// + ", monitorVirtualVODSegmentDurationInSeconds: " + to_string(monitorVirtualVODSegmentDurationInSeconds)
 	);
 
 	setStatus(
@@ -9413,7 +9408,7 @@ void FFMpeg::liveRecorder(
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 				string manifestFileName = outputRoot.get("manifestFileName", "").asString();
 				int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
-
+				int localSegmentDurationInSeconds = asInt(outputRoot, "segmentDurationInSeconds", 10);
 
 
 				if (audioVolumeChange != "")
@@ -9612,7 +9607,7 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-hls_flags");
 						ffmpegArgumentList.push_back("append_list");
 						ffmpegArgumentList.push_back("-hls_time");
-						ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+						ffmpegArgumentList.push_back(to_string(localSegmentDurationInSeconds));
 						ffmpegArgumentList.push_back("-hls_list_size");
 						ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
@@ -9643,7 +9638,7 @@ void FFMpeg::liveRecorder(
 					else if (outputType == "DASH")
 					{
 						ffmpegArgumentList.push_back("-seg_duration");
-						ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+						ffmpegArgumentList.push_back(to_string(localSegmentDurationInSeconds));
 						ffmpegArgumentList.push_back("-window_size");
 						ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
@@ -10037,215 +10032,6 @@ void FFMpeg::liveRecorder(
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		/*
-		if (monitorHLS || virtualVOD)
-		{
-			vector<string> ffmpegEncodingProfileArgumentList;
-			if (monitorVirtualVODEncodingProfileDetailsRoot != Json::nullValue)
-			{
-				try
-				{
-					bool isVideo = monitorIsVideo;
-					string httpStreamingFileFormat;    
-					string ffmpegHttpStreamingParameter = "";
-
-					string ffmpegFileFormatParameter = "";
-
-					string ffmpegVideoCodecParameter = "";
-					string ffmpegVideoProfileParameter = "";
-					string ffmpegVideoResolutionParameter = "";
-					int videoBitRateInKbps = -1;
-					string ffmpegVideoBitRateParameter = "";
-					string ffmpegVideoOtherParameters = "";
-					string ffmpegVideoMaxRateParameter = "";
-					string ffmpegVideoBufSizeParameter = "";
-					string ffmpegVideoFrameRateParameter = "";
-					string ffmpegVideoKeyFramesRateParameter = "";
-					bool twoPasses;
-
-					string ffmpegAudioCodecParameter = "";
-					string ffmpegAudioBitRateParameter = "";
-					string ffmpegAudioOtherParameters = "";
-					string ffmpegAudioChannelsParameter = "";
-					string ffmpegAudioSampleRateParameter = "";
-
-
-					settingFfmpegParameters(
-						monitorVirtualVODEncodingProfileDetailsRoot,
-						isVideo,
-
-						httpStreamingFileFormat,
-						ffmpegHttpStreamingParameter,
-
-						ffmpegFileFormatParameter,
-
-						ffmpegVideoCodecParameter,
-						ffmpegVideoProfileParameter,
-						ffmpegVideoResolutionParameter,
-						videoBitRateInKbps,
-						ffmpegVideoBitRateParameter,
-						ffmpegVideoOtherParameters,
-						twoPasses,
-						ffmpegVideoMaxRateParameter,
-						ffmpegVideoBufSizeParameter,
-						ffmpegVideoFrameRateParameter,
-						ffmpegVideoKeyFramesRateParameter,
-
-						ffmpegAudioCodecParameter,
-						ffmpegAudioBitRateParameter,
-						ffmpegAudioOtherParameters,
-						ffmpegAudioChannelsParameter,
-						ffmpegAudioSampleRateParameter
-					);
-
-					if (twoPasses)
-					{
-						twoPasses = false;
-
-						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have a two passes encoding. Change it to false"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", twoPasses: " + to_string(twoPasses)
-						;
-						_logger->warn(errorMessage);
-					}
-
-					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
-					ffmpegEncodingProfileArgumentList.push_back("-threads");
-					ffmpegEncodingProfileArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					throw e;
-				}
-			}
-
-			{
-				string manifestFilePathName = monitorManifestDirectoryPath + "/" + monitorManifestFileName;
-				string segmentFilePathName = monitorManifestDirectoryPath + "/"
-					+ recordedFileNamePrefix + "_%s." + outputFileFormat;
-
-				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-				);
-
-				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-				// I saw just once that the directory was not created and the liveencoder remains in the loop
-				// where:
-				//	1. the encoder returns an error because of the missing directory
-				//	2. EncoderVideoAudioProxy calls again the encoder
-				// So, for this reason, the below check is done
-				if (!FileIO::directoryExisting(monitorManifestDirectoryPath))
-				{
-					_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-					);
-
-					_logger->info(__FILEREF__ + "Create directory"
-						+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-					);
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					FileIO::createDirectory(monitorManifestDirectoryPath,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP |
-						S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("hls");
-
-				if (ffmpegEncodingProfileArgumentList.size() > 0)
-				{
-					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
-				}
-				else
-				{
-					// if (monitorOtherOutputOptions.find("-filter:v") == string::npos)
-					{
-						// it is not possible to have -c:v copy and -filter:v toghether
-						ffmpegArgumentList.push_back("-c:v");
-						ffmpegArgumentList.push_back("copy");
-					}
-					// if (monitorOtherOutputOptions.find("-filter:a") == string::npos)
-					{
-						// it is not possible to have -c:a copy and -filter:a toghether
-						ffmpegArgumentList.push_back("-c:a");
-						ffmpegArgumentList.push_back("copy");
-					}
-				}
-				{
-					ffmpegArgumentList.push_back("-hls_flags");
-					ffmpegArgumentList.push_back("append_list");
-					ffmpegArgumentList.push_back("-hls_time");
-					ffmpegArgumentList.push_back(to_string(monitorVirtualVODSegmentDurationInSeconds));
-					ffmpegArgumentList.push_back("-hls_list_size");
-					ffmpegArgumentList.push_back(to_string(monitorVirtualVODPlaylistEntriesNumber));
-
-					// Segment files removed from the playlist are deleted after a period of time
-					// equal to the duration of the segment plus the duration of the playlist
-					ffmpegArgumentList.push_back("-hls_flags");
-					ffmpegArgumentList.push_back("delete_segments");
-
-					// Set the number of unreferenced segments to keep on disk
-					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
-					// to download segments which were recently referenced in the playlist.
-					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
-					ffmpegArgumentList.push_back("-hls_delete_threshold");
-					ffmpegArgumentList.push_back(to_string(1));
-
-					// Segment files removed from the playlist are deleted after a period of time equal
-					// to the duration of the segment plus the duration of the playlist.
-
-					ffmpegArgumentList.push_back("-hls_flags");
-					ffmpegArgumentList.push_back("program_date_time");
-
-					ffmpegArgumentList.push_back("-strftime");
-					ffmpegArgumentList.push_back("1");
-					ffmpegArgumentList.push_back("-hls_segment_filename");
-					ffmpegArgumentList.push_back(segmentFilePathName);
-
-					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
-					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
-					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-					// 2020-07-19: commented, if it is needed just test it
-					// ffmpegArgumentList.push_back("-hls_start_number_source");
-					// ffmpegArgumentList.push_back("datetime");
-
-					// 2020-07-19: commented, if it is needed just test it
-					// ffmpegArgumentList.push_back("-start_number");
-					// ffmpegArgumentList.push_back(to_string(10));
-				}
-				ffmpegArgumentList.push_back(manifestFilePathName);
-			}
-		}
-		*/
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -12551,7 +12337,18 @@ int FFMpeg::getNextLiveProxyInput(
 			field = "utcProxyPeriodEnd";
 			int64_t utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
 
-			if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)
+			_logger->info(__FILEREF__ + "getNextLiveProxyInput"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", currentInputIndex: " + to_string(currentInputIndex)
+				+ ", timedInput: " + to_string(timedInput)
+				+ ", inputIndex: " + to_string(inputIndex)
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcNow: " + to_string(utcNow)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+			);
+
+			if (utcProxyPeriodStart <= utcNow && utcNow < utcProxyPeriodEnd)
 			{
 				*newInputRoot = (*inputsRoot)[inputIndex];
 				newInputIndex = inputIndex;

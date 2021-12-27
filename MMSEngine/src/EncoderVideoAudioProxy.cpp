@@ -14398,12 +14398,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							try
 							{
 								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
-									+ ", ingestionJobKey: "
-										+ to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: "
-										+ to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingProgress: "
-										+ to_string(encodingProgress)
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+									+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+									+ ", utcNow: " + to_string(utcNow)
+									+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
 								);
 								_mmsEngineDBFacade->updateEncodingJobProgress (
 									_encodingItem->_encodingJobKey, encodingProgress);
