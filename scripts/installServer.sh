@@ -202,6 +202,34 @@ install-packages()
 		echo ""
 		apt install -y openjdk-11-jdk
 	fi
+
+	if [ "$moduleName" == "engine" ]; then
+
+		#api should have GUI as well
+
+		echo ""
+		read -n 1 -s -r -p "install mysql-client..."
+		echo ""
+		apt-get -y install mysql-client
+
+		echo ""
+		read -n 1 -s -r -p "install mysql-server..."
+		echo ""
+		apt-get -y install mysql-server
+
+		echo ""
+		echo -n "Type the DB password: "
+		read dbPassword
+		echo "create database mms CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
+		echo "CREATE USER 'mms'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO 'mms'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "CREATE USER 'mms'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO 'mms'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
+		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, expire_logs_days"
+		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
+	fi
 }
 
 
@@ -352,7 +380,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		echo -n "tomcat version (i.e.: 9.0.53)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		echo -n "tomcat version (i.e.: 9.0.56)? Look the version at https://www-eu.apache.org/dist/tomcat"
 		read VERSION
 		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
 		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
@@ -407,7 +435,7 @@ install-mms-packages()
 		echo ""
 		echo "Make sure inside the Host tag we have:"
 		echo ""
-		echo "<Context path=\"\" docBase=\"catramms\" reloadable=\"true\">"
+		echo "<Context path=\"/catramms\" docBase=\"catramms\" reloadable=\"true\">"
 		echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
 		echo "</Context>"
 		echo ""
@@ -438,7 +466,7 @@ install-mms-packages()
 
 	packageName=CatraLibraries
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.24)? "
+	echo -n "$packageName version (i.e.: 1.0.130)? "
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
@@ -449,7 +477,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.570)? "
+	echo -n "$packageName version (i.e.: 1.0.2030)? "
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
@@ -552,6 +580,8 @@ fi
 
 moduleName=$1
 
+#Per prima cosa: formattare e montare dischi se necessario (fdisk...)
+
 #ssh-port
 #mms-account-creation
 #time-zone
@@ -568,7 +598,7 @@ else
 	#create-directory
 	#install-mms-packages $moduleName
 fi
-firewall-rules $moduleName
+#firewall-rules $moduleName
 
 if [ "$moduleName" == "storage" ]; then
 
