@@ -193,7 +193,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			{
 				// the last condition (and UNIX_TIMESTAMP(....) specifies that, if a Live Recorder has to start in one hour,
 				// it has not to be considered. It means the select has to return only the Live-Recorder close to start.
-				int minutesAheadToConsiderLiveRecorder = 15;
+				int minutesAheadToConsiderLiveRecorder = 5;
 
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
