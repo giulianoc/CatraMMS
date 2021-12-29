@@ -1447,7 +1447,7 @@ void MMSStorage::removePhysicalPathFile(
 						throw e;
 					}
 
-					int64_t newCurrentFreeSizeInBytes =
+					uint64_t newCurrentFreeSizeInBytes =
 						_mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey,
 								sizeInBytes);
 					_logger->info(__FILEREF__ + "updatePartitionBecauseOfDeletion"
@@ -1500,7 +1500,7 @@ void MMSStorage::removePhysicalPathFile(
 						throw e;
 					}
 
-					int64_t newCurrentFreeSizeInBytes =
+					uint64_t newCurrentFreeSizeInBytes =
 						_mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey,
 								sizeInBytes);
 					_logger->info(__FILEREF__ + "updatePartitionBecauseOfDeletion"
@@ -1772,9 +1772,9 @@ string MMSStorage::moveAssetInMMSRepository(
 
     {
 		int partitionKey;
-		int64_t newCurrentFreeSizeInBytes;
+		uint64_t newCurrentFreeSizeInBytes;
 
-		pair<int, int64_t> partitionDetails = _mmsEngineDBFacade
+		pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
 			->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
 		tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
 
@@ -2009,14 +2009,14 @@ void MMSStorage::deleteWorkspace(
 	}
 
 	{
-		vector<pair<int, int64_t>> partitionsInfo;
+		vector<pair<int, uint64_t>> partitionsInfo;
 
 		_mmsEngineDBFacade->getPartitionsInfo(partitionsInfo);
 
-		for (pair<int, int64_t> partitionInfo: partitionsInfo)
+		for (pair<int, uint64_t> partitionInfo: partitionsInfo)
 		{
 			int partitionKey;
-			int64_t currentFreeSizeInBytes;
+			uint64_t currentFreeSizeInBytes;
 
 			tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
 
@@ -2038,7 +2038,7 @@ void MMSStorage::deleteWorkspace(
 				bool removeRecursively = true;
 				FileIO::removeDirectory(workspacePathName, removeRecursively);
 
-				int64_t newCurrentFreeSizeInBytes =
+				uint64_t newCurrentFreeSizeInBytes =
 					_mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey,
 					directorySizeInBytes);
 				_logger->info(__FILEREF__ + "updatePartitionBecauseOfDeletion"
@@ -2064,14 +2064,14 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 
     ullWorkspaceStorageUsageInBytes = 0;
 
-	vector<pair<int, int64_t>> partitionsInfo;
+	vector<pair<int, uint64_t>> partitionsInfo;
 
 	_mmsEngineDBFacade->getPartitionsInfo(partitionsInfo);
 
-	for (pair<int, int64_t> partitionInfo: partitionsInfo)
+	for (pair<int, uint64_t> partitionInfo: partitionsInfo)
     {
 		int partitionKey;
-		int64_t currentFreeSizeInBytes;
+		uint64_t currentFreeSizeInBytes;
 
 		tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
 
@@ -2133,10 +2133,10 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			continue;
 		}
 
-		int64_t currentFreeSizeInBytes;
+		uint64_t currentFreeSizeInBytes;
 		{
-			int64_t usedInBytes;
-			int64_t availableInBytes;
+			uint64_t usedInBytes;
+			uint64_t availableInBytes;
 			long lPercentUsed;
 
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
