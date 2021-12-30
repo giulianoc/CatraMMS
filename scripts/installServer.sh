@@ -235,6 +235,8 @@ install-packages()
 
 create-directory()
 {
+	moduleName=$1
+
 	read -n 1 -s -r -p "create-directory..."
 	echo ""
 
@@ -249,11 +251,19 @@ create-directory()
 	mkdir /var/catramms/storage/MMSRepository
 
 	mkdir /var/catramms/logs
-	mkdir /var/catramms/logs/mmsAPI
-	mkdir /var/catramms/logs/mmsEncoder
-	mkdir /var/catramms/logs/mmsEngineService
-	mkdir /var/catramms/logs/nginx
-	mkdir /var/catramms/logs/tomcat-gui
+	if [ "$moduleName" == "api" ]; then
+		mkdir /var/catramms/logs/mmsAPI
+		mkdir /var/catramms/logs/tomcat-gui
+	fi
+	if [ "$moduleName" == "encoder" ]; then
+		mkdir /var/catramms/logs/mmsEncoder
+	fi
+	if [ "$moduleName" == "engine" ]; then
+		mkdir /var/catramms/logs/mmsEngineService
+	fi
+	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" ]; then
+		mkdir /var/catramms/logs/nginx
+	fi
 
 	mkdir /mmsStorage
 	mkdir /mmsRepository0000
@@ -595,7 +605,7 @@ if [ "$moduleName" == "storage" ]; then
 	echo "- Restart NFSd with sudo /etc/init.d/nfs-kernel-server restart"
 else
 	echo ""
-	#create-directory
+	#create-directory $moduleName
 	#install-mms-packages $moduleName
 fi
 #firewall-rules $moduleName

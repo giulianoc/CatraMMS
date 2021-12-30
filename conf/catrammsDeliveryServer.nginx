@@ -4,6 +4,9 @@
 
 	root /var/catramms/storage/MMSRepository/;
 
+	location /healthy.txt {
+	}
+
 	#authorization through parameter
 	#next location manages .m3u8 request (authorize request and add token parameter to each line of the manifest)
 	location ~ .(m3u8|mpd)$ {
@@ -38,7 +41,7 @@
 	location = /catramms/delivery/checkAuthorizationThroughParameter {
 		internal;
 
-		proxy_pass http://$deliveryHostName/catramms/delivery/authorizationThroughParameter;
+		proxy_pass http://$apiHostName/catramms/delivery/authorizationThroughParameter;
 		#$host will be mms-delivery.restream.ovh
 		proxy_set_header Host $host;
 		proxy_pass_request_body off;

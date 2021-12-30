@@ -73,7 +73,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
-	set $deliveryHostName 192.168.1.105;
+	set $apiHostName 192.168.1.105;
 	set $guiHostName mms-gui.catrasoft.cloud;
 	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
 }
@@ -90,7 +90,7 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
-	set $deliveryHostName 127.0.0.1;
+	set $apiHostName 127.0.0.1;
 	set $guiHostName mms-gui.catrasoft.cloud;
 	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
 }
@@ -101,7 +101,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
     listen 127.0.0.1:80;
 
-    set $deliveryHostName 127.0.0.1;
+    set $apiHostName 127.0.0.1;
     set $guiHostName mms-gui.catrasoft.cloud;
     include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
 }
@@ -114,7 +114,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
-	set $deliveryHostName 192.168.1.105;
+	set $apiHostName 192.168.1.105;
 	set $guiHostName mms-gui.catrasoft.cloud;
 	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
 }
@@ -131,7 +131,7 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
-	set $deliveryHostName 127.0.0.1;
+	set $apiHostName 127.0.0.1;
 	set $guiHostName mms-gui.catrasoft.cloud;
 	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
 }
@@ -142,7 +142,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
     listen 127.0.0.1:80;
 
-    set $deliveryHostName 127.0.0.1;
+    set $apiHostName 127.0.0.1;
     set $guiHostName mms-gui.catrasoft.cloud;
     include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
 }
@@ -180,7 +180,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
-	set $binaryHostName 192.168.1.105;
+	set $apiHostName 192.168.1.105;
 	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 
@@ -204,7 +204,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen mms-binary-1.restream.ovh:80;
 
-	set $binaryHostName 127.0.0.1;
+	set $apiHostName 127.0.0.1;
 	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 
@@ -214,7 +214,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 127.0.0.1:80;
 
-	set $binaryHostName 127.0.0.1;
+	set $apiHostName 127.0.0.1;
 	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 

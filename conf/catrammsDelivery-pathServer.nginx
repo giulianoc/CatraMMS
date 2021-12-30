@@ -4,6 +4,9 @@
 
 	root /var/catramms/storage/MMSRepository/;
 
+	location /healthy.txt {
+	}
+
 	#authorization through path
 	#next location manage any request: .mp4, .m3ud, .ts
 	location ~ ^/token_ {
@@ -28,7 +31,7 @@
 	location = /catramms/delivery/checkAuthorizationThroughPath {
 		internal;
 
-		proxy_pass http://$deliveryHostName/catramms/delivery/authorizationThroughPath;
+		proxy_pass http://$apiHostName/catramms/delivery/authorizationThroughPath;
 		#$host will be mms-delivery.restream.ovh
 		proxy_set_header Host $host;
 		proxy_pass_request_body off;
