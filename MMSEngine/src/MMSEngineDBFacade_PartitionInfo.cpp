@@ -7,7 +7,7 @@
 void MMSEngineDBFacade::addUpdatePartitionInfo(
 	int partitionKey,
 	string partitionPathName,
-	int64_t currentFreeSizeInBytes,
+	uint64_t currentFreeSizeInBytes,
 	int64_t freeSpaceToLeaveInMB
 )
 {
@@ -53,7 +53,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
             if (resultSet->next())
             {
 				string partitionPathName = resultSet->getString("partitionPathName");
-				int64_t savedCurrentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+				uint64_t savedCurrentFreeSizeInBytes = resultSet->getUInt64("currentFreeSizeInBytes");
 
 				_logger->info(__FILEREF__
 					+ "Difference between estimate and calculate CurrentFreeSizeInBytes"
@@ -73,7 +73,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
-				preparedStatement->setInt64(queryParameterIndex++, currentFreeSizeInBytes);
+				preparedStatement->setUInt64(queryParameterIndex++, currentFreeSizeInBytes);
 				preparedStatement->setInt64(queryParameterIndex++, partitionKey);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -98,7 +98,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				int queryParameterIndex = 1;
 				preparedStatement->setInt(queryParameterIndex++, partitionKey);
 				preparedStatement->setString(queryParameterIndex++, partitionPathName);
-				preparedStatement->setInt64(queryParameterIndex++, currentFreeSizeInBytes);
+				preparedStatement->setUInt64(queryParameterIndex++, currentFreeSizeInBytes);
 				preparedStatement->setInt64(queryParameterIndex++, freeSpaceToLeaveInMB);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -299,13 +299,13 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
     }
 }
 
-pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
+pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 	int64_t ullFSEntrySizeInBytes
 )
 {
 	string		lastSQLCommand;
 	int			partitionToBeUsed;
-	int64_t		currentFreeSizeInBytes;
+	uint64_t	currentFreeSizeInBytes;
 
 
 	shared_ptr<MySQLConnection> conn = nullptr;
@@ -375,7 +375,7 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
             if (resultSet->next())
             {
 				partitionToBeUsed = resultSet->getInt("partitionKey");
-				currentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+				currentFreeSizeInBytes = resultSet->getUInt64("currentFreeSizeInBytes");
 
 				_logger->info(__FILEREF__ + "Partition to be used"
 					+ ", partitionToBeUsed: " + to_string(partitionToBeUsed)
@@ -405,7 +405,7 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, currentFreeSizeInBytes);
+			preparedStatement->setUInt64(queryParameterIndex++, currentFreeSizeInBytes);
 			preparedStatement->setInt(queryParameterIndex++, partitionToBeUsed);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -605,12 +605,12 @@ pair<int, int64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 	return make_pair(partitionToBeUsed, currentFreeSizeInBytes);
 }
 
-int64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
+uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 	int partitionKey,
 	int64_t ullFSEntrySizeInBytes)
 {
 	string		lastSQLCommand;
-	int64_t		newCurrentFreeSizeInBytes;
+	uint64_t		newCurrentFreeSizeInBytes;
 
 
 	shared_ptr<MySQLConnection> conn = nullptr;
@@ -652,7 +652,7 @@ int64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 			);
             if (resultSet->next())
             {
-				newCurrentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+				newCurrentFreeSizeInBytes = resultSet->getUInt64("currentFreeSizeInBytes");
 			}
 			else
 			{
@@ -675,7 +675,7 @@ int64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, newCurrentFreeSizeInBytes);
+			preparedStatement->setUInt64(queryParameterIndex++, newCurrentFreeSizeInBytes);
 			preparedStatement->setInt(queryParameterIndex++, partitionKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -990,7 +990,7 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 	return partitionPathName;
 }
 
-void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, int64_t>>& partitionsInfo)
+void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partitionsInfo)
 {
 	string		lastSQLCommand;
 
@@ -1023,7 +1023,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, int64_t>>& partitions
             while (resultSet->next())
             {
 				int partitionKey = resultSet->getInt("partitionKey");
-				int64_t currentFreeSizeInBytes = resultSet->getInt64("currentFreeSizeInBytes");
+				uint64_t currentFreeSizeInBytes = resultSet->getUInt64("currentFreeSizeInBytes");
 
 				partitionsInfo.push_back(make_pair(partitionKey, currentFreeSizeInBytes));
 			}
