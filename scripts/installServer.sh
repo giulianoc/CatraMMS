@@ -315,7 +315,7 @@ create-directory()
 	echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
 	echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
 	echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
-	echo "PS1='\$serverName-'\$PS1" >> /home/mms/.bashrc
+	echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
 	echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
 	echo "date" >> /home/mms/.bashrc
 }
@@ -479,7 +479,7 @@ install-mms-packages()
 
 	packageName=CatraLibraries
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.130)? "
+	echo -n "$packageName version (i.e.: 1.0.150)? "
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
@@ -596,9 +596,9 @@ moduleName=$1
 #Per prima cosa: formattare e montare dischi se necessario (fdisk...)
 
 #ssh-port
-#mms-account-creation
-#time-zone
-#install-packages $moduleName
+mms-account-creation
+time-zone
+install-packages $moduleName
 
 if [ "$moduleName" == "storage" ]; then
 	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
@@ -608,8 +608,8 @@ if [ "$moduleName" == "storage" ]; then
 	echo "- Restart NFSd with sudo /etc/init.d/nfs-kernel-server restart"
 else
 	echo ""
-	#create-directory $moduleName
-	#install-mms-packages $moduleName
+	create-directory $moduleName
+	install-mms-packages $moduleName
 fi
 #firewall-rules $moduleName
 
