@@ -12273,10 +12273,10 @@ void MMSEngineProcessor::manageLiveRecorder(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				userAgent = parametersRoot.get(field, "").asString();
 
-            field = "RecordingPeriod";
+            field = "schedule";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
 
-            field = "Start";
+            field = "start";
             if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12286,9 +12286,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodStart = recordingPeriodRoot.get(field, "XXX").asString();
+            recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
 
-            field = "End";
+            field = "end";
             if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12298,9 +12298,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
+            recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
 
-            field = "AutoRenew";
+            field = "autoRenew";
             if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 				autoRenew = false;
 			else
@@ -12824,7 +12824,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 				if (timePeriod)
 				{
-					field = "ProxyPeriod";
+					field = "schedule";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__
@@ -12840,7 +12840,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 					Json::Value proxyPeriodRoot = parametersRoot[field];
 
-					field = "Start";
+					field = "start";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = __FILEREF__
@@ -12855,7 +12855,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
-					field = "End";
+					field = "end";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = __FILEREF__
@@ -13126,7 +13126,7 @@ void MMSEngineProcessor::manageVODProxy(
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 				if (timePeriod)
 				{
-					field = "ProxyPeriod";
+					field = "schedule";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13141,7 +13141,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 					Json::Value proxyPeriodRoot = parametersRoot[field];
 
-					field = "Start";
+					field = "start";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13155,7 +13155,7 @@ void MMSEngineProcessor::manageVODProxy(
 					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
-					field = "End";
+					field = "end";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13344,7 +13344,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
-			string field = "ProxyPeriod";
+			string field = "schedule";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13359,7 +13359,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 			Json::Value proxyPeriodRoot = parametersRoot[field];
 
-			field = "Start";
+			field = "start";
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13372,7 +13372,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
-			field = "End";
+			field = "end";
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -16315,7 +16315,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			else
 				youTubeLiveBroadcastLatencyPreference = parametersRoot.get(field, "").asString();
 
-            field = "ProxyPeriod";
+            field = "schedule";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -16327,7 +16327,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
             }
 			Json::Value scheduleRoot = parametersRoot[field];
 
-            field = "Start";
+            field = "start";
             if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -16340,7 +16340,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
             }
             scheduleStartTimeInSeconds = scheduleRoot.get(field, "").asString();
 
-            field = "End";
+            field = "end";
             if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

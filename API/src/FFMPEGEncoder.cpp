@@ -11151,7 +11151,8 @@ void FFMPEGEncoder::liveProxyThread(
 		}
 
 		{
-			// based on liveProxy->_proxyStart, the monitor thread starts the checkings
+			// setting of liveProxy->_proxyStart
+			// Based on liveProxy->_proxyStart, the monitor thread starts the checkings
 			// In case of IP_PUSH, the checks should be done after the ffmpeg server
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
@@ -11159,25 +11160,30 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[0];
 
-				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
+				int64_t utcProxyPeriodStart =
+					JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
 
 				if (JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
 				{
 					Json::Value channelInputRoot = inputRoot["channelInput"];
 
-					string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
+					string channelSourceType =
+						channelInputRoot.get("channelSourceType", "").asString();
 
 					if (channelSourceType == "IP_PUSH")
 					{
-						int pushListenTimeout = JSONUtils::asInt64(channelInputRoot, "pushListenTimeout", -1);
+						int pushListenTimeout = JSONUtils::asInt64(
+							channelInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
 						{
-							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
+							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+								chrono::system_clock::now())
 								liveProxy->_proxyStart = chrono::system_clock::now() +
 									chrono::seconds(pushListenTimeout);
 							else
-								liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) +
+								liveProxy->_proxyStart = chrono::system_clock::from_time_t(
+									utcProxyPeriodStart) +
 									chrono::seconds(pushListenTimeout);
 						}
 						else
@@ -13352,18 +13358,24 @@ void FFMPEGEncoder::monitorThread()
 						// liveProxy->_proxyStart could be a bit in the future
 						int64_t liveProxyLiveTimeInMinutes;
 						if (now > liveProxy->_proxyStart)
-							liveProxyLiveTimeInMinutes	=
-								chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
-						else
-							liveProxyLiveTimeInMinutes	= 0;
+							liveProxyLiveTimeInMinutes = chrono::duration_cast<
+								chrono::minutes>(now - liveProxy->_proxyStart).count();
+						else	// it will be negative
+							liveProxyLiveTimeInMinutes = chrono::duration_cast<
+								chrono::minutes>(now - liveProxy->_proxyStart).count();
 
-						// checks are done after 3 minutes LiveProxy started, in order to be sure
-						// the manifest file was already created
+						// checks are done after 3 minutes LiveProxy started,
+						// in order to be sure the manifest file was already created
 						if (liveProxyLiveTimeInMinutes <= 3)
 						{
-							_logger->info(__FILEREF__ + "Checks are not done because too early"
-								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+							_logger->info(__FILEREF__
+								+ "Checks are not done because too early"
+								+ ", ingestionJobKey: "
+									+ to_string(liveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: "
+									+ to_string(liveProxy->_encodingJobKey)
+								+ ", liveProxyLiveTimeInMinutes: "
+									+ to_string(liveProxyLiveTimeInMinutes)
 							);
 
 							continue;

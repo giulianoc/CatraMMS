@@ -4319,7 +4319,8 @@ void API::updateIngestionJob(
 			}
 			string sIngestionType = metadataRoot.get("IngestionType", "").asString();
 
-			if (sIngestionType == MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionType::LiveRecorder))
+			if (sIngestionType == MMSEngineDBFacade::toString(
+				MMSEngineDBFacade::IngestionType::LiveRecorder))
 			{
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder)
 				{
@@ -4359,18 +4360,18 @@ void API::updateIngestionJob(
 							newChannelLabel = metadataRoot.get("ChannelLabel", "").asString();
 						}
 
-						field = "RecordingPeriodStart";
+						field = "scheduleStart";
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							recordingPeriodStartModified = true;
-							newRecordingPeriodStart = metadataRoot.get("RecordingPeriodStart", "").asString();
+							newRecordingPeriodStart = metadataRoot.get("scheduleStart", "").asString();
 						}
 
-						field = "RecordingPeriodEnd";
+						field = "scheduleEnd";
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							recordingPeriodEndModified = true;
-							newRecordingPeriodEnd = metadataRoot.get("RecordingPeriodEnd", "").asString();
+							newRecordingPeriodEnd = metadataRoot.get("scheduleEnd", "").asString();
 						}
 
 						field = "RecordingVirtualVOD";
@@ -4667,6 +4668,12 @@ void API::changeLiveProxyPlaylist(
 						field = "text";
 						string broadcastDefaultText =
 							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+						field = "textPosition_X_InPixel";
+						string broadcastDefaultTextPosition_X_InPixel =
+							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+						field = "textPosition_Y_InPixel";
+						string broadcastDefaultTextPosition_Y_InPixel =
+							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
 
 						MMSEngineDBFacade::ContentType vodContentType;
 						string sourcePhysicalPathName;
@@ -4684,8 +4691,8 @@ void API::changeLiveProxyPlaylist(
 							broadcastDefaultPhysicalPathKey);
 						}
 
-						string textPosition_X_InPixel = "(video_width-text_width)/2";
-						string textPosition_Y_InPixel = "(video_height-text_height)/2";
+						// string textPosition_X_InPixel = "(video_width-text_width)/2";
+						// string textPosition_Y_InPixel = "(video_height-text_height)/2";
 						string fontType = "OpenSans-ExtraBold.ttf";
 						int fontSize = 48;
 						string fontColor = "orange";
@@ -4698,7 +4705,8 @@ void API::changeLiveProxyPlaylist(
 							= _mmsEngineDBFacade->getCountdownInputRoot(
 							sourcePhysicalPathName, broadcastDefaultPhysicalPathKey,
 							videoDurationInMilliSeconds, broadcastDefaultText,
-							textPosition_X_InPixel, textPosition_Y_InPixel,
+							broadcastDefaultTextPosition_X_InPixel,
+							broadcastDefaultTextPosition_Y_InPixel,
 							fontType, fontSize, fontColor, textPercentageOpacity,
 							boxEnable, boxColor, boxPercentageOpacity);
 					}
@@ -4855,7 +4863,8 @@ void API::changeLiveProxyPlaylist(
 			// vodContentType and sourcePhysicalPathName
 			{
 				for (int newReceivedPlaylistIndex = 0;
-					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size(); newReceivedPlaylistIndex++)
+					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
+					newReceivedPlaylistIndex++)
 				{
 					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
 						newReceivedPlaylistIndex];
@@ -5419,9 +5428,8 @@ void API::changeLiveProxyPlaylist(
 				// (timing to be run in the future). In this case broadcastEncoderKey will be -1
 				if (broadcastEncoderKey > 0)
 				{
-					bool internal = true;
 					string transcoderHost = _mmsEngineDBFacade->getEncoderURL(
-						broadcastEncoderKey, internal);
+						broadcastEncoderKey);
 
 					ffmpegEncoderURL = 
 						transcoderHost

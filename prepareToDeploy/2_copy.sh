@@ -104,3 +104,29 @@ if [ "$deploy" == "y" ]; then
 	date
 fi
 
+echo -n "deploy su aws? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+	echo "aws-mms-api-gui-1"
+	#scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@aws-mms-api-gui-1:/opt/catramms
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-35-35-24.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-api-gui-2"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-243-155.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-1"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-2"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-mil-1"
+	scp -i ~/ssh-keys/aws-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-15-160-110-185.eu-south-1.compute.amazonaws.com:/opt/catramms
+	date
+
+fi
+

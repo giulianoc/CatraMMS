@@ -92,7 +92,7 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
 
 pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 	string encodersPoolLabel, shared_ptr<Workspace> workspace,
-	int64_t encoderKeyToBeSkipped, bool internal)
+	int64_t encoderKeyToBeSkipped)
 {
 
     _logger->info(__FILEREF__ + "Received getEncoderURL"
@@ -103,25 +103,26 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 
 	try
 	{
-		tuple<int64_t, string, string, string, int> encoderByEncodersPool =
+		tuple<int64_t, bool, string, string, string, int> encoderByEncodersPool =
 			_mmsEngineDBFacade->getEncoderByEncodersPool(
 			workspace->_workspaceKey, encodersPoolLabel,
 			encoderKeyToBeSkipped);
 
 		int64_t encoderKey;
+		bool externalEncoder;
 		string protocol;
 		string publicServerName;
 		string internalServerName;
 		int port;
 
-		tie(encoderKey, protocol, publicServerName, internalServerName, port)
+		tie(encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port)
 			= encoderByEncodersPool;
 
 		string encoderURL;
-		if (internal)
-			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
-		else
+		if (externalEncoder)
 			encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
+		else
+			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
 
         _logger->info(__FILEREF__ + "getEncoderURL"
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)

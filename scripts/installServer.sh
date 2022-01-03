@@ -307,12 +307,15 @@ create-directory()
 
 	read -n 1 -s -r -p ".bashrc..."
 	echo ""
+	echo -n "serverName for the 'bash prompt' (i.e. engine-db-1): "
+	read serverName
 
 	echo "export PATH=\$PATH:~mms" >> /home/mms/.bashrc
 	echo "alias h='history'" >> /home/mms/.bashrc
 	echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
 	echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
 	echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
+	echo "PS1='\$serverName-'\$PS1" >> /home/mms/.bashrc
 	echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
 	echo "date" >> /home/mms/.bashrc
 }

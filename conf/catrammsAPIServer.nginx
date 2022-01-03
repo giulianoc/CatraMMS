@@ -21,7 +21,8 @@
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
 		}
-		if ($request_method = PUT) {
+		if ($request_method = GET) {
+			#2022-01-03: it has to be GET because this link is sent also via email
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
 		}
 		if ($request_method = PUT) {

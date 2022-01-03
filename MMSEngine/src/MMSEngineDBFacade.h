@@ -2361,14 +2361,14 @@ public:
 		string labelOrder	// "" or "asc" or "desc"
 	);
 
-	tuple<int64_t, string, string, string, int> getEncoderByEncodersPool(
+	tuple<int64_t, bool, string, string, string, int> getEncoderByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel,
       int64_t encoderKeyToBeSkipped);
 
 	int getEncodersNumberByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel);
 
-	string getEncoderURL(int64_t encoderKey, bool internal);
+	string getEncoderURL(int64_t encoderKey);
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

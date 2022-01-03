@@ -36,9 +36,9 @@
 
 		// mandatory in case the 'TimePeriod' field is true: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
-		"ProxyPeriod": {
-			"Start": "2019-01-21T12:30:00Z",
-			"End": "2019-01-21T13:30:00Z"
+		"schedule": {
+			"start": "2019-01-21T12:30:00Z",
+			"end": "2019-01-21T13:30:00Z"
 		},
 
 		// optional: It is possible to use this field to specify any other input options.

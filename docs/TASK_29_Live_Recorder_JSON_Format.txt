@@ -36,14 +36,14 @@
 
 		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
-		"RecordingPeriod": {
-			"Start": "2019-01-21T12:30:00Z",
-			"End": "2019-01-21T13:30:00Z",
+		"schedule": {
+			"start": "2019-01-21T12:30:00Z",
+			"end": "2019-01-21T13:30:00Z",
 			// If true, as soon as the End is reached, the recording will start again
 			// with the following dates:
 			//	Start will be set to the End
 			//	End will be increased of the same period (End - Start)
-			"AutoRenew": false
+			"autoRenew": false
 		},
 
 		// mandatory, it has to be as even number (numero pari) and cannot be smaller than 10

@@ -3738,7 +3738,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		vector<string> mandatoryFields = {
 			"ConfigurationLabel",
 			"DeliveryCode",
-			"RecordingPeriod",
+			"schedule",
 			"SegmentDuration"
 		};
 		for (string mandatoryField: mandatoryFields)
@@ -3794,9 +3794,9 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "RecordingPeriod";
+    field = "schedule";
 	Json::Value recordingPeriodRoot = parametersRoot[field];
-    field = "Start";
+    field = "start";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
@@ -3815,7 +3815,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
 	time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
 
-    field = "End";
+    field = "end";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
@@ -4013,7 +4013,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
-    field = "ProxyPeriod";
+    field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		if (timePeriod)
@@ -4038,14 +4038,14 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
 
-		field = "Start";
+		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
-		field = "End";
+		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
@@ -4340,7 +4340,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		}
 	}
 
-    field = "ProxyPeriod";
+    field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
@@ -4362,14 +4362,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
 
-		field = "Start";
+		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
-		field = "End";
+		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
@@ -4454,7 +4454,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
-    field = "ProxyPeriod";
+    field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		if (timePeriod)
@@ -4479,14 +4479,14 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
 
-		field = "Start";
+		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
-		field = "End";
+		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
@@ -4786,7 +4786,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    field = "ProxyPeriod";
+    field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
@@ -4807,14 +4807,14 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
 
-		field = "Start";
+		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
-		field = "End";
+		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
@@ -6621,6 +6621,7 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
         "m4p",
         "mpg",
         "mp2",
+        "mp3",
         "mpeg",
         "mjpeg",
         "m4v",

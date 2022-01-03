@@ -1241,8 +1241,7 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
 	ostringstream response;
 	try
 	{
-		bool internal = true;
-		string transcoderHost = _mmsEngineDBFacade->getEncoderURL(encoderKey, internal);
+		string transcoderHost = _mmsEngineDBFacade->getEncoderURL(encoderKey);
 
 		// ffmpegEncoderURL = _ffmpegEncoderProtocol
 		// 	+ "://"

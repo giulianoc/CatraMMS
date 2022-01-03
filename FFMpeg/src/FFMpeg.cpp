@@ -11827,6 +11827,74 @@ void FFMpeg::liveProxy2(
 		+ ", timedInput: " + to_string(timedInput)
 	);
 
+	if (timedInput)
+	{
+		int64_t utcFirstProxyPeriodStart = -1;
+		int64_t utcLastProxyPeriodEnd = -1;
+		{
+			lock_guard<mutex> locker(*inputsRootMutex);
+
+			for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
+			{
+				Json::Value inputRoot = (*inputsRoot)[inputIndex];
+
+				string field = "utcProxyPeriodStart";
+				int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+				if (utcFirstProxyPeriodStart == -1)
+					utcFirstProxyPeriodStart = utcProxyPeriodStart;
+
+				field = "utcProxyPeriodEnd";
+				utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			}
+		}
+
+		time_t utcNow;
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		if (utcNow < utcFirstProxyPeriodStart)
+		{
+			while (utcNow < utcFirstProxyPeriodStart)
+			{
+				time_t sleepTime = utcFirstProxyPeriodStart - utcNow;
+
+				_logger->info(__FILEREF__ + "LiveProxy timing. "
+					+ "Too early to start the LiveProxy, just sleep "
+						+ to_string(sleepTime) + " seconds"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcFirstProxyPeriodStart: " + to_string(utcFirstProxyPeriodStart)
+				);
+
+				this_thread::sleep_for(chrono::seconds(sleepTime));
+
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+			}
+		}
+		else if (utcLastProxyPeriodEnd < utcNow)
+        {
+			time_t tooLateTime = utcNow - utcLastProxyPeriodEnd;
+
+            string errorMessage = __FILEREF__ + "LiveProxy timing. "
+				+ "Too late to start the LiveProxy"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcLastProxyPeriodEnd: " + to_string(utcLastProxyPeriodEnd)
+                    + ", tooLateTime: " + to_string(tooLateTime)
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+	}
+
 	// max repeating is 1 because:
 	//	- we have to return to the engine because the engine has to register the failure
 	//	- if we increase 'max repeating':
@@ -12378,7 +12446,8 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
+pair<long, string> FFMpeg::liveProxyInput(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
@@ -12601,7 +12670,15 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 		}
 
 		time_t utcNow;
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
 
+		/*
+		2022-01-03: this method is just to set the input parameters because
+			we have to start the ffmpeg command, for sure we do NOT have
+			to wait because we are too early to run the ffmpeg command
 		if (timePeriod)
 		{
 			{
@@ -12672,6 +12749,7 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
+		*/
 
 		{
 			if (timePeriod)
@@ -12904,73 +12982,6 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 		);
 
 		time_t utcNow;
-
-		if (timePeriod)
-		{
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
-
-			if (utcNow < utcProxyPeriodStart)
-			{
-				while (utcNow < utcProxyPeriodStart)
-				{
-					time_t sleepTime = utcProxyPeriodStart - utcNow;
-
-					_logger->info(__FILEREF__ + "LiveProxy timing. "
-						+ "Too early to start the LiveProxy, just sleep "
-						+ to_string(sleepTime) + " seconds"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", utcNow: " + to_string(utcNow)
-						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-					);
-
-					this_thread::sleep_for(chrono::seconds(sleepTime));
-
-					{
-						chrono::system_clock::time_point now = chrono::system_clock::now();
-						utcNow = chrono::system_clock::to_time_t(now);
-					}
-				}
-			}
-			else if (utcProxyPeriodEnd <= utcNow)
-			{
-				time_t tooLateTime = utcNow - utcProxyPeriodEnd;
-
-				string errorMessage = __FILEREF__ + "LiveProxy timing. "
-					+ "Too late to start the LiveProxy"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", tooLateTime: " + to_string(tooLateTime)
-				;
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			else
-			{
-				time_t delayTime = utcNow - utcProxyPeriodStart;
-
-				string errorMessage = __FILEREF__ + "LiveProxy timing. "
-					+ "We are a bit late to start the LiveProxy, let's start it"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", delayTime: " + to_string(delayTime)
-				;
-
-				_logger->warn(errorMessage);
-			}
-		}
-		else
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
@@ -13055,73 +13066,6 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 
 
 		time_t utcNow;
-
-		if (timePeriod)
-		{
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
-
-			if (utcNow < utcProxyPeriodStart)
-			{
-				while (utcNow < utcProxyPeriodStart)
-				{
-					time_t sleepTime = utcProxyPeriodStart - utcNow;
-
-					_logger->info(__FILEREF__ + "VODProxy timing. "
-						+ "Too early to start the VODProxy, just sleep "
-						+ to_string(sleepTime) + " seconds"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", utcNow: " + to_string(utcNow)
-						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-					);
-
-					this_thread::sleep_for(chrono::seconds(sleepTime));
-
-					{
-						chrono::system_clock::time_point now = chrono::system_clock::now();
-						utcNow = chrono::system_clock::to_time_t(now);
-					}
-				}
-			}
-			else if (utcProxyPeriodEnd <= utcNow)
-			{
-				time_t tooLateTime = utcNow - utcProxyPeriodEnd;
-
-				string errorMessage = __FILEREF__ + "VODProxy timing. "
-					+ "Too late to start the VODProxy"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", tooLateTime: " + to_string(tooLateTime)
-				;
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			else
-			{
-				time_t delayTime = utcNow - utcProxyPeriodStart;
-
-				string errorMessage = __FILEREF__ + "VODProxy timing. "
-					+ "We are a bit late to start the VODProxy, let's start it"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", delayTime: " + to_string(delayTime)
-				;
-
-				_logger->warn(errorMessage);
-			}
-		}
-		else
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
@@ -13214,64 +13158,6 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 		}
 		int64_t videoDurationInMilliSeconds = asInt64(countdownInputRoot, field, -1);
 
-		/*
-		field = "text";
-		if (!isMetadataPresent(countdownInputRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		string text = countdownInputRoot.get(field, "").asString();
-
-		string textPosition_X_InPixel = "";
-		field = "textPosition_X_InPixel";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
-
-		string textPosition_Y_InPixel = "";
-		field = "textPosition_Y_InPixel";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
-
-		string fontType = "";
-		field = "fontType";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontType = countdownInputRoot.get(field, "").asString();
-
-		int fontSize = -1;
-		field = "fontSize";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontSize = asInt(countdownInputRoot, field, -1);
-
-		string fontColor = "";
-		field = "fontColor";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontColor = countdownInputRoot.get(field, "").asString();
-
-		int textPercentageOpacity = -1;
-		field = "textPercentageOpacity";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPercentageOpacity = asInt(countdownInputRoot, field, -1);
-
-		bool boxEnable = false;
-		field = "boxEnable";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxEnable = asBool(countdownInputRoot, field, false);
-
-		string boxColor = "";
-		field = "boxColor";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxColor = countdownInputRoot.get(field, "").asString();
-
-		int boxPercentageOpacity = -1;
-		field = "boxPercentageOpacity";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
-		*/
-
 		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
 			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
 		)
@@ -13290,27 +13176,25 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 
 		time_t utcNow;
 		{
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
 
-			if (utcCountDownEnd <= utcNow)
-			{
-				time_t tooLateTime = utcNow - utcCountDownEnd;
+		if (utcCountDownEnd <= utcNow)
+		{
+			time_t tooLateTime = utcNow - utcCountDownEnd;
 
-				string errorMessage = __FILEREF__ + "Countdown timing. "
-					+ "Too late to start"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", utcNow: " + to_string(utcNow)
-					+ ", utcCountDownEnd: " + to_string(utcCountDownEnd)
-					+ ", tooLateTime: " + to_string(tooLateTime)
-					;
-				_logger->error(errorMessage);
+			string errorMessage = __FILEREF__ + "Countdown timing. "
+				+ "Too late to start"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", utcNow: " + to_string(utcNow)
+				+ ", utcCountDownEnd: " + to_string(utcCountDownEnd)
+				+ ", tooLateTime: " + to_string(tooLateTime)
+				;
+			_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
+			throw runtime_error(errorMessage);
 		}
 
 		int streamLoopNumber;
@@ -13334,13 +13218,6 @@ pair<long, string> FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encod
 				/ fVideoDurationInMilliSeconds;
 			streamLoopNumber += 2;
 		}
-
-		/*
-		string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
-			streamingDurationInSeconds);
-		*/
 
 		{
 			// global options

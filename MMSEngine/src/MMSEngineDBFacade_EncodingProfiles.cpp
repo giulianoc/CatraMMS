@@ -927,7 +927,10 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                     while (resultSetProfile->next())
                     {
                         Json::Value encodingProfileRoot;
-                        
+
+						field = "global";
+						encodingProfileRoot[field] = false;
+
                         field = "encodingProfileKey";
                         encodingProfileRoot[field] = resultSetProfile->getInt64("encodingProfileKey");
                 

@@ -2271,7 +2271,7 @@ void MMSEngineDBFacade::removeEncodersPool(
     }        
 }
 
-tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
+tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 	int64_t workspaceKey, string encodersPoolLabel,
 	int64_t encoderKeyToBeSkipped)
 {
@@ -2393,6 +2393,7 @@ tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncod
 		int newLastEncoderIndexUsed = lastEncoderIndexUsed;
 
 		int64_t encoderKey;
+		bool external = false;
 		string protocol;
 		string publicServerName;
 		string internalServerName;
@@ -2407,7 +2408,7 @@ tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncod
 
 			if (encodersPoolLabel == "")
 				lastSQLCommand = 
-					"select e.encoderKey, e.enabled, e.protocol, "
+					"select e.encoderKey, e.enabled, e.external, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm " 
 					"where e.encoderKey = ewm.encoderKey and ewm.workspaceKey = ? "
@@ -2415,7 +2416,7 @@ tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncod
 					"limit 1 offset ?";
 			else
 				lastSQLCommand = 
-					"select e.encoderKey, e.enabled, e.protocol, "
+					"select e.encoderKey, e.enabled, e.external, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm " 
 					"where e.encoderKey = eepm.encoderKey and eepm.encodersPoolKey = ? "
@@ -2469,6 +2470,7 @@ tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncod
 					continue;
 				}
 
+				external = resultSet->getInt("external") == 1 ? true : false;
 				protocol = resultSet->getString("protocol");
 				publicServerName = resultSet->getString("publicServerName");
 				internalServerName = resultSet->getString("internalServerName");
@@ -2555,7 +2557,8 @@ tuple<int64_t, string, string, string, int> MMSEngineDBFacade::getEncoderByEncod
 		conn = nullptr;
 
 
-		return make_tuple(encoderKey, protocol, publicServerName, internalServerName, port);
+		return make_tuple(encoderKey, external, protocol,
+			publicServerName, internalServerName, port);
     }
     catch(sql::SQLException se)
     {
@@ -2916,7 +2919,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
     } 
 }
 
-string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, bool internal)
+string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
 {
     string      lastSQLCommand;
     Json::Value encodersPoolListRoot;
@@ -2936,13 +2939,14 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, bool internal)
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		bool external;
 		string protocol;
 		string publicServerName;
 		string internalServerName;
 		int port;
 		{
 			lastSQLCommand = 
-				"select protocol, publicServerName, internalServerName, port "
+				"select external, protocol, publicServerName, internalServerName, port "
 				"from MMS_Encoder " 
 				"where encoderKey = ? "
 				"and enabled = 1 ";
@@ -2962,6 +2966,7 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, bool internal)
 			);
 			if (resultSet->next())
 			{
+				external = resultSet->getInt("external") == 1 ? true : false;
 				protocol = resultSet->getString("protocol");
 				publicServerName = resultSet->getString("publicServerName");
 				internalServerName = resultSet->getString("internalServerName");
@@ -2986,10 +2991,10 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, bool internal)
 
 
 		string encoderURL;
-		if (internal)
-			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
-		else
+		if (external)
 			encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
+		else
+			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
 
         _logger->info(__FILEREF__ + "getEncoderURL"
 			+ ", encoderKey: " + to_string(encoderKey)
