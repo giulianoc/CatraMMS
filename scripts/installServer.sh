@@ -330,7 +330,7 @@ install-mms-packages()
 	package=jsoncpp
 	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 
@@ -340,7 +340,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -348,7 +348,7 @@ install-mms-packages()
 	package=curlpp
 	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 
@@ -358,7 +358,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -369,7 +369,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -457,7 +457,7 @@ install-mms-packages()
 	package=opencv
 	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 
@@ -472,7 +472,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -483,7 +483,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
@@ -494,9 +494,20 @@ install-mms-packages()
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.restream.ovh/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+
+	if [ "$moduleName" == "encoder" ]; then
+		packageName=encoderMmsConf
+		echo ""
+		echo -n "$packageName "
+		read version
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~
+	fi
 
 
 	chown -R mms:mms /opt/catramms
@@ -593,7 +604,14 @@ fi
 
 moduleName=$1
 
-#Per prima cosa: formattare e montare dischi se necessario (fdisk...)
+#1. Per prima cosa: formattare e montare dischi se necessario
+#       sudo fdisk /dev/nvme1n1 (p n p w)
+#       sudo mkfs.ext4 /dev/nvme1n1p1
+#2. Inizializzare /etc/fstab
+#3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
+#4. sudo mount -a
+#5 sudo su; ./installServer.sh <module>
+#6. verificare ~/mms/conf/*
 
 #ssh-port
 mms-account-creation
