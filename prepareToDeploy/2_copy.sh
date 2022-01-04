@@ -124,6 +124,22 @@ if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
+	echo "aws-mms-transcoder-irl-1"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-245-119-36.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-irl-2"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-9-211.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-irl-3"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-244-38-33.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-irl-4"
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-35-222-185.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
 	echo "aws-mms-transcoder-mil-1"
 	scp -i ~/ssh-keys/aws-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-15-160-110-185.eu-south-1.compute.amazonaws.com:/opt/catramms
 	date
