@@ -609,8 +609,8 @@ moduleName=$1
 #       sudo mkfs.ext4 /dev/nvme1n1p1
 #2. Inizializzare /etc/fstab
 #3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
-#4. sudo mount -a
-#5 sudo su; ./installServer.sh <module>
+#4 sudo su; ./installServer.sh <module>
+#5. sudo mount -a
 #6. verificare ~/mms/conf/*
 
 #ssh-port
