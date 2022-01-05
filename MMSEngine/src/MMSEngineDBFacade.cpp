@@ -160,6 +160,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath
     );
 
+	_getIngestionJobsCurrentIndex	= 0;
+	_getEncodingJobsCurrentIndex	= 0;
+
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
 	for(int adminEmailAddressesIndex = 0;
 			adminEmailAddressesIndex < configuration["mms"]["adminEmailAddresses"].size();

@@ -125,15 +125,15 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "aws-mms-transcoder-irl-1"
-	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-245-119-36.eu-west-1.compute.amazonaws.com:/opt/catramms
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-51-208-212-158.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-transcoder-irl-2"
-	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-9-211.eu-west-1.compute.amazonaws.com:/opt/catramms
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-18-202-247-77.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-transcoder-irl-3"
-	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-244-38-33.eu-west-1.compute.amazonaws.com:/opt/catramms
+	scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-54-220-254-54.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-transcoder-irl-4"

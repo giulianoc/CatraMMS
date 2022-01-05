@@ -309,14 +309,19 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			pointAfterLive = chrono::system_clock::now();
 
-            int mysqlOffset = 0;
+			int initialGetIngestionJobsCurrentIndex = _getIngestionJobsCurrentIndex;
+
+			_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
+				+ ", initialGetIngestionJobsCurrentIndex: " + to_string(initialGetIngestionJobsCurrentIndex)
+			);
+
             int mysqlRowCount = _ingestionJobsSelectPageSize;
             bool moreRows = true;
 			int minutesAheadToConsiderLive = 5;
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
 				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
-					+ ", mysqlOffset: " + to_string(mysqlOffset)
+					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
 					+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
 					+ ", moreRows: " + to_string(moreRows)
 				);
@@ -324,7 +329,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, "
 					"ij.metaDataContent, ij.status, ij.ingestionType, "
-					"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+					"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), "
+						"'%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 					"where ir.ingestionRootKey = ij.ingestionRootKey "
 					"and ij.processorMMS is null ";
@@ -399,7 +405,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					minutesAheadToConsiderLive);
 
 				preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-				preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
+				preparedStatement->setInt(queryParameterIndexIngestionJob++,
+					_getIngestionJobsCurrentIndex);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -407,8 +414,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					moreRows = false;
 				else
 					moreRows = true;
-				mysqlOffset += _ingestionJobsSelectPageSize;
+				_getIngestionJobsCurrentIndex += _ingestionJobsSelectPageSize;
 
+				int resultSetIndex = 0;
 				while (resultSet->next())
 				{
 					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
@@ -420,6 +428,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 						resultSet->getString("ingestionType"));
 					string ingestionDate      = resultSet->getString("ingestionDate");
+
+					_logger->info(__FILEREF__ + "getIngestionsToBeManaged (result set loop)"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ingestionJobLabel: " + ingestionJobLabel
+						+ ", initialGetIngestionJobsCurrentIndex: " + to_string(initialGetIngestionJobsCurrentIndex)
+						+ ", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(resultSet->rowsCount())
+					);
+					resultSetIndex++;
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
@@ -488,7 +504,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ to_string(_doNotManageIngestionsOlderThanDays)
 					+ ", minutesAheadToConsiderLive: " + to_string(minutesAheadToConsiderLive)
 					+ ", mysqlRowCount: " + to_string(mysqlRowCount)
-					+ ", mysqlOffset: " + to_string(mysqlOffset)
+					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
 					+ ", onlyTasksNotInvolvingMMSEngineThreads: "
 						+ to_string(onlyTasksNotInvolvingMMSEngineThreads)
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -497,11 +513,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
+			if (ingestionsToBeManaged.size() < maxIngestionJobs)
+				_getIngestionJobsCurrentIndex = 0;
 
 			pointAfterNotLive = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "getIngestionsToBeManaged (exit)"
-				+ ", mysqlOffset: " + to_string(mysqlOffset)
+				+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
 				+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
 				+ ", moreRows: " + to_string(moreRows)
 				+ ", onlyTasksNotInvolvingMMSEngineThreads: "

@@ -2462,6 +2462,9 @@ private:
 
 	vector<string>	_adminEmailAddresses;
 
+	int				_getIngestionJobsCurrentIndex;
+	int				_getEncodingJobsCurrentIndex;
+
 	string createAPIKeyForActiveDirectoryUser(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,

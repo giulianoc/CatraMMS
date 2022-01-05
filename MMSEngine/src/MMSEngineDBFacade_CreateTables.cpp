@@ -2541,6 +2541,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingPid				INT UNSIGNED NULL,"
                     "stagingEncodedAssetPathName VARCHAR (256) NULL,"
                     "failuresNumber           	INT NOT NULL,"
+					"utcScheduleStart_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(parameters, '$.utcScheduleStart')) NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
                     "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade) "
@@ -2562,10 +2563,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // that index is important because it will be used by the query looking every 15 seconds if there are
-            // contents to be encoded
             lastSQLCommand = 
-                "create index MMS_EncodingJob_idx2 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
+                "create index MMS_EncodingJob_idx1 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -2583,10 +2582,27 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // that index is important because it will be used by the query looking every 15 seconds if there are
-            // contents to be encoded
             lastSQLCommand = 
-                "create index MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority)";
+                "create index MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

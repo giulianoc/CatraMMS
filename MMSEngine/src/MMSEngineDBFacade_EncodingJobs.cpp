@@ -2333,24 +2333,31 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 		encodingItems.clear();
 
+		int initialGetEncodingJobsCurrentIndex = _getEncodingJobsCurrentIndex;
+
+		_logger->info(__FILEREF__ + "getEncodingJobs"
+			+ ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex)
+		);
+
 		bool stillRows = true;
-		int startRow = 0;
 		while(encodingItems.size() < maxEncodingsNumber && stillRows)
         {
-			_logger->info(__FILEREF__ + "getEncodingJobs"
-				+ ", startRow: " + to_string(startRow)
+			_logger->info(__FILEREF__ + "getEncodingJobs (before select)"
+				+ ", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
 			);
             lastSQLCommand = 
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
-				"JSON_EXTRACT(ej.parameters, '$.utcScheduleStart') as utcScheduleStart "
+				"ej.utcScheduleStart_virtual "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
-				"order by ej.typePriority asc, utcScheduleStart asc, "
-				"ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
+				"and (ej.utcScheduleStart_virtual is null or "
+					"ej.utcScheduleStart_virtual - unix_timestamp() < ? * 60) "
+				"order by ej.typePriority asc, ej.utcScheduleStart_virtual asc, "
+					"ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
 				"limit ? offset ?"
 				// " for update"
 				;
@@ -2359,35 +2366,45 @@ void MMSEngineDBFacade::getEncodingJobs(
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++,
 				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatementEncoding->setInt(queryParameterIndex++,
+				timeBeforeToPrepareResourcesInMinutes);
             preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
-            preparedStatementEncoding->setInt(queryParameterIndex++, startRow);
-
-			startRow += maxEncodingsNumber;
+            preparedStatementEncoding->setInt(queryParameterIndex++, _getEncodingJobsCurrentIndex);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", timeBeforeToPrepareResourcesInMinutes: " + to_string(timeBeforeToPrepareResourcesInMinutes)
 				+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
-				+ ", startRow: " + to_string(startRow)
+				+ ", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
 				+ ", encodingResultSet->rowsCount: " + to_string(encodingResultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+			_getEncodingJobsCurrentIndex += maxEncodingsNumber;
 			if (encodingResultSet->rowsCount() != maxEncodingsNumber)
 				stillRows = false;
 
+			/*
 			time_t utcNow;                                                                                    
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();                           
 				utcNow = chrono::system_clock::to_time_t(now);                                                
 			}
+			*/
 
+			_logger->info(__FILEREF__ + "getEncodingJobs (after select)"
+				+ ", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
+				+ ", encodingResultSet->rowsCount: " + to_string(encodingResultSet->rowsCount())
+			);
+			int resultSetIndex = 0;
             while (encodingResultSet->next())
             {
                 int64_t encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
 
+				/*
 				if (!encodingResultSet->isNull("utcScheduleStart"))
 				{
 					int64_t utcProxyPeriodStart = encodingResultSet->getInt64("utcScheduleStart");
@@ -2403,13 +2420,15 @@ void MMSEngineDBFacade::getEncodingJobs(
 						continue;
 					}
 				}
+				*/
 
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
 					make_shared<MMSEngineDBFacade::EncodingItem>();
 
 				encodingItem->_encodingJobKey = encodingJobKey;
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
-                encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
+				string encodingType = encodingResultSet->getString("type");
+                encodingItem->_encodingType = toEncodingType(encodingType);
                 encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
                 encodingItem->_encodingPriority = static_cast<EncodingPriority>(
 						encodingResultSet->getInt("encodingPriority"));
@@ -2422,6 +2441,14 @@ void MMSEngineDBFacade::getEncodingJobs(
 				else
 					encodingItem->_stagingEncodedAssetPathName =
 						encodingResultSet->getString("stagingEncodedAssetPathName");
+
+				_logger->info(__FILEREF__ + "getEncodingJobs (resultSet loop)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+					+ ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex)
+					+ ", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(encodingResultSet->rowsCount())
+				);
+				resultSetIndex++;
 
                 {
                     Json::CharReaderBuilder builder;
@@ -2476,6 +2503,10 @@ void MMSEngineDBFacade::getEncodingJobs(
                         // throw runtime_error(errorMessage);
                     }
                 }
+				_logger->info(__FILEREF__ + "getEncodingJobs (after encodingParameters)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+				);
                 
                 int64_t workspaceKey;
                 {
@@ -2545,6 +2576,11 @@ void MMSEngineDBFacade::getEncodingJobs(
                         // throw runtime_error(errorMessage);
                     }
                 }
+				_logger->info(__FILEREF__ + "getEncodingJobs (after workspaceKey)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+				);
+                
 
 				// encodingItem->_ingestedParametersRoot
 				{
@@ -2665,6 +2701,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
+				_logger->info(__FILEREF__ + "getEncodingJobs (after ingestedParameters)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+				);
 
                 if (encodingItem->_encodingType == EncodingType::OverlayImageOnVideo)
                 {
@@ -3378,6 +3418,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 						}
 					}
                 }
+				_logger->info(__FILEREF__ + "getEncodingJobs (after encodingType processing)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+				);
                 
                 encodingItems.push_back(encodingItem);
 				othersToBeEncoded++;
@@ -3405,7 +3449,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						//		ej.encodingJobStart <= NOW() continue to be true
 						+ ", encodingJobStart: " + "NOW()"
 						);
-					if (!encodingResultSet->isNull("utcScheduleStart"))
+					if (!encodingResultSet->isNull("utcScheduleStart_virtual"))
 						lastSQLCommand = 
 							"update MMS_EncodingJob set status = ?, processorMMS = ? "
 							"where encodingJobKey = ? and processorMMS is null";
@@ -3447,8 +3491,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         throw runtime_error(errorMessage);
                     }
                 }
+				_logger->info(__FILEREF__ + "getEncodingJobs (after encodingJob update)"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingType: " + encodingType
+				);
             }
         }
+
+		if (encodingItems.size() < maxEncodingsNumber)
+			_getEncodingJobsCurrentIndex = 0;
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
