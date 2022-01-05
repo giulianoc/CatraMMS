@@ -6006,14 +6006,14 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.Start', ?)";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.schedule.start', ?)";
 			}
 
 			if (recordingPeriodEndModified)
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.End', ?)";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.schedule.end', ?)";
 			}
 
 			if (recordingVirtualVODModified)

@@ -2529,6 +2529,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
+                    "typePriority				INT NOT NULL,"
 					"parameters					LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "encodingPriority			TINYINT NOT NULL,"
                     "encodingJobStart			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
@@ -2579,7 +2580,28 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-    
+
+        try
+        {
+            // that index is important because it will be used by the query looking every 15 seconds if there are
+            // contents to be encoded
+            lastSQLCommand = 
+                "create index MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             // create table MMS_RequestsAuthorization

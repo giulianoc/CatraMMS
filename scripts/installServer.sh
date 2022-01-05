@@ -188,7 +188,7 @@ install-packages()
 	echo ""
 	apt install -y dvb-tools
 
-	if [ "$moduleName" == "api" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
 
 		#api should have GUI as well
 
@@ -245,15 +245,19 @@ create-directory()
 	mkdir /var/catramms
 	mkdir /var/catramms/pids
 
-	mkdir /var/catramms/storage
-	mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
-	mkdir /var/catramms/storage/nginxWorkingAreaRepository
-	mkdir /var/catramms/storage/MMSRepository
+	if [ "$moduleName" != "integrator" ]; then
+		mkdir /var/catramms/storage
+		mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
+		mkdir /var/catramms/storage/nginxWorkingAreaRepository
+		mkdir /var/catramms/storage/MMSRepository
+	fi
 
 	mkdir /var/catramms/logs
+	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
+		mkdir /var/catramms/logs/tomcat-gui
+	fi
 	if [ "$moduleName" == "api" ]; then
 		mkdir /var/catramms/logs/mmsAPI
-		mkdir /var/catramms/logs/tomcat-gui
 	fi
 	if [ "$moduleName" == "encoder" ]; then
 		mkdir /var/catramms/logs/mmsEncoder
@@ -261,30 +265,35 @@ create-directory()
 	if [ "$moduleName" == "engine" ]; then
 		mkdir /var/catramms/logs/mmsEngineService
 	fi
-	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "integrator" ]; then
 		mkdir /var/catramms/logs/nginx
 	fi
 
-	mkdir /mmsStorage
-	mkdir /mmsRepository0000
-	chown mms:mms /mmsRepository0000
+	if [ "$moduleName" != "integrator" ]; then
+		mkdir /mmsStorage
+		mkdir /mmsRepository0000
+		chown mms:mms /mmsRepository0000
+	fi
 
 	read -n 1 -s -r -p "links..."
 	echo ""
 
-	#these links will be broken until the partition will not be mounted
-	ln -s /mmsStorage/IngestionRepository /var/catramms/storage
-	ln -s /mmsStorage/MMSGUI /var/catramms/storage
-	ln -s /mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
-	ln -s /mmsStorage/dbDump /var/catramms/storage
-	ln -s /mmsStorage/commonConfiguration /var/catramms/storage
-	ln -s /mmsStorage/MMSRepository-free /var/catramms/storage
-	#Assuming the partition for the first repository containing the media files is /mmsRepository0000
-	ln -s /mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-	ln -s /mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+	if [ "$moduleName" != "integrator" ]; then
+		#these links will be broken until the partition will not be mounted
+		ln -s /mmsStorage/IngestionRepository /var/catramms/storage
+		ln -s /mmsStorage/MMSGUI /var/catramms/storage
+		ln -s /mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+		ln -s /mmsStorage/dbDump /var/catramms/storage
+		ln -s /mmsStorage/commonConfiguration /var/catramms/storage
+		ln -s /mmsStorage/MMSRepository-free /var/catramms/storage
+		#Assuming the partition for the first repository containing the media files is /mmsRepository0000
+		ln -s /mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		ln -s /mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+
+		ln -s /var/catramms/storage /home/mms
+	fi
 
 	ln -s /var/catramms/logs /home/mms
-	ln -s /var/catramms/storage /home/mms
 
 	mkdir -p /home/mms/mms/conf
 	mkdir -p /home/mms/mms/scripts
@@ -327,29 +336,35 @@ install-mms-packages()
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
-	package=jsoncpp
-	read -n 1 -s -r -p "Downloading $package..."
-	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	if [ "$moduleName" != "integrator" ]; then
+		package=jsoncpp
+		read -n 1 -s -r -p "Downloading $package..."
+		echo ""
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	fi
 
 
-	packageName=ImageMagick
-	echo ""
-	echo -n "$packageName version (i.e.: 7.0.10)? "
-	read version
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	if [ "$moduleName" != "integrator" ]; then
+		packageName=ImageMagick
+		echo ""
+		echo -n "$packageName version (i.e.: 7.0.10)? "
+		read version
+		package=$packageName-$version
+		echo "Downloading $package..."
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+		ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	fi
 
 
-	package=curlpp
-	read -n 1 -s -r -p "Downloading $package..."
-	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	if [ "$moduleName" != "integrator" ]; then
+		package=curlpp
+		read -n 1 -s -r -p "Downloading $package..."
+		echo ""
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	fi
 
 
 	packageName=ffmpeg
@@ -388,7 +403,7 @@ install-mms-packages()
 		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
 	fi
 
-	if [ "$moduleName" == "api" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
 
 		#api should have GUI as well
 
@@ -454,38 +469,44 @@ install-mms-packages()
 		echo ""
 	fi
 
-	package=opencv
-	read -n 1 -s -r -p "Downloading $package..."
-	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	if [ "$moduleName" != "integrator" ]; then
+		package=opencv
+		read -n 1 -s -r -p "Downloading $package..."
+		echo ""
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	fi
 
 
-	#Only in case we have to download it again, AS mms user
-	#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
-	#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-	#	chmod a+rx /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-	#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
-	packageName=youtube-dl
-	echo ""
-	echo -n "$packageName version (i.e.: 2021-04-05)? "
-	read version
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	if [ "$moduleName" != "integrator" ]; then
+		#Only in case we have to download it again, AS mms user
+		#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
+		#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+		#	chmod a+rx /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+		#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
+		packageName=youtube-dl
+		echo ""
+		echo -n "$packageName version (i.e.: 2021-04-05)? "
+		read version
+		package=$packageName-$version
+		echo "Downloading $package..."
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+		ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	fi
 
 
-	packageName=CatraLibraries
-	echo ""
-	echo -n "$packageName version (i.e.: 1.0.150)? "
-	read version
-	package=$packageName-$version-ubuntu
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+	if [ "$moduleName" != "integrator" ]; then
+		packageName=CatraLibraries
+		echo ""
+		echo -n "$packageName version (i.e.: 1.0.150)? "
+		read version
+		package=$packageName-$version-ubuntu
+		echo "Downloading $package..."
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+		ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+	fi
 
 
 	packageName=CatraMMS
@@ -597,7 +618,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage)>"
+	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage or integrator)>"
 
 	exit
 fi

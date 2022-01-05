@@ -12967,8 +12967,12 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				field = "utcProxyPeriodStart";
 				inputRoot[field] = utcProxyPeriodStart;
+				field = "utcScheduleStart";
+				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
 
@@ -13214,8 +13218,12 @@ void MMSEngineProcessor::manageVODProxy(
 
 				field = "utcProxyPeriodStart";
 				inputRoot[field] = utcProxyPeriodStart;
+				field = "utcScheduleStart";
+				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
 
@@ -13493,8 +13501,12 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 				field = "utcProxyPeriodStart";
 				inputRoot[field] = utcProxyPeriodStart;
+				field = "utcScheduleStart";
+				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "utcProxyPeriodEnd";
+				inputRoot[field] = utcProxyPeriodEnd;
+				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
 

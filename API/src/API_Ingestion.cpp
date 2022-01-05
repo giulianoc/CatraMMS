@@ -4762,7 +4762,7 @@ void API::changeLiveProxyPlaylist(
                 throw runtime_error(errorMessage);
             }
 
-			field = "ProxyPeriod";
+			field = "schedule";
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -4786,11 +4786,11 @@ void API::changeLiveProxyPlaylist(
                 throw runtime_error(errorMessage);
             }
 
-			field = "Start";
+			field = "start";
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
-			field = "End";
+			field = "end";
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
 			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
@@ -4936,10 +4936,10 @@ void API::changeLiveProxyPlaylist(
 					// correct values have to be:
 					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
 					// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
-					string field = "utcProxyPeriodStart";
+					string field = "utcScheduleStart";
 					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
 						field, -1);
-					field = "utcProxyPeriodEnd";
+					field = "utcScheduleEnd";
 					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
 						field, -1);
 					if (utcCurrentBroadcasterStart > utcProxyPeriodStart
@@ -4980,10 +4980,10 @@ void API::changeLiveProxyPlaylist(
 						field = "timePeriod";
 						newdPlaylistItemToBeAddedRoot[field] = true;
 
-						field = "utcProxyPeriodStart";
+						field = "utcScheduleStart";
 						newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
 
-						field = "utcProxyPeriodEnd";
+						field = "utcScheduleEnd";
 						newdPlaylistItemToBeAddedRoot[field] = utcProxyPeriodStart;
 
 						if (broadcastDefaultMediaType == "Live Channel")
@@ -5096,10 +5096,10 @@ void API::changeLiveProxyPlaylist(
 					field = "timePeriod";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
-					field = "utcProxyPeriodStart";
+					field = "utcScheduleStart";
 					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterStart;
 
-					field = "utcProxyPeriodEnd";
+					field = "utcScheduleEnd";
 					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
 
 					if (broadcastDefaultMediaType == "Live Channel")
@@ -5189,10 +5189,10 @@ void API::changeLiveProxyPlaylist(
 					field = "timePeriod";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
-					field = "utcProxyPeriodStart";
+					field = "utcScheduleStart";
 					newdPlaylistItemToBeAddedRoot[field] = utcCurrentBroadcasterStart;
 
-					field = "utcProxyPeriodEnd";
+					field = "utcScheduleEnd";
 					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
 
 					if (broadcastDefaultMediaType == "Live Channel")
