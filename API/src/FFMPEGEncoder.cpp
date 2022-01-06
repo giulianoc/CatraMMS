@@ -548,9 +548,50 @@ void FFMPEGEncoder::manageRequestAndResponse(
     {
         try
         {
-            string responseBody = string("{ ")
-                    + "\"status\": \"Encoder up and running\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["status"] = "Encoder up and running";
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "status failed"
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else if (method == "info")
+    {
+        try
+        {
+			int lastBiggerCpuUsage = -1;
+			{
+				lock_guard<mutex> locker(*_cpuUsageMutex);
+
+				for(int cpuUsage: *_cpuUsage)
+				{
+					if (cpuUsage > lastBiggerCpuUsage)
+						lastBiggerCpuUsage = cpuUsage;
+				}
+			}
+
+			Json::Value infoRoot;
+			infoRoot["status"] = "Encoder up and running";
+			infoRoot["cpuUsage"] = lastBiggerCpuUsage;
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, infoRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -741,11 +782,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 
         try
-        {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+        {
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -939,10 +982,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -1134,11 +1179,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 
         try
-        {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+        {
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -1331,10 +1378,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -1527,10 +1576,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -1723,10 +1774,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -1919,10 +1972,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -2115,10 +2170,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -2311,10 +2368,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -2510,10 +2569,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -2757,10 +2818,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {            
-            string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                    + "}";
+			Json::Value responseBodyRoot;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+
+			Json::StreamWriterBuilder wbuilder;
+			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
             sendSuccess(request, 200, responseBody);
         }
@@ -13493,60 +13556,6 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 
 		return maxCapability;
 	}
-
-	/*
-	int maxEncodingsCapability = 1;
-
-	try
-	{
-		if (FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
-		{
-			Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
-				_encoderCapabilityConfigurationPathName.c_str());
-
-			maxEncodingsCapability = JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
-				"maxEncodingsCapability", 1);
-			_logger->info(__FILEREF__ + "Configuration item"
-				+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
-			);
-
-			if (maxEncodingsCapability > VECTOR_MAX_CAPACITY)
-			{
-				_logger->error(__FILEREF__ + "getMaxXXXXCapability. maxEncodingsCapability cannot be bigger than VECTOR_MAX_CAPACITY"
-					+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
-					+ ", maxEncodingsCapability: " + to_string(maxEncodingsCapability)
-					+ ", VECTOR_MAX_CAPACITY: " + to_string(VECTOR_MAX_CAPACITY)
-				);
-
-				maxEncodingsCapability = VECTOR_MAX_CAPACITY;
-			}
-
-			maxEncodingsCapability = calculateCapabilitiesBasedOnOtherRunningProcesses(
-				maxEncodingsCapability,
-				-1,
-				-1
-			);
-		}
-		else
-		{
-			_logger->error(__FILEREF__ + "getMaxXXXXCapability. Encoder Capability Configuration Path Name is not present"
-				+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
-			);
-		}
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "getMaxXXXXCapability failed"
-			+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
-		);
-	}
-
-	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-		+ ", maxEncodingsCapability: " + to_string(maxEncodingsCapability)
-	);
-
-	return maxEncodingsCapability;
-	*/
 }
 
 int FFMPEGEncoder::getMaxLiveProxiesCapability(void)

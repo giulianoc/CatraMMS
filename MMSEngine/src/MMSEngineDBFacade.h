@@ -1373,7 +1373,8 @@ public:
 	// 	int64_t ingestionJobKey);
 
 	void getRunningLiveRecorderVirtualVODsDetails(
-		vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+		vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t,
+		string>>& runningLiveRecordersDetails
 	);
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
@@ -2340,6 +2341,12 @@ public:
 
 	pair<string, string> getEncoderDetails (int64_t encoderKey);
 
+	bool isEncoderRunning(bool external, string protocol,
+		string publicServerName, string internalServerName, int port);
+
+	pair<bool, int> getEncoderInfo(bool external, string protocol,
+		string publicServerName, string internalServerName, int port);
+
 	void addAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
 
@@ -2362,7 +2369,7 @@ public:
 		string labelOrder	// "" or "asc" or "desc"
 	);
 
-	tuple<int64_t, bool, string, string, string, int> getEncoderByEncodersPool(
+	tuple<int64_t, bool, string, string, string, int> getRunningEncoderByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel,
       int64_t encoderKeyToBeSkipped);
 
@@ -2451,6 +2458,12 @@ private:
     
 	int								_doNotManageIngestionsOlderThanDays;
 	int								_ingestionWorkflowRetentionInDays;
+
+	string							_ffmpegEncoderUser;
+	string							_ffmpegEncoderPassword;
+	string							_ffmpegEncoderStatusURI;
+	string							_ffmpegEncoderInfoURI;
+	int								_ffmpegEncoderInfoTimeout;
 
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;

@@ -104,7 +104,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 	try
 	{
 		tuple<int64_t, bool, string, string, string, int> encoderByEncodersPool =
-			_mmsEngineDBFacade->getEncoderByEncodersPool(
+			_mmsEngineDBFacade->getRunningEncoderByEncodersPool(
 			workspace->_workspaceKey, encodersPoolLabel,
 			encoderKeyToBeSkipped);
 
@@ -136,7 +136,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 	}
     catch(EncoderNotFound e)
     {
-        _logger->error(__FILEREF__ + "getEncoderURL failed"
+        _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -147,7 +147,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "getEncoderURL failed"
+        _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -158,7 +158,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
     }
     catch(exception e)
     {
-        string errorMessage = string("getEncoderURL failed")
+        string errorMessage = string("getRunningEncoderByEncodersPool failed")
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)

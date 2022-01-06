@@ -93,6 +93,28 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
     );
 
+	_ffmpegEncoderUser = configuration["ffmpeg"].get("encoderUser", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
+	);
+	_ffmpegEncoderPassword = configuration["ffmpeg"].get("encoderPassword", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->encoderPassword: " + "..."
+	);
+	_ffmpegEncoderStatusURI = configuration["ffmpeg"].get("encoderStatusURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI
+    );
+	_ffmpegEncoderInfoURI = configuration["ffmpeg"].get("encoderInfoURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI
+    );
+	_ffmpegEncoderInfoTimeout = JSONUtils::asInt(configuration["ffmpeg"],
+		"encoderInfoTimeout", 2);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout)
+    );
+
     _ingestionJobsSelectPageSize = JSONUtils::asInt(configuration["mms"], "ingestionJobsSelectPageSize", 500);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize)

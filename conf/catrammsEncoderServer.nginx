@@ -6,6 +6,9 @@
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?version=$1&method=status last;
 		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/info/?$ /encoder?version=$1&method=info last;
+		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
 		}
