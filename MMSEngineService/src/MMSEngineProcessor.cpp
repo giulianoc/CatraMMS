@@ -886,7 +886,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			}
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-				_processorMMS, _maxIngestionJobsPerEvent, onlyTasksNotInvolvingMMSEngineThreads
+				_processorMMS, _maxIngestionJobsPerEvent, _timeBeforeToPrepareResourcesInMinutes,
+				onlyTasksNotInvolvingMMSEngineThreads
             );
 
             _logger->info(__FILEREF__ + "getIngestionsToBeManaged result"

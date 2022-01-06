@@ -1179,6 +1179,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "processorMMS               VARCHAR (128) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "errorMessage               MEDIUMTEXT NULL,"
+					"scheduleStart_virtual		DATETIME GENERATED ALWAYS AS (STR_TO_DATE(JSON_EXTRACT(metaDataContent, '$.schedule.start'), '\"%Y-%m-%dT%H:%i:%sZ\"')) NULL,"
 					// added because the channels view was slow
 					"configurationLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.ConfigurationLabel'))) NULL,"
 					"outputChannelLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.OutputChannelLabel'))) NULL,"
@@ -2541,6 +2542,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingPid				INT UNSIGNED NULL,"
                     "stagingEncodedAssetPathName VARCHAR (256) NULL,"
                     "failuresNumber           	INT NOT NULL,"
+					"creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
 					"utcScheduleStart_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(parameters, '$.utcScheduleStart')) NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
                     "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "

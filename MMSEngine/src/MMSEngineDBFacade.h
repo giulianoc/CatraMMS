@@ -1360,6 +1360,7 @@ public:
     void getIngestionsToBeManaged(
         vector<tuple<int64_t, string, shared_ptr<Workspace>,string, string, IngestionType,
 		IngestionStatus>>& ingestionsToBeManaged, string processorMMS, int maxIngestionJobs,
+		int timeBeforeToPrepareResourcesInMinutes,
 		bool onlyTasksNotInvolvingMMSEngineThreads
     );
 
@@ -2631,7 +2632,6 @@ private:
     Json::Value getIngestionJobRoot(
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
-        int64_t ingestionRootKey,
 		bool dependencyInfo,
 		bool ingestionJobOutputs,
         shared_ptr<MySQLConnection> conn);

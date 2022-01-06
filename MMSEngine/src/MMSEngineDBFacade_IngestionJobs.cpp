@@ -7,6 +7,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs,
+		int timeBeforeToPrepareResourcesInMinutes,
 		bool onlyTasksNotInvolvingMMSEngineThreads
 )
 {
@@ -17,6 +18,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
     try
     {
+		/*
 		int milliSecondsToSleepWaitingLock = 500;
 
 		PersistenceLock persistenceLock(this,
@@ -24,6 +26,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			_maxSecondsToWaitCheckIngestionLock,
 			processorMMS, "CheckIngestion",
 			milliSecondsToSleepWaitingLock, _logger);
+		*/
 
         chrono::system_clock::time_point startPoint = chrono::system_clock::now();
         if (startPoint - _lastConnectionStatsReport >=
@@ -66,258 +69,17 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
-			/* 2021-01-03: UNICA SELECT
-			// first Live-Proxy/VOD-Proxy/Countdown (because if we have many many Live-Recorder,
-			// Live-Proxy will never start)
-			// We will add also the YouTube-Live-Broadcast because this task has also a Schedule
-			{
-				int minutesAheadToConsiderLiveProxy = 5;
-
-				lastSQLCommand = 
-					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, "
-					"ij.status, ij.ingestionType, "
-					"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
-					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-					"where ir.ingestionRootKey = ij.ingestionRootKey and "
-					"ij.processorMMS is null "
-					"and ij.ingestionType in ('Live-Proxy', 'VOD-Proxy', 'Countdown', 'YouTube-Live-Broadcast') "
-					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
-					"and ij.sourceBinaryTransferred = 1)) "
-					// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
-					//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
-					//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
-					//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
-					//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
-					//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
-					//	non considera la condizione di job "troppo vecchio"
-					"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-					// $.ProxyPeriod.Start' is null gets all jobs without period
-					// UNIX_TIMESTAMP... gets all jobs with period
-					"and (JSON_EXTRACT(ij.metaDataContent, '$.schedule.start') is null or UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.schedule.start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
-					// "for update "
-					;
-					// "limit ? offset ?"
-					// "limit ? offset ? for update"
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndexIngestionJob = 1;
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++,
-				// 	_doNotManageIngestionsOlderThanDays);
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
-					minutesAheadToConsiderLiveProxy);
-
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
-
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				while (resultSet->next())
-				{
-					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-					string ingestionJobLabel	= resultSet->getString("label");
-					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
-					string metaDataContent      = resultSet->getString("metaDataContent");
-					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
-						resultSet->getString("status"));
-					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
-						resultSet->getString("ingestionType"));
-					string ingestionDate      = resultSet->getString("ingestionDate");
-
-					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
-						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-						ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
-
-					bool ingestionJobToBeManaged;
-					int64_t dependOnIngestionJobKey;
-					int dependOnSuccess;
-					IngestionStatus ingestionStatusDependency;
-
-					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess,
-						ingestionStatusDependency) = ingestionJobToBeManagedInfo;
-
-					if (ingestionJobToBeManaged)
-					{
-						_logger->info(__FILEREF__ + "Adding jobs to be processed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionStatus: " + toString(ingestionStatus)
-						);
-                       
-						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-
-						tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
-							IngestionStatus> ingestionToBeManaged
-                               = make_tuple(ingestionJobKey, ingestionJobLabel, workspace, ingestionDate,
-									   metaDataContent, ingestionType, ingestionStatus);
-
-						ingestionsToBeManaged.push_back(ingestionToBeManaged);
-						liveProxyToBeIngested++;
-					}
-					else
-					{
-						_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionStatus: " + toString(ingestionStatus)
-							+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-							+ ", dependOnSuccess: " + to_string(dependOnSuccess)
-							+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
-						);
-					}
-				}
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
-					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
-					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
-					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
-					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
-					+ ", minutesAheadToConsiderLiveProxy: " + to_string(minutesAheadToConsiderLiveProxy)
-					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-
-            }
-
-			// 2019-03-31: scenario: we have a long list of encodings to be done (113 encodings) and among these we have 2 live recordings.
-			//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
-			//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
-			{
-				// the last condition (and UNIX_TIMESTAMP(....) specifies that, if a Live Recorder has to start in one hour,
-				// it has not to be considered. It means the select has to return only the Live-Recorder close to start.
-				int minutesAheadToConsiderLiveRecorder = 5;
-
-				lastSQLCommand = 
-					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
-						"ij.ingestionType, "
-						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
-						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType = 'Live-Recorder' "
-						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
-						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
-						//	1. viene schedulato NOW un LiveRecorder che dovrà partire fra 30 gg
-						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
-						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
-						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
-						//	non considera la condizione di job "troppo vecchio"
-						"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-						"and (JSON_EXTRACT(ij.metaDataContent, '$.schedule.start') is not null and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.schedule.start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
-						// "for update "
-						;
-						// "limit ? offset ?"
-						// "limit ? offset ? for update"
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndexIngestionJob = 1;
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
-					MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++,
-				// 	_doNotManageIngestionsOlderThanDays);
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
-					minutesAheadToConsiderLiveRecorder);
-
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
-
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				while (resultSet->next())
-				{
-					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-					string ingestionJobLabel	= resultSet->getString("label");
-					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
-					string metaDataContent      = resultSet->getString("metaDataContent");
-					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
-						resultSet->getString("status"));
-					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
-						resultSet->getString("ingestionType"));
-					string ingestionDate      = resultSet->getString("ingestionDate");
-
-					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
-						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-						ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
-
-					bool ingestionJobToBeManaged;
-					int64_t dependOnIngestionJobKey;
-					int dependOnSuccess;
-					IngestionStatus ingestionStatusDependency;
-
-					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess,
-						ingestionStatusDependency) = ingestionJobToBeManagedInfo;
-
-					if (ingestionJobToBeManaged)
-					{
-						_logger->info(__FILEREF__ + "Adding jobs to be processed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionStatus: " + toString(ingestionStatus)
-						);
-                       
-						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-
-						tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
-							IngestionStatus> ingestionToBeManaged = make_tuple(ingestionJobKey,
-								ingestionJobLabel, workspace, ingestionDate, metaDataContent,
-								ingestionType, ingestionStatus);
-
-						ingestionsToBeManaged.push_back(ingestionToBeManaged);
-						liveRecorderToBeIngested++;
-					}
-					else
-					{
-						_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionStatus: " + toString(ingestionStatus)
-							+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-							+ ", dependOnSuccess: " + to_string(dependOnSuccess)
-							+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
-						);
-					}
-				}
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
-					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
-					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
-					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
-					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
-					+ ", minutesAheadToConsiderLiveRecorder: " + to_string(minutesAheadToConsiderLiveRecorder)
-					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-            }
-			*/
-
 			pointAfterLive = chrono::system_clock::now();
 
 			int initialGetIngestionJobsCurrentIndex = _getIngestionJobsCurrentIndex;
 
 			_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
-				+ ", initialGetIngestionJobsCurrentIndex: " + to_string(initialGetIngestionJobsCurrentIndex)
+				+ ", initialGetIngestionJobsCurrentIndex: "
+					+ to_string(initialGetIngestionJobsCurrentIndex)
 			);
 
             int mysqlRowCount = _ingestionJobsSelectPageSize;
             bool moreRows = true;
-			int minutesAheadToConsiderLive = 5;
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
 				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
@@ -326,6 +88,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					+ ", moreRows: " + to_string(moreRows)
 				);
 
+				/*
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, "
 					"ij.metaDataContent, ij.status, ij.ingestionType, "
@@ -359,53 +122,90 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					;
 					lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
 				}
-				/* 2021-01-03: UNICA SELECT
-				else
-				{
-					// everything but Live-Recorder, Live-Proxy, VOD-Proxy
-					// already asked before
-					lastSQLCommand +=
-						"and ij.ingestionType not in ('Live-Recorder', 'Live-Proxy', 'VOD-Proxy', 'Countdown', 'YouTube-Live-Broadcast') ";
-				}
-				*/
 				lastSQLCommand +=
 					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
 					"and ij.sourceBinaryTransferred = 1)) "
 					"and ij.processingStartingFrom <= NOW() "
 					"and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-					// 2021-01-03: BEGIN UNICA SELECT
 					"and ("
 					"JSON_EXTRACT(ij.metaDataContent, '$.schedule.start') is null "
 					"or UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.schedule.start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0 "
 					") "
-					// 2021-01-03: END UNICA SELECT
 					"order by ij.priority asc, ij.processingStartingFrom asc "
 					"limit ? offset ?"
 					// "limit ? offset ? for update"
 				;
+				*/
+				// 2022-01-06: I wanted to have this select running in parallel among all the engines.
+				//      For this reason, I have to use 'select for update'.
+				//      At the same time, I had to remove the join because a join would lock everything
+				//      Without join, if the select got i.e. 20 rows, all the other rows are not locked
+				//      and can be got from the other engines
+				lastSQLCommand = 
+					"select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
+					"ij.metaDataContent, ij.status, ij.ingestionType "
+					"from MMS_IngestionJob ij "
+					"where ij.processorMMS is null ";
+				if (onlyTasksNotInvolvingMMSEngineThreads)
+				{
+					string tasksNotInvolvingMMSEngineThreadsList =
+						"'GroupOfTask'"
+						", 'Encode'"
+						", 'Video-Speed'"
+						", 'Picture-InPicture'"
+						", 'Intro-Outro-Overlay'"
+						", 'Periodical-Frames'"
+						", 'I-Frames'"
+						", 'Motion-JPEG-by-Periodical-Frames'"
+						", 'Motion-JPEG-by-I-Frames'"
+						", 'Slideshow'"
+						", 'Overlay-Image-On-Video'"
+						", 'Overlay-Text-On-Video'"
+						", 'Media-Cross-Reference'"
+						", 'Face-Recognition'"
+						", 'Face-Identification'"
+						// ", 'Live-Recorder'"	already asked before
+						// ", 'Live-Proxy', 'VODProxy'"	already asked before
+						// ", 'Countdown'"
+						", 'Live-Grid'"
+					;
+					lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
+				}
+				lastSQLCommand +=
+					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
+					"and ij.sourceBinaryTransferred = 1)) "
+					"and ij.processingStartingFrom <= NOW() "
+					"and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+					"and (scheduleStart_virtual is null or UNIX_TIMESTAMP("
+						"convert_tz(scheduleStart_virtual,  '+00:00', @@session.time_zone)) - "
+						"UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
+					"order by ij.priority asc, ij.processingStartingFrom asc "
+					"limit ? offset ? for update"
+				;
+
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndexIngestionJob = 1;
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::
 						SourceDownloadingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::
 						SourceUploadingInProgress));
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
+				preparedStatement->setInt(queryParameterIndex++,
 					_doNotManageIngestionsOlderThanDays);
 
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
-					minutesAheadToConsiderLive);
+				preparedStatement->setInt(queryParameterIndex++,
+					timeBeforeToPrepareResourcesInMinutes);
 
-				preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
+				preparedStatement->setInt(queryParameterIndex++, mysqlRowCount);
+				preparedStatement->setInt(queryParameterIndex++,
 					_getIngestionJobsCurrentIndex);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -419,15 +219,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				int resultSetIndex = 0;
 				while (resultSet->next())
 				{
+					int64_t ingestionRootKey	= resultSet->getInt64("ingestionRootKey");
 					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
 					string ingestionJobLabel	= resultSet->getString("label");
-					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
 					string metaDataContent      = resultSet->getString("metaDataContent");
 					IngestionStatus ingestionStatus     = MMSEngineDBFacade::
 						toIngestionStatus(resultSet->getString("status"));
 					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 						resultSet->getString("ingestionType"));
-					string ingestionDate      = resultSet->getString("ingestionDate");
 
 					_logger->info(__FILEREF__ + "getIngestionsToBeManaged (result set loop)"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -436,6 +235,53 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(resultSet->rowsCount())
 					);
 					resultSetIndex++;
+
+					int64_t workspaceKey;
+					string ingestionDate;
+					{
+						lastSQLCommand = 
+							"select workspaceKey, "
+							"DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), "
+								"'%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+							"from MMS_IngestionRoot "
+							"where ingestionRootKey = ? ";
+						shared_ptr<sql::PreparedStatement> preparedStatementIngestionRoot (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex= 1;
+						preparedStatementIngestionRoot->setInt64(queryParameterIndex++,
+							ingestionRootKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						shared_ptr<sql::ResultSet> resultSetIngestionRoot (
+							preparedStatementIngestionRoot->executeQuery());
+
+						if (resultSetIngestionRoot->next())
+						{
+							workspaceKey = resultSetIngestionRoot->getInt64("workspaceKey");
+							ingestionDate = resultSetIngestionRoot->getString("ingestionDate");
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "IngestionRoot was not found"
+								+ ", processorMMS: " + processorMMS
+								+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", lastSQLCommand: " + lastSQLCommand
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);                    
+						}
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+							+ ", resultSetIngestionRoot->rowsCount: "
+								+ to_string(resultSetIngestionRoot->rowsCount())
+							+ ", elapsed (millisecs): @" + to_string(
+								chrono::duration_cast<chrono::milliseconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
@@ -502,7 +348,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							SourceUploadingInProgress)
 					+ ", _doNotManageIngestionsOlderThanDays: "
 						+ to_string(_doNotManageIngestionsOlderThanDays)
-					+ ", minutesAheadToConsiderLive: " + to_string(minutesAheadToConsiderLive)
+					+ ", timeBeforeToPrepareResourcesInMinutes: "
+						+ to_string(timeBeforeToPrepareResourcesInMinutes)
 					+ ", mysqlRowCount: " + to_string(mysqlRowCount)
 					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
 					+ ", onlyTasksNotInvolvingMMSEngineThreads: "
@@ -3849,6 +3696,11 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 
     try
     {
+        _logger->info(__FILEREF__ + "getIngestionJobDetails"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -3967,9 +3819,9 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
         }
 
         throw se;
-    }    
+    }
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -4587,9 +4439,10 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 workflowRoot[field] = static_cast<string>(resultSet->getString("lastUpdate"));
 
                 Json::Value ingestionJobsRoot(Json::arrayValue);
-                {            
+                {
                     lastSQLCommand = 
-                        "select ingestionJobKey, label, ingestionType, metaDataContent, processorMMS, "
+                        "select ingestionRootKey, ingestionJobKey, label, "
+						"ingestionType, metaDataContent, processorMMS, "
                         "DATE_FORMAT(convert_tz(processingStartingFrom, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as processingStartingFrom, "
                         "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
@@ -4607,7 +4460,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
-                                workspace, resultSetIngestionJob, currentIngestionRootKey,
+                                workspace, resultSetIngestionJob,
 								dependencyInfo, ingestionJobOutputs, conn);
 
                         ingestionJobsRoot.append(ingestionJobRoot);
@@ -4901,8 +4754,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value ingestionJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, "
-				"ij.metaDataContent, ij.processorMMS, "
+                "select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
+				"ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
                 "DATE_FORMAT(convert_tz(ij.processingStartingFrom, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as processingStartingFrom, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
@@ -4941,7 +4794,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             while (resultSet->next())
             {
                 Json::Value ingestionJobRoot = getIngestionJobRoot(
-                        workspace, resultSet, resultSet->getInt64("ingestionRootKey"),
+                        workspace, resultSet,
 						dependencyInfo, ingestionJobOutputs, conn);
 
                 ingestionJobsRoot.append(ingestionJobRoot);
@@ -5040,7 +4893,6 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
-        int64_t ingestionRootKey,
 		bool dependencyInfo,		// added for performance issue
 		bool ingestionJobOutputs,	// added because output could be thousands of entries
         shared_ptr<MySQLConnection> conn
@@ -5180,7 +5032,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         }
 
         field = "ingestionRootKey";
-        ingestionJobRoot[field] = ingestionRootKey;
+		ingestionJobRoot[field] = resultSet->getInt64("ingestionRootKey");
 
         field = "errorMessage";
         if (resultSet->isNull("errorMessage"))
