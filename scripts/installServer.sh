@@ -188,7 +188,7 @@ install-packages()
 	echo ""
 	apt install -y dvb-tools
 
-	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 
 		#api should have GUI as well
 
@@ -218,16 +218,25 @@ install-packages()
 		apt-get -y install mysql-server
 
 		echo ""
+		echo -n "Type the DB name: "
+		read dbName
+		echo -n "Type the DB user: "
+		read dbUser
 		echo -n "Type the DB password: "
 		read dbPassword
-		echo "create database mms CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
-		echo "CREATE USER 'mms'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO 'mms'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		echo "CREATE USER 'mms'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO 'mms'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "create database $dbName CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
+		echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		#grant process allows mysqldump
+		echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, expire_logs_days"
 
 		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
-		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, expire_logs_days"
+
 		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
 	fi
 }
@@ -245,7 +254,7 @@ create-directory()
 	mkdir /var/catramms
 	mkdir /var/catramms/pids
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		mkdir /var/catramms/storage
 		mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
 		mkdir /var/catramms/storage/nginxWorkingAreaRepository
@@ -253,7 +262,7 @@ create-directory()
 	fi
 
 	mkdir /var/catramms/logs
-	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 		mkdir /var/catramms/logs/tomcat-gui
 	fi
 	if [ "$moduleName" == "api" ]; then
@@ -265,11 +274,11 @@ create-directory()
 	if [ "$moduleName" == "engine" ]; then
 		mkdir /var/catramms/logs/mmsEngineService
 	fi
-	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "integrator" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "integration" ]; then
 		mkdir /var/catramms/logs/nginx
 	fi
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		mkdir /mmsStorage
 		mkdir /mmsRepository0000
 		chown mms:mms /mmsRepository0000
@@ -278,7 +287,7 @@ create-directory()
 	read -n 1 -s -r -p "links..."
 	echo ""
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
 		ln -s /mmsStorage/IngestionRepository /var/catramms/storage
 		ln -s /mmsStorage/MMSGUI /var/catramms/storage
@@ -336,7 +345,7 @@ install-mms-packages()
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -345,7 +354,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
 		echo -n "$packageName version (i.e.: 7.0.10)? "
@@ -358,7 +367,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		package=curlpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -403,7 +412,7 @@ install-mms-packages()
 		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
 	fi
 
-	if [ "$moduleName" == "api" -o "$moduleName" == "integrator" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 
 		#api should have GUI as well
 
@@ -469,7 +478,7 @@ install-mms-packages()
 		echo ""
 	fi
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		package=opencv
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -478,7 +487,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		#Only in case we have to download it again, AS mms user
 		#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
 		#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
@@ -496,7 +505,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integrator" ]; then
+	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
 		echo -n "$packageName version (i.e.: 1.0.150)? "
@@ -618,7 +627,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage or integrator)>"
+	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage or integration)>"
 
 	exit
 fi
