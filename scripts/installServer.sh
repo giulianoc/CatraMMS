@@ -287,6 +287,17 @@ create-directory()
 	read -n 1 -s -r -p "links..."
 	echo ""
 
+	if [ "$moduleName" == "encoder" -a $externalEncoder -eq 1 ]; then
+		mkdir /mmsStorage/IngestionRepository
+		chown mms:mms /mmsStorage/IngestionRepository
+		mkdir /mmsStorage/MMSWorkingAreaRepository
+		chown mms:mms /mmsStorage/MMSWorkingAreaRepository
+		mkdir /mmsStorage/MMSRepository-free
+		chown mms:mms /mmsStorage/MMSRepository-free
+		mkdir /mmsStorage/MMSLive
+		chown mms:mms /mmsStorage/MMSLive
+	fi
+
 	if [ "$moduleName" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
 		ln -s /mmsStorage/IngestionRepository /var/catramms/storage
@@ -529,10 +540,12 @@ install-mms-packages()
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
 	if [ "$moduleName" == "encoder" ]; then
-		packageName=encoderMmsConf
+		if [ $externalEncoder -eq 1 ]; then
+			packageName=externalEncoderMmsConf
+		else
+			packageName=encoderMmsConf
+		fi
 		echo ""
-		echo -n "$packageName "
-		read version
 		package=$packageName
 		echo "Downloading $package..."
 		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"

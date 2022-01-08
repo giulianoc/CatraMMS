@@ -141,7 +141,11 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "aws-mms-transcoder-mil-1"
-	scp -i ~/ssh-keys/aws-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-15-160-110-185.eu-south-1.compute.amazonaws.com:/opt/catramms
+	scp -i ~/ssh-keys/aws-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-15-161-78-89.eu-south-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-mil-2"
+	scp -i ~/ssh-keys/aws-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-35-152-80-3.eu-south-1.compute.amazonaws.com:/opt/catramms
 	date
 
 fi
