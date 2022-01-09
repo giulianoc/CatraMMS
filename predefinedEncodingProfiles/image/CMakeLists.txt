@@ -21,18 +21,18 @@
 # with the authors.
 
 SET (PROFILEs
-	MMS_JPG_H700.json
-	MMS_JPG_W40.json
-	MMS_PNG_W40.json
-	MMS_JPG_W60.json
-	MMS_PNG_W60.json
-	MMS_JPG_W120.json
-	MMS_PNG_W120.json
-	MMS_JPG_W240.json
-	MMS_PNG_W240.json
-	MMS_JPG_W930.json
 	MMS_PNG_1024_576.json
+	MMS_JPG_W120.json
+	MMS_JPG_W240.json
+	MMS_JPG_W40.json
+	MMS_JPG_W60.json
+	MMS_JPG_H700.json
+	MMS_JPG_W930.json
+	MMS_PNG_W120.json
 	MMS_PNG_W1280.json
+	MMS_PNG_W240.json
+	MMS_PNG_W40.json
+	MMS_PNG_W60.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/image)
