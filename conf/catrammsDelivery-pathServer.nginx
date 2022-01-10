@@ -15,6 +15,7 @@
 		rewrite ^/token_([a-zA-Z0-9\-_=,]+)/(.*) /$2 last;
 	}
 
+	#1 e poi #5
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
 
 		auth_request /catramms/delivery/checkAuthorizationThroughPath;
@@ -28,10 +29,11 @@
 		}
 	}
 
+	#2
 	location = /catramms/delivery/checkAuthorizationThroughPath {
 		internal;
 
-		proxy_pass http://$apiHostName/catramms/delivery/authorizationThroughPath;
+		proxy_pass http://$deliveryHostName/catramms/delivery/authorizationThroughPath;
 		#$host will be mms-delivery.restream.ovh
 		proxy_set_header Host $host;
 		proxy_pass_request_body off;
@@ -41,6 +43,7 @@
 		proxy_set_header X-Original-URI $request_uri;
 	}
 
+	#3
 	location /catramms/delivery/authorizationThroughPath {
 		allow 127.0.0.1;
 		deny all;
@@ -49,6 +52,7 @@
 		}
 	}
 
+	#4
 	location /api {
 		internal;
 

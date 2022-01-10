@@ -655,6 +655,8 @@ moduleName=$1
 #4 sudo su; ./installServer.sh <module>
 #5. sudo mount -a
 #6. verificare ~/mms/conf/*
+#7. remove installServer.sh
+#8. remove ssh key from /home/ubuntu/.ssh/authorized_keys
 
 #ssh-port
 mms-account-creation

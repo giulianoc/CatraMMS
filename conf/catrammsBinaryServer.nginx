@@ -46,7 +46,7 @@
 
 		#It is called when nginx completed to upload the binary,
 		#all the URL parameters are inherit from the 'toBeAuthorized' redirect
-		proxy_pass http://$apiHostName/catramms/uploadedBinary$is_args$args;
+		proxy_pass http://$binaryHostName/catramms/uploadedBinary$is_args$args;
 		proxy_http_version 1.1;
 		#$host will be mms-binary.restream.ovh
 		proxy_set_header Host $host;
@@ -70,7 +70,7 @@
 	location = /catramms/binary/checkAuthorization {
 		internal;
 
-		proxy_pass http://$apiHostName/catramms/binary/authorization?binaryListen=$apiHostName&binaryVirtualHostName=$host;
+		proxy_pass http://$binaryHostName/catramms/binary/authorization?binaryListen=$binaryHostName&binaryVirtualHostName=$host;
 		#$host will be mms-binary.restream.ovh
 		proxy_set_header Host $host;
 		proxy_pass_request_body off;
