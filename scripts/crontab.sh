@@ -276,22 +276,23 @@ else
 	then
 		#2020-12-09: added / at the end of dumpDirectory (because it is a link,
 		#'find' would not work)
-		dumpDirectory=/var/catramms/storage/dbDump/
+		#dumpDirectory=/var/catramms/storage/dbDump/
 		arrayOfDBUserPwd=($dbDetails)
 		dbUserPwdNumber="${#arrayOfDBUserPwd[@]}"
 		dbUserPwdIndex=0
 		#echo $dbUserPwdNumber
-		while [[ $dbUserPwdIndex -lt $dbUserPwdNumber ]]; do
+		#while [[ $dbUserPwdIndex -lt $dbUserPwdNumber ]]; do
 			dbUser=${arrayOfDBUserPwd[$dbUserPwdIndex]}
 			dbPwd=${arrayOfDBUserPwd[$((dbUserPwdIndex+1))]}
 			dbName=${arrayOfDBUserPwd[$((dbUserPwdIndex+2))]}
+			dumpDirectory=${arrayOfDBUserPwd[$((dbUserPwdIndex+3))]}
 
 			dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
 			#echo $dbUser $dbPwd $dbName $dumpFileName
 			mysqldump -u $dbUser -p$dbPwd -h db-server-active $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
 
 			dbUserPwdIndex=$((dbUserPwdIndex+3))
-		done
+		#done
 
 		if [[ "$timeoutInMinutes" == "" || "$timeoutInMinutes" == "0" ]]
 		then

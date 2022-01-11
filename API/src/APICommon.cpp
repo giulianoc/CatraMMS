@@ -608,7 +608,7 @@ bool APICommon::basicAuthenticationRequired(
 
 /*
 int APICommon::manageBinaryRequest()
-{    
+{
 
     pid_t processId = getpid();
 
@@ -890,7 +890,7 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
 void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
 		string responseBody, string contentType,
 		string cookieName, string cookieValue, string cookiePath,
-		bool enableCorsGETHeader)
+		bool enableCorsGETHeader, string originHeader)
 {
     string endLine = "\r\n";
     
@@ -929,9 +929,11 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
 	string corsGETHeader;
 	if (enableCorsGETHeader)
 	{
-		// Access-Control-Allow-Origin with the GUI hostname and Access-Control-Allow-Credentials: true
-		// are important to allow the player to manage the cookies
-		corsGETHeader = "Access-Control-Allow-Origin: " + _guiProtocol + "://" + _guiHostname + endLine
+		string origin = "*";
+		if (originHeader != "")
+			origin = originHeader;
+
+		corsGETHeader = "Access-Control-Allow-Origin: " + origin + endLine
 			+ "Access-Control-Allow-Methods: GET, POST, OPTIONS" + endLine
 			+ "Access-Control-Allow-Credentials: true" + endLine
 			+ "Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range" + endLine

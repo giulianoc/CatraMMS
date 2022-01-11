@@ -1310,15 +1310,22 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 					}
 					cookiePath = contentURI.substr(0, cookiePathIndex);
 				}
+
 				bool enableCorsGETHeader = true;
+				string originHeader;
+				{
+					auto originIt = requestDetails.find("HTTP_ORIGIN");
+					if (originIt != requestDetails.end())
+						originHeader = originIt->second;
+				}
 				if (secondaryManifest)
 					sendSuccess(request, 200, responseBody,
 						contentType, "", "", "",
-						enableCorsGETHeader);
+						enableCorsGETHeader, originHeader);
 				else
 					sendSuccess(request, 200, responseBody,
 						contentType, cookieName, cookieValue, cookiePath,
-						enableCorsGETHeader);
+						enableCorsGETHeader, originHeader);
 			}
 		}
         catch(runtime_error e)

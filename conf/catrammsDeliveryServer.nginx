@@ -31,8 +31,14 @@
 
 		auth_request /catramms/delivery/checkAuthorizationThroughParameter;
 
+		if ($http_Origin) {
+			set $origin '$http_Origin';
+		}
+		if ($http_Origin = "") {
+			set $origin '*';
+		}
 		if ($request_method = 'GET') {
-			add_header 'Access-Control-Allow-Origin' 'https://$guiHostName';
+			add_header 'Access-Control-Allow-Origin' '$origin';
 			add_header 'Access-Control-Allow-Credentials' 'true';
 			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
 			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
