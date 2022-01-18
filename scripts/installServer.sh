@@ -344,6 +344,7 @@ create-directory()
 	echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
 	echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
 	echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
+	echo "export EDITOR=/usr/bin/vi" >> /home/mms/.bashrc
 	echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
 	echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
 	echo "date" >> /home/mms/.bashrc

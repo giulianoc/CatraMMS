@@ -7657,8 +7657,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "channelSourceType";
 				parametersRoot[field] = channelSourceType;
 
-				field = "utcProxyPeriodStart";
-				parametersRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// parametersRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				parametersRoot[field] = utcProxyPeriodStart;
 
@@ -7964,8 +7964,8 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
 
-				field = "utcProxyPeriodStart";
-				parametersRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// parametersRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				parametersRoot[field] = utcProxyPeriodStart;
 
@@ -8266,8 +8266,8 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
 
-				field = "utcProxyPeriodStart";
-				parametersRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// parametersRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				parametersRoot[field] = utcProxyPeriodStart;
 

@@ -10495,23 +10495,23 @@ void FFMpeg::liveProxy2(
 			field = "utcScheduleStart";
 			if (isMetadataPresent(inputRoot, field))
 				utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-			else
-			{
-				field = "utcProxyPeriodStart";
-				if (isMetadataPresent(inputRoot, field))
-					utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-			}
+			// else
+			// {
+			// 	field = "utcProxyPeriodStart";
+			// 	if (isMetadataPresent(inputRoot, field))
+			// 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			// }
 
 			int64_t utcProxyPeriodEnd = -1;
 			field = "utcScheduleEnd";
 			if (isMetadataPresent(inputRoot, field))
 				utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-			else
-			{
-				field = "utcProxyPeriodEnd";
-				if (isMetadataPresent(inputRoot, field))
-					utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-			}
+			// else
+			// {
+			// 	field = "utcProxyPeriodEnd";
+			// 	if (isMetadataPresent(inputRoot, field))
+			// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			// }
 
 			if (!timePeriod || utcProxyPeriodStart == -1 || utcProxyPeriodEnd == -1)
 			{
@@ -10541,21 +10541,21 @@ void FFMpeg::liveProxy2(
 
 				string field = "utcScheduleStart";
 				int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-				if (utcProxyPeriodStart == -1)
-				{
-					field = "utcProxyPeriodStart";
-					utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-				}
+				// if (utcProxyPeriodStart == -1)
+				// {
+				// 	field = "utcProxyPeriodStart";
+				// 	utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+				// }
 				if (utcFirstProxyPeriodStart == -1)
 					utcFirstProxyPeriodStart = utcProxyPeriodStart;
 
 				field = "utcScheduleEnd";
 				utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
-				if (utcLastProxyPeriodEnd == -1)
-				{
-					field = "utcProxyPeriodEnd";
-					utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
-				}
+				// if (utcLastProxyPeriodEnd == -1)
+				// {
+				// 	field = "utcProxyPeriodEnd";
+				// 	utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
+				// }
 			}
 		}
 
@@ -11112,19 +11112,19 @@ int FFMpeg::getNextLiveProxyInput(
 
 			string field = "utcScheduleStart";
 			int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-			if (utcProxyPeriodStart == -1)
-			{
-				field = "utcProxyPeriodStart";
-				utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-			}
+			// if (utcProxyPeriodStart == -1)
+			// {
+			// 	field = "utcProxyPeriodStart";
+			// 	utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			// }
 
 			field = "utcScheduleEnd";
 			int64_t utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-			if (utcProxyPeriodEnd == -1)
-			{
-				field = "utcProxyPeriodEnd";
-				utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-			}
+			// if (utcProxyPeriodEnd == -1)
+			// {
+			// 	field = "utcProxyPeriodEnd";
+			// 	utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			// }
 
 			_logger->info(__FILEREF__ + "getNextLiveProxyInput"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11188,23 +11188,23 @@ pair<long, string> FFMpeg::liveProxyInput(
 	field = "utcScheduleStart";
 	if (isMetadataPresent(inputRoot, field))
 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-	else
-	{
-		field = "utcProxyPeriodStart";
-		if (isMetadataPresent(inputRoot, field))
-			utcProxyPeriodStart = asInt64(inputRoot, field, -1);
-	}
+	// else
+	// {
+	// 	field = "utcProxyPeriodStart";
+	// 	if (isMetadataPresent(inputRoot, field))
+	// 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+	// }
 
 	int64_t utcProxyPeriodEnd = -1;
 	field = "utcScheduleEnd";
 	if (isMetadataPresent(inputRoot, field))
 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-	else
-	{
-		field = "utcProxyPeriodEnd";
-		if (isMetadataPresent(inputRoot, field))
-			utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
-	}
+	// else
+	// {
+	// 	field = "utcProxyPeriodEnd";
+	// 	if (isMetadataPresent(inputRoot, field))
+	// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+	// }
 
 	//	"channelInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "channelConfKey": 2464, "channelConfigurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "channelSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
 	if (isMetadataPresent(inputRoot, "channelInput"))

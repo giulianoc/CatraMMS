@@ -13278,12 +13278,12 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 			if (timePeriod)
 			{
 				field = "utcScheduleStart";
-				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-				if (utcProxyPeriodStart == -1)
-				{
-					field = "utcProxyPeriodStart";
-					utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-				}
+				// utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+				// if (utcProxyPeriodStart == -1)
+				// {
+				// 	field = "utcProxyPeriodStart";
+				// 	utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+				// }
 			}
 
 			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
@@ -13295,11 +13295,11 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 			{
 				field = "utcScheduleEnd";
 				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
-				if (utcProxyPeriodEnd == -1)
-				{
-					field = "utcProxyPeriodEnd";
-					utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
-				}
+				// if (utcProxyPeriodEnd == -1)
+				// {
+				// 	field = "utcProxyPeriodEnd";
+				// 	utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+				// }
 			}
 		}
 	}
@@ -13426,11 +13426,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			{
 				field = "utcScheduleStart";
 				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-				if (utcProxyPeriodStart == -1)
-				{
-					field = "utcProxyPeriodStart";
-					utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-				}
+				// if (utcProxyPeriodStart == -1)
+				// {
+				// 	field = "utcProxyPeriodStart";
+				// 	utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
+				// }
 			}
 
 			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];

@@ -2611,7 +2611,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
+
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -3288,7 +3288,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool			encodingFound = false;
 
 		{
+			// see comment 2020-11-30
+			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+			#else
 			lock_guard<mutex> locker(*_encodingMutex);
+			#endif
 
 			#ifdef __VECTOR__
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
@@ -3314,7 +3318,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound)
 		{
+			// see comment 2020-11-30
+			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+			#else
 			lock_guard<mutex> locker(*_liveProxyMutex);
+			#endif
 
 			#ifdef __VECTOR__
 			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
@@ -3340,7 +3348,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound)
 		{
+			// see comment 2020-11-30
+			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+			#else
 			lock_guard<mutex> locker(*_liveRecordingMutex);
+			#endif
 
 			#ifdef __VECTOR__
 			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
@@ -3450,6 +3462,44 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		bool			encodingFound = false;
 
+		Json::Value newInputsRoot;
+		try
+		{
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
+
+			bool parsingSuccessful = reader->parse(requestBody.c_str(),
+				requestBody.c_str() + requestBody.size(), 
+				&newInputsRoot, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", errors: " + errors
+					+ ", requestBody: " + requestBody
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		catch(...)
+		{
+			string errorMessage = string("Parsing new LiveProxy playlist failed")
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", requestBody: " + requestBody
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			return;
+			// throw runtime_error(errorMessage);
+		}
+
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -3487,43 +3537,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				// throw runtime_error(errorMessage);
 				return;
-			}
-
-			Json::Value newInputsRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(requestBody.c_str(),
-					requestBody.c_str() + requestBody.size(), 
-					&newInputsRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", errors: " + errors
-						+ ", requestBody: " + requestBody
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(...)
-			{
-				string errorMessage = string("Parsing new LiveProxy playlist failed")
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
 			}
 
 			{
@@ -10417,8 +10430,8 @@ void FFMPEGEncoder::liveProxyThread(
 				Json::Value inputRoot = liveProxy->_inputsRoot[0];
 
 				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcScheduleStart", -1);
-				if (utcProxyPeriodStart == -1)
-					utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
+				// if (utcProxyPeriodStart == -1)
+				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
 
 				if (JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
 				{
@@ -11609,6 +11622,8 @@ void FFMPEGEncoder::monitorThread()
 	{
 		try
 		{
+			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
+
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
 			int liveProxyAndGridRunningCounter = 0;
@@ -12329,6 +12344,8 @@ void FFMPEGEncoder::monitorThread()
 				+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
 				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
 				+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
+				+ ", elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
 			);
 		}
 		catch(runtime_error e)
@@ -12350,6 +12367,8 @@ void FFMPEGEncoder::monitorThread()
 
 		try
 		{
+			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
+
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
 			int liveRecordingRunningCounter = 0;
@@ -13068,6 +13087,8 @@ void FFMPEGEncoder::monitorThread()
 				+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter + liveRecordingNotRunningCounter)
 				+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
 				+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+				+ ", elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
 			);
 		}
 		catch(runtime_error e)
@@ -13106,7 +13127,7 @@ void FFMPEGEncoder::cpuUsageThread()
 
 	while(!_cpuUsageThreadShutdown)
 	{
-		this_thread::sleep_for(chrono::milliseconds(50));
+		this_thread::sleep_for(chrono::milliseconds(200));
 
 		try
 		{

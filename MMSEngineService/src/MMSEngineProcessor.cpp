@@ -12966,13 +12966,13 @@ void MMSEngineProcessor::manageLiveProxy(
 				field = "timePeriod";
 				inputRoot[field] = timePeriod;
 
-				field = "utcProxyPeriodStart";
-				inputRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// inputRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				inputRoot[field] = utcProxyPeriodStart;
 
-				field = "utcProxyPeriodEnd";
-				inputRoot[field] = utcProxyPeriodEnd;
+				// field = "utcProxyPeriodEnd";
+				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
@@ -13217,13 +13217,13 @@ void MMSEngineProcessor::manageVODProxy(
 				field = "timePeriod";
 				inputRoot[field] = timePeriod;
 
-				field = "utcProxyPeriodStart";
-				inputRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// inputRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				inputRoot[field] = utcProxyPeriodStart;
 
-				field = "utcProxyPeriodEnd";
-				inputRoot[field] = utcProxyPeriodEnd;
+				// field = "utcProxyPeriodEnd";
+				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
@@ -13500,13 +13500,13 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				field = "timePeriod";
 				inputRoot[field] = timePeriod;
 
-				field = "utcProxyPeriodStart";
-				inputRoot[field] = utcProxyPeriodStart;
+				// field = "utcProxyPeriodStart";
+				// inputRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				inputRoot[field] = utcProxyPeriodStart;
 
-				field = "utcProxyPeriodEnd";
-				inputRoot[field] = utcProxyPeriodEnd;
+				// field = "utcProxyPeriodEnd";
+				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
