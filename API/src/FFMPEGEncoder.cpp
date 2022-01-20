@@ -11622,949 +11622,170 @@ void FFMPEGEncoder::monitorThread()
 	{
 		try
 		{
-			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
+			// this is to have a copy of LiveProxyAndGrid
+			vector<shared_ptr<LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
 
-			lock_guard<mutex> locker(*_liveProxyMutex);
+			// this is to have access to _running and _proxyStart
+			//	to check if it is changed. In case the process is killed, it will access
+			//	also to _killedBecauseOfNotWorking and _errorMessage
+			vector<shared_ptr<LiveProxyAndGrid>> sourceLiveProxiesCapability;
 
+			// to avoid to maintain the lock too much time
+			// we will clone the proxies for monitoring check
 			int liveProxyAndGridRunningCounter = 0;
-			int liveProxyAndGridNotRunningCounter = 0;
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
-			#else	// __MAP__
-			for(map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it = _liveProxiesCapability->begin();
-				it != _liveProxiesCapability->end(); it++)
-			#endif
 			{
+				lock_guard<mutex> locker(*_liveProxyMutex);
+
+				int liveProxyAndGridNotRunningCounter = 0;
+
 				#ifdef __VECTOR__
+				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				#else	// __MAP__
-				shared_ptr<LiveProxyAndGrid> liveProxy = it->second;
+				for(map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
+					_liveProxiesCapability->begin(); it != _liveProxiesCapability->end(); it++)
 				#endif
-
-				if (liveProxy->_running)
 				{
-					liveProxyAndGridRunningCounter++;
+					#ifdef __VECTOR__
+					#else	// __MAP__
+					shared_ptr<LiveProxyAndGrid> liveProxy = it->second;
+					#endif
 
-					_logger->info(__FILEREF__ + "liveProxyMonitor..."
-						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-					);
-
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-
-					bool liveProxyWorking = true;
-					string localErrorMessage;
-
+					if (liveProxy->_running)
 					{
-						// liveProxy->_proxyStart could be a bit in the future
-						int64_t liveProxyLiveTimeInMinutes;
-						if (now > liveProxy->_proxyStart)
-							liveProxyLiveTimeInMinutes = chrono::duration_cast<
-								chrono::minutes>(now - liveProxy->_proxyStart).count();
-						else	// it will be negative
-							liveProxyLiveTimeInMinutes = chrono::duration_cast<
-								chrono::minutes>(now - liveProxy->_proxyStart).count();
+						liveProxyAndGridRunningCounter++;
 
-						// checks are done after 3 minutes LiveProxy started,
-						// in order to be sure the manifest file was already created
-						if (liveProxyLiveTimeInMinutes <= 3)
-						{
-							_logger->info(__FILEREF__
-								+ "Checks are not done because too early"
-								+ ", ingestionJobKey: "
-									+ to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: "
-									+ to_string(liveProxy->_encodingJobKey)
-								+ ", liveProxyLiveTimeInMinutes: "
-									+ to_string(liveProxyLiveTimeInMinutes)
-							);
-
-							continue;
-						}
+						copiedRunningLiveProxiesCapability.push_back(
+							liveProxy->cloneForMonitor());
+						sourceLiveProxiesCapability.push_back(
+                            liveProxy);
 					}
-
-					// First health check
-					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-					//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
-					bool rtmpOutputFound = false;
-					if (liveProxyWorking)
+					else
 					{
-						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-							outputIndex++)
-						{
-							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-							string outputType = outputRoot.get("outputType", "").asString();
-
-							if (!liveProxyWorking)
-								break;
-
-							if (outputType == "HLS" || outputType == "DASH")
-							{
-								string manifestDirectoryPath = outputRoot
-									.get("manifestDirectoryPath", "").asString();
-								string manifestFileName = outputRoot
-									.get("manifestFileName", "").asString();
-
-								try
-								{
-									// First health check (HLS/DASH) looking the manifests path name timestamp
-
-									/*
-									chrono::system_clock::time_point now = chrono::system_clock::now();
-									int64_t liveProxyLiveTimeInMinutes =
-										chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
-
-									// check is done after 3 minutes LiveProxy started, in order to be sure
-									// the manifest file was already created
-									if (liveProxyLiveTimeInMinutes > 3)
-									*/
-									{
-										string manifestFilePathName =
-											manifestDirectoryPath + "/" + manifestFileName;
-										{
-											if(!FileIO::fileExisting(manifestFilePathName))
-											{
-												liveProxyWorking = false;
-
-												_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file does not exist"
-													+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestFilePathName: " + manifestFilePathName
-												);
-
-												localErrorMessage = " restarted because of 'manifest file is missing'";
-
-												break;
-											}
-											else
-											{
-												time_t utcManifestFileLastModificationTime;
-
-												FileIO::getFileTime (manifestFilePathName.c_str(),
-													&utcManifestFileLastModificationTime);
-
-												unsigned long long	ullNow = 0;
-												unsigned long		ulAdditionalMilliSecs;
-												long				lTimeZoneDifferenceInHours;
-
-												DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-													&lTimeZoneDifferenceInHours);
-
-												long maxLastManifestFileUpdateInSeconds = 30;
-
-												unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
-												if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
-												{
-													liveProxyWorking = false;
-
-													_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file was not updated "
-														+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
-														+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-														+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-														+ ", manifestFilePathName: " + manifestFilePathName
-														+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
-													);
-
-													localErrorMessage = " restarted because of 'manifest file was not updated'";
-
-													break;
-												}
-											}
-										}
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-							}
-							else	// rtmp (Proxy) or SRT (Grid)
-							{
-								rtmpOutputFound = true;
-							}
-						}
+						liveProxyAndGridNotRunningCounter++;
 					}
-					if (liveProxyWorking && rtmpOutputFound)
-					{
-						try
-						{
-							// First health check (rtmp), looks the log and check there is no message like
-							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-							//	This message causes proxy not working
-							if (liveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
-							{
-								liveProxyWorking = false;
-
-								_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
-									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									// + ", channelLabel: " + liveProxy->_channelLabel
-									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-								);
-
-								localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
-
-					// Second health 
-					//		HLS/DASH:	kill if segments were not generated
-					//					frame increasing check
-					//					it is also implemented the retention of segments too old (10 minutes)
-					//						This is already implemented by the HLS parameters (into the ffmpeg command)
-					//						We do it for the DASH option and in case ffmpeg does not work
-					//		rtmp(Proxy)/SRT(Grid):		frame increasing check
-					rtmpOutputFound = false;
-					if (liveProxyWorking)
-					{
-						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-							outputIndex++)
-						{
-							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-							string outputType = outputRoot.get("outputType", "").asString();
-
-							if (!liveProxyWorking)
-								break;
-
-							if (outputType == "HLS" || outputType == "DASH")
-							{
-								string manifestDirectoryPath = outputRoot
-									.get("manifestDirectoryPath", "").asString();
-								string manifestFileName = outputRoot
-									.get("manifestFileName", "").asString();
-
-								try
-								{
-									/*
-									chrono::system_clock::time_point now = chrono::system_clock::now();
-									int64_t liveProxyLiveTimeInMinutes =
-										chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
-
-									// check id done after 3 minutes LiveProxy started, in order to be sure
-									// segments were already created
-									// 1. get the timestamp of the last generated file
-									// 2. fill the vector with the chunks (pathname) to be removed because too old
-									//		(10 minutes after the "capacity" of the playlist)
-									// 3. kill ffmpeg in case no segments were generated
-									if (liveProxyLiveTimeInMinutes > 3)
-									*/
-									{
-										string manifestFilePathName =
-											manifestDirectoryPath + "/" + manifestFileName;
-										{
-											vector<string>	chunksTooOldToBeRemoved;
-											bool chunksWereNotGenerated = false;
-
-											string manifestDirectoryPathName;
-											{
-												size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
-												if (manifestFilePathIndex == string::npos)
-												{
-													string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
-														+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-														+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-														+ ", manifestFilePathName: " + manifestFilePathName;
-													_logger->error(errorMessage);
-
-													throw runtime_error(errorMessage);
-												}
-												manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
-											}
-
-											chrono::system_clock::time_point lastChunkTimestamp = liveProxy->_proxyStart;
-											bool firstChunkRead = false;
-
-											try
-											{
-												if (FileIO::directoryExisting(manifestDirectoryPathName))
-												{
-													FileIO::DirectoryEntryType_t detDirectoryEntryType;
-													shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-														manifestDirectoryPathName + "/");
-
-													// chunks will be removed 10 minutes after the "capacity" of the playlist
-													// long liveProxyChunkRetentionInSeconds =
-													// 	(segmentDurationInSeconds * playlistEntriesNumber)
-													// 	+ 10 * 60;	// 10 minutes
-													long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
-
-													bool scanDirectoryFinished = false;
-													while (!scanDirectoryFinished)
-													{
-														string directoryEntry;
-														try
-														{
-															string directoryEntry = FileIO::readDirectory (directory,
-															&detDirectoryEntryType);
-
-															if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-																continue;
-
-															string dashPrefixInitFiles ("init-stream");
-															if (outputType == "DASH" &&
-																directoryEntry.size() >= dashPrefixInitFiles.size()
-																	&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
-															)
-																continue;
-
-															{
-																string segmentPathNameToBeRemoved =
-																	manifestDirectoryPathName + "/" + directoryEntry;
-
-																chrono::system_clock::time_point fileLastModification =
-																	FileIO::getFileTime (segmentPathNameToBeRemoved);
-																chrono::system_clock::time_point now = chrono::system_clock::now();
-
-																if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-																	> liveProxyChunkRetentionInSeconds)
-																{
-																	chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
-																}
-
-																if (!firstChunkRead
-																	|| fileLastModification > lastChunkTimestamp)
-																	lastChunkTimestamp = fileLastModification;
-
-																firstChunkRead = true;
-															}
-														}
-														catch(DirectoryListFinished e)
-														{
-															scanDirectoryFinished = true;
-														}
-														catch(runtime_error e)
-														{
-															string errorMessage = __FILEREF__ + "listing directory failed"
-																+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-																+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-																+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-																+ ", e.what(): " + e.what()
-															;
-															_logger->error(errorMessage);
-
-															// throw e;
-														}
-														catch(exception e)
-														{
-															string errorMessage = __FILEREF__ + "listing directory failed"
-																+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-																+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-																+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-																+ ", e.what(): " + e.what()
-															;
-															_logger->error(errorMessage);
-
-															// throw e;
-														}
-													}
-
-													FileIO::closeDirectory (directory);
-												}
-											}
-											catch(runtime_error e)
-											{
-												_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-													+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-													+ ", e.what(): " + e.what()
-												);
-											}
-											catch(...)
-											{
-												_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-													+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-												);
-											}
-					
-											if (!firstChunkRead
-												|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
-											{
-												// if we are here, it means the ffmpeg command is not generating the ts files
-
-												_logger->error(__FILEREF__ + "liveProxyMonitor. Chunks were not generated"
-													+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-													+ ", firstChunkRead: " + to_string(firstChunkRead)
-												);
-
-												chunksWereNotGenerated = true;
-
-												liveProxyWorking = false;
-												localErrorMessage = " restarted because of 'no segments were generated'";
-
-												_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
-													+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestFilePathName: " + manifestFilePathName
-													// + ", channelLabel: " + liveProxy->_channelLabel
-													+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-												);
-
-
-												// we killed the process, we do not care to remove the too old segments
-												// since we will remove the entore directory
-												break;
-											}
-
-											{
-												bool exceptionInCaseOfError = false;
-
-												for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
-												{
-													try
-													{
-														_logger->info(__FILEREF__ + "liveProxyMonitor. Remove chunk because too old"
-															+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-															+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-															+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-														FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-													}
-													catch(runtime_error e)
-													{
-														_logger->error(__FILEREF__ + "remove failed"
-															+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-															+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-															+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
-															+ ", e.what(): " + e.what()
-														);
-													}
-												}
-											}
-										}
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-
-								if (!liveProxyWorking)
-									continue;
-
-								try
-								{
-									// Second health check (HLS/DASH), looks if the frame is increasing
-									// awaitingTheBeginning skips this check because
-									// often takes much time to update the frames
-									int secondsToWaitBetweenSamples = 3;
-									if (liveProxy->_method != "awaitingTheBeginning"
-											&& !liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-									{
-										_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											// + ", channelLabel: " + liveProxy->_channelLabel
-											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-										);
-
-										liveProxyWorking = false;
-										localErrorMessage = " restarted because of 'frame is not increasing'";
-									}
-								}
-								catch(FFMpegEncodingStatusNotAvailable e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->warn(__FILEREF__ + errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-							}
-							else
-							{
-								rtmpOutputFound = true;
-							}
-						}
-					}
-					if (liveProxyWorking && rtmpOutputFound)
-					{
-						try
-						{
-							// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-							int secondsToWaitBetweenSamples = 3;
-							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-							{
-								_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
-									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									// + ", channelLabel: " + liveProxy->_channelLabel
-									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-								);
-
-								liveProxyWorking = false;
-
-								localErrorMessage = " restarted because of 'frame is not increasing'";
-							}
-						}
-						catch(FFMpegEncodingStatusNotAvailable e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
-					// Third health 
-					//		HLS/DASH:	
-					//		rtmp(Proxy)/SRT(Grid):	the ffmpeg is up and running, it is not working and,
-					//			looking in the output log file, we have:
-					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
-					rtmpOutputFound = false;
-					if (liveProxyWorking)
-					{
-						for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-							outputIndex++)
-						{
-							Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-							string outputType = outputRoot.get("outputType", "").asString();
-
-							if (!liveProxyWorking)
-								break;
-
-							if (outputType == "HLS" || outputType == "DASH")
-							{
-							}
-							else
-							{
-								rtmpOutputFound = true;
-							}
-						}
-					}
-					if (liveProxyWorking && rtmpOutputFound)
-					{
-						try
-						{
-							if (liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
-							{
-								_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
-									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									// + ", channelLabel: " + liveProxy->_channelLabel
-									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-								);
-
-								liveProxyWorking = false;
-								localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
-							}
-						}
-						catch(FFMpegEncodingStatusNotAvailable e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
-					if (!liveProxyWorking)
-					{
-						_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
-							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-							+ ", localErrorMessage: " + localErrorMessage
-							// + ", channelLabel: " + liveProxy->_channelLabel
-							+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-						);
-
-						try
-						{
-							// 2021-12-14: switched from quit to kill because it seems
-							//		ffmpeg didn't terminate (in case of quit) when he was
-							//		failing. May be because it could not finish his sample/frame
-							//		to process. The result is that the channels were not restarted.
-							//		This is an ipothesys, not 100% sure
-							ProcessUtility::killProcess(liveProxy->_childPid);
-							// ProcessUtility::quitProcess(liveProxy->_childPid);
-							liveProxy->_killedBecauseOfNotWorking = true;
-							{
-								char strDateTime [64];
-								{
-									time_t utcTime = chrono::system_clock::to_time_t(
-										chrono::system_clock::now());
-									tm tmDateTime;
-									localtime_r (&utcTime, &tmDateTime);
-									sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-										tmDateTime. tm_year + 1900,
-										tmDateTime. tm_mon + 1,
-										tmDateTime. tm_mday,
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec);
-								}
-								liveProxy->_errorMessage = string(strDateTime) + " "
-									// + liveProxy->_channelLabel
-									+ localErrorMessage;
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("ProcessUtility::kill/quit Process failed")
-								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-								+ ", e.what(): " + e.what()
-									;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
-					_logger->info(__FILEREF__ + "liveProxyMonitorCheck"
-						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-						+ ", @MMS statistics@ - elapsed time: @" + to_string(
-							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
-						) + "@"
-					);
 				}
-				else
-				{
-					liveProxyAndGridNotRunningCounter++;
-				}
+				_logger->info(__FILEREF__ + "monitoringThread, numbers"
+					+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
+					+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
+					+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
+				);
 			}
-			_logger->info(__FILEREF__ + "monitoringThread, LiveProxyAndGrid"
-				+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
-				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
-				+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
-				+ ", elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("monitor LiveProxy failed")
-				+ ", e.what(): " + e.what()
-			;
 
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("monitor LiveProxy failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-
-		try
-		{
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
 
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int liveRecordingRunningCounter = 0;
-			int liveRecordingNotRunningCounter = 0;
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-			#else	// __MAP__
-			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
-				it != _liveRecordingsCapability->end(); it++)
-			#endif
+			for (int liveProxyIndex = 0;
+				liveProxyIndex < copiedRunningLiveProxiesCapability.size();
+				liveProxyIndex++)
 			{
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<LiveRecording> liveRecording = it->second;
-				#endif
+				shared_ptr<LiveProxyAndGrid> copiedLiveProxy
+					= copiedRunningLiveProxiesCapability[liveProxyIndex];
+				shared_ptr<LiveProxyAndGrid> sourceLiveProxy
+					= sourceLiveProxiesCapability[liveProxyIndex];
 
-				if (liveRecording->_running)
+				// this is just for logging
+				string channelConfigurationLabel;
+				if (copiedLiveProxy->_inputsRoot.size() > 0)
 				{
-					liveRecordingRunningCounter++;
-
-					_logger->info(__FILEREF__ + "liveRecordingMonitor..."
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-					);
-
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-
-					bool liveRecorderWorking = true;
-					string localErrorMessage;
-
-					// liveRecording->_recordingStart could be a bit in the future
-					int64_t liveRecordingLiveTimeInMinutes;
-					if (now > liveRecording->_recordingStart)
-						liveRecordingLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(
-							now - liveRecording->_recordingStart).count();
-					else
-						liveRecordingLiveTimeInMinutes = 0;
-
-					int segmentDurationInSeconds;
-					string field = "segmentDurationInSeconds";
-					segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, field, 0);
-
-					// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
-					// in order to be sure the file was already created
-					if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
+					Json::Value inputRoot = copiedLiveProxy->_inputsRoot[0];
+					string field = "channelInput";
+					if (JSONUtils::isMetadataPresent(inputRoot, field))
 					{
-						_logger->info(__FILEREF__ + "Checks are not done because too early"
-							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-							+ ", liveRecordingLiveTimeInMinutes: "
-								+ to_string(liveRecordingLiveTimeInMinutes)
-							+ ", (segmentDurationInSeconds / 60) + 5: "
-								+ to_string((segmentDurationInSeconds / 60) + 5)
+						Json::Value channelInputRoot = inputRoot[field];
+						field = "channelConfigurationLabel";
+						if (JSONUtils::isMetadataPresent(channelInputRoot, field))
+							channelConfigurationLabel = channelInputRoot.
+								get(field, "").asString();
+					}
+				}
+
+				_logger->info(__FILEREF__ + "liveProxyMonitor..."
+					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+					+ ", channelConfigurationLabel: " + channelConfigurationLabel
+				);
+
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+
+				bool liveProxyWorking = true;
+				string localErrorMessage;
+
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				{
+					// copiedLiveProxy->_proxyStart could be a bit in the future
+					int64_t liveProxyLiveTimeInMinutes;
+					if (now > copiedLiveProxy->_proxyStart)
+						liveProxyLiveTimeInMinutes = chrono::duration_cast<
+							chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
+					else	// it will be negative
+						liveProxyLiveTimeInMinutes = chrono::duration_cast<
+							chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
+
+					// checks are done after 3 minutes LiveProxy started,
+					// in order to be sure the manifest file was already created
+					if (liveProxyLiveTimeInMinutes <= 3)
+					{
+						_logger->info(__FILEREF__
+							+ "Checks are not done because too early"
+							+ ", ingestionJobKey: "
+								+ to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", encodingJobKey: "
+								+ to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", liveProxyLiveTimeInMinutes: "
+								+ to_string(liveProxyLiveTimeInMinutes)
 						);
 
 						continue;
 					}
+				}
 
-					// First health check
-					//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
-					if (liveRecorderWorking)
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				// First health check
+				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
+				//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+				bool rtmpOutputFound = false;
+				if (liveProxyWorking)
+				{
+					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
+						outputIndex++)
 					{
-						try
+						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
+
+						string outputType = outputRoot.get("outputType", "").asString();
+
+						if (!liveProxyWorking)
+							break;
+
+						if (outputType == "HLS" || outputType == "DASH")
 						{
-							// looking the manifests path name timestamp
+							string manifestDirectoryPath = outputRoot
+								.get("manifestDirectoryPath", "").asString();
+							string manifestFileName = outputRoot
+								.get("manifestFileName", "").asString();
 
-							string segmentListPathName = liveRecording->_transcoderStagingContentsPath
-								+ liveRecording->_segmentListFileName;
-
+							try
 							{
-								if(!FileIO::fileExisting(segmentListPathName))
+								// First health check (HLS/DASH) looking the manifests path name timestamp
 								{
-									liveRecorderWorking = false;
-
-									_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist"
-										+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-										+ ", segmentListPathName: " + segmentListPathName
-									);
-
-									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-								}
-								else
-								{
-									time_t utcSegmentListFileLastModificationTime;
-
-									FileIO::getFileTime (segmentListPathName.c_str(),
-										&utcSegmentListFileLastModificationTime);
-
-									unsigned long long	ullNow = 0;
-									unsigned long		ulAdditionalMilliSecs;
-									long				lTimeZoneDifferenceInHours;
-
-									DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-										&lTimeZoneDifferenceInHours);
-
-									long maxLastSegmentListFileUpdateInSeconds
-										= segmentDurationInSeconds * 2;
-
-									unsigned long long lastSegmentListFileUpdateInSeconds
-										= ullNow - utcSegmentListFileLastModificationTime;
-									if (lastSegmentListFileUpdateInSeconds
-										> maxLastSegmentListFileUpdateInSeconds)
-									{
-										liveRecorderWorking = false;
-
-										_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file was not updated "
-											+ "in the last " + to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds"
-											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-											+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-											+ ", segmentListPathName: " + segmentListPathName
-											+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
-										);
-
-										localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-									}
-								}
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
-								+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
-								+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
-					// Second health check
-					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-					//		rtmp(Proxy):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
-					//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
-					bool rtmpOutputFound = false;
-					if (liveRecorderWorking)
-					{
-						Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
-						for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-						{
-							Json::Value outputRoot = outputsRoot[outputIndex];
-
-							string outputType = outputRoot.get("outputType", "").asString();
-							string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-								asString();
-							string manifestFileName = outputRoot.get("manifestFileName", "").asString();
-
-							/*
-							string otherOutputOptions;
-							string audioVolumeChange;
-							Json::Value encodingProfileDetailsRoot;
-							int segmentDurationInSeconds;
-							int playlistEntriesNumber;
-							bool isVideo;
-							string rtmpUrl;
-							string udpUrl;
-
-							tie(outputType, otherOutputOptions, audioVolumeChange,
-								encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds,
-								playlistEntriesNumber, isVideo, rtmpUrl, udpUrl)
-								= outputRoot;
-							*/
-
-							if (!liveRecorderWorking)
-								break;
-
-							if (outputType == "HLS" || outputType == "DASH")
-							{
-								try
-								{
-									// First health check (HLS/DASH) looking the manifests path name timestamp
-
 									string manifestFilePathName =
 										manifestDirectoryPath + "/" + manifestFileName;
 									{
 										if(!FileIO::fileExisting(manifestFilePathName))
 										{
-											liveRecorderWorking = false;
+											liveProxyWorking = false;
 
-											_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file does not exist"
-												+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file does not exist"
+												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
 											);
 
@@ -12574,7 +11795,7 @@ void FFMPEGEncoder::monitorThread()
 										}
 										else
 										{
-											time_t utcManifestFileLastModificationTime;
+											time_t utcManifestFileLastModificationTime = 0;
 
 											FileIO::getFileTime (manifestFilePathName.c_str(),
 												&utcManifestFileLastModificationTime);
@@ -12591,12 +11812,12 @@ void FFMPEGEncoder::monitorThread()
 											unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
 											if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
 											{
-												liveRecorderWorking = false;
+												liveProxyWorking = false;
 
-												_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file was not updated "
+												_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file was not updated "
 													+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
-													+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-													+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+													+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+													+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 													+ ", manifestFilePathName: " + manifestFilePathName
 													+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
 												);
@@ -12608,103 +11829,130 @@ void FFMPEGEncoder::monitorThread()
 										}
 									}
 								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
-										+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
-										+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
 							}
-							else	// rtmp (Proxy) 
+							catch(runtime_error e)
 							{
-								rtmpOutputFound = true;
+								string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
 							}
+							catch(exception e)
+							{
+								string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+						}
+						else	// rtmp (Proxy) or SRT (Grid)
+						{
+							rtmpOutputFound = true;
 						}
 					}
-					if (liveRecorderWorking && rtmpOutputFound)
+				}
+
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				if (liveProxyWorking && rtmpOutputFound)
+				{
+					try
 					{
-						try
+						// First health check (rtmp), looks the log and check there is no message like
+						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+						//	This message causes proxy not working
+						if (sourceLiveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
 						{
-							// First health check (rtmp), looks the log and check there is no message like
-							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-							//	This message causes proxy not working
-							if (liveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
-							{
-								liveRecorderWorking = false;
+							liveProxyWorking = false;
 
-								_logger->error(__FILEREF__ + "liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveRecorder (ffmpeg) is killed in order to be started again"
-									+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-									+ ", channelLabel: " + liveRecording->_channelLabel
-									+ ", liveProxy->_childPid: " + to_string(liveRecording->_childPid)
-								);
+							_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
+								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
+								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+							);
 
-								localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
-								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
-								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
+							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 						}
 					}
-
-					// Thirth health 
-					//		HLS/DASH:	kill if segments were not generated
-					//					frame increasing check
-					//					it is also implemented the retention of segments too old (10 minutes)
-					//						This is already implemented by the HLS parameters (into the ffmpeg command)
-					//						We do it for the DASH option and in case ffmpeg does not work
-					//		rtmp(Proxy):		frame increasing check
-					//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
-					rtmpOutputFound = false;
-					if (liveRecorderWorking)
+					catch(runtime_error e)
 					{
-						Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
-						for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				// Second health 
+				//		HLS/DASH:	kill if segments were not generated
+				//					frame increasing check
+				//					it is also implemented the retention of segments too old (10 minutes)
+				//						This is already implemented by the HLS parameters (into the ffmpeg command)
+				//						We do it for the DASH option and in case ffmpeg does not work
+				//		rtmp(Proxy)/SRT(Grid):		frame increasing check
+				if (liveProxyWorking)
+				{
+					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
+						outputIndex++)
+					{
+						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
+
+						string outputType = outputRoot.get("outputType", "").asString();
+
+						if (!liveProxyWorking)
+							break;
+
+						if (outputType == "HLS" || outputType == "DASH")
 						{
-							Json::Value outputRoot = outputsRoot[outputIndex];
+							string manifestDirectoryPath = outputRoot
+								.get("manifestDirectoryPath", "").asString();
+							string manifestFileName = outputRoot
+								.get("manifestFileName", "").asString();
 
-							string outputType = outputRoot.get("outputType", "").asString();
-							string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-								asString();
-							string manifestFileName = outputRoot.get("manifestFileName", "").asString();
-
-							if (!liveRecorderWorking)
-								break;
-
-							if (outputType == "HLS" || outputType == "DASH")
+							try
 							{
-								try
+								/*
+								int64_t liveProxyLiveTimeInMinutes =
+									chrono::duration_cast<chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
+
+								// check id done after 3 minutes LiveProxy started, in order to be sure
+								// segments were already created
+								// 1. get the timestamp of the last generated file
+								// 2. fill the vector with the chunks (pathname) to be removed because too old
+								//		(10 minutes after the "capacity" of the playlist)
+								// 3. kill ffmpeg in case no segments were generated
+								if (liveProxyLiveTimeInMinutes > 3)
+								*/
 								{
 									string manifestFilePathName =
 										manifestDirectoryPath + "/" + manifestFileName;
@@ -12718,8 +11966,8 @@ void FFMPEGEncoder::monitorThread()
 											if (manifestFilePathIndex == string::npos)
 											{
 												string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
-													+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-													+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+													+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+													+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 													+ ", manifestFilePathName: " + manifestFilePathName;
 												_logger->error(errorMessage);
 
@@ -12728,7 +11976,7 @@ void FFMPEGEncoder::monitorThread()
 											manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 										}
 
-										chrono::system_clock::time_point lastChunkTimestamp = liveRecording->_recordingStart;
+										chrono::system_clock::time_point lastChunkTimestamp = copiedLiveProxy->_proxyStart;
 										bool firstChunkRead = false;
 
 										try
@@ -12792,8 +12040,8 @@ void FFMPEGEncoder::monitorThread()
 													catch(runtime_error e)
 													{
 														string errorMessage = __FILEREF__ + "listing directory failed"
-															+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-															+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 															+ ", e.what(): " + e.what()
 														;
@@ -12804,8 +12052,8 @@ void FFMPEGEncoder::monitorThread()
 													catch(exception e)
 													{
 														string errorMessage = __FILEREF__ + "listing directory failed"
-															+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-															+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 															+ ", e.what(): " + e.what()
 														;
@@ -12820,18 +12068,18 @@ void FFMPEGEncoder::monitorThread()
 										}
 										catch(runtime_error e)
 										{
-											_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
-												+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-												+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 												+ ", e.what(): " + e.what()
 											);
 										}
 										catch(...)
 										{
-											_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
-												+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-												+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 											);
 										}
@@ -12841,24 +12089,24 @@ void FFMPEGEncoder::monitorThread()
 										{
 											// if we are here, it means the ffmpeg command is not generating the ts files
 
-											_logger->error(__FILEREF__ + "liveRecorderMonitor. Chunks were not generated"
-												+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-												+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											_logger->error(__FILEREF__ + "liveProxyMonitor. Chunks were not generated"
+												+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+												+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 												+ ", firstChunkRead: " + to_string(firstChunkRead)
 											);
 
 											chunksWereNotGenerated = true;
 
-											liveRecorderWorking = false;
+											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
-												+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
-												+ ", channelLabel: " + liveRecording->_channelLabel
-												+ ", liveRecorder->_childPid: " + to_string(liveRecording->_childPid)
+												// + ", channelLabel: " + copiedLiveProxy->_channelLabel
+												+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
 											);
 
 
@@ -12874,17 +12122,17 @@ void FFMPEGEncoder::monitorThread()
 											{
 												try
 												{
-													_logger->info(__FILEREF__ + "liveRecorderMonitor. Remove chunk because too old"
-														+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-														+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+													_logger->info(__FILEREF__ + "liveProxyMonitor. Remove chunk because too old"
+														+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+														+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
 													FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
 												}
 												catch(runtime_error e)
 												{
 													_logger->error(__FILEREF__ + "remove failed"
-														+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-														+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+														+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+														+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
 														+ ", e.what(): " + e.what()
 													);
@@ -12893,201 +12141,961 @@ void FFMPEGEncoder::monitorThread()
 										}
 									}
 								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 										+ ", e.what(): " + e.what()
-									;
+								;
 
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+							catch(exception e)
+							{
+								string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
 
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+						}
+					}
+				}
 
-								if (!liveRecorderWorking)
-									continue;
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
 
-								try
-								{
-									// Second health check (HLS/DASH), looks if the frame is increasing
-									int secondsToWaitBetweenSamples = 3;
-									if (!liveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-									{
-										_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor (HLS/DASH). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-											+ ", channelLabel: " + liveRecording->_channelLabel
-											+ ", _childPid: " + to_string(liveRecording->_childPid)
-										);
+				if (liveProxyWorking) // && rtmpOutputFound)
+				{
+					try
+					{
+						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
+						int secondsToWaitBetweenSamples = 3;
+						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+						{
+							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+								+ ", channelConfigurationLabel: " + channelConfigurationLabel
+								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+							);
 
-										liveRecorderWorking = false;
-										localErrorMessage = " restarted because of 'frame is not increasing'";
-									}
-								}
-								catch(FFMpegEncodingStatusNotAvailable e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->warn(__FILEREF__ + errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (HLS/DASH) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+							liveProxyWorking = false;
+
+							localErrorMessage = " restarted because of 'frame is not increasing'";
+						}
+					}
+					catch(FFMpegEncodingStatusNotAvailable e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				if (liveProxyWorking) // && rtmpOutputFound)
+				{
+					try
+					{
+						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
+						{
+							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
+								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+							);
+
+							liveProxyWorking = false;
+							localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
+						}
+					}
+					catch(FFMpegEncodingStatusNotAvailable e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!sourceLiveProxy->_running ||
+					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					continue;
+				}
+
+				if (!liveProxyWorking)
+				{
+					_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", channelConfigurationLabel: " + channelConfigurationLabel
+						+ ", localErrorMessage: " + localErrorMessage
+						// + ", channelLabel: " + copiedLiveProxy->_channelLabel
+						+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+					);
+
+					try
+					{
+						// 2021-12-14: switched from quit to kill because it seems
+						//		ffmpeg didn't terminate (in case of quit) when he was
+						//		failing. May be because it could not finish his sample/frame
+						//		to process. The result is that the channels were not restarted.
+						//		This is an ipothesys, not 100% sure
+						ProcessUtility::killProcess(sourceLiveProxy->_childPid);
+						// ProcessUtility::quitProcess(copiedLiveProxy->_childPid);
+						sourceLiveProxy->_killedBecauseOfNotWorking = true;
+						{
+							char strDateTime [64];
+							{
+								time_t utcTime = chrono::system_clock::to_time_t(
+									chrono::system_clock::now());
+								tm tmDateTime;
+								localtime_r (&utcTime, &tmDateTime);
+								sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+									tmDateTime. tm_year + 1900,
+									tmDateTime. tm_mon + 1,
+									tmDateTime. tm_mday,
+									tmDateTime. tm_hour,
+									tmDateTime. tm_min,
+									tmDateTime. tm_sec);
+							}
+							sourceLiveProxy->_errorMessage = string(strDateTime) + " "
+								// + liveProxy->_channelLabel
+								+ localErrorMessage;
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("ProcessUtility::kill/quit Process failed")
+							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+							+ ", e.what(): " + e.what()
+								;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				_logger->info(__FILEREF__ + "monitoringThread liveProxy "
+					+ to_string(liveProxyIndex) + "/" + to_string(liveProxyAndGridRunningCounter)
+					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+					+ ", channelConfigurationLabel: " + channelConfigurationLabel
+					+ ", @MMS statistics@ - elapsed time: @" + to_string(
+						chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - now).count()) + "@"
+				);
+			}
+			_logger->info(__FILEREF__ + "monitoringThread liveProxy"
+				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
+				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
+			);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string ("monitor LiveProxy failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string ("monitor LiveProxy failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+
+		try
+		{
+			// this is to have a copy of LiveRecording
+			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
+
+			// this is to have access to _running and _proxyStart
+			//	to check if it is changed. In case the process is killed, it will access
+			//	also to _killedBecauseOfNotWorking and _errorMessage
+			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
+
+			// to avoid to maintain the lock too much time
+			// we will clone the proxies for monitoring check
+			int liveRecordingRunningCounter = 0;
+			{
+				lock_guard<mutex> locker(*_liveRecordingMutex);
+
+				int liveRecordingNotRunningCounter = 0;
+
+				#ifdef __VECTOR__
+				for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+				#else	// __MAP__
+				for(map<int64_t, shared_ptr<LiveRecording>>::iterator it =
+					_liveRecordingsCapability->begin(); it != _liveRecordingsCapability->end(); it++)
+				#endif
+				{
+					#ifdef __VECTOR__
+					#else	// __MAP__
+					shared_ptr<LiveRecording> liveRecording = it->second;
+					#endif
+
+					if (liveRecording->_running)
+					{
+						liveRecordingRunningCounter++;
+
+						copiedRunningLiveRecordingCapability.push_back(
+							liveRecording->cloneForMonitor());
+						sourceLiveRecordingCapability.push_back(
+                            liveRecording);
+					}
+					else
+					{
+						liveRecordingNotRunningCounter++;
+					}
+				}
+				_logger->info(__FILEREF__ + "monitoringThread, numbers"
+					+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter
+						+ liveRecordingNotRunningCounter)
+					+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
+					+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+				);
+			}
+
+			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
+
+			for (int liveRecordingIndex = 0;
+				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
+				liveRecordingIndex++)
+			{
+				shared_ptr<LiveRecording> copiedLiveRecording
+					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
+				shared_ptr<LiveRecording> sourceLiveRecording
+					= sourceLiveRecordingCapability[liveRecordingIndex];
+
+				_logger->info(__FILEREF__ + "liveRecordingMonitor..."
+					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+				);
+
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+
+				bool liveRecorderWorking = true;
+				string localErrorMessage;
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					continue;
+				}
+
+				// copiedLiveRecording->_recordingStart could be a bit in the future
+				int64_t liveRecordingLiveTimeInMinutes;
+				if (now > copiedLiveRecording->_recordingStart)
+					liveRecordingLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(
+						now - copiedLiveRecording->_recordingStart).count();
+				else
+					liveRecordingLiveTimeInMinutes = 0;
+
+				int segmentDurationInSeconds;
+				string field = "segmentDurationInSeconds";
+				segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_encodingParametersRoot, field, 0);
+
+				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
+				// in order to be sure the file was already created
+				if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
+				{
+					_logger->info(__FILEREF__ + "Checks are not done because too early"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", liveRecordingLiveTimeInMinutes: "
+							+ to_string(liveRecordingLiveTimeInMinutes)
+						+ ", (segmentDurationInSeconds / 60) + 5: "
+							+ to_string((segmentDurationInSeconds / 60) + 5)
+					);
+
+					continue;
+				}
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					continue;
+				}
+
+				// First health check
+				//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
+				if (liveRecorderWorking)
+				{
+					try
+					{
+						// looking the manifests path name timestamp
+
+						string segmentListPathName = copiedLiveRecording->_transcoderStagingContentsPath
+							+ copiedLiveRecording->_segmentListFileName;
+
+						{
+							if(!FileIO::fileExisting(segmentListPathName))
+							{
+								liveRecorderWorking = false;
+
+								_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist"
+									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
+									+ ", segmentListPathName: " + segmentListPathName
+								);
+
+								localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
 							}
 							else
 							{
-								rtmpOutputFound = true;
-							}
-						}
-					}
-					if (liveRecorderWorking && rtmpOutputFound)
-					{
-						try
-						{
-							// Second health check, rtmp(Proxy), looks if the frame is increasing
-							int secondsToWaitBetweenSamples = 3;
-							if (!liveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-							{
-								_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
-									+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-									+ ", channelLabel: " + liveRecording->_channelLabel
-									+ ", _childPid: " + to_string(liveRecording->_childPid)
-								);
+								time_t utcSegmentListFileLastModificationTime;
 
-								liveRecorderWorking = false;
+								FileIO::getFileTime (segmentListPathName.c_str(),
+									&utcSegmentListFileLastModificationTime);
 
-								localErrorMessage = " restarted because of 'frame is not increasing'";
-							}
-						}
-						catch(FFMpegEncodingStatusNotAvailable e)
-						{
-							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
+								unsigned long long	ullNow = 0;
+								unsigned long		ulAdditionalMilliSecs;
+								long				lTimeZoneDifferenceInHours;
 
-					if (!liveRecorderWorking)
-					{
-						_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
-							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-							+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-							+ ", channelLabel: " + liveRecording->_channelLabel
-							+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)
-						);
+								DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
+									&lTimeZoneDifferenceInHours);
 
-						try
-						{
-							// 2021-12-14: switched from quit to kill because it seems
-							//		ffmpeg didn't terminate (in case of quit) when he was
-							//		failing. May be because it could not finish his sample/frame
-							//		to process. The result is that the channels were not restarted.
-							//		This is an ipothesys, not 100% sure
-							ProcessUtility::killProcess(liveRecording->_childPid);
-							// ProcessUtility::quitProcess(liveRecording->_childPid);
-							liveRecording->_killedBecauseOfNotWorking = true;
-							{
-								char strDateTime [64];
+								long maxLastSegmentListFileUpdateInSeconds
+									= segmentDurationInSeconds * 2;
+
+								unsigned long long lastSegmentListFileUpdateInSeconds
+									= ullNow - utcSegmentListFileLastModificationTime;
+								if (lastSegmentListFileUpdateInSeconds
+									> maxLastSegmentListFileUpdateInSeconds)
 								{
-									time_t utcTime = chrono::system_clock::to_time_t(
-										chrono::system_clock::now());
-									tm tmDateTime;
-									localtime_r (&utcTime, &tmDateTime);
-									sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-										tmDateTime. tm_year + 1900,
-										tmDateTime. tm_mon + 1,
-										tmDateTime. tm_mday,
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec);
+									liveRecorderWorking = false;
+
+									_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file was not updated "
+										+ "in the last " + to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds"
+										+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
+										+ ", segmentListPathName: " + segmentListPathName
+										+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
+									);
+
+									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
 								}
-								liveRecording->_errorMessage = string(strDateTime) + " "
-									+ liveRecording->_channelLabel +
-									localErrorMessage;
 							}
 						}
-						catch(runtime_error e)
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					continue;
+				}
+
+				// Second health check
+				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
+				//		rtmp(Proxy):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
+				bool rtmpOutputFound = false;
+				if (liveRecorderWorking)
+				{
+					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
+					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+					{
+						Json::Value outputRoot = outputsRoot[outputIndex];
+
+						string outputType = outputRoot.get("outputType", "").asString();
+						string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+							asString();
+						string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+
+						if (!liveRecorderWorking)
+							break;
+
+						if (outputType == "HLS" || outputType == "DASH")
 						{
-							string errorMessage = string("ProcessUtility::kill/quit Process failed")
-								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-								+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)
-								+ ", e.what(): " + e.what()
-									;
-							_logger->error(__FILEREF__ + errorMessage);
+							try
+							{
+								// First health check (HLS/DASH) looking the manifests path name timestamp
+
+								string manifestFilePathName =
+									manifestDirectoryPath + "/" + manifestFileName;
+								{
+									if(!FileIO::fileExisting(manifestFilePathName))
+									{
+										liveRecorderWorking = false;
+
+										_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file does not exist"
+											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+											+ ", manifestFilePathName: " + manifestFilePathName
+										);
+
+										localErrorMessage = " restarted because of 'manifest file is missing'";
+
+										break;
+									}
+									else
+									{
+										time_t utcManifestFileLastModificationTime;
+
+										FileIO::getFileTime (manifestFilePathName.c_str(),
+											&utcManifestFileLastModificationTime);
+
+										unsigned long long	ullNow = 0;
+										unsigned long		ulAdditionalMilliSecs;
+										long				lTimeZoneDifferenceInHours;
+
+										DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
+											&lTimeZoneDifferenceInHours);
+
+										long maxLastManifestFileUpdateInSeconds = 30;
+
+										unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
+										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
+										{
+											liveRecorderWorking = false;
+
+											_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file was not updated "
+												+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
+												+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+												+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+												+ ", manifestFilePathName: " + manifestFilePathName
+												+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
+											);
+
+											localErrorMessage = " restarted because of 'manifest file was not updated'";
+
+											break;
+										}
+									}
+								}
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
+									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+							catch(exception e)
+							{
+								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
+									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+						}
+						else	// rtmp (Proxy) 
+						{
+							rtmpOutputFound = true;
 						}
 					}
+				}
 
-					_logger->info(__FILEREF__ + "liveRecordingMonitorCheck"
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", @MMS statistics@ - elapsed time: @" + to_string(
-							chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - now).count()
-						) + "@"
-					);
-				}
-				else
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					liveRecordingNotRunningCounter++;
+					continue;
 				}
+
+				if (liveRecorderWorking && rtmpOutputFound)
+				{
+					try
+					{
+						// First health check (rtmp), looks the log and check there is no message like
+						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+						//	This message causes proxy not working
+						if (sourceLiveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
+						{
+							liveRecorderWorking = false;
+
+							_logger->error(__FILEREF__ + "liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveRecorder (ffmpeg) is killed in order to be started again"
+								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+								+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
+							);
+
+							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					continue;
+				}
+
+				// Thirth health 
+				//		HLS/DASH:	kill if segments were not generated
+				//					frame increasing check
+				//					it is also implemented the retention of segments too old (10 minutes)
+				//						This is already implemented by the HLS parameters (into the ffmpeg command)
+				//						We do it for the DASH option and in case ffmpeg does not work
+				//		rtmp(Proxy):		frame increasing check
+				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
+				if (liveRecorderWorking)
+				{
+					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
+					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+					{
+						Json::Value outputRoot = outputsRoot[outputIndex];
+
+						string outputType = outputRoot.get("outputType", "").asString();
+						string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
+							asString();
+						string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+
+						if (!liveRecorderWorking)
+							break;
+
+						if (outputType == "HLS" || outputType == "DASH")
+						{
+							try
+							{
+								string manifestFilePathName =
+									manifestDirectoryPath + "/" + manifestFileName;
+								{
+									vector<string>	chunksTooOldToBeRemoved;
+									bool chunksWereNotGenerated = false;
+
+									string manifestDirectoryPathName;
+									{
+										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+										if (manifestFilePathIndex == string::npos)
+										{
+											string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
+												+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+												+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+												+ ", manifestFilePathName: " + manifestFilePathName;
+											_logger->error(errorMessage);
+
+											throw runtime_error(errorMessage);
+										}
+										manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
+									}
+
+									chrono::system_clock::time_point lastChunkTimestamp = copiedLiveRecording->_recordingStart;
+									bool firstChunkRead = false;
+
+									try
+									{
+										if (FileIO::directoryExisting(manifestDirectoryPathName))
+										{
+											FileIO::DirectoryEntryType_t detDirectoryEntryType;
+											shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+												manifestDirectoryPathName + "/");
+
+											// chunks will be removed 10 minutes after the "capacity" of the playlist
+											// long liveProxyChunkRetentionInSeconds =
+											// 	(segmentDurationInSeconds * playlistEntriesNumber)
+											// 	+ 10 * 60;	// 10 minutes
+											long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+
+											bool scanDirectoryFinished = false;
+											while (!scanDirectoryFinished)
+											{
+												string directoryEntry;
+												try
+												{
+													string directoryEntry = FileIO::readDirectory (directory,
+													&detDirectoryEntryType);
+
+													if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+														continue;
+
+													string dashPrefixInitFiles ("init-stream");
+													if (outputType == "DASH" &&
+														directoryEntry.size() >= dashPrefixInitFiles.size()
+															&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
+													)
+														continue;
+
+													{
+														string segmentPathNameToBeRemoved =
+															manifestDirectoryPathName + "/" + directoryEntry;
+
+														chrono::system_clock::time_point fileLastModification =
+															FileIO::getFileTime (segmentPathNameToBeRemoved);
+														chrono::system_clock::time_point now = chrono::system_clock::now();
+
+														if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
+															> liveProxyChunkRetentionInSeconds)
+														{
+															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
+														}
+
+														if (!firstChunkRead
+															|| fileLastModification > lastChunkTimestamp)
+															lastChunkTimestamp = fileLastModification;
+
+														firstChunkRead = true;
+													}
+												}
+												catch(DirectoryListFinished e)
+												{
+													scanDirectoryFinished = true;
+												}
+												catch(runtime_error e)
+												{
+													string errorMessage = __FILEREF__ + "listing directory failed"
+														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+														+ ", e.what(): " + e.what()
+													;
+													_logger->error(errorMessage);
+
+													// throw e;
+												}
+												catch(exception e)
+												{
+													string errorMessage = __FILEREF__ + "listing directory failed"
+														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+														+ ", e.what(): " + e.what()
+													;
+													_logger->error(errorMessage);
+
+													// throw e;
+												}
+											}
+
+											FileIO::closeDirectory (directory);
+										}
+									}
+									catch(runtime_error e)
+									{
+										_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
+											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+											+ ", e.what(): " + e.what()
+										);
+									}
+									catch(...)
+									{
+										_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
+											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+										);
+									}
+			
+									if (!firstChunkRead
+										|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
+									{
+										// if we are here, it means the ffmpeg command is not generating the ts files
+
+										_logger->error(__FILEREF__ + "liveRecorderMonitor. Chunks were not generated"
+											+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+											+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+											+ ", firstChunkRead: " + to_string(firstChunkRead)
+										);
+
+										chunksWereNotGenerated = true;
+
+										liveRecorderWorking = false;
+										localErrorMessage = " restarted because of 'no segments were generated'";
+
+										_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
+											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+											+ ", manifestFilePathName: " + manifestFilePathName
+											+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+											+ ", liveRecorder->_childPid: " + to_string(copiedLiveRecording->_childPid)
+										);
+
+
+										// we killed the process, we do not care to remove the too old segments
+										// since we will remove the entore directory
+										break;
+									}
+
+									{
+										bool exceptionInCaseOfError = false;
+
+										for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
+										{
+											try
+											{
+												_logger->info(__FILEREF__ + "liveRecorderMonitor. Remove chunk because too old"
+													+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+													+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+												FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+											}
+											catch(runtime_error e)
+											{
+												_logger->error(__FILEREF__ + "remove failed"
+													+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+													+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+													+ ", e.what(): " + e.what()
+												);
+											}
+										}
+									}
+								}
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
+									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+							catch(exception e)
+							{
+								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
+									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+
+								_logger->error(__FILEREF__ + errorMessage);
+							}
+						}
+					}
+				}
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					continue;
+				}
+
+				if (liveRecorderWorking) // && rtmpOutputFound)
+				{
+					try
+					{
+						// Second health check, rtmp(Proxy), looks if the frame is increasing
+						int secondsToWaitBetweenSamples = 3;
+						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+						{
+							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
+								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+								+ ", _childPid: " + to_string(copiedLiveRecording->_childPid)
+							);
+
+							liveRecorderWorking = false;
+
+							localErrorMessage = " restarted because of 'frame is not increasing'";
+						}
+					}
+					catch(FFMpegEncodingStatusNotAvailable e)
+					{
+						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				if (!liveRecorderWorking)
+				{
+					_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
+					);
+
+					try
+					{
+						// 2021-12-14: switched from quit to kill because it seems
+						//		ffmpeg didn't terminate (in case of quit) when he was
+						//		failing. May be because it could not finish his sample/frame
+						//		to process. The result is that the channels were not restarted.
+						//		This is an ipothesys, not 100% sure
+						ProcessUtility::killProcess(sourceLiveRecording->_childPid);
+						// ProcessUtility::quitProcess(liveRecording->_childPid);
+						sourceLiveRecording->_killedBecauseOfNotWorking = true;
+						{
+							char strDateTime [64];
+							{
+								time_t utcTime = chrono::system_clock::to_time_t(
+									chrono::system_clock::now());
+								tm tmDateTime;
+								localtime_r (&utcTime, &tmDateTime);
+								sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+									tmDateTime. tm_year + 1900,
+									tmDateTime. tm_mon + 1,
+									tmDateTime. tm_mday,
+									tmDateTime. tm_hour,
+									tmDateTime. tm_min,
+									tmDateTime. tm_sec);
+							}
+							sourceLiveRecording->_errorMessage = string(strDateTime) + " "
+								+ sourceLiveRecording->_channelLabel +
+								localErrorMessage;
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("ProcessUtility::kill/quit Process failed")
+							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+							+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
+							+ ", e.what(): " + e.what()
+								;
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+				}
+
+				_logger->info(__FILEREF__ + "monitoringThread liveRecording "
+					+ to_string(liveRecordingIndex) + "/" + to_string(liveRecordingRunningCounter)
+					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+					+ ", @MMS statistics@ - elapsed time: @" + to_string(
+						chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - now).count()
+					) + "@"
+				);
 			}
-			_logger->info(__FILEREF__ + "monitoringThread, LiveRecording"
-				+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter + liveRecordingNotRunningCounter)
+			_logger->info(__FILEREF__ + "monitoringThread liveRecording"
 				+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
-				+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
-				+ ", elapsed (millisecs): " + to_string(chrono::duration_cast<
+				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
 					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
 			);
 		}

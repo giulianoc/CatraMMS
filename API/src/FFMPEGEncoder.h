@@ -40,66 +40,115 @@ struct Encoding
 
 struct LiveProxyAndGrid
 {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-		string					_method;	// liveProxy, liveGrid or awaitingTheBeginning
-        shared_ptr<FFMpeg>		_ffmpeg;
-		pid_t					_childPid;
-        bool					_killedBecauseOfNotWorking;	// by monitorThread
+	bool                    _running;
+	int64_t                 _encodingJobKey;
+	string					_method;	// liveProxy, liveGrid or awaitingTheBeginning
+	shared_ptr<FFMpeg>		_ffmpeg;
+	pid_t					_childPid;
+	bool					_killedBecauseOfNotWorking;	// by monitorThread
 
-		string					_errorMessage;
+	string					_errorMessage;
 
-		string					_liveGridOutputType;	// only for LiveGrid
-		// Json::Value				_liveProxyOutputsRoot;	// only for LiveProxy
-		// vector<tuple<string, string, string, Json::Value, string, string, int, int,
-		// 	bool, string, string>> _liveProxyOutputRoots;
-		Json::Value				_outputsRoot;
+	string					_liveGridOutputType;	// only for LiveGrid
+	Json::Value				_outputsRoot;
 
-		int64_t					_ingestionJobKey;
-		Json::Value				_ingestedParametersRoot;
+	int64_t					_ingestionJobKey;
+	Json::Value				_ingestedParametersRoot;
 
-		Json::Value				_inputsRoot;
-		mutex					_inputsRootMutex;
+	Json::Value				_inputsRoot;
+	mutex					_inputsRootMutex;
 
-        // string					_channelSourceType;
-		// string					_channelLabel;
-		// vector<string>			_manifestFilePathNames;
-		chrono::system_clock::time_point	_proxyStart;
+	chrono::system_clock::time_point	_proxyStart;
+
+	shared_ptr<LiveProxyAndGrid> cloneForMonitor()
+	{
+		shared_ptr<LiveProxyAndGrid> liveProxyAndGrid =
+			make_shared<LiveProxyAndGrid>();
+
+		liveProxyAndGrid->_running = _running;
+		liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
+		liveProxyAndGrid->_method = _method;
+		liveProxyAndGrid->_ffmpeg = _ffmpeg;
+		liveProxyAndGrid->_childPid = _childPid;
+		liveProxyAndGrid->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
+		liveProxyAndGrid->_errorMessage = _errorMessage;
+		liveProxyAndGrid->_liveGridOutputType = _liveGridOutputType;
+
+		liveProxyAndGrid->_ingestionJobKey = _ingestionJobKey;
+
+		liveProxyAndGrid->_outputsRoot = _outputsRoot;
+		liveProxyAndGrid->_ingestedParametersRoot = _ingestedParametersRoot;
+		liveProxyAndGrid->_inputsRoot = _inputsRoot;
+
+		liveProxyAndGrid->_proxyStart = _proxyStart;
+
+		return liveProxyAndGrid;
+	}
 };
 
 // no encoding, just copying the video/audio tracks
 struct LiveRecording
 {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>      _ffmpeg;
-		pid_t					_childPid;
-        bool					_killedBecauseOfNotWorking;	// by monitorThread
+	bool                    _running;
+	int64_t                 _encodingJobKey;
+	shared_ptr<FFMpeg>      _ffmpeg;
+	pid_t					_childPid;
+	bool					_killedBecauseOfNotWorking;	// by monitorThread
 
-		string					_errorMessage;
+	string					_errorMessage;
 
-		// vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
-		// 	string>> _liveRecorderOutputRoots;
-		// vector<string>			_manifestFilePathNames;
-		int64_t					_ingestionJobKey;
-		Json::Value				_encodingParametersRoot;
-		Json::Value				_ingestedParametersRoot;
-        string					_channelSourceType;
-        string					_transcoderStagingContentsPath;
-        string					_stagingContentsPath;
-        string					_segmentListFileName;
-        string					_recordedFileNamePrefix;
-		string					_lastRecordedAssetFileName;
-		double					_lastRecordedAssetDurationInSeconds;
-		string					_channelLabel;
-		string					_segmenterType;
-		chrono::system_clock::time_point	_recordingStart;
+	int64_t					_ingestionJobKey;
+	Json::Value				_encodingParametersRoot;
+	Json::Value				_ingestedParametersRoot;
+	string					_channelSourceType;
+	string					_transcoderStagingContentsPath;
+	string					_stagingContentsPath;
+	string					_segmentListFileName;
+	string					_recordedFileNamePrefix;
+	string					_lastRecordedAssetFileName;
+	double					_lastRecordedAssetDurationInSeconds;
+	string					_channelLabel;
+	string					_segmenterType;
+	chrono::system_clock::time_point	_recordingStart;
 
-		bool					_virtualVOD;
-		string					_monitorVirtualVODManifestDirectoryPath;	// used to build virtualVOD
-		string					_monitorVirtualVODManifestFileName;			// used to build virtualVOD
-		string					_virtualVODStagingContentsPath;
-		int64_t					_liveRecorderVirtualVODImageMediaItemKey;
+	bool					_virtualVOD;
+	string					_monitorVirtualVODManifestDirectoryPath;	// used to build virtualVOD
+	string					_monitorVirtualVODManifestFileName;			// used to build virtualVOD
+	string					_virtualVODStagingContentsPath;
+	int64_t					_liveRecorderVirtualVODImageMediaItemKey;
+
+	shared_ptr<LiveRecording> cloneForMonitor()
+	{
+		shared_ptr<LiveRecording> liveRecording =
+			make_shared<LiveRecording>();
+
+		liveRecording->_running = _running;
+		liveRecording->_encodingJobKey = _encodingJobKey;
+		liveRecording->_ffmpeg = _ffmpeg;
+		liveRecording->_childPid = _childPid;
+		liveRecording->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
+		liveRecording->_errorMessage = _errorMessage;
+		liveRecording->_ingestionJobKey = _ingestionJobKey;
+		liveRecording->_encodingParametersRoot = _encodingParametersRoot;
+		liveRecording->_ingestedParametersRoot = _ingestedParametersRoot;
+		liveRecording->_channelSourceType = _channelSourceType;
+		liveRecording->_transcoderStagingContentsPath = _transcoderStagingContentsPath;
+		liveRecording->_stagingContentsPath = _stagingContentsPath;
+		liveRecording->_segmentListFileName = _segmentListFileName;
+		liveRecording->_recordedFileNamePrefix = _recordedFileNamePrefix;
+		liveRecording->_lastRecordedAssetFileName = _lastRecordedAssetFileName;
+		liveRecording->_lastRecordedAssetDurationInSeconds = _lastRecordedAssetDurationInSeconds;
+		liveRecording->_channelLabel = _channelLabel;
+		liveRecording->_segmenterType = _segmenterType;
+		liveRecording->_recordingStart = _recordingStart;
+		liveRecording->_virtualVOD = _virtualVOD;
+		liveRecording->_monitorVirtualVODManifestDirectoryPath = _monitorVirtualVODManifestDirectoryPath;
+		liveRecording->_monitorVirtualVODManifestFileName = _monitorVirtualVODManifestFileName;
+		liveRecording->_virtualVODStagingContentsPath = _virtualVODStagingContentsPath;
+		liveRecording->_liveRecorderVirtualVODImageMediaItemKey = _liveRecorderVirtualVODImageMediaItemKey;
+
+		return liveRecording;
+	}
 };
 
 struct EncodingCompleted
