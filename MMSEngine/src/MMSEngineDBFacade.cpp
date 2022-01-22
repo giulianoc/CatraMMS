@@ -187,10 +187,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
 	for(int adminEmailAddressesIndex = 0;
-			adminEmailAddressesIndex < configuration["mms"]["adminEmailAddresses"].size();
+			adminEmailAddressesIndex < configuration["api"]["adminEmailAddresses"].size();
 			adminEmailAddressesIndex++)
 	{
-		string adminEmailAddress = configuration["mms"]["adminEmailAddresses"]
+		string adminEmailAddress = configuration["api"]["adminEmailAddresses"]
 			[adminEmailAddressesIndex].asString();
 		_adminEmailAddresses.push_back(adminEmailAddress);
 		_logger->info(__FILEREF__ + "Configuration item"
