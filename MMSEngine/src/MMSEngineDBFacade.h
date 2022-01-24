@@ -1504,6 +1504,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows, string label,
         /* bool startAndEndIngestionDatePresent, */ string startIngestionDate, string endIngestionDate,
+		string startScheduleDate,
 		string ingestionType,
 		string configurationLabel, string outputChannelLabel, int64_t deliveryCode,
 		bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,

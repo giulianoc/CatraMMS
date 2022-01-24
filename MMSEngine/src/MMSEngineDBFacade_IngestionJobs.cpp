@@ -4180,12 +4180,12 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
-        shared_ptr<Workspace> workspace,
-		int64_t ingestionRootKey, int64_t mediaItemKey,
-        int start, int rows,
-        // bool startAndEndIngestionDatePresent,
-		string startIngestionDate, string endIngestionDate,
-        string label, string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs
+	shared_ptr<Workspace> workspace,
+	int64_t ingestionRootKey, int64_t mediaItemKey,
+	int start, int rows,
+	// bool startAndEndIngestionDatePresent,
+	string startIngestionDate, string endIngestionDate,
+	string label, string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs
 )
 {
     string      lastSQLCommand;
@@ -4553,7 +4553,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4572,7 +4572,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         throw e;
     } 
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -4598,6 +4598,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 	int start, int rows, string label,
 	/* bool startAndEndIngestionDatePresent, */
 	string startIngestionDate, string endIngestionDate,
+	string startScheduleDate,
 	string ingestionType,
 	string configurationLabel, string outputChannelLabel, int64_t deliveryCode,
 	bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,
@@ -4661,6 +4662,11 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 field = "endIngestionDate";
                 requestParametersRoot[field] = endIngestionDate;
             }
+			if (startScheduleDate != "")
+			{
+				field = "startScheduleDate";
+				requestParametersRoot[field] = startScheduleDate;
+			}
 
             if (ingestionType != "")
             {
@@ -4718,6 +4724,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endIngestionDate != "")
             sqlWhere += ("and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (startScheduleDate != "")
+            sqlWhere += ("and ij.scheduleStart_virtual >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (ingestionType != "")
             sqlWhere += ("and ij.ingestionType = ? ");
         if (configurationLabel != "")
@@ -4760,6 +4768,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
             if (endIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            if (startScheduleDate != "")
+                preparedStatement->setString(queryParameterIndex++, startScheduleDate);
 			if (ingestionType != "")
                 preparedStatement->setString(queryParameterIndex++, ingestionType);
 			if (configurationLabel != "")
@@ -4790,6 +4800,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", label: " + "%" + label + "%"
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
+				+ ", startScheduleDate: " + startScheduleDate
 				+ ", ingestionType: " + ingestionType
 				+ ", configurationLabel: " + configurationLabel
 				+ ", outputChannelLabel: " + outputChannelLabel
@@ -4835,6 +4846,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
             if (endIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            if (startScheduleDate != "")
+                preparedStatement->setString(queryParameterIndex++, startScheduleDate);
 			if (ingestionType != "")
                 preparedStatement->setString(queryParameterIndex++, ingestionType);
 			if (configurationLabel != "")
@@ -4862,6 +4875,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", label: " + "%" + label + "%"
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
+				+ ", startScheduleDate: " + startScheduleDate
 				+ ", ingestionType: " + ingestionType
 				+ ", configurationLabel: " + configurationLabel
 				+ ", rows: " + to_string(rows)
@@ -4906,7 +4920,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4925,7 +4939,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         throw e;
     } 
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")

@@ -3935,6 +3935,11 @@ void API::ingestionJobsStatus(
         if (endIngestionDateIt != queryParameters.end())
 			endIngestionDate = endIngestionDateIt->second;
 
+        string startScheduleDate;
+        auto startScheduleDateIt = queryParameters.find("startScheduleDate");
+        if (startScheduleDateIt != queryParameters.end())
+			startScheduleDate = startScheduleDateIt->second;
+
         string ingestionType;
         auto ingestionTypeIt = queryParameters.find("ingestionType");
         if (ingestionTypeIt != queryParameters.end() && ingestionTypeIt->second != "")
@@ -4054,6 +4059,7 @@ void API::ingestionJobsStatus(
 				workspace, ingestionJobKey,
 				start, rows, label,
 				/* startAndEndIngestionDatePresent, */ startIngestionDate, endIngestionDate,
+				startScheduleDate,
 				ingestionType,
 				configurationLabel, outputChannelLabel,
 				deliveryCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,
