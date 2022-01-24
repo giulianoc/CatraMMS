@@ -3578,6 +3578,7 @@ void API::ingestionRootsStatus(
 				rows = _maxPageSize;
         }
         
+/*
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -3632,6 +3633,16 @@ void API::ingestionRootsStatus(
 
             startAndEndIngestionDatePresent = true;
         }
+*/
+		string startIngestionDate;
+		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+		if (startIngestionDateIt != queryParameters.end())
+			startIngestionDate = startIngestionDateIt->second;
+
+		string endIngestionDate;
+		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+		if (endIngestionDateIt != queryParameters.end())
+			endIngestionDate = endIngestionDateIt->second;
 
         string label;
         auto labelIt = queryParameters.find("label");
@@ -3690,7 +3701,8 @@ void API::ingestionRootsStatus(
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
                     workspace, ingestionRootKey, mediaItemKey,
                     start, rows,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    // startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
                     label, status, asc, dependencyInfo, ingestionJobOutputs
                     );
 
@@ -3857,6 +3869,7 @@ void API::ingestionJobsStatus(
 			label = curlpp::unescape(firstDecoding);
         }
 
+		/*
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -3911,6 +3924,16 @@ void API::ingestionJobsStatus(
 
             startAndEndIngestionDatePresent = true;
         }
+		*/
+        string startIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        if (startIngestionDateIt != queryParameters.end())
+			startIngestionDate = startIngestionDateIt->second;
+
+        string endIngestionDate;
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (endIngestionDateIt != queryParameters.end())
+			endIngestionDate = endIngestionDateIt->second;
 
         string ingestionType;
         auto ingestionTypeIt = queryParameters.find("ingestionType");
@@ -4030,7 +4053,7 @@ void API::ingestionJobsStatus(
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
 				workspace, ingestionJobKey,
 				start, rows, label,
-				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+				/* startAndEndIngestionDatePresent, */ startIngestionDate, endIngestionDate,
 				ingestionType,
 				configurationLabel, outputChannelLabel,
 				deliveryCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,

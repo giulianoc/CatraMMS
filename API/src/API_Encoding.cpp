@@ -62,6 +62,7 @@ void API::encodingJobsStatus(
 				rows = _maxPageSize;
         }
         
+		/*
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -116,7 +117,18 @@ void API::encodingJobsStatus(
 
             startAndEndIngestionDatePresent = true;
         }
+		*/
+        string startIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        if (startIngestionDateIt != queryParameters.end())
+			startIngestionDate = startIngestionDateIt->second;
 
+        string endIngestionDate;
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (endIngestionDateIt != queryParameters.end())
+			endIngestionDate = endIngestionDateIt->second;
+
+		/*
         bool startAndEndEncodingDatePresent = false;
         string startEncodingDate;
         string endEncodingDate;
@@ -171,6 +183,16 @@ void API::encodingJobsStatus(
 
             startAndEndEncodingDatePresent = true;
         }
+		*/
+        string startEncodingDate;
+        auto startEncodingDateIt = queryParameters.find("startEncodingDate");
+        if (startEncodingDateIt != queryParameters.end())
+			startEncodingDate = startEncodingDateIt->second;
+
+        string endEncodingDate;
+        auto endEncodingDateIt = queryParameters.find("endEncodingDate");
+        if (endEncodingDateIt != queryParameters.end())
+			endEncodingDate = endEncodingDateIt->second;
 
         int64_t encoderKey = -1;
         auto encoderKeyIt = queryParameters.find("encoderKey");
@@ -227,8 +249,10 @@ void API::encodingJobsStatus(
             Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
                     workspace, encodingJobKey,
                     start, rows,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    startAndEndEncodingDatePresent, startEncodingDate, endEncodingDate,
+                    // startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
+                    // startAndEndEncodingDatePresent,
+					startEncodingDate, endEncodingDate,
 					encoderKey, alsoEncodingJobsFromOtherWorkspaces,
                     asc, status, types
                     );

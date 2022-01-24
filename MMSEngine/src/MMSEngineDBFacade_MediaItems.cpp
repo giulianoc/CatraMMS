@@ -832,7 +832,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	int rows = 1;
 	bool contentTypePresent = false;
 	ContentType contentType;
-	bool startAndEndIngestionDatePresent = false;
+	// bool startAndEndIngestionDatePresent = false;
 	string startIngestionDate;
 	string endIngestionDate;
 	string title;
@@ -851,7 +851,8 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 		otherMediaItemsKey,
         start, rows,
         contentTypePresent, contentType,
-        startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+        // startAndEndIngestionDatePresent,
+		startIngestionDate, endIngestionDate,
         title, liveRecordingChunk,
 		deliveryCode,
 		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -998,7 +999,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	int rows = 1;
 	bool contentTypePresent = false;
 	ContentType contentType;
-	bool startAndEndIngestionDatePresent = false;
+	// bool startAndEndIngestionDatePresent = false;
 	string startIngestionDate;
 	string endIngestionDate;
 	string title;
@@ -1017,7 +1018,8 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 		otherMediaItemsKey,
         start, rows,
         contentTypePresent, contentType,
-        startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+        // startAndEndIngestionDatePresent,
+		startIngestionDate, endIngestionDate,
         title, liveRecordingChunk,
 		deliveryCode,
 		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -1035,7 +1037,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        // bool startAndEndIngestionDatePresent,
+		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
 		int64_t deliveryCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -1065,9 +1068,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", rows: " + to_string(rows)
             + ", contentTypePresent: " + to_string(contentTypePresent)
             + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
-            + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
-            + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
-            + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
+            // + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
+            + ", startIngestionDate: " + startIngestionDate
+            + ", endIngestionDate: " + endIngestionDate
             + ", title: " + title
             + ", tagsIn.size(): " + to_string(tagsIn.size())
             + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
@@ -1117,11 +1120,23 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = toString(contentType);
             }
             
+			/*
             if (startAndEndIngestionDatePresent)
             {
                 field = "startIngestionDate";
                 requestParametersRoot[field] = startIngestionDate;
 
+                field = "endIngestionDate";
+                requestParametersRoot[field] = endIngestionDate;
+            }
+			*/
+            if (startIngestionDate != "")
+            {
+                field = "startIngestionDate";
+                requestParametersRoot[field] = startIngestionDate;
+            }
+            if (endIngestionDate != "")
+            {
                 field = "endIngestionDate";
                 requestParametersRoot[field] = endIngestionDate;
             }
@@ -1290,7 +1305,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey,
 					start, rows,
 					contentTypePresent, contentType,
-					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -1306,7 +1322,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			resultSetAndNumFound = getMediaItemsList_withoutTagsCheck (
 					conn, workspaceKey, newMediaItemKey, otherMediaItemsKey, start, rows,
 					contentTypePresent, contentType,
-					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -2283,7 +2300,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        // bool startAndEndIngestionDatePresent,
+		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
 		int64_t deliveryCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -2316,8 +2334,12 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		}
         if (contentTypePresent)
             sqlWhere += ("and mi.contentType = ? ");
-        if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        // if (startAndEndIngestionDatePresent)
+        //     sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (startIngestionDate != "")
+            sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (endIngestionDate != "")
+            sqlWhere += ("and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
             sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
 		/*
@@ -2387,11 +2409,15 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
-            if (startAndEndIngestionDatePresent)
-            {
+            // if (startAndEndIngestionDatePresent)
+            // {
+            //     preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+            //     preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            // }
+            if (startIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+            if (endIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
-            }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
 			if (deliveryCode != -1)
@@ -2481,11 +2507,15 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
-            if (startAndEndIngestionDatePresent)
-            {
+            // if (startAndEndIngestionDatePresent)
+            // {
+            //     preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+            //     preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            // }
+            if (startIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+            if (endIngestionDate != "")
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
-            }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
 			if (deliveryCode != -1)
@@ -2571,7 +2601,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        // bool startAndEndIngestionDatePresent,
+		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
 		int64_t deliveryCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -2650,8 +2681,12 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
 			if (contentTypePresent)
 				sqlWhere += ("and mi.contentType = ? ");
-			if (startAndEndIngestionDatePresent)
-				sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+			// if (startAndEndIngestionDatePresent)
+			// 	sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+			if (startIngestionDate != "")
+				sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+			if (endIngestionDate != "")
+				sqlWhere += ("and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 			if (title != "")
 				sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
 			/*
@@ -2721,11 +2756,15 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
 			if (contentTypePresent)
 				preparedStatement->setString(queryParameterIndex++, toString(contentType));
-			if (startAndEndIngestionDatePresent)
-			{
-				preparedStatement->setString(queryParameterIndex++, startIngestionDate);
-				preparedStatement->setString(queryParameterIndex++, endIngestionDate);
-			}
+			// if (startAndEndIngestionDatePresent)
+			// {
+			// 	preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+			// 	preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+			// }
+            if (startIngestionDate != "")
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+            if (endIngestionDate != "")
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
 			if (title != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
 			if (deliveryCode != -1)

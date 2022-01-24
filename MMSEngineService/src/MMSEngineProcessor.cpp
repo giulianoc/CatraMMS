@@ -14172,7 +14172,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			int rows = 60 * 1;	// assuming every MediaItem is one minute, let's take 1 hour
 			bool contentTypePresent = true;
 			MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
-			bool startAndEndIngestionDatePresent = false;
+			// bool startAndEndIngestionDatePresent = false;
 			string startIngestionDate;
 			string endIngestionDate;
 			string title;
@@ -14238,7 +14238,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
 					contentTypePresent, contentType,
-					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
@@ -15291,7 +15292,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			int rows = 60 * 1;	// assuming every MediaItem is one minute, let's take 1 hour
 			bool contentTypePresent = true;
 			MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
-			bool startAndEndIngestionDatePresent = false;
+			// bool startAndEndIngestionDatePresent = false;
 			string startIngestionDate;
 			string endIngestionDate;
 			string title;
@@ -15359,7 +15360,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
 					contentTypePresent, contentType,
-					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,

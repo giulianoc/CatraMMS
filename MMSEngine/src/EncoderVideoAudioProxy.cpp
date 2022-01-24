@@ -11305,7 +11305,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		int64_t physicalPathKey = -1;
 		bool contentTypePresent = true;
 		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Image;
-		bool startAndEndIngestionDatePresent = false;
+		// bool startAndEndIngestionDatePresent = false;
 		string startIngestionDate;
 		string endIngestionDate;
 		string title;
@@ -11332,7 +11332,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 				otherMediaItemsKey, start, rows, contentTypePresent, contentType,
-				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+				// startAndEndIngestionDatePresent,
+				startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk,
 				deliveryCode,
 				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,

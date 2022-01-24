@@ -495,6 +495,7 @@ void API::mediaItemsList(
 				liveRecordingChunk = 0;
         }
 
+		/*
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -549,6 +550,16 @@ void API::mediaItemsList(
             
             startAndEndIngestionDatePresent = true;
         }
+		*/
+        string startIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        if (startIngestionDateIt != queryParameters.end())
+			startIngestionDate = startIngestionDateIt->second;
+
+        string endIngestionDate;
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (endIngestionDateIt != queryParameters.end())
+			endIngestionDate = endIngestionDateIt->second;
 
         string title;
         auto titleIt = queryParameters.find("title");
@@ -715,7 +726,8 @@ void API::mediaItemsList(
                     workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
                     start, rows,
                     contentTypePresent, contentType,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    // startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate,
                     title, liveRecordingChunk,
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
