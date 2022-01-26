@@ -1,5 +1,5 @@
 {
-  "Label": "VOD from Recording",
+  "Label": "Cut from Recording",
   "Task": {
     "Label": "Cut from Recording",
     "OnSuccess": {"Task": {
@@ -8,17 +8,16 @@
         "ExecutionType": "parallel",
         "Tasks": [
           {
-            "Label": "Picture of VOD",
+            "Label": "Picture of Cut",
             "Parameters": {
               "AllowUniqueNameOverride": false,
-              "ImageRetention": "1d",
+              "ImageRetention": "${MediaItemRetention}",
               "ImageTags": "[ \"FACE\" ]",
               "ImageUserData": "",
               "Ingester": "Admin",
               "InitialFramesNumberToBeSkipped": 1500,
               "InstantInSeconds": 60,
-              "ProcessingStartingFrom": "2021-08-14T09:46:49Z",
-              "Title": "My Title",
+              "Title": "${MediaItemTitle}",
               "UniqueName": "",
               "WorkflowAsLibraryLabel": "Best Picture of the Video",
               "WorkflowAsLibraryType": "MMS"
@@ -26,7 +25,7 @@
             "Type": "Workflow-As-Library"
           },
           {
-            "Label": "VOD encoding",
+            "Label": "Cut encoding",
             "Parameters": {
               "ContentType": "video",
               "EncodingPriority": "Low",
@@ -46,17 +45,54 @@
     "Parameters": {
       "AllowUniqueNameOverride": false,
       "CutPeriod": {
-        "End": "2021-08-14T09:46:38.409Z",
-        "Start": "2021-08-14T09:36:38.409Z"
+        "End": "${LiveCutEnd}",
+        "Start": "${LiveCutStart}"
       },
-      "DeliveryCode": 1234,
+      "DeliveryCode": "${RecordingCode}",
       "ErrorIfAChunkIsMissing": false,
       "Ingester": "Giuliano Catrambone",
       "MaxWaitingForLastChunkInSeconds": 90,
-      "Retention": "1h",
-      "Title": "Cut from Recording"
+      "Retention": "${MediaItemRetention}",
+      "Title": "${MediaItemTitle}"
     },
     "Type": "Live-Cut"
   },
-  "Type": "Workflow"
+  "Type": "Workflow",
+  "Variables": {
+    "LiveCutEnd": {
+      "Description": "End of the LiveCut",
+      "IsNull": false,
+      "Position": 1,
+      "Type": "datetime-millisecs",
+      "Value": "2022-01-24T21:09:05.011Z"
+    },
+    "LiveCutStart": {
+      "Description": "Start of the LiveCut",
+      "IsNull": false,
+      "Position": 0,
+      "Type": "datetime-millisecs",
+      "Value": "2022-01-24T21:07:34.088Z"
+    },
+    "MediaItemRetention": {
+      "Description": "Media item retention",
+      "IsNull": false,
+      "Position": 4,
+      "Type": "string",
+      "Value": ""
+    },
+    "MediaItemTitle": {
+      "Description": "Media item title",
+      "IsNull": false,
+      "Position": 3,
+      "Type": "string",
+      "Value": ""
+    },
+    "RecordingCode": {
+      "Description": "Recording Code",
+      "IsNull": false,
+      "Position": 2,
+      "Type": "integer",
+      "Value": 0
+    }
+  }
 }
