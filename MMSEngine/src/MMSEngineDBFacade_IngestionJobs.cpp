@@ -172,8 +172,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
 				}
 				lastSQLCommand +=
-					"and (ij.status = ? or (ij.status in (?, ?, ?, ?) "
-					"and ij.sourceBinaryTransferred = 1)) "
+					"and (ij.status = ? "
+					"or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 					"and ij.processingStartingFrom <= NOW() "
 					"and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 					"and (scheduleStart_virtual is null or UNIX_TIMESTAMP("
@@ -6101,26 +6101,56 @@ void MMSEngineDBFacade::retentionOfIngestionData()
         {
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot"
 					);
-            lastSQLCommand = 
-                "delete from MMS_IngestionRoot where ingestionDate < DATE_SUB(NOW(), INTERVAL ? DAY)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+			// we will remove by steps to avoid error because of transaction log overflow
+			int maxToBeRemoved = 100;
+			int totalRowsRemoved = 0;
+			bool moreRowsToBeRemoved = true;
+			while (moreRowsToBeRemoved)
+			{
+				// 2022-01-30: we cannot remove any OLD ingestionroot/ingestionjob/encodingjob
+				//			because we have the sheduled jobs (recording, proxy, ...) that
+				//			can be scheduled to be run on the future
+				//			For this reason I added the status condition
+				// scenarios anomalous:
+				//	- encoding is in a final state but ingestion is not: we already have the
+				//		fixIngestionJobsHavingWrongStatus method
+				//	- ingestion is in a final state but encoding is not: we already have the
+				//		fixEncodingJobsHavingWrongStatus method
+				lastSQLCommand = 
+					"delete from MMS_IngestionRoot "
+					"where ingestionDate < DATE_SUB(NOW(), INTERVAL ? DAY) "
+					"and status like 'Completed%' "
+					"limit ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, _ingestionWorkflowRetentionInDays);
+				int queryParameterIndex = 1;
+				preparedStatement->setInt(queryParameterIndex++,
+					_ingestionWorkflowRetentionInDays);
+				preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				totalRowsRemoved += rowsUpdated;
+				if (rowsUpdated == 0)
+					moreRowsToBeRemoved = false;
+			}
+			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot"
+				+ ", totalRowsRemoved: " + to_string(totalRowsRemoved)
 			);
         }
 
-		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
+
+		// IngestionJobs taking too time to download/move/copy/upload
+		// the content are set to failed
 		{
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time to download/move/copy/upload the content"
 				);

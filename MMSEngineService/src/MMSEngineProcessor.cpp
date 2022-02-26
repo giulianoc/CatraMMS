@@ -12194,7 +12194,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string configurationLabel;
 
 		int64_t confKey = -1;
-		string channelSourceType;
+		string streamSourceType;
 		string encodersPoolLabel;
 		string pullUrl;
 		string pushProtocol;
@@ -12246,9 +12246,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, string, int, string, int,
 						int, string, int, int, int, int, int, int64_t>
-						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
+						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(confKey, channelSourceType,
+					tie(confKey, streamSourceType,
 						encodersPoolLabel,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
@@ -12260,8 +12260,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 						satSourceSATConfKey) = channelConfDetails;
 
 					// default is IP_PULL
-					if (channelSourceType == "")
-						channelSourceType = "IP_PULL";
+					if (streamSourceType == "")
+						streamSourceType = "IP_PULL";
 				}
 			}
 
@@ -12463,19 +12463,19 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int satelliteAudioItalianPid = -1;
 		string liveURL;
 
-		if (channelSourceType == "IP_PULL")
+		if (streamSourceType == "IP_PULL")
 			liveURL = pullUrl;
-		else if (channelSourceType == "IP_PUSH")
+		else if (streamSourceType == "IP_PUSH")
 		{
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (channelSourceType == "Satellite")
+		else if (streamSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			tuple<int64_t, int64_t, int64_t, string, int, int>
 				satChannelConfDetails =
-				_mmsEngineDBFacade->getSourceSATChannelConfDetails(
+				_mmsEngineDBFacade->getSourceSATStreamDetails(
 				satSourceSATConfKey, warningIfMissing);
 
 			tie(satelliteServiceId, satelliteFrequency,
@@ -12558,7 +12558,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string manifestExtension;
 				manifestExtension = "m3u8";
 
-				if (channelSourceType == "IP_PULL")
+				if (streamSourceType == "IP_PULL")
 				{
 					// monitorHLS is true
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
@@ -12567,7 +12567,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelSourceType == "Satellite")
+				else if (streamSourceType == "Satellite")
 				{
 					// monitorHLS is true
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
@@ -12576,7 +12576,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelSourceType == "IP_PUSH")
+				else if (streamSourceType == "IP_PUSH")
 				{
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 						to_string(deliveryCode),
@@ -12584,7 +12584,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (channelSourceType == "CaptureLive")
+				else if (streamSourceType == "CaptureLive")
 				{
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 						to_string(deliveryCode),
@@ -12669,7 +12669,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			ingestionJobLabel, channelSourceType,
+			ingestionJobLabel, streamSourceType,
 			configurationLabel, confKey, liveURL, encodersPoolLabel, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
@@ -12745,7 +12745,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string configurationLabel;
 
 		int64_t confKey = -1;
-		string channelSourceType;
+		string streamSourceType;
 		string encodersPoolLabel;
 		string pullUrl;
 		int maxWidth = -1;
@@ -12789,9 +12789,9 @@ void MMSEngineProcessor::manageLiveProxy(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, string, int, string, int,
 						int, string, int, int, int, int, int, int64_t>
-						channelConfDetails = _mmsEngineDBFacade->getChannelConfDetails(
+						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(confKey, channelSourceType,
+					tie(confKey, streamSourceType,
 						encodersPoolLabel,
 						pullUrl,
 						pushProtocol, pushServerName, pushServerPort, pushUri,
@@ -12803,8 +12803,8 @@ void MMSEngineProcessor::manageLiveProxy(
 						satSourceSATConfKey) = channelConfDetails;
 
 					// default is IP_PULL
-					if (channelSourceType == "")
-						channelSourceType = "IP_PULL";
+					if (streamSourceType == "")
+						streamSourceType = "IP_PULL";
 				}
 			}
 
@@ -12920,19 +12920,19 @@ void MMSEngineProcessor::manageLiveProxy(
 		int satelliteAudioItalianPid = -1;
 		string liveURL;
 
-		if (channelSourceType == "IP_PULL")
+		if (streamSourceType == "IP_PULL")
 			liveURL = pullUrl;
-		else if (channelSourceType == "IP_PUSH")
+		else if (streamSourceType == "IP_PUSH")
 		{
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (channelSourceType == "Satellite")
+		else if (streamSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			tuple<int64_t, int64_t, int64_t, string, int, int>
 				satChannelConfDetails =
-				_mmsEngineDBFacade->getSourceSATChannelConfDetails(
+				_mmsEngineDBFacade->getSourceSATStreamDetails(
 				satSourceSATConfKey, warningIfMissing);
 
 			tie(satelliteServiceId, satelliteFrequency,
@@ -12954,14 +12954,14 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else
 		{
-			Json::Value channelInputRoot = _mmsEngineDBFacade->getChannelInputRoot(
+			Json::Value streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace->_workspaceKey, configurationLabel,
 				maxWidth, userAgent, otherInputOptions);
 
 			Json::Value inputRoot;
 			{
-				string field = "channelInput";
-				inputRoot[field] = channelInputRoot;
+				string field = "streamInput";
+				inputRoot[field] = streamInputRoot;
 
 				field = "timePeriod";
 				inputRoot[field] = timePeriod;
@@ -12985,7 +12985,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			inputsRoot,	// used by FFMPEGEncoder
-			channelSourceType,	// used by FFMPEGEncoder
+			streamSourceType,	// used by FFMPEGEncoder
 			utcProxyPeriodStart,	// used in MMSEngineDBFacade::getEncodingJobs
 			maxAttemptsNumberInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
 			waitingSecondsBetweenAttemptsInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
@@ -13853,20 +13853,20 @@ void MMSEngineProcessor::manageLiveGrid(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, string, int, string, int,
 					int, string, int, int, int, int, int, int64_t>
-					confKeyAndChannelURL = _mmsEngineDBFacade->getChannelConfDetails(
+					confKeyAndChannelURL = _mmsEngineDBFacade->getStreamDetails(
 					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
 
-				int64_t inputChannelConfKey;
-				string channelSourceType;
+				int64_t inputConfKey;
+				string streamSourceType;
 				string inputChannelURL;
-				tie(inputChannelConfKey, channelSourceType, inputChannelURL,
+				tie(inputConfKey, streamSourceType, inputChannelURL,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = confKeyAndChannelURL;
 
-				// bisognerebbe verificare channelSourceType
+				// bisognerebbe verificare streamSourceType
 
-				inputChannels.push_back(make_tuple(inputChannelConfKey,
+				inputChannels.push_back(make_tuple(inputConfKey,
 					inputConfigurationLabel, inputChannelURL));
 			}
 
@@ -14008,7 +14008,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		// string channelSourceType;
+		// string streamSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
@@ -14018,7 +14018,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 		bool errorIfAChunkIsMissing = false;
         {
 			/*
-            string field = "ChannelSourceType";
+            string field = "streamSourceType";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14029,9 +14029,9 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-			channelSourceType = liveCutParametersRoot.get(field, "").asString();
+			streamSourceType = liveCutParametersRoot.get(field, "").asString();
 
-			if (channelSourceType == "IP_PULL")
+			if (streamSourceType == "IP_PULL")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -14046,7 +14046,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				}
 				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
 			}
-			else if (channelSourceType == "Satellite")
+			else if (streamSourceType == "Satellite")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -14063,7 +14063,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			}
 			*/
 
-			// else if (channelSourceType == "IP_PUSH")
+			// else if (streamSourceType == "IP_PUSH")
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
@@ -14134,14 +14134,14 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 		/*
 		int64_t confKey = -1;
-		if (channelSourceType == "IP_PULL")
+		if (streamSourceType == "IP_PULL")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
 			tie(confKey, ignore) = confKeyAndLiveURL;
 		}
-		else if (channelSourceType == "Satellite")
+		else if (streamSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
@@ -14518,7 +14518,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				// + ", channelSourceType: " + channelSourceType
+				// + ", streamSourceType: " + streamSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
 				+ ", deliveryCode: " + to_string(deliveryCode)
@@ -14589,19 +14589,19 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				/*
-				if (channelSourceType == "IP_PULL")
+				if (streamSourceType == "IP_PULL")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else if (channelSourceType == "Satellite")
+				else if (streamSourceType == "Satellite")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else // if (channelSourceType == "IP_PUSH")
+				else // if (streamSourceType == "IP_PUSH")
 				{
 					Json::Value removed;
 					field = "ActAsServerChannelCode";
@@ -14786,20 +14786,20 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					*/
 
 					/*
-					field = "channelSourceType";
-					mmsDataRoot[field] = channelSourceType;
+					field = "streamSourceType";
+					mmsDataRoot[field] = streamSourceType;
 
-					if (channelSourceType == "IP_PULL")
+					if (streamSourceType == "IP_PULL")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = ipConfigurationLabel;
 					}
-					else if (channelSourceType == "Satellite")
+					else if (streamSourceType == "Satellite")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = satConfigurationLabel;
 					}
-					else // if (channelSourceType == "IP_PUSH")
+					else // if (streamSourceType == "IP_PUSH")
 					{
 						field = "actAsServerChannelCode";
 						mmsDataRoot[field] = actAsServerChannelCode;
@@ -15118,7 +15118,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		// string channelSourceType;
+		// string streamSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
@@ -15130,7 +15130,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		bool errorIfAChunkIsMissing = false;
         {
 			/*
-            string field = "channelSourceType";
+            string field = "streamSourceType";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15141,9 +15141,9 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-			channelSourceType = liveCutParametersRoot.get(field, "").asString();
+			streamSourceType = liveCutParametersRoot.get(field, "").asString();
 
-			if (channelSourceType == "IP_PULL")
+			if (streamSourceType == "IP_PULL")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -15158,7 +15158,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				}
 				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
 			}
-			else if (channelSourceType == "Satellite")
+			else if (streamSourceType == "Satellite")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -15175,7 +15175,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			}
 			*/
 
-			// else if (channelSourceType == "IP_PUSH")
+			// else if (streamSourceType == "IP_PUSH")
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
@@ -15254,14 +15254,14 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 		/*
 		int64_t confKey = -1;
-		if (channelSourceType == "IP_PULL")
+		if (streamSourceType == "IP_PULL")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
 			tie(confKey, ignore) = confKeyAndLiveURL;
 		}
-		else if (channelSourceType == "Satellite")
+		else if (streamSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
@@ -15669,7 +15669,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				// + ", channelSourceType: " + channelSourceType
+				// + ", streamSourceType: " + streamSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
 				+ ", deliveryCode: " + to_string(deliveryCode)
@@ -15740,19 +15740,19 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				/*
-				if (channelSourceType == "IP_PULL")
+				if (streamSourceType == "IP_PULL")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else if (channelSourceType == "Satellite")
+				else if (streamSourceType == "Satellite")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
-				else // if (channelSourceType == "IP_PUSH")
+				else // if (streamSourceType == "IP_PUSH")
 				{
 					Json::Value removed;
 					field = "ActAsServerChannelCode";
@@ -15937,20 +15937,20 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					*/
 
 					/*
-					field = "channelSourceType";
-					mmsDataRoot[field] = channelSourceType;
+					field = "streamSourceType";
+					mmsDataRoot[field] = streamSourceType;
 
-					if (channelSourceType == "IP_PULL")
+					if (streamSourceType == "IP_PULL")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = ipConfigurationLabel;
 					}
-					else if (channelSourceType == "Satellite")
+					else if (streamSourceType == "Satellite")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = satConfigurationLabel;
 					}
-					else // if (channelSourceType == "IP_PUSH")
+					else // if (streamSourceType == "IP_PUSH")
 					{
 						field = "actAsServerChannelCode";
 						mmsDataRoot[field] = actAsServerChannelCode;
@@ -16279,8 +16279,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		string scheduleStartTimeInSeconds;
 		string scheduleEndTimeInSeconds;
 		string sourceType;
-		// channelConfigurationLabel or referencesRoot has to be present
-		string channelConfigurationLabel;
+		// streamConfigurationLabel or referencesRoot has to be present
+		string streamConfigurationLabel;
 		Json::Value referencesRoot;
         {
             string field = "YouTubeConfigurationLabel";
@@ -16392,7 +16392,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					throw runtime_error(errorMessage);
 				}
-				channelConfigurationLabel = parametersRoot.get(field, "").asString();
+				streamConfigurationLabel = parametersRoot.get(field, "").asString();
 			}
 			else // if (sourceType == "MediaItem")
 			{
@@ -16455,10 +16455,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						snippetRoot[field] = youTubeLiveBroadcastDescription;
 					}
 
-					if (channelConfigurationLabel != "")
+					if (streamConfigurationLabel != "")
 					{
 						field = "channelId";
-						snippetRoot[field] = channelConfigurationLabel;
+						snippetRoot[field] = streamConfigurationLabel;
 					}
 
 					// scheduledStartTime
@@ -16877,10 +16877,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						snippetRoot[field] = youTubeLiveBroadcastDescription;
 					}
 
-					if (channelConfigurationLabel != "")
+					if (streamConfigurationLabel != "")
 					{
 						field = "channelId";
-						snippetRoot[field] = channelConfigurationLabel;
+						snippetRoot[field] = streamConfigurationLabel;
 					}
 
 					field = "snippet";
@@ -17565,7 +17565,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				Json::Value liveProxyParametersRoot;
 				{
 					string field = "Label";
-					proxyLabel = "Proxy " + channelConfigurationLabel
+					proxyLabel = "Proxy " + streamConfigurationLabel
 						+ " to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
@@ -22033,13 +22033,13 @@ void MMSEngineProcessor::emailNotificationThread(
 											int, string, int, int, string, int,
 											int, int, int, int, int64_t>
 											channelDetails =
-											_mmsEngineDBFacade->getChannelConfDetails(
+											_mmsEngineDBFacade->getStreamDetails(
 											workspace->_workspaceKey,
 											checkStreaming_streamingName,
 											warningIfMissing);
 
-										string channelSourceType;
-										tie(ignore, channelSourceType,
+										string streamSourceType;
+										tie(ignore, streamSourceType,
 											checkStreaming_streamingUrl,
 											ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore, ignore,
@@ -22339,10 +22339,10 @@ void MMSEngineProcessor::checkStreamingThread(
 			bool warningIfMissing = false;
 			tuple<int64_t, string, string, string, string, string, int, string, int,
 				int, string, int, int, int, int, int, int64_t>
-				ipChannelDetails = _mmsEngineDBFacade->getChannelConfDetails(
+				ipChannelDetails = _mmsEngineDBFacade->getStreamDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			string channelSourceType;
-			tie(ignore, channelSourceType, streamingUrl,
+			string streamSourceType;
+			tie(ignore, streamSourceType, streamingUrl,
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore) = ipChannelDetails;

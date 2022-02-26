@@ -1,0 +1,29 @@
+{
+	"Label" : "MMS_MP4_H264_1000Kb_medium_720p25_Main_AAC_92",
+	"FileFormat" : "mp4",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "main",
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"BitRates": [
+			{
+				"Width" : 1280,
+				"Height" : 720,
+				"KBitRate" : 1000
+			}
+		]
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"ChannelsNumber": 2,
+		"BitRates": [
+			{
+				"KBitRate" : 92
+			}
+		]
+	}
+}

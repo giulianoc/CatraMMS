@@ -7212,7 +7212,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey, string ingestionJobLabel,
-	string channelSourceType,
+	string streamSourceType,
 
 	string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
 	string userAgent,
@@ -7251,7 +7251,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ingestionJobLabel: " + ingestionJobLabel
-            + ", channelSourceType: " + channelSourceType
+            + ", streamSourceType: " + streamSourceType
             // + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
@@ -7296,8 +7296,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				string field = "ingestionJobLabel";
 				parametersRoot[field] = ingestionJobLabel;
 
-				field = "channelSourceType";
-				parametersRoot[field] = channelSourceType;
+				field = "streamSourceType";
+				parametersRoot[field] = streamSourceType;
 
 				field = "main";
 				parametersRoot[field] = main;
@@ -7653,7 +7653,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	Json::Value inputsRoot,
-	string channelSourceType,
+	string streamSourceType,
 	int64_t utcProxyPeriodStart,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
@@ -7669,7 +7669,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", channelSourceType: " + channelSourceType
+            + ", streamSourceType: " + streamSourceType
 /*
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
@@ -7705,8 +7705,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
 
-				field = "channelSourceType";
-				parametersRoot[field] = channelSourceType;
+				field = "streamSourceType";
+				parametersRoot[field] = streamSourceType;
 
 				// field = "utcProxyPeriodStart";
 				// parametersRoot[field] = utcProxyPeriodStart;
@@ -8641,15 +8641,15 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 					{
 						tuple<int64_t, string, string> inputChannel = inputChannels[inputChannelIndex];
 
-						int64_t inputChannelConfKey;
+						int64_t inputConfKey;
 						string inputConfigurationLabel;
 						string inputChannelURL;
-						tie(inputChannelConfKey, inputConfigurationLabel, inputChannelURL) = inputChannel;
+						tie(inputConfKey, inputConfigurationLabel, inputChannelURL) = inputChannel;
 
 						Json::Value inputChannelRoot;
 
-						field = "inputChannelConfKey";
-						inputChannelRoot[field] = inputChannelConfKey;
+						field = "inputConfKey";
+						inputChannelRoot[field] = inputConfKey;
 
 						field = "inputConfigurationLabel";
 						inputChannelRoot[field] = inputConfigurationLabel;

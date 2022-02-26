@@ -6571,8 +6571,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel = liveRecording->_ingestedParametersRoot.get(
 			"ConfigurationLabel", "").asString();
 
-        liveRecording->_channelSourceType = liveRecorderMedatada["encodingParametersRoot"].get(
-			"channelSourceType", "IP_PULL").asString();
+        liveRecording->_streamSourceType = liveRecorderMedatada["encodingParametersRoot"].get(
+			"streamSourceType", "IP_PULL").asString();
 		int ipMMSAsServer_listenTimeoutInSeconds =
 			liveRecorderMedatada["encodingParametersRoot"]
 			.get("ActAsServerListenTimeout", 300).asInt();
@@ -6586,7 +6586,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		int captureLive_height = -1;
 		int captureLive_audioDeviceNumber = -1;
 		int captureLive_channelsNumber = -1;
-		if (liveRecording->_channelSourceType == "CaptureLive")
+		if (liveRecording->_streamSourceType == "CaptureLive")
 		{
 			captureLive_videoDeviceNumber = JSONUtils::asInt(
 				liveRecorderMedatada["encodingParametersRoot"],
@@ -6610,7 +6610,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
         string liveURL;
 
-		if (liveRecording->_channelSourceType == "Satellite")
+		if (liveRecording->_streamSourceType == "Satellite")
 		{
 			satelliteServiceId = JSONUtils::asInt64(
 				liveRecorderMedatada["encodingParametersRoot"],
@@ -6737,7 +6737,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		// In case of IP_PUSH, the checks should be done after the ffmpeg server
 		// receives the stream and we do not know what it happens.
 		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-		if (liveRecording->_channelSourceType == "IP_PUSH")
+		if (liveRecording->_streamSourceType == "IP_PUSH")
 		{
 			if (chrono::system_clock::from_time_t(
 					utcRecordingPeriodStart) < chrono::system_clock::now())
@@ -6820,7 +6820,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		_logger->info(__FILEREF__ + "liveRecorder. _ffmpeg->liveRecorder"
 			+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", channelSourceType: " + liveRecording->_channelSourceType
+			+ ", streamSourceType: " + liveRecording->_streamSourceType
 			+ ", liveURL: " + liveURL
 		);
 		liveRecording->_ffmpeg->liveRecorder(
@@ -6830,7 +6830,7 @@ void FFMPEGEncoder::liveRecorderThread(
 				+ liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
 
-			liveRecording->_channelSourceType,
+			liveRecording->_streamSourceType,
 			StringUtils::trimTabToo(liveURL),
 			pushListenTimeout,
 			captureLive_videoDeviceNumber,
@@ -6856,7 +6856,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			&(liveRecording->_childPid)
 		);
 
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -6934,7 +6934,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7029,7 +7029,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLForbidden e)
     {
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7116,7 +7116,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLNotFound e)
     {
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7203,7 +7203,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(runtime_error e)
     {
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7290,7 +7290,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(exception e)
     {
-		if (liveRecording->_channelSourceType == "Satellite"
+		if (liveRecording->_streamSourceType == "Satellite"
 			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
 		)
 		{
@@ -7439,7 +7439,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								lastRecordedAssetInfo = liveRecorder_processStreamSegmenterOutput(
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
-									liveRecording->_channelSourceType,
+									liveRecording->_streamSourceType,
 									// highAvailability, main,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
@@ -7457,7 +7457,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								lastRecordedAssetInfo = liveRecorder_processHLSSegmenterOutput(
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
-									liveRecording->_channelSourceType,
+									liveRecording->_streamSourceType,
 									// highAvailability, main,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
@@ -7693,7 +7693,7 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 
 pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelSourceType,
+	string streamSourceType,
 	// bool highAvailability, bool main,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
@@ -7884,12 +7884,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
 				/*
-				mmsDataRoot["channelSourceType"] = channelSourceType;
-				if (channelSourceType == "IP_PULL")
+				mmsDataRoot["streamSourceType"] = streamSourceType;
+				if (streamSourceType == "IP_PULL")
 					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else if (channelSourceType == "Satellite")
+				else if (streamSourceType == "Satellite")
 					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else // if (channelSourceType == "IP_PUSH")
+				else // if (streamSourceType == "IP_PUSH")
 				*/
 				{
 					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
@@ -7919,7 +7919,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			string addContentTitle;
 			{
 				/*
-				if (channelSourceType == "IP_PUSH")
+				if (streamSourceType == "IP_PUSH")
 				{
 					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"DeliveryCode", 0);
@@ -8113,7 +8113,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 
 pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelSourceType,
+	string streamSourceType,
 	// bool highAvailability, bool main,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
@@ -8321,12 +8321,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 								Json::Value mmsDataRoot;
 								mmsDataRoot["dataType"] = "liveRecordingChunk";
 								/*
-								mmsDataRoot["channelSourceType"] = channelSourceType;
-								if (channelSourceType == "IP_PULL")
+								mmsDataRoot["streamSourceType"] = streamSourceType;
+								if (streamSourceType == "IP_PULL")
 									mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else if (channelSourceType == "Satellite")
+								else if (streamSourceType == "Satellite")
 									mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else // if (channelSourceType == "IP_PUSH")
+								else // if (streamSourceType == "IP_PUSH")
 								*/
 								{
 									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
@@ -10351,8 +10351,8 @@ void FFMPEGEncoder::liveProxyThread(
 		// non serve
 		// liveProxy->_channelLabel = "";
 
-		// liveProxy->_channelSourceType = liveProxyMetadata["encodingParametersRoot"].
-		// 	get("channelSourceType", "IP_PULL").asString();
+		// liveProxy->_streamSourceType = liveProxyMetadata["encodingParametersRoot"].
+		// 	get("streamSourceType", "IP_PULL").asString();
 
 		liveProxy->_inputsRoot = liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
 
@@ -10360,19 +10360,19 @@ void FFMPEGEncoder::liveProxyThread(
 		{
 			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-			if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
-			Json::Value channelInputRoot = inputRoot["channelInput"];
+			Json::Value streamInputRoot = inputRoot["streamInput"];
 
-			string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-			if (channelSourceType == "Satellite")
+			string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+			if (streamSourceType == "Satellite")
 			{
-				int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-				int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-				int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-				string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+				int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+				int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+				int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+				string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+				int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 					"satelliteAudioItalianPid", -1);
 
 				// In case ffmpeg crashes and is automatically restarted, it should use the same
@@ -10404,10 +10404,10 @@ void FFMPEGEncoder::liveProxyThread(
 
 				string newURL = string("udp://@") + satelliteMulticastIP + ":" + satelliteMulticastPort;
 
-				channelInputRoot["url"] = newURL;
-				channelInputRoot["satelliteMulticastIP"] = satelliteMulticastIP;
-				channelInputRoot["satelliteMulticastPort"] = satelliteMulticastPort;
-				inputRoot["channelInput"] = channelInputRoot;
+				streamInputRoot["url"] = newURL;
+				streamInputRoot["satelliteMulticastIP"] = satelliteMulticastIP;
+				streamInputRoot["satelliteMulticastPort"] = satelliteMulticastPort;
+				inputRoot["streamInput"] = streamInputRoot;
 				liveProxy->_inputsRoot[inputIndex] = inputRoot;
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
@@ -10433,17 +10433,17 @@ void FFMPEGEncoder::liveProxyThread(
 				// if (utcProxyPeriodStart == -1)
 				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
 
-				if (JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				{
-					Json::Value channelInputRoot = inputRoot["channelInput"];
+					Json::Value streamInputRoot = inputRoot["streamInput"];
 
-					string channelSourceType =
-						channelInputRoot.get("channelSourceType", "").asString();
+					string streamSourceType =
+						streamInputRoot.get("streamSourceType", "").asString();
 
-					if (channelSourceType == "IP_PUSH")
+					if (streamSourceType == "IP_PUSH")
 					{
 						int pushListenTimeout = JSONUtils::asInt64(
-							channelInputRoot, "pushListenTimeout", -1);
+							streamInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
 						{
@@ -10504,22 +10504,22 @@ void FFMPEGEncoder::liveProxyThread(
 		{
 			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-			if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
-			Json::Value channelInputRoot = inputRoot["channelInput"];
+			Json::Value streamInputRoot = inputRoot["streamInput"];
 
-			string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-			if (channelSourceType == "Satellite")
+			string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+			if (streamSourceType == "Satellite")
 			{
-				string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-				string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+				string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+				string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-				int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-				int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-				int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-				string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+				int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+				int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+				int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+				string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+				int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 					"satelliteAudioItalianPid", -1);
 
 				if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -10586,22 +10586,22 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value channelInputRoot = inputRoot["channelInput"];
+				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-				if (channelSourceType == "Satellite")
+				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				if (streamSourceType == "Satellite")
 				{
-					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+					string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"satelliteAudioItalianPid", -1);
 
 					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -10691,22 +10691,22 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value channelInputRoot = inputRoot["channelInput"];
+				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-				if (channelSourceType == "Satellite")
+				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				if (streamSourceType == "Satellite")
 				{
-					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+					string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"satelliteAudioItalianPid", -1);
 
 					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -10791,22 +10791,22 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value channelInputRoot = inputRoot["channelInput"];
+				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-				if (channelSourceType == "Satellite")
+				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				if (streamSourceType == "Satellite")
 				{
-					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+					string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"satelliteAudioItalianPid", -1);
 
 					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -10891,22 +10891,22 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value channelInputRoot = inputRoot["channelInput"];
+				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-				if (channelSourceType == "Satellite")
+				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				if (streamSourceType == "Satellite")
 				{
-					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+					string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"satelliteAudioItalianPid", -1);
 
 					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -10991,22 +10991,22 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "channelInput"))
+				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value channelInputRoot = inputRoot["channelInput"];
+				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string channelSourceType = channelInputRoot.get("channelSourceType", "").asString();
-				if (channelSourceType == "Satellite")
+				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				if (streamSourceType == "Satellite")
 				{
-					string satelliteMulticastIP = channelInputRoot.get("string satelliteMulticastIP", "").asString();
-					string satelliteMulticastPort = channelInputRoot.get("string satelliteMulticastPort", "").asString();
+					string satelliteMulticastIP = streamInputRoot.get("string satelliteMulticastIP", "").asString();
+					string satelliteMulticastPort = streamInputRoot.get("string satelliteMulticastPort", "").asString();
 
-					int64_t satelliteServiceId = JSONUtils::asInt64(channelInputRoot, "satelliteServiceId", -1);
-					int64_t satelliteFrequency = JSONUtils::asInt64(channelInputRoot, "satelliteFrequency", -1);
-					int64_t satelliteSymbolRate = JSONUtils::asInt64(channelInputRoot, "satelliteSymbolRate", -1);
-					string satelliteModulation = channelInputRoot.get("satelliteModulation", "").asString();
-					int satelliteVideoPid = JSONUtils::asInt(channelInputRoot, "satelliteVideoPid", -1);
-					int satelliteAudioItalianPid = JSONUtils::asInt(channelInputRoot,
+					int64_t satelliteServiceId = JSONUtils::asInt64(streamInputRoot, "satelliteServiceId", -1);
+					int64_t satelliteFrequency = JSONUtils::asInt64(streamInputRoot, "satelliteFrequency", -1);
+					int64_t satelliteSymbolRate = JSONUtils::asInt64(streamInputRoot, "satelliteSymbolRate", -1);
+					string satelliteModulation = streamInputRoot.get("satelliteModulation", "").asString();
+					int satelliteVideoPid = JSONUtils::asInt(streamInputRoot, "satelliteVideoPid", -1);
+					int satelliteAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"satelliteAudioItalianPid", -1);
 
 					if (satelliteServiceId != -1) // this is just to be sure variables are initialized
@@ -11630,6 +11630,7 @@ void FFMPEGEncoder::monitorThread()
 			//	also to _killedBecauseOfNotWorking and _errorMessage
 			vector<shared_ptr<LiveProxyAndGrid>> sourceLiveProxiesCapability;
 
+			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
 			// we will clone the proxies for monitoring check
 			int liveProxyAndGridRunningCounter = 0;
@@ -11664,12 +11665,17 @@ void FFMPEGEncoder::monitorThread()
 						liveProxyAndGridNotRunningCounter++;
 					}
 				}
-				_logger->info(__FILEREF__ + "monitoringThread, numbers"
+				_logger->info(__FILEREF__ + "liveProxyMonitor, numbers"
 					+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
 					+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
 					+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
 				);
 			}
+			_logger->info(__FILEREF__ + "liveProxyMonitor clone"
+				+ ", copiedRunningLiveProxiesCapability.size: " + to_string(copiedRunningLiveProxiesCapability.size())
+				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			);
 
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
 
@@ -11683,25 +11689,30 @@ void FFMPEGEncoder::monitorThread()
 					= sourceLiveProxiesCapability[liveProxyIndex];
 
 				// this is just for logging
-				string channelConfigurationLabel;
+				string configurationLabel;
 				if (copiedLiveProxy->_inputsRoot.size() > 0)
 				{
 					Json::Value inputRoot = copiedLiveProxy->_inputsRoot[0];
-					string field = "channelInput";
+					string field = "streamInput";
 					if (JSONUtils::isMetadataPresent(inputRoot, field))
 					{
-						Json::Value channelInputRoot = inputRoot[field];
-						field = "channelConfigurationLabel";
-						if (JSONUtils::isMetadataPresent(channelInputRoot, field))
-							channelConfigurationLabel = channelInputRoot.
+						Json::Value streamInputRoot = inputRoot[field];
+						field = "configurationLabel";
+						if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+							configurationLabel = streamInputRoot.
 								get(field, "").asString();
 					}
 				}
 
-				_logger->info(__FILEREF__ + "liveProxyMonitor..."
+				_logger->info(__FILEREF__ + "liveProxyMonitor start"
 					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-					+ ", channelConfigurationLabel: " + channelConfigurationLabel
+					+ ", configurationLabel: " + configurationLabel
+					+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+					+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): "
+						+ to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+					+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): "
+						+ to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 				);
 
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -11712,6 +11723,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -11730,7 +11750,7 @@ void FFMPEGEncoder::monitorThread()
 					if (liveProxyLiveTimeInMinutes <= 3)
 					{
 						_logger->info(__FILEREF__
-							+ "Checks are not done because too early"
+							+ "liveProxyMonitor. Checks are not done because too early"
 							+ ", ingestionJobKey: "
 								+ to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", encodingJobKey: "
@@ -11746,6 +11766,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -11755,6 +11784,12 @@ void FFMPEGEncoder::monitorThread()
 				bool rtmpOutputFound = false;
 				if (liveProxyWorking)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor manifest check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+					);
+
 					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
 						outputIndex++)
 					{
@@ -11832,7 +11867,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(runtime_error e)
 							{
-								string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -11842,7 +11877,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(exception e)
 							{
-								string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -11861,6 +11896,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -11868,6 +11912,12 @@ void FFMPEGEncoder::monitorThread()
 				{
 					try
 					{
+						_logger->info(__FILEREF__ + "liveProxyMonitor nonMonotonousDTSInOutputLog check"
+							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+							+ ", configurationLabel: " + configurationLabel
+						);
+
 						// First health check (rtmp), looks the log and check there is no message like
 						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
 						//	This message causes proxy not working
@@ -11887,7 +11937,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -11897,7 +11947,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -11910,6 +11960,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -11922,6 +11981,12 @@ void FFMPEGEncoder::monitorThread()
 				//		rtmp(Proxy)/SRT(Grid):		frame increasing check
 				if (liveProxyWorking)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor segments check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+					);
+
 					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
 						outputIndex++)
 					{
@@ -11965,7 +12030,7 @@ void FFMPEGEncoder::monitorThread()
 											size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
 											if (manifestFilePathIndex == string::npos)
 											{
-												string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
+												string errorMessage = __FILEREF__ + "liveProxyMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
 													+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 													+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 													+ ", manifestFilePathName: " + manifestFilePathName;
@@ -12039,7 +12104,7 @@ void FFMPEGEncoder::monitorThread()
 													}
 													catch(runtime_error e)
 													{
-														string errorMessage = __FILEREF__ + "listing directory failed"
+														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
 															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12051,7 +12116,7 @@ void FFMPEGEncoder::monitorThread()
 													}
 													catch(exception e)
 													{
-														string errorMessage = __FILEREF__ + "listing directory failed"
+														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
 															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12068,7 +12133,7 @@ void FFMPEGEncoder::monitorThread()
 										}
 										catch(runtime_error e)
 										{
-											_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+											_logger->error(__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed"
 												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12077,7 +12142,7 @@ void FFMPEGEncoder::monitorThread()
 										}
 										catch(...)
 										{
-											_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+											_logger->error(__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed"
 												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12101,7 +12166,7 @@ void FFMPEGEncoder::monitorThread()
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
@@ -12130,7 +12195,7 @@ void FFMPEGEncoder::monitorThread()
 												}
 												catch(runtime_error e)
 												{
-													_logger->error(__FILEREF__ + "remove failed"
+													_logger->error(__FILEREF__ + "liveProxyMonitor. remove failed"
 														+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 														+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
@@ -12144,7 +12209,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(runtime_error e)
 							{
-								string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 										+ ", e.what(): " + e.what()
@@ -12154,7 +12219,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(exception e)
 							{
-								string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -12169,21 +12234,36 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
 				if (liveProxyWorking) // && rtmpOutputFound)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor isFrameIncreasing check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+					);
+
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						int secondsToWaitBetweenSamples = 3;
-						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+						int maxMilliSecondsToWait = 3000;
+						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-								+ ", channelConfigurationLabel: " + channelConfigurationLabel
+								+ ", configurationLabel: " + configurationLabel
 								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
 							);
 
@@ -12194,7 +12274,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(FFMpegEncodingStatusNotAvailable e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12203,7 +12283,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12212,7 +12292,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12224,16 +12304,31 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
 				if (liveProxyWorking) // && rtmpOutputFound)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor forbiddenErrorInOutputLog check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+					);
+
 					try
 					{
 						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 						{
-							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
@@ -12246,7 +12341,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(FFMpegEncodingStatusNotAvailable e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12255,20 +12350,20 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", configurationLabel: " + configurationLabel
 							+ ", e.what(): " + e.what()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", configurationLabel: " + configurationLabel
 							+ ", e.what(): " + e.what()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
@@ -12278,15 +12373,24 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveProxy->_running ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
+					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
+						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
 				if (!liveProxyWorking)
 				{
-					_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
+					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", channelConfigurationLabel: " + channelConfigurationLabel
+						+ ", configurationLabel: " + configurationLabel
 						+ ", localErrorMessage: " + localErrorMessage
 						// + ", channelLabel: " + copiedLiveProxy->_channelLabel
 						+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
@@ -12324,10 +12428,10 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string("ProcessUtility::kill/quit Process failed")
+						string errorMessage = string("liveProxyMonitor. ProcessUtility::kill/quit Process failed")
 							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", channelConfigurationLabel: " + channelConfigurationLabel
+							+ ", configurationLabel: " + configurationLabel
 							+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
 							+ ", e.what(): " + e.what()
 								;
@@ -12335,17 +12439,17 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				_logger->info(__FILEREF__ + "monitoringThread liveProxy "
+				_logger->info(__FILEREF__ + "liveProxyMonitor "
 					+ to_string(liveProxyIndex) + "/" + to_string(liveProxyAndGridRunningCounter)
 					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-					+ ", channelConfigurationLabel: " + channelConfigurationLabel
+					+ ", configurationLabel: " + configurationLabel
 					+ ", @MMS statistics@ - elapsed time: @" + to_string(
 						chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - now).count()) + "@"
 				);
 			}
-			_logger->info(__FILEREF__ + "monitoringThread liveProxy"
+			_logger->info(__FILEREF__ + "liveProxyMonitor"
 				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
 				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
 					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
@@ -12353,7 +12457,7 @@ void FFMPEGEncoder::monitorThread()
 		}
 		catch(runtime_error e)
 		{
-			string errorMessage = string ("monitor LiveProxy failed")
+			string errorMessage = string ("liveProxyMonitor failed")
 				+ ", e.what(): " + e.what()
 			;
 
@@ -12361,7 +12465,7 @@ void FFMPEGEncoder::monitorThread()
 		}
 		catch(exception e)
 		{
-			string errorMessage = string ("monitor LiveProxy failed")
+			string errorMessage = string ("liveProxyMonitor failed")
 				+ ", e.what(): " + e.what()
 			;
 
@@ -12378,6 +12482,7 @@ void FFMPEGEncoder::monitorThread()
 			//	also to _killedBecauseOfNotWorking and _errorMessage
 			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
 
+			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
 			// we will clone the proxies for monitoring check
 			int liveRecordingRunningCounter = 0;
@@ -12412,13 +12517,18 @@ void FFMPEGEncoder::monitorThread()
 						liveRecordingNotRunningCounter++;
 					}
 				}
-				_logger->info(__FILEREF__ + "monitoringThread, numbers"
+				_logger->info(__FILEREF__ + "liveRecordingMonitor, numbers"
 					+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter
 						+ liveRecordingNotRunningCounter)
 					+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
 					+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
 				);
 			}
+			_logger->info(__FILEREF__ + "liveRecordingMonitor clone"
+				+ ", copiedRunningLiveRecordingCapability.size: " + to_string(copiedRunningLiveRecordingCapability.size())
+				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			);
 
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
 
@@ -12431,7 +12541,7 @@ void FFMPEGEncoder::monitorThread()
 				shared_ptr<LiveRecording> sourceLiveRecording
 					= sourceLiveRecordingCapability[liveRecordingIndex];
 
-				_logger->info(__FILEREF__ + "liveRecordingMonitor..."
+				_logger->info(__FILEREF__ + "liveRecordingMonitor"
 					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -12445,6 +12555,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -12464,7 +12583,7 @@ void FFMPEGEncoder::monitorThread()
 				// in order to be sure the file was already created
 				if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
 				{
-					_logger->info(__FILEREF__ + "Checks are not done because too early"
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. Checks are not done because too early"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -12480,6 +12599,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -12487,6 +12615,12 @@ void FFMPEGEncoder::monitorThread()
 				//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
 				if (liveRecorderWorking)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. liveRecorder.list check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+					);
+
 					try
 					{
 						// looking the manifests path name timestamp
@@ -12548,7 +12682,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+						string errorMessage = string ("liveRecordingMonitor on path name failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12558,7 +12692,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+						string errorMessage = string ("liveRecordingMonitor on path name failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12571,6 +12705,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -12581,6 +12724,12 @@ void FFMPEGEncoder::monitorThread()
 				bool rtmpOutputFound = false;
 				if (liveRecorderWorking)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. manifest check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+					);
+
 					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 					{
@@ -12655,7 +12804,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(runtime_error e)
 							{
-								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
+								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
 									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -12665,7 +12814,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(exception e)
 							{
-								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on manifest path name failed")
+								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
 									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -12684,6 +12833,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -12691,6 +12849,12 @@ void FFMPEGEncoder::monitorThread()
 				{
 					try
 					{
+						_logger->info(__FILEREF__ + "liveRecordingMonitor. nonMonotonousDTSInOutputLog check"
+							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+							+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						);
+
 						// First health check (rtmp), looks the log and check there is no message like
 						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
 						//	This message causes proxy not working
@@ -12710,7 +12874,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12720,7 +12884,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -12733,6 +12897,15 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
@@ -12746,6 +12919,12 @@ void FFMPEGEncoder::monitorThread()
 				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
 				if (liveRecorderWorking)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. segment check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+					);
+
 					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 					{
@@ -12774,7 +12953,7 @@ void FFMPEGEncoder::monitorThread()
 										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
 										if (manifestFilePathIndex == string::npos)
 										{
-											string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
+											string errorMessage = __FILEREF__ + "liveRecordingMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
 												+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 												+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName;
@@ -12848,7 +13027,7 @@ void FFMPEGEncoder::monitorThread()
 												}
 												catch(runtime_error e)
 												{
-													string errorMessage = __FILEREF__ + "listing directory failed"
+													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
 														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12860,7 +13039,7 @@ void FFMPEGEncoder::monitorThread()
 												}
 												catch(exception e)
 												{
-													string errorMessage = __FILEREF__ + "listing directory failed"
+													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
 														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12877,7 +13056,7 @@ void FFMPEGEncoder::monitorThread()
 									}
 									catch(runtime_error e)
 									{
-										_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
+										_logger->error(__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed"
 											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12886,7 +13065,7 @@ void FFMPEGEncoder::monitorThread()
 									}
 									catch(...)
 									{
-										_logger->error(__FILEREF__ + "scan LiveRecorder files failed"
+										_logger->error(__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed"
 											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
@@ -12910,7 +13089,7 @@ void FFMPEGEncoder::monitorThread()
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'no segments were generated'";
 
-										_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
+										_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 											+ ", manifestFilePathName: " + manifestFilePathName
@@ -12939,7 +13118,7 @@ void FFMPEGEncoder::monitorThread()
 											}
 											catch(runtime_error e)
 											{
-												_logger->error(__FILEREF__ + "remove failed"
+												_logger->error(__FILEREF__ + "liveRecordingMonitor. remove failed"
 													+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 													+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
@@ -12952,7 +13131,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(runtime_error e)
 							{
-								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
+								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
 									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -12962,7 +13141,7 @@ void FFMPEGEncoder::monitorThread()
 							}
 							catch(exception e)
 							{
-								string errorMessage = string ("liveRecorderMonitorCheck (HLS) on segments (and retention) failed")
+								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
 									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 									+ ", e.what(): " + e.what()
@@ -12977,18 +13156,34 @@ void FFMPEGEncoder::monitorThread()
 				if (!sourceLiveRecording->_running ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
 					continue;
 				}
 
 				if (liveRecorderWorking) // && rtmpOutputFound)
 				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. isFrameIncreasing check"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+					);
+
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						int secondsToWaitBetweenSamples = 3;
-						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+						int maxMilliSecondsToWait = 3000;
+						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(
+							maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -13002,7 +13197,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(FFMpegEncodingStatusNotAvailable e)
 					{
-						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -13011,7 +13206,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -13020,7 +13215,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -13031,7 +13226,7 @@ void FFMPEGEncoder::monitorThread()
 
 				if (!liveRecorderWorking)
 				{
-					_logger->error(__FILEREF__ + "ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
+					_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
@@ -13071,7 +13266,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string("ProcessUtility::kill/quit Process failed")
+						string errorMessage = string("liveRecordingMonitor. ProcessUtility::kill/quit Process failed")
 							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -13082,7 +13277,7 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				_logger->info(__FILEREF__ + "monitoringThread liveRecording "
+				_logger->info(__FILEREF__ + "liveRecordingMonitor "
 					+ to_string(liveRecordingIndex) + "/" + to_string(liveRecordingRunningCounter)
 					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
@@ -13093,7 +13288,7 @@ void FFMPEGEncoder::monitorThread()
 					) + "@"
 				);
 			}
-			_logger->info(__FILEREF__ + "monitoringThread liveRecording"
+			_logger->info(__FILEREF__ + "liveRecordingMonitor"
 				+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
 				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
 					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
@@ -13101,7 +13296,7 @@ void FFMPEGEncoder::monitorThread()
 		}
 		catch(runtime_error e)
 		{
-			string errorMessage = string ("monitor LiveRecording failed")
+			string errorMessage = string ("liveRecordingMonitor failed")
 				+ ", e.what(): " + e.what()
 			;
 
@@ -13109,7 +13304,7 @@ void FFMPEGEncoder::monitorThread()
 		}
 		catch(exception e)
 		{
-			string errorMessage = string ("monitor LiveRecording failed")
+			string errorMessage = string ("liveRecordingMonitor failed")
 				+ ", e.what(): " + e.what()
 			;
 

@@ -8918,17 +8918,17 @@ void FFMpeg::liveRecorder(
 	string segmentListPathName,
 	string recordedFileNamePrefix,
 
-	// if channelSourceType is IP_PUSH means the liveURL should be like
+	// if streamSourceType is IP_PUSH means the liveURL should be like
 	//		rtmp://<local transcoder IP to bind>:<port>
 	//		listening for an incoming connection
-	// else if channelSourceType is CaptureLive, liveURL is not used
+	// else if streamSourceType is CaptureLive, liveURL is not used
 	// else means the liveURL is "any thing" referring a stream
-	string channelSourceType,	// IP_PULL, Satellite, IP_PUSH, CaptureLive
+	string streamSourceType,	// IP_PULL, Satellite, IP_PUSH, CaptureLive
     string liveURL,
-	// Used only in case channelSourceType is IP_PUSH, Maximum time to wait for the incoming connection
+	// Used only in case streamSourceType is IP_PUSH, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
 
-	// parameters used only in case channelSourceType is CaptureLive
+	// parameters used only in case streamSourceType is CaptureLive
 	int captureLive_videoDeviceNumber,
 	string captureLive_videoInputFormat,
 	int captureLive_frameRate,
@@ -8984,7 +8984,7 @@ void FFMpeg::liveRecorder(
 		+ ", segmentListPathName: " + segmentListPathName
 		+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 
-		+ ", channelSourceType: " + channelSourceType
+		+ ", streamSourceType: " + streamSourceType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
@@ -9161,7 +9161,7 @@ void FFMpeg::liveRecorder(
 			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 			+ ", streamingDuration: " + to_string(streamingDuration)
 		);
-		if (channelSourceType == "IP_PUSH" || channelSourceType == "Satellite")
+		if (streamSourceType == "IP_PUSH" || streamSourceType == "Satellite")
 		{
 			if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
 			{
@@ -9187,7 +9187,7 @@ void FFMpeg::liveRecorder(
 
 		// user agent is an HTTP header and can be used only in case of http request
 		bool userAgentToBeUsed = false;
-		if (channelSourceType == "IP_PULL" && userAgent != "")
+		if (streamSourceType == "IP_PULL" && userAgent != "")
 		{
 			string httpPrefix = "http";	// it includes also https
 			if (liveURL.size() >= httpPrefix.size()
@@ -9213,7 +9213,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 
-		if (channelSourceType == "IP_PUSH")
+		if (streamSourceType == "IP_PUSH")
 		{
 			// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
 			if (
@@ -9253,12 +9253,12 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelSourceType == "IP_PULL" || channelSourceType == "Satellite")
+		else if (streamSourceType == "IP_PULL" || streamSourceType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelSourceType == "CaptureLive")
+		else if (streamSourceType == "CaptureLive")
 		{
 			// video
 			{
@@ -10399,9 +10399,9 @@ void FFMpeg::liveProxy2(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 
-	// only one between channelInput and vodInput has to be present
+	// only one between streamInput and vodInput has to be present
 	// array of: "inputRoot": {
-	//	"channelInput": { },
+	//	"streamInput": { },
 	//	"vodInput": { },
 	//	"timePeriod": false, "utcScheduleEnd": -1, "utcScheduleStart": -1 
 	// }
@@ -11206,14 +11206,14 @@ pair<long, string> FFMpeg::liveProxyInput(
 	// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
 	// }
 
-	//	"channelInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "channelConfKey": 2464, "channelConfigurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "channelSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
-	if (isMetadataPresent(inputRoot, "channelInput"))
+	//	"streamInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "confKey": 2464, "configurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "streamSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
+	if (isMetadataPresent(inputRoot, "streamInput"))
 	{
-		field = "channelInput";
-		Json::Value channelInputRoot = inputRoot[field];
+		field = "streamInput";
+		Json::Value streamInputRoot = inputRoot[field];
 
-		field = "channelSourceType";
-		if (!isMetadataPresent(channelInputRoot, field))
+		field = "streamSourceType";
+		if (!isMetadataPresent(streamInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field;
@@ -11221,67 +11221,67 @@ pair<long, string> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string channelSourceType = channelInputRoot.get(field, "").asString();
+		string streamSourceType = streamInputRoot.get(field, "").asString();
 
 		int maxWidth = -1;
 		field = "maxWidth";
-		if (isMetadataPresent(channelInputRoot, field))
-			maxWidth = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			maxWidth = asInt(streamInputRoot, field, -1);
 
 		string url;
 		field = "url";
-		if (isMetadataPresent(channelInputRoot, field))
-			url = channelInputRoot.get(field, "").asString();
+		if (isMetadataPresent(streamInputRoot, field))
+			url = streamInputRoot.get(field, "").asString();
 
 		string userAgent;
 		field = "userAgent";
-		if (isMetadataPresent(channelInputRoot, field))
-			userAgent = channelInputRoot.get(field, "").asString();
+		if (isMetadataPresent(streamInputRoot, field))
+			userAgent = streamInputRoot.get(field, "").asString();
 
 		int pushListenTimeout = -1;
 		field = "pushListenTimeout";
-		if (isMetadataPresent(channelInputRoot, field))
-			pushListenTimeout = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			pushListenTimeout = asInt(streamInputRoot, field, -1);
 
 		string otherInputOptions;
 		field = "otherInputOptions";
-		if (isMetadataPresent(channelInputRoot, field))
-			otherInputOptions = channelInputRoot.get(field, "").asString();
+		if (isMetadataPresent(streamInputRoot, field))
+			otherInputOptions = streamInputRoot.get(field, "").asString();
 
 		string captureLive_videoInputFormat;
 		field = "captureVideoInputFormat";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_videoInputFormat = channelInputRoot.get(field, "").asString();
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_videoInputFormat = streamInputRoot.get(field, "").asString();
 
 		int captureLive_frameRate = -1;
 		field = "captureFrameRate";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_frameRate = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_frameRate = asInt(streamInputRoot, field, -1);
 
 		int captureLive_width = -1;
 		field = "captureWidth";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_width = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_width = asInt(streamInputRoot, field, -1);
 
 		int captureLive_height = -1;
 		field = "captureHeight";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_height = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_height = asInt(streamInputRoot, field, -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		field = "captureVideoDeviceNumber";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_videoDeviceNumber = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_videoDeviceNumber = asInt(streamInputRoot, field, -1);
 
 		int captureLive_channelsNumber = -1;
 		field = "captureChannelsNumber";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_channelsNumber = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_channelsNumber = asInt(streamInputRoot, field, -1);
 
 		int captureLive_audioDeviceNumber = -1;
 		field = "captureAudioDeviceNumber";
-		if (isMetadataPresent(channelInputRoot, field))
-			captureLive_audioDeviceNumber = asInt(channelInputRoot, field, -1);
+		if (isMetadataPresent(streamInputRoot, field))
+			captureLive_audioDeviceNumber = asInt(streamInputRoot, field, -1);
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11289,10 +11289,10 @@ pair<long, string> FFMpeg::liveProxyInput(
 			+ ", timePeriod: " + to_string(timePeriod)
 			+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
 			+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-			+ ", channelSourceType: " + channelSourceType
+			+ ", streamSourceType: " + streamSourceType
 		);
 
-		if (channelSourceType == "IP_PULL" && maxWidth != -1)
+		if (streamSourceType == "IP_PULL" && maxWidth != -1)
 		{
 			try
 			{
@@ -11499,7 +11499,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 					+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
 				);
 
-				if (channelSourceType == "IP_PUSH" || channelSourceType == "Satellite")
+				if (streamSourceType == "IP_PUSH" || streamSourceType == "Satellite")
 				{
 					if (pushListenTimeout > 0 && pushListenTimeout > streamingDurationInSeconds)
 					{
@@ -11526,7 +11526,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 
 			// user agent is an HTTP header and can be used only in case of http request
 			bool userAgentToBeUsed = false;
-			if (channelSourceType == "IP_PULL" && userAgent != "")
+			if (streamSourceType == "IP_PULL" && userAgent != "")
 			{
 				string httpPrefix = "http";	// it includes also https
 				if (url.size() >= httpPrefix.size()
@@ -11566,7 +11566,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 			}
 			ffmpegInputArgumentList.push_back("-re");
 			addToArguments(otherInputOptions, ffmpegInputArgumentList);
-			if (channelSourceType == "IP_PUSH")
+			if (streamSourceType == "IP_PUSH")
 			{
 				// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
 				if (
@@ -11627,12 +11627,12 @@ pair<long, string> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
 			}
-			else if (channelSourceType == "IP_PULL" || channelSourceType == "Satellite")
+			else if (streamSourceType == "IP_PULL" || streamSourceType == "Satellite")
 			{
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
 			}
-			else if (channelSourceType == "CaptureLive")
+			else if (streamSourceType == "CaptureLive")
 			{
 				// video
 				{
@@ -11698,12 +11698,12 @@ pair<long, string> FFMpeg::liveProxyInput(
 	else if (isMetadataPresent(inputRoot, "directURLInput"))
 	{
 		field = "directURLInput";
-		Json::Value channelInputRoot = inputRoot[field];
+		Json::Value streamInputRoot = inputRoot[field];
 
 		string url;
 		field = "url";
-		if (isMetadataPresent(channelInputRoot, field))
-			url = channelInputRoot.get(field, "").asString();
+		if (isMetadataPresent(streamInputRoot, field))
+			url = streamInputRoot.get(field, "").asString();
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11969,7 +11969,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "channelInput or vodInput or countdownInput is not present";
+		string errorMessage = __FILEREF__ + "streamInput or vodInput or countdownInput is not present";
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -15120,19 +15120,19 @@ bool FFMpeg::forbiddenErrorInOutputLog()
     }
 }
 
-bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
+bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 {
 
 	bool frameIncreasing = true;
 
+	chrono::system_clock::time_point startCheck = chrono::system_clock::now();
     try
     {
-		chrono::system_clock::time_point now = chrono::system_clock::now();
 		long minutesSinceBeginningPassed =
-			chrono::duration_cast<chrono::minutes>(now - _startFFMpegMethod).count();
+			chrono::duration_cast<chrono::minutes>(startCheck - _startFFMpegMethod).count();
 		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
         {
-            _logger->info(__FILEREF__ + "ffmpeg: too early to check frame increasing"
+            _logger->info(__FILEREF__ + "isFrameIncreasing: too early to check frame increasing"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
                 + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -15140,6 +15140,9 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
                 + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 				+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 				+ ", _startCheckingFrameInfoInMinutes: " + to_string(_startCheckingFrameInfoInMinutes)
+				+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now()
+					- startCheck).count())
             );
 
 			return frameIncreasing;
@@ -15147,7 +15150,7 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {
-            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
+            _logger->info(__FILEREF__ + "isFrameIncreasing: Encoding status not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
                 + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -15170,7 +15173,7 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 			}
 			catch(exception e)
 			{
-				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+				_logger->error(__FILEREF__ + "isFrameIncreasing: Failure reading the encoding status file"
 					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -15190,58 +15193,17 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 			{
 				frameIncreasing = false;
 
-				_logger->error(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (1)"
-					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
-					+ ", frameIncreasing: " + to_string(frameIncreasing)
-				);
-
-				return frameIncreasing;
-				// throw FFMpegEncodingStatusNotAvailable();
-			}
-		}
-
-		this_thread::sleep_for(chrono::seconds(secondsToWaitBetweenSamples));
-
-		long secondFramesValue;
-		{
-			string ffmpegEncodingStatus;
-			try
-			{
-				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+				_logger->error(__FILEREF__ + "isFrameIncreasing: frame monitoring. Frame info not available (1)"
 					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
 					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
-				);
-
-				throw FFMpegEncodingStatusNotAvailable();
-			}
-
-			try
-			{
-				secondFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
-			}
-			catch(FFMpegFrameInfoNotAvailable e)
-			{
-				frameIncreasing = false;
-
-				_logger->error(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (2)"
-					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 					+ ", frameIncreasing: " + to_string(frameIncreasing)
+					+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now()
+						- startCheck).count())
 				);
 
 				return frameIncreasing;
@@ -15249,26 +15211,102 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 			}
 		}
 
+		int millisecondsToWaitAmongChecks = 300;
+		int numberOfChecksDone = 0;
+		long secondFramesValue = firstFramesValue;
+
+		while(chrono::duration_cast<chrono::milliseconds>(
+			chrono::system_clock::now() - startCheck).count() < maxMilliSecondsToWait)
+		{
+			this_thread::sleep_for(chrono::milliseconds(millisecondsToWaitAmongChecks));
+			numberOfChecksDone++;
+
+			{
+				string ffmpegEncodingStatus;
+				try
+				{
+					ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName,
+						lastCharsToBeReadToGetInfo);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__
+						+ "isFrameIncreasing: Failure reading the encoding status file"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: "
+							+ _currentStagingEncodedAssetPathName
+						+ ", minutesSinceBeginningPassed: "
+							+ to_string(minutesSinceBeginningPassed)
+					);
+
+					throw FFMpegEncodingStatusNotAvailable();
+				}
+
+				try
+				{
+					secondFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
+				}
+				catch(FFMpegFrameInfoNotAvailable e)
+				{
+					frameIncreasing = false;
+
+					_logger->error(__FILEREF__
+						+ "isFrameIncreasing. Frame info not available (2)"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: "
+							+ _currentStagingEncodedAssetPathName
+						+ ", minutesSinceBeginningPassed: "
+							+ to_string(minutesSinceBeginningPassed)
+						+ ", frameIncreasing: " + to_string(frameIncreasing)
+						+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+							chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startCheck).count())
+					);
+
+					return frameIncreasing;
+					// throw FFMpegEncodingStatusNotAvailable();
+				}
+			}
+
+			if (firstFramesValue != secondFramesValue)
+				break;
+		}
+
 		frameIncreasing = (firstFramesValue == secondFramesValue ? false : true);
 
-        _logger->info(__FILEREF__ + "ffmpeg: frame monitoring"
+        _logger->info(__FILEREF__ + "isFrameIncreasing"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
             + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
             + ", firstFramesValue: " + to_string(firstFramesValue)
             + ", secondFramesValue: " + to_string(secondFramesValue)
 			+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
             + ", frameIncreasing: " + to_string(frameIncreasing)
+            + ", numberOfChecksDone: " + to_string(numberOfChecksDone)
+			+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+				chrono::duration_cast<chrono::milliseconds>(
+				chrono::system_clock::now() - startCheck).count())
         );
     }
     catch(FFMpegEncodingStatusNotAvailable e)
     {
-        _logger->info(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
+        _logger->info(__FILEREF__ + "isFrameIncreasing failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
             + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now()
+				- startCheck).count())
             + ", e.what(): " + e.what()
         );
 
@@ -15276,16 +15314,19 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+        _logger->error(__FILEREF__ + "isFrameIncreasing failed" + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
             + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			+ ", isFrameIncreasing elapsed (millisecs): " + to_string(
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now()
+				- startCheck).count())
         );
 
         throw e;
     }
-    
+
     return frameIncreasing;
 }
 

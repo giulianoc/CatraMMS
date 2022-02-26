@@ -135,7 +135,7 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$threeDaysInMinutes
+			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
 		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete"
@@ -274,6 +274,13 @@ else
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
 	then
+		if [[ "$timeoutInMinutes" == "" || "$timeoutInMinutes" == "0" ]]
+		then
+			timeoutInMinutes=$tenDaysInMinutes
+		fi
+
+		timeoutValue="1h"
+
 		#2020-12-09: added / at the end of dumpDirectory (because it is a link,
 		#'find' would not work)
 		#dumpDirectory=/var/catramms/storage/dbDump/
@@ -281,7 +288,7 @@ else
 		dbUserPwdNumber="${#arrayOfDBUserPwd[@]}"
 		dbUserPwdIndex=0
 		#echo $dbUserPwdNumber
-		#while [[ $dbUserPwdIndex -lt $dbUserPwdNumber ]]; do
+		while [[ $dbUserPwdIndex -lt $dbUserPwdNumber ]]; do
 			dbUser=${arrayOfDBUserPwd[$dbUserPwdIndex]}
 			dbPwd=${arrayOfDBUserPwd[$((dbUserPwdIndex+1))]}
 			dbName=${arrayOfDBUserPwd[$((dbUserPwdIndex+2))]}
@@ -289,19 +296,16 @@ else
 
 			dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
 			#echo $dbUser $dbPwd $dbName $dumpFileName
-			mysqldump -u $dbUser -p$dbPwd -h db-server-active $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
+			mysqldump --no-tablespaces -u $dbUser -p$dbPwd -h db-server-active $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
 
-			dbUserPwdIndex=$((dbUserPwdIndex+3))
-		#done
+			dbUserPwdIndex=$((dbUserPwdIndex+4))
 
-		if [[ "$timeoutInMinutes" == "" || "$timeoutInMinutes" == "0" ]]
-		then
-			timeoutInMinutes=$tenDaysInMinutes
-		fi
-		#echo $tenDaysInMinutes
-		commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete"
+			#the retention command is called here because in case of multiple DB
+			#the command would be called only for the last one
+			commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete"
+			timeout $timeoutValue $commandToBeExecuted
+		done
 
-		timeoutValue="1h"
 	else
 		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
 

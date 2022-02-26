@@ -342,11 +342,11 @@ void API::registerUser(
 		{
 			_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", _sharedEncoderLabel: " + _sharedEncoderLabel
+				+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
 			);
 
 			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-				_sharedEncoderLabel);
+				_sharedEncodersPoolLabel, _sharedEncodersLabel);
 		}
         catch(runtime_error e)
         {
@@ -582,11 +582,11 @@ void API::createWorkspace(
 		{
 			_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", _sharedEncoderLabel: " + _sharedEncoderLabel
+				+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
 			);
 
 			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-				_sharedEncoderLabel);
+				_sharedEncodersPoolLabel, _sharedEncodersLabel);
 		}
         catch(runtime_error e)
         {
@@ -1135,7 +1135,20 @@ void API::workspaceList(
         {
             rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
 		*/
 

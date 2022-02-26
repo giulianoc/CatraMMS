@@ -195,7 +195,7 @@ public:
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
-	bool isFrameIncreasing(int secondsToWaitBetweenSamples);
+	bool isFrameIncreasing(int maxMilliSecondsToWait);
 
 	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey,
 		bool isMMSAssetPathName, string mediaSource,
@@ -288,7 +288,7 @@ public:
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
-		string channelSourceType,
+		string streamSourceType,
         string liveURL,
 		int listenTimeoutInSeconds,
 		int captureLive_videoDeviceNumber,
@@ -329,12 +329,12 @@ public:
 		// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
 		//		listening for an incoming connection
 		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		string channelSourceType,
+		string streamSourceType,
 		string liveURL,
 		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
 
-		// parameters used only in case channelSourceType is CaptureLive
+		// parameters used only in case streamSourceType is CaptureLive
 		int captureLive_videoDeviceNumber,
 		string captureLive_videoInputFormat,
 		int captureLive_frameRate,

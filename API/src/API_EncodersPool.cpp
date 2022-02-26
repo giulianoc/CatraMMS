@@ -570,7 +570,20 @@ void API::encoderList(
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				throw runtime_error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		string label;
@@ -623,6 +636,11 @@ void API::encoderList(
 					+ ", labelOrder: " + labelOrderIt->second);
 		}
 
+		bool runningInfo = false;
+		auto runningInfoIt = queryParameters.find("runningInfo");
+		if (runningInfoIt != queryParameters.end())
+			runningInfo = (runningInfoIt->second == "true" ? true : false);
+
         bool allEncoders = false;
 		int64_t workspaceKey = workspace->_workspaceKey;
 		if(admin)
@@ -643,7 +661,7 @@ void API::encoderList(
         {
             Json::Value encoderListRoot = _mmsEngineDBFacade->getEncoderList(
                     start, rows,
-					allEncoders, workspaceKey,
+					allEncoders, workspaceKey, runningInfo,
 					encoderKey, label, serverName, port, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
@@ -714,7 +732,20 @@ void API::encodersPoolList(
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		string label;

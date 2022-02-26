@@ -332,6 +332,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 			lastSQLCommand = 
 				"select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where (currentFreeSizeInBytes / 1000) - (freeSpaceToLeaveInMB * 1000) > ? / 1000 "
+				"and enabled = 1 "
 				"for update";
 				// "order by partitionKey asc limit 1 for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (

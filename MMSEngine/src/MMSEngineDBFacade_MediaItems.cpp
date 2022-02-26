@@ -67,7 +67,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             noMoreRowsReturned = true;
@@ -108,7 +108,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 							+ ", processorMMS: " + processorMMS
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
                         if (rowsUpdated != 1)
@@ -193,7 +193,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             noMoreRowsReturned = true;
@@ -235,7 +235,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 							+ ", processorMMS: " + processorMMS
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
                         if (rowsUpdated != 1)
@@ -584,7 +584,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSetDependency->rowsCount: " + to_string(resultSetDependency->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			if (resultSetDependency->next())
@@ -718,7 +718,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			/*
@@ -907,7 +907,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			/*
@@ -1232,7 +1232,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", physicalPathKey: " + to_string(physicalPathKey)
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 				if (resultSet->next())
@@ -1267,7 +1267,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", uniqueName: " + uniqueName
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 				if (resultSet->next())
@@ -1300,25 +1300,35 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				);
 			}
         
+			chrono::system_clock::time_point startTags = chrono::system_clock::now();
 			// getMediaItemsList_withTagsCheck creates a temporary table
 			resultSetAndNumFound = getMediaItemsList_withTagsCheck (
-					conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey,
-					start, rows,
-					contentTypePresent, contentType,
-					// startAndEndIngestionDatePresent,
-					startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk,
-					deliveryCode,
-					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-					jsonCondition,
-					tagsIn, tagsNotIn,
-					orderBy,
-					jsonOrderBy,
-					admin
-				);
+				conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey,
+				start, rows,
+				contentTypePresent, contentType,
+				// startAndEndIngestionDatePresent,
+				startIngestionDate, endIngestionDate,
+				title, liveRecordingChunk,
+				deliveryCode,
+				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+				jsonCondition,
+				tagsIn, tagsNotIn,
+				orderBy,
+				jsonOrderBy,
+				admin
+			);
+			_logger->info(__FILEREF__ + "@MMS statistics@ - with tags"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", start: " + to_string(start)
+				+ ", rows: " + to_string(rows)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now()
+					- startTags).count()) + "@"
+			);
 		}
 		else
 		{
+			chrono::system_clock::time_point startTags = chrono::system_clock::now();
 			resultSetAndNumFound = getMediaItemsList_withoutTagsCheck (
 					conn, workspaceKey, newMediaItemKey, otherMediaItemsKey, start, rows,
 					contentTypePresent, contentType,
@@ -1332,6 +1342,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					jsonOrderBy,
 					admin
 				);
+			_logger->info(__FILEREF__ + "@MMS statistics@ - without tags"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", start: " + to_string(start)
+				+ ", rows: " + to_string(rows)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now()
+					- startTags).count()) + "@"
+			);
 		}
 
 		shared_ptr<sql::ResultSet> resultSet;
@@ -1347,6 +1365,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
+			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
             while (resultSet->next())
             {
                 Json::Value mediaItemRoot;
@@ -1418,7 +1437,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", contentProviderKey: " + to_string(contentProviderKey)
 						+ ", resultSetProviders->rowsCount: " + to_string(resultSetProviders->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
                     if (resultSetProviders->next())
@@ -1455,7 +1474,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
 						+ ", resultSetUniqueName->rowsCount: " + to_string(resultSetUniqueName->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
                     if (resultSetUniqueName->next())
@@ -1485,7 +1504,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
 						+ ", resultSetTags->rowsCount: " + to_string(resultSetTags->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
                     while (resultSetTags->next())
@@ -1520,7 +1539,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
 								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 							while (resultSetCrossReferences->next())
@@ -1609,7 +1628,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
 								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 							while (resultSetCrossReferences->next())
@@ -1712,7 +1731,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
 						+ ", resultSetProfiles->rowsCount: " + to_string(resultSetProfiles->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
                     while (resultSetProfiles->next())
@@ -2071,6 +2090,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 mediaItemsRoot.append(mediaItemRoot);
             }
+			_logger->info(__FILEREF__ + "@SQL statistics@ - mediaItems"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", start: " + to_string(start)
+				+ ", rows: " + to_string(rows)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+					chrono::system_clock::now() - startSqlResultSet).count()) + "@"
+			);
         }
 
         field = "mediaItems";
@@ -2089,7 +2116,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 		}
@@ -2124,7 +2151,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					preparedStatement->executeUpdate();
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
 				}
@@ -2187,7 +2214,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					preparedStatement->executeUpdate();
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
 				}
@@ -2249,7 +2276,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					preparedStatement->executeUpdate();
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
 				}
@@ -2451,7 +2478,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -2553,7 +2580,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
@@ -2745,7 +2772,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 					+ "from MMS_MediaItem mi, MMS_Tag t "
 				+ sqlWhere
 				+ "group by t.mediaItemKey "
-				;
+			;
 			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -2797,7 +2824,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 				+ ", utcCutPeriodEndTimeInMilliSecondsPlusOneSecond: " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
@@ -2817,7 +2844,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -2879,7 +2906,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
@@ -2957,7 +2984,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3117,7 +3144,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", contentType: " + toString(contentType)
 				+ ", encodingProfileLabel: " + encodingProfileLabel
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3155,7 +3182,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3308,7 +3335,7 @@ tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourceP
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -3501,7 +3528,7 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3671,7 +3698,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3839,7 +3866,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -3912,7 +3939,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -3934,7 +3961,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", mediaItemKey: " + to_string(mediaItemKey)
 						+ ", resultSetMediaItem->rowsCount: " + to_string(resultSetMediaItem->rowsCount())
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
                     if (resultSetMediaItem->next())
@@ -4096,7 +4123,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", referenceUniqueName: " + referenceUniqueName
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4245,7 +4272,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4291,7 +4318,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4443,7 +4470,7 @@ void MMSEngineDBFacade::getVideoDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4484,7 +4511,7 @@ void MMSEngineDBFacade::getVideoDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -4534,7 +4561,7 @@ void MMSEngineDBFacade::getVideoDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -4685,7 +4712,7 @@ void MMSEngineDBFacade::getAudioDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4725,7 +4752,7 @@ void MMSEngineDBFacade::getAudioDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4865,7 +4892,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -4907,7 +4934,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -5070,7 +5097,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", contentProviderName: " + contentProviderName
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -5251,7 +5278,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				+ ", startPublishing: " + startPublishing
 				+ ", endPublishing: " + endPublishing
 				+ ", retentionInMinutes: " + to_string(retentionInMinutes)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
@@ -5555,7 +5582,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
                 if (resultSet->next())
@@ -5625,7 +5652,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					+ ", currentDirLevel3: " + to_string(currentDirLevel3)
 					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
                 if (rowsUpdated != 1)
@@ -6011,7 +6038,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", mediaItemKey: " + to_string(mediaItemKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
@@ -6038,7 +6065,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKEy: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			if (resultSet->next())
@@ -6067,7 +6094,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", uniqueName: " + uniqueName
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 				if (resultSet->next())
@@ -6094,7 +6121,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							+ ", workspaceKey: " + to_string(workspaceKey)
 							+ ", uniqueName: " + uniqueName
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
 					}
@@ -6118,7 +6145,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							+ ", workspaceKey: " + to_string(workspaceKey)
 							+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
 					}
@@ -6144,7 +6171,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", mediaItemKey: " + to_string(mediaItemKey)
 					+ ", uniqueName: " + uniqueName
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
@@ -6171,7 +6198,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", uniqueName: " + uniqueName
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 				if (resultSet->next())
@@ -6200,7 +6227,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								+ ", workspaceKey: " + to_string(workspaceKey)
 								+ ", uniqueName: " + uniqueName
 								+ ", rowsUpdated: " + to_string(rowsUpdated)
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 						}
@@ -6224,7 +6251,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								+ ", workspaceKey: " + to_string(workspaceKey)
 								+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
 								+ ", rowsUpdated: " + to_string(rowsUpdated)
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 						}
@@ -6252,7 +6279,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", mediaItemKey: " + to_string(mediaItemKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
@@ -6383,7 +6410,7 @@ void MMSEngineDBFacade::addTags(
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", tag: " + tag
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -6406,7 +6433,7 @@ void MMSEngineDBFacade::addTags(
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", mediaItemKey: " + to_string(mediaItemKey)
 						+ ", tag: " + tag
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
 				}
@@ -6476,7 +6503,7 @@ void MMSEngineDBFacade::removeTags(
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", mediaItemKey: " + to_string(mediaItemKey)
-			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+			+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);
 		/*
@@ -6873,7 +6900,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -6977,7 +7004,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", deliveryInfo: " + deliveryInfo
 				+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
@@ -7056,7 +7083,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					+ ", videoCodecName: " + videoCodecName
 					+ ", videoBitRate: " + to_string(videoBitRate)
 					+ ", videoProfile: " + videoProfile
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
             }
@@ -7125,7 +7152,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					+ ", audioSampleRate: " + to_string(audioSampleRate)
 					+ ", audioChannels: " + to_string(audioChannels)
 					+ ", language: " + language
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
             }
@@ -7155,7 +7182,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				+ ", imageHeight: " + to_string(imageHeight)
 				+ ", imageFormat: " + imageFormat
 				+ ", imageQuality: " + to_string(imageQuality)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 		}
@@ -7262,7 +7289,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -7315,7 +7342,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 				+ ", sLastUtcChunkEndTime: " + sLastUtcChunkEndTime
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -7362,7 +7389,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 					+ ", previousDataType: " + previousDataType
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
@@ -7387,7 +7414,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
@@ -7441,7 +7468,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", videoTrackIndex: " + to_string(videoTrackIndex)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -7506,7 +7533,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", audioTrackIndex: " + to_string(audioTrackIndex)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -7743,7 +7770,7 @@ void MMSEngineDBFacade::addCrossReference (
 				+ ", crossReferenceType: " + toString(crossReferenceType)
 				+ ", targetMediaItemKey: " + to_string(targetMediaItemKey)
 				+ ", crossReferenceParameters: " + crossReferenceParameters
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
@@ -7816,7 +7843,7 @@ void MMSEngineDBFacade::removePhysicalPath (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -7927,7 +7954,7 @@ void MMSEngineDBFacade::removeMediaItem (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (rowsUpdated != 1)
@@ -8078,7 +8105,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
@@ -8120,7 +8147,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
@@ -8245,7 +8272,7 @@ void MMSEngineDBFacade::updateMediaItem(
 				+ ", processorMMSForRetention: " + processorMMSForRetention
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			if (rowsUpdated != 1)

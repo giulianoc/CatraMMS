@@ -281,10 +281,16 @@ API::API(Json::Value configuration,
         + ", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: " + to_string(_expirationInDaysWorkspaceDefaultValue)
     );
 
-    _sharedEncoderLabel =  _configuration["api"].get("sharedEncoderLabel", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->sharedEncoderLabel: " + _sharedEncoderLabel
-    );
+	{
+		Json::Value sharedEncodersPoolRoot = _configuration["api"]["sharedEncodersPool"];
+
+		_sharedEncodersPoolLabel = sharedEncodersPoolRoot.get("label", "").asString();
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", api->sharedEncodersPool->label: " + _sharedEncodersPoolLabel
+		);
+
+		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
+	}
 
     _apiProtocol =  _configuration["api"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -1960,7 +1966,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         facebookConfList(request, workspace);
     }
-    else if (method == "addChannelConf")
+    else if (method == "addStream")
     {
         if (!admin && !editConfiguration)
         {
@@ -1974,9 +1980,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addChannelConf(request, workspace, queryParameters, requestBody);
+        addStream(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "modifyChannelConf")
+    else if (method == "modifyStream")
     {
         if (!admin && !editConfiguration)
         {
@@ -1990,9 +1996,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyChannelConf(request, workspace, queryParameters, requestBody);
+        modifyStream(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeChannelConf")
+    else if (method == "removeStream")
     {
         if (!admin && !editConfiguration)
         {
@@ -2006,29 +2012,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeChannelConf(request, workspace, queryParameters);
+        removeStream(request, workspace, queryParameters);
     }
-    else if (method == "channelConfList")
+    else if (method == "streamList")
     {
-        channelConfList(request, workspace, queryParameters);
+        streamList(request, workspace, queryParameters);
     }
-    else if (method == "addSourceSATChannelConf")
-    {
-        if (!admin)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        addSourceSATChannelConf(request, workspace, queryParameters, requestBody);
-    }
-    else if (method == "modifySourceSATChannelConf")
+    else if (method == "addSourceSATStream")
     {
         if (!admin)
         {
@@ -2042,9 +2032,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifySourceSATChannelConf(request, workspace, queryParameters, requestBody);
+        addSourceSATStream(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeSourceSATChannelConf")
+    else if (method == "modifySourceSATStream")
     {
         if (!admin)
         {
@@ -2058,11 +2048,27 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeSourceSATChannelConf(request, workspace, queryParameters);
+        modifySourceSATStream(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "sourceSatChannelConfList")
+    else if (method == "removeSourceSATStream")
     {
-        sourceSatChannelConfList(request, workspace, queryParameters);
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeSourceSATStream(request, workspace, queryParameters);
+    }
+    else if (method == "sourceSatStreamList")
+    {
+        sourceSatStreamList(request, workspace, queryParameters);
     }
     else if (method == "addFTPConf")
     {
@@ -4067,7 +4073,7 @@ void API::createDeliveryCDN77Authorization(
 
 		string liveURLData;
 		tuple<string, string, string> liveURLConfDetails
-			= _mmsEngineDBFacade->getChannelConfDetails(
+			= _mmsEngineDBFacade->getStreamDetails(
 			requestWorkspace->_workspaceKey, liveURLConfKey);
 		tie(ignore, ignore, liveURLData) = liveURLConfDetails;
 

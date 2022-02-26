@@ -189,30 +189,30 @@
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/channel/?$ /api?version=$1&method=addChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?$ /api?version=$1&method=addStream last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=modifyChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/([0-9]+)/?$ /api?version=$1&method=modifyStream&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=removeChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/([0-9]+)/?$ /api?version=$1&method=removeStream&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/channel/?([0-9]*)/?$ /api?version=$1&method=channelConfList&liveURLKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=streamList&liveURLKey=$2 last;
 		}
 
 #Source SAT Channels
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatChannel/?$ /api?version=$1&method=addSourceSATChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatStream/?$ /api?version=$1&method=addSourceSATStream last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatChannel/([0-9]+)/?$ /api?version=$1&method=modifySourceSATChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatStream/([0-9]+)/?$ /api?version=$1&method=modifySourceSATStream&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatChannel/([0-9]+)/?$ /api?version=$1&method=removeSourceSATChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatStream/([0-9]+)/?$ /api?version=$1&method=removeSourceSATStream&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatChannel/?([0-9]*)/?$ /api?version=$1&method=sourceSatChannelConfList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceSatStream/?([0-9]*)/?$ /api?version=$1&method=sourceSatStreamList&confKey=$2 last;
 		}
 
 

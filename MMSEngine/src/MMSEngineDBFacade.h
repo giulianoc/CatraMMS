@@ -1780,7 +1780,7 @@ public:
 	void addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey, string ingestionJobLabel,
-		string channelSourceType,
+		string streamSourceType,
 		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
 		string userAgent,
@@ -1812,7 +1812,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		Json::Value inputsRoot,
-		string channelSourceType,
+		string streamSourceType,
 		/*
 		int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
 
@@ -2123,7 +2123,7 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
-    Json::Value addChannelConf(
+    Json::Value addStream(
         int64_t workspaceKey,
         string label,
 		string sourceType,
@@ -2150,9 +2150,9 @@ public:
 		int64_t imageMediaItemKey,
 		string imageUniqueName,
 		int position,
-		Json::Value channelData);
+		Json::Value userData);
 
-	Json::Value modifyChannelConf(
+	Json::Value modifyStream(
 		int64_t confKey,
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
@@ -2179,13 +2179,13 @@ public:
 		bool countryToBeModified, string country,
 		bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
 		bool positionToBeModified, int position,
-		bool channelDataToBeModified, Json::Value channelData);
+		bool userDataToBeModified, Json::Value userData);
 
-    void removeChannelConf(
+    void removeStream(
         int64_t workspaceKey,
         int64_t confKey);
 
-    Json::Value getChannelConfList (
+    Json::Value getStreamList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
 		string label, string sourceType, string type,
@@ -2194,13 +2194,13 @@ public:
 
 	tuple<int64_t, string, string, string, string, string, int, string, int,
 		int, string, int, int, int, int, int, int64_t>
-		getChannelConfDetails(
+		getStreamDetails(
 			int64_t workspaceKey, string label, bool warningIfMissing);
 
-	tuple<string, string, string> getChannelConfDetails(
+	tuple<string, string, string> getStreamDetails(
 		int64_t workspaceKey, int64_t confKey);
 
-	Json::Value addSourceSATChannelConf(
+	Json::Value addSourceSATStream(
 		int64_t serviceId,
 		int64_t networkId,
 		int64_t transportStreamId,
@@ -2220,7 +2220,7 @@ public:
 		string deliverySystem
 	);
 
-	Json::Value modifySourceSATChannelConf(
+	Json::Value modifySourceSATStream(
 		int64_t confKey,
 
 		bool serviceIdToBeModified, int64_t serviceId,
@@ -2242,17 +2242,17 @@ public:
 		bool deliverySystemToBeModified, string deliverySystem
 	);
 
-    void removeSourceSATChannelConf(
+    void removeSourceSATStream(
         int64_t confKey);
 
-    Json::Value getSourceSATChannelConfList (
+    Json::Value getSourceSATStreamList (
         int64_t confKey,
 		int start, int rows,
 		int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
 		string nameOrder);
 
-    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceSATChannelConfDetails(
+    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceSATStreamDetails(
         int64_t confKey, bool warningIfMissing);
 
     int64_t addFTPConf(
@@ -2355,14 +2355,15 @@ public:
 		int64_t workspaceKey, int64_t encoderKey);
 
 	void addAssociationWorkspaceEncoder(
-		int64_t workspaceKey, string encoderLabel);
+		int64_t workspaceKey,
+		string sharedEncodersPoolLabel, Json::Value sharedEncodersLabel);
 
 	void removeAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
 
 	Json::Value getEncoderList (
 		int start, int rows,
-		bool allEncoders, int64_t workspaceKey, int64_t encoderKey,
+		bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey,
 		string label, string serverName, int port,
 		string labelOrder	// "" or "asc" or "desc"
 	);
@@ -2413,7 +2414,7 @@ public:
 
 	static int64_t parseRetention(string retention);
 
-	Json::Value getChannelInputRoot(
+	Json::Value getStreamInputRoot(
 		int64_t workspaceKey, string configurationLabel,
 		int maxWidth, string userAgent, string otherInputOptions);
 
@@ -2677,6 +2678,7 @@ private:
 		shared_ptr<MySQLConnection> conn);
 
 	Json::Value getEncoderRoot (
+		bool runningInfo,
 		shared_ptr<sql::ResultSet> resultSet);
 
     void createTablesIfNeeded();

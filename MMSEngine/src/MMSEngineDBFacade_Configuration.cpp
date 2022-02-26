@@ -1472,7 +1472,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
     return facebookPageToken;
 }
 
-Json::Value MMSEngineDBFacade::addChannelConf(
+Json::Value MMSEngineDBFacade::addStream(
     int64_t workspaceKey,
     string label,
 	string sourceType,
@@ -1499,7 +1499,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 	int64_t imageMediaItemKey,
 	string imageUniqueName,
 	int position,
-	Json::Value channelData)
+	Json::Value userData)
 {
     string      lastSQLCommand;
     int64_t     confKey;
@@ -1514,15 +1514,15 @@ Json::Value MMSEngineDBFacade::addChannelConf(
         );
         
         {
-			string sChannelData;
-			if (channelData != Json::nullValue)
+			string sUserData;
+			if (userData != Json::nullValue)
 			{
 				Json::StreamWriterBuilder wbuilder;
-				sChannelData = Json::writeString(wbuilder, channelData);
+				sUserData = Json::writeString(wbuilder, userData);
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_IPChannel(workspaceKey, label, sourceType, "
+                "insert into MMS_Conf_Stream(workspaceKey, label, sourceType, "
 				"encodersPoolLabel, url, "
 				"pushProtocol, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
@@ -1531,7 +1531,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 				"satSourceSATConfKey, "
 				"type, description, name, "
 				"region, country, imageMediaItemKey, imageUniqueName, "
-				"position, channelData) values ("
+				"position, userData) values ("
                 "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
 				"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -1641,10 +1641,10 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
 				preparedStatement->setInt(queryParameterIndex++, position);
-			if (sChannelData == "")
+			if (sUserData == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
-				preparedStatement->setString(queryParameterIndex++, sChannelData);
+				preparedStatement->setString(queryParameterIndex++, sUserData);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -1662,7 +1662,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 				+ ", imageMediaItemKey: " + to_string(imageMediaItemKey)
 				+ ", imageUniqueName: " + imageUniqueName
 				+ ", position: " + to_string(position)
-				+ ", sChannelData: " + sChannelData
+				+ ", sUserData: " + sUserData
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1670,7 +1670,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
             confKey = getLastInsertId(conn);
         }
 
-		Json::Value channelConfRoot;
+		Json::Value streamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -1682,13 +1682,13 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 			string region;
 			string country;
 			string labelOrder;
-			Json::Value channelConfListRoot = getChannelConfList (
+			Json::Value streamListRoot = getStreamList (
 				workspaceKey, confKey,
 				start, rows, label, url, sourceType, type, name,
 				region, country, labelOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
+			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -1696,9 +1696,9 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = channelConfListRoot[field];
+			Json::Value responseRoot = streamListRoot[field];
 
-			field = "channelConf";
+			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1707,11 +1707,11 @@ Json::Value MMSEngineDBFacade::addChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			channelConfRoot = responseRoot[field];
+			streamsRoot = responseRoot[field];
 
-			if (channelConfRoot.size() != 1)
+			if (streamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				string errorMessage = __FILEREF__ + "Wrong streams";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1724,7 +1724,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return channelConfRoot[0];
+		return streamsRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -1786,7 +1786,7 @@ Json::Value MMSEngineDBFacade::addChannelConf(
     }
 }
 
-Json::Value MMSEngineDBFacade::modifyChannelConf(
+Json::Value MMSEngineDBFacade::modifyStream(
     int64_t confKey,
     int64_t workspaceKey,
     bool labelToBeModified, string label,
@@ -1815,7 +1815,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 	bool countryToBeModified, string country,
 	bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
 	bool positionToBeModified, int position,
-	bool channelDataToBeModified, Json::Value channelData)
+	bool userDataToBeModified, Json::Value userData)
 {
     string      lastSQLCommand;
     
@@ -2024,18 +2024,18 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 				oneParameterPresent = true;
 			}
 
-			string sChannelData;
-			if (channelDataToBeModified)
+			string sUserData;
+			if (userDataToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("channelData = ?");
+				setSQL += ("userData = ?");
 				oneParameterPresent = true;
 
-				if (channelData != Json::nullValue)
+				if (userData != Json::nullValue)
 				{
 					Json::StreamWriterBuilder wbuilder;
-					sChannelData = Json::writeString(wbuilder, channelData);
+					sUserData = Json::writeString(wbuilder, userData);
 				}
 			}
 
@@ -2051,7 +2051,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
             }
 
             lastSQLCommand = 
-                string("update MMS_Conf_IPChannel ") + setSQL + " "
+                string("update MMS_Conf_Stream ") + setSQL + " "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2257,13 +2257,13 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 				else
 					preparedStatement->setInt(queryParameterIndex++, position);
 			}
-			if (channelDataToBeModified)
+			if (userDataToBeModified)
 			{
-				if (sChannelData == "")
+				if (sUserData == "")
 					preparedStatement->setNull(queryParameterIndex++,
 						sql::DataType::VARCHAR);
 				else
-					preparedStatement->setString(queryParameterIndex++, sChannelData);
+					preparedStatement->setString(queryParameterIndex++, sUserData);
 			}
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -2299,8 +2299,8 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 					+ imageUniqueName
 				+ ", position (" + to_string(positionToBeModified) + "): "
 					+ to_string(position)
-				+ ", sChannelData (" + to_string(channelDataToBeModified) + "): "
-					+ sChannelData
+				+ ", sUserData (" + to_string(userDataToBeModified) + "): "
+					+ sUserData
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -2323,7 +2323,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
             }
 		}
 
-		Json::Value channelConfRoot;
+		Json::Value streamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -2335,12 +2335,12 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 			string region;
 			string country;
 			string labelOrder;
-			Json::Value channelConfListRoot = getChannelConfList (
+			Json::Value streamListRoot = getStreamList (
 				workspaceKey, confKey,
 				start, rows, label, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(channelConfListRoot, field))
+			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -2348,9 +2348,9 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = channelConfListRoot[field];
+			Json::Value responseRoot = streamListRoot[field];
 
-			field = "channelConf";
+			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2359,11 +2359,11 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			channelConfRoot = responseRoot[field];
+			streamsRoot = responseRoot[field];
 
-			if (channelConfRoot.size() != 1)
+			if (streamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				string errorMessage = __FILEREF__ + "Wrong streams";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2376,7 +2376,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return channelConfRoot[0];
+		return streamsRoot[0];
 	}
     catch(sql::SQLException se)
     {
@@ -2438,7 +2438,7 @@ Json::Value MMSEngineDBFacade::modifyChannelConf(
     }      
 }
 
-void MMSEngineDBFacade::removeChannelConf(
+void MMSEngineDBFacade::removeStream(
     int64_t workspaceKey,
     int64_t confKey)
 {
@@ -2455,7 +2455,7 @@ void MMSEngineDBFacade::removeChannelConf(
         
         {
             lastSQLCommand = 
-                "delete from MMS_Conf_IPChannel where confKey = ? and workspaceKey = ?";
+                "delete from MMS_Conf_Stream where confKey = ? and workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2551,7 +2551,7 @@ void MMSEngineDBFacade::removeChannelConf(
     }        
 }
 
-Json::Value MMSEngineDBFacade::getChannelConfList (
+Json::Value MMSEngineDBFacade::getStreamList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
 	string label, string url, string sourceType, string type,
@@ -2560,7 +2560,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 )
 {
     string      lastSQLCommand;
-    Json::Value channelConfListRoot;
+    Json::Value streamListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2568,7 +2568,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getLiveURLConfList"
+        _logger->info(__FILEREF__ + "getStreamList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", liveURLKey: " + to_string(liveURLKey)
             + ", start: " + to_string(start)
@@ -2661,7 +2661,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 			}
 
             field = "requestParameters";
-            channelConfListRoot[field] = requestParametersRoot;
+            streamListRoot[field] = requestParametersRoot;
         }
         
         string sqlWhere = string ("where workspaceKey = ? ");
@@ -2685,10 +2685,11 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
         Json::Value responseRoot;
         {
             lastSQLCommand = 
-                string("select count(*) from MMS_Conf_IPChannel ")
+                string("select count(*) from MMS_Conf_Stream ")
                     + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (liveURLKey != -1)
@@ -2736,7 +2737,7 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
             responseRoot[field] = resultSet->getInt64(1);
         }
 
-        Json::Value channelRoot(Json::arrayValue);
+        Json::Value streamsRoot(Json::arrayValue);
         {
 			string orderByCondition;
 			if (labelOrder == "")
@@ -2753,8 +2754,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 						"captureLiveChannelsNumber, satSourceSATConfKey, "
 						"type, description, name, "
 						"region, country, "
-						"imageMediaItemKey, imageUniqueName, position, channelData "
-						"from MMS_Conf_IPChannel ") 
+						"imageMediaItemKey, imageUniqueName, position, userData "
+						"from MMS_Conf_Stream ") 
                 + sqlWhere
 				+ orderByCondition
 				+ "limit ? offset ?";
@@ -2808,184 +2809,184 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 			);
             while (resultSet->next())
             {
-                Json::Value channelConfRoot;
+                Json::Value streamRoot;
 
                 field = "confKey";
-                channelConfRoot[field] = resultSet->getInt64("confKey");
+                streamRoot[field] = resultSet->getInt64("confKey");
 
                 field = "label";
-                channelConfRoot[field] = static_cast<string>(
+                streamRoot[field] = static_cast<string>(
 					resultSet->getString("label"));
 
                 field = "sourceType";
-                channelConfRoot[field] = static_cast<string>(
+                streamRoot[field] = static_cast<string>(
 					resultSet->getString("sourceType"));
 
                 field = "encodersPoolLabel";
 				if (resultSet->isNull("encodersPoolLabel"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("encodersPoolLabel"));
 
                 field = "url";
 				if (resultSet->isNull("url"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("url"));
 
                 field = "pushProtocol";
 				if (resultSet->isNull("pushProtocol"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("pushProtocol"));
 
                 field = "pushServerName";
 				if (resultSet->isNull("pushServerName"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("pushServerName"));
 
                 field = "pushServerPort";
 				if (resultSet->isNull("pushServerPort"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("pushServerPort");
+					streamRoot[field] = resultSet->getInt("pushServerPort");
 
                 field = "pushUri";
 				if (resultSet->isNull("pushUri"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("pushUri"));
 
                 field = "pushListenTimeout";
 				if (resultSet->isNull("pushListenTimeout"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("pushListenTimeout");
+					streamRoot[field] = resultSet->getInt("pushListenTimeout");
 
                 field = "captureLiveVideoDeviceNumber";
 				if (resultSet->isNull("captureLiveVideoDeviceNumber"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] =
+					streamRoot[field] =
 						resultSet->getInt("captureLiveVideoDeviceNumber");
 
                 field = "captureLiveVideoInputFormat";
 				if (resultSet->isNull("captureLiveVideoInputFormat"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("captureLiveVideoInputFormat"));
 
                 field = "captureLiveFrameRate";
 				if (resultSet->isNull("captureLiveFrameRate"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureLiveFrameRate");
+					streamRoot[field] = resultSet->getInt("captureLiveFrameRate");
 
                 field = "captureLiveWidth";
 				if (resultSet->isNull("captureLiveWidth"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureLiveWidth");
+					streamRoot[field] = resultSet->getInt("captureLiveWidth");
 
                 field = "captureLiveHeight";
 				if (resultSet->isNull("captureLiveHeight"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureLiveHeight");
+					streamRoot[field] = resultSet->getInt("captureLiveHeight");
 
                 field = "captureLiveAudioDeviceNumber";
 				if (resultSet->isNull("captureLiveAudioDeviceNumber"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] =
+					streamRoot[field] =
 						resultSet->getInt("captureLiveAudioDeviceNumber");
 
                 field = "captureLiveChannelsNumber";
 				if (resultSet->isNull("captureLiveChannelsNumber"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("captureLiveChannelsNumber");
+					streamRoot[field] = resultSet->getInt("captureLiveChannelsNumber");
 
                 field = "satSourceSATConfKey";
 				if (resultSet->isNull("satSourceSATConfKey"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("satSourceSATConfKey");
+					streamRoot[field] = resultSet->getInt64("satSourceSATConfKey");
 
                 field = "type";
 				if (resultSet->isNull("type"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("type"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("type"));
 
                 field = "description";
 				if (resultSet->isNull("description"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("description"));
 
                 field = "name";
 				if (resultSet->isNull("name"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("name"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("name"));
 
                 field = "region";
 				if (resultSet->isNull("region"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("region"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("region"));
 
                 field = "country";
 				if (resultSet->isNull("country"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("country"));
 
                 field = "imageMediaItemKey";
 				if (resultSet->isNull("imageMediaItemKey"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("imageMediaItemKey");
+					streamRoot[field] = resultSet->getInt64("imageMediaItemKey");
 
                 field = "imageUniqueName";
 				if (resultSet->isNull("imageUniqueName"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
+					streamRoot[field] = static_cast<string>(
 						resultSet->getString("imageUniqueName"));
 
                 field = "position";
 				if (resultSet->isNull("position"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("position");
+					streamRoot[field] = resultSet->getInt("position");
 
-                field = "channelData";
-				if (resultSet->isNull("channelData"))
-					channelConfRoot[field] = Json::nullValue;
+                field = "userData";
+				if (resultSet->isNull("userData"))
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(
-						resultSet->getString("channelData"));
+					streamRoot[field] = static_cast<string>(
+						resultSet->getString("userData"));
 
-                channelRoot.append(channelConfRoot);
+                streamsRoot.append(streamRoot);
             }
         }
 
-        field = "channelConf";
-        responseRoot[field] = channelRoot;
+        field = "streams";
+        responseRoot[field] = streamsRoot;
 
         field = "response";
-        channelConfListRoot[field] = responseRoot;
+        streamListRoot[field] = responseRoot;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -3052,12 +3053,12 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
         throw e;
     } 
     
-    return channelConfListRoot;
+    return streamListRoot;
 }
 
 tuple<int64_t, string, string, string, string, string, int, string, int,
 	int, string, int, int, int, int, int, int64_t>
-	MMSEngineDBFacade::getChannelConfDetails(
+	MMSEngineDBFacade::getStreamDetails(
     int64_t workspaceKey, string label,
 	bool warningIfMissing
 )
@@ -3068,7 +3069,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 
     try
     {
-        _logger->info(__FILEREF__ + "getChannelConfDetails"
+        _logger->info(__FILEREF__ + "getStreamDetails"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", label: " + label
         );
@@ -3104,7 +3105,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
 				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
 				"satSourceSATConfKey "
-				"from MMS_Conf_IPChannel "
+				"from MMS_Conf_Stream "
 				"where workspaceKey = ? and label = ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3270,7 +3271,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
     } 
 }
 
-tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
+tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
     int64_t workspaceKey, int64_t confKey
 )
 {
@@ -3280,7 +3281,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
 
     try
     {        
-        _logger->info(__FILEREF__ + "getChannelConfDetails"
+        _logger->info(__FILEREF__ + "getStreamDetails"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", confKey: " + to_string(confKey)
         );
@@ -3292,9 +3293,9 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
         
 		string		url;
 		string		channelName;
-		string		liveURLData;
+		string		userData;
         {
-            lastSQLCommand = string("select url, name, channelData from MMS_Conf_IPChannel ")
+            lastSQLCommand = string("select url, name, userData from MMS_Conf_Stream ")
 				+ "where workspaceKey = ? and confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3314,7 +3315,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
 			);
             if (!resultSet->next())
             {
-                string errorMessage = __FILEREF__ + "select from MMS_Conf_IPChannel failed"
+                string errorMessage = __FILEREF__ + "select from MMS_Conf_Stream failed"
                     + ", workspaceKey: " + to_string(workspaceKey)
                     + ", confKey: " + to_string(confKey)
                 ;
@@ -3326,7 +3327,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
 
             url = resultSet->getString("url");
             channelName = resultSet->getString("name");
-            liveURLData = resultSet->getString("channelData");
+            userData = resultSet->getString("userData");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -3335,7 +3336,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(url, channelName, liveURLData);
+		return make_tuple(url, channelName, userData);
     }
     catch(sql::SQLException se)
     {
@@ -3397,7 +3398,7 @@ tuple<string, string, string> MMSEngineDBFacade::getChannelConfDetails(
     } 
 }
 
-Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
+Json::Value MMSEngineDBFacade::addSourceSATStream(
 	int64_t serviceId,
 	int64_t networkId,
 	int64_t transportStreamId,
@@ -3431,7 +3432,7 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_SourceSATChannel(serviceId, networkId, transportStreamId, "
+                "insert into MMS_Conf_SourceSATStream(serviceId, networkId, transportStreamId, "
 				"name, satellite, frequency, lnb, "
 				"videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid, "
 				"modulation, polarization, symbolRate, country, deliverySystem "
@@ -3528,7 +3529,7 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
 			confKey = getLastInsertId(conn);
         }
 
-		Json::Value sourceSATChannelConfRoot;
+		Json::Value sourceSATStreamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -3539,12 +3540,12 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
 			int videoPid;
 			string audioPids;
 			string nameOrder;
-			Json::Value sourceSATChannelConfRoot = getSourceSATChannelConfList (
+			Json::Value sourceSATStreamRoot = getSourceSATStreamList (
 				confKey, start, rows, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(sourceSATChannelConfRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceSATStreamRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -3552,9 +3553,9 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = sourceSATChannelConfRoot[field];
+			Json::Value responseRoot = sourceSATStreamRoot[field];
 
-			field = "sourceSATChannelConf";
+			field = "sourceSATStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -3563,9 +3564,9 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceSATChannelConfRoot = responseRoot[field];
+			sourceSATStreamsRoot = responseRoot[field];
 
-			if (sourceSATChannelConfRoot.size() != 1)
+			if (sourceSATStreamsRoot.size() != 1)
 			{
 				string errorMessage = __FILEREF__ + "Wrong channelConf";
 				_logger->error(errorMessage);
@@ -3580,7 +3581,7 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return sourceSATChannelConfRoot[0];
+		return sourceSATStreamsRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -3642,7 +3643,7 @@ Json::Value MMSEngineDBFacade::addSourceSATChannelConf(
     }  
 }
 
-Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
+Json::Value MMSEngineDBFacade::modifySourceSATStream(
 	int64_t confKey,
 
 	bool serviceIdToBeModified, int64_t serviceId,
@@ -3827,7 +3828,7 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
             }
 
             lastSQLCommand = 
-                string("update MMS_Conf_SourceSATChannel ") + setSQL + " "
+                string("update MMS_Conf_SourceSATStream ") + setSQL + " "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3995,7 +3996,7 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
             }
         }
 
-		Json::Value sourceSATChannelConfRoot;
+		Json::Value sourceSATStreamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -4006,12 +4007,12 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
 			int videoPid;
 			string audioPids;
 			string nameOrder;
-			Json::Value sourceSATChannelConfRoot = getSourceSATChannelConfList (
+			Json::Value sourceSATStreamRoot = getSourceSATStreamList (
 				confKey, start, rows, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(sourceSATChannelConfRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceSATStreamRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -4019,9 +4020,9 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = sourceSATChannelConfRoot[field];
+			Json::Value responseRoot = sourceSATStreamRoot[field];
 
-			field = "sourceSATChannelConf";
+			field = "sourceSATStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -4030,11 +4031,11 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceSATChannelConfRoot = responseRoot[field];
+			sourceSATStreamsRoot = responseRoot[field];
 
-			if (sourceSATChannelConfRoot.size() != 1)
+			if (sourceSATStreamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				string errorMessage = __FILEREF__ + "Wrong streams";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -4047,7 +4048,7 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return sourceSATChannelConfRoot[0];
+		return sourceSATStreamsRoot[0];
     }
     catch(sql::SQLException se)
     {
@@ -4109,7 +4110,7 @@ Json::Value MMSEngineDBFacade::modifySourceSATChannelConf(
     }
 }
 
-void MMSEngineDBFacade::removeSourceSATChannelConf(
+void MMSEngineDBFacade::removeSourceSATStream(
 	int64_t confKey)
 {
     string      lastSQLCommand;
@@ -4125,7 +4126,7 @@ void MMSEngineDBFacade::removeSourceSATChannelConf(
         
         {
             lastSQLCommand = 
-                "delete from MMS_Conf_SourceSATChannel where confKey = ?";
+                "delete from MMS_Conf_SourceSATStream where confKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4219,7 +4220,7 @@ void MMSEngineDBFacade::removeSourceSATChannelConf(
     }        
 }
 
-Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
+Json::Value MMSEngineDBFacade::getSourceSATStreamList (
 	int64_t confKey,
 	int start, int rows,
 	int64_t serviceId, string name, int64_t frequency, string lnb,
@@ -4227,7 +4228,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 	string nameOrder)
 {
     string      lastSQLCommand;
-    Json::Value channelConfListRoot;
+    Json::Value streamListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -4235,7 +4236,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getSourceSATChannelConfList"
+        _logger->info(__FILEREF__ + "getSourceSATStreamList"
             + ", confKey: " + to_string(confKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
@@ -4315,7 +4316,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 			}
 
             field = "requestParameters";
-            channelConfListRoot[field] = requestParametersRoot;
+            streamListRoot[field] = requestParametersRoot;
         }
         
 		string sqlWhere;
@@ -4373,7 +4374,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 
         Json::Value responseRoot;
         {
-			lastSQLCommand = string("select count(*) from MMS_Conf_SourceSATChannel sc ")
+			lastSQLCommand = string("select count(*) from MMS_Conf_SourceSATStream sc ")
 				+ sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -4421,7 +4422,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
             responseRoot[field] = resultSet->getInt64(1);
         }
 
-        Json::Value channelRoot(Json::arrayValue);
+        Json::Value streamsRoot(Json::arrayValue);
         {
 			string orderByCondition;
 			if (nameOrder == "")
@@ -4435,7 +4436,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 					"sc.audioItalianPid, sc.audioEnglishPid, sc.teletextPid, "
 					"sc.modulation, sc.polarization, sc.symbolRate, "
 					"sc.country, sc.deliverySystem "
-					"from MMS_Conf_SourceSATChannel sc ") 
+					"from MMS_Conf_SourceSATStream sc ") 
 				+ sqlWhere
 				+ orderByCondition
 				+ "limit ? offset ?";
@@ -4478,113 +4479,113 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 			);
             while (resultSet->next())
             {
-                Json::Value channelConfRoot;
+                Json::Value streamRoot;
 
                 field = "confKey";
-                channelConfRoot[field] = resultSet->getInt64("confKey");
+                streamRoot[field] = resultSet->getInt64("confKey");
 
                 field = "serviceId";
 				if (resultSet->isNull("serviceId"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("serviceId");
+					streamRoot[field] = resultSet->getInt64("serviceId");
 
                 field = "networkId";
 				if (resultSet->isNull("networkId"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("networkId");
+					streamRoot[field] = resultSet->getInt64("networkId");
 
                 field = "transportStreamId";
 				if (resultSet->isNull("transportStreamId"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("transportStreamId");
+					streamRoot[field] = resultSet->getInt64("transportStreamId");
 
                 field = "name";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("name"));
+                streamRoot[field] = static_cast<string>(resultSet->getString("name"));
 
                 field = "satellite";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("satellite"));
+                streamRoot[field] = static_cast<string>(resultSet->getString("satellite"));
 
                 field = "frequency";
-                channelConfRoot[field] = resultSet->getInt64("frequency");
+                streamRoot[field] = resultSet->getInt64("frequency");
 
                 field = "lnb";
 				if (resultSet->isNull("lnb"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("lnb"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("lnb"));
 
                 field = "videoPid";
 				if (resultSet->isNull("videoPid"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("videoPid");
+					streamRoot[field] = resultSet->getInt("videoPid");
 
                 field = "audioPids";
 				if (resultSet->isNull("audioPids"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("audioPids"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("audioPids"));
 
                 field = "audioItalianPid";
 				if (resultSet->isNull("audioItalianPid"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("audioItalianPid");
+					streamRoot[field] = resultSet->getInt("audioItalianPid");
 
                 field = "audioEnglishPid";
 				if (resultSet->isNull("audioEnglishPid"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("audioEnglishPid");
+					streamRoot[field] = resultSet->getInt("audioEnglishPid");
 
                 field = "teletextPid";
 				if (resultSet->isNull("teletextPid"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt("teletextPid");
+					streamRoot[field] = resultSet->getInt("teletextPid");
 
                 field = "modulation";
 				if (resultSet->isNull("modulation"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("modulation"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("modulation"));
 
                 field = "polarization";
 				if (resultSet->isNull("polarization"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("polarization"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("polarization"));
 
                 field = "symbolRate";
 				if (resultSet->isNull("symbolRate"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = resultSet->getInt64("symbolRate");
+					streamRoot[field] = resultSet->getInt64("symbolRate");
 
 				field = "country";
 				if (resultSet->isNull("country"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("country"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("country"));
 
                 field = "deliverySystem";
 				if (resultSet->isNull("deliverySystem"))
-					channelConfRoot[field] = Json::nullValue;
+					streamRoot[field] = Json::nullValue;
 				else
-					channelConfRoot[field] = static_cast<string>(resultSet->getString("deliverySystem"));
+					streamRoot[field] = static_cast<string>(resultSet->getString("deliverySystem"));
 
-                channelRoot.append(channelConfRoot);
+                streamsRoot.append(streamRoot);
             }
         }
 
-        field = "sourceSATChannelConf";
-        responseRoot[field] = channelRoot;
+        field = "sourceSATStreams";
+        responseRoot[field] = streamsRoot;
 
         field = "response";
-        channelConfListRoot[field] = responseRoot;
+        streamListRoot[field] = responseRoot;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4651,11 +4652,11 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
         throw e;
     } 
     
-    return channelConfListRoot;
+    return streamListRoot;
 }
 
 tuple<int64_t, int64_t, int64_t, string, int, int>
-	MMSEngineDBFacade::getSourceSATChannelConfDetails(
+	MMSEngineDBFacade::getSourceSATStreamDetails(
 	int64_t confKey, bool warningIfMissing
 )
 {
@@ -4665,7 +4666,7 @@ tuple<int64_t, int64_t, int64_t, string, int, int>
 
     try
     {
-        _logger->info(__FILEREF__ + "getSATChannelConfDetails"
+        _logger->info(__FILEREF__ + "getSATStreamDetails"
             + ", confKey: " + to_string(confKey)
         );
 
@@ -4683,7 +4684,7 @@ tuple<int64_t, int64_t, int64_t, string, int, int>
         {
 			lastSQLCommand = "select serviceId, frequency, symbolRate, "
 				"modulation, videoPid, audioItalianPid "
-				"from MMS_Conf_SourceSATChannel "
+				"from MMS_Conf_SourceSATStream "
 				"where confKey = ?"
 			;
 
@@ -6149,17 +6150,17 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-Json::Value MMSEngineDBFacade::getChannelInputRoot(
+Json::Value MMSEngineDBFacade::getStreamInputRoot(
 	int64_t workspaceKey, string configurationLabel,
 	int maxWidth, string userAgent, string otherInputOptions
 )
 {
-	Json::Value channelInputRoot;
+	Json::Value streamInputRoot;
 
     try
     {
 		int64_t confKey = -1;
-		string channelSourceType;
+		string streamSourceType;
 		string encodersPoolLabel;
 		string pullUrl;
 		string pushProtocol;
@@ -6180,9 +6181,9 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 			bool warningIfMissing = false;
 			tuple<int64_t, string, string, string, string, string, int, string, int,
 				int, string, int, int, int, int, int, int64_t>
-				channelConfDetails = getChannelConfDetails(
+				channelConfDetails = getStreamDetails(
 				workspaceKey, configurationLabel, warningIfMissing);
-			tie(confKey, channelSourceType,
+			tie(confKey, streamSourceType,
 				encodersPoolLabel,
 				pullUrl,
 				pushProtocol, pushServerName, pushServerPort, pushUri,
@@ -6194,8 +6195,8 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 				satSourceSATConfKey) = channelConfDetails;
 
 			// default is IP_PULL
-			if (channelSourceType == "")
-				channelSourceType = "IP_PULL";
+			if (streamSourceType == "")
+				streamSourceType = "IP_PULL";
 		}
 
 		int64_t satelliteServiceId = -1;
@@ -6206,18 +6207,18 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 		int satelliteAudioItalianPid = -1;
 		string liveURL;
 
-		if (channelSourceType == "IP_PULL")
+		if (streamSourceType == "IP_PULL")
 			liveURL = pullUrl;
-		else if (channelSourceType == "IP_PUSH")
+		else if (streamSourceType == "IP_PUSH")
 		{
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (channelSourceType == "Satellite")
+		else if (streamSourceType == "Satellite")
 		{
 			bool warningIfMissing = false;
 			tuple<int64_t, int64_t, int64_t, string, int, int>
-				satChannelConfDetails = getSourceSATChannelConfDetails(
+				satChannelConfDetails = getSourceSATStreamDetails(
 				satSourceSATConfKey, warningIfMissing);
 
 			tie(satelliteServiceId, satelliteFrequency,
@@ -6225,93 +6226,93 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
 				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
 
-		string field = "channelConfKey";
-		channelInputRoot[field] = confKey;
+		string field = "confKey";
+		streamInputRoot[field] = confKey;
 
-		field = "channelConfigurationLabel";
-		channelInputRoot[field] = configurationLabel;
+		field = "configurationLabel";
+		streamInputRoot[field] = configurationLabel;
 
-		field = "channelSourceType";
-		channelInputRoot[field] = channelSourceType;
+		field = "streamSourceType";
+		streamInputRoot[field] = streamSourceType;
 
 		field = "encodersPoolLabel";
-		channelInputRoot[field] = encodersPoolLabel;
+		streamInputRoot[field] = encodersPoolLabel;
 
 		field = "url";
-		channelInputRoot[field] = liveURL;
+		streamInputRoot[field] = liveURL;
 
 		if (maxWidth != -1)
 		{
 			field = "maxWidth";
-			channelInputRoot[field] = maxWidth;
+			streamInputRoot[field] = maxWidth;
 		}
 
 		if (userAgent != "")
 		{
 			field = "userAgent";
-			channelInputRoot[field] = userAgent;
+			streamInputRoot[field] = userAgent;
 		}
 
 		if (otherInputOptions != "")
 		{
 			field = "otherInputOptions";
-			channelInputRoot[field] = otherInputOptions;
+			streamInputRoot[field] = otherInputOptions;
 		}
 
-		if (channelSourceType == "IP_PUSH")
+		if (streamSourceType == "IP_PUSH")
 		{
 			field = "pushListenTimeout";
-			channelInputRoot[field] = pushListenTimeout;
+			streamInputRoot[field] = pushListenTimeout;
 		}
 
-		if (channelSourceType == "CaptureLive")
+		if (streamSourceType == "CaptureLive")
 		{
 			field = "captureVideoDeviceNumber";
-			channelInputRoot[field] = captureVideoDeviceNumber;
+			streamInputRoot[field] = captureVideoDeviceNumber;
 
 			field = "captureVideoInputFormat";
-			channelInputRoot[field] = captureVideoInputFormat;
+			streamInputRoot[field] = captureVideoInputFormat;
 
 			field = "captureFrameRate";
-			channelInputRoot[field] = captureFrameRate;
+			streamInputRoot[field] = captureFrameRate;
 
 			field = "captureWidth";
-			channelInputRoot[field] = captureWidth;
+			streamInputRoot[field] = captureWidth;
 
 			field = "captureHeight";
-			channelInputRoot[field] = captureHeight;
+			streamInputRoot[field] = captureHeight;
 
 			field = "captureAudioDeviceNumber";
-			channelInputRoot[field] = captureAudioDeviceNumber;
+			streamInputRoot[field] = captureAudioDeviceNumber;
 
 			field = "captureChannelsNumber";
-			channelInputRoot[field] = captureChannelsNumber;
+			streamInputRoot[field] = captureChannelsNumber;
 		}
 
-		if (channelSourceType == "Satellite")
+		if (streamSourceType == "Satellite")
 		{
 			field = "satelliteServiceId";
-			channelInputRoot[field] = satelliteServiceId;
+			streamInputRoot[field] = satelliteServiceId;
 
 			field = "satelliteFrequency";
-			channelInputRoot[field] = satelliteFrequency;
+			streamInputRoot[field] = satelliteFrequency;
 
 			field = "satelliteSymbolRate";
-			channelInputRoot[field] = satelliteSymbolRate;
+			streamInputRoot[field] = satelliteSymbolRate;
 
 			field = "satelliteModulation";
-			channelInputRoot[field] = satelliteModulation;
+			streamInputRoot[field] = satelliteModulation;
 
 			field = "satelliteVideoPid";
-			channelInputRoot[field] = satelliteVideoPid;
+			streamInputRoot[field] = satelliteVideoPid;
 
 			field = "satelliteAudioItalianPid";
-			channelInputRoot[field] = satelliteAudioItalianPid;
+			streamInputRoot[field] = satelliteAudioItalianPid;
 		}
 	}
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "getChannelInputRoot failed"
+        _logger->error(__FILEREF__ + "getStreamInputRoot failed"
             + ", e.what(): " + e.what()
         );
  
@@ -6319,13 +6320,13 @@ Json::Value MMSEngineDBFacade::getChannelInputRoot(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "getChannelInputRoot failed"
+        _logger->error(__FILEREF__ + "getStreamInputRoot failed"
         );
         
         throw e;
     }
 
-	return channelInputRoot;
+	return streamInputRoot;
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor

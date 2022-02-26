@@ -100,7 +100,7 @@ struct LiveRecording
 	int64_t					_ingestionJobKey;
 	Json::Value				_encodingParametersRoot;
 	Json::Value				_ingestedParametersRoot;
-	string					_channelSourceType;
+	string					_streamSourceType;
 	string					_transcoderStagingContentsPath;
 	string					_stagingContentsPath;
 	string					_segmentListFileName;
@@ -131,7 +131,7 @@ struct LiveRecording
 		liveRecording->_ingestionJobKey = _ingestionJobKey;
 		liveRecording->_encodingParametersRoot = _encodingParametersRoot;
 		liveRecording->_ingestedParametersRoot = _ingestedParametersRoot;
-		liveRecording->_channelSourceType = _channelSourceType;
+		liveRecording->_streamSourceType = _streamSourceType;
 		liveRecording->_transcoderStagingContentsPath = _transcoderStagingContentsPath;
 		liveRecording->_stagingContentsPath = _stagingContentsPath;
 		liveRecording->_segmentListFileName = _segmentListFileName;
@@ -369,7 +369,7 @@ private:
         string requestBody);
 	pair<string, double> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string channelSourceType, 
+		string streamSourceType, 
 		// bool highAvailability, bool main,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
@@ -382,7 +382,7 @@ private:
 		double lastRecordedAssetDurationInSeconds);
 	pair<string, double> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string channelSourceType, 
+		string streamSourceType, 
 		// bool highAvailability, bool main,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,

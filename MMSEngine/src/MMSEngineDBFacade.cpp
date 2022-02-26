@@ -1877,31 +1877,42 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 			// Once authorization is expired, we will still take it for 1 day
 			int retention = 3600 * 24;
 
-            lastSQLCommand = 
-                "delete from MMS_DeliveryAuthorization "
-				"where DATE_ADD(authorizationTimestamp, INTERVAL (ttlInSeconds + ?) SECOND) < NOW()";
+			// we will remove by steps to avoid error because of transaction log overflow
+			int maxToBeRemoved = 100;
+			int totalRowsRemoved = 0;
+			bool moreRowsToBeRemoved = true;
+			while (moreRowsToBeRemoved)
+			{
+				lastSQLCommand = 
+					"delete from MMS_DeliveryAuthorization "
+					"where DATE_ADD(authorizationTimestamp, "
+						"INTERVAL (ttlInSeconds + ?) SECOND) < NOW() "
+					"limit ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, retention);
+				int queryParameterIndex = 1;
+				preparedStatement->setInt(queryParameterIndex++, retention);
+				preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", retention: " + to_string(retention)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", retention: " + to_string(retention)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				totalRowsRemoved += rowsUpdated;
+				if (rowsUpdated == 0)
+					moreRowsToBeRemoved = false;
+			}
+
+			_logger->info(__FILEREF__ + "Deletion obsolete DeliveryAuthorization"
+				+ ", totalRowsRemoved: " + to_string(totalRowsRemoved)
 			);
-            if (rowsUpdated > 0)
-            {
-                _logger->info(__FILEREF__ + "Deletion obsolete DeliveryAuthorization"
-                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                );
-            }
-        }
+		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

@@ -774,7 +774,8 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 }
 
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
-    int64_t workspaceKey, string encoderLabel)
+    int64_t workspaceKey,
+	string sharedEncodersPoolLabel, Json::Value sharedEncodersLabel)
 {
     string      lastSQLCommand;
 
@@ -787,8 +788,12 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		int64_t encoderKey;
+		vector<int64_t> encoderKeys;
+		for (int encoderIndex = 0; encoderIndex < sharedEncodersLabel.size();
+			encoderIndex++)
         {
+			string encoderLabel = sharedEncodersLabel[encoderIndex].asString();
+
 			lastSQLCommand = "select encoderKey from MMS_Encoder "
 				"where label = ?";
 
@@ -806,7 +811,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
-				encoderKey = resultSet->getInt64("encoderKey");
+				encoderKeys.push_back(resultSet->getInt64("encoderKey"));
 			else
 			{
 				string errorMessage = string("No encoder label found")
@@ -818,8 +823,10 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 			}
         }
 
-		addAssociationWorkspaceEncoder(workspaceKey, encoderKey,
-			conn);
+		for (int64_t encoderKey: encoderKeys)
+			addAssociationWorkspaceEncoder(workspaceKey, encoderKey, conn);
+
+		addEncodersPool(workspaceKey, sharedEncodersPoolLabel, encoderKeys);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1002,7 +1009,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
 
 Json::Value MMSEngineDBFacade::getEncoderList (
 	int start, int rows,
-	bool allEncoders, int64_t workspaceKey, int64_t encoderKey,
+	bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey,
 	string label, string serverName, int port,
 	string labelOrder	// "" or "asc" or "desc"
 )
@@ -1020,6 +1027,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", allEncoders: " + to_string(allEncoders)
+            + ", runningInfo: " + to_string(runningInfo)
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", encoderKey: " + to_string(encoderKey)
             + ", label: " + label
@@ -1080,6 +1088,11 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			{
 				field = "port";
 				requestParametersRoot[field] = port;
+			}
+
+			{
+				field = "runningInfo";
+				requestParametersRoot[field] = runningInfo;
 			}
 
             if (labelOrder != "")
@@ -1259,7 +1272,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			);
             while (resultSet->next())
             {
-                Json::Value encoderRoot = getEncoderRoot (resultSet);
+                Json::Value encoderRoot = getEncoderRoot(runningInfo, resultSet);
 
                 encodersRoot.append(encoderRoot);
             }
@@ -1340,6 +1353,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 }
 
 Json::Value MMSEngineDBFacade::getEncoderRoot (
+	bool runningInfo,
 	shared_ptr<sql::ResultSet> resultSet
 )
 {
@@ -1376,17 +1390,24 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 		int port = resultSet->getInt("port");
 		encoderRoot[field] = port;
 
-		bool running;
-		int cpuUsage = 0;
-		pair<bool, int> encoderRunningDetails = getEncoderInfo(external, protocol,
-			publicServerName, internalServerName, port);
-		tie(running, cpuUsage) = encoderRunningDetails;
+		// 2022-1-30: running and cpu usage takes a bit of time
+		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
+		//		to be loaded because of this check and, in these pages, we do not care about
+		//		running info, so we made it optional
+		if (runningInfo)
+		{
+			bool running;
+			int cpuUsage = 0;
+			pair<bool, int> encoderRunningDetails = getEncoderInfo(external, protocol,
+				publicServerName, internalServerName, port);
+			tie(running, cpuUsage) = encoderRunningDetails;
 
-		field = "running";
-		encoderRoot[field] = running;
+			field = "running";
+			encoderRoot[field] = running;
 
-		field = "cpuUsage";
-		encoderRoot[field] = cpuUsage;
+			field = "cpuUsage";
+			encoderRoot[field] = cpuUsage;
+		}
     }
     catch(sql::SQLException se)
     {
@@ -1921,7 +1942,9 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 							);
 							if (resultSetEncoder->next())
 							{
-								Json::Value encoderRoot = getEncoderRoot (resultSetEncoder);
+								bool runningInfo = false;
+								Json::Value encoderRoot = getEncoderRoot (
+									runningInfo, resultSetEncoder);
 
 								encodersRoot.append(encoderRoot);
 							}

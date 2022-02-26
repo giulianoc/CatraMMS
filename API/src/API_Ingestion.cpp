@@ -3575,7 +3575,20 @@ void API::ingestionRootsStatus(
         {
             rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
         
 /*
@@ -3850,7 +3863,20 @@ void API::ingestionJobsStatus(
         {
             rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
         
         string label;
@@ -4539,9 +4565,9 @@ void API::changeLiveProxyPlaylist(
 		int64_t utcBroadcasterEnd;
 
 		int64_t broadcastIngestionJobKey;
-		string broadcastDefaultMediaType;	// options: Live Channel, Media, Countdown, Direct URL
-		// // used in case mediaType is Live Channel
-		Json::Value broadcastDefaultChannelInputRoot = Json::nullValue;
+		string broadcastDefaultMediaType;	// options: Stream, Media, Countdown, Direct URL
+		// // used in case mediaType is Stream
+		Json::Value broadcastDefaultStreamInputRoot = Json::nullValue;
 		// used in case mediaType is Media
 		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;
 		// used in case mediaType is Countdown
@@ -4645,18 +4671,18 @@ void API::changeLiveProxyPlaylist(
 					broadcastDefaultMediaType = broadcastDefaultPlaylistItemRoot.get(
 						field, "").asString();
 
-					if (broadcastDefaultMediaType == "Live Channel")
+					if (broadcastDefaultMediaType == "Stream")
 					{
-						field = "channelConfigurationLabel";
-						string broadcastDefaultChannelConfigurationLabel =
+						field = "configurationLabel";
+						string broadcastDefaultConfigurationLabel =
 							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
 						int maxWidth = -1;
 						string userAgent;
 						string otherInputOptions;
 
-						broadcastDefaultChannelInputRoot =
-							_mmsEngineDBFacade->getChannelInputRoot(
-							workspace->_workspaceKey, broadcastDefaultChannelConfigurationLabel,
+						broadcastDefaultStreamInputRoot =
+							_mmsEngineDBFacade->getStreamInputRoot(
+							workspace->_workspaceKey, broadcastDefaultConfigurationLabel,
 							maxWidth, userAgent, otherInputOptions);
 					}
 					else if (broadcastDefaultMediaType == "Media")
@@ -5015,15 +5041,15 @@ void API::changeLiveProxyPlaylist(
 						field = "utcScheduleEnd";
 						newdPlaylistItemToBeAddedRoot[field] = utcProxyPeriodStart;
 
-						if (broadcastDefaultMediaType == "Live Channel")
+						if (broadcastDefaultMediaType == "Stream")
 						{
-							if (broadcastDefaultChannelInputRoot != Json::nullValue)
-								newdPlaylistItemToBeAddedRoot["channelInput"]
-									= broadcastDefaultChannelInputRoot;
+							if (broadcastDefaultStreamInputRoot != Json::nullValue)
+								newdPlaylistItemToBeAddedRoot["streamInput"]
+									= broadcastDefaultStreamInputRoot;
 							else
 							{
 								string errorMessage = __FILEREF__
-									+ "Broadcaster data: no default Live Channel present"
+									+ "Broadcaster data: no default Stream present"
 									+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 								;
 								_logger->error(errorMessage);
@@ -5131,15 +5157,15 @@ void API::changeLiveProxyPlaylist(
 					field = "utcScheduleEnd";
 					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
 
-					if (broadcastDefaultMediaType == "Live Channel")
+					if (broadcastDefaultMediaType == "Stream")
 					{
-						if (broadcastDefaultChannelInputRoot != Json::nullValue)
-							newdPlaylistItemToBeAddedRoot["channelInput"]
-							= broadcastDefaultChannelInputRoot;
+						if (broadcastDefaultStreamInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["streamInput"]
+							= broadcastDefaultStreamInputRoot;
 						else
 						{
 							string errorMessage = __FILEREF__
-								+ "Broadcaster data: no default Live Channel present"
+								+ "Broadcaster data: no default Stream present"
 								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);
@@ -5224,15 +5250,15 @@ void API::changeLiveProxyPlaylist(
 					field = "utcScheduleEnd";
 					newdPlaylistItemToBeAddedRoot[field] = utcBroadcasterEnd;
 
-					if (broadcastDefaultMediaType == "Live Channel")
+					if (broadcastDefaultMediaType == "Stream")
 					{
-						if (broadcastDefaultChannelInputRoot != Json::nullValue)
-							newdPlaylistItemToBeAddedRoot["channelInput"]
-							= broadcastDefaultChannelInputRoot;
+						if (broadcastDefaultStreamInputRoot != Json::nullValue)
+							newdPlaylistItemToBeAddedRoot["streamInput"]
+							= broadcastDefaultStreamInputRoot;
 						else
 						{
 							string errorMessage = __FILEREF__
-								+ "Broadcaster data: no default Live Channel present"
+								+ "Broadcaster data: no default Stream present"
 								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 							;
 							_logger->error(errorMessage);

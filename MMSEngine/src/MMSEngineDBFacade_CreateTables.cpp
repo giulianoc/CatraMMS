@@ -205,6 +205,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"currentFreeSizeInBytes	BIGINT UNSIGNED NOT NULL,"
 					"freeSpaceToLeaveInMB	BIGINT UNSIGNED NOT NULL,"
 					"lastUpdateFreeSize		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+					"enabled				TINYINT(1) NOT NULL,"
 					"constraint MMS_PartitionInfo_PK PRIMARY KEY (partitionKey)) "
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);    
@@ -1943,8 +1944,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
                     "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
-                    "constraint MMS_IngestionJobOutput_FK foreign key (physicalPathKey) "
-                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "constraint MMS_IngestionJobOutput_FK foreign key (ingestionJobKey) "
+                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -2219,7 +2220,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
                 
             lastSQLCommand = 
-                "create table if not exists MMS_Conf_IPChannel ("
+                "create table if not exists MMS_Conf_Stream ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
@@ -2248,9 +2249,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "imageMediaItemKey			BIGINT UNSIGNED NULL,"
                     "imageUniqueName			VARCHAR (128) NULL,"
                     "position					INT UNSIGNED NULL,"
-                    "channelData				" + channelDataDefinition + ","
-                    "constraint MMS_Conf_IPChannel_PK PRIMARY KEY (confKey), "
-                    "constraint MMS_Conf_IPChannel_FK foreign key (workspaceKey) "
+                    "userData				" + channelDataDefinition + ","
+                    "constraint MMS_Conf_Stream_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_Stream_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";
@@ -2272,7 +2273,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-				"create table if not exists MMS_Conf_SourceSATChannel ("
+				"create table if not exists MMS_Conf_SourceSATStream ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
 					"serviceId					BIGINT UNSIGNED NULL,"
 					"networkId					BIGINT UNSIGNED NULL,"
@@ -2291,7 +2292,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"symbolRate					BIGINT UNSIGNED NULL,"
                     "country					VARCHAR (64) NULL,"
                     "deliverySystem				VARCHAR (64) NULL,"
-                    "constraint MMS_Conf_SourceSATChannel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_SourceSATStream_PK PRIMARY KEY (confKey), "
                     "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);

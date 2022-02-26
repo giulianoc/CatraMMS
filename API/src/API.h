@@ -81,7 +81,10 @@ private:
     int					_maxIngestionsNumberWorkspaceDefaultValue;
     int					_maxStorageInMBWorkspaceDefaultValue;
 	int					_expirationInDaysWorkspaceDefaultValue;
-	string				_sharedEncoderLabel;
+
+	string				_sharedEncodersPoolLabel;
+	Json::Value			_sharedEncodersLabel;
+
     // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
     int                 _webServerPort;
@@ -485,46 +488,46 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
-    void addChannelConf(
+    void addStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void modifyChannelConf(
+    void modifyStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeChannelConf(
+    void removeStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void channelConfList(
+    void streamList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
-    void addSourceSATChannelConf(
+    void addSourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void modifySourceSATChannelConf(
+    void modifySourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeSourceSATChannelConf(
+    void removeSourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void sourceSatChannelConfList(
+    void sourceSatStreamList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);

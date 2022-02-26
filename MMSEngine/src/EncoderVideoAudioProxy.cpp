@@ -11966,7 +11966,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
 	string encodersPool;
-	int64_t channelConfKey;
+	int64_t confKey;
 	string liveURL;
 	string userAgent;
 	time_t utcRecordingPeriodStart;
@@ -11980,7 +11980,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         // encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
         string field = "confKey";
-        channelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+        confKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -12214,7 +12214,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									_encodingItem->_ingestionJobKey,
 									_encodingItem->_encodingJobKey,
 									_encodingItem->_workspace->_workspaceKey,
-									channelConfKey);
+									confKey);
 
 								string lastCalculatedURL;
 
@@ -12225,7 +12225,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
 									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
 								);
@@ -12239,7 +12239,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", YouTube URL: " + streamingYouTubeLiveURL
 								;
 								_logger->error(errorMessage);
@@ -12262,7 +12262,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", confKey: " + to_string(confKey)
 										+ ", initial YouTube URL: " + liveURL
 										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
@@ -12279,7 +12279,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", confKey: " + to_string(confKey)
 										+ ", YouTube URL: " + streamingYouTubeLiveURL
 									;
 									_logger->error(errorMessage);
@@ -12338,7 +12338,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 											_encodingItem->_ingestionJobKey,
 											_encodingItem->_encodingJobKey,
 											_encodingItem->_workspace->_workspaceKey,
-											channelConfKey,
+											confKey,
 											streamingYouTubeLiveURL);
 									}
 									catch(runtime_error e)
@@ -12348,7 +12348,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", channelConfKey: " + to_string(channelConfKey)
+											+ ", confKey: " + to_string(confKey)
 											+ ", YouTube URL: " + streamingYouTubeLiveURL
 										;
 										_logger->error(errorMessage);
@@ -12361,7 +12361,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", initial YouTube URL: " + liveURL
 									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
@@ -13387,10 +13387,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 		if (proxyType == "vodProxy")
 			field = "vodInput";
 		else if (proxyType == "liveProxy")
-			field = "channelInput";
+			field = "streamInput";
 		else if (proxyType == "countdownProxy")
 			field = "countdownInput";
-		Json::Value channelInputRoot = firstInputRoot[field];
+		Json::Value streamInputRoot = firstInputRoot[field];
 
 		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
 		{
@@ -13400,13 +13400,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 		else
 		{
 			field = "encodersPoolLabel";
-			encodersPool = channelInputRoot.get(field, "").asString();
+			encodersPool = streamInputRoot.get(field, "").asString();
 
-	        field = "channelConfKey";
-			liveURLConfKey = JSONUtils::asInt64(channelInputRoot, field, 0);
+	        field = "confKey";
+			liveURLConfKey = JSONUtils::asInt64(streamInputRoot, field, 0);
 
 			field = "url";
-			liveURL = channelInputRoot.get(field, "").asString();
+			liveURL = streamInputRoot.get(field, "").asString();
 		}
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
@@ -15029,7 +15029,7 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getChannelConfDetails(
+			_mmsEngineDBFacade->getStreamDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -15219,7 +15219,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getChannelConfDetails(
+			_mmsEngineDBFacade->getStreamDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -15376,7 +15376,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		int position = -1;
 		bool channelDataToBeModified = true;
 
-		_mmsEngineDBFacade->modifyChannelConf(
+		_mmsEngineDBFacade->modifyStream(
 			liveURLConfKey,
 			_encodingItem->_workspace->_workspaceKey,
 			labelToBeModified, label,
@@ -15451,7 +15451,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 	int gridWidth;
 	int gridHeight;
 	string outputType;
-	int64_t outputChannelConfKey;
+	int64_t outputConfKey;
 	int segmentDurationInSeconds;
 	int playlistEntriesNumber;
 	string userAgent;
@@ -15493,8 +15493,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
-        field = "outputChannelConfKey";
-        outputChannelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+        field = "outputConfKey";
+        outputConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "segmentDurationInSeconds";
         segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
@@ -15606,8 +15606,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						string inputChannelURLField = "inputChannelURL";
 						string liveURL = inputChannelRoot.get(inputChannelURLField, "").asString();
 
-						string inputChannelConfKeyField = "inputChannelConfKey";
-						int64_t channelConfKey = JSONUtils::asInt64(inputChannelRoot, inputChannelConfKeyField, 0);
+						string inputConfKeyField = "inputConfKey";
+						int64_t confKey = JSONUtils::asInt64(inputChannelRoot, inputConfKeyField, 0);
 
 						string youTubePrefix1 ("https://www.youtube.com/");
 						string youTubePrefix2 ("https://youtu.be/");
@@ -15628,7 +15628,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									_encodingItem->_ingestionJobKey,
 									_encodingItem->_encodingJobKey,
 									_encodingItem->_workspace->_workspaceKey,
-									channelConfKey);
+									confKey);
 
 								string lastCalculatedURL;
 
@@ -15639,7 +15639,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
 									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
 								);
@@ -15653,7 +15653,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", YouTube URL: " + streamingYouTubeLiveURL
 								;
 								_logger->error(errorMessage);
@@ -15676,7 +15676,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", confKey: " + to_string(confKey)
 										+ ", initial YouTube URL: " + liveURL
 										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
@@ -15693,7 +15693,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", confKey: " + to_string(confKey)
 										+ ", YouTube URL: " + streamingYouTubeLiveURL
 									;
 									_logger->error(errorMessage);
@@ -15752,7 +15752,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 											_encodingItem->_ingestionJobKey,
 											_encodingItem->_encodingJobKey,
 											_encodingItem->_workspace->_workspaceKey,
-											channelConfKey,
+											confKey,
 											streamingYouTubeLiveURL);
 									}
 									catch(runtime_error e)
@@ -15762,7 +15762,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", channelConfKey: " + to_string(channelConfKey)
+											+ ", confKey: " + to_string(confKey)
 											+ ", YouTube URL: " + streamingYouTubeLiveURL
 										;
 										_logger->error(errorMessage);
@@ -15775,7 +15775,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", confKey: " + to_string(confKey)
 									+ ", initial YouTube URL: " + liveURL
 									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)

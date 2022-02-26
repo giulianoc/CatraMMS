@@ -1028,13 +1028,13 @@ void API::facebookConfList(
     }
 }
 
-void API::addChannelConf(
+void API::addStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addChannelConf";
+    string api = "addStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1070,7 +1070,7 @@ void API::addChannelConf(
 		int64_t imageMediaItemKey = -1;
 		string imageUniqueName;
 		int position = -1;
-        Json::Value channelData = Json::nullValue;
+        Json::Value userData = Json::nullValue;
 
         try
         {
@@ -1212,9 +1212,9 @@ void API::addChannelConf(
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
-            field = "channelData";
+            field = "userData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelData = requestBodyRoot[field];
+				userData = requestBodyRoot[field];
         }
         catch(runtime_error e)
         {
@@ -1239,7 +1239,7 @@ void API::addChannelConf(
         string sResponse;
         try
         {
-			Json::Value channelConfRoot = _mmsEngineDBFacade->addChannelConf(
+			Json::Value streamRoot = _mmsEngineDBFacade->addStream(
                 workspace->_workspaceKey, label,
 				sourceType,
 				encodersPoolLabel,
@@ -1259,14 +1259,14 @@ void API::addChannelConf(
 				satSourceSATConfKey,
 				type, description,
 				name, region, country, imageMediaItemKey, imageUniqueName, position,
-				channelData);
+				userData);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, channelConfRoot);
+            sResponse = Json::writeString(wbuilder, streamRoot);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1274,7 +1274,7 @@ void API::addChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1315,13 +1315,13 @@ void API::addChannelConf(
     }
 }
 
-void API::modifyChannelConf(
+void API::modifyStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "modifyChannelConf";
+    string api = "modifyStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1357,7 +1357,7 @@ void API::modifyChannelConf(
 		int64_t imageMediaItemKey = -1;
 		string imageUniqueName;
 		int position = -1;
-        Json::Value channelData;
+        Json::Value userData;
         
 		bool labelToBeModified;
 		bool sourceTypeToBeModified;
@@ -1383,7 +1383,7 @@ void API::modifyChannelConf(
 		bool countryToBeModified;
 		bool imageToBeModified;
 		bool positionToBeModified;
-		bool channelDataToBeModified;
+		bool userDataToBeModified;
 
         try
         {
@@ -1619,12 +1619,12 @@ void API::modifyChannelConf(
 				positionToBeModified = true;
 			}
 
-			channelDataToBeModified = false;
-            field = "channelData";
+			userDataToBeModified = false;
+            field = "userData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				channelData = requestBodyRoot[field];
-				channelDataToBeModified = true;
+				userData = requestBodyRoot[field];
+				userDataToBeModified = true;
             }
         }
         catch(runtime_error e)
@@ -1663,7 +1663,7 @@ void API::modifyChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-			Json::Value channelConfRoot = _mmsEngineDBFacade->modifyChannelConf(
+			Json::Value streamRoot = _mmsEngineDBFacade->modifyStream(
                 confKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
@@ -1689,14 +1689,14 @@ void API::modifyChannelConf(
 				countryToBeModified, country,
 				imageToBeModified, imageMediaItemKey, imageUniqueName,
 				positionToBeModified, position,
-				channelDataToBeModified, channelData);
+				userDataToBeModified, userData);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, channelConfRoot);
+            sResponse = Json::writeString(wbuilder, streamRoot);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1704,7 +1704,7 @@ void API::modifyChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1745,12 +1745,12 @@ void API::modifyChannelConf(
     }
 }
 
-void API::removeChannelConf(
+void API::removeStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeChannelConf";
+    string api = "removeStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1774,7 +1774,7 @@ void API::removeChannelConf(
             }
             confKey = stoll(confKeyIt->second);
             
-            _mmsEngineDBFacade->removeChannelConf(
+            _mmsEngineDBFacade->removeStream(
                 workspace->_workspaceKey, confKey);
 
             sResponse = (
@@ -1785,7 +1785,7 @@ void API::removeChannelConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1793,7 +1793,7 @@ void API::removeChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1832,12 +1832,12 @@ void API::removeChannelConf(
     }
 }
 
-void API::channelConfList(
+void API::streamList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
 {
-    string api = "channelConfList";
+    string api = "streamList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1868,7 +1868,20 @@ void API::channelConfList(
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		string label;
@@ -1914,7 +1927,7 @@ void API::channelConfList(
 			)
 				sourceType = sourceTypeIt->second;
 			else
-				_logger->warn(__FILEREF__ + "channelList: 'sourceType' parameter is unknown"
+				_logger->warn(__FILEREF__ + "streamList: 'sourceType' parameter is unknown"
 					+ ", sourceType: " + sourceTypeIt->second);
 		}
 
@@ -1995,12 +2008,12 @@ void API::channelConfList(
 
         {
             
-            Json::Value channelConfListRoot = _mmsEngineDBFacade->getChannelConfList(
+            Json::Value streamListRoot = _mmsEngineDBFacade->getStreamList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, 
 					url, sourceType, type, name, region, country, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, channelConfListRoot);
+            string responseBody = Json::writeString(wbuilder, streamListRoot);
             
             sendSuccess(request, 200, responseBody);
         }
@@ -2036,13 +2049,13 @@ void API::channelConfList(
 }
 
 
-void API::addSourceSATChannelConf(
+void API::addSourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addSourceSATChannelConf";
+    string api = "addSourceSATStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2223,8 +2236,8 @@ void API::addSourceSATChannelConf(
         string sResponse;
         try
         {
-			Json::Value sourceSATChannelConfRoot =
-				_mmsEngineDBFacade->addSourceSATChannelConf(
+			Json::Value sourceSATStreamRoot =
+				_mmsEngineDBFacade->addSourceSATStream(
 				serviceId, networkId, transportStreamId,
 				name, satellite, frequency, lnb,
 				videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid,
@@ -2232,11 +2245,11 @@ void API::addSourceSATChannelConf(
 			);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceSATChannelConfRoot);
+            sResponse = Json::writeString(wbuilder, sourceSATStreamRoot);
 		}
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2244,7 +2257,7 @@ void API::addSourceSATChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2285,13 +2298,13 @@ void API::addSourceSATChannelConf(
     }
 }
 
-void API::modifySourceSATChannelConf(
+void API::modifySourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "modifySourceSATChannelConf";
+    string api = "modifySourceSATStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2517,8 +2530,8 @@ void API::modifySourceSATChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-			Json::Value sourceSATChannelConfRoot =
-				_mmsEngineDBFacade->modifySourceSATChannelConf(
+			Json::Value sourceSATStreamRoot =
+				_mmsEngineDBFacade->modifySourceSATStream(
 				confKey,
                 serviceIdToBeModified, serviceId,
 				networkIdToBeModified, networkId,
@@ -2540,11 +2553,11 @@ void API::modifySourceSATChannelConf(
 			);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceSATChannelConfRoot);
+            sResponse = Json::writeString(wbuilder, sourceSATStreamRoot);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2552,7 +2565,7 @@ void API::modifySourceSATChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2593,12 +2606,12 @@ void API::modifySourceSATChannelConf(
     }
 }
 
-void API::removeSourceSATChannelConf(
+void API::removeSourceSATStream(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeSourceSATChannelConf";
+    string api = "removeSourceSATStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2622,7 +2635,7 @@ void API::removeSourceSATChannelConf(
             }
             confKey = stoll(confKeyIt->second);
             
-            _mmsEngineDBFacade->removeSourceSATChannelConf(confKey);
+            _mmsEngineDBFacade->removeSourceSATStream(confKey);
 
             sResponse = (
                     string("{ ") 
@@ -2632,7 +2645,7 @@ void API::removeSourceSATChannelConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2640,7 +2653,7 @@ void API::removeSourceSATChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2679,12 +2692,12 @@ void API::removeSourceSATChannelConf(
     }
 }
 
-void API::sourceSatChannelConfList(
+void API::sourceSatStreamList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
 {
-    string api = "sourceSatChannelConfList";
+    string api = "sourceSatStreamList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -2715,7 +2728,20 @@ void API::sourceSatChannelConfList(
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
-				rows = _maxPageSize;
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		int64_t serviceId = -1;
@@ -2793,13 +2819,13 @@ void API::sourceSatChannelConfList(
 		}
 
         {
-            Json::Value sourceSATChannelConfRoot =
-				_mmsEngineDBFacade->getSourceSATChannelConfList(
+            Json::Value sourceSATStreamRoot =
+				_mmsEngineDBFacade->getSourceSATStreamList(
 				confKey, start, rows,
 				serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, sourceSATChannelConfRoot);
+            string responseBody = Json::writeString(wbuilder, sourceSATStreamRoot);
 
             sendSuccess(request, 200, responseBody);
         }
