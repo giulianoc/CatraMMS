@@ -233,7 +233,7 @@ install-packages()
 		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 		echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, expire_logs_days"
+		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, binlog_expire_logs_seconds"
 
 		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
 
@@ -268,13 +268,13 @@ create-directory()
 	if [ "$moduleName" == "api" ]; then
 		mkdir /var/catramms/logs/mmsAPI
 	fi
-	if [ "$moduleName" == "encoder" ]; then
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		mkdir /var/catramms/logs/mmsEncoder
 	fi
 	if [ "$moduleName" == "engine" ]; then
 		mkdir /var/catramms/logs/mmsEngineService
 	fi
-	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "integration" ]; then
+	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" -o "$moduleName" == "integration" ]; then
 		mkdir /var/catramms/logs/nginx
 	fi
 
@@ -287,7 +287,7 @@ create-directory()
 	read -n 1 -s -r -p "links..."
 	echo ""
 
-	if [ "$moduleName" == "encoder" -a $externalEncoder -eq 1 ]; then
+	if [ "$moduleName" == "externalEncoder" ]; then
 		mkdir /mmsStorage/IngestionRepository
 		chown mms:mms /mmsStorage/IngestionRepository
 		mkdir /mmsStorage/MMSWorkingAreaRepository
@@ -429,7 +429,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		echo -n "tomcat version (i.e.: 9.0.56)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		echo -n "tomcat version (i.e.: 9.0.58)? Look the version at https://www-eu.apache.org/dist/tomcat"
 		read VERSION
 		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
 		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
@@ -540,7 +540,7 @@ install-mms-packages()
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
-	if [ "$moduleName" == "encoder" ]; then
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		if [ $externalEncoder -eq 1 ]; then
 			packageName=externalEncoderMmsConf
 		else
@@ -572,7 +572,7 @@ firewall-rules()
 	#ufw allow ssh
 	ufw allow 9255
 
-	if [ "$moduleName" == "encoder" ]; then
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		#engine -> transcoder(nginx)
 		ufw allow 8088
 
@@ -641,23 +641,26 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage or integration)>"
+	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi
 
 moduleName=$1
 
+#LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE
+
 #1. Per prima cosa: formattare e montare dischi se necessario
 #       sudo fdisk /dev/nvme1n1 (p n p w)
 #       sudo mkfs.ext4 /dev/nvme1n1p1
 #2. Inizializzare /etc/fstab
 #3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
-#4 sudo su; ./installServer.sh <module>
+#4. apt-get -y install nfs-common
 #5. sudo mount -a
-#6. verificare ~/mms/conf/*
-#7. remove installServer.sh
-#8. remove ssh key from /home/ubuntu/.ssh/authorized_keys
+#6 sudo su; ./installServer.sh <module>
+#7. verificare ~/mms/conf/*
+#8. remove installServer.sh
+#9. remove ssh key from /home/ubuntu/.ssh/authorized_keys
 
 #ssh-port
 mms-account-creation
@@ -704,7 +707,7 @@ else
 	echo ""
 fi
 
-if [ "$moduleName" == "encoder" ]; then
+if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 	echo "add the new hostname in every /etc/hosts of every api and engine servers"
 fi
 

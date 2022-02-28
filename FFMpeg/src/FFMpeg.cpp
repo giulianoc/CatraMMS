@@ -110,6 +110,7 @@ void FFMpeg::encodeContent(
 		_logger->info(__FILEREF__ + "Received " + _currentApiName
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", isVideo: " + to_string(isVideo)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
 			+ ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
 			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
@@ -2298,6 +2299,7 @@ void FFMpeg::encodeContent(
             }
             else
             {
+				// used in case of multiple bitrate
 				string templateVariable = "__HEIGHT__";
 				string templatePart = templateVariable + "p";
 
@@ -2329,68 +2331,108 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
-				for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size(); videoIndex++)
+				if (isVideo)
 				{
-					tuple<string, int, int, int, string, string, string> videoBitRateInfo
-						= videoBitRatesInfo [videoIndex];
-
-					string ffmpegVideoResolutionParameter = "";
-					int videoBitRateInKbps = -1;
-					int videoHeight = -1;
-					string ffmpegVideoBitRateParameter = "";
-					string ffmpegVideoMaxRateParameter = "";
-					string ffmpegVideoBufSizeParameter = "";
-					string ffmpegAudioBitRateParameter = "";
-
-					tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, videoHeight,
-						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
-						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-					if (videoTrackIndexToBeUsed >= 0)
+					for (int videoIndex = 0; videoIndex < videoBitRatesInfo.size();
+						videoIndex++)
 					{
-						ffmpegArgumentList.push_back("-map");
-						ffmpegArgumentList.push_back(
-							string("0:v:") + to_string(videoTrackIndexToBeUsed));
-					}
-					if (audioTrackIndexToBeUsed >= 0)
-					{
-						ffmpegArgumentList.push_back("-map");
-						ffmpegArgumentList.push_back(
-							string("0:a:") + to_string(audioTrackIndexToBeUsed));
-					}
-					addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-					addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-						ffmpegArgumentList);
-					ffmpegArgumentList.push_back("-threads");
-					ffmpegArgumentList.push_back("0");
-					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-					if (audioBitRatesInfo.size() > videoIndex)
-						ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
-					else 
-						ffmpegAudioBitRateParameter = audioBitRatesInfo[
-							audioBitRatesInfo.size() - 1];
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						tuple<string, int, int, int, string, string, string> videoBitRateInfo
+							= videoBitRatesInfo [videoIndex];
 
-					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-					if (videoBitRatesInfo.size() > 1)
-					{
-						string newStagingEncodedAssetPathName =
-							regex_replace(stagingTemplateEncodedAssetPathName,
-								regex(templateVariable), to_string(videoHeight));
-						ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+						string ffmpegVideoResolutionParameter = "";
+						int videoBitRateInKbps = -1;
+						int videoHeight = -1;
+						string ffmpegVideoBitRateParameter = "";
+						string ffmpegVideoMaxRateParameter = "";
+						string ffmpegVideoBufSizeParameter = "";
+						string ffmpegAudioBitRateParameter = "";
+
+						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps,
+							ignore, videoHeight,
+							ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+							ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+						if (videoTrackIndexToBeUsed >= 0)
+						{
+							ffmpegArgumentList.push_back("-map");
+							ffmpegArgumentList.push_back(
+								string("0:v:") + to_string(videoTrackIndexToBeUsed));
+						}
+						if (audioTrackIndexToBeUsed >= 0)
+						{
+							ffmpegArgumentList.push_back("-map");
+							ffmpegArgumentList.push_back(
+								string("0:a:") + to_string(audioTrackIndexToBeUsed));
+						}
+						addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+						addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+						addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+							ffmpegArgumentList);
+						ffmpegArgumentList.push_back("-threads");
+						ffmpegArgumentList.push_back("0");
+						addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+						if (audioBitRatesInfo.size() > videoIndex)
+							ffmpegAudioBitRateParameter = audioBitRatesInfo[videoIndex];
+						else 
+							ffmpegAudioBitRateParameter = audioBitRatesInfo[
+								audioBitRatesInfo.size() - 1];
+						addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+						addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+						addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+						addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+						addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+						if (videoBitRatesInfo.size() > 1)
+						{
+							string newStagingEncodedAssetPathName =
+								regex_replace(stagingTemplateEncodedAssetPathName,
+									regex(templateVariable), to_string(videoHeight));
+							ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+						}
+						else
+							ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 					}
-					else
-						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+				}
+				else
+				{
+					for (int audioIndex = 0; audioIndex < audioBitRatesInfo.size();
+						audioIndex++)
+					{
+						string ffmpegAudioBitRateParameter = audioBitRatesInfo[audioIndex];
+
+						if (audioTrackIndexToBeUsed >= 0)
+						{
+							ffmpegArgumentList.push_back("-map");
+							ffmpegArgumentList.push_back(
+								string("0:a:") + to_string(audioTrackIndexToBeUsed));
+						}
+						ffmpegArgumentList.push_back("-threads");
+						ffmpegArgumentList.push_back("0");
+						addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+						addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+						addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+						addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+						addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+						addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+						/*
+						if (videoBitRatesInfo.size() > 1)
+						{
+							string newStagingEncodedAssetPathName =
+								regex_replace(stagingTemplateEncodedAssetPathName,
+									regex(templateVariable), to_string(videoHeight));
+							ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+						}
+						else
+						*/
+							ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+					}
 				}
 
                 try
