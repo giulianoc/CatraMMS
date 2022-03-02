@@ -2556,7 +2556,97 @@ void API::createBulkOfDeliveryAuthorization(
 
 			bool save = false;
 
-			string field = "uniqueNameList";
+			string field = "mediaItemKeyList";
+			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
+			{
+				Json::Value mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
+				for (int mediaItemKeyIndex = 0;
+					mediaItemKeyIndex < mediaItemKeyListRoot.size();
+					mediaItemKeyIndex++)
+				{
+					Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
+
+					field = "mediaItemKey";
+					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemKeyRoot, field, -1);
+					field = "encodingProfileKey";
+					int64_t encodingProfileKey = JSONUtils::asInt64(mediaItemKeyRoot,
+						field, -1);
+					field = "encodingProfileLabel";
+					string encodingProfileLabel = mediaItemKeyRoot.get(field, "").asString();
+
+					pair<string, string> deliveryAuthorizationDetails;
+					try
+					{
+						bool warningIfMissingMediaItemKey = true;
+						deliveryAuthorizationDetails = createDeliveryAuthorization(
+							userKey,
+							requestWorkspace,
+							clientIPAddress,
+
+							mediaItemKey,
+							"",	// uniqueName,
+							encodingProfileKey,
+							encodingProfileLabel,
+
+							-1,	// physicalPathKey,
+
+							-1,	// ingestionJobKey,
+							-1,	// deliveryCode,
+
+							ttlInSeconds,
+							maxRetries,
+							save,
+							authorizationThroughPath,
+							warningIfMissingMediaItemKey
+						);
+					}
+					catch (MediaItemKeyNotFound e)
+					{
+						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", e.what(): " + e.what()
+						);
+
+						continue;
+					}
+					catch (runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", e.what(): " + e.what()
+						);
+
+						continue;
+					}
+					catch (exception e)
+					{
+						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", e.what(): " + e.what()
+						);
+
+						continue;
+					}
+
+					string deliveryURL;
+					string deliveryFileName;
+
+					tie(deliveryURL, deliveryFileName) = deliveryAuthorizationDetails;
+
+					field = "deliveryURL";
+					mediaItemKeyRoot[field] = deliveryURL;
+
+					mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
+				}
+
+				field = "mediaItemKeyList";
+				deliveryAutorizationDetailsRoot[field] = mediaItemKeyListRoot;
+			}
+
+			field = "uniqueNameList";
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				Json::Value uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
