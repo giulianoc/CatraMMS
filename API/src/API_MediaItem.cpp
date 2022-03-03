@@ -844,10 +844,32 @@ void API::tagsList(
             contentTypePresent = true;
         }
         
+        string tagNameFilter;
+        auto tagNameFilterIt = queryParameters.find("tagNameFilter");
+        if (tagNameFilterIt != queryParameters.end() && tagNameFilterIt->second != "")
+            tagNameFilter = tagNameFilterIt->second;
+
+		/*
+		 * liveRecordingChunk:
+		 * -1: no condition in select
+		 *  0: look for NO liveRecordingChunk (default)
+		 *  1: look for liveRecordingChunk
+		 */
+        int liveRecordingChunk = 0;
+        auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
+        if (liveRecordingChunkIt != queryParameters.end()
+			&& liveRecordingChunkIt->second != "")
+        {
+			if (liveRecordingChunkIt->second == "true")
+				liveRecordingChunk = 1;
+			else if (liveRecordingChunkIt->second == "false")
+				liveRecordingChunk = 0;
+        }
+
         {
             Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
                     workspace->_workspaceKey, start, rows,
-                    contentTypePresent, contentType);
+                    liveRecordingChunk, contentTypePresent, contentType, tagNameFilter);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, tagsRoot);

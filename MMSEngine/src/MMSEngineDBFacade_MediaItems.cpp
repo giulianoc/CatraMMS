@@ -8037,8 +8037,9 @@ void MMSEngineDBFacade::removeMediaItem (
 }
 
 Json::Value MMSEngineDBFacade::getTagsList (
-        int64_t workspaceKey, int start, int rows,
-        bool contentTypePresent, ContentType contentType
+	int64_t workspaceKey, int start, int rows,
+	int liveRecordingChunk, bool contentTypePresent, ContentType contentType,
+	string tagNameFilter
 )
 {
     string      lastSQLCommand;
@@ -8054,8 +8055,10 @@ Json::Value MMSEngineDBFacade::getTagsList (
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
+            + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", contentTypePresent: " + to_string(contentTypePresent)
             + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
+            + ", tagNameFilter: " + tagNameFilter
         );
         
         conn = _connectionPool->borrow();	
@@ -8072,10 +8075,19 @@ Json::Value MMSEngineDBFacade::getTagsList (
             field = "rows";
             requestParametersRoot[field] = rows;
             
+            field = "liveRecordingChunk";
+            requestParametersRoot[field] = liveRecordingChunk;
+
             if (contentTypePresent)
             {
                 field = "contentType";
                 requestParametersRoot[field] = toString(contentType);
+            }
+
+            if (tagNameFilter != "")
+            {
+                field = "tagNameFilter";
+                requestParametersRoot[field] = tagNameFilter;
             }
             
             field = "requestParameters";
@@ -8086,6 +8098,15 @@ Json::Value MMSEngineDBFacade::getTagsList (
 		sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
         if (contentTypePresent)
             sqlWhere += ("and mi.contentType = ? ");
+        if (tagNameFilter != "")
+            sqlWhere += ("and t.name like ? ");
+		if (liveRecordingChunk == 0)
+		{
+			sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
+			sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
+		}
+		else if (liveRecordingChunk == 1)
+			sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
         
         Json::Value responseRoot;
         {
@@ -8098,12 +8119,15 @@ Json::Value MMSEngineDBFacade::getTagsList (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (tagNameFilter != "")
+                preparedStatement->setString(queryParameterIndex++, "%" + tagNameFilter + "%");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", tagNameFilter: " + tagNameFilter
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -8136,6 +8160,8 @@ Json::Value MMSEngineDBFacade::getTagsList (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (tagNameFilter != "")
+                preparedStatement->setString(queryParameterIndex++, "%" + tagNameFilter + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -8144,6 +8170,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", tagNameFilter: " + tagNameFilter
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())

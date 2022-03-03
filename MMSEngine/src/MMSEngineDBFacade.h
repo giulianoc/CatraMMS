@@ -1558,7 +1558,8 @@ public:
 
 	Json::Value getTagsList (
         int64_t workspaceKey, int start, int rows,
-        bool contentTypePresent, ContentType contentType);
+        int liveRecordingChunk, bool contentTypePresent, ContentType contentType,
+		string tagNameFilter);
 
 	void updateMediaItem(
 		int64_t mediaItemKey,
