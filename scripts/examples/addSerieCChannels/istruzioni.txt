@@ -1,0 +1,4 @@
+
+1. execute foglio.sh, it will generate the output.sh script
+2. run output.sh
+

@@ -2621,7 +2621,7 @@ void MMSEngineDBFacade::removeEncodersPool(
 tuple<int64_t, bool, string, string, string, int>
 	MMSEngineDBFacade::getRunningEncoderByEncodersPool(
 	int64_t workspaceKey, string encodersPoolLabel,
-	int64_t encoderKeyToBeSkipped)
+	int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed)
 {
     string      lastSQLCommand;
     
@@ -2636,6 +2636,7 @@ tuple<int64_t, bool, string, string, string, int>
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", encodersPoolLabel: " + encodersPoolLabel
             + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+            + ", externalEncoderAllowed: " + to_string(externalEncoderAllowed)
         );
         
         conn = _connectionPool->borrow();	
@@ -2747,6 +2748,7 @@ tuple<int64_t, bool, string, string, string, int>
 		int port;
 		bool encoderFound = false;
 		int encoderIndex = 0;
+
 		while(!encoderFound && encoderIndex < encodersNumber)
 		{
 			encoderIndex++;
@@ -2801,7 +2803,18 @@ tuple<int64_t, bool, string, string, string, int>
 				internalServerName = resultSet->getString("internalServerName");
 				port = resultSet->getInt("port");
 
-				if (!enabled)
+				if (external && !externalEncoderAllowed)
+				{
+					_logger->info(__FILEREF__
+						+ "getEncoderByEncodersPool, skipped encoderKey because external encoder are not allowed"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encodersPoolLabel: " + encodersPoolLabel
+						+ ", enabled: " + to_string(enabled)
+					);
+
+					continue;
+				}
+				else if (!enabled)
 				{
 					_logger->info(__FILEREF__ + "getEncoderByEncodersPool, skipped encoderKey because encoder not enabled"
 						+ ", workspaceKey: " + to_string(workspaceKey)
@@ -2863,8 +2876,8 @@ tuple<int64_t, bool, string, string, string, int>
 		}
 
         {
-            lastSQLCommand = 
-                string("update MMS_EncodersPool set lastEncoderIndexUsed = ? ") +
+			lastSQLCommand = 
+				"update MMS_EncodersPool set lastEncoderIndexUsed = ? "
 				"where encodersPoolKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (

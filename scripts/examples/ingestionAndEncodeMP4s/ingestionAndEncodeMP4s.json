@@ -1,0 +1,29 @@
+{
+	"Label": "__FILENAME__",
+	"Task": {
+		"Label": "__FILENAME__",
+		"Parameters": {
+			"AllowUniqueNameOverride": false,
+			"FileFormat": "__FILEFORMAT__",
+			"PushBinaryFileName": "__FILENAME__",
+			"Ingester": "Giuliano",
+			"Retention": "10y",
+			"Title": "__TITLE__"
+		},
+		"Type": "Add-Content",
+		"OnSuccess": {
+			"Task": {
+				"Label": "encode __TITLE__",
+				"Parameters": {
+					"ContentType": "video",
+					"EncodersPool": "irl-3",
+					"EncodingPriority": "Low",
+					"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
+				},
+				"Type": "Encode"
+			}
+		}
+	},
+	"Type": "Workflow"
+}
+

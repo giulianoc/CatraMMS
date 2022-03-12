@@ -1,0 +1,26 @@
+
+{
+	"label": "__serieTitle__-__season__-__episodeNumber__",
+	"url": "__url__",
+	"sourceType": "IP_PULL",
+	"type": "direct-serie",
+	"description": "__description__",
+	"name": "__serieTitle__-__season__-__episodeNumber__-__episodeTitle__",
+	"region": "",
+	"country": "",
+	"imageUniqueName": "__serieTitle__",
+	"position": __position__,
+	"channelData": {
+		"staging": true,
+		"production": true,
+		"year": __year__,
+		"categories": [__categories__],
+		"channelName": "__serieTitle__",
+		"language": "__language__",
+		"serieTitle": "__serieTitle__",
+		"episodeTitle": "__episodeTitle__",
+		"episodeNumber": "__episodeNumber__",
+		"season": "__season__"
+	}
+}
+

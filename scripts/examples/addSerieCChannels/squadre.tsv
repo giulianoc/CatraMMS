@@ -1,0 +1,76 @@
+AC Renate	mms-ch-renate.restream.ovh	30000	fr-11	/app/seriec/ACR
+UC Albinoleffe	mms-ch-albinoleffe.restream.ovh	30010	fr-11	/app/seriec/ALB
+US Alessandria Calcio 1912	mms-ch-alessandria.restream.ovh	30020	fr-12	/app/seriec/ALE
+AS Lucchese Libertas 1905	mms-ch-lucchese.restream.ovh	30030	fr-11	/app/seriec/AS_
+Aurora Pro Patria 1919	mms-ch-aurora.restream.ovh	30040	fr-11	/app/seriec/AUR
+Carrarese Calcio 1908	mms-ch-carrarese.restream.ovh	30050	fr-12	/app/seriec/CAR
+Como 1907	mms-ch-como.restream.ovh	30060	fr-11	/app/seriec/COM
+AS Giana Erminio	mms-ch-giana.restream.ovh	30070	fr-12	/app/seriec/GIE
+US Grosseto	mms-ch-grosseto.restream.ovh	30080	fr-11	/app/seriec/GRO
+Juventus U23	mms-ch-juventusu23.restream.ovh	30090	fr-11	/app/seriec/JUV
+Calcio Lecco	mms-ch-lecco.restream.ovh	30100	fr-12	/app/seriec/LEC
+AS Livorno	mms-ch-livorno.restream.ovh	30110	fr-11	/app/seriec/LIV
+Novara Calcio	mms-ch-novara.restream.ovh	30120	fr-12	/app/seriec/NOV
+Olbia Calcio 1905	mms-ch-olbia.restream.ovh	30130	fr-11	/app/seriec/OLB
+US Pergolettese 1932	mms-ch-pergolettese.restream.ovh	30140	fr-12	/app/seriec/PER
+Piacenza Calcio	mms-ch-piacenza.restream.ovh	30150	fr-11	/app/seriec/PIA
+AC Pistoiese	mms-ch-pistoiese.restream.ovh	30160	fr-12	/app/seriec/PIS
+Pontedera	mms-ch-pontedera.restream.ovh	30170	fr-11	/app/seriec/PON
+Ssd Pro Sesto	mms-ch-sesto.restream.ovh	30180	fr-12	/app/seriec/SSD
+FC Pro Vercelli 1892	mms-ch-vercelli.restream.ovh	30190	fr-11	/app/seriec/VER
+AC Trento	mms-ch-trento.restream.ovh	30600	fr-11	/app/seriec/AC_
+Seregno Calcio	mms-ch-seregno.restream.ovh	30610	fr-12	/app/seriec/SEC
+US Fiorenzuola 1922	mms-ch-fiorenzuola.restream.ovh	30620	fr-11	/app/seriec/US_
+AJ Fano 1906	mms-ch-fano.restream.ovh	30200	fr-12	/app/seriec/AJF
+SS Arezzo	mms-ch-arezzo.restream.ovh	30210	fr-11	/app/seriec/ARE
+Cesena FC	mms-ch-cesena.restream.ovh	30220	fr-11	/app/seriec/CES
+Carpi FC 1909	mms-ch-carpi.restream.ovh	30230	fr-12	/app/seriec/CFC
+FC Legnago Salus SSD	mms-ch-legnago.restream.ovh	30240	fr-11	/app/seriec/FC_
+FC Sudtirol	mms-ch-sudtirol.restream.ovh	30250	fr-12	/app/seriec/FCS
+AC Feralpi Salo	mms-ch-feralpi.restream.ovh	30260	fr-12	/app/seriec/FER
+Fermana FC	mms-ch-fermana.restream.ovh	30270	fr-11	/app/seriec/FFC
+Gubbio	mms-ch-gubbio.restream.ovh	30280	fr-12	/app/seriec/GUB
+Imolese Calcio	mms-ch-imolese.restream.ovh	30290	fr-12	/app/seriec/IMC
+Mantova 1911	mms-ch-mantova.restream.ovh	30300	fr-11	/app/seriec/MAN
+Modena FC	mms-ch-modena.restream.ovh	30310	fr-12	/app/seriec/MOD
+Ssd Vis Pesaro 1898	mms-ch-pesaro.restream.ovh	30320	fr-11	/app/seriec/P98
+Calcio Padova	mms-ch-padova.restream.ovh	30330	fr-11	/app/seriec/PAD
+Perugia	mms-ch-perugia.restream.ovh	30340	fr-12	/app/seriec/PCS
+Ravenna FC 1913	mms-ch-ravenna.restream.ovh	30350	fr-11	/app/seriec/RAV
+Sambenedettese	mms-ch-sambenedettese.restream.ovh	30360	fr-12	/app/seriec/SAM
+SS Matelica Calcio Asd	mms-ch-matelica.restream.ovh	30370	fr-11	/app/seriec/SS_
+US Triestina Calcio 1918	mms-ch-triestina.restream.ovh	30380	fr-12	/app/seriec/TRI
+Virtus Vecomp Verona	mms-ch-verona.restream.ovh	30390	fr-12	/app/seriec/VVV
+AC Reggiana	mms-ch-reggiana.restream.ovh	30630	fr-12	/app/seriec/REG
+Aquila 1902 Montevarchi	mms-ch-montevarchi.restream.ovh	30640	fr-12	/app/seriec/AQU
+Pescara Calcio	mms-ch-pescara.restream.ovh	30650	fr-11	/app/seriec/PES
+Robur Siena	mms-ch-siena.restream.ovh	30660	fr-11	/app/seriec/RSI
+US Ancona 1905	mms-ch-ancona.restream.ovh	30670	fr-11	/app/seriec/ACA
+Virtus Entella	mms-ch-entella.restream.ovh	30680	fr-12	/app/seriec/ENT
+AS Bisceglie	mms-ch-bisceglie.restream.ovh	30400	fr-11	/app/seriec/ASB
+Asd Turris Calcio	mms-ch-turris.restream.ovh	30410	fr-11	/app/seriec/ASD
+SSC Bari	mms-ch-bari.restream.ovh	30420	fr-12	/app/seriec/BAR
+Calcio Catania	mms-ch-catania.restream.ovh	30430	fr-12	/app/seriec/CAT
+Cavese 1919	mms-ch-cavese.restream.ovh	30440	fr-11	/app/seriec/CAV
+Casertana FC	mms-ch-casertana.restream.ovh	30450	fr-12	/app/seriec/CFC
+Foggia Calcio	mms-ch-foggia.restream.ovh	30460	fr-12	/app/seriec/FOG
+Paganese Calcio 1926	mms-ch-paganese.restream.ovh	30470	fr-12	/app/seriec/PAG
+US Palermo	mms-ch-palermo.restream.ovh	30480	fr-12	/app/seriec/PAL
+Potenza Calcio	mms-ch-potenza.restream.ovh	30490	fr-11	/app/seriec/POT
+SS Monopoli 1966	mms-ch-monopoli.restream.ovh	30500	fr-11	/app/seriec/SSM
+Juve Stabia	mms-ch-juvestabia.restream.ovh	30510	fr-12	/app/seriec/STA
+SS Teramo Calcio	mms-ch-teramo.restream.ovh	30520	fr-11	/app/seriec/TER
+Ternana Calcio	mms-ch-ternana.restream.ovh	30530	fr-12	/app/seriec/TER
+Trapani Calcio	mms-ch-trapani.restream.ovh	30540	fr-11	/app/seriec/TRA
+US Avellino 1912	mms-ch-avellino.restream.ovh	30550	fr-12	/app/seriec/USA
+US Catanzaro 1929	mms-ch-catanzaro.restream.ovh	30560	fr-12	/app/seriec/USC
+US Vibonese Calcio	mms-ch-vibonese.restream.ovh	30570	fr-12	/app/seriec/USV
+Virtus Francavilla Calcio	mms-ch-francavilla.restream.ovh	30580	fr-11	/app/seriec/VF
+A.S. Viterbese Castrense	mms-ch-viterbese.restream.ovh	30590	fr-11	/app/seriec/VIT
+Acr Messina	mms-ch-messina.restream.ovh	30690	fr-12	/app/seriec/ACR
+AZ Picerno	mms-ch-picerno.restream.ovh	30700	fr-11	/app/seriec/AZP
+Monterosi FC	mms-ch-monterosi.restream.ovh	30710	fr-11	/app/seriec/MON
+SSD Citta Di Campobasso	mms-ch-campobasso.restream.ovh	30720	fr-12	/app/seriec/CDC
+Ssd Fidelis Andria 2018	mms-ch-andria.restream.ovh	30730	fr-12	/app/seriec/SSD
+Taranto FC 1927	mms-ch-taranto.restream.ovh	30740	fr-12	/app/seriec/TAR
+US Latina Calcio 1932	mms-ch-latina.restream.ovh	30750	fr-11	/app/seriec/US_s

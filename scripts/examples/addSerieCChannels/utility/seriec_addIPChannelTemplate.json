@@ -1,0 +1,15 @@
+
+{
+	"Label": "__title__",
+	"Name": "__title__",
+	"SourceType": "IP_PUSH",
+	"PushProtocol": "rtmp",
+	"PushServerName": "__serverName__",
+	"PushServerPort": __serverPort__,
+	"PushURI": "__serverURI__",
+	"PushListenTimeout": 3600,
+	"ChannelData": {
+		"encodersPool": "__encodersPool__"
+	}
+}
+

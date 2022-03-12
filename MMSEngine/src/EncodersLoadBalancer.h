@@ -46,7 +46,7 @@ public:
     
 	pair<int64_t, string> getEncoderURL(
 		string encodersPoolLabel, shared_ptr<Workspace> workspace,
-		int64_t encoderKeyToBeSkipped);
+		int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 
 private:
 	/*

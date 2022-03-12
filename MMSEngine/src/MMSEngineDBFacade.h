@@ -2377,7 +2377,7 @@ public:
 
 	tuple<int64_t, bool, string, string, string, int> getRunningEncoderByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel,
-      int64_t encoderKeyToBeSkipped);
+      int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 
 	int getEncodersNumberByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel);

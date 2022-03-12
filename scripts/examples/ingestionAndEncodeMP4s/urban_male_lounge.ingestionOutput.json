@@ -1,0 +1,1 @@
+{ "workflow": { "ingestionRootKey": 83820, "label": "urban_male_lounge.mp4" }, "tasks": [ { "ingestionJobKey": 275544, "label": "urban_male_lounge.mp4" }, { "ingestionJobKey": 275545, "label": "encode urban_male_lounge" } ] }

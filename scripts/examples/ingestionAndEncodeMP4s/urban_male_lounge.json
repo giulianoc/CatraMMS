@@ -1,0 +1,29 @@
+{
+	"Label": "urban_male_lounge.mp4",
+	"Task": {
+		"Label": "urban_male_lounge.mp4",
+		"Parameters": {
+			"AllowUniqueNameOverride": false,
+			"FileFormat": "mp4",
+			"PushBinaryFileName": "urban_male_lounge.mp4",
+			"Ingester": "Giuliano",
+			"Retention": "10y",
+			"Title": "urban_male_lounge"
+		},
+		"Type": "Add-Content",
+		"OnSuccess": {
+			"Task": {
+				"Label": "encode urban_male_lounge",
+				"Parameters": {
+					"ContentType": "video",
+					"EncodersPool": "irl-3",
+					"EncodingPriority": "Low",
+					"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
+				},
+				"Type": "Encode"
+			}
+		}
+	},
+	"Type": "Workflow"
+}
+

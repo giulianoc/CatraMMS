@@ -2312,9 +2312,10 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "getEncoderHost"
@@ -3922,9 +3923,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					encodersPool, _encodingItem->_workspace, encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -4973,9 +4975,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -6004,9 +6007,10 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -6817,9 +6821,10 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -7605,9 +7610,10 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -8333,9 +8339,10 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -9137,9 +9144,10 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -9811,9 +9819,10 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
+			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
             _logger->info(__FILEREF__ + "Configuration item"
@@ -12037,10 +12046,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						);
 
 					int64_t encoderKeyToBeSkipped = -1;
+					bool externalEncoderAllowed = true;
 					pair<int64_t, string> encoderURL =
 						_encodersLoadBalancer->getEncoderURL(
 							encodersPool, _encodingItem->_workspace,
-							encoderKeyToBeSkipped);
+							encoderKeyToBeSkipped, externalEncoderAllowed);
 					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
 						= encoderURL;
 				}
@@ -13534,9 +13544,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			if (_encodingItem->_encoderKey == -1)
 			{
 				int64_t encoderKeyToBeSkipped = -1;
+				bool externalEncoderAllowed = true;
 				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
 					= encoderURL;
 
@@ -15567,9 +15578,10 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					encodersPool, _encodingItem->_workspace, encoderToSkip);
 				*/
 				int64_t encoderKeyToBeSkipped = -1;
+				bool externalEncoderAllowed = true;
 				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped);
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
 				_logger->info(__FILEREF__ + "Configuration item"
