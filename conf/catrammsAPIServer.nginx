@@ -25,6 +25,12 @@
 			#2022-01-03: it has to be GET because this link is sent also via email
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
 		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?version=$1&method=createTokenToResetPassword last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?version=$1&method=resetPassword last;
+		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
 		}

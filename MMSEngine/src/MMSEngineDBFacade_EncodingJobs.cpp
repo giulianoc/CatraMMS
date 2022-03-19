@@ -1536,746 +1536,921 @@ int MMSEngineDBFacade::updateEncodingJob (
 	string ingestionErrorMessage,
 	bool forceEncodingToBeFailed)
 {
+	int encodingFailureNumber;
     
-    string      lastSQLCommand;
+	bool updateToBeTriedAgain = true;
+	int retriesNumber = 0;
+	int maxRetriesNumber = 3;
+	int secondsBetweenRetries = 5;
+	while(updateToBeTriedAgain && retriesNumber < maxRetriesNumber)
+	{
+		retriesNumber++;
+
+		string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn = nullptr;
-    bool autoCommit = true;
+		shared_ptr<MySQLConnection> conn = nullptr;
+		bool autoCommit = true;
 
-    int encodingFailureNumber = -1;
+		encodingFailureNumber = -1;
 
-    try
-    {
-		/*
-		int milliSecondsToSleepWaitingLock = 500;
+		try
+		{
+			/*
+			int milliSecondsToSleepWaitingLock = 500;
 
-        PersistenceLock persistenceLock(this,
-            MMSEngineDBFacade::LockType::Encoding,
-            maxSecondsToWaitUpdateEncodingJobLock,
-            processorMMS, "UpdateEncodingJob",
-            milliSecondsToSleepWaitingLock, _logger);
-		*/
+			PersistenceLock persistenceLock(this,
+				MMSEngineDBFacade::LockType::Encoding,
+				maxSecondsToWaitUpdateEncodingJobLock,
+				processorMMS, "UpdateEncodingJob",
+				milliSecondsToSleepWaitingLock, _logger);
+			*/
 
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
+			conn = _connectionPool->borrow();	
+			_logger->debug(__FILEREF__ + "DB connection borrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
 
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
-        {
-            lastSQLCommand = 
-                "START TRANSACTION";
+			// 2022-03-14: evito di usare transazioni perchè ci sono troppi errori di
+			//		Deadlock e Lock wait timeout exceeded
+			autoCommit = false;
+			// conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+			{
+				lastSQLCommand = 
+					"START TRANSACTION";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        
-        EncodingStatus newEncodingStatus;
-        if (encodingError == EncodingError::PunctualError)
-        {
-			string type;
-            {
-                lastSQLCommand = 
-                    "select type, failuresNumber from MMS_EncodingJob "
-					"where encodingJobKey = ?";
-					// "where encodingJobKey = ? for update";
-                shared_ptr<sql::PreparedStatement> preparedStatement (
+				shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+				statement->execute(lastSQLCommand);
+			}
+  
+			EncodingStatus newEncodingStatus;
+			if (encodingError == EncodingError::PunctualError)
+			{
+				string type;
+				{
+					lastSQLCommand = 
+						"select type, failuresNumber from MMS_EncodingJob "
+						"where encodingJobKey = ?";
+						// "where encodingJobKey = ? for update";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-                if (resultSet->next())
-                {
-                    type = resultSet->getString("type");
-                    encodingFailureNumber = resultSet->getInt("failuresNumber");
-                }
-                else
-                {
-                    string errorMessage = __FILEREF__ + "EncodingJob not found"
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (resultSet->next())
+					{
+						type = resultSet->getString("type");
+						encodingFailureNumber = resultSet->getInt("failuresNumber");
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "EncodingJob not found"
                             + ", EncodingJobKey: " + to_string(encodingJobKey)
                             + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
+						;
+						_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);                    
-                }
-            }
+						throw runtime_error(errorMessage);                    
+					}
+				}
             
-			string transcoderUpdate;
-			// in case of LiveRecorder there is no more retries since it already run up
-			//		to the end of the recording
-            if (forceEncodingToBeFailed
+				string transcoderUpdate;
+				// in case of LiveRecorder there is no more retries since it already run up
+				//		to the end of the recording
+				if (forceEncodingToBeFailed
 					|| encodingFailureNumber + 1 >= _maxEncodingFailures)
-			{
-                newEncodingStatus          = EncodingStatus::End_Failed;
+				{
+					newEncodingStatus          = EncodingStatus::End_Failed;
 
-				_logger->info(__FILEREF__ + "update EncodingJob"
+					_logger->info(__FILEREF__ + "update EncodingJob"
+						+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+						+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					);
+				}
+				else
+				{
+					newEncodingStatus          = EncodingStatus::ToBeProcessed;
+					encodingFailureNumber++;
+
+					transcoderUpdate = ", encoderKey = NULL";
+				}
+
+				{
+					_logger->info(__FILEREF__ + "EncodingJob update"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+						+ ", processorMMS: " + "NULL"
+						+ ", " + transcoderUpdate
+						+ ", failuresNumber: " + to_string(encodingFailureNumber)
+						+ ", encodingProgress: " + "NULL"
+						);
+					lastSQLCommand = 
+						string("update MMS_EncodingJob set status = ?, processorMMS = NULL")
+						+ transcoderUpdate + ", failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(newEncodingStatus));
+					preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
+					preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(EncodingStatus::Processing));
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+						+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (rowsUpdated != 1)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+                            + ", MMSEngineDBFacade::toString(newEncodingStatus): "
+								+ MMSEngineDBFacade::toString(newEncodingStatus)
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", rowsUpdated: " + to_string(rowsUpdated)
+                            + ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);                    
+					}
+				}
+            
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
 					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 					+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				);
 			}
-            else
-            {
-                newEncodingStatus          = EncodingStatus::ToBeProcessed;
-                encodingFailureNumber++;
-
-				transcoderUpdate = ", encoderKey = NULL";
-            }
-
-            {
+			else if (encodingError == EncodingError::MaxCapacityReached
+				|| encodingError == EncodingError::ErrorBeforeEncoding)
+			{
+				newEncodingStatus       = EncodingStatus::ToBeProcessed;
+            
 				_logger->info(__FILEREF__ + "EncodingJob update"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
 					+ ", processorMMS: " + "NULL"
-					+ ", " + transcoderUpdate
-					+ ", failuresNumber: " + to_string(encodingFailureNumber)
+					+ ", encoderKey = NULL"
 					+ ", encodingProgress: " + "NULL"
 					);
-                lastSQLCommand = 
-                    string("update MMS_EncodingJob set status = ?, processorMMS = NULL")
-					+ transcoderUpdate + ", failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(newEncodingStatus));
-                preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
-                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-                preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(EncodingStatus::Processing));
+				lastSQLCommand = 
+					"update MMS_EncodingJob set status = ?, processorMMS = NULL, "
+					"encoderKey = NULL, encodingProgress = NULL "
+					"where encodingJobKey = ? and status = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(newEncodingStatus));
+				preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                int rowsUpdated = preparedStatement->executeUpdate();
+				int rowsUpdated = preparedStatement->executeUpdate();
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-					+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
-                if (rowsUpdated != 1)
-                {
-                    string errorMessage = __FILEREF__ + "no update was done"
-                            + ", MMSEngineDBFacade::toString(newEncodingStatus): "
-								+ MMSEngineDBFacade::toString(newEncodingStatus)
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", rowsUpdated: " + to_string(rowsUpdated)
-                            + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);                    
-                }
-            }
-            
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
-        else if (encodingError == EncodingError::MaxCapacityReached
-				|| encodingError == EncodingError::ErrorBeforeEncoding)
-        {
-            newEncodingStatus       = EncodingStatus::ToBeProcessed;
-            
-			_logger->info(__FILEREF__ + "EncodingJob update"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", processorMMS: " + "NULL"
-				+ ", encoderKey = NULL"
-				+ ", encodingProgress: " + "NULL"
-				);
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, "
-				"encoderKey = NULL, encodingProgress = NULL "
-				"where encodingJobKey = ? and status = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
-					MMSEngineDBFacade::toString(newEncodingStatus));
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-            preparedStatement->setString(queryParameterIndex++,
-					MMSEngineDBFacade::toString(EncodingStatus::Processing));
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", MMSEngineDBFacade::toString(newEncodingStatus): "
 							+ MMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
-        else if (encodingError == EncodingError::KilledByUser)
-        {
-            newEncodingStatus       = EncodingStatus::End_KilledByUser;
-            
-			_logger->info(__FILEREF__ + "EncodingJob update"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", processorMMS: " + "NULL"
-				+ ", encodingJobEnd: " + "NOW()"
+					throw runtime_error(errorMessage);                    
+				}
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				);
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
-				"where encodingJobKey = ? and status = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+			}
+			else if (encodingError == EncodingError::KilledByUser)
+			{
+				newEncodingStatus       = EncodingStatus::End_KilledByUser;
+            
+				_logger->info(__FILEREF__ + "EncodingJob update"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", processorMMS: " + "NULL"
+					+ ", encodingJobEnd: " + "NOW()"
+					);
+				lastSQLCommand = 
+					"update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
+					"where encodingJobKey = ? and status = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(newEncodingStatus));
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-            preparedStatement->setString(queryParameterIndex++,
+				preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", MMSEngineDBFacade::toString(newEncodingStatus): "
 							+ MMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
-        else if (encodingError == EncodingError::CanceledByUser)
-        {
-            newEncodingStatus       = EncodingStatus::End_CanceledByUser;
-            
-			_logger->info(__FILEREF__ + "EncodingJob update"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", processorMMS: " + "NULL"
-				+ ", encodingJobEnd: " + "NOW()"
+					throw runtime_error(errorMessage);                    
+				}
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				);
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
-				"where encodingJobKey = ? and status = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+			}
+			else if (encodingError == EncodingError::CanceledByUser)
+			{
+				newEncodingStatus       = EncodingStatus::End_CanceledByUser;
+            
+				_logger->info(__FILEREF__ + "EncodingJob update"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", processorMMS: " + "NULL"
+					+ ", encodingJobEnd: " + "NOW()"
+					);
+				lastSQLCommand = 
+					"update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
+					"where encodingJobKey = ? and status = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(newEncodingStatus));
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-            preparedStatement->setString(queryParameterIndex++,
+				preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", MMSEngineDBFacade::toString(newEncodingStatus): "
 							+ MMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
-        else if (encodingError == EncodingError::CanceledByMMS)
-        {
-            newEncodingStatus       = EncodingStatus::End_CanceledByMMS;
+					throw runtime_error(errorMessage);                    
+				}
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				);
+			}
+			else if (encodingError == EncodingError::CanceledByMMS)
+			{
+				newEncodingStatus       = EncodingStatus::End_CanceledByMMS;
             
-			_logger->info(__FILEREF__ + "EncodingJob update"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", processorMMS: " + "NULL"
-				+ ", encodingJobEnd: " + "NOW()"
-				);
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
-				"where encodingJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+				_logger->info(__FILEREF__ + "EncodingJob update"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", processorMMS: " + "NULL"
+					+ ", encodingJobEnd: " + "NOW()"
+					);
+				lastSQLCommand = 
+					"update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
+					"where encodingJobKey = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(newEncodingStatus));
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+				preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", MMSEngineDBFacade::toString(newEncodingStatus): "
 							+ MMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
-        else    // success
-        {
-            newEncodingStatus       = EncodingStatus::End_Success;
-
-			_logger->info(__FILEREF__ + "EncodingJob update"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", processorMMS: " + "NULL"
-				+ ", encodingJobEnd: " + "NOW()"
-				+ ", encodingProgress: " + "100"
+					throw runtime_error(errorMessage);                    
+				}
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				);
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW(), encodingProgress = 100 "
-                "where encodingJobKey = ? and status = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+			}
+			else    // success
+			{
+				newEncodingStatus       = EncodingStatus::End_Success;
+
+				_logger->info(__FILEREF__ + "EncodingJob update"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", processorMMS: " + "NULL"
+					+ ", encodingJobEnd: " + "NOW()"
+					+ ", encodingProgress: " + "100"
+					);
+				lastSQLCommand = 
+					"update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW(), encodingProgress = 100 "
+					"where encodingJobKey = ? and status = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(newEncodingStatus));
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-            preparedStatement->setString(queryParameterIndex++,
+				preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", MMSEngineDBFacade::toString(newEncodingStatus): "
 							+ MMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-            _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
-                + ", encodingJobKey: " + to_string(encodingJobKey)
-            );
-        }
+					throw runtime_error(errorMessage);                    
+				}
+				_logger->info(__FILEREF__ + "EncodingJob updated successful"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				);
+			}
 
-        if (newEncodingStatus == EncodingStatus::End_Success)
-        {
-			// 2021-08-27:
-			//	We are in EncoderVideoAudioProxy.cpp,
-			//	In case it was added just a new encoding profile to a media item,
-			//		isIngestionJobFinished will be true and the ingestion job status has to be updated
-			//	In case it was created a new media item (i.e: OverlayImageOnVideo), the file was generated but
-			//		the media item has still to be ingested. In this case the ingestion job status does NOT to be
-			//		updated because it will be updated when the file will be ingested
-			//		(inside the handleLocalAssetIngestionEvent method)
-            if (isIngestionJobFinished && ingestionJobKey != -1)
-            {
-                IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
+			if (newEncodingStatus == EncodingStatus::End_Success)
+			{
+				// 2021-08-27:
+				//	We are in EncoderVideoAudioProxy.cpp,
+				//	In case it was added just a new encoding profile to a media item,
+				//		isIngestionJobFinished will be true and the ingestion job status has to be updated
+				//	In case it was created a new media item (i.e: OverlayImageOnVideo), the file was generated but
+				//		the media item has still to be ingested. In this case the ingestion job status does NOT to be
+				//		updated because it will be updated when the file will be ingested
+				//		(inside the handleLocalAssetIngestionEvent method)
+				if (isIngestionJobFinished && ingestionJobKey != -1)
+				{
+					IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
 
-                string errorMessage;
-                string processorMMS;
-                _logger->info(__FILEREF__ + "Update IngestionJob"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", IngestionStatus: " + toString(newIngestionStatus)
-                    + ", errorMessage: " + errorMessage
-                    + ", processorMMS: " + processorMMS
-                );                            
-                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-            }
-        }
-        else if (newEncodingStatus == EncodingStatus::End_Failed && ingestionJobKey != -1)
-        {
-            IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
-            // string errorMessage;
-            string processorMMS;
-            int64_t physicalPathKey = -1;
+					string errorMessage;
+					string processorMMS;
+					_logger->info(__FILEREF__ + "Update IngestionJob"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + toString(newIngestionStatus)
+						+ ", errorMessage: " + errorMessage
+						+ ", processorMMS: " + processorMMS
+					);                            
+					updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+				}
+			}
+			else if (newEncodingStatus == EncodingStatus::End_Failed && ingestionJobKey != -1)
+			{
+				IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
+				// string errorMessage;
+				string processorMMS;
+				int64_t physicalPathKey = -1;
 
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(ingestionStatus)
-                + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", errorMessage: " + ingestionErrorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, ingestionErrorMessage);
-        }
-        else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
-        {
-            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
-            string errorMessage;
-            string processorMMS;
-            int64_t physicalPathKey = -1;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(ingestionStatus)
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", errorMessage: " + ingestionErrorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, ingestionStatus, ingestionErrorMessage);
+			}
+			else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
+			{
+				IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
+				string errorMessage;
+				string processorMMS;
+				int64_t physicalPathKey = -1;
 
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(ingestionStatus)
-                + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
-        }
-        else if (newEncodingStatus == EncodingStatus::End_CanceledByUser && ingestionJobKey != -1)
-        {
-            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
-            string errorMessage;
-            string processorMMS;
-            int64_t physicalPathKey = -1;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(ingestionStatus)
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, ingestionStatus, errorMessage);
+			}
+			else if (newEncodingStatus == EncodingStatus::End_CanceledByUser && ingestionJobKey != -1)
+			{
+				IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
+				string errorMessage;
+				string processorMMS;
+				int64_t physicalPathKey = -1;
 
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(ingestionStatus)
-                + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
-        }
-        else if (newEncodingStatus == EncodingStatus::End_CanceledByMMS && ingestionJobKey != -1)
-        {
-            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByMMS;
-            string errorMessage;
-            string processorMMS;
-            int64_t physicalPathKey = -1;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(ingestionStatus)
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, ingestionStatus, errorMessage);
+			}
+			else if (newEncodingStatus == EncodingStatus::End_CanceledByMMS && ingestionJobKey != -1)
+			{
+				IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByMMS;
+				string errorMessage;
+				string processorMMS;
+				int64_t physicalPathKey = -1;
 
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(ingestionStatus)
-                + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
-        }
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(ingestionStatus)
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, ingestionStatus, errorMessage);
+			}
 
-        // conn->_sqlConnection->commit(); OR execute COMMIT
-        {
-            lastSQLCommand = 
-                "COMMIT";
+			// conn->_sqlConnection->commit(); OR execute COMMIT
+			{
+				lastSQLCommand = 
+					"COMMIT";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        autoCommit = true;
+				shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+				statement->execute(lastSQLCommand);
+			}
+			autoCommit = true;
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
+			updateToBeTriedAgain = false;
+
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+		catch(sql::SQLException se)
+		{
+			string exceptionMessage(se.what());
         
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			if (exceptionMessage.find("Lock wait timeout exceeded") != string::npos
+				&& retriesNumber < maxRetriesNumber)
+			{
+				_logger->warn(__FILEREF__ + "SQL exception"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
-        if (conn != nullptr)
-        {
-            try
-            {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
+				if (conn != nullptr)
+				{
+					/*
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+					*/
+					try
+					{
+						// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+						if (!autoCommit)
+						{
+							shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+							statement->execute("ROLLBACK");
+						}
 
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(sql::SQLException se)
-            {
-                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
-                    + ", exceptionMessage: " + se.what()
-                );
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(sql::SQLException se)
+					{
+						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+							+ ", exceptionMessage: " + se.what()
+						);
 
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(exception e)
-            {
-                _logger->error(__FILEREF__ + "exception doing unborrow"
-                    + ", exceptionMessage: " + e.what()
-                );
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "exception doing unborrow"
+							+ ", exceptionMessage: " + e.what()
+						);
 
+						// _logger->debug(__FILEREF__ + "DB connection unborrow"
+						// 	+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						// );
+						// _connectionPool->unborrow(conn);
+						// conn = nullptr;
+					}
+				}
+
+				_logger->info(__FILEREF__ + "updateEncodingJob failed, waiting before to try again"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", retriesNumber: " + to_string(retriesNumber)
+					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
+					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+			}
+			else
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
+
+				if (conn != nullptr)
+				{
+					/*
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+					*/
+					try
+					{
+						// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+						if (!autoCommit)
+						{
+							shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+							statement->execute("ROLLBACK");
+						}
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(sql::SQLException se)
+					{
+						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+							+ ", exceptionMessage: " + se.what()
+						);
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "exception doing unborrow"
+							+ ", exceptionMessage: " + e.what()
+						);
+
+						// _logger->debug(__FILEREF__ + "DB connection unborrow"
+						// 	+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						// );
+						// _connectionPool->unborrow(conn);
+						// conn = nullptr;
+					}
+				}
+
+				throw se;
+			}
+		}
+		catch(AlreadyLocked e)
+		{
+			if (retriesNumber < maxRetriesNumber)
+			{
+				_logger->warn(__FILEREF__ + "SQL exception"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
+
+				if (conn != nullptr)
+				{
+					/*
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+					*/
+					try
+					{
+						// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+						if (!autoCommit)
+						{
+							shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+							statement->execute("ROLLBACK");
+						}
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(sql::SQLException se)
+					{
+						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+							+ ", exceptionMessage: " + se.what()
+						);
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "exception doing unborrow"
+							+ ", exceptionMessage: " + e.what()
+						);
+
+						// _logger->debug(__FILEREF__ + "DB connection unborrow"
+						// 	+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						// );
+						// _connectionPool->unborrow(conn);
+						// conn = nullptr;
+					}
+				}
+        
+				_logger->info(__FILEREF__ + "updateEncodingJob failed, waiting before to try again"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", retriesNumber: " + to_string(retriesNumber)
+					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
+					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+			}
+			else
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
+
+				if (conn != nullptr)
+				{
+					/*
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+					*/
+					try
+					{
+						// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+						if (!autoCommit)
+						{
+							shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+							statement->execute("ROLLBACK");
+						}
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(sql::SQLException se)
+					{
+						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+							+ ", exceptionMessage: " + se.what()
+						);
+
+						_logger->debug(__FILEREF__ + "DB connection unborrow"
+							+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						);
+						_connectionPool->unborrow(conn);
+						conn = nullptr;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "exception doing unborrow"
+							+ ", exceptionMessage: " + e.what()
+						);
+
+						// _logger->debug(__FILEREF__ + "DB connection unborrow"
+						// 	+ ", getConnectionId: " + to_string(conn->getConnectionId())
+						// );
+						// _connectionPool->unborrow(conn);
+						// conn = nullptr;
+					}
+				}
+        
+				throw e;
+			}
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
 				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
-            }
-        }
+				try
+				{
+					// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+					if (!autoCommit)
+					{
+						shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+						statement->execute("ROLLBACK");
+					}
 
-        throw se;
-    }
-    catch(AlreadyLocked e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
+				catch(sql::SQLException se)
+				{
+					_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+						+ ", exceptionMessage: " + se.what()
+					);
 
-        if (conn != nullptr)
-        {
-            try
-            {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "exception doing unborrow"
+						+ ", exceptionMessage: " + e.what()
+					);
 
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(sql::SQLException se)
-            {
-                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
-                    + ", exceptionMessage: " + se.what()
-                );
+					// _logger->debug(__FILEREF__ + "DB connection unborrow"
+					// + ", getConnectionId: " + to_string(conn->getConnectionId())
+					// ;
+					// connectionPool->unborrow(conn);
+					// onn = nullptr;
+				}
+			}
+        
+			throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
 
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(exception e)
-            {
-                _logger->error(__FILEREF__ + "exception doing unborrow"
-                    + ", exceptionMessage: " + e.what()
-                );
-
+			if (conn != nullptr)
+			{
 				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
-            }
-        }
+				try
+				{
+					// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+					if (!autoCommit)
+					{
+						shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+						statement->execute("ROLLBACK");
+					}
+
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
+				catch(sql::SQLException se)
+				{
+					_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+						+ ", exceptionMessage: " + se.what()
+					);
+
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "exception doing unborrow"
+						+ ", exceptionMessage: " + e.what()
+					);
+
+					// _logger->debug(__FILEREF__ + "DB connection unborrow"
+					// 	+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					// );
+					// _connectionPool->unborrow(conn);
+					// conn = nullptr;
+				}
+			}
         
-        throw e;
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            try
-            {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(sql::SQLException se)
-            {
-                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
-                    + ", exceptionMessage: " + se.what()
-                );
-
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(exception e)
-            {
-                _logger->error(__FILEREF__ + "exception doing unborrow"
-                    + ", exceptionMessage: " + e.what()
-                );
-
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
-            }
-        }
-        
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            try
-            {
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(sql::SQLException se)
-            {
-                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
-                    + ", exceptionMessage: " + se.what()
-                );
-
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-            }
-            catch(exception e)
-            {
-                _logger->error(__FILEREF__ + "exception doing unborrow"
-                    + ", exceptionMessage: " + e.what()
-                );
-
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
-            }
-        }
-        
-        throw e;
-    }
+			throw e;
+		}
+	}
     
     return encodingFailureNumber;
 }

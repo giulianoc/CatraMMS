@@ -142,6 +142,14 @@ private:
         int64_t userKey,
         string requestBody);
 
+	void createTokenToResetPassword(
+		FCGX_Request& request,
+		unordered_map<string, string> queryParameters);
+
+	void resetPassword(
+		FCGX_Request& request,
+		string requestBody);
+
     void updateWorkspace(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
@@ -330,7 +338,7 @@ private:
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value& taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
-            // vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+            vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);

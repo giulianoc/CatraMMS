@@ -1362,6 +1362,14 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         updateUser(request, userKey, requestBody);
     }
+    else if (method == "createTokenToResetPassword")
+    {
+        createTokenToResetPassword(request, queryParameters);
+    }
+    else if (method == "resetPassword")
+    {
+        resetPassword(request, requestBody);
+    }
     else if (method == "updateWorkspace")
     {
         updateWorkspace(request, workspace, userKey, requestBody);

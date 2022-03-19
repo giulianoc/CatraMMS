@@ -1017,7 +1017,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 			);
 
             userKey = getLastInsertId(conn);
-        }    
+        }
         
         unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
         default_random_engine e(seed);
@@ -5253,6 +5253,125 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
     return emailAddressAndName;
 }
 
+pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
+{
+	int64_t			userKey;
+	string			name;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "select userKey, name from MMS_User where eMailAddress = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, email);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", emailserKey: " + email
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+                userKey = resultSet->getInt64("userKey");
+                name = resultSet->getString("name");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "User is not present"
+                    + ", email: " + email
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+	pair<int64_t, string> userDetails = make_pair(userKey, name);
+
+    return userDetails;
+}
+
 Json::Value MMSEngineDBFacade::updateUser (
 		bool ldapEnabled,
         int64_t userKey,
@@ -5535,6 +5654,283 @@ Json::Value MMSEngineDBFacade::updateUser (
     }
     
     return loginDetailsRoot;
+}
+
+string MMSEngineDBFacade::createResetPasswordToken(
+	int64_t userKey
+)
+{
+	string		resetPasswordToken;
+	string		lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+        default_random_engine e(seed);
+		resetPasswordToken = to_string(e());
+
+        {
+			lastSQLCommand = 
+				"insert into MMS_ResetPasswordToken (token, userKey, creationDate) "
+				"values (?, ?, NOW())";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, resetPasswordToken);
+			preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", resetPasswordToken: " + resetPasswordToken
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+    return resetPasswordToken;
+}
+
+pair<string, string> MMSEngineDBFacade::resetPassword(
+	string resetPasswordToken,
+	string newPassword
+)
+{
+	string		name;
+	string		email;
+	string		lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		int resetPasswordRetentionInHours = 24;
+
+		int userKey;
+        {
+            lastSQLCommand = 
+				"select u.name, u.eMailAddress, u.userKey "
+				"from MMS_ResetPasswordToken rp, MMS_User u "
+				"where rp.userKey = u.userKey and rp.token = ? "
+				"and DATE_ADD(rp.creationDate, INTERVAL ? HOUR) >= NOW()";
+			;
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, resetPasswordToken);
+            preparedStatement->setInt(queryParameterIndex++, resetPasswordRetentionInHours);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", resetPasswordToken: " + resetPasswordToken
+				+ ", resetPasswordRetentionInHours: " + to_string(resetPasswordRetentionInHours)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+                name = resultSet->getString("name");
+                email = resultSet->getString("eMailAddress");
+                userKey = resultSet->getInt64("userKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__
+					+ "reset password token is not present or is expired"
+                    + ", resetPasswordToken: " + resetPasswordToken
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        {
+			lastSQLCommand = 
+				"update MMS_User set password = ? where userKey = ?"
+				;
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, newPassword);
+			preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newPassword: " + newPassword
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			/*
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done"
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+			}
+			*/
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+	pair<string, string> details = make_pair(name, email);
+
+    return details;
 }
 
 int64_t MMSEngineDBFacade::saveLoginStatistics(

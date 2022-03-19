@@ -586,6 +586,8 @@ bool APICommon::basicAuthenticationRequired(
 
     if (method == "registerUser"
             || method == "confirmRegistration"
+            || method == "createTokenToResetPassword"
+            || method == "resetPassword"
             || method == "login"
             || method == "manageHTTPStreamingManifest_authorizationThroughParameter"
             || method == "deliveryAuthorizationThroughParameter"

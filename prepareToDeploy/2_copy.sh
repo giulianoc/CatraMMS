@@ -23,86 +23,87 @@ fi
 echo -n "deploy su mms cloud/test? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "mms-t-api-gui-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.131:/opt/catramms
+	echo "aws-mms-t-api-gui-1"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-176-34-143-242.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
-	echo "mms-t-engine-db-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.250:/opt/catramms
+
+	echo "aws-mms-t-engine-db-1"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-31-108-235.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
-	echo "mms-t-transcoder-fr-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.249:/opt/catramms
+	echo "aws-mms-t-transcoder-irl-1"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-54-73-213-29.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 fi
 
-echo -n "deploy su cibor? " 
-read deploy
-if [ "$deploy" == "y" ]; then
-	echo "cibortv-mms-api-gui-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.228:/opt/catramms
-	date
+#echo -n "deploy su cibor? " 
+#read deploy
+#if [ "$deploy" == "y" ]; then
+#	echo "cibortv-mms-api-gui-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.228:/opt/catramms
+#	date
 
-	echo "cibortv-mms-api-gui-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.229:/opt/catramms
-	date
+#	echo "cibortv-mms-api-gui-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.229:/opt/catramms
+#	date
 
-	echo "cibortv-mms-engine-db-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.235:/opt/catramms
-	date
+#	echo "cibortv-mms-engine-db-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.235:/opt/catramms
+#	date
 
-	echo "cibortv-mms-engine-db-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.241:/opt/catramms
-	date
+#	echo "cibortv-mms-engine-db-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.241:/opt/catramms
+#	date
 
-	echo "cibortv-mms-engine-db-3"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.132:/opt/catramms
-	date
+#	echo "cibortv-mms-engine-db-3"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.132:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.225:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.225:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.231:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.231:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-3"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.232:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-3"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@164.132.248.232:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-4"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.242:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-4"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@51.210.161.242:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-11"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@135.125.97.201:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-11"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@135.125.97.201:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-fr-12"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@152.228.220.72:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-fr-12"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@152.228.220.72:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-ita-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.129:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-ita-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.129:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-ita-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.130:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-ita-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@176.31.140.130:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-itaita-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@188.213.169.34:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-itaita-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@188.213.169.34:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-itaita-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@95.110.132.155:/opt/catramms
-	date
+#	echo "cibortv-mms-transcoder-itaita-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@95.110.132.155:/opt/catramms
+#	date
 
-	echo "cibortv-mms-transcoder-sat-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.200:/opt/catramms
-	date
-fi
+#	echo "cibortv-mms-transcoder-sat-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.200:/opt/catramms
+#	date
+#fi
 
 echo -n "deploy su aws? " 
 read deploy

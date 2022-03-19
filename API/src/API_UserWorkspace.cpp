@@ -402,7 +402,7 @@ void API::registerUser(
             string subject = "Confirmation code";
             
             vector<string> emailBody;
-            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
             emailBody.push_back(string("<p>here follows the user key <b>") + to_string(userKey) 
                 + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
@@ -638,7 +638,7 @@ void API::createWorkspace(
             string subject = "Confirmation code";
             
             vector<string> emailBody;
-            emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
+            emailBody.push_back(string("<p>Dear ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
             emailBody.push_back(string("<p>here follows the confirmation code ") + confirmationCode + " to be used to confirm the registration</p>");
 			string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/" 
@@ -1037,7 +1037,7 @@ void API::shareWorkspace_(
             string subject = "Confirmation code";
             
             vector<string> emailBody;
-            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
             emailBody.push_back(string("<p>Here follows the user key <b>")
 				+ to_string(userKey) 
@@ -1232,7 +1232,7 @@ void API::confirmRegistration(
             string subject = "Welcome";
             
             vector<string> emailBody;
-            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
             emailBody.push_back(string("<p>Your registration is now completed and you can enjoy working with MMS</p>"));
             emailBody.push_back("<p>Best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
@@ -2297,6 +2297,346 @@ void API::updateUser(
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
 
             sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::createTokenToResetPassword(
+	FCGX_Request& request,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "createTokenToResetPassword";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        string email;
+
+
+		auto emailIt = queryParameters.find("email");
+		if (emailIt == queryParameters.end())
+		{
+			string errorMessage = string("The 'email' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		{
+			email = emailIt->second;
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(email, regex(plus), plusDecoded);
+
+			email = curlpp::unescape(firstDecoding);
+		}
+
+		string resetPasswordToken;
+		string name;
+        try
+        {
+            _logger->info(__FILEREF__ + "getUserDetailsByEmail"
+                + ", email: " + email
+            );
+
+			pair<int64_t, string> userDetails
+				= _mmsEngineDBFacade->getUserDetailsByEmail(email);
+			int64_t userKey = userDetails.first;
+			name = userDetails.second;
+
+			resetPasswordToken = _mmsEngineDBFacade->createResetPasswordToken(userKey);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {
+            sendSuccess(request, 201, "");
+
+			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				resetPasswordURL += (":" + to_string(_guiPort));
+			resetPasswordURL += (string("/catramms/login.xhtml?resetPasswordRequested=true")
+				+ "&resetPasswordToken=" + resetPasswordToken);
+
+            string to = email;
+            string subject = "Reset password";
+
+			vector<string> emailBody;
+			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+			emailBody.push_back(
+				string("<p>Please click <a href=\"") + resetPasswordURL
+				+ "\">here</a> to reset your password. This link is valid for a limited time.</p>");
+            emailBody.push_back(string("In case you did not request any reset of your password, just ignore this email</p>"));
+
+            emailBody.push_back("<p>Have a nice day, best regards</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
+
+            EMailSender emailSender(_logger, _configuration);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::resetPassword(
+	FCGX_Request& request,
+	string requestBody)
+{
+	string api = "resetPassword";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", requestBody: " + requestBody
+    );
+
+    try
+    {
+		string newPassword;
+		string resetPasswordToken;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+
+		resetPasswordToken = metadataRoot.get("resetPasswordToken", "").asString();
+		if (resetPasswordToken == "")
+		{
+			string errorMessage = string("The 'resetPasswordToken' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		newPassword = metadataRoot.get("newPassword", "").asString();
+		if (newPassword == "")
+		{
+			string errorMessage = string("The 'newPassword' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string name;
+		string email;
+        try
+        {
+            _logger->info(__FILEREF__ + "Reset Password"
+                + ", resetPasswordToken: " + resetPasswordToken
+            );
+
+            pair<string, string> details = _mmsEngineDBFacade->resetPassword(
+				resetPasswordToken, newPassword);
+			name = details.first;
+			email = details.second;
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {
+            sendSuccess(request, 200, "");
+
+            string to = email;
+            string subject = "Reset password";
+
+            vector<string> emailBody;
+            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+            emailBody.push_back(string("your password has been changed.</p>"));
+
+            emailBody.push_back("<p>Have a nice day, best regards</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
+
+            EMailSender emailSender(_logger, _configuration);
+			bool useMMSCCToo = true;
+            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {

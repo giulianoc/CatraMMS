@@ -5,6 +5,10 @@ binaryFilePathName=$2
 chunckSize=$3
 ingestionNumberToBeContinued=$4
 
+mmsBinaryHostname=mms-binary.mms-cloud-hub.com
+mmsUserKey=1
+mmsAPIKey=1j1l1x1o1l1d1q1r1f1d1w1u1d1p1e1r1q1h1C1j1p1d1l1o111f1r1p1b1b1V1H1S1b1b14181719091914181613
+
 osName=$(uname -s)
 
 if [ $# -eq 2 ]; then
@@ -35,12 +39,8 @@ elif [ $# -ne 4 ]; then
 	exit 1
 fi
 
-mmsHostName=mms-binary.catrasoft.cloud
-#mmsPort=80
-userKey=1
-userAPIKey=SU1.8ZO1O2zRs.gL_nWYV4AZ0uU_dy89CRjqmaXv4J58R0NfNsa9Ku8f6OScAwS.gT
-sleepingInSecondsInCaseOfIngestionError=5
-maxRetriesNumber=3
+sleepingInSecondsInCaseOfIngestionError=60
+maxRetriesNumber=5
 
 if [ "$osName" == "Darwin" ]; then
 	binaryFileSize=$(stat -f%z "$binaryFilePathName")
@@ -78,13 +78,13 @@ while [  $ingestionNumber -lt $totalIngestionsNumber ]; do
 
 			startChunkIngestion=$(date -u +%s)
 
-			echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $ingestionNumber/$totalIngestionsNumber, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize"
+			echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $((ingestionNumber + 1))/$totalIngestionsNumber, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize"
 			if [ "$osName" == "Darwin" ]; then
-				echo "command: dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"http://$mmsHostName/catramms/binary/$ingestionJobKey\""
-				responseCode=$(dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "http://$mmsHostName/catramms/binary/$ingestionJobKey")
+				#echo "command: dd if=\"$binaryFilePathName\" bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -k -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $mmsUserKey:$mmsAPIKey --data-binary @- \"https://$mmsBinaryHostname/catramms/binary/1.0.1/$ingestionJobKey\""
+				responseCode=$(dd if="$binaryFilePathName" bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -k -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $mmsUserKey:$mmsAPIKey --data-binary @- "https://$mmsBinaryHostname/catramms/1.0.1/binary/$ingestionJobKey")
 			else
-				echo "command: dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"http://$mmsHostName/catramms/binary/$ingestionJobKey\""
-				responseCode=$(dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "http://$mmsHostName/catramms/binary/$ingestionJobKey")
+				#echo "command: dd status=none if=\"$binaryFilePathName\" bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -k -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $mmsUserKey:$mmsAPIKey --data-binary @- \"https://$mmsBinaryHostname/catramms/1.0.1/binary/$ingestionJobKey\""
+				responseCode=$(dd status=none if="$binaryFilePathName" bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -k -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $mmsUserKey:$mmsAPIKey --data-binary @- "https://$mmsBinaryHostname/catramms/1.0.1/binary/$ingestionJobKey")
 			fi
 
 			#echo "responseCode: $responseCode"
@@ -92,19 +92,20 @@ while [  $ingestionNumber -lt $totalIngestionsNumber ]; do
 			endChunkIngestion=$(date -u +%s)
 
 			if [ "$responseCode" -ne "201" ]; then
-				echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $ingestionNumber/$totalIngestionsNumber FAILED, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize, Ingestion response code: $responseCode. Elapsed (secs): $((endChunkIngestion - startChunkIngestion))"
+				echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $((ingestionNumber + 1))/$totalIngestionsNumber FAILED, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize, Ingestion response code: $responseCode. Elapsed (secs): $((endChunkIngestion - startChunkIngestion))"
 
 				retriesNumber=$((retriesNumber + 1))
 
 				echo "Pause $sleepingInSecondsInCaseOfIngestionError seconds..."
 				sleep $sleepingInSecondsInCaseOfIngestionError
-			else
-				echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $ingestionNumber/$totalIngestionsNumber SUCCESS, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize. Elapsed (secs): $((endChunkIngestion - startChunkIngestion))"
 			fi
+			#else
+				#echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $((ingestionNumber + 1))/$totalIngestionsNumber SUCCESS, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize. Elapsed (secs): $((endChunkIngestion - startChunkIngestion))"
+			#fi
 		done
 
 		if [ "$retriesNumber" -ge "$maxRetriesNumber" ]; then
-			echo "FAILURE at ingestionNumber: $ingestionNumber (bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize)"
+			echo "FAILURE at ingestionNumber $((ingestionNumber + 1)) (bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize), ingestionJobKey: $ingestionJobKey, binaryFilePathName: $binaryFilePathName"
 
 			exit 2
 		fi

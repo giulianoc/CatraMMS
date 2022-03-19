@@ -1,7 +1,9 @@
 {
 	"Label": "__FILENAME__",
+	"Type": "Workflow",
 	"Task": {
 		"Label": "__FILENAME__",
+		"Type": "Add-Content",
 		"Parameters": {
 			"AllowUniqueNameOverride": false,
 			"FileFormat": "__FILEFORMAT__",
@@ -10,20 +12,44 @@
 			"Retention": "10y",
 			"Title": "__TITLE__"
 		},
-		"Type": "Add-Content",
 		"OnSuccess": {
 			"Task": {
-				"Label": "encode __TITLE__",
+				"Label": "GroupOfTasks __TITLE__",
+				"Type": "GroupOfTasks",
 				"Parameters": {
-					"ContentType": "video",
-					"EncodersPool": "irl-3",
-					"EncodingPriority": "Low",
-					"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
-				},
-				"Type": "Encode"
+					"ExecutionType": "parallel",
+					"Tasks": [
+						{
+							"Label": "encode __TITLE__",
+							"Type": "Encode",
+							"Parameters": {
+								"ContentType": "video",
+								"EncodersPool": "irl-3",
+								"EncodingPriority": "Low",
+								"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
+							}
+						},
+						{
+							"Label": "Best Picture: __TITLE__",
+							"Type": "Workflow-As-Library",
+							"Parameters": {
+								"AllowUniqueNameOverride": false,
+								"ImageRetention": "10y",
+								"ImageTags": ["FACE"],
+								"ImageUserData": {},
+								"Ingester": "Giuliano",
+								"InitialFramesNumberToBeSkipped": 1500,
+								"InstantInSeconds": 60,
+								"Title": "__TITLE__",
+								"UniqueName": "",
+								"WorkflowAsLibraryLabel": "Best Picture of the Video",
+								"WorkflowAsLibraryType": "MMS"
+							}
+						}
+					]
+				}
 			}
 		}
-	},
-	"Type": "Workflow"
+	}
 }
 

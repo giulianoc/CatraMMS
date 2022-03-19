@@ -638,6 +638,29 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 {
 	string field;
 
+	// just for logging
+	{
+		string sDependOnIngestionJobKeysOverallInput;
+		for (int referenceIndex = 0;
+			referenceIndex < dependOnIngestionJobKeysOverallInput.size();
+			++referenceIndex)
+		{
+			if (referenceIndex == 0)
+				sDependOnIngestionJobKeysOverallInput
+					= to_string(dependOnIngestionJobKeysOverallInput.at(referenceIndex));
+			else
+				sDependOnIngestionJobKeysOverallInput +=
+					(string(", ") + to_string(dependOnIngestionJobKeysOverallInput.at(referenceIndex)));
+		}
+
+		_logger->info(__FILEREF__ + "manageReferencesInput"
+			+ ", taskOrGroupOfTasksLabel: " + taskOrGroupOfTasksLabel
+			+ ", IngestionType: " + ingestionType
+			+ ", parametersSectionPresent: " + to_string(parametersSectionPresent)
+			+ ", sDependOnIngestionJobKeysOverallInput: " + sDependOnIngestionJobKeysOverallInput
+		);
+	}
+
 	// initialize referencesRoot
     bool referencesSectionPresent = false;
     Json::Value referencesRoot(Json::arrayValue);
@@ -1652,16 +1675,20 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     
 	vector<int64_t> referencesOutputIngestionJobKeys;
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-            localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
+		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
 
-			// in case of OnError, OverallInput has to be the same of the failed task
-			// 2021-09-19: I had to remove dependOnIngestionJobKeysOverallInputOnError
-			//	because otherwise the OnError tasks would not receive the correct ingestionJobs
-            // dependOnIngestionJobKeysOverallInput,
+		// 2022-03-15: Let's say we have a Task A and on his error we have Task B.
+		//		When Task A fails, it will not generate any output and the Task B,
+		//		configured OnError, will not receive any input.
+		//		For this reason, only in case of a failure (onError), the overall input
+		//		for the Task B has to be the same input of the Task A.
+		//		For this reason I added the next parameter (dependOnIngestionJobKeysOverallInputOnError)
+		//		to be used for the OnError Task
+		dependOnIngestionJobKeysOverallInput,
 
-			referencesOutputIngestionJobKeys,
+		referencesOutputIngestionJobKeys,
 
-			mapLabelAndIngestionJobKey, responseBody);
+		mapLabelAndIngestionJobKey, responseBody);
 
 
     return localDependOnIngestionJobKeysForStarting;
@@ -2109,11 +2136,14 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
-		// in case of OnError, OverallInput has to be the same of the failed task
-		// in case of OnError, OverallInput has to be the same of the failed task
-		// 2021-09-19: I had to remove dependOnIngestionJobKeysOverallInputOnError
-		//	because otherwise the OnError tasks would not receive the correct ingestionJobs
-        // dependOnIngestionJobKeysOverallInput,
+		// 2022-03-15: Let's say we have a Task A and on his error we have Task B.
+		//		When Task A fails, it will not generate any output and the Task B,
+		//		configured OnError, will not receive any input.
+		//		For this reason, only in case of a failure (onError), the overall input
+		//		for the Task B has to be the same input of the Task A.
+		//		For this reason I added the next parameter (dependOnIngestionJobKeysOverallInputOnError)
+		//		to be used for the OnError Task
+        dependOnIngestionJobKeysOverallInput,
 
 		referencesOutputIngestionJobKeys,
 		mapLabelAndIngestionJobKey, responseBody);
@@ -2126,7 +2156,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value& taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
-        // vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+        vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
         vector<int64_t>& referencesOutputIngestionJobKeys,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
@@ -2136,7 +2166,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value& onSuccessRoot = taskOrGroupOfTasksRoot[field];
-        
+ 
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
@@ -2256,8 +2286,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    // dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
         else
@@ -2283,8 +2313,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             int localDependOnSuccess = 0;
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    // dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     responseBody);
         }
 

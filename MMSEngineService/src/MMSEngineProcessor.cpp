@@ -263,7 +263,7 @@ MMSEngineProcessor::MMSEngineProcessor(
                     + ", exception: " + e.what()
             );
 
-            throw e;
+            // throw e;
         }
         catch(exception e)
         {
@@ -271,7 +271,7 @@ MMSEngineProcessor::MMSEngineProcessor(
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
             );
 
-            throw e;
+            // throw e;
         }
     }
 }

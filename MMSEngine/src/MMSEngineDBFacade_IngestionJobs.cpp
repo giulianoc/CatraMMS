@@ -80,14 +80,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
             int mysqlRowCount = _ingestionJobsSelectPageSize;
             bool moreRows = true;
-            while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
+			// 2022-03-14: The next 'while' was commented because it causes
+			//		Deadlock. That because we might have the following scenarios:
+			//		- first select inside the while by Processor 1
+			//		- first select inside the while by Processor 2
+			//		- second select inside the while by Processor 1
+			//		- second select inside the while by Processor 2
+			//		Basically the selects inside the while are mixed among the Processors
+			//		and that causes Deadlock
+            // while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
-				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
-					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
-					+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
-					+ ", moreRows: " + to_string(moreRows)
-				);
-
 				/*
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, "
@@ -359,9 +361,19 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
+
+				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
+					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
+					+ ", moreRows: " + to_string(moreRows)
+				);
+
+				if (resultSet->rowsCount() == 0)
+					_getIngestionJobsCurrentIndex = 0;
 			}
-			if (ingestionsToBeManaged.size() < maxIngestionJobs)
-				_getIngestionJobsCurrentIndex = 0;
+			// if (ingestionsToBeManaged.size() < maxIngestionJobs)
+			// 	_getIngestionJobsCurrentIndex = 0;
 
 			pointAfterNotLive = chrono::system_clock::now();
 
@@ -2026,117 +2038,187 @@ void MMSEngineDBFacade::updateIngestionJob (
         string processorMMS
 )
 {
-    string      lastSQLCommand;
+	bool updateToBeTriedAgain = true;
+	int retriesNumber = 0;
+	int maxRetriesNumber = 3;
+	int secondsBetweenRetries = 5;
+	while(updateToBeTriedAgain && retriesNumber < maxRetriesNumber)
+	{
+		retriesNumber++;
 
-    shared_ptr<MySQLConnection> conn = nullptr;
+		string      lastSQLCommand;
 
-    try
-    {
-		/*
-		int milliSecondsToSleepWaitingLock = 500;
+		shared_ptr<MySQLConnection> conn = nullptr;
 
-		PersistenceLock persistenceLock(this,
-			MMSEngineDBFacade::LockType::Ingestion,
-			_maxSecondsToWaitUpdateIngestionJobLock,
-			processorMMS, "UpdateIngestionJob",
-			milliSecondsToSleepWaitingLock, _logger);
-		*/
+		try
+		{
+			/*
+			int milliSecondsToSleepWaitingLock = 500;
 
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
+			PersistenceLock persistenceLock(this,
+				MMSEngineDBFacade::LockType::Ingestion,
+				_maxSecondsToWaitUpdateIngestionJobLock,
+				processorMMS, "UpdateIngestionJob",
+				milliSecondsToSleepWaitingLock, _logger);
+			*/
 
-        updateIngestionJob (conn, ingestionJobKey, newIngestionStatus,
-            errorMessage, processorMMS);
+			conn = _connectionPool->borrow();	
+			_logger->debug(__FILEREF__ + "DB connection borrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			updateIngestionJob (conn, ingestionJobKey, newIngestionStatus,
+				errorMessage, processorMMS);
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
+			updateToBeTriedAgain = false;
+
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
 			conn = nullptr;
-        }
+		}
+		catch(sql::SQLException se)
+		{
+			string exceptionMessage(se.what());
 
-        throw se;
-    }
-    catch(AlreadyLocked e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			if (exceptionMessage.find("Deadlock") != string::npos
+				&& retriesNumber < maxRetriesNumber)
+			{
+				_logger->warn(__FILEREF__ + "SQL exception"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
+				if (conn != nullptr)
+				{
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
 
-        throw e;
-    }
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+				_logger->info(__FILEREF__ + "updateIngestionJob failed, waiting before to try again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retriesNumber: " + to_string(retriesNumber)
+					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
+					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+			}
+			else
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
+				if (conn != nullptr)
+				{
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
 
-        throw e;
-    }    
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+				throw se;
+			}
+		}
+		catch(AlreadyLocked e)
+		{
+			if (retriesNumber < maxRetriesNumber)
+			{
+				_logger->warn(__FILEREF__ + "SQL exception"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", e.what(): " + e.what()
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
+				if (conn != nullptr)
+				{
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
 
-        throw e;
-    }    
+				_logger->info(__FILEREF__ + "updateIngestionJob failed, waiting before to try again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retriesNumber: " + to_string(retriesNumber)
+					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
+					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+			}
+			else
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", e.what(): " + e.what()
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
+
+				if (conn != nullptr)
+				{
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				}
+
+				throw e;
+			}
+		}
+		catch(runtime_error e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", e.what(): " + e.what()
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}    
+		catch(exception e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}    
+	}
 }
 
 void MMSEngineDBFacade::updateIngestionJob (

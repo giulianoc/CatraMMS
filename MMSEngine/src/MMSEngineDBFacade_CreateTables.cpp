@@ -463,6 +463,32 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_ResetPasswordToken ("
+					"token				VARCHAR (64) NOT NULL,"
+					"userKey			BIGINT UNSIGNED NOT NULL,"
+					"creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "constraint MMS_ResetPasswordToken_PK PRIMARY KEY (token),"
+                    "constraint MMS_ResetPasswordToken_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         /*
         try
         {

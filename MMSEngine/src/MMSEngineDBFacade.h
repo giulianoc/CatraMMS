@@ -1249,6 +1249,7 @@ public:
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue);
 
     pair<string,string> getUserDetails(int64_t userKey);
+	pair<int64_t, string> getUserDetailsByEmail (string email);
 
     tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 		checkAPIKey (string apiKey);
@@ -1298,6 +1299,13 @@ public:
         bool emailChanged, string email, 
         bool countryChanged, string country,
 		bool passwordChanged, string newPassword, string oldPassword);
+
+	string createResetPasswordToken(
+		int64_t userKey);
+
+	pair<string, string> resetPassword(
+		string resetPassworkToken,
+		string newPassword);
 
 	void addIngestionJobOutput(
 		int64_t ingestionJobKey,
