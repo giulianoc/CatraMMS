@@ -33,6 +33,13 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 
+#include <aws/core/Aws.h>
+#include <aws/medialive/MediaLiveClient.h>
+#include <aws/medialive/model/StartChannelRequest.h>
+#include <aws/medialive/model/StopChannelRequest.h>
+#include <aws/medialive/model/DescribeChannelRequest.h>
+#include <aws/medialive/model/DescribeChannelResult.h>
+
 extern char** environ;
 
 int main(int argc, char** argv) 
@@ -271,6 +278,11 @@ int main(int argc, char** argv)
 			ffmpegEncoderThreads.push_back(thread(&FFMPEGEncoder::operator(), ffmpegEncoder));
 		}
 
+		Aws::SDKOptions options;
+		{
+			Aws::InitAPI(options);
+		}
+
 		// shutdown should be managed in some way:
 		// - mod_fcgid send just one shutdown, so only one thread will go down
 		// - mod_fastcgi ???
@@ -291,6 +303,10 @@ int main(int argc, char** argv)
 			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
 			ffmpegEncoders[0]->stopMonitorThread();
 			ffmpegEncoders[0]->stopCPUUsageThread();
+		}
+
+		{
+			Aws::ShutdownAPI(options);
 		}
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
@@ -10235,77 +10251,10 @@ void FFMPEGEncoder::liveProxyThread(
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				/*
-				string otherOutputOptions;
-				string audioVolumeChange;
-				Json::Value encodingProfileDetailsRoot = Json::nullValue;
-				string manifestDirectoryPath;
-				string manifestFileName;
-				int segmentDurationInSeconds = -1;
-				int playlistEntriesNumber = -1;
-				bool isVideo = true;
-				string rtmpUrl;
-				string udpUrl;
-
-
-
 				if (outputType == "HLS" || outputType == "DASH")
 				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					manifestFileName = outputRoot.get("manifestFileName", "").asString();
-					segmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
-					playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
-
-					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
-
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else if (outputType == "RTMP_Stream")
-				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
-
-					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else if (outputType == "UDP_Stream")
-				{
-					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
-					udpUrl = outputRoot.get("udpUrl", "").asString();
-
-					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
-					isVideo = encodingProfileContentType == "Video" ? true : false;
-				}
-				else
-				{
-					string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
-						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", outputType: " + outputType;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				tuple<string, string, string, Json::Value, string, string, int, int, bool, string,
-					string> tOutputRoot = make_tuple(outputType, otherOutputOptions,
-						audioVolumeChange, encodingProfileDetailsRoot, manifestDirectoryPath,
-						manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
-						isVideo, rtmpUrl, udpUrl);
-
-				liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
-				*/
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
-						.asString();
+					string manifestDirectoryPath
+						= outputRoot.get("manifestDirectoryPath", "").asString();
 
 					if (FileIO::directoryExisting(manifestDirectoryPath))
 					{
@@ -10491,6 +10440,25 @@ void FFMPEGEncoder::liveProxyThread(
 				}
 			}
 
+			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+				outputIndex++)
+			{
+				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+
+				if (outputType == "RTMP_Stream")
+				{
+					string awsChannelIdToBeManaged
+						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+					if (awsChannelIdToBeManaged != "")
+					{
+						awsStartChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+							awsChannelIdToBeManaged);
+					}
+				}
+			}
+
 			liveProxy->_ffmpeg->liveProxy2(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
@@ -10498,6 +10466,25 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_inputsRoot),
 				liveProxy->_outputsRoot,
 				&(liveProxy->_childPid));
+
+			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+				outputIndex++)
+			{
+				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+				string outputType = outputRoot.get("outputType", "").asString();
+
+				if (outputType == "RTMP_Stream")
+				{
+					string awsChannelIdToBeManaged
+						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+					if (awsChannelIdToBeManaged != "")
+					{
+						awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+							awsChannelIdToBeManaged);
+					}
+				}
+			}
 		}
 
 		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10580,6 +10567,25 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
+		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+			outputIndex++)
+		{
+			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+			string outputType = outputRoot.get("outputType", "").asString();
+
+			if (outputType == "RTMP_Stream")
+			{
+				string awsChannelIdToBeManaged
+					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+				if (awsChannelIdToBeManaged != "")
+				{
+					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+						awsChannelIdToBeManaged);
+				}
+			}
+		}
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10685,6 +10691,25 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLForbidden e)
     {
+		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+			outputIndex++)
+		{
+			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+			string outputType = outputRoot.get("outputType", "").asString();
+
+			if (outputType == "RTMP_Stream")
+			{
+				string awsChannelIdToBeManaged
+					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+				if (awsChannelIdToBeManaged != "")
+				{
+					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+						awsChannelIdToBeManaged);
+				}
+			}
+		}
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10785,6 +10810,25 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
+		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+			outputIndex++)
+		{
+			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+			string outputType = outputRoot.get("outputType", "").asString();
+
+			if (outputType == "RTMP_Stream")
+			{
+				string awsChannelIdToBeManaged
+					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+				if (awsChannelIdToBeManaged != "")
+				{
+					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+						awsChannelIdToBeManaged);
+				}
+			}
+		}
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10885,6 +10929,25 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
+		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+			outputIndex++)
+		{
+			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+			string outputType = outputRoot.get("outputType", "").asString();
+
+			if (outputType == "RTMP_Stream")
+			{
+				string awsChannelIdToBeManaged
+					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+				if (awsChannelIdToBeManaged != "")
+				{
+					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+						awsChannelIdToBeManaged);
+				}
+			}
+		}
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10985,6 +11048,25 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
+		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
+			outputIndex++)
+		{
+			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
+
+			string outputType = outputRoot.get("outputType", "").asString();
+
+			if (outputType == "RTMP_Stream")
+			{
+				string awsChannelIdToBeManaged
+					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
+				if (awsChannelIdToBeManaged != "")
+				{
+					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
+						awsChannelIdToBeManaged);
+				}
+			}
+		}
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13949,195 +14031,185 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	*/
 }
 
-/*
-int FFMPEGEncoder::calculateCapabilitiesBasedOnOtherRunningProcesses(
-	int configuredMaxEncodingsCapability,	// != -1 if we want to calculate maxEncodingsCapability
-	int configuredMaxLiveProxiesCapability,	// != -1 if we want to calculate maxLiveProxiesCapability
-	int configuredMaxLiveRecordingsCapability	// != -1 if we want to calculate maxLiveRecordingsCapability
-)
+void FFMPEGEncoder::awsStartChannel(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string awsChannelIdToBeStarted)
 {
+	Aws::MediaLive::MediaLiveClient mediaLiveClient;
 
-	// proportion are: 1 encoding likes 3 recorders (1 encoding) likes 6 proxies
+	Aws::MediaLive::Model::StartChannelRequest startChannelRequest;
+	startChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-	int oneEncodingEqualsToRecorderNumber = 3;
-	int oneEncodingEqualsToProxyNumber = 6;
-	int oneRecorderEqualsToProxyNumber = 3;
+	_logger->info(__FILEREF__ + "mediaLive.StartChannel"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+	);
 
-	if (configuredMaxEncodingsCapability != -1)
+	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
+
+	auto startChannelOutcome = mediaLiveClient.StartChannel(startChannelRequest);
+	if (!startChannelOutcome.IsSuccess())
 	{
-		int currentLiveProxiesRunning = 0;
+		string errorMessage = __FILEREF__ + "AWS Start Channel failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+			+ ", errorType: " + to_string((long) startChannelOutcome.GetError().GetErrorType())
+			+ ", errorMessage: " + startChannelOutcome.GetError().GetMessage()
+		;
+		_logger->error(errorMessage);
+
+		// liveproxy is not stopped in case of error
+		// throw runtime_error(errorMessage);
+	}
+
+	bool commandFinished = false;
+	int maxCommandDuration = 120;
+	Aws::MediaLive::Model::ChannelState lastChannelState
+		= Aws::MediaLive::Model::ChannelState::IDLE;
+	int sleepInSecondsBetweenChecks = 15;
+	while(!commandFinished
+		&& chrono::system_clock::now() - commandTime <
+		chrono::seconds(maxCommandDuration))
+	{
+		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
+		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
+
+		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		);
+
+		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(
+			describeChannelRequest);
+		if (!describeChannelOutcome.IsSuccess())
 		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
+			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
+				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
+			;
+			_logger->error(errorMessage);
 
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
-			{
-				if (liveProxy->_running)
-					currentLiveProxiesRunning++;
-			}
-			#else	// __MAP__
-			currentLiveProxiesRunning = _liveProxiesCapability->size();
-			#endif
+			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
-
-		int currentLiveRecorderRunning = 0;
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-			{
-				if (liveRecording->_running)
-					currentLiveRecorderRunning++;
-			}
-			#else	// __MAP__
-			currentLiveRecorderRunning = _liveRecordingsCapability->size();
-			#endif
-		}
-
-		int encodingsToBeSubtractedBecauseOfProxies = currentLiveProxiesRunning / oneEncodingEqualsToProxyNumber;
-		int encodingsToBeSubtractedBecauseOfRecorders = currentLiveRecorderRunning / oneEncodingEqualsToRecorderNumber;
-
-		int newMaxEncodingsCapability;
-		if (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders
-				> configuredMaxEncodingsCapability)
-			newMaxEncodingsCapability = 0;
 		else
-			newMaxEncodingsCapability = configuredMaxEncodingsCapability
-				- (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders);
-
-		if (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders > 0)
-			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
-				+ ", configuredMaxEncodingsCapability: " + to_string(configuredMaxEncodingsCapability)
-				+ ", currentLiveProxiesRunning: " + to_string(currentLiveProxiesRunning)
-				+ ", encodingsToBeSubtractedBecauseOfProxies: " + to_string(encodingsToBeSubtractedBecauseOfProxies)
-				+ ", currentLiveRecorderRunning: " + to_string(currentLiveRecorderRunning)
-				+ ", encodingsToBeSubtractedBecauseOfRecorders: " + to_string(encodingsToBeSubtractedBecauseOfRecorders)
-				+ ", newMaxEncodingsCapability: " + to_string(newMaxEncodingsCapability)
-			);
-
-		return newMaxEncodingsCapability;
-	}
-	else if (configuredMaxLiveProxiesCapability != -1)
-	{
-		int currentEncodingsRunning = 0;
 		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			#ifdef __VECTOR__
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
-			{
-				if (encoding->_running)
-					currentEncodingsRunning++;
-			}
-			#else	// __MAP__
-			currentEncodingsRunning = _encodingsCapability->size();
-			#endif
+			Aws::MediaLive::Model::DescribeChannelResult describeChannelResult
+				= describeChannelOutcome.GetResult();
+			lastChannelState = describeChannelResult.GetState();
+			if (lastChannelState ==  Aws::MediaLive::Model::ChannelState::RUNNING)
+				commandFinished = true;
+			else
+				this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
-
-		int currentLiveRecorderRunning = 0;
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-			{
-				if (liveRecording->_running)
-					currentLiveRecorderRunning++;
-			}
-			#else	// __MAP__
-			currentLiveRecorderRunning = _liveRecordingsCapability->size();
-			#endif
-		}
-
-		int proxiesToBeSubtractedBecauseOfEncodings = currentEncodingsRunning * oneEncodingEqualsToProxyNumber;
-		int proxiesToBeSubtractedBecauseOfRecorders = currentLiveRecorderRunning * oneRecorderEqualsToProxyNumber;
-
-		int newMaxLiveProxiesCapability;
-		if (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders
-				> configuredMaxLiveProxiesCapability)
-			newMaxLiveProxiesCapability = 0;
-		else
-			newMaxLiveProxiesCapability = configuredMaxLiveProxiesCapability
-				- (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders);
-
-		if (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders > 0)
-			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
-				+ ", configuredMaxLiveProxiesCapability: " + to_string(configuredMaxLiveProxiesCapability)
-				+ ", currentEncodingsRunning: " + to_string(currentEncodingsRunning)
-				+ ", proxiesToBeSubtractedBecauseOfEncodings: " + to_string(proxiesToBeSubtractedBecauseOfEncodings)
-				+ ", currentLiveRecorderRunning: " + to_string(currentLiveRecorderRunning)
-				+ ", proxiesToBeSubtractedBecauseOfRecorders: " + to_string(proxiesToBeSubtractedBecauseOfRecorders)
-				+ ", newMaxLiveProxiesCapability: " + to_string(newMaxLiveProxiesCapability)
-			);
-
-		return newMaxLiveProxiesCapability;
 	}
-	else if (configuredMaxLiveRecordingsCapability != -1)
-	{
-		int currentEncodingsRunning = 0;
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
-			{
-				if (encoding->_running)
-					currentEncodingsRunning++;
-			}
-			#else	// __MAP__
-			currentEncodingsRunning = _encodingsCapability->size();
-			#endif
-		}
-
-		int currentLiveProxiesRunning = 0;
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
-			{
-				if (liveProxy->_running)
-					currentLiveProxiesRunning++;
-			}
-			#else	// __MAP__
-			currentLiveProxiesRunning = _liveProxiesCapability->size();
-			#endif
-		}
-
-		int newMaxLiveRecordingsCapability;
-		int recordersToBeSubtractedBecauseOfEncodings = currentEncodingsRunning * oneEncodingEqualsToRecorderNumber;
-		int recordersToBeSubtractedBecauseOfProxies = currentLiveProxiesRunning / oneRecorderEqualsToProxyNumber;
-
-		if (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies
-				> configuredMaxLiveRecordingsCapability)
-			newMaxLiveRecordingsCapability = 0;
-		else
-			newMaxLiveRecordingsCapability = configuredMaxLiveRecordingsCapability
-				- (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies);
-
-		if (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies > 0)
-			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
-				+ ", configuredMaxLiveRecordingsCapability: " + to_string(configuredMaxLiveRecordingsCapability)
-				+ ", currentEncodingsRunning: " + to_string(currentEncodingsRunning)
-				+ ", recordersToBeSubtractedBecauseOfEncodings: " + to_string(recordersToBeSubtractedBecauseOfEncodings)
-				+ ", currentLiveProxiesRunning: " + to_string(currentLiveProxiesRunning)
-				+ ", recordersToBeSubtractedBecauseOfProxies: " + to_string(recordersToBeSubtractedBecauseOfProxies)
-				+ ", newMaxLiveRecordingsCapability: " + to_string(newMaxLiveRecordingsCapability)
-			);
-
-		return newMaxLiveRecordingsCapability;
-	}
-	else
-	{
-		_logger->error(__FILEREF__ + "getMaxXXXXCapability. Wrong call to calculateCapabilitiesBasedOnOtherRunningProcesses"
-				+ ", configuredMaxEncodingsCapability: " + to_string(configuredMaxEncodingsCapability)
-				+ ", configuredMaxLiveProxiesCapability: " + to_string(configuredMaxLiveProxiesCapability)
-				+ ", configuredMaxLiveRecordingsCapability: " + to_string(configuredMaxLiveRecordingsCapability)
-			);
-
-		return 0;
-	}
+	_logger->info(__FILEREF__ + "mediaLive.StartChannel finished"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		+ ", lastChannelState: " + to_string((long) lastChannelState)
+		+ ", maxCommandDuration: " + to_string(maxCommandDuration)
+		+ ", elapsed (secs): " + to_string(
+			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+			- commandTime).count())
+	);
 }
-*/
+
+void FFMPEGEncoder::awsStopChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
+	string awsChannelIdToBeStarted)
+{
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
+	Aws::MediaLive::MediaLiveClient mediaLiveClient;
+
+	Aws::MediaLive::Model::StopChannelRequest stopChannelRequest;
+	stopChannelRequest.SetChannelId(awsChannelIdToBeStarted);
+
+	_logger->info(__FILEREF__ + "mediaLive.StopChannel"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+	);
+
+	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
+
+	auto stopChannelOutcome = mediaLiveClient.StopChannel(stopChannelRequest);
+	if (!stopChannelOutcome.IsSuccess())
+	{
+		string errorMessage = __FILEREF__ + "AWS Stop Channel failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+			+ ", errorType: " + to_string((long) stopChannelOutcome.GetError().GetErrorType())
+			+ ", errorMessage: " + stopChannelOutcome.GetError().GetMessage()
+		;
+		_logger->error(errorMessage);
+
+		// liveproxy is not stopped in case of error
+		// throw runtime_error(errorMessage);
+	}
+
+	bool commandFinished = false;
+	int maxCommandDuration = 120;
+	Aws::MediaLive::Model::ChannelState lastChannelState
+		= Aws::MediaLive::Model::ChannelState::RUNNING;
+	int sleepInSecondsBetweenChecks = 15;
+	while(!commandFinished
+		&& chrono::system_clock::now() - commandTime <
+		chrono::seconds(maxCommandDuration))
+	{
+		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
+		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
+
+		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		);
+
+		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(
+			describeChannelRequest);
+		if (!describeChannelOutcome.IsSuccess())
+		{
+			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
+				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
+			;
+			_logger->error(errorMessage);
+
+			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
+		}
+		else
+		{
+			Aws::MediaLive::Model::DescribeChannelResult describeChannelResult
+				= describeChannelOutcome.GetResult();
+			lastChannelState = describeChannelResult.GetState();
+			if (lastChannelState ==  Aws::MediaLive::Model::ChannelState::IDLE)
+				commandFinished = true;
+			else
+				this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
+		}
+	}
+
+	_logger->info(__FILEREF__ + "mediaLive.StopChannel finished"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		+ ", lastChannelState: " + to_string((long) lastChannelState)
+		+ ", maxCommandDuration: " + to_string(maxCommandDuration)
+		+ ", elapsed (secs): " + to_string(
+			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+			- commandTime).count())
+	);
+}
 

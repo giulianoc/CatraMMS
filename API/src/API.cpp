@@ -1360,7 +1360,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "updateUser")
     {
-        updateUser(request, userKey, requestBody);
+        updateUser(request, userKey, requestBody, admin);
     }
     else if (method == "createTokenToResetPassword")
     {

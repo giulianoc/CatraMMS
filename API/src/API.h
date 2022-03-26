@@ -140,7 +140,8 @@ private:
     void updateUser(
         FCGX_Request& request,
         int64_t userKey,
-        string requestBody);
+        string requestBody,
+		bool admin);
 
 	void createTokenToResetPassword(
 		FCGX_Request& request,

@@ -85,6 +85,12 @@
 				//		to play the stream sent through the rtmp 
 				"PlayUrl": "...",
 
+				// optional only in case of RTMP_Stream. This is the AWS channel id
+				//		and it has to be initialized ONLY in case the AWS channel
+				//		has to be started just before the live proxy starts
+				//		and has to be stopped as soon as the live proxy ends
+				"awsChannelIdToBeManaged": "",
+
 				// optional: It is possible to use this field to specify any other output options.
 				// Examples:
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output

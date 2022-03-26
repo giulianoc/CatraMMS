@@ -5373,11 +5373,13 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
 }
 
 Json::Value MMSEngineDBFacade::updateUser (
+		bool admin,
 		bool ldapEnabled,
         int64_t userKey,
         bool nameChanged, string name,
         bool emailChanged, string email, 
         bool countryChanged, string country,
+        bool expirationDateChanged, string expirationDate,
 		bool passwordChanged, string newPassword, string oldPassword)
 {
     Json::Value     loginDetailsRoot;
@@ -5479,6 +5481,13 @@ Json::Value MMSEngineDBFacade::updateUser (
 				setSQL += ("country = ?");
 				oneParameterPresent = true;
 			}
+			if (admin && expirationDateChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("expirationDate = ?");
+				oneParameterPresent = true;
+			}
 
 			lastSQLCommand = 
 				string("update MMS_User ") + setSQL + " "
@@ -5494,6 +5503,8 @@ Json::Value MMSEngineDBFacade::updateUser (
 				preparedStatement->setString(queryParameterIndex++, email);
 			if (countryChanged)
 				preparedStatement->setString(queryParameterIndex++, country);
+			if (admin && expirationDateChanged)
+				preparedStatement->setString(queryParameterIndex++, expirationDate);
 			preparedStatement->setInt64(queryParameterIndex++, userKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5504,6 +5515,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 				+ ", name: " + name
 				+ ", email: " + email
 				+ ", country: " + country
+				+ ", expirationDate: " + expirationDate
 				+ ", userKey: " + to_string(userKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(

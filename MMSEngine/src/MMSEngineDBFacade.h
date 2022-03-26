@@ -1293,11 +1293,13 @@ public:
 		int64_t workspaceKeyToBeSetAsDefault);
 
     Json::Value updateUser (
+		bool admin,
 		bool ldapEnabled,
         int64_t userKey,
         bool nameChanged, string name, 
         bool emailChanged, string email, 
         bool countryChanged, string country,
+		bool expirationDateChanged, string expirationDate,
 		bool passwordChanged, string newPassword, string oldPassword);
 
 	string createResetPasswordToken(

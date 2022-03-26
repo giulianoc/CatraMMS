@@ -2169,7 +2169,8 @@ void API::login(
 void API::updateUser(
         FCGX_Request& request,
         int64_t userKey,
-        string requestBody)
+        string requestBody,
+		bool admin)
 {
     string api = "updateUser";
 
@@ -2185,6 +2186,8 @@ void API::updateUser(
 		bool emailChanged;
         string country;
 		bool countryChanged;
+        string expirationDate;
+		bool expirationDateChanged;
 		bool passwordChanged;
         string newPassword;
         string oldPassword;
@@ -2229,6 +2232,7 @@ void API::updateUser(
 		nameChanged = false;
 		emailChanged = false;
 		countryChanged = false;
+		expirationDateChanged = false;
 		passwordChanged = false;
 		if(!_ldapEnabled)
         {
@@ -2251,6 +2255,16 @@ void API::updateUser(
 			{
 				country = metadataRoot.get(field, "").asString();
 				countryChanged = true;
+			}
+
+			if (admin)
+			{
+				field = "expirationDate";
+				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+				{
+					expirationDate = metadataRoot.get(field, "").asString();
+					expirationDateChanged = true;
+				}
 			}
 
 			if (JSONUtils::isMetadataPresent(metadataRoot, "newPassword")
@@ -2280,11 +2294,13 @@ void API::updateUser(
             );
 
             Json::Value loginDetailsRoot = _mmsEngineDBFacade->updateUser(
+				admin,
 				_ldapEnabled,
 				userKey,
 				nameChanged, name,
 				emailChanged, email,
 				countryChanged, country,
+				expirationDateChanged, expirationDate,
 				passwordChanged, newPassword, oldPassword);
 
             _logger->info(__FILEREF__ + "User updated"

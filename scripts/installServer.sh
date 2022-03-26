@@ -541,6 +541,26 @@ install-mms-packages()
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+		packageName=aws-sdk-cpp
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+
+		echo ""
+		echo -n "Type the AWS Access Key Id: "
+		read awsAccessKeyId
+		echo ""
+		echo -n "Type the AWS Secret Access Key: "
+		read awsSecretAccessKey
+		mkdir -p /home/mms/.aws
+		echo "[default]" > /home/mms/.aws/credentials
+		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
+		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
+	fi
+
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		if [ $externalEncoder -eq 1 ]; then
 			packageName=externalEncoderMmsConf
 		else
