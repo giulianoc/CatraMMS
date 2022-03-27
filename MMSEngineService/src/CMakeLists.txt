@@ -48,6 +48,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
@@ -66,6 +67,7 @@ else()
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
 # ImageMagick, inside the deploy dir, is a link to the real version: ImageMagick -> ImageMagick-7.0.10
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
@@ -137,5 +139,7 @@ target_link_libraries (mmsEngineService avformat)
 target_link_libraries (mmsEngineService avutil)
 target_link_libraries (mmsEngineService swscale)
 target_link_libraries (mmsEngineService swresample)
+target_link_libraries (mmsEngineService aws-cpp-sdk-core)
+target_link_libraries (mmsEngineService aws-cpp-sdk-medialive)
 
 install (TARGETS mmsEngineService DESTINATION bin)

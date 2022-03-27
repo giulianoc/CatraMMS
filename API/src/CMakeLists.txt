@@ -56,7 +56,6 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
@@ -72,8 +71,8 @@ if (APPLE)
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()
@@ -222,8 +221,6 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 	target_link_libraries (ffmpegEncoder.fcgi avutil)
 	target_link_libraries (ffmpegEncoder.fcgi swscale)
 	target_link_libraries (ffmpegEncoder.fcgi swresample)
-	target_link_libraries (ffmpegEncoder.fcgi aws-cpp-sdk-core)
-	target_link_libraries (ffmpegEncoder.fcgi aws-cpp-sdk-medialive)
     list(APPEND TARGETS ffmpegEncoder.fcgi)
 
 

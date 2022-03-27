@@ -23,6 +23,13 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
+#include <aws/core/Aws.h>
+#include <aws/medialive/MediaLiveClient.h>
+#include <aws/medialive/model/StartChannelRequest.h>
+#include <aws/medialive/model/StopChannelRequest.h>
+#include <aws/medialive/model/DescribeChannelRequest.h>
+#include <aws/medialive/model/DescribeChannelResult.h>
+
 Json::Value loadConfigurationFile(string configurationPathName);
 
 void signalHandler(int signal)
@@ -345,8 +352,13 @@ int main (int iArgc, char *pArgv [])
     checkRefreshPartitionFreeSizeTimes->start();
     scheduler.activeTimes(checkRefreshPartitionFreeSizeTimes);
 
+	Aws::SDKOptions options;
+	Aws::InitAPI(options);
+
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager");
     activeEncodingsManagerThread.join();
+
+	Aws::ShutdownAPI(options);
 
     {
         for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessorsThread.size(); mmsProcessorIndex++)

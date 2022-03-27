@@ -34,6 +34,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")

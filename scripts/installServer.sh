@@ -540,14 +540,15 @@ install-mms-packages()
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		packageName=aws-sdk-cpp
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
+	packageName=aws-sdk-cpp
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+
+	if [ "$moduleName" == "externalEncoder" ]; then
 		echo ""
 		echo -n "Type the AWS Access Key Id: "
 		read awsAccessKeyId
@@ -558,7 +559,10 @@ install-mms-packages()
 		echo "[default]" > /home/mms/.aws/credentials
 		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
 		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
+	else
+		ln -s /var/catramms/storage/commonConfiguration/.aws .
 	fi
+
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		if [ $externalEncoder -eq 1 ]; then

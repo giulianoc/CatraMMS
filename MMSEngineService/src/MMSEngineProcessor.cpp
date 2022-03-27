@@ -12665,6 +12665,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "playUrl";
 			localOutputRoot[field] = string("");
 
+			field = "awsChannelIdToBeManaged";
+			localOutputRoot[field] = string("");
+
 			localOutputsRoot.append(localOutputRoot);
 		}
 
@@ -13583,6 +13586,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string manifestFileName;
 		string rtmpUrl;
 		string playUrl;
+		string awsChannelIdToBeManaged;
 		string udpUrl;
 
 
@@ -13653,6 +13657,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 			field = "PlayUrl";
 			playUrl = outputRoot.get(field, "").asString();
+
+			field = "awsChannelIdToBeManaged";
+			awsChannelIdToBeManaged = outputRoot.get(field, "").asString();
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13789,6 +13796,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "playUrl";
 		localOutputRoot[field] = playUrl;
+
+		field = "awsChannelIdToBeManaged";
+		localOutputRoot[field] = awsChannelIdToBeManaged;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;

@@ -510,12 +510,6 @@ private:
 		int64_t satelliteSymbolRate,
 		string satelliteModulation
 	);
-
-	void awsStartChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
-		string awsChannelIdToBeStarted);
-
-	void awsStopChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
-		string awsChannelIdToBeStarted);
 };
 
 #endif

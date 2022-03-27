@@ -33,13 +33,6 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-
 extern char** environ;
 
 int main(int argc, char** argv) 
@@ -278,11 +271,6 @@ int main(int argc, char** argv)
 			ffmpegEncoderThreads.push_back(thread(&FFMPEGEncoder::operator(), ffmpegEncoder));
 		}
 
-		Aws::SDKOptions options;
-		{
-			Aws::InitAPI(options);
-		}
-
 		// shutdown should be managed in some way:
 		// - mod_fcgid send just one shutdown, so only one thread will go down
 		// - mod_fastcgi ???
@@ -303,10 +291,6 @@ int main(int argc, char** argv)
 			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
 			ffmpegEncoders[0]->stopMonitorThread();
 			ffmpegEncoders[0]->stopCPUUsageThread();
-		}
-
-		{
-			Aws::ShutdownAPI(options);
 		}
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
@@ -10440,25 +10424,6 @@ void FFMPEGEncoder::liveProxyThread(
 				}
 			}
 
-			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-				outputIndex++)
-			{
-				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-				string outputType = outputRoot.get("outputType", "").asString();
-
-				if (outputType == "RTMP_Stream")
-				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
-					{
-						awsStartChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-							awsChannelIdToBeManaged);
-					}
-				}
-			}
-
 			liveProxy->_ffmpeg->liveProxy2(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
@@ -10466,25 +10431,6 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_inputsRoot),
 				liveProxy->_outputsRoot,
 				&(liveProxy->_childPid));
-
-			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-				outputIndex++)
-			{
-				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-				string outputType = outputRoot.get("outputType", "").asString();
-
-				if (outputType == "RTMP_Stream")
-				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
-					{
-						awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-							awsChannelIdToBeManaged);
-					}
-				}
-			}
 		}
 
 		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10567,25 +10513,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-			outputIndex++)
-		{
-			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-			string outputType = outputRoot.get("outputType", "").asString();
-
-			if (outputType == "RTMP_Stream")
-			{
-				string awsChannelIdToBeManaged
-					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-				if (awsChannelIdToBeManaged != "")
-				{
-					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-						awsChannelIdToBeManaged);
-				}
-			}
-		}
-
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10691,25 +10618,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLForbidden e)
     {
-		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-			outputIndex++)
-		{
-			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-			string outputType = outputRoot.get("outputType", "").asString();
-
-			if (outputType == "RTMP_Stream")
-			{
-				string awsChannelIdToBeManaged
-					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-				if (awsChannelIdToBeManaged != "")
-				{
-					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-						awsChannelIdToBeManaged);
-				}
-			}
-		}
-
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10810,25 +10718,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
-		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-			outputIndex++)
-		{
-			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-			string outputType = outputRoot.get("outputType", "").asString();
-
-			if (outputType == "RTMP_Stream")
-			{
-				string awsChannelIdToBeManaged
-					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-				if (awsChannelIdToBeManaged != "")
-				{
-					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-						awsChannelIdToBeManaged);
-				}
-			}
-		}
-
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -10929,25 +10818,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
-		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-			outputIndex++)
-		{
-			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-			string outputType = outputRoot.get("outputType", "").asString();
-
-			if (outputType == "RTMP_Stream")
-			{
-				string awsChannelIdToBeManaged
-					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-				if (awsChannelIdToBeManaged != "")
-				{
-					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-						awsChannelIdToBeManaged);
-				}
-			}
-		}
-
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -11048,25 +10918,6 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
-		for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size();
-			outputIndex++)
-		{
-			Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-			string outputType = outputRoot.get("outputType", "").asString();
-
-			if (outputType == "RTMP_Stream")
-			{
-				string awsChannelIdToBeManaged
-					= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-				if (awsChannelIdToBeManaged != "")
-				{
-					awsStopChannel(liveProxy->_ingestionJobKey, encodingJobKey,
-						awsChannelIdToBeManaged);
-				}
-			}
-		}
-
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -14029,187 +13880,5 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 
 	return maxLiveRecordingsCapability;
 	*/
-}
-
-void FFMPEGEncoder::awsStartChannel(
-	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
-	string awsChannelIdToBeStarted)
-{
-	Aws::MediaLive::MediaLiveClient mediaLiveClient;
-
-	Aws::MediaLive::Model::StartChannelRequest startChannelRequest;
-	startChannelRequest.SetChannelId(awsChannelIdToBeStarted);
-
-	_logger->info(__FILEREF__ + "mediaLive.StartChannel"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-	);
-
-	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
-
-	auto startChannelOutcome = mediaLiveClient.StartChannel(startChannelRequest);
-	if (!startChannelOutcome.IsSuccess())
-	{
-		string errorMessage = __FILEREF__ + "AWS Start Channel failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-			+ ", errorType: " + to_string((long) startChannelOutcome.GetError().GetErrorType())
-			+ ", errorMessage: " + startChannelOutcome.GetError().GetMessage()
-		;
-		_logger->error(errorMessage);
-
-		// liveproxy is not stopped in case of error
-		// throw runtime_error(errorMessage);
-	}
-
-	bool commandFinished = false;
-	int maxCommandDuration = 120;
-	Aws::MediaLive::Model::ChannelState lastChannelState
-		= Aws::MediaLive::Model::ChannelState::IDLE;
-	int sleepInSecondsBetweenChecks = 15;
-	while(!commandFinished
-		&& chrono::system_clock::now() - commandTime <
-		chrono::seconds(maxCommandDuration))
-	{
-		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
-		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
-
-		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-		);
-
-		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(
-			describeChannelRequest);
-		if (!describeChannelOutcome.IsSuccess())
-		{
-			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
-				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
-			;
-			_logger->error(errorMessage);
-
-			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
-		}
-		else
-		{
-			Aws::MediaLive::Model::DescribeChannelResult describeChannelResult
-				= describeChannelOutcome.GetResult();
-			lastChannelState = describeChannelResult.GetState();
-			if (lastChannelState ==  Aws::MediaLive::Model::ChannelState::RUNNING)
-				commandFinished = true;
-			else
-				this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
-		}
-	}
-
-	_logger->info(__FILEREF__ + "mediaLive.StartChannel finished"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-		+ ", lastChannelState: " + to_string((long) lastChannelState)
-		+ ", maxCommandDuration: " + to_string(maxCommandDuration)
-		+ ", elapsed (secs): " + to_string(
-			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-			- commandTime).count())
-	);
-}
-
-void FFMPEGEncoder::awsStopChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
-	string awsChannelIdToBeStarted)
-{
-	chrono::system_clock::time_point start = chrono::system_clock::now();
-
-	Aws::MediaLive::MediaLiveClient mediaLiveClient;
-
-	Aws::MediaLive::Model::StopChannelRequest stopChannelRequest;
-	stopChannelRequest.SetChannelId(awsChannelIdToBeStarted);
-
-	_logger->info(__FILEREF__ + "mediaLive.StopChannel"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-	);
-
-	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
-
-	auto stopChannelOutcome = mediaLiveClient.StopChannel(stopChannelRequest);
-	if (!stopChannelOutcome.IsSuccess())
-	{
-		string errorMessage = __FILEREF__ + "AWS Stop Channel failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-			+ ", errorType: " + to_string((long) stopChannelOutcome.GetError().GetErrorType())
-			+ ", errorMessage: " + stopChannelOutcome.GetError().GetMessage()
-		;
-		_logger->error(errorMessage);
-
-		// liveproxy is not stopped in case of error
-		// throw runtime_error(errorMessage);
-	}
-
-	bool commandFinished = false;
-	int maxCommandDuration = 120;
-	Aws::MediaLive::Model::ChannelState lastChannelState
-		= Aws::MediaLive::Model::ChannelState::RUNNING;
-	int sleepInSecondsBetweenChecks = 15;
-	while(!commandFinished
-		&& chrono::system_clock::now() - commandTime <
-		chrono::seconds(maxCommandDuration))
-	{
-		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
-		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
-
-		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-		);
-
-		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(
-			describeChannelRequest);
-		if (!describeChannelOutcome.IsSuccess())
-		{
-			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
-				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
-			;
-			_logger->error(errorMessage);
-
-			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
-		}
-		else
-		{
-			Aws::MediaLive::Model::DescribeChannelResult describeChannelResult
-				= describeChannelOutcome.GetResult();
-			lastChannelState = describeChannelResult.GetState();
-			if (lastChannelState ==  Aws::MediaLive::Model::ChannelState::IDLE)
-				commandFinished = true;
-			else
-				this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
-		}
-	}
-
-	_logger->info(__FILEREF__ + "mediaLive.StopChannel finished"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
-		+ ", lastChannelState: " + to_string((long) lastChannelState)
-		+ ", maxCommandDuration: " + to_string(maxCommandDuration)
-		+ ", elapsed (secs): " + to_string(
-			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-			- commandTime).count())
-	);
 }
 

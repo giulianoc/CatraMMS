@@ -320,6 +320,11 @@ private:
         Json::Value parametersRoot);
 
 	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
+	void awsStartChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
+		string awsChannelIdToBeStarted);
+
+	void awsStopChannel(int64_t ingestionJobKey, int64_t encodingJobKey,
+		string awsChannelIdToBeStarted);
 };
 
 #endif

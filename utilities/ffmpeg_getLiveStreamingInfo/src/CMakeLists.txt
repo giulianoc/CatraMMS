@@ -48,6 +48,7 @@ else()
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
