@@ -14271,6 +14271,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				_maxEncoderNotReachableFailures))
             // while(!encodingFinished)
             {
+				_logger->info(__FILEREF__ + "sleep_for"
+					+ ", _ingestionJobKey: "
+						+ to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _intervalInSecondsToCheckEncodingFinished: "
+						+ to_string(_intervalInSecondsToCheckEncodingFinished)
+				);
 				this_thread::sleep_for(chrono::seconds(
 					_intervalInSecondsToCheckEncodingFinished));
 
@@ -14390,6 +14397,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						chrono::system_clock::time_point now;
 						do
 						{
+							_logger->info(__FILEREF__ + "sleep_for"
+								+ ", _ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _intervalInSecondsToCheckEncodingFinished: "
+									+ to_string(_intervalInSecondsToCheckEncodingFinished)
+							);
 							// 2021-02-12: moved sleep here because, in this case, if the task was killed
 							// during the sleep, it will check that.
 							// Before the sleep was after the check, so when the sleep is finished,
@@ -14580,11 +14594,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						{
 							try
 							{
-								_logger->info(__FILEREF__ + "updateEncodingPid"
+								_logger->info(__FILEREF__ + "encoderPid check, updateEncodingPid"
 									+ ", ingestionJobKey: "
 										+ to_string(_encodingItem->_ingestionJobKey)
 									+ ", encodingJobKey: "
 										+ to_string(_encodingItem->_encodingJobKey)
+									+ ", lastEncodingPid: " + to_string(lastEncodingPid)
 									+ ", encodingPid: " + to_string(encodingPid)
 								);
 								_mmsEngineDBFacade->updateEncodingPid (
@@ -14613,6 +14628,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 									+ ", _encodingPid: " + to_string(encodingPid)
 								);
 							}
+						}
+						else
+						{
+							_logger->info(__FILEREF__ + "encoderPid check, not changed"
+								+ ", ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey)
+								+ ", encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
 						}
 					}
                 }

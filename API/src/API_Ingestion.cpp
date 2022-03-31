@@ -4717,33 +4717,57 @@ void API::changeLiveProxyPlaylist(
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
-						field = "physicalPathKey";
-						int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(
-							broadcastDefaultPlaylistItemRoot, field, -1);
+						vector<pair<int64_t, string>> sources;
 
 						MMSEngineDBFacade::ContentType vodContentType;
-						string sourcePhysicalPathName;
-						{
-							tuple<string, int, string, string, int64_t, string>
-								physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-								broadcastDefaultPhysicalPathKey);
-							tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
-								= physicalPathDetails;
 
-							bool warningIfMissing = false;
-							tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
-								string, int64_t, string, string> mediaItemKeyDetails =
-								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-									workspace->_workspaceKey, broadcastDefaultPhysicalPathKey,
-									warningIfMissing);
-							tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore,
-								ignore) = mediaItemKeyDetails;
+						field = "physicalPathKeys";
+						if (JSONUtils::isMetadataPresent(
+							broadcastDefaultPlaylistItemRoot, field))
+						{
+							Json::Value physicalPathKeysRoot
+								= broadcastDefaultPlaylistItemRoot[field];
+
+							for (int physicalPathKeyIndex = 0;
+								physicalPathKeyIndex < physicalPathKeysRoot.size();
+								physicalPathKeyIndex++)
+							{
+								int64_t broadcastDefaultPhysicalPathKey
+									= JSONUtils::asInt64(
+									physicalPathKeysRoot[physicalPathKeyIndex],
+									"", -1);
+
+								string sourcePhysicalPathName;
+								{
+									tuple<string, int, string, string, int64_t, string>
+										physicalPathDetails =
+										_mmsStorage->getPhysicalPathDetails(
+										broadcastDefaultPhysicalPathKey);
+									tie(sourcePhysicalPathName, ignore, ignore, ignore,
+										ignore, ignore) = physicalPathDetails;
+
+									bool warningIfMissing = false;
+									tuple<int64_t, MMSEngineDBFacade::ContentType, string,
+										string, string, int64_t, string, string>
+										mediaItemKeyDetails =
+										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+											workspace->_workspaceKey,
+											broadcastDefaultPhysicalPathKey,
+											warningIfMissing);
+									tie(ignore, vodContentType, ignore, ignore, ignore,
+										ignore, ignore, ignore) = mediaItemKeyDetails;
+								}
+
+								sources.push_back(
+									make_pair(broadcastDefaultPhysicalPathKey,
+									sourcePhysicalPathName));
+							}
 						}
 
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
-						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
-							vodContentType, sourcePhysicalPathName,
-							broadcastDefaultPhysicalPathKey);
+						broadcastDefaultVodInputRoot
+							= _mmsEngineDBFacade->getVodInputRoot(
+							vodContentType, sources);
 					}
 					else if (broadcastDefaultMediaType == "Countdown")
 					{

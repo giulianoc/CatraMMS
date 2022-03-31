@@ -3661,7 +3661,8 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
     }    
 }
 
-tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
+tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
+	string, string>
 	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
 	int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing)
 {
@@ -3669,8 +3670,8 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
-		mediaItemDetails;
+    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
+		string, string> mediaItemDetails;
 
     try
     {
@@ -3681,12 +3682,15 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, "
-				"p.fileName, p.relativePath, "
-                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
+				"mi.ingestionJobKey, p.fileName, p.relativePath, "
+                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), "
+					"'%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
-                "where mi.workspaceKey = ? and mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                "where mi.workspaceKey = ? and mi.mediaItemKey = p.mediaItemKey "
+				"and p.physicalPathKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
@@ -3698,13 +3702,15 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+				+ ", elapsed (millisecs): @"
+					+ to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
             {
                 int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
-                MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                MMSEngineDBFacade::ContentType contentType
+					= MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
 
                 string userData;
                 if (!resultSet->isNull("userData"))
@@ -3723,8 +3729,8 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-                mediaItemDetails = make_tuple(mediaItemKey, contentType, title, userData, ingestionDate,
-						ingestionJobKey, fileName, relativePath);                
+                mediaItemDetails = make_tuple(mediaItemKey, contentType, title,
+					userData, ingestionDate, ingestionJobKey, fileName, relativePath);
             }
             else
             {
@@ -4240,7 +4246,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 }
 
 int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
-	int64_t mediaItemKey, int64_t physicalPathKey)
+	// mediaItemKey or physicalPathKey has to be initialized, the other has to be -1
+	int64_t mediaItemKey,
+	int64_t physicalPathKey
+)
 {
     string      lastSQLCommand;
         
@@ -4326,7 +4335,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 				if (resultSet->isNull("durationInMilliSeconds"))
 				{
 					string errorMessage = __FILEREF__ + "duration is not found"
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", physicalPathKey: " + to_string(physicalPathKey)
 						+ ", lastSQLCommand: " + lastSQLCommand
 					;
 					_logger->error(errorMessage);
@@ -4338,8 +4347,8 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
             }
             else
             {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                string errorMessage = __FILEREF__ + "physicalPathKey is not found"
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);

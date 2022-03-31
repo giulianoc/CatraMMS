@@ -3032,6 +3032,7 @@ pair<string, string> API::createDeliveryAuthorization(
 		tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
 
 		if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
+			&& ingestionType != MMSEngineDBFacade::IngestionType::VODProxy
 			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
 			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder
 			&& ingestionType != MMSEngineDBFacade::IngestionType::Countdown

@@ -378,6 +378,7 @@ public:
 
 		pid_t* pChildPid);
 
+	/*
 	void vodProxy(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
@@ -412,6 +413,7 @@ public:
 		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
 
 		pid_t* pChildPid);
+		*/
 
 /*
 	void awaitingTheBegining(

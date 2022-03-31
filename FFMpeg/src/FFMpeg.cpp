@@ -11359,7 +11359,8 @@ pair<long, string> FFMpeg::liveProxyInput(
 				int currentVideoWidth = -1;
 				string selectedVideoStreamId;
 				string selectedAudioStreamId;
-				for(tuple<int, string, string, string, string, int, int> videoTrack: videoTracks)
+				for(tuple<int, string, string, string, string, int, int> videoTrack:
+					videoTracks)
 				{
 					int videoProgramId;
 					string videoStreamId;
@@ -11806,7 +11807,8 @@ pair<long, string> FFMpeg::liveProxyInput(
 			}
 		}
 	}
-	//	"vodInput": { "vodContentType": "", "sourcePhysicalPathName": "...", "otherInputOptions": "" },
+	//	"vodInput": { "vodContentType": "", "sources": [{"sourcePhysicalPathName": "..."}],
+	//		"otherInputOptions": "" },
 	else if (isMetadataPresent(inputRoot, "vodInput"))
 	{
 		string field = "vodInput";
@@ -11823,16 +11825,36 @@ pair<long, string> FFMpeg::liveProxyInput(
 		}
 		string vodContentType = vodInputRoot.get(field, "").asString();
 
-		field = "sourcePhysicalPathName";
-		if (!isMetadataPresent(vodInputRoot, field))
+		vector<string> sources;
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
+			field = "sources";
+			if (!isMetadataPresent(vodInputRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			Json::Value sourcesRoot = vodInputRoot[field];
+
+			for(int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
+			{
+				Json::Value sourceRoot = sourcesRoot[sourceIndex];
+
+				field = "sourcePhysicalPathName";
+				if (!isMetadataPresent(sourceRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string sourcePhysicalPathName = sourceRoot.get(field, "").asString();
+				sources.push_back(sourcePhysicalPathName);
+			}
 		}
-		string sourcePhysicalPathName = vodInputRoot.get(field, "").asString();
 
 		string otherInputOptions;
 		field = "otherInputOptions";
@@ -11895,8 +11917,11 @@ pair<long, string> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back("-1");
 			}
 
-			ffmpegInputArgumentList.push_back("-i");
-			ffmpegInputArgumentList.push_back(sourcePhysicalPathName);
+			for(string sourcePhysicalPathName: sources)
+			{
+				ffmpegInputArgumentList.push_back("-i");
+				ffmpegInputArgumentList.push_back(sourcePhysicalPathName);
+			}
 
 			if (timePeriod)
 			{
@@ -12497,6 +12522,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	}
 }
 
+/*
 void FFMpeg::vodProxy(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
@@ -12547,11 +12573,6 @@ void FFMpeg::vodProxy(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey
-		/*
-		videoDurationInMilliSeconds,
-		mmsAssetPathName
-		stagingEncodedAssetPathName
-		*/
 	);
 
 
@@ -12796,28 +12817,8 @@ void FFMpeg::vodProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -13072,28 +13073,8 @@ void FFMpeg::vodProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -13251,28 +13232,8 @@ void FFMpeg::vodProxy(
 
 					ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-					/*
-					if (httpStreamingFileFormat != "")
+					if (twoPasses)
 					{
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					else */ if (twoPasses)
-					{
-						/*
-						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-						*/
 						twoPasses = false;
 
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
@@ -13636,6 +13597,7 @@ void FFMpeg::vodProxy(
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
+*/
 
 
 void FFMpeg::liveGrid(

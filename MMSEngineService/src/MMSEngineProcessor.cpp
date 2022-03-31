@@ -13059,77 +13059,13 @@ void MMSEngineProcessor::manageVODProxy(
             throw runtime_error(errorMessage);
         }
 
-		MMSEngineDBFacade::ContentType vodContentType;
-		string sourcePhysicalPathName;
-		int64_t sourcePhysicalPathKey;
-
-		// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-		// 	keyAndDependencyType: dependencies)
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[0];
-
-            int64_t key;
-            // MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-            tie(key, vodContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			_logger->info(__FILEREF__ + "manageVODProxy"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", key: " + to_string(key)
-			);
-
-            int64_t sourceMediaItemKey;
-            // string sourcePhysicalPath;
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-				int64_t encodingProfileKey = -1;
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-						warningIfMissing);
-                tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore, ignore,
-					ignore, ignore) = physicalPathDetails;
-
-                sourceMediaItemKey = key;
-            }
-            else
-            {
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key);
-				tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-
-                sourcePhysicalPathKey = key;
-
-                bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
-					string, string> mediaItemKeyDetails =
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyDetails;
-            }
-		}
-
 		Json::Value outputsRoot;
-		bool timePeriod;
+		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
-			timePeriod = false;
             string field = "TimePeriod";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				utcProxyPeriodStart = -1;
-				utcProxyPeriodEnd = -1;
-			}
-			else
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 				if (timePeriod)
@@ -13192,13 +13128,11 @@ void MMSEngineProcessor::manageVODProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
-			workspace, ingestionJobKey,
-			vodContentType == MMSEngineDBFacade::ContentType::Image ? true : false
-		);
+		MMSEngineDBFacade::ContentType vodContentType;
 
-		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
-		Json::Value inputsRoot;
+		Json::Value inputsRoot(Json::arrayValue);
+		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot)
+		//		already ready
 		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS")
 			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster")
 			&& JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot")
@@ -13208,9 +13142,67 @@ void MMSEngineProcessor::manageVODProxy(
 		}
 		else
 		{
+			vector<pair<int64_t, string>> sources;
+
+			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
+			{
+				string sourcePhysicalPathName;
+				int64_t sourcePhysicalPathKey;
+
+				int64_t key;
+				// MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
+
+				tie(key, vodContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
+
+				_logger->info(__FILEREF__ + "manageVODProxy"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", key: " + to_string(key)
+				);
+
+				int64_t sourceMediaItemKey;
+				// string sourcePhysicalPath;
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					int64_t encodingProfileKey = -1;
+					bool warningIfMissing = false;
+					tuple<int64_t, string, int, string, string, int64_t, string>
+						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
+						encodingProfileKey, warningIfMissing);
+					tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore, ignore,
+						ignore, ignore) = physicalPathDetails;
+
+					sourceMediaItemKey = key;
+				}
+				else
+				{
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key);
+					tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+						= physicalPathDetails;
+
+					sourcePhysicalPathKey = key;
+
+					bool warningIfMissing = false;
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+						string, string> mediaItemKeyDetails =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+
+					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
+						ignore, ignore) = mediaItemKeyDetails;
+				}
+
+				sources.push_back(make_pair(sourcePhysicalPathKey, sourcePhysicalPathName));
+			}
+
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
 			Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
-				vodContentType, sourcePhysicalPathName, sourcePhysicalPathKey);
+				vodContentType, sources);
 
 			Json::Value inputRoot;
 			{
@@ -13220,22 +13212,20 @@ void MMSEngineProcessor::manageVODProxy(
 				field = "timePeriod";
 				inputRoot[field] = timePeriod;
 
-				// field = "utcProxyPeriodStart";
-				// inputRoot[field] = utcProxyPeriodStart;
 				field = "utcScheduleStart";
 				inputRoot[field] = utcProxyPeriodStart;
 
-				// field = "utcProxyPeriodEnd";
-				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 			}
 
-			Json::Value localInputsRoot(Json::arrayValue);
-			localInputsRoot.append(inputRoot);
-
-			inputsRoot = localInputsRoot;
+			inputsRoot.append(inputRoot);
 		}
+
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey,
+			vodContentType == MMSEngineDBFacade::ContentType::Image ? true : false
+		);
 
 		// the only reason we may have a failure should be in case the vod is missing/removed
 		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;

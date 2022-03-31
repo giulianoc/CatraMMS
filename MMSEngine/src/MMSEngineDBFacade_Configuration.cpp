@@ -6332,8 +6332,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getVodInputRoot(
 	MMSEngineDBFacade::ContentType vodContentType,
-	string sourcePhysicalPathName,
-	int64_t physicalPathKey
+	vector<pair<int64_t, string>>& sources
 )
 {
 	Json::Value vodInputRoot;
@@ -6343,11 +6342,27 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 		string field = "vodContentType";
 		vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
 
-		field = "sourcePhysicalPathName";
-		vodInputRoot[field] = sourcePhysicalPathName;
+		Json::Value sourcesRoot(Json::arrayValue);
 
-		field = "physicalPathKey";
-		vodInputRoot[field] = physicalPathKey;
+		for (pair<int64_t, string> source: sources)
+		{
+			int64_t physicalPathKey = source.first;
+			string sourcePhysicalPathName = source.second;
+
+
+			Json::Value sourceRoot;
+
+			field = "sourcePhysicalPathName";
+			sourceRoot[field] = sourcePhysicalPathName;
+
+			field = "physicalPathKey";
+			sourceRoot[field] = physicalPathKey;
+
+			sourcesRoot.append(sourceRoot);
+		}
+
+		field = "sources";
+		vodInputRoot[field] = sourcesRoot;
 	}
     catch(runtime_error e)
     {

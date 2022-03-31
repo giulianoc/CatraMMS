@@ -90,8 +90,8 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				lastSQLCommand = 
 					"insert into MMS_PartitionInfo ("
 						"partitionKey, partitionPathName, currentFreeSizeInBytes, "
-						"freeSpaceToLeaveInMB, lastUpdateFreeSize) values ("
-						"?, ?, ?, ?, NOW())";
+						"freeSpaceToLeaveInMB, lastUpdateFreeSize, enabled) values ("
+						"?, ?, ?, ?, NOW(), 1)";
 
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
