@@ -1581,7 +1581,8 @@ public:
 		int64_t workspaceKey,
 		string label,
 		int64_t thumbnailMediaItemKey,
-		string jsonWorkflow);
+		string jsonWorkflow,
+		bool admin);
 
 	void removeWorkflowAsLibrary(                                                                
 		int64_t userKey,
@@ -1967,6 +1968,10 @@ public:
 		int64_t encodingJobKey,
 		string parameters);
 
+	void updateOutputRtmpAndPlaURL (
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		int outputIndex, string rtmpURL, string playURL);
+
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
@@ -2265,6 +2270,33 @@ public:
 
     tuple<int64_t, int64_t, int64_t, string, int, int> getSourceSATStreamDetails(
         int64_t confKey, bool warningIfMissing);
+
+	int64_t addAWSChannelConf(
+		int64_t workspaceKey,
+		string label,
+		string channelId, string rtmpURL, string playURL, string type);
+
+	void modifyAWSChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+		string label,
+		string channelId, string rtmpURL, string playURL, string type);
+
+	void removeAWSChannelConf(
+		int64_t workspaceKey,
+		int64_t confKey);
+
+	Json::Value getAWSChannelConfList (
+        int64_t workspaceKey);
+
+	tuple<string, string, string, bool> reserveAWSChannel(
+		int64_t workspaceKey, string label, string type,
+		int64_t ingestionJobKey);
+
+	// tuple<string, string, string> getAWSChannelByIngestionJobKey(
+	// 	int64_t workspaceKey, int64_t ingestionJobKey);
+
+	string releaseAWSChannel(int64_t workspaceKey, int64_t ingestionJobKey);
 
     int64_t addFTPConf(
         int64_t workspaceKey,
@@ -2645,13 +2677,14 @@ private:
         int imageQuality
     );
 
-	int64_t addUpdateWorkflowAsLibrary(                                                          
-		shared_ptr<MySQLConnection> conn,                                                                         
+	int64_t addUpdateWorkflowAsLibrary(
+		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
-		int64_t workspaceKey,                                                                                     
-		string label,                                                                                             
+		int64_t workspaceKey,
+		string label,
 		int64_t thumbnailMediaItemKey,
-		string jsonWorkflow);
+		string jsonWorkflow,
+		bool admin);
 
 	void addCrossReference (
         shared_ptr<MySQLConnection> conn,

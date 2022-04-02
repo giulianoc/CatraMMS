@@ -541,6 +541,27 @@ private:
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
+    void addAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void awsChannelConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace);
+
     void addFTPConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

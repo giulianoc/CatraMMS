@@ -207,7 +207,7 @@ void API::saveWorkflowAsLibrary(
 			int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
 				workflowAsLibraryScope == "MMS" ? -1 : userKey,
 				workflowAsLibraryScope == "MMS" ? -1 : workspace->_workspaceKey,
-				workflowLabel, thumbnailMediaItemKey, requestBody);
+				workflowLabel, thumbnailMediaItemKey, requestBody, admin);
 
             responseBody = (
                     string("{ ") 

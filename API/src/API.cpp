@@ -2078,6 +2078,58 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         sourceSatStreamList(request, workspace, queryParameters);
     }
+    else if (method == "addAWSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addAWSChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyAWSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifyAWSChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeAWSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeAWSChannelConf(request, workspace, queryParameters);
+    }
+    else if (method == "awsChannelConfList")
+    {
+        awsChannelConfList(request, workspace);
+    }
     else if (method == "addFTPConf")
     {
         if (!admin && !editConfiguration)
@@ -3097,7 +3149,7 @@ pair<string, string> API::createDeliveryAuthorization(
 			Json::Value outputsRoot = ingestionJobRoot[field];
 
 			// Option 1: OutputType HLS with deliveryCode
-			// Option 2: OutputType RTMP_Stream with playURL
+			// Option 2: OutputType RTMP_Stream/AWS_CHANNEL with playURL
 			// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -3123,7 +3175,8 @@ pair<string, string> API::createDeliveryAuthorization(
 
 					}
 				}
-				else if (outputType == "RTMP_Stream")
+				else if (outputType == "RTMP_Stream"
+					|| outputType == "AWS_CHANNEL")
 				{
 					field = "PlayUrl";
 					playURL = outputRoot.get(field, "").asString();
@@ -3191,7 +3244,8 @@ pair<string, string> API::createDeliveryAuthorization(
 				}
 			}
 
-			if (outputType == "RTMP_Stream")
+			if (outputType == "RTMP_Stream"
+				|| outputType == "AWS_CHANNEL")
 			{
 				deliveryURL = playURL;
 			}

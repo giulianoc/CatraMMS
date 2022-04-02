@@ -11975,16 +11975,124 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string awsChannelConfigurationLabel
+						= outputRoot.get("awsChannelConfigurationLabel", "").asString();
+					bool awsSignedURL = JSONUtils::asBool(outputRoot,
+						"awsSignedURL", false);
+
+					string awsChannelType;
+					if (awsChannelConfigurationLabel == "")
+						awsChannelType = "SHARED";
+					else
+						awsChannelType = "DEDICATED";
+
+					// reserveAWSChannel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, bool> awsChannelDetails
+						= _mmsEngineDBFacade->reserveAWSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							awsChannelConfigurationLabel, awsChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string awsChannelId;
+					string rtmpURL;
+					string playURL;
+					bool channelAlreadyReserved;
+					tie(awsChannelId, rtmpURL, playURL,
+						channelAlreadyReserved) = awsChannelDetails;
+
+					if (awsSignedURL)
 					{
-						awsStartChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
 					}
+
+					// update outputsRoot with the new details
+					{
+						field = "awsChannelConfigurationLabel";
+						outputRoot[field] = awsChannelConfigurationLabel;
+
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							// Json::StreamWriterBuilder wbuilder;
+							// string encodingParameters = Json::writeString(wbuilder,
+							// 	_encodingItem->_encodingParametersRoot);
+
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: "
+									+ to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey) 
+								+ ", awsChannelConfigurationLabel: "
+									+ awsChannelConfigurationLabel 
+								+ ", awsChannelType: " + awsChannelType 
+								+ ", awsChannelId: " + awsChannelId 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", playURL: " + playURL 
+								+ ", channelAlreadyReserved: "
+									+ to_string(channelAlreadyReserved) 
+								// + ", encodingParameters: " + encodingParameters 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+							// _mmsEngineDBFacade->updateEncodingJobParameters(
+							// 	_encodingItem->_encodingJobKey,
+							// 	encodingParameters);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+
+					// channelAlreadyReserved true means the channel was already reserved,
+					// so it is supposed is already started
+					// Maybe just start again is not an issue!!! Let's see
+					if (!channelAlreadyReserved)
+						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
 			}
 
@@ -12007,15 +12115,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					try
 					{
-						awsStopChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
+						// error in case do not find ingestionJobKey
+						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+
+						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
 					}
 				}
 			}
@@ -12028,15 +12146,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					try
 					{
-						awsStopChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
+						// error in case do not find ingestionJobKey
+						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+
+						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
 					}
 				}
 			}
@@ -13434,16 +13562,124 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string awsChannelConfigurationLabel
+						= outputRoot.get("awsChannelConfigurationLabel", "").asString();
+					bool awsSignedURL = JSONUtils::asBool(outputRoot,
+						"awsSignedURL", false);
+
+					string awsChannelType;
+					if (awsChannelConfigurationLabel == "")
+						awsChannelType = "SHARED";
+					else
+						awsChannelType = "DEDICATED";
+
+					// reserveAWSChannel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, bool> awsChannelDetails
+						= _mmsEngineDBFacade->reserveAWSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							awsChannelConfigurationLabel, awsChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string awsChannelId;
+					string rtmpURL;
+					string playURL;
+					bool channelAlreadyReserved;
+					tie(awsChannelId, rtmpURL, playURL,
+						channelAlreadyReserved) = awsChannelDetails;
+
+					if (awsSignedURL)
 					{
-						awsStartChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
 					}
+
+					// update outputsRoot with the new details
+					{
+						field = "awsChannelConfigurationLabel";
+						outputRoot[field] = awsChannelConfigurationLabel;
+
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							// Json::StreamWriterBuilder wbuilder;
+							// string encodingParameters = Json::writeString(wbuilder,
+							// 	_encodingItem->_encodingParametersRoot);
+
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: "
+									+ to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey) 
+								+ ", awsChannelConfigurationLabel: "
+									+ awsChannelConfigurationLabel 
+								+ ", awsChannelType: " + awsChannelType 
+								+ ", awsChannelId: " + awsChannelId 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", playURL: " + playURL 
+								+ ", channelAlreadyReserved: "
+									+ to_string(channelAlreadyReserved) 
+								// + ", encodingParameters: " + encodingParameters 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+							// _mmsEngineDBFacade->updateEncodingJobParameters(
+							// 	_encodingItem->_encodingJobKey,
+							// 	encodingParameters);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+
+					// channelAlreadyReserved true means the channel was already reserved,
+					// so it is supposed is already started
+					// Maybe just start again is not an issue!!! Let's see
+					if (!channelAlreadyReserved)
+						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
 			}
 
@@ -13466,15 +13702,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					try
 					{
-						awsStopChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
+						// error in case do not find ingestionJobKey
+						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+
+						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
 					}
 				}
 			}
@@ -13487,15 +13733,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = outputRoot.get("outputType", "").asString();
 
-				if (outputType == "RTMP_Stream")
+				if (outputType == "AWS_CHANNEL")
 				{
-					string awsChannelIdToBeManaged
-						= outputRoot.get("awsChannelIdToBeManaged", "").asString();
-					if (awsChannelIdToBeManaged != "")
+					try
 					{
-						awsStopChannel(_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							awsChannelIdToBeManaged);
+						// error in case do not find ingestionJobKey
+						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+
+						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
 					}
 				}
 			}
@@ -17380,7 +17636,6 @@ Magick::InterlaceType EncoderVideoAudioProxy::encodingImageInterlaceTypeValidati
 
 void EncoderVideoAudioProxy::awsStartChannel(
 	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
 	string awsChannelIdToBeStarted)
 {
 	Aws::MediaLive::MediaLiveClient mediaLiveClient;
@@ -17390,7 +17645,6 @@ void EncoderVideoAudioProxy::awsStartChannel(
 
 	_logger->info(__FILEREF__ + "mediaLive.StartChannel"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 	);
 
@@ -17401,7 +17655,6 @@ void EncoderVideoAudioProxy::awsStartChannel(
 	{
 		string errorMessage = __FILEREF__ + "AWS Start Channel failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 			+ ", errorType: " + to_string((long) startChannelOutcome.GetError().GetErrorType())
 			+ ", errorMessage: " + startChannelOutcome.GetError().GetMessage()
@@ -17426,7 +17679,6 @@ void EncoderVideoAudioProxy::awsStartChannel(
 
 		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 		);
 
@@ -17436,7 +17688,6 @@ void EncoderVideoAudioProxy::awsStartChannel(
 		{
 			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
 				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
@@ -17459,7 +17710,6 @@ void EncoderVideoAudioProxy::awsStartChannel(
 
 	_logger->info(__FILEREF__ + "mediaLive.StartChannel finished"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 		+ ", lastChannelState: " + to_string((long) lastChannelState)
 		+ ", maxCommandDuration: " + to_string(maxCommandDuration)
@@ -17470,8 +17720,7 @@ void EncoderVideoAudioProxy::awsStartChannel(
 }
 
 void EncoderVideoAudioProxy::awsStopChannel(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string awsChannelIdToBeStarted)
+	int64_t ingestionJobKey, string awsChannelIdToBeStarted)
 {
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
@@ -17482,7 +17731,6 @@ void EncoderVideoAudioProxy::awsStopChannel(
 
 	_logger->info(__FILEREF__ + "mediaLive.StopChannel"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 	);
 
@@ -17493,7 +17741,6 @@ void EncoderVideoAudioProxy::awsStopChannel(
 	{
 		string errorMessage = __FILEREF__ + "AWS Stop Channel failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 			+ ", errorType: " + to_string((long) stopChannelOutcome.GetError().GetErrorType())
 			+ ", errorMessage: " + stopChannelOutcome.GetError().GetMessage()
@@ -17518,7 +17765,6 @@ void EncoderVideoAudioProxy::awsStopChannel(
 
 		_logger->info(__FILEREF__ + "mediaLive.DescribeChannel"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 		);
 
@@ -17528,7 +17774,6 @@ void EncoderVideoAudioProxy::awsStopChannel(
 		{
 			string errorMessage = __FILEREF__ + "AWS Describe Channel failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 				+ ", errorType: " + to_string((long) describeChannelOutcome.GetError().GetErrorType())
 				+ ", errorMessage: " + describeChannelOutcome.GetError().GetMessage()
@@ -17551,7 +17796,6 @@ void EncoderVideoAudioProxy::awsStopChannel(
 
 	_logger->info(__FILEREF__ + "mediaLive.StopChannel finished"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
 		+ ", lastChannelState: " + to_string((long) lastChannelState)
 		+ ", maxCommandDuration: " + to_string(maxCommandDuration)

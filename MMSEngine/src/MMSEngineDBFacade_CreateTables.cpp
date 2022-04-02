@@ -1569,7 +1569,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						string label = workflowRoot.get("Label", "XXX").asString();
 
 						int64_t workspaceKey = -1;
-						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1, jsonWorkflow);
+						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1,
+							jsonWorkflow, true);
                     }
                     catch(DirectoryListFinished e)
                     {
@@ -2336,6 +2337,40 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+		try
+		{
+			// type: SHARED or DEDICATED
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_AWSChannel ("
+					"confKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"label						VARCHAR (128) NOT NULL,"
+					"channelId					VARCHAR (64) NOT NULL,"
+					"rtmpURL					VARCHAR (512) NOT NULL,"
+                    "playURL					VARCHAR (512) NOT NULL,"
+                    "type						VARCHAR (64) NOT NULL,"
+                    "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
+                    "constraint MMS_Conf_AWSChannel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_AWSChannel_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label), "
+                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 
@@ -2367,7 +2402,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-        
+
         try
         {
             lastSQLCommand = 

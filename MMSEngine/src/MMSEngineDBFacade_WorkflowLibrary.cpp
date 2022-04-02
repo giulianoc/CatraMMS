@@ -9,7 +9,8 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	int64_t workspaceKey,
 	string label,
 	int64_t thumbnailMediaItemKey,
-	string jsonWorkflow
+	string jsonWorkflow,
+	bool admin
 )
 {
 	int64_t		workflowLibraryKey;
@@ -30,7 +31,8 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 			workspaceKey,
 			label,
 			thumbnailMediaItemKey,
-			jsonWorkflow);
+			jsonWorkflow,
+			admin);
 
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -106,7 +108,8 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	int64_t workspaceKey,
 	string label,
 	int64_t thumbnailMediaItemKey,
-	string jsonWorkflow
+	string jsonWorkflow,
+	bool admin
 )
 {
 	int64_t			workflowLibraryKey;
@@ -153,7 +156,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 				if (workspaceKey != -1)
 				{
 					int64_t creatorUserKey     = resultSet->getInt64("creatorUserKey");
-					if (creatorUserKey != userKey)
+					if (creatorUserKey != userKey && !admin)
 					{
 						string errorMessage = string("User does not have the permission to add/update MMS WorkflowAsLibrary")
 							+ ", creatorUserKey: " + to_string(creatorUserKey)

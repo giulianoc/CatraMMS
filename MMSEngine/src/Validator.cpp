@@ -3880,15 +3880,15 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
 			field = "OutputType";
-			string liveProxyOutputType;
+			string liveRecordingOutputType;
 			if (JSONUtils::isMetadataPresent(outputRoot, field))
 			{
-				liveProxyOutputType = outputRoot.get(field, "").asString();
-				if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+				liveRecordingOutputType = outputRoot.get(field, "").asString();
+				if (!isLiveProxyOutputTypeValid(liveRecordingOutputType))
 				{
 					string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
 						+ ", Field: " + field
-						+ ", liveProxyOutputType: " + liveProxyOutputType
+						+ ", liveRecordingOutputType: " + liveRecordingOutputType
 						+ ", label: " + label
 						;
 					_logger->error(__FILEREF__ + errorMessage);
@@ -3897,7 +3897,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 				}
 			}
 
-			if (liveProxyOutputType == "HLS")
+			if (liveRecordingOutputType == "HLS")
 			{
 				vector<string> mandatoryFields = {
 					"DeliveryCode"
@@ -3920,7 +3920,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 					}
 				}
 			}
-			else if (liveProxyOutputType == "RTMP_Stream")
+			else if (liveRecordingOutputType == "RTMP_Stream")
 			{
 				vector<string> mandatoryFields = {
 					"RtmpUrl"
@@ -3943,7 +3943,10 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 					}
 				}
 			}
-			else if (liveProxyOutputType == "UDP_Stream")
+			else if (liveRecordingOutputType == "AWS_CHANNEL")
+			{
+			}
+			else if (liveRecordingOutputType == "UDP_Stream")
 			{
 				vector<string> mandatoryFields = {
 					"udpUrl"
@@ -4170,6 +4173,9 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
+		}
+		else if (liveProxyOutputType == "AWS_CHANNEL")
+		{
 		}
 		else if (liveProxyOutputType == "UDP_Stream")
 		{
@@ -4417,7 +4423,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
 {
-        
+
 	MMSEngineDBFacade::ContentType referenceContentType = MMSEngineDBFacade::ContentType::Video;
 
     // References is optional because in case of dependency managed automatically
@@ -4446,8 +4452,18 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
                 throw runtime_error(errorMessage);
             }
+
+            {
+                int64_t key;
+                Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
+
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
+            }
         }
     }
+
 
 	bool timePeriod = false;
 	field = "TimePeriod";
@@ -4548,6 +4564,28 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
+		// check that, in case of an Image, the encoding profile is mandatory
+		if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+		{
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
+				&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+       
+				string errorMessage = __FILEREF__
+					+ "In case of Image, the EncodingProfile is mandatory"
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
 		field = "OutputType";
 		string liveProxyOutputType;
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
@@ -4588,30 +4626,6 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
 		}
 		else if (liveProxyOutputType == "RTMP_Stream")
 		{
@@ -4635,30 +4649,9 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
+		}
+		else if (liveProxyOutputType == "AWS_CHANNEL")
+		{
 		}
 		else if (liveProxyOutputType == "UDP_Stream")
 		{
@@ -4682,30 +4675,6 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
 		}
 	}
 
@@ -4731,8 +4700,6 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
 {
-
-	MMSEngineDBFacade::ContentType referenceContentType = MMSEngineDBFacade::ContentType::Video;
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
@@ -4939,30 +4906,6 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
 		}
 		else if (liveProxyOutputType == "RTMP_Stream")
 		{
@@ -4986,30 +4929,9 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
+		}
+		else if (liveProxyOutputType == "AWS_CHANNEL")
+		{
 		}
 		else if (liveProxyOutputType == "UDP_Stream")
 		{
@@ -5033,30 +4955,6 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 					throw runtime_error(errorMessage);
 				}
 			}
-
-			// check that, in case of an Image, the encoding profile is mandatory
-            {
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				{
-					string keyField = "EncodingProfileKey";
-					string labelField = "EncodingProfileLabel";
-					if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
-						&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__
-							+ "In case of Image, the EncodingProfile is mandatory"
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
 		}
 	}
 
@@ -6843,6 +6741,7 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
         "RTMP_Stream",
+		"AWS_CHANNEL",
         "UDP_Stream",
         "HLS",
         "DASH"

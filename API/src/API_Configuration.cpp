@@ -2860,6 +2860,531 @@ void API::sourceSatStreamList(
     }
 }
 
+void API::addAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "addAWSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string channelId;
+        string rtmpURL;
+        string playURL;
+        string type;
+
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "").asString();            
+
+            field = "channelId";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            channelId = requestBodyRoot.get(field, "").asString();            
+
+            field = "rtmpURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            rtmpURL = requestBodyRoot.get(field, "").asString();            
+
+            field = "playURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            playURL = requestBodyRoot.get(field, "").asString();            
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            type = requestBodyRoot.get(field, "").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t confKey = _mmsEngineDBFacade->addAWSChannelConf(
+                workspace->_workspaceKey, label, channelId, rtmpURL,
+				playURL, type);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyAWSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string channelId;
+        string rtmpURL;
+        string playURL;
+        string type;
+
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "").asString();            
+
+            field = "channelId";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            channelId = requestBodyRoot.get(field, "").asString();            
+
+            field = "rtmpURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            rtmpURL = requestBodyRoot.get(field, "").asString();            
+
+            field = "playURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            playURL = requestBodyRoot.get(field, "").asString();            
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            type = requestBodyRoot.get(field, "").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+
+            _mmsEngineDBFacade->modifyAWSChannelConf(
+                confKey, workspace->_workspaceKey, label, 
+				channelId, rtmpURL, playURL, type);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeAWSChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeAWSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+            
+            _mmsEngineDBFacade->removeAWSChannelConf(
+                workspace->_workspaceKey, confKey);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::awsChannelConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace)
+{
+    string api = "awsChannelConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+            
+            Json::Value awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(
+                    workspace->_workspaceKey);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, awsChannelConfListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+
 void API::addFTPConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

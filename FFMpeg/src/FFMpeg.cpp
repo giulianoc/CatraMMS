@@ -9699,7 +9699,7 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(manifestFilePathName);
 				}
 			}
-			else if (outputType == "RTMP_Stream")
+			else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 			{
 				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 
@@ -12462,7 +12462,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			}
 			ffmpegOutputArgumentList.push_back(manifestFilePathName);
 		}
-		else if (outputType == "RTMP_Stream")
+		else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 		{
 			string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 
