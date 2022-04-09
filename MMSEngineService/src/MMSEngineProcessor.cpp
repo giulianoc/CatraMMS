@@ -13575,6 +13575,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string playUrl;
 		string awsChannelConfigurationLabel;
 		bool awsSignedURL = false;
+		int awsExpirationInMinutes = 1440;	// 1 day
 		string udpUrl;
 
 
@@ -13653,6 +13654,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 			field = "awsSignedURL";
 			awsSignedURL = JSONUtils::asBool(outputRoot, field, false);
+
+			field = "awsExpirationInMinutes";
+			awsExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440);
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13795,6 +13799,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "awsSignedURL";
 		localOutputRoot[field] = awsSignedURL;
+
+		field = "awsExpirationInMinutes";
+		localOutputRoot[field] = awsExpirationInMinutes;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;

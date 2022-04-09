@@ -205,6 +205,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"currentFreeSizeInBytes	BIGINT UNSIGNED NOT NULL,"
 					"freeSpaceToLeaveInMB	BIGINT UNSIGNED NOT NULL,"
 					"lastUpdateFreeSize		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+					"awsCloudFrontHostName	VARCHAR (512) NULL,"
 					"enabled				TINYINT(1) NOT NULL,"
 					"constraint MMS_PartitionInfo_PK PRIMARY KEY (partitionKey)) "
 					"ENGINE=InnoDB";

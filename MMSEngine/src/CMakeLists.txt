@@ -21,6 +21,7 @@
 # with the authors.
 
 SET (SOURCES
+	AWSSigner.cpp
 	Workspace.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
@@ -45,6 +46,7 @@ SET (SOURCES
 	ThreadsStatistic.cpp
 )
 SET (HEADERS
+	AWSSigner.h
 	Workspace.h
 	MMSStorage.h
 	MMSEngineDBFacade.h

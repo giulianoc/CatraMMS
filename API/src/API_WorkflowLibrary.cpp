@@ -307,11 +307,12 @@ void API::removeWorkflowAsLibrary(
 			_mmsEngineDBFacade->removeWorkflowAsLibrary(
 				workflowAsLibraryScope == "MMS" ? -1 : userKey,
 				workflowAsLibraryScope == "MMS" ? -1 : workspace->_workspaceKey,
-				workflowLibraryKey);
+				workflowLibraryKey, admin);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
+            _logger->error(__FILEREF__
+				+ "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -319,7 +320,8 @@ void API::removeWorkflowAsLibrary(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
+            _logger->error(__FILEREF__
+				+ "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 

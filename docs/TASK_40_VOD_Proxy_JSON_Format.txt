@@ -50,7 +50,8 @@
 		//	At least one Output has to be present
 		"Outputs" = [
 			{
-				// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
+				// optional, possible values: HLS, DASH, RTMP_Stream, AWS_CHANNEL.
+				// Default: HLS
 				"OutputType": "HLS",
 
 				// DeliveryCode is used only in case of HLS and DASH
@@ -77,6 +78,21 @@
 				// optional only in case of RTMP_Stream. It specifies the url to be used
 				//		to play the stream sent through the rtmp 
 				"PlayUrl": "...",
+
+				// optional, used only in case of AWS_CHANNEL
+				// the configuration label of an AWS Channel defined in MMS.
+				// If not present, a SHARED free AWS channel is used
+				"awsChannelConfigurationLabel": "",
+
+				// optional, used only in case of AWS_CHANNEL
+				// it specifies if a signed URL has to be used
+				// Default: false
+				"awsSignedURL": false,
+
+				// optional, used only in case of AWS_CHANNEL and awsSignedURL is true
+				// it specifies the expiration of the signed URL
+				// Default: 1440 (1 day)
+				"expirationInMinutes": 1440,
 
 				// optional: It is possible to use this field to specify any other output options.
 				// Examples:

@@ -284,7 +284,8 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 }
 
 void MMSEngineDBFacade::removeWorkflowAsLibrary(
-    int64_t userKey, int64_t workspaceKey, int64_t workflowLibraryKey)
+    int64_t userKey, int64_t workspaceKey,
+	int64_t workflowLibraryKey, bool admin)
 {
     string      lastSQLCommand;
 
@@ -305,9 +306,18 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
 					"and workspaceKey is null";
 			else
-				lastSQLCommand = 
-					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
-					"and creatorUserKey = ? and workspaceKey = ?";
+			{
+				// admin is able to remove also WorkflowLibrarys created by others
+				// for this reason the condition on creatorUserKey has to be removed
+				if (admin)
+					lastSQLCommand = 
+						"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
+						"and workspaceKey = ?";
+				else
+					lastSQLCommand = 
+						"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
+						"and creatorUserKey = ? and workspaceKey = ?";
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -315,7 +325,8 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
             preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
 			if (workspaceKey != -1)
 			{
-				preparedStatement->setInt64(queryParameterIndex++, userKey);
+				if (!admin)
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			}
 

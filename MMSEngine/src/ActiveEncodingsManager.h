@@ -48,7 +48,7 @@ public:
     void operator ()();
 
     unsigned long addEncodingItems (
-	vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems);
+		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
     // static void encodingImageFormatValidation(string newFormat);
     // static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);

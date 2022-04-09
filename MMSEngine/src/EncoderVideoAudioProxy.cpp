@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "AWSSigner.h"
 #include <fstream>
 // #include <sstream>
 #ifdef __LOCALENCODER__
@@ -205,38 +206,38 @@ void EncoderVideoAudioProxy::init(
     );
 
 
-    _computerVisionCascadePath             = configuration["computerVision"].get("cascadePath", "XXX").asString();
+    _computerVisionCascadePath             = _configuration["computerVision"].get("cascadePath", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->cascadePath: " + _computerVisionCascadePath
     );
 	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
-    _computerVisionDefaultScale				= JSONUtils::asDouble(configuration["computerVision"], "defaultScale", 1.1);
+    _computerVisionDefaultScale				= JSONUtils::asDouble(_configuration["computerVision"], "defaultScale", 1.1);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultScale: " + to_string(_computerVisionDefaultScale)
     );
-    _computerVisionDefaultMinNeighbors		= JSONUtils::asInt(configuration["computerVision"],
+    _computerVisionDefaultMinNeighbors		= JSONUtils::asInt(_configuration["computerVision"],
 			"defaultMinNeighbors", 2);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultMinNeighbors: " + to_string(_computerVisionDefaultMinNeighbors)
     );
-    _computerVisionDefaultTryFlip		= JSONUtils::asBool(configuration["computerVision"], "defaultTryFlip", false);
+    _computerVisionDefaultTryFlip		= JSONUtils::asBool(_configuration["computerVision"], "defaultTryFlip", false);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultTryFlip: " + to_string(_computerVisionDefaultTryFlip)
     );
 
-	_timeBeforeToPrepareResourcesInMinutes		= JSONUtils::asInt(configuration["mms"],
+	_timeBeforeToPrepareResourcesInMinutes		= JSONUtils::asInt(_configuration["mms"],
 			"liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(_configuration["storage"],
 		"waitingNFSSync_maxMillisecondsToWait", 60000);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
-	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
+	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(_configuration["storage"],
 		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: "
@@ -269,6 +270,16 @@ void EncoderVideoAudioProxy::init(
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
 	*/
+
+	_keyPairId =  _configuration["aws"].get("keyPairId", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", aws->keyPairId: " + _keyPairId
+	);
+	_privateKeyPEMPathName =  _configuration["aws"]
+		.get("privateKeyPEMPathName", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName
+	);
 
 	_retrieveStreamingYouTubeURLPeriodInHours = 5;	// 5 hours
 
@@ -11983,6 +11994,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						= outputRoot.get("awsChannelConfigurationLabel", "").asString();
 					bool awsSignedURL = JSONUtils::asBool(outputRoot,
 						"awsSignedURL", false);
+					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot,
+						"awsExpirationInMinutes", 1440);
 
 					string awsChannelType;
 					if (awsChannelConfigurationLabel == "")
@@ -12010,6 +12023,23 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 					if (awsSignedURL)
 					{
+						try
+						{
+							playURL = getAWSSignedURL(playURL, awsExpirationInMinutes);
+						}
+						catch(exception ex)
+						{
+							_logger->error(__FILEREF__
+								+ "getAWSSignedURL failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", playURL: " + playURL
+							);
+
+							// throw e;
+						}
 					}
 
 					// update outputsRoot with the new details
@@ -13570,6 +13600,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						= outputRoot.get("awsChannelConfigurationLabel", "").asString();
 					bool awsSignedURL = JSONUtils::asBool(outputRoot,
 						"awsSignedURL", false);
+					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot,
+						"awsExpirationInMinutes", 1440);
 
 					string awsChannelType;
 					if (awsChannelConfigurationLabel == "")
@@ -13597,6 +13629,23 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 					if (awsSignedURL)
 					{
+						try
+						{
+							playURL = getAWSSignedURL(playURL, awsExpirationInMinutes);
+						}
+						catch(exception ex)
+						{
+							_logger->error(__FILEREF__
+								+ "getAWSSignedURL failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", playURL: " + playURL
+							);
+
+							// throw e;
+						}
 					}
 
 					// update outputsRoot with the new details
@@ -13815,7 +13864,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			_encodingItem->_encodingParametersRoot, field, 2);
 
 		{
-			Json::Value firstInputRoot = inputsRoot[0];
+			// Json::Value firstInputRoot = inputsRoot[0];
 
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
@@ -17803,6 +17852,83 @@ void EncoderVideoAudioProxy::awsStopChannel(
 			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
 			- commandTime).count())
 	);
+}
+
+string EncoderVideoAudioProxy::getAWSSignedURL(string playURL, int expirationInMinutes)
+{
+	string signedPlayURL;
+
+	// string mmsGUIURL;
+	// ostringstream response;
+	// bool responseInitialized = false;
+    try
+    {
+		// playURL is like: https://d1nue3l1x0sz90.cloudfront.net/out/v1/ca8fd629f9204ca38daf18f04187c694/index.m3u8
+		string prefix ("https://");
+		if (!(
+			playURL.size() >= prefix.size()
+			&& 0 == playURL.compare(0, prefix.size(), prefix)
+			&& playURL.find("/", prefix.size()) != string::npos
+			)
+		)
+		{
+			string errorMessage = __FILEREF__
+				+ "awsSignedURL. playURL wrong format"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", playURL: " + playURL
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		size_t uriStartIndex = playURL.find("/", prefix.size());
+		string cloudFrontHostName = playURL.substr(prefix.size(),
+			uriStartIndex - prefix.size());
+		string uriPath = playURL.substr(uriStartIndex + 1);
+
+		AWSSigner awsSigner(_logger);                    
+		string signedPlayURL = awsSigner.calculateSignedURL(
+			cloudFrontHostName,
+			uriPath,
+			_keyPairId,
+			_privateKeyPEMPathName,
+			expirationInMinutes * 60
+		);
+
+		if (signedPlayURL == "")
+		{
+			string errorMessage = __FILEREF__
+				+ "awsSignedURL. no signedPlayURL found"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", signedPlayURL: " + signedPlayURL
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+    }
+    catch (runtime_error e)
+    {
+		_logger->error(__FILEREF__ + "awsSigner failed (exception)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "awsSigner failed (exception)"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        throw e;
+    }
+
+	return signedPlayURL;
 }
 
 /*

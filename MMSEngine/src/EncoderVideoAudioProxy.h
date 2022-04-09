@@ -182,6 +182,9 @@ private:
 	long								_retrieveStreamingYouTubeURLPeriodInHours;
 	int									_maxEncoderNotReachableFailures;
 
+	string					_keyPairId;
+	string					_privateKeyPEMPathName;
+
 	/*
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
@@ -325,6 +328,9 @@ private:
 
 	void awsStopChannel(int64_t ingestionJobKey,
 		string awsChannelIdToBeStarted);
+
+	string getAWSSignedURL(string playURL, int expirationInMinutes);
+
 };
 
 #endif

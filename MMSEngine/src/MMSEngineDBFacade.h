@@ -1584,10 +1584,11 @@ public:
 		string jsonWorkflow,
 		bool admin);
 
-	void removeWorkflowAsLibrary(                                                                
+	void removeWorkflowAsLibrary(
 		int64_t userKey,
 		int64_t workspaceKey,
-		int64_t workflowLibraryKey);
+		int64_t workflowLibraryKey,
+		bool admin);
 
 	Json::Value getWorkflowsAsLibraryList (
 		int64_t workspaceKey);
