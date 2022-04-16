@@ -2615,11 +2615,6 @@ void API::createBulkOfDeliveryAuthorization(
 			if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
 				maxRetries = stol(maxRetriesIt->second);
 
-			string deliveryType;
-			auto deliveryTypeIt = queryParameters.find("deliveryType");
-			if (deliveryTypeIt != queryParameters.end())
-				deliveryType = deliveryTypeIt->second;
-
 			bool save = false;
 
 			string field = "mediaItemKeyList";
@@ -2639,6 +2634,9 @@ void API::createBulkOfDeliveryAuthorization(
 						field, -1);
 					field = "encodingProfileLabel";
 					string encodingProfileLabel = mediaItemKeyRoot.get(field, "").asString();
+
+					field = "deliveryType";
+					string deliveryType = mediaItemKeyRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2728,6 +2726,9 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "encodingProfileLabel";
 					string encodingProfileLabel = uniqueNameRoot.get(field, "").asString();
 
+					field = "deliveryType";
+					string deliveryType = uniqueNameRoot.get(field, "").asString();
+
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
@@ -2814,6 +2815,9 @@ void API::createBulkOfDeliveryAuthorization(
 					int64_t ingestionJobKey = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);
 					field = "deliveryCode";
 					int64_t deliveryCode = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);
+
+					field = "deliveryType";
+					string deliveryType = liveIngestionJobKeyRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -3109,7 +3113,29 @@ pair<string, string> API::createDeliveryAuthorization(
 
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
 		}
-		else if (deliveryType == "MMS_SignedToken")
+		else if (deliveryType == "MMS_Token")
+		{
+			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+				userKey,
+				clientIPAddress,
+				physicalPathKey,
+				-1,
+				deliveryURI,
+				ttlInSeconds,
+				maxRetries);
+
+			deliveryURL = 
+				_deliveryProtocol
+				+ "://" 
+				+ _deliveryHost_authorizationThroughParameter
+				+ deliveryURI
+				+ "?token=" + to_string(authorizationKey)
+			;
+
+			if (save && deliveryFileName != "")
+				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
+		}
+		else // if (deliveryType == "MMS_SignedToken")
 		{
 			time_t expirationTime = chrono::system_clock::to_time_t(
 				chrono::system_clock::now());
@@ -3140,28 +3166,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				+ deliveryURI
 			;
 		}
-		else if (deliveryType == "MMS_Token")
-		{
-			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-				userKey,
-				clientIPAddress,
-				physicalPathKey,
-				-1,
-				deliveryURI,
-				ttlInSeconds,
-				maxRetries);
-
-			deliveryURL = 
-				_deliveryProtocol
-				+ "://" 
-				+ _deliveryHost_authorizationThroughParameter
-				+ deliveryURI
-				+ "?token=" + to_string(authorizationKey)
-			;
-
-			if (save && deliveryFileName != "")
-				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
-		}
+		/*
 		else
 		{
 			string errorMessage = string("wrong vodDeliveryType")
@@ -3171,6 +3176,13 @@ pair<string, string> API::createDeliveryAuthorization(
 
 			throw runtime_error(errorMessage);
 		}
+		*/
+
+		_logger->info(__FILEREF__ + "createDeliveryAuthorization info"
+			+ ", deliveryURI: " + deliveryURI
+			+ ", deliveryType: " + deliveryType
+			+ ", deliveryURL (authorized): " + deliveryURL
+		);
 	}
 	else
 	{

@@ -4,6 +4,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
+#include "catralibraries/FileIO.h"
 
 #include "MMSEngineDBFacade.h"
 #include "AWSSigner.h"
@@ -52,6 +53,14 @@ B. Write a method to create the signature for the signed URL that uses
     4. Replace characters that are invalid in a URL query string
 		with characters that are valid
 */
+
+	if (!FileIO::fileExisting(privateKeyPEMPathName))
+	{
+		_logger->error(__FILEREF__ + "PEM path name not existing"
+			+ ", privateKeyPEMPathName: " + privateKeyPEMPathName);
+
+		return "";
+	}
 
 	string resourceUrlOrPath = string("https://") + hostName + "/" + uriPath;
 
@@ -111,6 +120,11 @@ B. Write a method to create the signature for the signed URL that uses
 string AWSSigner::sign(string pemPathName, string message)
 {
 	// initialize OpenSSL
+
+	_logger->info(__FILEREF__ + "sign"
+		+ ", pemPathName: " + pemPathName
+		+ ", message: " + message
+	);
 
 	_logger->info(__FILEREF__ + "OpenSSL initialization");
 
