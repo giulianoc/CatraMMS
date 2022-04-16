@@ -1,0 +1,55 @@
+{
+  "Label": "ingestContent Miss-Italia-nel-mondo_720m_14-4",
+  "Type": "Workflow",
+  "Task":
+  {
+    "Label": "Add Content Miss-Italia-nel-mondo_720m_14-4",
+    "Type": "Add-Content",
+    "Parameters": {
+      "Title": "Miss-Italia-nel-mondo_720m_14-4",
+      "AllowUniqueNameOverride": false,
+      "FileFormat": "mp4",
+      "Ingester": "Marco",
+      "Retention": "10y"
+    },
+    "OnSuccess": {
+      "Task":
+      {
+        "Label": "Miss-Italia-nel-mondo_720m_14-4",
+        "Type": "GroupOfTasks",
+        "Parameters": {
+          "ExecutionType": "parallel",
+          "Tasks": [
+            {
+              "Label": "Generate Picture Miss-Italia-nel-mondo_720m_14-4",
+              "Type": "Workflow-As-Library",
+              "Parameters": {
+                "Title": "Miss-Italia-nel-mondo_720m_14-4",
+                "WorkflowAsLibraryType": "MMS",
+                "WorkflowAsLibraryLabel": "Best Picture of the Video",
+                "AllowUniqueNameOverride": false,
+                "ImageRetention": "10y",
+                "ImageTags": ["FACE"],
+                "ImageUserData": {},
+                "Ingester": "Marco",
+                "InitialFramesNumberToBeSkipped": 1500,
+                "InstantInSeconds": 60,
+                "UniqueName": ""
+              }
+            },
+            {
+              "Label": "Encode Miss-Italia-nel-mondo_720m_14-4",
+              "Type": "Encode",
+              "Parameters": {
+                "ContentType": "video",
+                "EncodingPriority": "Low",
+                "EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+

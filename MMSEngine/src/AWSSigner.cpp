@@ -96,6 +96,15 @@ B. Write a method to create the signature for the signed URL that uses
 		+ "&Signature=" + signature
 		+ "&Key-Pair-Id=" + keyPairId;
 
+	_logger->info(__FILEREF__ + "calculateSignedURL"
+		+ ", hostName: " + hostName
+		+ ", uriPath: " + uriPath
+		+ ", keyPairId: " + keyPairId
+		+ ", privateKeyPEMPathName: " + privateKeyPEMPathName
+		+ ", expirationInSeconds: " + to_string(expirationInSeconds)
+		+ ", signedURL: " + signedURL
+	);
+
 	return signedURL;
 }
 

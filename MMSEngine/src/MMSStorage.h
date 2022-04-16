@@ -74,10 +74,10 @@ public:
 	tuple<string, int, string, string, int64_t, string> getPhysicalPathDetails(
 		int64_t physicalPathKey);
 
-	pair<string, string> getVODDeliveryURI(
+	tuple<int, string, string> getVODDeliveryURI(
 			int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
 
-	tuple<int64_t, string, string> getVODDeliveryURI(
+	tuple<int, int64_t, string, string> getVODDeliveryURI(
 		int64_t mediaItemKey,
 		int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace);

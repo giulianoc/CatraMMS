@@ -3,7 +3,7 @@
 	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
 
 	#it is the same in nginx.conf of LoadBalancer
-	client_max_body_size 1G;
+	client_max_body_size 2G;
 
 	#1. POST http://mms-binary.restream.ovh/catramms/v1/binary/1991788 goes through:
 	#	#2, #3, #4, #5, #7 (fcgi: /catramms/binary/authorization --> add monitoring with progressId...)

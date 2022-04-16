@@ -535,10 +535,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {
-        string errorMessage = string("The 'method' parameter is not found");
-        _logger->error(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + "The 'method' parameter is not found");
 
-        sendError(request, 400, errorMessage);
+		string errorMessage = string("Internal server error");
+
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
@@ -615,10 +616,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
+			_logger->error(__FILEREF__ + "The 'encodingJobKey' parameter is not found");
 
-            sendError(request, 400, errorMessage);
+			string errorMessage = string("Internal server error");
+
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -3277,7 +3279,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
-        }
+		}
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
 		_logger->info(__FILEREF__ + "Received killEncodingJob"
@@ -3390,19 +3392,37 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 
 		_logger->info(__FILEREF__ + "ProcessUtility::killProcess. Found Encoding to kill"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+		);
+
+		if (pidToBeKilled == 0)
+		{
+			_logger->error(__FILEREF__
+				+ "The EncodingJob seems not running (see pidToBeKilled)"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
-				);
+			);
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
 
         try
-        {
-			chrono::system_clock::time_point startKillProcess = chrono::system_clock::now();
+		{
+			chrono::system_clock::time_point startKillProcess
+				= chrono::system_clock::now();
 
 			ProcessUtility::killProcess(pidToBeKilled);
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
 			_logger->info(__FILEREF__ + "killProcess statistics"
-				+ ", @MMS statistics@ - killProcess (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				+ ", @MMS statistics@ - killProcess (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
 					endKillProcess - startKillProcess).count()) + "@"
 			);
         }

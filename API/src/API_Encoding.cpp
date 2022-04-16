@@ -1293,8 +1293,10 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
 		list<string> header;
 
 		{
-			string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+			string userPasswordEncoded = Convert::base64_encode(
+				_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+			string basicAuthorization = string("Authorization: Basic ")
+				+ userPasswordEncoded;
 
 			header.push_back(basicAuthorization);
 		}
@@ -1315,19 +1317,19 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
 			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 		{
 			/*
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                  typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                  typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
 			*/
                                                                                                 
               
@@ -1368,14 +1370,14 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
               
 			// disconnect if we can't validate server's cert
 			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER>
+				sslVerifyPeer(bSslVerifyPeer);
 			request.setOpt(sslVerifyPeer);
               
 			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 			request.setOpt(sslVerifyHost);
-              
-			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
+			// request.setOpt(new curlpp::options::SslEngineDefault());
 		}
 
 		request.setOpt(new curlpp::options::HttpHeader(header));

@@ -128,6 +128,10 @@ private:
     string				_ldapBaseDn;
 	string				_ldapDefaultWorkspaceKeys;
 
+	string				_keyPairId;
+	string				_privateKeyPEMPathName;
+	Json::Value			_vodCloudFrontHostNamesRoot;
+
 	bool				_registerUserEnabled;
 
     FileUploadProgressData*     _fileUploadProgressData;
@@ -428,7 +432,8 @@ private:
 		int ttlInSeconds,
 		int maxRetries,
 		bool save,
-		bool authorizationThroughPath,
+		string deliveryType,
+
 		bool warningIfMissingMediaItemKey
 	);
 

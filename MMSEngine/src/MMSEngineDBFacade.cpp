@@ -1183,14 +1183,16 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 		ContentType contentType;
 		if (encodingProfileKey != -1)
         {
-            lastSQLCommand = string("") +
-                "select mi.workspaceKey, mi.title, mi.contentType, mi.deliveryFileName, pp.externalReadOnlyStorage, "
-				"pp.physicalPathKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
+            lastSQLCommand =
+                "select mi.workspaceKey, mi.title, mi.contentType, mi.deliveryFileName, "
+				"pp.externalReadOnlyStorage, pp.physicalPathKey, pp.partitionNumber, "
+				"pp.relativePath, pp.fileName, pp.sizeInBytes "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
                 "and pp.encodingProfileKey = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
@@ -1221,7 +1223,8 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
 			if (physicalPathKey == -1)
             {
-                string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present"
+                string errorMessage = __FILEREF__
+					+ "MediaItemKey/EncodingProfileKey are not present"
                     + ", mediaItemKey: " + to_string(mediaItemKey)
                     + ", encodingProfileKey: " + to_string(encodingProfileKey)
                     + ", lastSQLCommand: " + lastSQLCommand
@@ -1231,8 +1234,8 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 				else
 					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }
+				throw MediaItemKeyNotFound(errorMessage);                    
+			}
 
 			// default
 			if (contentType == ContentType::Video || contentType == ContentType::Audio)

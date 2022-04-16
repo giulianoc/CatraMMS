@@ -1,0 +1,45 @@
+
+To ingest large files into the MMS you have
+- first to ingest the Workflow containing the Add-Content task
+- next split the large file in little pieces and ingest them one by one. All those little ingesting will be associated to the previous Add-content task through his ingestionJobKey
+
+
+Steps to ingest the content:
+---------------------------
+1. run ingestionWorkflow.sh to ingest the workflow
+	i.e.: ./ingestionWorkflow.sh <mmsUserKey> <mmsAPIKey>
+
+	The result/output will be a json where every task will have his ingestionJobKey:
+{ "workflow": { "ingestionRootKey": 157313, "label": "ingestContent Miss-Italia-nel-mondo_720m_14-4" }, "tasks": [ { "ingestionJobKey": 469030, "label": "Add Content Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469031, "label": "Frame Containing Face: Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469032, "label": "Encode image MMS_JPG_W240 (FrameContainingFace): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469033, "label": "Encode image MMS_PNG_W240 (FrameContainingFace): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469034, "label": "Encoding profiles (FrameContainingFace): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469035, "label": "Frame: Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469036, "label": "Encode image MMS_JPG_W240 (Frame): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469037, "label": "Encode image MMS_PNG_W240 (Frame): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469038, "label": "Encoding profiles (* Connection #0 to host mms-api.cibortv-mms.com left intact
+Frame): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469039, "label": "Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469040, "label": "" }, { "ingestionJobKey": 469041, "label": "Encode Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469042, "label": "Miss-Italia-nel-mondo_720m_14-4" } ] }
+
+
+2. mark the IngestionJobKey associated to the Add-Content task because it will be used in the next step when the media file will be ingested
+	In the previous example, the ingestionJobKey ssociated to the Add-Content task is "ingestionJobKey": 469030
+4. run ingestionThroughChunks.sh script to ingest the media file
+	i.e.: ./ingestionThroughChunks.sh <mmsUserKey> <mmsAPIKey> <Add-Content ingestionJobKey> <media path name>
+
+
+More details:
+
+ingestionWorkflow.json
+----------------------
+it contains the workflow to be ingested. It consists of the following tasks:
+	1. Add-Content task to ingest a new media file
+	2. In case of success, in parallel it executes:
+		2.1. 'Best Picture of the Video' Workflow-As-Library task to retrieve the best picture of the media content
+		2.2. Encode task to add a specific HLS profile
+
+
+ingestionWorkflow.sh
+--------------------
+It is a script to ingest the ingestionWorkflow.json Workflow
+Usage: ./ingestionWorkflow.sh <mmsUserKey> <mmsAPIKey>
+
+
+ingestionThroughChunks.sh
+-------------------------
+it is the script to slit the media file in pieces and ingest them one by one
+Usage: ./ingestionThroughChunks.sh <mmsUserKey> <mmsAPIKey> <ingestion job key> <binary path name> [<chunk size in bytes]
+
+

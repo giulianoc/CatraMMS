@@ -36,7 +36,7 @@ SET (CONFs
 	3_UNIVERSAL_2021_07_19.channel.dvbv5.conf
 	3_UNIVERSAL.channel.dvbv5.conf
 	partitionInfo.json
-	pk-APKAUYWFOBAADUMU4IGK.pem
+	pk-APKAUYWFOBAADUMU4IGK.pem.gz
 )
 
 install (FILES ${CONFs} DESTINATION conf)

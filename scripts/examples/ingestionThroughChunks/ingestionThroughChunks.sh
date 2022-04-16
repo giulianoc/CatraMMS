@@ -1,17 +1,17 @@
 #!/bin/bash
 
-ingestionJobKey=$1
-binaryFilePathName=$2
-chunckSize=$3
-ingestionNumberToBeContinued=$4
+mmsUserKey=$1
+mmsAPIKey=$2
+ingestionJobKey=$3
+binaryFilePathName=$4
+chunckSize=$5
+ingestionNumberToBeContinued=$6
 
-mmsBinaryHostname=mms-binary.mms-cloud-hub.com
-mmsUserKey=XXX
-mmsAPIKey=XXXXX
+mmsBinaryHostname=mms-binary.cibortv-mms.com
 
 osName=$(uname -s)
 
-if [ $# -eq 2 ]; then
+if [ $# -eq 4 ]; then
 	if [ "$osName" == "Darwin" ]; then
 		binaryFileSize=$(stat -f%z "$binaryFilePathName")
 	else
@@ -31,10 +31,10 @@ if [ $# -eq 2 ]; then
 
 	echo "chunckSize selected: $chunckSize"
 	ingestionNumberToBeContinued=0
-elif [ $# -eq 3 ]; then
+elif [ $# -eq 5 ]; then
 	ingestionNumberToBeContinued=0
-elif [ $# -ne 4 ]; then
-	echo "Usage: $0 <ingestion job key> <binary path name> [<chunk size in bytes]"
+elif [ $# -ne 6 ]; then
+	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <ingestion job key> <binary path name> [<chunk size in bytes]"
 
 	exit 1
 fi
