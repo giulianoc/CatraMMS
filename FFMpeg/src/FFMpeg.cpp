@@ -77,21 +77,21 @@ FFMpeg::~FFMpeg()
 }
 
 void FFMpeg::encodeContent(
-        string mmsSourceAssetPathName,
-        int64_t durationInMilliSeconds,
-        // string encodedFileName,
-        string stagingEncodedAssetPathName,
-        Json::Value encodingProfileDetailsRoot,
-        bool isVideo,   // if false it means is audio
-		Json::Value videoTracksRoot,
-		Json::Value audioTracksRoot,
-		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
-        int64_t physicalPathKey,
-        string customerDirectoryName,
-        string relativePath,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid)
+	string mmsSourceAssetPathName,
+	int64_t durationInMilliSeconds,
+	// string encodedFileName,
+	string stagingEncodedAssetPathName,
+	Json::Value encodingProfileDetailsRoot,
+	bool isVideo,   // if false it means is audio
+	Json::Value videoTracksRoot,
+	Json::Value audioTracksRoot,
+	int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
+	int64_t physicalPathKey,
+	string customerDirectoryName,
+	string relativePath,
+	int64_t encodingJobKey,
+	int64_t ingestionJobKey,
+	pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
 
