@@ -13572,6 +13572,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string manifestDirectoryPath;
 		string manifestFileName;
 		string rtmpUrl;
+		string rtmpStreamName;
+		string rtmpUserName;
+		string rtmpPassword;
 		string playUrl;
 		string awsChannelConfigurationLabel;
 		bool awsSignedURL = false;
@@ -13643,6 +13646,15 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			field = "RtmpUrl";
 			rtmpUrl = outputRoot.get(field, "").asString();
+
+			field = "rtmpStreamName";
+			rtmpStreamName = outputRoot.get(field, "").asString();
+
+			field = "rtmpUserName";
+			rtmpUserName = outputRoot.get(field, "").asString();
+
+			field = "rtmpPassword";
+			rtmpPassword = outputRoot.get(field, "").asString();
 
 			field = "PlayUrl";
 			playUrl = outputRoot.get(field, "").asString();
@@ -13790,6 +13802,15 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "rtmpUrl";
 		localOutputRoot[field] = rtmpUrl;
+
+		field = "rtmpStreamName";
+		localOutputRoot[field] = rtmpStreamName;
+
+		field = "rtmpUserName";
+		localOutputRoot[field] = rtmpUserName;
+
+		field = "rtmpPassword";
+		localOutputRoot[field] = rtmpPassword;
 
 		field = "playUrl";
 		localOutputRoot[field] = playUrl;

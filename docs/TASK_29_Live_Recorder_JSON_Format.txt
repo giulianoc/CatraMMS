@@ -137,6 +137,12 @@
 
 				// mandatory only in case of RTMP_Stream
 				"RtmpUrl": "...",
+				// optional only in case of RTMP_Stream
+				"rtmpStreamName": "...",
+				// optional only in case of RTMP_Stream
+				"rtmpUserName": "...",
+				// optional only in case of RTMP_Stream
+				"rtmpPassword": "...",
 
 				// optional only in case of RTMP_Stream. It specifies the url to be used
 				//		to play the stream sent through the rtmp 

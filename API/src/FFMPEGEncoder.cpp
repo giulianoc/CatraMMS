@@ -10236,19 +10236,6 @@ void FFMPEGEncoder::liveProxyThread(
 		// liveProxy->_liveProxyOutputRoots.clear();
 		{
 
-			/*
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sOutputsRoot = Json::writeString(wbuilder, outputsRoot);
-
-				_logger->info(__FILEREF__ + "liveProxy. outputsRoot"
-					+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sOutputsRoot: " + sOutputsRoot
-				);
-			}
-			*/
-
 			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];

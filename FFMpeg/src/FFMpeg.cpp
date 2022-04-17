@@ -9702,7 +9702,9 @@ void FFMpeg::liveRecorder(
 			else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 			{
 				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
-
+				string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
+				string rtmpUserName = outputRoot.get("rtmpUserName", "").asString();
+				string rtmpPassword = outputRoot.get("rtmpPassword", "").asString();
 				if (rtmpUrl == "")
 				{
 					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -9713,6 +9715,13 @@ void FFMpeg::liveRecorder(
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+				if (rtmpStreamName != "")
+					rtmpUrl += ("/" + rtmpStreamName);
+				if (rtmpUserName != "" && rtmpPassword != "")
+				{
+					// rtmp://.....
+					rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 				}
 
 				if (audioVolumeChange != "")
@@ -12465,6 +12474,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 		{
 			string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+			string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
+			string rtmpUserName = outputRoot.get("rtmpUserName", "").asString();
+			string rtmpPassword = outputRoot.get("rtmpPassword", "").asString();
 
 			if (rtmpUrl == "")
 			{
@@ -12476,6 +12488,14 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
+			}
+
+			if (rtmpStreamName != "")
+				rtmpUrl += ("/" + rtmpStreamName);
+			if (rtmpUserName != "" && rtmpPassword != "")
+			{
+				// rtmp://.....
+				rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 			}
 
 			ffmpegOutputArgumentList.push_back("-bsf:a");
