@@ -123,7 +123,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     string _emailPassword;
     {
         string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
-        _emailPassword = Encrypt::decrypt(encryptedPassword);        
+        _emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
     }
     _emailFrom                          = _configuration["EmailNotification"].get("from", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"

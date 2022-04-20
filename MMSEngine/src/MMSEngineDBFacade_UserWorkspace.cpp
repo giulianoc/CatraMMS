@@ -1912,7 +1912,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			default_random_engine e(seed);
 
 			string sourceApiKey = userEmailAddress + "__SEP__" + to_string(e());
-			apiKey = Encrypt::encrypt(sourceApiKey);
+			apiKey = Encrypt::opensslEncrypt(sourceApiKey);
 
 			bool isOwner = false;
 			bool isDefault = false;
@@ -2536,7 +2536,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             default_random_engine e(seed);
 
             string sourceApiKey = emailAddress + "__SEP__" + to_string(e());
-            apiKey = Encrypt::encrypt(sourceApiKey);
+            apiKey = Encrypt::opensslEncrypt(sourceApiKey);
 
             bool isOwner = isSharedWorkspace ? false : true;
 			bool isDefault = false;
@@ -2892,7 +2892,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			default_random_engine e(seed);
 
 			string sourceApiKey = adminEmailAddress + "__SEP__" + to_string(e());
-			apiKey = Encrypt::encrypt(sourceApiKey);
+			apiKey = Encrypt::opensslEncrypt(sourceApiKey);
 
 			lastSQLCommand = 
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "

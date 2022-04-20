@@ -50,7 +50,7 @@ void EMailSender:: sendEmail(
     string password;
     {
         string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
-        password = Encrypt::decrypt(encryptedPassword);        
+        password = Encrypt::opensslDecrypt(encryptedPassword);        
     }
     string from = _configuration["EmailNotification"].get("from", "XXX").asString();
     // string to = "giulianoc@catrasoftware.it";

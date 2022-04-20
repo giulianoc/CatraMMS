@@ -897,7 +897,7 @@ void API::manageRequestAndResponse(
 				}
 				else
 				{
-					string sTokenComingFromCookie = Encrypt::decrypt(mmsInfoCookie);
+					string sTokenComingFromCookie = Encrypt::opensslDecrypt(mmsInfoCookie);
 					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
 					if (tokenComingFromCookie != tokenComingFromURL)
@@ -1001,7 +1001,7 @@ void API::manageRequestAndResponse(
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
 								*/
-								string auth = Encrypt::encrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
 							else if (manifestLine[0] != '#' &&
@@ -1019,7 +1019,7 @@ void API::manageRequestAndResponse(
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
 								*/
-								string auth = Encrypt::encrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
 							// start with
@@ -1045,7 +1045,7 @@ void API::manageRequestAndResponse(
 											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 										);
 										*/
-										string auth = Encrypt::encrypt(uri + "+++" + to_string(tokenComingFromURL));
+										string auth = Encrypt::opensslEncrypt(uri + "+++" + to_string(tokenComingFromURL));
 										string tokenParameter = string("?token=") + auth;
 
 										manifestLine.insert(uriEndIndex, tokenParameter);
@@ -1242,7 +1242,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 								throw runtime_error(errorMessage);
 							}
 
-							string auth = Encrypt::encrypt(string((char*) mediaValue)
+							string auth = Encrypt::opensslEncrypt(string((char*) mediaValue)
 								+ "+++" + to_string(tokenComingFromURL));
 							string newMediaAttributeValue = string((char*) mediaValue)
 								+ "?token=" + auth;
@@ -1316,7 +1316,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 					}
 				}
 
-				string cookieValue = Encrypt::encrypt(to_string(tokenComingFromURL));
+				string cookieValue = Encrypt::opensslEncrypt(to_string(tokenComingFromURL));
 				string cookiePath;
 				{
 					size_t cookiePathIndex = contentURI.find_last_of("/");
@@ -3851,7 +3851,7 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				throw runtime_error(errorMessage);
 			}
 			// manifestLineAndToken comes from ts URL
-			string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
+			string manifestLineAndToken = Encrypt::opensslDecrypt(encryptedToken);
 			string manifestLine;
 			// int64_t tokenComingFromURL;
 			{
@@ -3872,7 +3872,7 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				tokenComingFromURL = stoll(sTokenComingFromURL);
 			}
 
-			string sTokenComingFromCookie = Encrypt::decrypt(cookie);
+			string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
 			int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
 			_logger->info(__FILEREF__ + "check token info"

@@ -73,7 +73,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     string dbPassword;
     {
         string encryptedPassword = configuration["database"].get("password", "XXX").asString();
-        dbPassword = Encrypt::decrypt(encryptedPassword);        
+        dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		// dbPassword = encryptedPassword;
     }    
     string dbName = configuration["database"].get("dbName", "XXX").asString();
