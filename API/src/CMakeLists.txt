@@ -35,6 +35,7 @@ SET (SOURCES_API
 	API_UserWorkspace.cpp
 	API_Configuration.cpp
 	API_EncodersPool.cpp
+	API_Statistic.cpp
 )
 
 #SET (SOURCES_UPLOADBINARY

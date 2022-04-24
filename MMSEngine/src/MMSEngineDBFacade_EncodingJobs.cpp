@@ -4988,7 +4988,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                     if (resultSetEncodingJob->isNull("encodingJobStart"))
                         encodingJobRoot[field] = Json::nullValue;
                     else
-                        encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
+                        encodingJobRoot[field] = static_cast<string>(
+							resultSetEncodingJob->getString("encodingJobStart"));
                 }
 
                 field = "end";

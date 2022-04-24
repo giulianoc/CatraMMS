@@ -5715,10 +5715,21 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 	_currentApiName = "getMediaInfo";
 
 	_logger->info(__FILEREF__ + "getMediaInfo"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", isMMSAssetPathName: " + to_string(isMMSAssetPathName)
+		+ ", mediaSource: " + mediaSource
+	);
+
+	if (mediaSource == "")
+	{
+		string errorMessage = string("Media Source is wrong")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", isMMSAssetPathName: " + to_string(isMMSAssetPathName)
 			+ ", mediaSource: " + mediaSource
-			);
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	// milli secs to wait in case of nfs delay
 	if (isMMSAssetPathName)
@@ -5779,14 +5790,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
+	chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
     try
     {
         _logger->info(__FILEREF__ + "getMediaInfo: Executing ffprobe command"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
         );
-
-        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
 		// The check/retries below was done to manage the scenario where the file was created
 		// by another MMSEngine and it is not found just because of nfs delay.
@@ -5825,16 +5835,22 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             + ", @FFMPEG statistics@ - duration (secs): @"
-				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
+				endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
     catch(runtime_error e)
     {
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
+        string errorMessage = __FILEREF__ + "getMediaInfo: Executed ffmpeg command failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
+				endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 			+ ", e.what(): " + e.what()
         ;

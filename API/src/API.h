@@ -609,6 +609,17 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
+	void addRequestStatistic(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters,
+		string requestBody);
+
+	void requestStatisticList(
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
     void parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,

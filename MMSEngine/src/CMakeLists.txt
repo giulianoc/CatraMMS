@@ -34,6 +34,7 @@ SET (SOURCES
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_PartitionInfo.cpp
+	MMSEngineDBFacade_Statistic.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp

@@ -2353,6 +2353,18 @@ public:
     tuple<string, string, string> getEMailByConfigurationLabel(
         int64_t workspaceKey, string liveURLConfigurationLabel);
     
+	Json::Value addRequestStatistic(
+		int64_t workspaceKey,
+		string userId,
+		int64_t physicalPathKey,
+		int64_t confStreamKey);
+
+	Json::Value getRequestStatisticList (
+		int64_t workspaceKey,
+		string userId,
+		string startDate, string endDate,
+		int start, int rows);
+
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string label,
 			int milliSecondsToSleepWaitingLock = 500,

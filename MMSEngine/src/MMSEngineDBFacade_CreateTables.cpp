@@ -352,6 +352,33 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+            lastSQLCommand = 
+				"create table if not exists MMS_RequestStatistic ("
+					"requestStatisticKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"userId						VARCHAR (128) NOT NULL,"
+					"physicalPathKey			BIGINT UNSIGNED NULL,"
+					"confStreamKey				BIGINT UNSIGNED NULL,"
+					"requestTimestamp			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+					"constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey))"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
 			// isDefault: assume a User has access to two Workspaces, which one is the default for him?
 			//	default means the GUI APP starts with this (default) Workspace
             lastSQLCommand = 

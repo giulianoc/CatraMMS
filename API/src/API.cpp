@@ -2249,6 +2249,26 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         emailConfList(request, workspace);
     }
+    else if (method == "addRequestStatistic")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+				", admin: " + to_string(admin)
+			);
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addRequestStatistic(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "requestStatisticList")
+    {
+		requestStatisticList(request, workspace, queryParameters);
+    }
     else
     {
         string errorMessage = string("No API is matched")
