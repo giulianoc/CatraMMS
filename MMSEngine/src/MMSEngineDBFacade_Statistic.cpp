@@ -6,7 +6,8 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 	int64_t workspaceKey,
 	string userId,
 	int64_t physicalPathKey,
-	int64_t confStreamKey
+	int64_t confStreamKey,
+	string title
 	)
 {
     string      lastSQLCommand;
@@ -24,8 +25,8 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		{
 			lastSQLCommand = 
 				"insert into MMS_RequestStatistic(workspaceKey, userId, physicalPathKey, "
-				"confStreamKey, requestTimestamp) values ("
-				"?, ?, ?, ?, NOW())";
+				"confStreamKey, title, requestTimestamp) values ("
+				"?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -40,6 +41,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 			else
 				preparedStatement->setInt64(queryParameterIndex++, confStreamKey);
+			preparedStatement->setString(queryParameterIndex++, title);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -69,6 +71,9 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 			field = "confStreamKey";
 			statisticRoot[field] = confStreamKey;
+
+			field = "title";
+			statisticRoot[field] = title;
 		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -142,6 +147,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 Json::Value MMSEngineDBFacade::getRequestStatisticList (
 	int64_t workspaceKey,
 	string userId,
+	string title,
 	string startStatisticDate, string endStatisticDate,
 	int start, int rows
 )
@@ -158,6 +164,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         _logger->info(__FILEREF__ + "getRequestStatisticList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", userId: " + userId
+            + ", title: " + title
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
             + ", start: " + to_string(start)
@@ -181,6 +188,12 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 			{
 				field = "userId";
 				requestParametersRoot[field] = userId;
+			}
+
+			if (title != "")
+			{
+				field = "title";
+				requestParametersRoot[field] = title;
 			}
 
 			if (startStatisticDate != "")
@@ -212,6 +225,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 		string sqlWhere = string ("where workspaceKey = ? ");
 		if (userId != "")
 			sqlWhere += ("and userId like ? ");
+		if (title != "")
+			sqlWhere += ("and title like ? ");
 		if (startStatisticDate != "")
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
@@ -229,6 +244,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			if (userId != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + userId + "%");
+			if (title != "")
+				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
 			if (startStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
@@ -239,6 +256,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userId: " + userId
+				+ ", title: " + title
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -262,7 +280,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         {
             lastSQLCommand = 
                 "select requestStatisticKey, userId, "
-				"physicalPathKey, confStreamKey, "
+				"physicalPathKey, confStreamKey, title, "
 				"DATE_FORMAT(convert_tz(requestTimestamp, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as requestTimestamp "
 				"from MMS_RequestStatistic "
                 + sqlWhere
@@ -276,6 +294,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 			if (userId != "")
 				preparedStatement->setString(queryParameterIndex++,
 					string("%") + userId + "%");
+			if (title != "")
+				preparedStatement->setString(queryParameterIndex++,
+					string("%") + title + "%");
 			if (startStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
@@ -288,6 +309,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userId: " + userId
+				+ ", title: " + title
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
 				+ ", rows: " + to_string(rows)
@@ -319,6 +341,10 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 					statisticRoot[field] = Json::nullValue;
 				else
 					statisticRoot[field] = resultSet->getInt64("confStreamKey");
+
+                field = "title";
+                statisticRoot[field] = static_cast<string>(
+					resultSet->getString("title"));
 
                 field = "requestTimestamp";
 				statisticRoot[field] = static_cast<string>(

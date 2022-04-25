@@ -378,7 +378,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathD
     }
 }
 
-tuple<int, string, string> MMSStorage::getVODDeliveryURI(
+tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(
 	int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace)
 {
     try
@@ -448,7 +448,7 @@ tuple<int, string, string> MMSStorage::getVODDeliveryURI(
 				+ fileName;
 		}
 
-		return make_tuple(mmsPartitionNumber, deliveryFileName, deliveryURI);
+		return make_tuple(title, mmsPartitionNumber, deliveryFileName, deliveryURI);
     }
     catch(MediaItemKeyNotFound e)
     {
@@ -484,7 +484,7 @@ tuple<int, string, string> MMSStorage::getVODDeliveryURI(
     }
 }
 
-tuple<int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
+tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
 		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace)
 {
@@ -549,7 +549,8 @@ tuple<int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
 				+ fileName;
 		}
 
-		return make_tuple(mmsPartitionNumber, physicalPathKey, deliveryFileName, deliveryURI);
+		return make_tuple(title, mmsPartitionNumber, physicalPathKey,
+			deliveryFileName, deliveryURI);
     }
     catch(MediaItemKeyNotFound e)
     {

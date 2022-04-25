@@ -2357,11 +2357,13 @@ public:
 		int64_t workspaceKey,
 		string userId,
 		int64_t physicalPathKey,
-		int64_t confStreamKey);
+		int64_t confStreamKey,
+		string title);
 
 	Json::Value getRequestStatisticList (
 		int64_t workspaceKey,
 		string userId,
+		string title,
 		string startDate, string endDate,
 		int start, int rows);
 

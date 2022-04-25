@@ -359,6 +359,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"userId						VARCHAR (128) NOT NULL,"
 					"physicalPathKey			BIGINT UNSIGNED NULL,"
 					"confStreamKey				BIGINT UNSIGNED NULL,"
+                    "title						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
 					"requestTimestamp			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
 					"constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey))"
                     "ENGINE=InnoDB";

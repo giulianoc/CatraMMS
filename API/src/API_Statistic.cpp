@@ -39,6 +39,7 @@ void API::addRequestStatistic(
         string userId;
 		int64_t physicalPathKey = -1;
 		int64_t confStreamKey = -1;
+        string title;
         
         try
         {
@@ -94,6 +95,17 @@ void API::addRequestStatistic(
 
 				throw runtime_error(errorMessage);
             }
+
+			field = "title";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            title = requestBodyRoot.get(field, "").asString();            
         }
         catch(runtime_error e)
         {
@@ -119,7 +131,7 @@ void API::addRequestStatistic(
         try
         {
 			Json::Value statisticRoot = _mmsEngineDBFacade->addRequestStatistic(
-				workspace->_workspaceKey, userId, physicalPathKey, confStreamKey);
+				workspace->_workspaceKey, userId, physicalPathKey, confStreamKey, title);
 
 			Json::StreamWriterBuilder wbuilder;
 			sResponse = Json::writeString(wbuilder, statisticRoot);
@@ -232,6 +244,22 @@ void API::requestStatisticList(
 			userId = curlpp::unescape(firstDecoding);
 		}
 
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = curlpp::unescape(firstDecoding);
+		}
+
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt != queryParameters.end())
@@ -244,7 +272,7 @@ void API::requestStatisticList(
 
         {
 			Json::Value statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
-				workspace->_workspaceKey, userId, startStatisticDate, endStatisticDate,
+				workspace->_workspaceKey, userId, title, startStatisticDate, endStatisticDate,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;

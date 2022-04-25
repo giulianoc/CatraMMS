@@ -3006,13 +3006,15 @@ pair<string, string> API::createDeliveryAuthorization(
 	{
 		string deliveryURI;
 		int mmsPartitionNumber;
+		int64_t localPhysicalPathKey = physicalPathKey;
+		string title;
 
-		if (physicalPathKey != -1)
+		if (localPhysicalPathKey != -1)
 		{
-			tuple<int, string, string> deliveryFileNameAndDeliveryURI =
-				_mmsStorage->getVODDeliveryURI(physicalPathKey, save, requestWorkspace);
+			tuple<string, int, string, string> deliveryFileNameAndDeliveryURI =
+				_mmsStorage->getVODDeliveryURI(localPhysicalPathKey, save, requestWorkspace);
 
-			tie(mmsPartitionNumber, deliveryFileName, deliveryURI)
+			tie(title, mmsPartitionNumber, deliveryFileName, deliveryURI)
 				= deliveryFileNameAndDeliveryURI;
 		}
 		else
@@ -3051,10 +3053,10 @@ pair<string, string> API::createDeliveryAuthorization(
 				);
 			}
 
-			tuple<int, int64_t, string, string> vodDeliveryURIDetails =
+			tuple<string, int, int64_t, string, string> vodDeliveryURIDetails =
 				_mmsStorage->getVODDeliveryURI(mediaItemKey,
 					encodingProfileKey, save, requestWorkspace);
-			tie(mmsPartitionNumber, physicalPathKey, deliveryFileName, deliveryURI) =
+			tie(title, mmsPartitionNumber, localPhysicalPathKey, deliveryFileName, deliveryURI) =
 				vodDeliveryURIDetails;
 		}
 
@@ -3138,7 +3140,7 @@ pair<string, string> API::createDeliveryAuthorization(
 			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 				userKey,
 				clientIPAddress,
-				physicalPathKey,
+				localPhysicalPathKey,
 				-1,
 				deliveryURI,
 				ttlInSeconds,
@@ -3198,7 +3200,26 @@ pair<string, string> API::createDeliveryAuthorization(
 		}
 		*/
 
+		try
+		{
+			_mmsEngineDBFacade->addRequestStatistic(
+				requestWorkspace->_workspaceKey,
+				to_string(userKey),
+				localPhysicalPathKey,
+				-1,	// confStreamKey
+				title
+			);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("_mmsEngineDBFacade->addRequestStatistic failed")
+				+ ", e.what: " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+
 		_logger->info(__FILEREF__ + "createDeliveryAuthorization info"
+			+ ", title: " + title
 			+ ", deliveryURI: " + deliveryURI
 			+ ", deliveryType: " + deliveryType
 			+ ", deliveryURL (authorized): " + deliveryURL
@@ -3463,6 +3484,50 @@ pair<string, string> API::createDeliveryAuthorization(
 				}
 				*/
 			}
+
+			try
+			{
+				field = "ConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				{
+					string errorMessage =
+						field + " field missing"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string configurationLabel = ingestionJobRoot.get(field, "").asString();
+
+				bool warningIfMissing = false;
+				tuple<int64_t, string, string, string, string, string, int, string, int,
+					int, string, int, int, int, int, int, int64_t> streamDetails
+					= _mmsEngineDBFacade->getStreamDetails(
+					requestWorkspace->_workspaceKey,
+					configurationLabel, warningIfMissing
+				);
+
+				int64_t streamConfKey;
+				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore) = streamDetails;
+
+				_mmsEngineDBFacade->addRequestStatistic(
+					requestWorkspace->_workspaceKey,
+					to_string(userKey),
+					-1,	// localPhysicalPathKey,
+					streamConfKey,
+					configurationLabel
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("_mmsEngineDBFacade->addRequestStatistic failed")
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
 		}
 		else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 		{
@@ -3688,6 +3753,50 @@ pair<string, string> API::createDeliveryAuthorization(
 					throw runtime_error(errorMessage);
 				}
 				*/
+			}
+
+			try
+			{
+				field = "ConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				{
+					string errorMessage =
+						field + " field missing"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string configurationLabel = ingestionJobRoot.get(field, "").asString();
+
+				bool warningIfMissing = false;
+				tuple<int64_t, string, string, string, string, string, int, string, int,
+					int, string, int, int, int, int, int, int64_t> streamDetails
+					= _mmsEngineDBFacade->getStreamDetails(
+					requestWorkspace->_workspaceKey,
+					configurationLabel, warningIfMissing
+				);
+
+				int64_t streamConfKey;
+				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore) = streamDetails;
+
+				_mmsEngineDBFacade->addRequestStatistic(
+					requestWorkspace->_workspaceKey,
+					to_string(userKey),
+					-1,	// localPhysicalPathKey,
+					streamConfKey,
+					configurationLabel
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("_mmsEngineDBFacade->addRequestStatistic failed")
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 			}
 
 			_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
