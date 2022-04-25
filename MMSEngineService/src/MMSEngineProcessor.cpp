@@ -21999,19 +21999,21 @@ void MMSEngineProcessor::emailNotificationThread(
 						field = "ReferenceIngestionJobKey";
 						if (JSONUtils::isMetadataPresent(referenceRoot, field))
 						{
-							int64_t referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
+							int64_t referenceIngestionJobKey =
+								JSONUtils::asInt64(referenceRoot, field, 0);
 
 							string referenceLabel;
 							MMSEngineDBFacade::IngestionType ingestionType;
 							string parameters;
 							string referenceErrorMessage;
 
-							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+							tuple<string, MMSEngineDBFacade::IngestionType,
+								MMSEngineDBFacade::IngestionStatus,
 								string, string> ingestionJobDetails =
 								_mmsEngineDBFacade->getIngestionJobDetails(
 										workspace->_workspaceKey, referenceIngestionJobKey);
-							tie(referenceLabel, ingestionType, ignore, parameters, referenceErrorMessage)
-								= ingestionJobDetails;
+							tie(referenceLabel, ingestionType, ignore, parameters,
+								referenceErrorMessage) = ingestionJobDetails;
 
 							sReferencies += string("<br>IngestionJob")
 								+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)

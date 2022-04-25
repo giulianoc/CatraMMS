@@ -2367,6 +2367,12 @@ public:
 		string startDate, string endDate,
 		int start, int rows);
 
+	Json::Value getRequestStatisticPerContentList (
+		int64_t workspaceKey,
+		string title,
+		string startDate, string endDate,
+		int start, int rows);
+
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string label,
 			int milliSecondsToSleepWaitingLock = 500,

@@ -2269,6 +2269,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
 		requestStatisticList(request, workspace, queryParameters);
     }
+    else if (method == "requestStatisticPerContentList")
+    {
+		requestStatisticPerContentList(request, workspace, queryParameters);
+    }
     else
     {
         string errorMessage = string("No API is matched")
@@ -2422,6 +2426,16 @@ void API::createDeliveryAuthorization(
         if (deliveryTypeIt != queryParameters.end())
 			deliveryType = deliveryTypeIt->second;
 
+        bool filteredByStatistic = false;
+        auto filteredByStatisticIt = queryParameters.find("filteredByStatistic");
+        if (filteredByStatisticIt != queryParameters.end())
+        {
+            if (filteredByStatisticIt->second == "true")
+                filteredByStatistic = true;
+            else
+                filteredByStatistic = false;
+        }
+
 		try
 		{
 			bool warningIfMissingMediaItemKey = false;
@@ -2445,7 +2459,8 @@ void API::createDeliveryAuthorization(
 				save,
 				deliveryType,
 
-				warningIfMissingMediaItemKey
+				warningIfMissingMediaItemKey,
+				filteredByStatistic
 			);
 
 			string deliveryURL;
@@ -2658,6 +2673,9 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "deliveryType";
 					string deliveryType = mediaItemKeyRoot.get(field, "").asString();
 
+					field = "filteredByStatistic";
+					bool filteredByStatistic = mediaItemKeyRoot.get(field, false).asBool();
+
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
@@ -2681,7 +2699,8 @@ void API::createBulkOfDeliveryAuthorization(
 							maxRetries,
 							save,
 							deliveryType,
-							warningIfMissingMediaItemKey
+							warningIfMissingMediaItemKey,
+							filteredByStatistic
 						);
 					}
 					catch (MediaItemKeyNotFound e)
@@ -2749,6 +2768,9 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "deliveryType";
 					string deliveryType = uniqueNameRoot.get(field, "").asString();
 
+					field = "filteredByStatistic";
+					bool filteredByStatistic = uniqueNameRoot.get(field, false).asBool();
+
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
@@ -2772,7 +2794,8 @@ void API::createBulkOfDeliveryAuthorization(
 							maxRetries,
 							save,
 							deliveryType,
-							warningIfMissingMediaItemKey
+							warningIfMissingMediaItemKey,
+							filteredByStatistic
 						);
 					}
 					catch (MediaItemKeyNotFound e)
@@ -2839,6 +2862,9 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "deliveryType";
 					string deliveryType = liveIngestionJobKeyRoot.get(field, "").asString();
 
+					field = "filteredByStatistic";
+					bool filteredByStatistic = liveIngestionJobKeyRoot.get(field, false).asBool();
+
 					pair<string, string> deliveryAuthorizationDetails;
 					try
 					{
@@ -2862,7 +2888,8 @@ void API::createBulkOfDeliveryAuthorization(
 							maxRetries,
 							save,
 							deliveryType,
-							warningIfMissingMediaItemKey
+							warningIfMissingMediaItemKey,
+							filteredByStatistic
 						);
 					}
 					catch (MediaItemKeyNotFound e)
@@ -2996,7 +3023,8 @@ pair<string, string> API::createDeliveryAuthorization(
 	// AWSCloudFront_Signed: delivery by AWS CloudFront with a signed URL
 	string deliveryType,
 
-	bool warningIfMissingMediaItemKey
+	bool warningIfMissingMediaItemKey,
+	bool filteredByStatistic
 	)
 {
 	string deliveryURL;
@@ -3200,22 +3228,25 @@ pair<string, string> API::createDeliveryAuthorization(
 		}
 		*/
 
-		try
+		if (!filteredByStatistic)
 		{
-			_mmsEngineDBFacade->addRequestStatistic(
-				requestWorkspace->_workspaceKey,
-				to_string(userKey),
-				localPhysicalPathKey,
-				-1,	// confStreamKey
-				title
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string("_mmsEngineDBFacade->addRequestStatistic failed")
-				+ ", e.what: " + e.what()
-			;
-			_logger->error(__FILEREF__ + errorMessage);
+			try
+			{
+				_mmsEngineDBFacade->addRequestStatistic(
+					requestWorkspace->_workspaceKey,
+					to_string(userKey),
+					localPhysicalPathKey,
+					-1,	// confStreamKey
+					title
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("_mmsEngineDBFacade->addRequestStatistic failed")
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
 		}
 
 		_logger->info(__FILEREF__ + "createDeliveryAuthorization info"

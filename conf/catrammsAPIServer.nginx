@@ -242,6 +242,9 @@
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?version=$1&method=requestStatisticList last;
 		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perContent/?$ /api?version=$1&method=requestStatisticPerContentList last;
+		}
 
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;

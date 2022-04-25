@@ -434,7 +434,8 @@ private:
 		bool save,
 		string deliveryType,
 
-		bool warningIfMissingMediaItemKey
+		bool warningIfMissingMediaItemKey,
+		bool filteredByStatistic
 	);
 
 	void createBulkOfDeliveryAuthorization(
@@ -616,6 +617,11 @@ private:
 		string requestBody);
 
 	void requestStatisticList(
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
+	void requestStatisticPerContentList(
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);

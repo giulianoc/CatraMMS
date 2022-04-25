@@ -428,3 +428,241 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
     return statisticsListRoot;
 }
 
+Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
+	int64_t workspaceKey,
+	string title,
+	string startStatisticDate, string endStatisticDate,
+	int start, int rows
+)
+{
+    string      lastSQLCommand;
+    Json::Value statisticsListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getRequestStatisticPerContentList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", title: " + title
+            + ", startStatisticDate: " + startStatisticDate
+            + ", endStatisticDate: " + endStatisticDate
+            + ", start: " + to_string(start)
+            + ", rows: " + to_string(rows)
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+
+			{
+				field = "workspaceKey";
+				requestParametersRoot[field] = workspaceKey;
+			}
+            
+			if (title != "")
+			{
+				field = "title";
+				requestParametersRoot[field] = title;
+			}
+
+			if (startStatisticDate != "")
+            {
+                field = "startStatisticDate";
+                requestParametersRoot[field] = startStatisticDate;
+            }
+
+			if (endStatisticDate != "")
+            {
+                field = "endStatisticDate";
+                requestParametersRoot[field] = endStatisticDate;
+            }
+
+			{
+				field = "start";
+				requestParametersRoot[field] = start;
+			}
+            
+			{
+				field = "rows";
+				requestParametersRoot[field] = rows;
+			}
+
+            field = "requestParameters";
+            statisticsListRoot[field] = requestParametersRoot;
+        }
+        
+		string sqlWhere = string ("where workspaceKey = ? ");
+		if (title != "")
+			sqlWhere += ("and title like ? ");
+		if (startStatisticDate != "")
+			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (endStatisticDate != "")
+			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+
+        Json::Value responseRoot;
+        {
+			lastSQLCommand = 
+				string("select title, count(*) from MMS_RequestStatistic ")
+				+ sqlWhere
+				+ "group by title order by count(*) asc "
+			;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (title != "")
+				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (startStatisticDate != "")
+				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
+			if (endStatisticDate != "")
+				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", title: " + title
+				+ ", startStatisticDate: " + startStatisticDate
+				+ ", endStatisticDate: " + endStatisticDate
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+
+            field = "numFound";
+            responseRoot[field] = resultSet->rowsCount();
+        }
+
+        Json::Value statisticsRoot(Json::arrayValue);
+        {
+            lastSQLCommand = 
+				string("select title, count(*) as count from MMS_RequestStatistic ")
+				+ sqlWhere
+				+ "group by title order by count(*) asc "
+				+ "limit ? offset ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (title != "")
+				preparedStatement->setString(queryParameterIndex++,
+					string("%") + title + "%");
+			if (startStatisticDate != "")
+				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
+			if (endStatisticDate != "")
+				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", title: " + title
+				+ ", startStatisticDate: " + startStatisticDate
+				+ ", endStatisticDate: " + endStatisticDate
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            while (resultSet->next())
+            {
+                Json::Value statisticRoot;
+
+                field = "title";
+                statisticRoot[field] = static_cast<string>(
+					resultSet->getString("title"));
+
+                field = "count";
+                statisticRoot[field] = resultSet->getInt64("count");
+
+                statisticsRoot.append(statisticRoot);
+            }
+        }
+
+        field = "requestStatistics";
+        responseRoot[field] = statisticsRoot;
+
+        field = "response";
+        statisticsListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    
+    return statisticsListRoot;
+}
+

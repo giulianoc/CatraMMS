@@ -40,10 +40,12 @@
 		// Here follows the list of the "variables" replaced by MMS if the placeholder is present:
 		// - Dependencies: it contains details of the Media inheredit by the parent Task
 		// - Referencies: it contains details of the References included by the this Task
+
 		// Here follows the list of the "variables" replaced by MMS
 		// if the parent Task is 'CheckStreaming':
 		// - CheckStreaming_streamingName
 		// - CheckStreaming_streamingUrl
+
 		"ConfigurationLabel": "My email"
 
 		// optional
