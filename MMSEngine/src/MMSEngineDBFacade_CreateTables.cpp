@@ -352,17 +352,49 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+			string currentPartition_YYYYMM_1;
+			string currentPartition_YYYYMM_2;
+			{
+				chrono::duration<int, ratio<60*60*24*30>> one_month(1);
+
+				chrono::system_clock::time_point today = chrono::system_clock::now();
+				chrono::system_clock::time_point nextMonth = today + one_month;
+				time_t utcTime_nextMonth = chrono::system_clock::to_time_t(nextMonth);
+
+				char strDateTime [64];
+				tm tmDateTime;
+		
+				localtime_r (&utcTime_nextMonth, &tmDateTime);
+
+				sprintf (strDateTime, "%04d-%02d-01",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1);
+				currentPartition_YYYYMM_1 = strDateTime;
+
+				sprintf (strDateTime, "%04d_%02d_01",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1);
+				currentPartition_YYYYMM_2 = strDateTime;
+			}
+
             lastSQLCommand = 
 				"create table if not exists MMS_RequestStatistic ("
-					"requestStatisticKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey				BIGINT UNSIGNED NOT NULL,"
 					"userId						VARCHAR (128) NOT NULL,"
 					"physicalPathKey			BIGINT UNSIGNED NULL,"
 					"confStreamKey				BIGINT UNSIGNED NULL,"
                     "title						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					"requestTimestamp			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-					"constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey))"
-                    "ENGINE=InnoDB";
+					"requestTimestamp			DATETIME NOT NULL,"
+					"constraint MMS_RequestStatistic_PK PRIMARY KEY (workspaceKey, userId, requestTimestamp))"
+                    "ENGINE=InnoDB "
+					"partition by range (to_days(requestTimestamp)) "
+					"( "
+					"PARTITION p_" + currentPartition_YYYYMM_2
+						+ " VALUES LESS THAN (to_days('" + currentPartition_YYYYMM_1 + "')) "
+					// 2022-04-26: commented because otherwise no more partitions can be added
+					// ", PARTITION p_others VALUES LESS THAN MAXVALUE "
+					") "
+			;
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

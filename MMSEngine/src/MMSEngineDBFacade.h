@@ -2375,6 +2375,18 @@ public:
 		string startDate, string endDate,
 		int start, int rows);
 
+	Json::Value getRequestStatisticPerMonthList (
+		int64_t workspaceKey,
+		string title,
+		string startStatisticDate, string endStatisticDate,
+		int start, int rows);
+
+	Json::Value getRequestStatisticPerDayList (
+		int64_t workspaceKey,
+		string title,
+		string startStatisticDate, string endStatisticDate,
+		int start, int rows);
+
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string label,
 			int milliSecondsToSleepWaitingLock = 500,
@@ -2528,7 +2540,7 @@ private:
     
 	int								_doNotManageIngestionsOlderThanDays;
 	int								_ingestionWorkflowRetentionInDays;
-	int								_statisticRetentionInDays;
+	int								_statisticRetentionInMonths;
 
 	string							_ffmpegEncoderUser;
 	string							_ffmpegEncoderPassword;
