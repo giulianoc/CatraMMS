@@ -437,13 +437,13 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 {
     string      lastSQLCommand;
     Json::Value statisticsListRoot;
-    
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
     {
         string field;
-        
+
         _logger->info(__FILEREF__ + "getRequestStatisticPerContentList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", title: " + title
@@ -511,7 +511,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 			lastSQLCommand = 
 				string("select title, count(*) from MMS_RequestStatistic ")
 				+ sqlWhere
-				+ "group by title order by count(*) asc "
+				+ "group by title order by count(*) desc "
 			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -546,7 +546,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             lastSQLCommand = 
 				string("select title, count(*) as count from MMS_RequestStatistic ")
 				+ sqlWhere
-				+ "group by title order by count(*) asc "
+				+ "group by title order by count(*) desc "
 				+ "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -564,19 +564,6 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", title: " + title
-				+ ", startStatisticDate: " + startStatisticDate
-				+ ", endStatisticDate: " + endStatisticDate
-				+ ", rows: " + to_string(rows)
-				+ ", start: " + to_string(start)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
             while (resultSet->next())
             {
                 Json::Value statisticRoot;
@@ -590,6 +577,19 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 
                 statisticsRoot.append(statisticRoot);
             }
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", title: " + title
+				+ ", startStatisticDate: " + startStatisticDate
+				+ ", endStatisticDate: " + endStatisticDate
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         field = "requestStatistics";
