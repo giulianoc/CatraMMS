@@ -626,6 +626,16 @@ private:
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
+	void requestStatisticPerMonthList(
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
+	void requestStatisticPerDayList(
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
     void parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,

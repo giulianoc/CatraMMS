@@ -2273,6 +2273,14 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
 		requestStatisticPerContentList(request, workspace, queryParameters);
     }
+    else if (method == "requestStatisticPerMonthList")
+    {
+		requestStatisticPerMonthList(request, workspace, queryParameters);
+    }
+    else if (method == "requestStatisticPerDayList")
+    {
+		requestStatisticPerDayList(request, workspace, queryParameters);
+    }
     else
     {
         string errorMessage = string("No API is matched")

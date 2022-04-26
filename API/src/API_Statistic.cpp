@@ -420,3 +420,221 @@ void API::requestStatisticPerContentList(
     }
 }
 
+void API::requestStatisticPerMonthList(
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "requestStatisticPerMonthList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+		{
+			start = stoll(startIt->second);
+		}
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = curlpp::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt != queryParameters.end())
+			startStatisticDate = startStatisticDateIt->second;
+
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt != queryParameters.end())
+			endStatisticDate = endStatisticDateIt->second;
+
+        {
+			Json::Value statisticsListRoot
+				= _mmsEngineDBFacade->getRequestStatisticPerMonthList(
+				workspace->_workspaceKey, title, startStatisticDate, endStatisticDate,
+				start, rows); 
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+
+			sendSuccess(request, 200, responseBody);
+		}
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::requestStatisticPerDayList(
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "requestStatisticPerDayList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+		{
+			start = stoll(startIt->second);
+		}
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = curlpp::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt != queryParameters.end())
+			startStatisticDate = startStatisticDateIt->second;
+
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt != queryParameters.end())
+			endStatisticDate = endStatisticDateIt->second;
+
+        {
+			Json::Value statisticsListRoot
+				= _mmsEngineDBFacade->getRequestStatisticPerDayList(
+				workspace->_workspaceKey, title, startStatisticDate, endStatisticDate,
+				start, rows); 
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+
+			sendSuccess(request, 200, responseBody);
+		}
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
