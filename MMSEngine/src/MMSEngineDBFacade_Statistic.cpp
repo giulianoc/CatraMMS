@@ -666,3 +666,124 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
     return statisticsListRoot;
 }
 
+void MMSEngineDBFacade::retentionOfStatisticData()
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	_logger->info(__FILEREF__ + "retentionOfStatisticData"
+			);
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+			// we will remove by steps to avoid error because of transaction log overflow
+			int maxToBeRemoved = 100;
+			int totalRowsRemoved = 0;
+			bool moreRowsToBeRemoved = true;
+			while (moreRowsToBeRemoved)
+			{
+				lastSQLCommand = 
+					"delete from MMS_RequestStatistic "
+					"where requestTimestamp < DATE_SUB(NOW(), INTERVAL ? DAY) "
+					"limit ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt(queryParameterIndex++,
+					_statisticRetentionInDays);
+				preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfStatisticData)"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", _statisticRetentionInDays: " + to_string(_statisticRetentionInDays)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (millisecs): @"
+						+ to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				totalRowsRemoved += rowsUpdated;
+				if (rowsUpdated == 0)
+					moreRowsToBeRemoved = false;
+			}
+			_logger->info(__FILEREF__ + "retentionOfStatisticData"
+				+ ", totalRowsRemoved: " + to_string(totalRowsRemoved)
+			);
+        }
+
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+

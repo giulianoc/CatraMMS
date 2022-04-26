@@ -1696,6 +1696,8 @@ public:
 
 	void retentionOfIngestionData();
 
+	void retentionOfStatisticData();
+
 	void retentionOfDeliveryAuthorization();
 
 	void fixEncodingJobsHavingWrongStatus();
@@ -2526,6 +2528,7 @@ private:
     
 	int								_doNotManageIngestionsOlderThanDays;
 	int								_ingestionWorkflowRetentionInDays;
+	int								_statisticRetentionInDays;
 
 	string							_ffmpegEncoderUser;
 	string							_ffmpegEncoderPassword;

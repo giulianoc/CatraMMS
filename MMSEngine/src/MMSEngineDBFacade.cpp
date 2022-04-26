@@ -88,6 +88,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
     );
+    _statisticRetentionInDays = JSONUtils::asInt(configuration["database"], "statisticRetentionInDays", 30);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->statisticRetentionInDays: " + to_string(_statisticRetentionInDays)
+    );
     _doNotManageIngestionsOlderThanDays = JSONUtils::asInt(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
