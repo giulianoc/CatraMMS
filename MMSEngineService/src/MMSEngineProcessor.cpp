@@ -13893,8 +13893,8 @@ void MMSEngineProcessor::manageLiveGrid(
 				int64_t inputConfKey;
 				string streamSourceType;
 				string inputChannelURL;
-				tie(inputConfKey, streamSourceType, inputChannelURL,
-					ignore, ignore, ignore, ignore, ignore, ignore,
+				tie(inputConfKey, streamSourceType, ignore, inputChannelURL,
+					ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = confKeyAndChannelURL;
 
@@ -22076,8 +22076,8 @@ void MMSEngineProcessor::emailNotificationThread(
 
 										string streamSourceType;
 										tie(ignore, streamSourceType,
-											checkStreaming_streamingUrl,
-											ignore, ignore, ignore, ignore, ignore,
+											ignore, checkStreaming_streamingUrl,
+											ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore)
 											= channelDetails;
