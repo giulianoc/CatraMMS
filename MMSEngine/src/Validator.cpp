@@ -2621,7 +2621,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "InputType"
+        "inputType"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2640,13 +2640,13 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
             throw runtime_error(errorMessage);
         }
     }
-	string field = "InputType";
+	string field = "inputType";
 	string inputType = parametersRoot.get(field, "").asString();
 
 	if (inputType == "Channel")
 	{
 		vector<string> mandatoryFields = {
-			"ConfigurationLabel"
+			"channelConfigurationLabel"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -2669,8 +2669,8 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 	else if (inputType == "StreamingUrl")
 	{
 		vector<string> mandatoryFields = {
-			"StreamingName",
-			"StreamingUrl"
+			"streamingName",
+			"streamingUrl"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -2695,7 +2695,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-		string errorMessage = __FILEREF__ + "InputType Field is wrong, it is neither Channel nor StreamingUrl"
+		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither channel nor streamingUrl"
 			+ ", inputType: " + inputType
 			+ ", sParametersRoot: " + sParametersRoot
 			+ ", label: " + label
@@ -2705,7 +2705,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		throw runtime_error(errorMessage);
 	}
     
-    field = "ProcessingStartingFrom";
+    field = "processingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();

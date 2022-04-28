@@ -21879,8 +21879,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		_processorsThreadsNumber.use_count(),
 		ingestionJobKey);
 
-    try
-    {
+	try
+	{
 		_logger->info(__FILEREF__ + "emailNotificationThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -22347,7 +22347,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-        string field = "InputType";
+        string field = "inputType";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -22361,7 +22361,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		string streamingUrl;
 		if (inputType == "Channel")
 		{
-			string field = "ConfigurationLabel";
+			string field = "channelConfigurationLabel";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -22378,8 +22378,8 @@ void MMSEngineProcessor::checkStreamingThread(
 				ipChannelDetails = _mmsEngineDBFacade->getStreamDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 			string streamSourceType;
-			tie(ignore, streamSourceType, streamingUrl,
-				ignore, ignore, ignore, ignore, ignore, ignore,
+			tie(ignore, streamSourceType, ignore, streamingUrl,
+				ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore) = ipChannelDetails;
 		}
@@ -22388,7 +22388,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			// StreamingName is mandatory even if it is not used here
 			// It is mandatory because in case into the workflow we have the EMail task,
 			// the Email task may need the StreamingName information to add it into the email
-			string field = "StreamingName";
+			string field = "streamingName";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -22399,7 +22399,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			}
 			string streamingName = parametersRoot.get(field, "").asString();
 
-			field = "StreamingUrl";
+			field = "streamingUrl";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -22411,6 +22411,22 @@ void MMSEngineProcessor::checkStreamingThread(
 			streamingUrl = parametersRoot.get(field, "").asString();
 		}
 
+		_logger->info(__FILEREF__ + "checkStreamingThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", inputType: " + inputType
+			+ ", streamingUrl: " + streamingUrl
+		);
+
+		if (streamingUrl == "")
+        {
+            string errorMessage = __FILEREF__ + "streamingUrl is wrong"
+                    + ", streamingUrl: " + streamingUrl;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
 		{
 			_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22419,7 +22435,8 @@ void MMSEngineProcessor::checkStreamingThread(
 			);
 			bool isMMSAssetPathName = false;
 			pair<int64_t, long> mediaInfoDetails;
-			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+			vector<tuple<int, int64_t, string, string, int, int, string, long>>
+				videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			FFMpeg ffmpeg (_configuration, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
@@ -22428,7 +22445,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""

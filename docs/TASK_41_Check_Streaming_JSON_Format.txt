@@ -10,22 +10,22 @@
 		// or specifying directly the Streaming Url to be checked
 		// mandatory
 		// Possible values: Channel or StreamingUrl
-		"InputType": "Channel",
+		"inputType": "Channel",
 
 		// mandatory if InputType is Channel
-		"ConfigurationLabel": "Channel A",
+		"channelConfigurationLabel": "Channel A",
 
 		// mandatory if InputType is StreamingUrl
-		"StreamingName": "Streaming A",
+		"streamingName": "Streaming A",
 		// mandatory if InputType is StreamingUrl
-		"StreamingUrl": "https://.....",
+		"streamingUrl": "https://.....",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		//	If it is not present, by default it will be initialized with the ingesion time
-		"ProcessingStartingFrom": "2019-01-21T12:30:00Z"
+		"processingStartingFrom": "2019-01-21T12:30:00Z"
 	}
 }
 
