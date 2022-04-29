@@ -21864,12 +21864,12 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 }
 
 void MMSEngineProcessor::emailNotificationThread(
-		shared_ptr<long> processorsThreadsNumber,
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
-			dependencies
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+		dependencies
 )
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
@@ -21881,10 +21881,19 @@ void MMSEngineProcessor::emailNotificationThread(
 
 	try
 	{
+		string sParameters;
+		{
+			Json::StreamWriterBuilder wbuilder;
+			sParameters = Json::writeString(wbuilder, parametersRoot);
+		}
+
 		_logger->info(__FILEREF__ + "emailNotificationThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+			+ ", _processorsThreadsNumber.use_count(): "
+				+ to_string(_processorsThreadsNumber.use_count())
+			+ ", dependencies.size: " + to_string(dependencies.size())
+			+ ", sParameters: " + sParameters
 		);
 
         string sDependencies;
@@ -21991,7 +22000,8 @@ void MMSEngineProcessor::emailNotificationThread(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value referencesRoot = parametersRoot[field];
-				for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
+				for (int referenceIndex = 0; referenceIndex < referencesRoot.size();
+					referenceIndex++)
 				{
 					try
 					{
@@ -22016,14 +22026,16 @@ void MMSEngineProcessor::emailNotificationThread(
 								referenceErrorMessage) = ingestionJobDetails;
 
 							sReferencies += string("<br>IngestionJob")
-								+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+								+ ", ingestionType: " 
+									+ MMSEngineDBFacade::toString(ingestionType)
 								+ ", ingestionJobKey: " + to_string(referenceIngestionJobKey)
 								+ ", label: " + referenceLabel
 								+ ", errorMessage: " + referenceErrorMessage
 								+ ". "
 							;
 
-							if (ingestionType == MMSEngineDBFacade::IngestionType::CheckStreaming)
+							if (ingestionType ==
+								MMSEngineDBFacade::IngestionType::CheckStreaming)
 							{
 								Json::Value parametersRoot;
 								{
@@ -22038,8 +22050,10 @@ void MMSEngineProcessor::emailNotificationThread(
 
 									if (!parsingSuccessful)
 									{
-										string errorMessage = __FILEREF__ + "failed to parse the parameters"
-											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										string errorMessage = __FILEREF__
+											+ "failed to parse the parameters"
+											+ ", _processorIdentifier: "
+												+ to_string(_processorIdentifier)
 											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 											+ ", errors: " + errors
 											+ ", parameters: " + parameters
@@ -22051,13 +22065,13 @@ void MMSEngineProcessor::emailNotificationThread(
 								}
 
 								string inputType;
-								field = "InputType";
+								field = "inputType";
 								if (JSONUtils::isMetadataPresent(parametersRoot, field))
 									inputType = parametersRoot.get(field, "").asString();
 
 								if (inputType == "Channel")
 								{
-									field = "ConfigurationLabel";
+									field = "channelConfigurationLabel";
 									if (JSONUtils::isMetadataPresent(parametersRoot,
 										field))
 									{
@@ -22085,11 +22099,11 @@ void MMSEngineProcessor::emailNotificationThread(
 								}
 								else
 								{
-									field = "StreamingName";
+									field = "streamingName";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
 										checkStreaming_streamingName
 											= parametersRoot.get(field, "").asString();
-									field = "StreamingUrl";
+									field = "streamingUrl";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
 										checkStreaming_streamingUrl
 											= parametersRoot.get(field, "").asString();
@@ -22344,7 +22358,8 @@ void MMSEngineProcessor::checkStreamingThread(
 		_logger->info(__FILEREF__ + "checkStreamingThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+			+ ", _processorsThreadsNumber.use_count(): "
+				+ to_string(_processorsThreadsNumber.use_count())
 		);
 
         string field = "inputType";
@@ -22403,7 +22418,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+					+ ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);

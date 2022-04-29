@@ -9,17 +9,10 @@
 		// optional
 		"References": [
 			// optional.
-			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
-			// In such a case, the System will automatically add the Reference... item using the key
-			// of the ingestion job by which this EMail depend on.
-			// As reference can be used "ReferenceIngestionJobKey"
-
-			// The below object could contain optionally:
-			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
-			//		a specific profile
-			// - StopIfReferenceProcessingError in case of multiple References,
-			//		this boolean field specifies if the MMS has to continue or not
-			//		in case of an error during the processing. Default is false
+			// The System will automatically add the ReferenceIngestionJobKey item
+			//		using the key of the ingestion job by which this EMail depend on.
+			//		The ReferenceIngestionJobKey item is used by this task to prepare
+			//		all the MMS substitution (see the next comment)
 
 			{ "ReferenceIngestionJobKey": 11 }
 		],
