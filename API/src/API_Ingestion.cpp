@@ -1700,7 +1700,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	//		We added this change because, in the 'Best Picture Of Video' WorkflowLibrary,
 	//		in case of the 'Face Recognition' failure, the 'Frame' OnError task was not
 	//		receiving any input. Now with this fix/change, it works and the 'Frame' task
-	//		is receiving the same input the 'Face Recognition' task.
+	//		is receiving the same input of the 'Face Recognition' task.
 	// 2022-04-29: Now we have the following scenario:
 	//		CheckStreaming task and, on error, the emailNotification task.
 	//		In this scenario, it not important, as in the previous comment (2022-03-15),
@@ -1712,11 +1712,16 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	//		parent task (CheckStreaming task) and prepare for the right substitution
 	//		(checkStreaming_streamingName, ...)
 	//		For this reason, we are adding here, also the ReferenceIngestionJobKey
-	//		of the parent task. So, in case of OnError, the task (in our case
-	//		the emailNotification task) will receive as input:
-	//		1. the same input received by his parent (scenario of the 2022-03-15 comment
+	//		of the parent task.
+	//		So, in case of OnError, the task (in our case the emailNotification task)
+	//		will receive as input:
+	//		1. the ReferenceIngestionJobKey of the granparent, in order to received
+	//			the same input by his parent (scenario of the 2022-03-15 comment
 	//		2. the ReferenceIngestionJobKey of the parent (this comment)
-	dependOnIngestionJobKeysOverallInput.insert(dependOnIngestionJobKeysOverallInput.end(),
+	vector<int64_t> dependOnIngestionJobKeysOverallInputOnError =
+		dependOnIngestionJobKeysOverallInput;
+	dependOnIngestionJobKeysOverallInputOnError.insert(
+		dependOnIngestionJobKeysOverallInputOnError.end(),
 		localDependOnIngestionJobKeysOverallInput.begin(),
 		localDependOnIngestionJobKeysOverallInput.end());
 
@@ -1724,7 +1729,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
 
-		dependOnIngestionJobKeysOverallInput,
+		dependOnIngestionJobKeysOverallInputOnError,
 
 		referencesOutputIngestionJobKeys,
 
@@ -2185,7 +2190,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	//		We added this change because, in the 'Best Picture Of Video' WorkflowLibrary,
 	//		in case of the 'Face Recognition' failure, the 'Frame' OnError task was not
 	//		receiving any input. Now with this fix/change, it works and the 'Frame' task
-	//		is receiving the same input the 'Face Recognition' task.
+	//		is receiving the same input of the 'Face Recognition' task.
 	// 2022-04-29: Now we have the following scenario:
 	//		CheckStreaming task and, on error, the emailNotification task.
 	//		In this scenario, it not important, as in the previous comment (2022-03-15),
@@ -2197,18 +2202,23 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	//		parent task (CheckStreaming task) and prepare for the right substitution
 	//		(checkStreaming_streamingName, ...)
 	//		For this reason, we are adding here, also the ReferenceIngestionJobKey
-	//		of the parent task. So, in case of OnError, the task (in our case
-	//		the emailNotification task) will receive as input:
-	//		1. the same input received by his parent (scenario of the 2022-03-15 comment
+	//		of the parent task.
+	//		So, in case of OnError, the task (in our case the emailNotification task)
+	//		will receive as input:
+	//		1. the ReferenceIngestionJobKey of the granparent, in order to received
+	//			the same input by his parent (scenario of the 2022-03-15 comment
 	//		2. the ReferenceIngestionJobKey of the parent (this comment)
-	dependOnIngestionJobKeysOverallInput.insert(dependOnIngestionJobKeysOverallInput.end(),
+	vector<int64_t> dependOnIngestionJobKeysOverallInputOnError =
+		dependOnIngestionJobKeysOverallInput;
+	dependOnIngestionJobKeysOverallInputOnError.insert(
+		dependOnIngestionJobKeysOverallInputOnError.end(),
 		localDependOnIngestionJobKeysForStarting.begin(),
 		localDependOnIngestionJobKeysForStarting.end());
 
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
 
-        dependOnIngestionJobKeysOverallInput,
+        dependOnIngestionJobKeysOverallInputOnError,
 
 		referencesOutputIngestionJobKeys,
 		mapLabelAndIngestionJobKey, responseBody);

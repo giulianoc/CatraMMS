@@ -10,6 +10,7 @@ oneDayInMinutes=1440
 twoDaysInMinutes=2880
 threeDaysInMinutes=4320
 tenDaysInMinutes=14400
+twentyDaysInMinutes=28800
 
 if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 -a $# -ne 4 ]
 then
@@ -135,7 +136,7 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$tenDaysInMinutes
+			timeoutInMinutes=$twentyDaysInMinutes
 		fi
 
 		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete"
