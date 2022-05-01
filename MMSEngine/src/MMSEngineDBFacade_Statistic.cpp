@@ -1167,10 +1167,12 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			string currentPartition_YYYYMM_1;
 			string currentPartition_YYYYMM_2;
 			{
-				chrono::duration<int, ratio<60*60*24*30>> one_month(1);
+				// 2022-05-01: changed from one to two months because, the first of each
+				//	month, until this procedure do not run, it would not work
+				chrono::duration<int, ratio<60*60*24*30>> two_month(2);
 
 				chrono::system_clock::time_point today = chrono::system_clock::now();
-				chrono::system_clock::time_point nextMonth = today + one_month;
+				chrono::system_clock::time_point nextMonth = today + two_month;
 				time_t utcTime_nextMonth = chrono::system_clock::to_time_t(nextMonth);
 
 				char strDateTime [64];
