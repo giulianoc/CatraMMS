@@ -1,0 +1,31 @@
+{
+  "Label": "Proxy of a Picture",
+  "Task": {
+    "Label": "Proxy of a Picture (Slideshow)",
+    "Type": "Slideshow",
+    "Parameters": {
+      "AllowUniqueNameOverride": false,
+      "DurationOfEachSlideInSeconds": 15,
+      "EncodingPriority": "Low",
+      "Ingester": "Giuliano",
+      "References": [
+      ],
+      "Retention": "10y",
+      "Title": "Proxy of a Picture (Slideshow)",
+      "VideoSyncMethod": "cfr"
+    },
+    "OnSuccess": {"Task": {
+      "Label": "Proxy of a Picture (VOD-Proxy)",
+      "Type": "VOD-Proxy",
+      "Parameters": {
+        "Outputs": [{
+          "DeliveryCode": 765234,
+          "EncodingProfileKey": 20,
+          "OutputType": "HLS"
+        }],
+        "TimePeriod": false
+      }
+    }}
+  },
+  "Type": "Workflow"
+}

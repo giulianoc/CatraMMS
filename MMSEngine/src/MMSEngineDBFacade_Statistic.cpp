@@ -21,12 +21,11 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		int64_t requestStatisticKey;
 		{
 			lastSQLCommand = 
 				"insert into MMS_RequestStatistic(workspaceKey, userId, physicalPathKey, "
 				"confStreamKey, title, requestTimestamp) values ("
-				"?, ?, ?, ?, ?, NOW())";
+				"?, ?, ?, ?, ?, NOW(3))";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -54,16 +53,11 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-
-            requestStatisticKey = getLastInsertId(conn);
         }
 
 		Json::Value statisticRoot;
 		{
-			string field = "requestStatisticKey";
-			statisticRoot[field] = requestStatisticKey;
-
-			field = "userId";
+			string field = "userId";
 			statisticRoot[field] = userId;
 
 			field = "physicalPathKey";
@@ -279,8 +273,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select requestStatisticKey, userId, "
-				"physicalPathKey, confStreamKey, title, "
+                "select userId, physicalPathKey, confStreamKey, title, "
 				"DATE_FORMAT(convert_tz(requestTimestamp, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as requestTimestamp "
 				"from MMS_RequestStatistic "
                 + sqlWhere
@@ -322,9 +315,6 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
             while (resultSet->next())
             {
                 Json::Value statisticRoot;
-
-                field = "requestStatisticKey";
-                statisticRoot[field] = resultSet->getInt64("requestStatisticKey");
 
                 field = "userId";
                 statisticRoot[field] = static_cast<string>(
