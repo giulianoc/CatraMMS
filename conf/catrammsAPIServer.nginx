@@ -251,7 +251,9 @@
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perDay/?$ /api?version=$1&method=requestStatisticPerDayList last;
 		}
-
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perHour/?$ /api?version=$1&method=requestStatisticPerHourList last;
+		}
 
 
 		if ($request_method = POST) {

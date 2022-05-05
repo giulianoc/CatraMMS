@@ -2281,6 +2281,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
 		requestStatisticPerDayList(request, workspace, queryParameters);
     }
+    else if (method == "requestStatisticPerHourList")
+    {
+		requestStatisticPerHourList(request, workspace, queryParameters);
+    }
     else
     {
         string errorMessage = string("No API is matched")
