@@ -377,15 +377,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				currentPartition_YYYYMM_2 = strDateTime;
 			}
 
+			// PRIMARY KEY (requestStatisticKey, requestTimestamp):
+			//	requestTimestamp was necessary because of partition
             lastSQLCommand = 
 				"create table if not exists MMS_RequestStatistic ("
+					"requestStatisticKey		bigint unsigned NOT NULL AUTO_INCREMENT,"
                     "workspaceKey				BIGINT UNSIGNED NOT NULL,"
 					"userId						VARCHAR (128) NOT NULL,"
 					"physicalPathKey			BIGINT UNSIGNED NULL,"
 					"confStreamKey				BIGINT UNSIGNED NULL,"
                     "title						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					"requestTimestamp			DATETIME(3) NOT NULL,"
-					"constraint MMS_RequestStatistic_PK PRIMARY KEY (workspaceKey, userId, requestTimestamp))"
+					"requestTimestamp			DATETIME NOT NULL,"
+					"constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey, requestTimestamp))"
                     "ENGINE=InnoDB "
 					"partition by range (to_days(requestTimestamp)) "
 					"( "
@@ -414,6 +417,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
 				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (title)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
+				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (requestTimestamp)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)

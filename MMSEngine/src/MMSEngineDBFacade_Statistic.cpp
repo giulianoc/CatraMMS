@@ -25,7 +25,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			lastSQLCommand = 
 				"insert into MMS_RequestStatistic(workspaceKey, userId, physicalPathKey, "
 				"confStreamKey, title, requestTimestamp) values ("
-				"?, ?, ?, ?, ?, NOW(3))";
+				"?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -273,7 +273,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select userId, physicalPathKey, confStreamKey, title, "
+                "select requestStatisticKey, userId, physicalPathKey, confStreamKey, title, "
 				"DATE_FORMAT(convert_tz(requestTimestamp, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as requestTimestamp "
 				"from MMS_RequestStatistic "
                 + sqlWhere
@@ -315,6 +315,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
             while (resultSet->next())
             {
                 Json::Value statisticRoot;
+
+                field = "requestStatisticKey";
+				statisticRoot[field] = resultSet->getInt64("requestStatisticKey");
 
                 field = "userId";
                 statisticRoot[field] = static_cast<string>(
