@@ -593,6 +593,7 @@ void API::mediaItemsList(
 		vector<string> tagsIn;
 		vector<string> tagsNotIn;
 		vector<int64_t> otherMediaItemsKey;
+		Json::Value responseFields = Json::nullValue;
 		if (requestBody != "")
 		{
 			Json::Value otherInputsRoot;
@@ -662,6 +663,10 @@ void API::mediaItemsList(
 					otherMediaItemsKey.push_back (JSONUtils::asInt64(otherMediaItemsKeyRoot[mediaItemsIndex]));
 				}
 			}
+
+			field = "responseFields";
+            if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
+				responseFields = otherInputsRoot[field];
 		}
 
         int64_t deliveryCode = -1;
@@ -735,17 +740,20 @@ void API::mediaItemsList(
 			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 			int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 
-            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-                    workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
-                    start, rows,
-                    contentTypePresent, contentType,
-                    // startAndEndIngestionDatePresent,
-					startIngestionDate, endIngestionDate,
-                    title, liveRecordingChunk,
-					deliveryCode,
-					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-					jsonCondition,
-					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
+			Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
+				workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
+				otherMediaItemsKey,
+				start, rows,
+				contentTypePresent, contentType,
+				// startAndEndIngestionDatePresent,
+				startIngestionDate, endIngestionDate,
+				title, liveRecordingChunk,
+				deliveryCode,
+				utcCutPeriodStartTimeInMilliSeconds,
+				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+				jsonCondition,
+				tagsIn, tagsNotIn, orderBy, jsonOrderBy,
+				responseFields, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

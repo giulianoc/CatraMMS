@@ -14268,6 +14268,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			{
 				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
+				Json::Value responseFields = Json::nullValue;
 				Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
@@ -14278,7 +14279,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
-					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
+					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
+					responseFields, admin);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];
@@ -15390,6 +15392,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value mediaItemsRoot;
 			do
 			{
+				Json::Value responseFields = Json::nullValue;
 				Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
@@ -15400,7 +15403,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					deliveryCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
-					tagsIn, tagsNotIn, orderBy, jsonOrderBy, admin);
+					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
+					responseFields, admin);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];
@@ -21692,7 +21696,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
@@ -21704,139 +21708,86 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-        field = "Text";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
+		string videoFileNameExtension;
+		int64_t sourceDurationInMilliSeconds;
+		string sourceAssetPathName;
+		{
+			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
+			string sourceRelativePath;
+			string sourceFileName;
 
-            throw runtime_error(errorMessage);
-        }
-        string text = parametersRoot.get(field, "XXX").asString();
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = dependencies[0];
 
-        string textPosition_X_InPixel;
-        field = "TextPosition_X_InPixel";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            textPosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
-        }
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-        string textPosition_Y_InPixel;
-        field = "TextPosition_Y_InPixel";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            textPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
-        }
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
-        string fontType;
-        field = "FontType";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            fontType = parametersRoot.get(field, "XXX").asString();
-        }
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+				sourceMediaItemKey = key;
 
-        int fontSize = -1;
-        field = "FontSize";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            fontSize = JSONUtils::asInt(parametersRoot, field, -1);
-        }
+				bool warningIfMissing = true;
+				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey, warningIfMissing);
+				tie(sourcePhysicalPathKey, ignore, sourceRelativePath, sourceFileName,
+					ignore, ignore) = sourcePhysicalPathDetails;
+			}
+			else
+			{
+				sourcePhysicalPathKey = key;
 
-        string fontColor;
-        field = "FontColor";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            fontColor = parametersRoot.get(field, "XXX").asString();
-        }
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
 
-        int textPercentageOpacity = -1;
-        field = "TextPercentageOpacity";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            textPercentageOpacity = JSONUtils::asInt64(parametersRoot, field, -1);
-        }
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
+					sourceFileName, sourceRelativePath)
+					= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+			}
 
-        bool boxEnable = false;
-        field = "BoxEnable";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            boxEnable = JSONUtils::asBool(parametersRoot, field, false);
-        }
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);
+				tie(sourceAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
 
-        string boxColor;
-        field = "BoxColor";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            boxColor = parametersRoot.get(field, "XXX").asString();
-        }
+			sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+				sourceMediaItemKey, sourcePhysicalPathKey);
 
-        int boxPercentageOpacity = -1;
-        field = "BoxPercentageOpacity";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            boxPercentageOpacity = JSONUtils::asInt64(parametersRoot, field, -1);
-        }
+			{
+				size_t extensionIndex = sourceFileName.find_last_of(".");
+				if (extensionIndex == string::npos)
+				{
+					string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", sourceFileName: " + sourceFileName;
+					_logger->error(errorMessage);
 
-        int64_t sourceMediaItemKey;
-        int64_t sourcePhysicalPathKey;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType = dependencies[0];
-
-        int64_t key;
-        MMSEngineDBFacade::ContentType referenceContentType;
-        Validator::DependencyType dependencyType;
-		bool stopIfReferenceProcessingError;
-
-        tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-			= keyAndDependencyType;
-
-        if (dependencyType == Validator::DependencyType::MediaItemKey)
-        {
-            sourceMediaItemKey = key;
-
-            sourcePhysicalPathKey = -1;
-        }
-        else
-        {
-            sourcePhysicalPathKey = key;
-            
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-        }
+					throw runtime_error(errorMessage);
+				}
+				videoFileNameExtension = sourceFileName.substr(extensionIndex);
+			}
+		}
 
 		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
-				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-				+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-				+ ", text: " + text
-				+ ", textPosition_X_InPixel: " + textPosition_X_InPixel
-				+ ", textPosition_Y_InPixel: " + textPosition_Y_InPixel
-				+ ", fontType: " + fontType
-				+ ", fontSize: " + to_string(fontSize)
-				+ ", fontColor: " + fontColor
-				+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
-				+ ", boxEnable: " + to_string(boxEnable)
-				+ ", boxColor: " + boxColor
-				+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
-			);
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
+		);
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
-                workspace, ingestionJobKey, encodingPriority,
-                
-                sourceMediaItemKey, sourcePhysicalPathKey,
-                text,
-                textPosition_X_InPixel, textPosition_Y_InPixel,
-                fontType, fontSize, fontColor, textPercentageOpacity,
-                boxEnable, boxColor, boxPercentageOpacity
-                );
+			workspace, ingestionJobKey, encodingPriority,
+
+			sourceAssetPathName, sourceDurationInMilliSeconds,
+			videoFileNameExtension
+		);
     }
     catch(runtime_error e)
     {

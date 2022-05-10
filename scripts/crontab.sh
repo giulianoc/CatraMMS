@@ -136,7 +136,7 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$twentyDaysInMinutes
+			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
 		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete"

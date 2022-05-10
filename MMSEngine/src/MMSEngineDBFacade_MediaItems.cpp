@@ -845,6 +845,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
+	Json::Value responseFields = Json::nullValue;
 
 	Json::Value mediaItemsListRoot = getMediaItemsList (
 		workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
@@ -860,6 +861,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 		tagsIn, tagsNotIn,
         orderBy,
 		jsonOrderBy,
+		responseFields,
 		admin);
 
     return mediaItemsListRoot;
@@ -1012,6 +1014,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
+	Json::Value responseFields = Json::nullValue;
 
 	Json::Value mediaItemsListRoot = getMediaItemsList (
 		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey,
@@ -1027,6 +1030,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 		tagsIn, tagsNotIn,
         orderBy,
 		jsonOrderBy,
+        responseFields,
 		admin);
 
     return mediaItemsListRoot;
@@ -1046,6 +1050,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
 		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
+        Json::Value responseFields,
 		bool admin
 )
 {
@@ -1375,6 +1380,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 field = "mediaItemKey";
                 mediaItemRoot[field] = localMediaItemKey;
 
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "title"))
 				{
 					string localTitle = static_cast<string>(resultSet->getString("title"));
 
@@ -1389,134 +1396,205 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					mediaItemRoot[field] = localTitle;
 				}
 
-                field = "deliveryFileName";
-                if (resultSet->isNull("deliveryFileName"))
-                    mediaItemRoot[field] = Json::nullValue;
-                else
-                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("deliveryFileName"));
-
-                field = "ingester";
-                if (resultSet->isNull("ingester"))
-                    mediaItemRoot[field] = Json::nullValue;
-                else
-                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingester"));
-
-                field = "userData";
-                if (resultSet->isNull("userData"))
-                    mediaItemRoot[field] = Json::nullValue;
-                else
-                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("userData"));
-
-                field = "ingestionDate";
-                mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
-
-                field = "startPublishing";
-                mediaItemRoot[field] = static_cast<string>(resultSet->getString("startPublishing"));
-                field = "endPublishing";
-                mediaItemRoot[field] = static_cast<string>(resultSet->getString("endPublishing"));
-
-                ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-                field = "contentType";
-                mediaItemRoot[field] = static_cast<string>(resultSet->getString("contentType"));
-
-                field = "retentionInMinutes";
-                mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
-
-                int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
-                
-                {                    
-                    lastSQLCommand = 
-                        "select name from MMS_ContentProvider where contentProviderKey = ?";
-
-                    shared_ptr<sql::PreparedStatement> preparedStatementProvider (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementProvider->setInt64(queryParameterIndex++, contentProviderKey);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                    shared_ptr<sql::ResultSet> resultSetProviders (preparedStatementProvider->executeQuery());
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", contentProviderKey: " + to_string(contentProviderKey)
-						+ ", resultSetProviders->rowsCount: " + to_string(resultSetProviders->rowsCount())
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-                    if (resultSetProviders->next())
-                    {
-                        field = "providerName";
-                        mediaItemRoot[field] = static_cast<string>(resultSetProviders->getString("name"));
-                    }
-                    else
-                    {
-                        string errorMessage = string("content provider does not exist")
-                            + ", contentProviderKey: " + to_string(contentProviderKey)
-                        ;
-
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-
-                {
-                    lastSQLCommand = 
-                        "select uniqueName from MMS_ExternalUniqueName "
-						"where workspaceKey = ? and mediaItemKey = ?";
-
-                    shared_ptr<sql::PreparedStatement> preparedStatementUniqueName (
-							conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementUniqueName->setInt64(queryParameterIndex++, workspaceKey);
-                    preparedStatementUniqueName->setInt64(queryParameterIndex++, localMediaItemKey);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                    shared_ptr<sql::ResultSet> resultSetUniqueName (preparedStatementUniqueName->executeQuery());
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
-						+ ", resultSetUniqueName->rowsCount: " + to_string(resultSetUniqueName->rowsCount())
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-                    if (resultSetUniqueName->next())
-                    {
-                        field = "uniqueName";
-                        mediaItemRoot[field] = static_cast<string>(resultSetUniqueName->getString("uniqueName"));
-                    }
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
+				{
+					field = "deliveryFileName";
+					if (resultSet->isNull("deliveryFileName"))
+						mediaItemRoot[field] = Json::nullValue;
 					else
+						mediaItemRoot[field] = static_cast<string>(
+							resultSet->getString("deliveryFileName"));
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "ingester"))
+				{
+					field = "ingester";
+					if (resultSet->isNull("ingester"))
+						mediaItemRoot[field] = Json::nullValue;
+					else
+						mediaItemRoot[field] = static_cast<string>(
+							resultSet->getString("ingester"));
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "userData"))
+				{
+					field = "userData";
+					if (resultSet->isNull("userData"))
+						mediaItemRoot[field] = Json::nullValue;
+					else
+						mediaItemRoot[field] = static_cast<string>(
+							resultSet->getString("userData"));
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
+				{
+					field = "ingestionDate";
+					mediaItemRoot[field] = static_cast<string>(
+						resultSet->getString("ingestionDate"));
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
+				{
+					field = "startPublishing";
+					mediaItemRoot[field] = static_cast<string>(
+						resultSet->getString("startPublishing"));
+				}
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
+				{
+					field = "endPublishing";
+					mediaItemRoot[field] = static_cast<string>(
+						resultSet->getString("endPublishing"));
+				}
+
+				ContentType contentType = MMSEngineDBFacade::toContentType(
+					resultSet->getString("contentType"));
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "contentType"))
+				{
+					field = "contentType";
+					mediaItemRoot[field] = static_cast<string>(
+						resultSet->getString("contentType"));
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
+				{
+					field = "retentionInMinutes";
+					mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "providerName"))
+				{
+					int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
+                
 					{
-                        field = "uniqueName";
-                        mediaItemRoot[field] = string("");
+						lastSQLCommand = 
+							"select name from MMS_ContentProvider where contentProviderKey = ?";
+
+						shared_ptr<sql::PreparedStatement> preparedStatementProvider (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementProvider->setInt64(queryParameterIndex++,
+							contentProviderKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						shared_ptr<sql::ResultSet> resultSetProviders (
+							preparedStatementProvider->executeQuery());
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", contentProviderKey: " + to_string(contentProviderKey)
+							+ ", resultSetProviders->rowsCount: "
+								+ to_string(resultSetProviders->rowsCount())
+							+ ", elapsed (millisecs): @" + to_string(
+								chrono::duration_cast<chrono::milliseconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						if (resultSetProviders->next())
+						{
+							field = "providerName";
+							mediaItemRoot[field] = static_cast<string>(
+								resultSetProviders->getString("name"));
+						}
+						else
+						{
+							string errorMessage = string("content provider does not exist")
+								+ ", contentProviderKey: " + to_string(contentProviderKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
 					}
-                }
+				}
 
-                {
-                    Json::Value mediaItemTagsRoot(Json::arrayValue);
-                    
-                    lastSQLCommand = 
-                        "select name from MMS_Tag where mediaItemKey = ?";
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
+				{
+					{
+						lastSQLCommand = 
+							"select uniqueName from MMS_ExternalUniqueName "
+							"where workspaceKey = ? and mediaItemKey = ?";
 
-                    shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                    shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
-						+ ", resultSetTags->rowsCount: " + to_string(resultSetTags->rowsCount())
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-                    while (resultSetTags->next())
-                    {
-                        mediaItemTagsRoot.append(static_cast<string>(resultSetTags->getString("name")));
-                    }
+						shared_ptr<sql::PreparedStatement> preparedStatementUniqueName (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementUniqueName->setInt64(queryParameterIndex++,
+							workspaceKey);
+						preparedStatementUniqueName->setInt64(queryParameterIndex++,
+							localMediaItemKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						shared_ptr<sql::ResultSet> resultSetUniqueName (
+							preparedStatementUniqueName->executeQuery());
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+							+ ", resultSetUniqueName->rowsCount: "
+								+ to_string(resultSetUniqueName->rowsCount())
+							+ ", elapsed (millisecs): @" + to_string(
+								chrono::duration_cast<chrono::milliseconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						if (resultSetUniqueName->next())
+						{
+							field = "uniqueName";
+							mediaItemRoot[field] = static_cast<string>(
+								resultSetUniqueName->getString("uniqueName"));
+						}
+						else
+						{
+							field = "uniqueName";
+							mediaItemRoot[field] = string("");
+						}
+					}
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "tags"))
+				{
+					{
+						Json::Value mediaItemTagsRoot(Json::arrayValue);
                     
-                    field = "tags";
-                    mediaItemRoot[field] = mediaItemTagsRoot;
-                }
+						lastSQLCommand = 
+							"select name from MMS_Tag where mediaItemKey = ?";
+
+						shared_ptr<sql::PreparedStatement> preparedStatementTags (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementTags->setInt64(queryParameterIndex++,
+							localMediaItemKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						shared_ptr<sql::ResultSet> resultSetTags (
+							preparedStatementTags->executeQuery());
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+							+ ", resultSetTags->rowsCount: "
+								+ to_string(resultSetTags->rowsCount())
+							+ ", elapsed (millisecs): @" + to_string(
+								chrono::duration_cast<chrono::milliseconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						while (resultSetTags->next())
+						{
+							mediaItemTagsRoot.append(static_cast<string>(
+								resultSetTags->getString("name")));
+						}
+                    
+						field = "tags";
+						mediaItemRoot[field] = mediaItemTagsRoot;
+					}
+				}
 
 				// CrossReferences
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
@@ -1524,22 +1602,27 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     
 						{
 							lastSQLCommand = 
-								"select sourceMediaItemKey, type, parameters from MMS_CrossReference "
+								"select sourceMediaItemKey, type, parameters "
+								"from MMS_CrossReference "
 								"where targetMediaItemKey = ?";
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
 
 							shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
-							preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							preparedStatementCrossReferences->setInt64(queryParameterIndex++,
+								localMediaItemKey);
+							chrono::system_clock::time_point startSql
+								= chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> resultSetCrossReferences (
 									preparedStatementCrossReferences->executeQuery());
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
-								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
-								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+								+ ", resultSetCrossReferences->rowsCount: "
+									+ to_string(resultSetCrossReferences->rowsCount())
+								+ ", elapsed (millisecs): @" + to_string(
+									chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 							while (resultSetCrossReferences->next())
@@ -1547,10 +1630,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								Json::Value crossReferenceRoot;
 
 								field = "sourceMediaItemKey";
-								crossReferenceRoot[field] = resultSetCrossReferences->getInt64("sourceMediaItemKey");
+								crossReferenceRoot[field]
+									= resultSetCrossReferences->getInt64("sourceMediaItemKey");
 
 								field = "type";
-								crossReferenceRoot[field] = static_cast<string>(resultSetCrossReferences->getString("type"));
+								crossReferenceRoot[field] = static_cast<string>(
+									resultSetCrossReferences->getString("type"));
 
 								if (!resultSetCrossReferences->isNull("parameters"))
 								{
@@ -1567,15 +1652,18 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 											bool parsingSuccessful = reader->parse(
 												crossReferenceParameters.c_str(),
-												crossReferenceParameters.c_str() + crossReferenceParameters.size(), 
+												crossReferenceParameters.c_str()
+													+ crossReferenceParameters.size(), 
 												&crossReferenceParametersRoot, &errors);
 											delete reader;
 
 											if (!parsingSuccessful)
 											{
-												string errorMessage = __FILEREF__ + "failed to parse the crossReferenceParameters"
+												string errorMessage = __FILEREF__
+													+ "failed to parse the crossReferenceParameters"
 													+ ", errors: " + errors
-													+ ", crossReferenceParameters: " + crossReferenceParameters
+													+ ", crossReferenceParameters: "
+														+ crossReferenceParameters
 												;
 												_logger->error(errorMessage);
 
@@ -1585,7 +1673,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 										catch(runtime_error e)
 										{
 											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: " + crossReferenceParameters
+												+ ", crossReferenceParameters: "
+													+ crossReferenceParameters
 												+ ", e.what(): " + e.what()
 											;
 											_logger->error(__FILEREF__ + errorMessage);
@@ -1613,22 +1702,27 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     
 						{
 							lastSQLCommand = 
-								"select type, targetMediaItemKey, parameters from MMS_CrossReference "
+								"select type, targetMediaItemKey, parameters "
+								"from MMS_CrossReference "
 								"where sourceMediaItemKey = ?";
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
 
 							shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
-							preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							preparedStatementCrossReferences->setInt64(queryParameterIndex++,
+								localMediaItemKey);
+							chrono::system_clock::time_point startSql
+								= chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> resultSetCrossReferences (
 								preparedStatementCrossReferences->executeQuery());
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
-								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
-								+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+								+ ", resultSetCrossReferences->rowsCount: "
+									+ to_string(resultSetCrossReferences->rowsCount())
+								+ ", elapsed (millisecs): @" + to_string(
+									chrono::duration_cast<chrono::milliseconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
 							while (resultSetCrossReferences->next())
@@ -1636,10 +1730,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								Json::Value crossReferenceRoot;
 
 								field = "type";
-								crossReferenceRoot[field] = static_cast<string>(resultSetCrossReferences->getString("type"));
+								crossReferenceRoot[field] = static_cast<string>(
+									resultSetCrossReferences->getString("type"));
 
 								field = "targetMediaItemKey";
-								crossReferenceRoot[field] = resultSetCrossReferences->getInt64("targetMediaItemKey");
+								crossReferenceRoot[field] =
+									resultSetCrossReferences->getInt64("targetMediaItemKey");
 
 								if (!resultSetCrossReferences->isNull("parameters"))
 								{
@@ -1656,7 +1752,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 											bool parsingSuccessful = reader->parse(
 												crossReferenceParameters.c_str(),
-												crossReferenceParameters.c_str() + crossReferenceParameters.size(), 
+												crossReferenceParameters.c_str()
+													+ crossReferenceParameters.size(), 
 												&crossReferenceParametersRoot, &errors);
 											delete reader;
 
@@ -1664,7 +1761,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 											{
 												string errorMessage = __FILEREF__ + "failed to parse the crossReferenceParameters"
 													+ ", errors: " + errors
-													+ ", crossReferenceParameters: " + crossReferenceParameters
+													+ ", crossReferenceParameters: "
+														+ crossReferenceParameters
 												;
 												_logger->error(errorMessage);
 
@@ -1674,7 +1772,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 										catch(runtime_error e)
 										{
 											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: " + crossReferenceParameters
+												+ ", crossReferenceParameters: "
+													+ crossReferenceParameters
 												+ ", e.what(): " + e.what()
 											;
 											_logger->error(__FILEREF__ + errorMessage);
@@ -1684,7 +1783,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 										catch(exception e)
 										{
 											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: " + crossReferenceParameters
+												+ ", crossReferenceParameters: "
+													+ crossReferenceParameters
 											;
 											_logger->error(__FILEREF__ + errorMessage);
 
@@ -1710,6 +1810,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					*/
 				}
 
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
                 {
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     

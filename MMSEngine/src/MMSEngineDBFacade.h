@@ -599,51 +599,20 @@ public:
 
         shared_ptr<Workspace>                   _workspace;
 
-		/*
-        struct EncodeData {
-            string                                  _fileName;
-            string                                  _relativePath;
-            long long                               _mediaItemKey;
-            int64_t                                 _durationInMilliSeconds;
-            ContentType                             _contentType;
-            MMSEngineDBFacade::DeliveryTechnology   _deliveryTechnology;
-            string                                  _jsonProfile;
-        };
-		*/
-
         struct OverlayImageOnVideoData {
-            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
 
-            // unsigned long                           _mmsImagePartitionNumber;
             string                                  _imageFileName;
             string                                  _imageRelativePath;
         };
         
-        struct OverlayTextOnVideoData {
-            // unsigned long                           _mmsVideoPartitionNumber;
-            string                                  _videoFileName;
-            string                                  _videoRelativePath;
-            int64_t                                 _videoDurationInMilliSeconds;
-        };
-
         struct GenerateFramesData {
-            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
         };
-
-        // struct SlideShowData {
-        // };
-
-        // struct FaceRecognitionData {
-        // };
-
-        // struct FaceIdentificationData {
-        // };
 
 		struct LiveRecorderData {
             // Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
@@ -651,58 +620,31 @@ public:
 		};
 
         struct VideoSpeedData {
-            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
         };
 
         struct PictureInPictureData {
-            // unsigned long                           _mmsMainVideoPartitionNumber;
             string                                  _mainVideoFileName;
             string                                  _mainVideoRelativePath;
             int64_t                                 _mainVideoDurationInMilliSeconds;
 
-            // unsigned long                           _mmsOverlayVideoPartitionNumber;
             string                                  _overlayVideoFileName;
             string                                  _overlayVideoRelativePath;
             int64_t                                 _overlayVideoDurationInMilliSeconds;
         };
-
-        // struct IntroOutroOverlayData {
-        // };
-
-		// struct LiveProxyData {
-			// int64_t									_encodingProfileKey;
-            // string									_jsonEncodingProfile;
-			// ContentType								_contentType;
-			// Json::Value								_outputsRoot;
-		// };
-
-		// struct AwaitingTheBeginningData {
-		// 	int64_t									_encodingProfileKey;
-		// 	ContentType								_encodingProfileContentType;
-		// 	Json::Value								_encodingProfileDetailsRoot;
-		// };
 
 		struct LiveGridData {
 			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
             Json::Value								_encodingProfileDetailsRoot;
 		};
 
-        // shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
-        shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
         shared_ptr<GenerateFramesData>              _generateFramesData;
-        // shared_ptr<SlideShowData>                   _slideShowData;
-        // shared_ptr<FaceRecognitionData>				_faceRecognitionData;
-        // shared_ptr<FaceIdentificationData>			_faceIdentificationData;
 		shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
-		// shared_ptr<IntroOutroOverlayData>			_introOutroOverlayData;
-		// shared_ptr<LiveProxyData>					_liveProxyData;
-		// shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
@@ -1564,7 +1506,8 @@ public:
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
-		string orderBy, string jsonOrderBy, bool admin);
+		string orderBy, string jsonOrderBy,
+		Json::Value responseFields, bool admin);
 
 	Json::Value getTagsList (
         int64_t workspaceKey, int start, int rows,
@@ -1738,17 +1681,9 @@ public:
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
 
-        int64_t mediaItemKey, int64_t physicalPathKey,
-        string text,
-        string textPosition_X_InPixel,
-        string textPosition_Y_InPixel,
-        string fontType,
-        int fontSize,
-        string fontColor,
-        int textPercentageOpacity,
-        bool boxEnable,
-        string boxColor,
-        int boxPercentageOpacity);
+		string sourceAssetPathName,
+		int64_t sourceDurationInMilliSeconds,                                                
+		string videoFileNameExtension);
 
     void addEncoding_GenerateFramesJob (
         shared_ptr<Workspace> workspace,

@@ -654,87 +654,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
-                else if (encodingItem->_encodingType == EncodingType::OverlayTextOnVideo)
-                {
-                    encodingItem->_overlayTextOnVideoData = make_shared<EncodingItem::OverlayTextOnVideoData>();
-                    
-                    int64_t sourceVideoPhysicalPathKey;
-
-                    {
-                        string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
-                    }
-
-                    int64_t videoMediaItemKey;
-                    {
-                        lastSQLCommand = 
-                            "select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
-                            "from MMS_PhysicalPath where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
-
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                        shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", lastSQLCommand: " + lastSQLCommand
-							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-                        if (physicalPathResultSet->next())
-                        {
-                            // encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
-                            encodingItem->_overlayTextOnVideoData->_videoFileName = physicalPathResultSet->getString("fileName");
-                            encodingItem->_overlayTextOnVideoData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
-							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
-								encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds = -1;
-							else
-								encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds =
-									physicalPathResultSet->getInt64("durationInMilliSeconds");
-                            
-                            videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "@SQL statistics@"
-									+ ", lastSQLCommand: " + lastSQLCommand
-									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", rowsUpdated: " + to_string(rowsUpdated)
-									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-										chrono::system_clock::now() - startSql).count()) + "@"
-								);
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-                }
                 else if (encodingItem->_encodingType == EncodingType::GenerateFrames)
                 {
                     encodingItem->_generateFramesData = make_shared<EncodingItem::GenerateFramesData>();
@@ -5995,18 +5914,10 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
-        
-    int64_t mediaItemKey, int64_t physicalPathKey,
-    string text,
-    string textPosition_X_InPixel,
-    string textPosition_Y_InPixel,
-    string fontType,
-    int fontSize,
-    string fontColor,
-    int textPercentageOpacity,
-    bool boxEnable,
-    string boxColor,
-    int boxPercentageOpacity
+
+	string sourceAssetPathName,                                                                           
+	int64_t sourceDurationInMilliSeconds,                                                                 
+	string videoFileNameExtension
 )
 {
 
@@ -6032,92 +5943,24 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             statement->execute(lastSQLCommand);
         }
         
-        ContentType contentType;
-        {
-            lastSQLCommand =
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey: " + to_string(mediaItemKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "mediaItemKey not found"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-        int64_t sourceVideoPhysicalPathKey = physicalPathKey;
-        if (physicalPathKey == -1)
-        {
-            lastSQLCommand =
-                "select physicalPathKey from MMS_PhysicalPath "
-                "where mediaItemKey = ? and encodingProfileKey is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey: " + to_string(mediaItemKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                sourceVideoPhysicalPathKey = resultSet->getInt64("physicalPathKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-                
         EncodingType encodingType = EncodingType::OverlayTextOnVideo;
         
-        string parameters = string()
-                + "{ "
-                + "\"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
+        string parameters;
+		{
+			Json::Value parametersRoot;
 
-                + ", \"text\": \"" + text + "\""
-                + ", \"textPosition_X_InPixel\": \"" + textPosition_X_InPixel + "\""
-                + ", \"textPosition_Y_InPixel\": \"" + textPosition_Y_InPixel + "\""
-                + ", \"fontType\": \"" + fontType + "\""
-                + ", \"fontSize\": " + to_string(fontSize)
-                + ", \"fontColor\": \"" + fontColor + "\""
-                + ", \"textPercentageOpacity\": " + to_string(textPercentageOpacity)
-                + ", \"boxEnable\": " + (boxEnable ? "true" : "false")
-                + ", \"boxColor\": \"" + boxColor + "\""
-                + ", \"boxPercentageOpacity\": " + to_string(boxPercentageOpacity)
+			string field = "sourceAssetPathName";
+			parametersRoot[field] = sourceAssetPathName;
 
-                + "} ";
+			field = "sourceDurationInMilliSeconds";
+			parametersRoot[field] = sourceDurationInMilliSeconds;
+
+			field = "videoFileNameExtension";
+			parametersRoot[field] = videoFileNameExtension;
+
+			Json::StreamWriterBuilder wbuilder;
+			parameters = Json::writeString(wbuilder, parametersRoot);
+		}
         {
             int savedEncodingPriority = static_cast<int>(encodingPriority);
             if (savedEncodingPriority > workspace->_maxEncodingPriority)

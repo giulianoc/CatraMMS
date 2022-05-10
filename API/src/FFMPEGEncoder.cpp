@@ -4499,91 +4499,59 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
             throw runtime_error(errorMessage);
         }
-        
-        string mmsSourceVideoAssetPathName = overlayTextMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(overlayTextMedatada, "videoDurationInMilliSeconds", -1);
 
-        string text = overlayTextMedatada.get("text", "XXX").asString();
-        
-        string textPosition_X_InPixel;
-        string field = "textPosition_X_InPixel";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            textPosition_X_InPixel = overlayTextMedatada.get(field, "XXX").asString();
-        
-        string textPosition_Y_InPixel;
-        field = "textPosition_Y_InPixel";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            textPosition_Y_InPixel = overlayTextMedatada.get(field, "XXX").asString();
-        
-        string fontType;
-        field = "fontType";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            fontType = overlayTextMedatada.get(field, "XXX").asString();
+        string mmsSourceVideoAssetPathName = overlayTextMedatada["encodingParametersRoot"].
+			get("sourceAssetPathName", "").asString();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(
+			overlayTextMedatada["encodingParametersRoot"], "sourceDurationInMilliSeconds", -1);
 
-        int fontSize = -1;
-        field = "fontSize";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            fontSize = JSONUtils::asInt(overlayTextMedatada, field, -1);
+		string text = overlayTextMedatada["ingestedParametersRoot"].get("text", "").asString();
+		string textPosition_X_InPixel = overlayTextMedatada["ingestedParametersRoot"].
+			get("textPosition_X_InPixel", "").asString();
+		string textPosition_Y_InPixel = overlayTextMedatada["ingestedParametersRoot"].
+			get("textPosition_Y_InPixel", "").asString();
+		string fontType = overlayTextMedatada["ingestedParametersRoot"].
+			get("fontType", "").asString();
+        int fontSize = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"], "fontSize", -1);
+		string fontColor = overlayTextMedatada["ingestedParametersRoot"].
+			get("fontColor", "").asString();
+		int textPercentageOpacity = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
+			"textPercentageOpacity", -1);
+		bool boxEnable = JSONUtils::asBool(overlayTextMedatada["ingestedParametersRoot"],
+			"boxEnable", false);
+		string boxColor = overlayTextMedatada["ingestedParametersRoot"].
+			get("boxColor", "").asString();
+		int boxPercentageOpacity = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
+			"boxPercentageOpacity", -1);
 
-        string fontColor;
-        field = "fontColor";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            fontColor = overlayTextMedatada.get(field, "XXX").asString();
-
-        int textPercentageOpacity = -1;
-        field = "textPercentageOpacity";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            textPercentageOpacity = JSONUtils::asInt(overlayTextMedatada, field, -1);
-
-        bool boxEnable = false;
-        field = "boxEnable";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            boxEnable = JSONUtils::asBool(overlayTextMedatada, field, false);
-
-        string boxColor;
-        field = "boxColor";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            boxColor = overlayTextMedatada.get(field, "XXX").asString();
-        
-        int boxPercentageOpacity = -1;
-        field = "boxPercentageOpacity";
-        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
-            boxPercentageOpacity = JSONUtils::asInt(overlayTextMedatada, "boxPercentageOpacity", -1);
-
-        // string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
-        string stagingEncodedAssetPathName = overlayTextMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
+        string stagingEncodedAssetPathName = overlayTextMedatada.
+			get("stagingEncodedAssetPathName", "").asString();
         int64_t encodingJobKey = JSONUtils::asInt64(overlayTextMedatada, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(overlayTextMedatada, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        encoding->_ffmpeg->overlayTextOnVideo(
-                mmsSourceVideoAssetPathName,
-                videoDurationInMilliSeconds,
+		encoding->_ffmpeg->overlayTextOnVideo(
+			mmsSourceVideoAssetPathName,
+			videoDurationInMilliSeconds,
 
-                text,
-                textPosition_X_InPixel,
-                textPosition_Y_InPixel,
-                fontType,
-                fontSize,
-                fontColor,
-                textPercentageOpacity,
-                boxEnable,
-                boxColor,
-                boxPercentageOpacity,
+			text,
+			textPosition_X_InPixel,
+			textPosition_Y_InPixel,
+			fontType,
+			fontSize,
+			fontColor,
+			textPercentageOpacity,
+			boxEnable,
+			boxColor,
+			boxPercentageOpacity,
 
-                // encodedFileName,
-                stagingEncodedAssetPathName,
-                encodingJobKey,
-                ingestionJobKey,
-				&(encoding->_childPid));
+			// encodedFileName,
+			stagingEncodedAssetPathName,
+			encodingJobKey,
+			ingestionJobKey,
+			&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-//        string responseBody = string("{ ")
-//                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-//                + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-//                + "}";
-
-        // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
         encoding->_childPid = 0;

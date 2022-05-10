@@ -497,9 +497,10 @@ int APICommon::operator()()
             }
              */
 
-            manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
-                    basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
-                    contentLength, requestBody, requestDetails);            
+			manageRequestAndResponse(
+				request, requestURI, requestMethod, queryParameters,
+				basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
+				contentLength, requestBody, requestDetails);            
         }
         catch(AlreadyLocked e)
         {
@@ -890,9 +891,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
 */
 
 void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
-		string responseBody, string contentType,
-		string cookieName, string cookieValue, string cookiePath,
-		bool enableCorsGETHeader, string originHeader)
+	string responseBody, string contentType,
+	string cookieName, string cookieValue, string cookiePath,
+	bool enableCorsGETHeader, string originHeader)
 {
     string endLine = "\r\n";
     
@@ -978,11 +979,22 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
             + responseBody;
 	}
 
+    string sThreadId;
+    {
+        thread::id threadId = this_thread::get_id();
+        stringstream ss;
+        ss << threadId;
+        sThreadId = ss.str();
+    }
+
     // _logger->info(__FILEREF__ + "HTTP Success"
     //     + ", response: " + completeHttpResponse
     // );
-    _logger->debug(__FILEREF__ + "HTTP Success"
-        + ", response: " + completeHttpResponse
+    _logger->info(__FILEREF__ + "sendSuccess"
+		+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+		+ ", threadId: " + sThreadId
+        + ", responseBody.size: " + to_string(responseBody.size())
+        // + ", response: " + completeHttpResponse
     );
 
     FCGX_FPrintF(request.out, completeHttpResponse.c_str());

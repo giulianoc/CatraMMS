@@ -2300,7 +2300,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "Text"
+        "text"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2320,7 +2320,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    string field = "FontType";
+    string field = "fontType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fontType = parametersRoot.get(field, "").asString();
@@ -2337,7 +2337,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    field = "FontColor";
+    field = "fontColor";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fontColor = parametersRoot.get(field, "").asString();
@@ -2354,7 +2354,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    field = "TextPercentageOpacity";
+    field = "textPercentageOpacity";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         int textPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
@@ -2371,13 +2371,13 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    field = "BoxEnable";
+    field = "boxEnable";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         bool boxEnable = JSONUtils::asBool(parametersRoot, field, true);                        
     }
 
-    field = "BoxPercentageOpacity";
+    field = "boxPercentageOpacity";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         int boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
@@ -2394,7 +2394,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    field = "EncodingPriority";
+    field = "encodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = parametersRoot.get(field, "").asString();
@@ -2414,7 +2414,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    field = "BoxColor";
+    field = "boxColor";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string boxColor = parametersRoot.get(field, "").asString();

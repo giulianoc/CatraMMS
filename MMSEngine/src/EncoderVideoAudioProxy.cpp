@@ -4924,56 +4924,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 {
     
 	string encodersPool;
-    int64_t sourceVideoPhysicalPathKey;
-    string text;
-    string textPosition_X_InPixel;
-    string textPosition_Y_InPixel;
-    string fontType;
-    int fontSize;
-    string fontColor;
-    int textPercentageOpacity;
-    bool boxEnable;
-    string boxColor;
-    int boxPercentageOpacity;
 
-    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
     {
-        string field = "EncodersPool";
+        string field = "encodersPool";
         encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
-				field, 0);
-
-        field = "text";
-        text = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "textPosition_X_InPixel";
-        textPosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "textPosition_Y_InPixel";
-        textPosition_Y_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "fontType";
-        fontType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "fontSize";
-        fontSize = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "fontColor";
-        fontColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "textPercentageOpacity";
-        textPercentageOpacity = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "boxEnable";
-        boxEnable = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
-
-        field = "boxColor";
-        boxColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "boxPercentageOpacity";
-        boxPercentageOpacity = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -4986,12 +4940,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
-			/*
-			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					encodersPool, _encodingItem->_workspace,
-					encoderToSkip);
-			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
             pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
@@ -5004,11 +4952,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                 + ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
             );
-            // ffmpegEncoderURL = 
-            //         _ffmpegEncoderProtocol
-            //         + "://"
-            //         + _currentUsedFFMpegEncoderHost + ":"
-            //         + to_string(_ffmpegEncoderPort)
             ffmpegEncoderURL =
 				_currentUsedFFMpegEncoderHost
 				+ ffmpegURI
@@ -5016,86 +4959,27 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             ;
             string body;
             {
-				// string encodedFileName;
-				string mmsSourceVideoAssetPathName;
-
-    
 				// stagingEncodedAssetPathName preparation
 				{
-					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-					/*
-					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
-						_encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						_encodingItem->_overlayTextOnVideoData->_videoRelativePath,
-						_encodingItem->_overlayTextOnVideoData->_videoFileName);
-					*/
-
-					size_t extensionIndex = _encodingItem->_overlayTextOnVideoData->_videoFileName.find_last_of(".");
-					if (extensionIndex == string::npos)
-					{
-						string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", _overlayTextOnVideoData->_videoFileName: " + _encodingItem->_overlayTextOnVideoData->_videoFileName;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					/*
-					encodedFileName =
-					to_string(_encodingItem->_ingestionJobKey)
-					+ "_"
-					+ to_string(_encodingItem->_encodingJobKey)
-					+ _encodingItem->_overlayTextOnVideoData->_videoFileName.substr(extensionIndex)
-					;
-					*/
 					string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
 						_encodingItem->_workspace);
 					stagingEncodedAssetPathName = 
 						workspaceIngestionRepository + "/" 
 						+ to_string(_encodingItem->_ingestionJobKey)
 						+ "_overlayedtext"
-						+ _encodingItem->_overlayTextOnVideoData->_videoFileName.substr(extensionIndex)
-						;
-					/*
-					bool removeLinuxPathIfExist = true;
-					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-					_encodingItem->_workspace->_directoryName,
-					"/",    // _encodingItem->_relativePath,
-					encodedFileName,
-					-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-					-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-					removeLinuxPathIfExist);        
-					*/
+						+ _encodingItem->_encodingParametersRoot.
+							get("videoFileNameExtension", "").asString()
+					;
 				}
 
                 Json::Value overlayTextMedatada;
-                
-                overlayTextMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
-                overlayTextMedatada["videoDurationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds);
 
-                overlayTextMedatada["text"] = text;
-                overlayTextMedatada["textPosition_X_InPixel"] = textPosition_X_InPixel;
-                overlayTextMedatada["textPosition_Y_InPixel"] = textPosition_Y_InPixel;
-                overlayTextMedatada["fontType"] = fontType;
-                overlayTextMedatada["fontSize"] = fontSize;
-                overlayTextMedatada["fontColor"] = fontColor;
-                overlayTextMedatada["textPercentageOpacity"] = textPercentageOpacity;
-                overlayTextMedatada["boxEnable"] = boxEnable;
-                overlayTextMedatada["boxColor"] = boxColor;
-                overlayTextMedatada["boxPercentageOpacity"] = boxPercentageOpacity;
-                
-                // overlayTextMedatada["encodedFileName"] = encodedFileName;
-                overlayTextMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
-                overlayTextMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
-                overlayTextMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+				overlayTextMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
+				overlayTextMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
+
+				overlayTextMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
+				overlayTextMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
+				overlayTextMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
                 {
                     Json::StreamWriterBuilder wbuilder;
@@ -11343,6 +11227,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string jsonCondition;
 		string orderBy;
 		string jsonOrderBy;
+		Json::Value responseFields = Json::nullValue;
 		bool admin = true;
 
 		int start = 0;
@@ -11365,7 +11250,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 				deliveryCode,
 				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 				jsonCondition,
-				deepLearnedModelTags, tagsNotIn, orderBy, jsonOrderBy, admin);
+				deepLearnedModelTags, tagsNotIn, orderBy, jsonOrderBy,
+				responseFields, admin);
 
 			field = "response";
 			Json::Value responseRoot = mediaItemsListRoot[field];
