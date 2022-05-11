@@ -890,7 +890,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
 }
 */
 
-void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
+void APICommon::sendSuccess(FCGX_Request& request,
+	string requestURI, string requestMethod,
+	int htmlResponseCode,
 	string responseBody, string contentType,
 	string cookieName, string cookieValue, string cookiePath,
 	bool enableCorsGETHeader, string originHeader)
@@ -993,7 +995,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
     _logger->info(__FILEREF__ + "sendSuccess"
 		+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 		+ ", threadId: " + sThreadId
-        + ", responseBody.size: " + to_string(responseBody.size())
+		+ ", requestURI: " + requestURI
+		+ ", requestMethod: " + requestMethod
+        + ", responseBody.size: @" + to_string(responseBody.size()) + "@"
         // + ", response: " + completeHttpResponse
     );
 
@@ -1052,9 +1056,26 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
             + responseBody;
 	}
 
-    _logger->info(__FILEREF__ + "HTTP Success"
-        + ", response: " + completeHttpResponse
+    string sThreadId;
+    {
+        thread::id threadId = this_thread::get_id();
+        stringstream ss;
+        ss << threadId;
+        sThreadId = ss.str();
+    }
+
+    // _logger->info(__FILEREF__ + "HTTP Success"
+    //     + ", response: " + completeHttpResponse
+    // );
+    _logger->info(__FILEREF__ + "sendSuccess"
+		+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+		+ ", threadId: " + sThreadId
+		// + ", requestURI: " + requestURI
+		// + ", requestMethod: " + requestMethod
+        + ", responseBody.size: @" + to_string(responseBody.size()) + "@"
+        // + ", response: " + completeHttpResponse
     );
+
 
     cout << completeHttpResponse;
 }

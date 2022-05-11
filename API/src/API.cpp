@@ -578,7 +578,7 @@ void API::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string sJson = Json::writeString(wbuilder, statusRoot);
 
-            sendSuccess(request, 200, sJson);
+            sendSuccess(request, requestURI, requestMethod, 200, sJson);
         }
         catch(exception e)
         {
@@ -682,7 +682,7 @@ void API::manageRequestAndResponse(
         }        
         
         string responseBody;
-        sendSuccess(request, 200, responseBody);
+        sendSuccess(request, requestURI, requestMethod, 200, responseBody);
     }
     else if (method == "deliveryAuthorizationThroughParameter")
     {
@@ -726,7 +726,7 @@ void API::manageRequestAndResponse(
 			checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
 			string responseBody;
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, requestURI, requestMethod, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -768,7 +768,7 @@ void API::manageRequestAndResponse(
 			checkDeliveryAuthorizationThroughPath(contentURI);
 
 			string responseBody;
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, requestURI, requestMethod, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -1340,11 +1340,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						originHeader = originIt->second;
 				}
 				if (secondaryManifest)
-					sendSuccess(request, 200, responseBody,
+					sendSuccess(request, requestURI, requestMethod, 200, responseBody,
 						contentType, "", "", "",
 						enableCorsGETHeader, originHeader);
 				else
-					sendSuccess(request, 200, responseBody,
+					sendSuccess(request, requestURI, requestMethod, 200, responseBody,
 						contentType, cookieName, cookieValue, cookiePath,
 						enableCorsGETHeader, originHeader);
 			}
@@ -2511,7 +2511,7 @@ void API::createDeliveryAuthorization(
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
 				*/
-				sendSuccess(request, 201, responseBody);
+				sendSuccess(request, "", api, 201, responseBody);
 			}
         }
         catch(MediaItemKeyNotFound e)
@@ -2952,9 +2952,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 			{
 				Json::StreamWriterBuilder wbuilder;
-				string responseBody = Json::writeString(wbuilder, deliveryAutorizationDetailsRoot);
+				string responseBody = Json::writeString(wbuilder,
+					deliveryAutorizationDetailsRoot);
 
-				sendSuccess(request, 201, responseBody);
+				sendSuccess(request, "", api, 201, responseBody);
 			}
 		}
         catch(runtime_error e)
@@ -4657,7 +4658,7 @@ void API::createDeliveryCDN77Authorization(
 			}
 		}
 
-		sendSuccess(request, 201, responseBody);
+		sendSuccess(request, "", api, 201, responseBody);
 	}
 	catch(runtime_error e)
 	{
@@ -4851,7 +4852,7 @@ void API::mmsSupport(
             emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 
             string responseBody;
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, "", api, 201, responseBody);
         }
         catch(runtime_error e)
         {

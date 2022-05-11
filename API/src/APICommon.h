@@ -95,7 +95,9 @@ protected:
     unsigned long long   _maxBinaryContentLength;
 
     // void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
-	void sendSuccess(FCGX_Request& request, int htmlResponseCode,
+	void sendSuccess(FCGX_Request& request,
+		string requestURI, string requestMethod,
+		int htmlResponseCode,
         string responseBody, string contentType = "",
         string cookieName = "", string cookieValue = "", string cookiePath = "",
 		bool enableCorsGETHeader = false, string originHeader = "");

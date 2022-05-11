@@ -212,7 +212,7 @@ void API::ingestion(
             throw e;
         }
 
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, "", api, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Ingestion"
@@ -2875,7 +2875,7 @@ void API::uploadedBinary(
         }
         
         string responseBody;
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, "", api, 201, responseBody);
 
         /*
         if (requestMethod == "HEAD")
@@ -3827,7 +3827,7 @@ void API::ingestionRootsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3899,7 +3899,7 @@ void API::ingestionRootMetaDataContent(
 				_mmsEngineDBFacade->getIngestionRootMetaDataContent(
 				workspace, ingestionRootKey, processedMetadata);
 
-            sendSuccess(request, 200, ingestionRootMetaDataContent);
+            sendSuccess(request, "", api, 200, ingestionRootMetaDataContent);
         }
     }
     catch(runtime_error e)
@@ -4201,7 +4201,7 @@ void API::ingestionJobsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -4342,7 +4342,7 @@ void API::cancelIngestionJob(
 			_mmsEngineDBFacade->forceCancelEncodingJob (ingestionJobKey);
 
         string responseBody;
-        sendSuccess(request, 200, responseBody);
+        sendSuccess(request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -4583,7 +4583,7 @@ void API::updateIngestionJob(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, responseRoot);
             
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -5777,7 +5777,7 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			string responseBody;
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
 		}
 		catch (curlpp::LogicError & e) 
 		{

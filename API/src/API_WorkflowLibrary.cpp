@@ -42,7 +42,7 @@ void API::workflowsAsLibraryList(
 		Json::StreamWriterBuilder wbuilder;
 		string responseBody = Json::writeString(wbuilder, workflowListRoot);
 
-		sendSuccess(request, 200, responseBody);
+		sendSuccess(request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -103,7 +103,7 @@ void API::workflowAsLibraryContent(
 		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(
 			workspace->_workspaceKey, workflowLibraryKey);
 
-		sendSuccess(request, 200, workflowLibraryContent);
+		sendSuccess(request, "", api, 200, workflowLibraryContent);
     }
     catch(runtime_error e)
     {
@@ -218,7 +218,7 @@ void API::saveWorkflowAsLibrary(
                     );            
         }
 
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -330,7 +330,7 @@ void API::removeWorkflowAsLibrary(
 
         string responseBody;
         
-        sendSuccess(request, 200, responseBody);
+        sendSuccess(request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {

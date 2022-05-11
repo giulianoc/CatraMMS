@@ -389,7 +389,7 @@ void API::registerUser(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -629,7 +629,7 @@ void API::createWorkspace(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, "", api, 201, responseBody);
 
             pair<string, string> emailAddressAndName =
 				_mmsEngineDBFacade->getUserDetails (userKey);
@@ -1024,7 +1024,7 @@ void API::shareWorkspace_(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -1158,7 +1158,7 @@ void API::workspaceList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceListRoot);
 
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -1226,7 +1226,7 @@ void API::confirmRegistration(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, "", api, 201, responseBody);
 
             string to = emailAddress;
             string subject = "Welcome";
@@ -2110,7 +2110,7 @@ void API::login(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
 
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -2312,7 +2312,7 @@ void API::updateUser(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
 
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -2445,7 +2445,7 @@ void API::createTokenToResetPassword(
 
         try
         {
-            sendSuccess(request, 201, "");
+            sendSuccess(request, "", api, 201, "");
 
 			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -2638,7 +2638,7 @@ void API::resetPassword(
 
         try
         {
-            sendSuccess(request, 200, "");
+            sendSuccess(request, "", api, 200, "");
 
             string to = email;
             string subject = "Reset password";
@@ -2942,7 +2942,7 @@ void API::updateWorkspace(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceDetailRoot);
             
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -3038,7 +3038,7 @@ void API::setWorkspaceAsDefault(
 
             string responseBody;
 
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -3125,7 +3125,7 @@ void API::deleteWorkspace(
             
             string responseBody;
             
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -3169,7 +3169,7 @@ void API::deleteWorkspace(
             
             string responseBody;
             
-            sendSuccess(request, 200, responseBody);            
+            sendSuccess(request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -3227,13 +3227,14 @@ void API::deleteWorkspace(
     }
 }
 
-
 void API::workspaceUsage (
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
     Json::Value workspaceUsageRoot;
     
+    string api = "workspaceUsage";
+
     try
     {
         string field;
@@ -3265,7 +3266,7 @@ void API::workspaceUsage (
 		Json::StreamWriterBuilder wbuilder;
 		string responseBody = Json::writeString(wbuilder, workspaceUsageRoot);
             
-		sendSuccess(request, 200, responseBody);            
+		sendSuccess(request, "", api, 200, responseBody);            
     }
     catch(runtime_error e)
     {

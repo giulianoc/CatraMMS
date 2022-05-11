@@ -197,7 +197,7 @@ void API::addYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -406,7 +406,7 @@ void API::modifyYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -495,7 +495,7 @@ void API::removeYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -545,7 +545,7 @@ void API::youTubeConfList(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -693,7 +693,7 @@ void API::addFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -855,7 +855,7 @@ void API::modifyFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -944,7 +944,7 @@ void API::removeFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -995,7 +995,7 @@ void API::facebookConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -1281,7 +1281,7 @@ void API::addStream(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1711,7 +1711,7 @@ void API::modifyStream(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1800,7 +1800,7 @@ void API::removeStream(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2015,7 +2015,7 @@ void API::streamList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, streamListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -2264,7 +2264,7 @@ void API::addSourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2572,7 +2572,7 @@ void API::modifySourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2660,7 +2660,7 @@ void API::removeSourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2827,7 +2827,7 @@ void API::sourceSatStreamList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, sourceSATStreamRoot);
 
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3012,7 +3012,7 @@ void API::addAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3211,7 +3211,7 @@ void API::modifyAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3300,7 +3300,7 @@ void API::removeAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3351,7 +3351,7 @@ void API::awsChannelConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, awsChannelConfListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3549,7 +3549,7 @@ void API::addFTPConf(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3760,7 +3760,7 @@ void API::modifyFTPConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3849,7 +3849,7 @@ void API::removeFTPConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3900,7 +3900,7 @@ void API::ftpConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ftpConfListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -4072,7 +4072,7 @@ void API::addEMailConf(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4259,7 +4259,7 @@ void API::modifyEMailConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4348,7 +4348,7 @@ void API::removeEMailConf(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4399,7 +4399,7 @@ void API::emailConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, emailConfListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)

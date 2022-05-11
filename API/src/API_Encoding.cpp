@@ -273,7 +273,7 @@ void API::encodingJobsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingStatusRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -371,7 +371,7 @@ void API::encodingJobPriority(
 
             string responseBody;
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -551,7 +551,7 @@ void API::killOrCancelEncodingJob(
 			}
 
             string responseBody;
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -624,7 +624,7 @@ void API::encodingProfilesSetsList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingProfilesSetListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -710,7 +710,7 @@ void API::encodingProfilesList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingProfileListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -895,7 +895,7 @@ void API::addEncodingProfilesSet(
             throw e;
         }
 
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -1078,7 +1078,7 @@ void API::addEncodingProfile(
             throw e;
         }
 
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -1160,7 +1160,7 @@ void API::removeEncodingProfile(
 
         string responseBody;
         
-        sendSuccess(request, 200, responseBody);
+        sendSuccess(request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -1240,7 +1240,7 @@ void API::removeEncodingProfilesSet(
 
         string responseBody;
         
-        sendSuccess(request, 200, responseBody);
+        sendSuccess(request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {

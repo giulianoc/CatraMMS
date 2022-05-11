@@ -153,7 +153,7 @@ void API::addRequestStatistic(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -278,7 +278,7 @@ void API::requestStatisticList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -387,7 +387,7 @@ void API::requestStatisticPerContentList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -496,7 +496,7 @@ void API::requestStatisticPerMonthList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -605,7 +605,7 @@ void API::requestStatisticPerDayList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -714,7 +714,7 @@ void API::requestStatisticPerHourList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, 200, responseBody);
+			sendSuccess(request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)

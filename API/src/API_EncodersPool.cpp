@@ -184,7 +184,7 @@ void API::addEncoder(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -413,7 +413,7 @@ void API::modifyEncoder(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -502,7 +502,7 @@ void API::removeEncoder(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -667,7 +667,7 @@ void API::encoderList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encoderListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -784,7 +784,7 @@ void API::encodersPoolList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodersPoolListRoot);
             
-            sendSuccess(request, 200, responseBody);
+            sendSuccess(request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -932,7 +932,7 @@ void API::addEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1094,7 +1094,7 @@ void API::modifyEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, 201, sResponse);
+        sendSuccess(request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1183,7 +1183,7 @@ void API::removeEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1283,7 +1283,7 @@ void API::addAssociationWorkspaceEncoder(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1383,7 +1383,7 @@ void API::removeAssociationWorkspaceEncoder(
             throw e;
         }
 
-        sendSuccess(request, 200, sResponse);
+        sendSuccess(request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
