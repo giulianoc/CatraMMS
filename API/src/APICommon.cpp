@@ -958,7 +958,9 @@ void APICommon::sendSuccess(FCGX_Request& request,
 	bool compressed = true;
 	if (compressed)
 	{
-		long contentLength = responseBody.size();
+		string compressedResponseBody = Compressor::compress_string(responseBody);
+
+		long contentLength = compressedResponseBody.size();
 
 		string headResponse =
 			httpStatus
@@ -972,39 +974,19 @@ void APICommon::sendSuccess(FCGX_Request& request,
 
 		FCGX_FPrintF(request.out, headResponse.c_str());
 
-		if (compressed)
-		{
-			string compressedResponseBody = Compressor::compress_string(responseBody);
+		_logger->info(__FILEREF__ + "sendSuccess"
+			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+			+ ", threadId: " + sThreadId
+			+ ", requestURI: " + requestURI
+			+ ", requestMethod: " + requestMethod
+			+ ", headResponse.size: " + to_string(headResponse.size())
+			+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
+			+ ", compressedResponseBody.size: @" + to_string(contentLength) + "@"
+			// + ", response: " + completeHttpResponse
+		);
 
-			_logger->info(__FILEREF__ + "sendSuccess"
-				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-				+ ", threadId: " + sThreadId
-				+ ", requestURI: " + requestURI
-				+ ", requestMethod: " + requestMethod
-				+ ", headResponse.size: " + to_string(headResponse.size())
-				+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
-				+ ", compressedResponseBody.size: @"
-					+ to_string(compressedResponseBody.size()) + "@"
-				// + ", response: " + completeHttpResponse
-			);
-
-			FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(),
-				request.out);
-		}
-		else
-		{
-			_logger->info(__FILEREF__ + "sendSuccess"
-				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-				+ ", threadId: " + sThreadId
-				+ ", requestURI: " + requestURI
-				+ ", requestMethod: " + requestMethod
-				+ ", headResponse: " + headResponse
-				+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
-				// + ", response: " + completeHttpResponse
-			);
-
-			FCGX_PutStr(responseBody.data(), responseBody.size(), request.out);
-		}
+		FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(),
+			request.out);
 	}
 	else
 	{
@@ -1055,7 +1037,9 @@ void APICommon::sendSuccess(FCGX_Request& request,
 			// + ", response: " + completeHttpResponse
 		);
 
-		// si potrebbe usare anche FCGX_PutStr, in questo caso non serve la gestione sopra di %%
+		// si potrebbe usare anche FCGX_PutStr, in questo caso
+		// non bisogna gestire %% (vedi sopra)
+		// FCGX_PutStr(responseBody.data(), responseBody.size(), request.out);
 		FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 	}
     
