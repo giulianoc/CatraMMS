@@ -19,6 +19,7 @@
 #include <curl/curl.h>
 #include "catralibraries/Convert.h"
 #include "catralibraries/System.h"
+#include "catralibraries/Compressor.h"
 #include "APICommon.h"
 #include <regex>
 
@@ -946,62 +947,117 @@ void APICommon::sendSuccess(FCGX_Request& request,
 			;
 	}
 
-    string completeHttpResponse;
-
-	// 2020-02-08: content length has to be calculated before the substitution from % to %%
-	// because for FCGX_FPrintF (below used) %% is just one character
-	long contentLength = responseBody.length();
-
-	// responseBody cannot have the '%' char because FCGX_FPrintF will not work
-	if (responseBody.find("%") != string::npos)
+	string sThreadId;
 	{
-		string toBeSearched = "%";
-		string replacedWith = "%%";
-		string newResponseBody = regex_replace(
-			responseBody, regex(toBeSearched), replacedWith);
+		thread::id threadId = this_thread::get_id();
+		stringstream ss;
+		ss << threadId;
+		sThreadId = ss.str();
+	}
 
-		completeHttpResponse =
-            httpStatus
-            + localContentType
-            + (cookieHeader == "" ? "" : cookieHeader)
-            + (corsGETHeader == "" ? "" : corsGETHeader)
-            + "Content-Length: " + to_string(contentLength) + endLine
-            + endLine
-            + newResponseBody;
+	bool compressed = true;
+	if (compressed)
+	{
+		long contentLength = responseBody.size();
+
+		string headResponse =
+			httpStatus
+			+ localContentType
+			+ (cookieHeader == "" ? "" : cookieHeader)
+			+ (corsGETHeader == "" ? "" : corsGETHeader)
+			+ "Content-Length: " + to_string(contentLength) + endLine
+			+ (compressed ? ("X-CompressedBody: true" + endLine) : "")
+			+ endLine
+		;
+
+		FCGX_FPrintF(request.out, headResponse.c_str());
+
+		if (compressed)
+		{
+			string compressedResponseBody = Compressor::compress_string(responseBody);
+
+			_logger->info(__FILEREF__ + "sendSuccess"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+				+ ", threadId: " + sThreadId
+				+ ", requestURI: " + requestURI
+				+ ", requestMethod: " + requestMethod
+				+ ", headResponse.size: " + to_string(headResponse.size())
+				+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
+				+ ", compressedResponseBody.size: @"
+					+ to_string(compressedResponseBody.size()) + "@"
+				// + ", response: " + completeHttpResponse
+			);
+
+			FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(),
+				request.out);
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "sendSuccess"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+				+ ", threadId: " + sThreadId
+				+ ", requestURI: " + requestURI
+				+ ", requestMethod: " + requestMethod
+				+ ", headResponse: " + headResponse
+				+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
+				// + ", response: " + completeHttpResponse
+			);
+
+			FCGX_PutStr(responseBody.data(), responseBody.size(), request.out);
+		}
 	}
 	else
 	{
-		completeHttpResponse =
-            httpStatus
-            + localContentType
-            + (cookieHeader == "" ? "" : cookieHeader)
-            + (corsGETHeader == "" ? "" : corsGETHeader)
-            + "Content-Length: " + to_string(contentLength) + endLine
-            + endLine
-            + responseBody;
+		string completeHttpResponse;
+
+		// 2020-02-08: content length has to be calculated before the substitution from % to %%
+		// because for FCGX_FPrintF (below used) %% is just one character
+		long contentLength = responseBody.length();
+
+		// responseBody cannot have the '%' char because FCGX_FPrintF will not work
+		if (responseBody.find("%") != string::npos)
+		{
+			string toBeSearched = "%";
+			string replacedWith = "%%";
+			string newResponseBody = regex_replace(
+				responseBody, regex(toBeSearched), replacedWith);
+
+			completeHttpResponse =
+				httpStatus
+				+ localContentType
+				+ (cookieHeader == "" ? "" : cookieHeader)
+				+ (corsGETHeader == "" ? "" : corsGETHeader)
+				+ "Content-Length: " + to_string(contentLength) + endLine
+				+ endLine
+				+ newResponseBody;
+		}
+		else
+		{
+			completeHttpResponse =
+				httpStatus
+				+ localContentType
+				+ (cookieHeader == "" ? "" : cookieHeader)
+				+ (corsGETHeader == "" ? "" : corsGETHeader)
+				+ "Content-Length: " + to_string(contentLength) + endLine
+				+ endLine
+				+ responseBody;
+		}
+
+		// _logger->info(__FILEREF__ + "HTTP Success"
+		//     + ", response: " + completeHttpResponse
+		// );
+		_logger->info(__FILEREF__ + "sendSuccess"
+			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+			+ ", threadId: " + sThreadId
+			+ ", requestURI: " + requestURI
+			+ ", requestMethod: " + requestMethod
+			+ ", responseBody.size: @" + to_string(responseBody.size()) + "@"
+			// + ", response: " + completeHttpResponse
+		);
+
+		// si potrebbe usare anche FCGX_PutStr, in questo caso non serve la gestione sopra di %%
+		FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 	}
-
-    string sThreadId;
-    {
-        thread::id threadId = this_thread::get_id();
-        stringstream ss;
-        ss << threadId;
-        sThreadId = ss.str();
-    }
-
-    // _logger->info(__FILEREF__ + "HTTP Success"
-    //     + ", response: " + completeHttpResponse
-    // );
-    _logger->info(__FILEREF__ + "sendSuccess"
-		+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-		+ ", threadId: " + sThreadId
-		+ ", requestURI: " + requestURI
-		+ ", requestMethod: " + requestMethod
-        + ", responseBody.size: @" + to_string(responseBody.size()) + "@"
-        // + ", response: " + completeHttpResponse
-    );
-
-    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
     
 //    cout << completeHttpResponse;
 }

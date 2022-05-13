@@ -2818,9 +2818,10 @@ Json::Value MMSEngineDBFacade::getStreamList (
                 streamRoot[field] = static_cast<string>(
 					resultSet->getString("label"));
 
-                field = "sourceType";
-                streamRoot[field] = static_cast<string>(
+				string sourceType = static_cast<string>(
 					resultSet->getString("sourceType"));
+				field = "sourceType";
+				streamRoot[field] = "sourceType";
 
                 field = "encodersPoolLabel";
 				if (resultSet->isNull("encodersPoolLabel"))
@@ -2829,98 +2830,107 @@ Json::Value MMSEngineDBFacade::getStreamList (
 					streamRoot[field] = static_cast<string>(
 						resultSet->getString("encodersPoolLabel"));
 
-                field = "url";
-				if (resultSet->isNull("url"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("url"));
+				// if (sourceType == "IP_PULL")
+				{
+					field = "url";
+					if (resultSet->isNull("url"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = static_cast<string>(
+							resultSet->getString("url"));
+				}
+				// else if (sourceType == "IP_PUSH")
+				{
+					field = "pushProtocol";
+					if (resultSet->isNull("pushProtocol"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = static_cast<string>(
+							resultSet->getString("pushProtocol"));
 
-                field = "pushProtocol";
-				if (resultSet->isNull("pushProtocol"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("pushProtocol"));
+					field = "pushServerName";
+					if (resultSet->isNull("pushServerName"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = static_cast<string>(
+							resultSet->getString("pushServerName"));
 
-                field = "pushServerName";
-				if (resultSet->isNull("pushServerName"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("pushServerName"));
+					field = "pushServerPort";
+					if (resultSet->isNull("pushServerPort"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("pushServerPort");
 
-                field = "pushServerPort";
-				if (resultSet->isNull("pushServerPort"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("pushServerPort");
+					field = "pushUri";
+					if (resultSet->isNull("pushUri"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = static_cast<string>(
+							resultSet->getString("pushUri"));
 
-                field = "pushUri";
-				if (resultSet->isNull("pushUri"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("pushUri"));
+					field = "pushListenTimeout";
+					if (resultSet->isNull("pushListenTimeout"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("pushListenTimeout");
+				}
+				// else if (sourceType == "CaptureLive")
+				{
+					field = "captureLiveVideoDeviceNumber";
+					if (resultSet->isNull("captureLiveVideoDeviceNumber"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] =
+							resultSet->getInt("captureLiveVideoDeviceNumber");
 
-                field = "pushListenTimeout";
-				if (resultSet->isNull("pushListenTimeout"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("pushListenTimeout");
+					field = "captureLiveVideoInputFormat";
+					if (resultSet->isNull("captureLiveVideoInputFormat"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = static_cast<string>(
+							resultSet->getString("captureLiveVideoInputFormat"));
 
-                field = "captureLiveVideoDeviceNumber";
-				if (resultSet->isNull("captureLiveVideoDeviceNumber"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] =
-						resultSet->getInt("captureLiveVideoDeviceNumber");
+					field = "captureLiveFrameRate";
+					if (resultSet->isNull("captureLiveFrameRate"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("captureLiveFrameRate");
 
-                field = "captureLiveVideoInputFormat";
-				if (resultSet->isNull("captureLiveVideoInputFormat"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("captureLiveVideoInputFormat"));
+					field = "captureLiveWidth";
+					if (resultSet->isNull("captureLiveWidth"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("captureLiveWidth");
 
-                field = "captureLiveFrameRate";
-				if (resultSet->isNull("captureLiveFrameRate"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("captureLiveFrameRate");
+					field = "captureLiveHeight";
+					if (resultSet->isNull("captureLiveHeight"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("captureLiveHeight");
 
-                field = "captureLiveWidth";
-				if (resultSet->isNull("captureLiveWidth"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("captureLiveWidth");
+					field = "captureLiveAudioDeviceNumber";
+					if (resultSet->isNull("captureLiveAudioDeviceNumber"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] =
+							resultSet->getInt("captureLiveAudioDeviceNumber");
 
-                field = "captureLiveHeight";
-				if (resultSet->isNull("captureLiveHeight"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("captureLiveHeight");
+					field = "captureLiveChannelsNumber";
+					if (resultSet->isNull("captureLiveChannelsNumber"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt("captureLiveChannelsNumber");
+				}
+				// else if (sourceType == "Satellite")
+				{
+					field = "satSourceSATConfKey";
+					if (resultSet->isNull("satSourceSATConfKey"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt64("satSourceSATConfKey");
+				}
 
-                field = "captureLiveAudioDeviceNumber";
-				if (resultSet->isNull("captureLiveAudioDeviceNumber"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] =
-						resultSet->getInt("captureLiveAudioDeviceNumber");
-
-                field = "captureLiveChannelsNumber";
-				if (resultSet->isNull("captureLiveChannelsNumber"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt("captureLiveChannelsNumber");
-
-                field = "satSourceSATConfKey";
-				if (resultSet->isNull("satSourceSATConfKey"))
-					streamRoot[field] = Json::nullValue;
-				else
-					streamRoot[field] = resultSet->getInt64("satSourceSATConfKey");
-
-                field = "type";
+				field = "type";
 				if (resultSet->isNull("type"))
 					streamRoot[field] = Json::nullValue;
 				else
