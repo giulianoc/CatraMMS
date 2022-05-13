@@ -54,6 +54,7 @@ public:
     // int manageBinaryRequest();
 
     virtual void manageRequestAndResponse(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestURI,
         string requestMethod,
@@ -95,13 +96,15 @@ protected:
     unsigned long long   _maxBinaryContentLength;
 
     // void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
-	void sendSuccess(FCGX_Request& request,
+	void sendSuccess(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,
 		string requestURI, string requestMethod,
 		int htmlResponseCode,
         string responseBody, string contentType = "",
         string cookieName = "", string cookieValue = "", string cookiePath = "",
 		bool enableCorsGETHeader = false, string originHeader = "");
-    void sendSuccess(int htmlResponseCode, string responseBody);
+    // void sendSuccess(int htmlResponseCode, string responseBody);
     void sendRedirect(FCGX_Request& request, string locationURL);
     void sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize);
     void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
@@ -110,7 +113,7 @@ protected:
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
 private:
-    int             _requestIdentifier;
+    int64_t			_requestIdentifier;
     unsigned long   _maxAPIContentLength;
 	string			_encoderUser;
 	string			_encoderPassword;

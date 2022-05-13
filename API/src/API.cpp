@@ -479,17 +479,18 @@ void API::getBinaryAndResponse(
 */
 
 void API::manageRequestAndResponse(
-        FCGX_Request& request,
-        string requestURI,
-        string requestMethod,
-        unordered_map<string, string> queryParameters,
-        bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
-			userKeyWorkspaceAndFlags,
-		string apiKey,
-        unsigned long contentLength,
-        string requestBody,
-        unordered_map<string, string>& requestDetails
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	string requestURI,
+	string requestMethod,
+	unordered_map<string, string> queryParameters,
+	bool basicAuthenticationPresent,
+	tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
+		userKeyWorkspaceAndFlags,
+	string apiKey,
+	unsigned long contentLength,
+	string requestBody,
+	unordered_map<string, string>& requestDetails
 )
 {
 
@@ -578,7 +579,8 @@ void API::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string sJson = Json::writeString(wbuilder, statusRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, sJson);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, sJson);
         }
         catch(exception e)
         {
@@ -682,7 +684,8 @@ void API::manageRequestAndResponse(
         }        
         
         string responseBody;
-        sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
     }
     else if (method == "deliveryAuthorizationThroughParameter")
     {
@@ -726,7 +729,8 @@ void API::manageRequestAndResponse(
 			checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
 			string responseBody;
-			sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -768,7 +772,8 @@ void API::manageRequestAndResponse(
 			checkDeliveryAuthorizationThroughPath(contentURI);
 
 			string responseBody;
-			sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -1340,11 +1345,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						originHeader = originIt->second;
 				}
 				if (secondaryManifest)
-					sendSuccess(request, requestURI, requestMethod, 200, responseBody,
+					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+						request, requestURI, requestMethod, 200, responseBody,
 						contentType, "", "", "",
 						enableCorsGETHeader, originHeader);
 				else
-					sendSuccess(request, requestURI, requestMethod, 200, responseBody,
+					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+						request, requestURI, requestMethod, 200, responseBody,
 						contentType, cookieName, cookieValue, cookiePath,
 						enableCorsGETHeader, originHeader);
 			}
@@ -1367,31 +1374,36 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "login")
     {
-        login(request, requestBody);
+        login(sThreadId, requestIdentifier, responseBodyCompressed, request, requestBody);
     }
     else if (method == "registerUser")
     {
-        registerUser(request, requestBody);
+        registerUser(sThreadId, requestIdentifier, responseBodyCompressed, request, requestBody);
     }
     else if (method == "updateUser")
     {
-        updateUser(request, userKey, requestBody, admin);
+        updateUser(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey,
+			requestBody, admin);
     }
     else if (method == "createTokenToResetPassword")
     {
-        createTokenToResetPassword(request, queryParameters);
+        createTokenToResetPassword(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, queryParameters);
     }
     else if (method == "resetPassword")
     {
-        resetPassword(request, requestBody);
+        resetPassword(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, requestBody);
     }
     else if (method == "updateWorkspace")
     {
-        updateWorkspace(request, workspace, userKey, requestBody);
+        updateWorkspace(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, userKey, requestBody);
     }
     else if (method == "setWorkspaceAsDefault")
     {
-        setWorkspaceAsDefault(request, workspace, userKey, queryParameters, requestBody);
+        setWorkspaceAsDefault(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, userKey, queryParameters, requestBody);
     }
     else if (method == "createWorkspace")
     {
@@ -1407,7 +1419,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        createWorkspace(request, userKey, queryParameters, requestBody, admin);
+        createWorkspace(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, queryParameters, requestBody, admin);
     }
     else if (method == "deleteWorkspace")
     {
@@ -1423,11 +1436,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        deleteWorkspace(request, userKey, workspace);
+        deleteWorkspace(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace);
     }
     else if (method == "workspaceUsage")
     {
-        workspaceUsage(request, workspace);
+        workspaceUsage(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "shareWorkspace")
     {
@@ -1443,15 +1458,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        shareWorkspace_(request, workspace, queryParameters, requestBody);
+        shareWorkspace_(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "workspaceList")
     {
-		workspaceList(request, userKey, workspace, queryParameters, admin);
+		workspaceList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace, queryParameters, admin);
     }
     else if (method == "confirmRegistration")
     {
-        confirmRegistration(request, queryParameters);
+        confirmRegistration(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, queryParameters);
     }
     else if (method == "addEncoder")
     {
@@ -1467,7 +1485,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		addEncoder(request, workspace, requestBody);
+		addEncoder(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, requestBody);
     }
     else if (method == "removeEncoder")
     {
@@ -1483,7 +1502,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		removeEncoder(request, workspace, queryParameters);
+		removeEncoder(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "modifyEncoder")
     {
@@ -1499,15 +1519,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		modifyEncoder(request, workspace, queryParameters, requestBody);
+		modifyEncoder(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "encoderList")
     {
-		encoderList(request, workspace, admin, queryParameters);
+		encoderList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, admin, queryParameters);
     }
     else if (method == "encodersPoolList")
     {
-		encodersPoolList(request, workspace, admin, queryParameters);
+		encodersPoolList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, admin, queryParameters);
     }
     else if (method == "addEncodersPool")
     {
@@ -1523,7 +1546,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		addEncodersPool(request, workspace, requestBody);
+		addEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, requestBody);
     }
     else if (method == "modifyEncodersPool")
     {
@@ -1539,7 +1563,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		modifyEncodersPool(request, workspace, queryParameters, requestBody);
+		modifyEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeEncodersPool")
     {
@@ -1555,7 +1580,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		removeEncodersPool(request, workspace, queryParameters);
+		removeEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "addAssociationWorkspaceEncoder")
     {
@@ -1571,7 +1597,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		addAssociationWorkspaceEncoder(request, workspace, queryParameters);
+		addAssociationWorkspaceEncoder(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "removeAssociationWorkspaceEncoder")
     {
@@ -1587,7 +1614,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-		removeAssociationWorkspaceEncoder(request, workspace, queryParameters);
+		removeAssociationWorkspaceEncoder(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "createDeliveryAuthorization")
     {
@@ -1608,8 +1636,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
 
-		createDeliveryAuthorization(request, userKey, workspace,
-			clientIPAddress, queryParameters);
+		createDeliveryAuthorization(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace, clientIPAddress, queryParameters);
     }
     else if (method == "createBulkOfDeliveryAuthorization")
     {
@@ -1630,8 +1658,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
 
-		createBulkOfDeliveryAuthorization(request, userKey, workspace,
-			clientIPAddress, queryParameters, requestBody);
+		createBulkOfDeliveryAuthorization(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace, clientIPAddress, queryParameters, requestBody);
     }
     else if (method == "createDeliveryCDN77Authorization")
     {
@@ -1652,8 +1680,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
 
-        createDeliveryCDN77Authorization(request, userKey, workspace,
-                clientIPAddress, queryParameters);
+        createDeliveryCDN77Authorization(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace,
+			clientIPAddress, queryParameters);
     }
     else if (method == "ingestion")
     {
@@ -1669,19 +1698,23 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
         
-        ingestion(request, userKey, apiKey, workspace, queryParameters, requestBody);
+        ingestion(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, apiKey, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionRootsStatus")
     {
-        ingestionRootsStatus(request, workspace, queryParameters, requestBody);
+        ingestionRootsStatus(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionRootMetaDataContent")
     {
-        ingestionRootMetaDataContent(request, workspace, queryParameters, requestBody);
+        ingestionRootMetaDataContent(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionJobsStatus")
     {
-        ingestionJobsStatus(request, workspace, queryParameters, requestBody);
+        ingestionJobsStatus(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "cancelIngestionJob")
     {
@@ -1697,7 +1730,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        cancelIngestionJob(request, workspace, queryParameters, requestBody);
+        cancelIngestionJob(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "updateIngestionJob")
     {
@@ -1713,15 +1747,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        updateIngestionJob(request, workspace, userKey, queryParameters, requestBody, admin);
+        updateIngestionJob(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, userKey, queryParameters, requestBody, admin);
     }
     else if (method == "encodingJobsStatus")
     {
-        encodingJobsStatus(request, workspace, queryParameters, requestBody);
+        encodingJobsStatus(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "encodingJobPriority")
     {
-        encodingJobPriority(request, workspace, queryParameters, requestBody);
+        encodingJobPriority(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "killOrCancelEncodingJob")
     {
@@ -1737,15 +1774,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        killOrCancelEncodingJob(request, workspace, queryParameters, requestBody);
+        killOrCancelEncodingJob(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "changeLiveProxyPlaylist")
     {
-        changeLiveProxyPlaylist(request, workspace, queryParameters, requestBody);
+        changeLiveProxyPlaylist(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "mediaItemsList")
     {
-        mediaItemsList(request, workspace, queryParameters, requestBody, admin);
+        mediaItemsList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody, admin);
     }
     else if (method == "updateMediaItem")
     {
@@ -1761,7 +1801,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
         
-        updateMediaItem(request, workspace, userKey, queryParameters, requestBody, admin);
+        updateMediaItem(sThreadId, requestIdentifier, responseBodyCompressed, request,
+			workspace, userKey, queryParameters, requestBody, admin);
     }
     else if (method == "updatePhysicalPath")
     {
@@ -1777,16 +1818,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
         
-        updatePhysicalPath(request, workspace, userKey, queryParameters, requestBody, admin);
+        updatePhysicalPath(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, userKey, queryParameters, requestBody, admin);
     }
     else if (method == "tagsList")
     {
-        tagsList(request, workspace, queryParameters, requestBody);
+        tagsList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "uploadedBinary")
     {
-        uploadedBinary(request, requestMethod,
-            queryParameters, workspace, // contentLength,
+        uploadedBinary(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, requestMethod, queryParameters, workspace, // contentLength,
                 requestDetails);
     }
     else if (method == "addEncodingProfilesSet")
@@ -1803,12 +1846,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addEncodingProfilesSet(request, workspace,
-            queryParameters, requestBody);
+        addEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "encodingProfilesSetsList")
     {
-        encodingProfilesSetsList(request, workspace, queryParameters);
+        encodingProfilesSetsList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "addEncodingProfile")
     {
@@ -1824,8 +1868,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
                 
-        addEncodingProfile(request, workspace,
-            queryParameters, requestBody);
+        addEncodingProfile(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeEncodingProfile")
     {
@@ -1841,8 +1885,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
                 
-        removeEncodingProfile(request, workspace,
-            queryParameters);
+        removeEncodingProfile(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "removeEncodingProfilesSet")
     {
@@ -1858,32 +1902,38 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeEncodingProfilesSet(request, workspace,
-            queryParameters);
+        removeEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "encodingProfilesList")
     {
-        encodingProfilesList(request, workspace, queryParameters);
+        encodingProfilesList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "workflowsAsLibraryList")
     {
-        workflowsAsLibraryList(request, workspace, queryParameters);
+        workflowsAsLibraryList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "workflowAsLibraryContent")
     {
-        workflowAsLibraryContent(request, workspace, queryParameters);
+        workflowAsLibraryContent(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "saveWorkflowAsLibrary")
     {
-        saveWorkflowAsLibrary(request, userKey, workspace, queryParameters, requestBody, admin);
+        saveWorkflowAsLibrary(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace, queryParameters, requestBody, admin);
     }
     else if (method == "removeWorkflowAsLibrary")
     {
-        removeWorkflowAsLibrary(request, userKey, workspace, queryParameters, admin);
+        removeWorkflowAsLibrary(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace, queryParameters, admin);
     }
     else if (method == "mmsSupport")
     {
-		mmsSupport(request, userKey, apiKey, workspace, queryParameters, requestBody);
+		mmsSupport(sThreadId, requestIdentifier, responseBodyCompressed, request,
+			userKey, apiKey, workspace, queryParameters, requestBody);
     }
     else if (method == "addYouTubeConf")
     {
@@ -1899,7 +1949,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addYouTubeConf(request, workspace, queryParameters, requestBody);
+        addYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyYouTubeConf")
     {
@@ -1915,7 +1966,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyYouTubeConf(request, workspace, queryParameters, requestBody);
+        modifyYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeYouTubeConf")
     {
@@ -1931,11 +1983,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeYouTubeConf(request, workspace, queryParameters);
+        removeYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "youTubeConfList")
     {
-        youTubeConfList(request, workspace);
+        youTubeConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "addFacebookConf")
     {
@@ -1951,7 +2005,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addFacebookConf(request, workspace, queryParameters, requestBody);
+        addFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyFacebookConf")
     {
@@ -1967,7 +2022,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyFacebookConf(request, workspace, queryParameters, requestBody);
+        modifyFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeFacebookConf")
     {
@@ -1983,11 +2039,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeFacebookConf(request, workspace, queryParameters);
+        removeFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "facebookConfList")
     {
-        facebookConfList(request, workspace);
+        facebookConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "addStream")
     {
@@ -2003,7 +2061,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addStream(request, workspace, queryParameters, requestBody);
+        addStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyStream")
     {
@@ -2019,7 +2078,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyStream(request, workspace, queryParameters, requestBody);
+        modifyStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeStream")
     {
@@ -2035,11 +2095,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeStream(request, workspace, queryParameters);
+        removeStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "streamList")
     {
-        streamList(request, workspace, queryParameters);
+        streamList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "addSourceSATStream")
     {
@@ -2055,7 +2117,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addSourceSATStream(request, workspace, queryParameters, requestBody);
+        addSourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifySourceSATStream")
     {
@@ -2071,7 +2134,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifySourceSATStream(request, workspace, queryParameters, requestBody);
+        modifySourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeSourceSATStream")
     {
@@ -2087,11 +2151,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeSourceSATStream(request, workspace, queryParameters);
+        removeSourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "sourceSatStreamList")
     {
-        sourceSatStreamList(request, workspace, queryParameters);
+        sourceSatStreamList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "addAWSChannelConf")
     {
@@ -2107,7 +2173,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addAWSChannelConf(request, workspace, queryParameters, requestBody);
+        addAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyAWSChannelConf")
     {
@@ -2123,7 +2190,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyAWSChannelConf(request, workspace, queryParameters, requestBody);
+        modifyAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeAWSChannelConf")
     {
@@ -2139,11 +2207,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeAWSChannelConf(request, workspace, queryParameters);
+        removeAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "awsChannelConfList")
     {
-        awsChannelConfList(request, workspace);
+        awsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "addFTPConf")
     {
@@ -2159,7 +2229,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addFTPConf(request, workspace, queryParameters, requestBody);
+        addFTPConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyFTPConf")
     {
@@ -2175,7 +2246,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyFTPConf(request, workspace, queryParameters, requestBody);
+        modifyFTPConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeFTPConf")
     {
@@ -2191,11 +2263,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeFTPConf(request, workspace, queryParameters);
+        removeFTPConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "ftpConfList")
     {
-        ftpConfList(request, workspace);
+        ftpConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "addEMailConf")
     {
@@ -2211,7 +2285,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addEMailConf(request, workspace, queryParameters, requestBody);
+        addEMailConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyEMailConf")
     {
@@ -2227,7 +2302,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyEMailConf(request, workspace, queryParameters, requestBody);
+        modifyEMailConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeEMailConf")
     {
@@ -2243,11 +2319,13 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeEMailConf(request, workspace, queryParameters);
+        removeEMailConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "emailConfList")
     {
-        emailConfList(request, workspace);
+        emailConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
     }
     else if (method == "addRequestStatistic")
     {
@@ -2263,27 +2341,33 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addRequestStatistic(request, workspace, queryParameters, requestBody);
+        addRequestStatistic(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
     }
     else if (method == "requestStatisticList")
     {
-		requestStatisticList(request, workspace, queryParameters);
+		requestStatisticList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "requestStatisticPerContentList")
     {
-		requestStatisticPerContentList(request, workspace, queryParameters);
+		requestStatisticPerContentList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "requestStatisticPerMonthList")
     {
-		requestStatisticPerMonthList(request, workspace, queryParameters);
+		requestStatisticPerMonthList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "requestStatisticPerDayList")
     {
-		requestStatisticPerDayList(request, workspace, queryParameters);
+		requestStatisticPerDayList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else if (method == "requestStatisticPerHourList")
     {
-		requestStatisticPerHourList(request, workspace, queryParameters);
+		requestStatisticPerHourList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
     }
     else
     {
@@ -2301,6 +2385,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 }
 
 void API::createDeliveryAuthorization(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	int64_t userKey,
 	shared_ptr<Workspace> requestWorkspace,
@@ -2511,7 +2596,8 @@ void API::createDeliveryAuthorization(
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
 				*/
-				sendSuccess(request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+					request, "", api, 201, responseBody);
 			}
         }
         catch(MediaItemKeyNotFound e)
@@ -2580,6 +2666,7 @@ void API::createDeliveryAuthorization(
 }
 
 void API::createBulkOfDeliveryAuthorization(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	int64_t userKey,
 	shared_ptr<Workspace> requestWorkspace,
@@ -2955,7 +3042,8 @@ void API::createBulkOfDeliveryAuthorization(
 				string responseBody = Json::writeString(wbuilder,
 					deliveryAutorizationDetailsRoot);
 
-				sendSuccess(request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+					request, "", api, 201, responseBody);
 			}
 		}
         catch(runtime_error e)
@@ -4449,11 +4537,12 @@ string API::getSignedPath(string contentURI, time_t expirationTime)
 }
 
 void API::createDeliveryCDN77Authorization(
-        FCGX_Request& request,
-        int64_t userKey,
-        shared_ptr<Workspace> requestWorkspace,
-        string clientIPAddress,
-        unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	int64_t userKey,
+	shared_ptr<Workspace> requestWorkspace,
+	string clientIPAddress,
+	unordered_map<string, string> queryParameters)
 {
 	string api = "createDeliveryCDN77Authorization";
 
@@ -4658,7 +4747,8 @@ void API::createDeliveryCDN77Authorization(
 			}
 		}
 
-		sendSuccess(request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
 	}
 	catch(runtime_error e)
 	{
@@ -4755,6 +4845,7 @@ void API::parseContentRange(string contentRange,
 }
 
 void API::mmsSupport(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
@@ -4852,7 +4943,8 @@ void API::mmsSupport(
             emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 
             string responseBody;
-            sendSuccess(request, "", api, 201, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, responseBody);
         }
         catch(runtime_error e)
         {

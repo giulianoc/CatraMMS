@@ -26,6 +26,7 @@
 
 
 void API::encodingJobsStatus(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -273,7 +274,8 @@ void API::encodingJobsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingStatusRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -309,6 +311,7 @@ void API::encodingJobsStatus(
 }
 
 void API::encodingJobPriority(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -371,7 +374,8 @@ void API::encodingJobPriority(
 
             string responseBody;
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -407,6 +411,7 @@ void API::encodingJobPriority(
 }
 
 void API::killOrCancelEncodingJob(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters,
@@ -551,7 +556,8 @@ void API::killOrCancelEncodingJob(
 			}
 
             string responseBody;
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -587,6 +593,7 @@ void API::killOrCancelEncodingJob(
 }
 
 void API::encodingProfilesSetsList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -624,7 +631,8 @@ void API::encodingProfilesSetsList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingProfilesSetListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -658,6 +666,7 @@ void API::encodingProfilesSetsList(
 }
 
 void API::encodingProfilesList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -710,7 +719,8 @@ void API::encodingProfilesList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingProfileListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -744,6 +754,7 @@ void API::encodingProfilesList(
 }
 
 void API::addEncodingProfilesSet(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -895,7 +906,8 @@ void API::addEncodingProfilesSet(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -930,6 +942,7 @@ void API::addEncodingProfilesSet(
 }
 
 void API::addEncodingProfile(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -1078,7 +1091,8 @@ void API::addEncodingProfile(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -1113,6 +1127,7 @@ void API::addEncodingProfile(
 }
 
 void API::removeEncodingProfile(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -1160,7 +1175,8 @@ void API::removeEncodingProfile(
 
         string responseBody;
         
-        sendSuccess(request, "", api, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -1193,6 +1209,7 @@ void API::removeEncodingProfile(
 }
 
 void API::removeEncodingProfilesSet(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -1240,7 +1257,8 @@ void API::removeEncodingProfilesSet(
 
         string responseBody;
         
-        sendSuccess(request, "", api, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {

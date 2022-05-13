@@ -123,6 +123,7 @@ UploadBinary::~UploadBinary() {
 }
 
 void UploadBinary::manageRequestAndResponse(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestURI,
         string requestMethod,

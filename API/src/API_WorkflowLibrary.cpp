@@ -25,6 +25,7 @@
 
 
 void API::workflowsAsLibraryList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -42,7 +43,8 @@ void API::workflowsAsLibraryList(
 		Json::StreamWriterBuilder wbuilder;
 		string responseBody = Json::writeString(wbuilder, workflowListRoot);
 
-		sendSuccess(request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -76,6 +78,7 @@ void API::workflowsAsLibraryList(
 
 
 void API::workflowAsLibraryContent(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -103,7 +106,8 @@ void API::workflowAsLibraryContent(
 		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(
 			workspace->_workspaceKey, workflowLibraryKey);
 
-		sendSuccess(request, "", api, 200, workflowLibraryContent);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, workflowLibraryContent);
     }
     catch(runtime_error e)
     {
@@ -137,6 +141,7 @@ void API::workflowAsLibraryContent(
 
 
 void API::saveWorkflowAsLibrary(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
@@ -218,7 +223,8 @@ void API::saveWorkflowAsLibrary(
                     );            
         }
 
-        sendSuccess(request, "", api, 201, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -253,6 +259,7 @@ void API::saveWorkflowAsLibrary(
 }
 
 void API::removeWorkflowAsLibrary(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
@@ -330,7 +337,8 @@ void API::removeWorkflowAsLibrary(
 
         string responseBody;
         
-        sendSuccess(request, "", api, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {

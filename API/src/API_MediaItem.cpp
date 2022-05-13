@@ -23,6 +23,7 @@
 #include "API.h"
 
 void API::updateMediaItem(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -162,7 +163,8 @@ void API::updateMediaItem(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, mediaItemRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -219,6 +221,7 @@ void API::updateMediaItem(
 }
 
 void API::updatePhysicalPath(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -344,7 +347,8 @@ void API::updatePhysicalPath(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, mediaItemRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -401,6 +405,7 @@ void API::updatePhysicalPath(
 }
 
 void API::mediaItemsList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters,
@@ -758,7 +763,8 @@ void API::mediaItemsList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
 
 		_logger->info(__FILEREF__ + api
@@ -800,6 +806,7 @@ void API::mediaItemsList(
 }
 
 void API::tagsList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -882,7 +889,8 @@ void API::tagsList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, tagsRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)

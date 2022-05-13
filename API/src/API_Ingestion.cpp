@@ -34,6 +34,7 @@
 
 
 void API::ingestion(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
@@ -212,7 +213,8 @@ void API::ingestion(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Ingestion"
@@ -2479,6 +2481,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 }
 
 void API::uploadedBinary(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -2875,7 +2878,8 @@ void API::uploadedBinary(
         }
         
         string responseBody;
-        sendSuccess(request, "", api, 201, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, responseBody);
 
         /*
         if (requestMethod == "HEAD")
@@ -3640,6 +3644,7 @@ void API::fileUploadProgressCheck()
 }
 
 void API::ingestionRootsStatus(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -3827,7 +3832,8 @@ void API::ingestionRootsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3863,10 +3869,11 @@ void API::ingestionRootsStatus(
 }
 
 void API::ingestionRootMetaDataContent(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	string requestBody)
 {
     string api = "ingestionRootMetaDataContent";
 
@@ -3899,7 +3906,8 @@ void API::ingestionRootMetaDataContent(
 				_mmsEngineDBFacade->getIngestionRootMetaDataContent(
 				workspace, ingestionRootKey, processedMetadata);
 
-            sendSuccess(request, "", api, 200, ingestionRootMetaDataContent);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, ingestionRootMetaDataContent);
         }
     }
     catch(runtime_error e)
@@ -3935,6 +3943,7 @@ void API::ingestionRootMetaDataContent(
 }
 
 void API::ingestionJobsStatus(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -4201,7 +4210,8 @@ void API::ingestionJobsStatus(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -4238,6 +4248,7 @@ void API::ingestionJobsStatus(
 
 
 void API::cancelIngestionJob(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -4342,7 +4353,8 @@ void API::cancelIngestionJob(
 			_mmsEngineDBFacade->forceCancelEncodingJob (ingestionJobKey);
 
         string responseBody;
-        sendSuccess(request, "", api, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);
     }
     catch(runtime_error e)
     {
@@ -4377,6 +4389,7 @@ void API::cancelIngestionJob(
 }
 
 void API::updateIngestionJob(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -4583,7 +4596,8 @@ void API::updateIngestionJob(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, responseRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -4640,6 +4654,7 @@ void API::updateIngestionJob(
 }
 
 void API::changeLiveProxyPlaylist(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters,
@@ -5777,7 +5792,8 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			string responseBody;
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
 		}
 		catch (curlpp::LogicError & e) 
 		{

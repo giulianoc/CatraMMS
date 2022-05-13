@@ -518,6 +518,7 @@ void FFMPEGEncoder::getBinaryAndResponse(
 //	for new connections (encodingStatus, ...)
 
 void FFMPEGEncoder::manageRequestAndResponse(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestURI,
         string requestMethod,
@@ -555,7 +556,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -594,7 +596,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, infoRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -792,7 +795,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -991,7 +995,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -1189,7 +1194,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -1387,7 +1393,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -1585,7 +1592,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -1783,7 +1791,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -1981,7 +1990,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -2179,7 +2189,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -2377,7 +2388,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -2578,7 +2590,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -2827,7 +2840,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
-            sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
         }
         catch(exception e)
         {
@@ -3251,7 +3265,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				+ to_string(chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()) + "@"
 		);
 
-        sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, requestURI, requestMethod, 200, responseBody);
     }
     else if (method == "killEncodingJob")
     {
@@ -3445,7 +3460,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			+ ", \"pid\": " + to_string(pidToBeKilled)
 			+ "}";
 
-        sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, requestURI, requestMethod, 200, responseBody);
     }
     else if (method == "changeLiveProxyPlaylist")
     {
@@ -3602,7 +3618,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBody = Json::writeString(wbuilder, responseBodyRoot);
 		}
 
-        sendSuccess(request, requestURI, requestMethod, 200, responseBody);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, requestURI, requestMethod, 200, responseBody);
     }
     else if (method == "encodingProgress")
     {

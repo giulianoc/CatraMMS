@@ -24,6 +24,7 @@
 
 
 void API::addYouTubeConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -197,7 +198,8 @@ void API::addYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -232,6 +234,7 @@ void API::addYouTubeConf(
 }
 
 void API::modifyYouTubeConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -406,7 +409,8 @@ void API::modifyYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -441,6 +445,7 @@ void API::modifyYouTubeConf(
 }
 
 void API::removeYouTubeConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -495,7 +500,8 @@ void API::removeYouTubeConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -528,6 +534,7 @@ void API::removeYouTubeConf(
 }
 
 void API::youTubeConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -545,7 +552,8 @@ void API::youTubeConfList(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -579,6 +587,7 @@ void API::youTubeConfList(
 }
 
 void API::addFacebookConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -693,7 +702,8 @@ void API::addFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -728,6 +738,7 @@ void API::addFacebookConf(
 }
 
 void API::modifyFacebookConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -855,7 +866,8 @@ void API::modifyFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -890,6 +902,7 @@ void API::modifyFacebookConf(
 }
 
 void API::removeFacebookConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -944,7 +957,8 @@ void API::removeFacebookConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -977,6 +991,7 @@ void API::removeFacebookConf(
 }
 
 void API::facebookConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -995,7 +1010,8 @@ void API::facebookConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -1029,6 +1045,7 @@ void API::facebookConfList(
 }
 
 void API::addStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -1281,7 +1298,8 @@ void API::addStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1316,6 +1334,7 @@ void API::addStream(
 }
 
 void API::modifyStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -1711,7 +1730,8 @@ void API::modifyStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1746,6 +1766,7 @@ void API::modifyStream(
 }
 
 void API::removeStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -1800,7 +1821,8 @@ void API::removeStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1833,6 +1855,7 @@ void API::removeStream(
 }
 
 void API::streamList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
@@ -2015,7 +2038,8 @@ void API::streamList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, streamListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -2050,6 +2074,7 @@ void API::streamList(
 
 
 void API::addSourceSATStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -2264,7 +2289,8 @@ void API::addSourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2299,6 +2325,7 @@ void API::addSourceSATStream(
 }
 
 void API::modifySourceSATStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -2572,7 +2599,8 @@ void API::modifySourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2607,6 +2635,7 @@ void API::modifySourceSATStream(
 }
 
 void API::removeSourceSATStream(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -2660,7 +2689,8 @@ void API::removeSourceSATStream(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -2693,6 +2723,7 @@ void API::removeSourceSATStream(
 }
 
 void API::sourceSatStreamList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
@@ -2827,7 +2858,8 @@ void API::sourceSatStreamList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, sourceSATStreamRoot);
 
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -2861,6 +2893,7 @@ void API::sourceSatStreamList(
 }
 
 void API::addAWSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -3012,7 +3045,8 @@ void API::addAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3047,6 +3081,7 @@ void API::addAWSChannelConf(
 }
 
 void API::modifyAWSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -3211,7 +3246,8 @@ void API::modifyAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3246,6 +3282,7 @@ void API::modifyAWSChannelConf(
 }
 
 void API::removeAWSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -3300,7 +3337,8 @@ void API::removeAWSChannelConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3333,6 +3371,7 @@ void API::removeAWSChannelConf(
 }
 
 void API::awsChannelConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -3351,7 +3390,8 @@ void API::awsChannelConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, awsChannelConfListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3386,6 +3426,7 @@ void API::awsChannelConfList(
 
 
 void API::addFTPConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -3549,7 +3590,8 @@ void API::addFTPConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3584,6 +3626,7 @@ void API::addFTPConf(
 }
 
 void API::modifyFTPConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -3760,7 +3803,8 @@ void API::modifyFTPConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3795,6 +3839,7 @@ void API::modifyFTPConf(
 }
 
 void API::removeFTPConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -3849,7 +3894,8 @@ void API::removeFTPConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -3882,6 +3928,7 @@ void API::removeFTPConf(
 }
 
 void API::ftpConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -3900,7 +3947,8 @@ void API::ftpConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ftpConfListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -3934,6 +3982,7 @@ void API::ftpConfList(
 }
 
 void API::addEMailConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -4072,7 +4121,8 @@ void API::addEMailConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4107,6 +4157,7 @@ void API::addEMailConf(
 }
 
 void API::modifyEMailConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -4259,7 +4310,8 @@ void API::modifyEMailConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4294,6 +4346,7 @@ void API::modifyEMailConf(
 }
 
 void API::removeEMailConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -4348,7 +4401,8 @@ void API::removeEMailConf(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4381,6 +4435,7 @@ void API::removeEMailConf(
 }
 
 void API::emailConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -4399,7 +4454,8 @@ void API::emailConfList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, emailConfListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)

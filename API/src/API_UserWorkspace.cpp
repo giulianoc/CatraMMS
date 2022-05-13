@@ -26,6 +26,7 @@
 
 
 void API::registerUser(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	string requestBody)
 {
@@ -389,7 +390,8 @@ void API::registerUser(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, "", api, 201, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -472,6 +474,7 @@ void API::registerUser(
 }
 
 void API::createWorkspace(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
@@ -629,7 +632,8 @@ void API::createWorkspace(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, "", api, 201, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, responseBody);
 
             pair<string, string> emailAddressAndName =
 				_mmsEngineDBFacade->getUserDetails (userKey);
@@ -706,6 +710,7 @@ void API::createWorkspace(
 }
 
 void API::shareWorkspace_(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -1024,7 +1029,8 @@ void API::shareWorkspace_(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, "", api, 201, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -1108,11 +1114,12 @@ void API::shareWorkspace_(
 }
 
 void API::workspaceList(
-        FCGX_Request& request,
-		int64_t userKey,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-		bool admin)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	int64_t userKey,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	bool admin)
 {
     string api = "workspaceList";
 
@@ -1158,7 +1165,8 @@ void API::workspaceList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceListRoot);
 
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -1187,6 +1195,7 @@ void API::workspaceList(
 }
 
 void API::confirmRegistration(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	unordered_map<string, string> queryParameters)
 {
@@ -1226,7 +1235,8 @@ void API::confirmRegistration(
 			Json::StreamWriterBuilder wbuilder;
 			string responseBody = Json::writeString(wbuilder, registrationRoot);
 
-            sendSuccess(request, "", api, 201, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, responseBody);
 
             string to = emailAddress;
             string subject = "Welcome";
@@ -1294,6 +1304,7 @@ void API::confirmRegistration(
 }
 
 void API::login(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestBody)
 {
@@ -2110,7 +2121,8 @@ void API::login(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
 
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -2167,6 +2179,7 @@ void API::login(
 }
 
 void API::updateUser(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         int64_t userKey,
         string requestBody,
@@ -2312,7 +2325,8 @@ void API::updateUser(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
 
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -2369,6 +2383,7 @@ void API::updateUser(
 }
 
 void API::createTokenToResetPassword(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	unordered_map<string, string> queryParameters)
 {
@@ -2445,7 +2460,8 @@ void API::createTokenToResetPassword(
 
         try
         {
-            sendSuccess(request, "", api, 201, "");
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 201, "");
 
 			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -2523,6 +2539,7 @@ void API::createTokenToResetPassword(
 }
 
 void API::resetPassword(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	string requestBody)
 {
@@ -2638,7 +2655,8 @@ void API::resetPassword(
 
         try
         {
-            sendSuccess(request, "", api, 200, "");
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, "");
 
             string to = email;
             string subject = "Reset password";
@@ -2709,6 +2727,7 @@ void API::resetPassword(
 }
 
 void API::updateWorkspace(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -2942,7 +2961,8 @@ void API::updateWorkspace(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceDetailRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -2999,6 +3019,7 @@ void API::updateWorkspace(
 }
 
 void API::setWorkspaceAsDefault(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -3038,7 +3059,8 @@ void API::setWorkspaceAsDefault(
 
             string responseBody;
 
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
         catch(runtime_error e)
         {
@@ -3095,6 +3117,7 @@ void API::setWorkspaceAsDefault(
 }
 
 void API::deleteWorkspace(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace)
@@ -3125,7 +3148,8 @@ void API::deleteWorkspace(
             
             string responseBody;
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -3169,7 +3193,8 @@ void API::deleteWorkspace(
             
             string responseBody;
             
-            sendSuccess(request, "", api, 200, responseBody);            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
         }
         catch(runtime_error e)
         {
@@ -3228,6 +3253,7 @@ void API::deleteWorkspace(
 }
 
 void API::workspaceUsage (
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
@@ -3266,7 +3292,8 @@ void API::workspaceUsage (
 		Json::StreamWriterBuilder wbuilder;
 		string responseBody = Json::writeString(wbuilder, workspaceUsageRoot);
             
-		sendSuccess(request, "", api, 200, responseBody);            
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, responseBody);            
     }
     catch(runtime_error e)
     {

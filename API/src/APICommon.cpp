@@ -498,7 +498,20 @@ int APICommon::operator()()
             }
              */
 
+			bool responseBodyCompressed = false;
+			{
+				unordered_map<string, string>::iterator it;
+
+				if ((it = requestDetails.find("HTTP_X_RESPONSEBODYCOMPRESSED"))
+					!= requestDetails.end()
+					&& it->second == "true")
+				{
+					responseBodyCompressed = true;
+				}
+			}
+
 			manageRequestAndResponse(
+				sThreadId, _requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, queryParameters,
 				basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
 				contentLength, requestBody, requestDetails);            
@@ -891,7 +904,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
 }
 */
 
-void APICommon::sendSuccess(FCGX_Request& request,
+void APICommon::sendSuccess(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
 	string requestURI, string requestMethod,
 	int htmlResponseCode,
 	string responseBody, string contentType,
@@ -947,16 +962,7 @@ void APICommon::sendSuccess(FCGX_Request& request,
 			;
 	}
 
-	string sThreadId;
-	{
-		thread::id threadId = this_thread::get_id();
-		stringstream ss;
-		ss << threadId;
-		sThreadId = ss.str();
-	}
-
-	bool compressed = true;
-	if (compressed)
+	if (responseBodyCompressed)
 	{
 		string compressedResponseBody = Compressor::compress_string(responseBody);
 
@@ -968,14 +974,14 @@ void APICommon::sendSuccess(FCGX_Request& request,
 			+ (cookieHeader == "" ? "" : cookieHeader)
 			+ (corsGETHeader == "" ? "" : corsGETHeader)
 			+ "Content-Length: " + to_string(contentLength) + endLine
-			+ (compressed ? ("X-CompressedBody: true" + endLine) : "")
+			+ "X-CompressedBody: true" + endLine
 			+ endLine
 		;
 
 		FCGX_FPrintF(request.out, headResponse.c_str());
 
 		_logger->info(__FILEREF__ + "sendSuccess"
-			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+			+ ", requestIdentifier: " + to_string(requestIdentifier)
 			+ ", threadId: " + sThreadId
 			+ ", requestURI: " + requestURI
 			+ ", requestMethod: " + requestMethod
@@ -1029,7 +1035,7 @@ void APICommon::sendSuccess(FCGX_Request& request,
 		//     + ", response: " + completeHttpResponse
 		// );
 		_logger->info(__FILEREF__ + "sendSuccess"
-			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+			+ ", requestIdentifier: " + to_string(requestIdentifier)
 			+ ", threadId: " + sThreadId
 			+ ", requestURI: " + requestURI
 			+ ", requestMethod: " + requestMethod
@@ -1046,6 +1052,7 @@ void APICommon::sendSuccess(FCGX_Request& request,
 //    cout << completeHttpResponse;
 }
 
+/*
 void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 {
     string endLine = "\r\n";
@@ -1096,19 +1103,11 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
             + responseBody;
 	}
 
-    string sThreadId;
-    {
-        thread::id threadId = this_thread::get_id();
-        stringstream ss;
-        ss << threadId;
-        sThreadId = ss.str();
-    }
-
     // _logger->info(__FILEREF__ + "HTTP Success"
     //     + ", response: " + completeHttpResponse
     // );
     _logger->info(__FILEREF__ + "sendSuccess"
-		+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+		+ ", requestIdentifier: " + to_string(requestIdentifier)
 		+ ", threadId: " + sThreadId
 		// + ", requestURI: " + requestURI
 		// + ", requestMethod: " + requestMethod
@@ -1116,9 +1115,9 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
         // + ", response: " + completeHttpResponse
     );
 
-
-    cout << completeHttpResponse;
+	// cout << completeHttpResponse;
 }
+*/
 
 void APICommon::sendRedirect(FCGX_Request& request, string locationURL)
 {

@@ -58,6 +58,7 @@ public:
     */
 
     virtual void manageRequestAndResponse(
+			string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
             FCGX_Request& request,
             string requestURI,
             string requestMethod,
@@ -138,30 +139,36 @@ private:
     
 
     void registerUser(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestBody);
     
     void updateUser(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         int64_t userKey,
         string requestBody,
 		bool admin);
 
 	void createTokenToResetPassword(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		unordered_map<string, string> queryParameters);
 
 	void resetPassword(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		string requestBody);
 
     void updateWorkspace(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
         string requestBody);
 
     void setWorkspaceAsDefault(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -169,27 +176,32 @@ private:
         string requestBody);
 
     void createWorkspace(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
         string requestBody, bool admin);
 
     void deleteWorkspace(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace);
 
 	void workspaceUsage (
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 			FCGX_Request& request,
 			shared_ptr<Workspace> workspace);
 
     void shareWorkspace_(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void workspaceList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
@@ -197,14 +209,17 @@ private:
 		bool admin);
 
     void confirmRegistration(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
     void login(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestBody);
 
 	void mmsSupport(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
@@ -212,30 +227,35 @@ private:
         string requestBody);
 
     void ingestionRootsStatus(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
 	void ingestionRootMetaDataContent(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void ingestionJobsStatus(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
 	void cancelIngestionJob(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void updateIngestionJob(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -243,24 +263,28 @@ private:
         string requestBody, bool admin);
 
     void encodingJobsStatus(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void encodingJobPriority(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void killOrCancelEncodingJob(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void changeLiveProxyPlaylist(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -269,12 +293,14 @@ private:
 	void killEncodingJob(int64_t encoderKey, int64_t encodingJobKey);
 
     void mediaItemsList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody, bool admin);
 
     void updateMediaItem(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -282,6 +308,7 @@ private:
         string requestBody, bool admin);
 
     void updatePhysicalPath(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
@@ -289,22 +316,26 @@ private:
         string requestBody, bool admin);
 
     void tagsList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void encodingProfilesSetsList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void encodingProfilesList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void ingestion(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
@@ -349,6 +380,7 @@ private:
             string& responseBody);
 
     void uploadedBinary(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -363,38 +395,45 @@ private:
 		string sourcePathName);
 
     void addEncodingProfilesSet(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void addEncodingProfile(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeEncodingProfile(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void removeEncodingProfilesSet(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
 	void workflowsAsLibraryList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
 	void workflowAsLibraryContent(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
 	void saveWorkflowAsLibrary(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
@@ -402,12 +441,14 @@ private:
         string requestBody, bool admin);
 
 	void removeWorkflowAsLibrary(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters, bool admin);
 
     void createDeliveryAuthorization(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         int64_t userKey,
         shared_ptr<Workspace> requestWorkspace,
@@ -439,6 +480,7 @@ private:
 	);
 
 	void createBulkOfDeliveryAuthorization(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		int64_t userKey,
 		shared_ptr<Workspace> requestWorkspace,
@@ -447,6 +489,7 @@ private:
 		string requestBody);
 
 	void createDeliveryCDN77Authorization(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		int64_t userKey,
 		shared_ptr<Workspace> requestWorkspace,
@@ -462,181 +505,215 @@ private:
 	string getSignedPath(string contentURI, time_t expirationTime);
 
     void addYouTubeConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyYouTubeConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeYouTubeConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void youTubeConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
     void addFacebookConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyFacebookConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeFacebookConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void facebookConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
     void addStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void streamList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
     void addSourceSATStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifySourceSATStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeSourceSATStream(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void sourceSatStreamList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
     void addAWSChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyAWSChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeAWSChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void awsChannelConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
     void addFTPConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyFTPConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeFTPConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void ftpConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
     void addEMailConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void modifyEMailConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     void removeEMailConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
     void emailConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
 	void addRequestStatistic(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters,
 		string requestBody);
 
 	void requestStatisticList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
 	void requestStatisticPerContentList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
 	void requestStatisticPerMonthList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
 	void requestStatisticPerDayList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
 	void requestStatisticPerHourList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
@@ -647,53 +724,63 @@ private:
         long long& contentRangeSize);
     
 	void addEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		string requestBody);
 
 	void modifyEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters,
 		string requestBody);
 
 	void removeEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
 	void encoderList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request, 
 		shared_ptr<Workspace> workspace, bool admin,
 		unordered_map<string, string> queryParameters);
 
 	void encodersPoolList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request, 
 		shared_ptr<Workspace> workspace, bool admin,
 		unordered_map<string, string> queryParameters);
 
 	void addEncodersPool(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		string requestBody);
 
 	void modifyEncodersPool(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters,
 		string requestBody);
 
 	void removeEncodersPool(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
 	void addAssociationWorkspaceEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
 	void removeAssociationWorkspaceEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
 		shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);

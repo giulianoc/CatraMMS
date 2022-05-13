@@ -22,6 +22,7 @@
 
 
 void API::addRequestStatistic(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -153,7 +154,8 @@ void API::addRequestStatistic(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -188,6 +190,7 @@ void API::addRequestStatistic(
 }
 
 void API::requestStatisticList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
@@ -278,7 +281,8 @@ void API::requestStatisticList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -312,6 +316,7 @@ void API::requestStatisticList(
 }
 
 void API::requestStatisticPerContentList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters)
@@ -387,7 +392,8 @@ void API::requestStatisticPerContentList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -421,6 +427,7 @@ void API::requestStatisticPerContentList(
 }
 
 void API::requestStatisticPerMonthList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters)
@@ -496,7 +503,8 @@ void API::requestStatisticPerMonthList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -530,6 +538,7 @@ void API::requestStatisticPerMonthList(
 }
 
 void API::requestStatisticPerDayList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters)
@@ -605,7 +614,8 @@ void API::requestStatisticPerDayList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)
@@ -639,6 +649,7 @@ void API::requestStatisticPerDayList(
 }
 
 void API::requestStatisticPerHourList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters)
@@ -714,7 +725,8 @@ void API::requestStatisticPerHourList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, statisticsListRoot);
 
-			sendSuccess(request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
 		}
     }
     catch(runtime_error e)

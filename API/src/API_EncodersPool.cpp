@@ -18,6 +18,7 @@
 
 
 void API::addEncoder(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	string requestBody)
@@ -184,7 +185,8 @@ void API::addEncoder(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -219,6 +221,7 @@ void API::addEncoder(
 }
 
 void API::modifyEncoder(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
@@ -413,7 +416,8 @@ void API::modifyEncoder(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -448,6 +452,7 @@ void API::modifyEncoder(
 }
 
 void API::removeEncoder(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -502,7 +507,8 @@ void API::removeEncoder(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -535,6 +541,7 @@ void API::removeEncoder(
 }
 
 void API::encoderList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace, bool admin,
 		unordered_map<string, string> queryParameters)
@@ -667,7 +674,8 @@ void API::encoderList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encoderListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -701,6 +709,7 @@ void API::encoderList(
 }
 
 void API::encodersPoolList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace, bool admin,
 		unordered_map<string, string> queryParameters)
@@ -784,7 +793,8 @@ void API::encodersPoolList(
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodersPoolListRoot);
             
-            sendSuccess(request, "", api, 200, responseBody);
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -818,6 +828,7 @@ void API::encodersPoolList(
 }
 
 void API::addEncodersPool(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	string requestBody)
@@ -932,7 +943,8 @@ void API::addEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -967,6 +979,7 @@ void API::addEncodersPool(
 }
 
 void API::modifyEncodersPool(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 	FCGX_Request& request,
 	shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters,
@@ -1094,7 +1107,8 @@ void API::modifyEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, "", api, 201, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1129,6 +1143,7 @@ void API::modifyEncodersPool(
 }
 
 void API::removeEncodersPool(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
@@ -1183,7 +1198,8 @@ void API::removeEncodersPool(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1216,6 +1232,7 @@ void API::removeEncodersPool(
 }
 
 void API::addAssociationWorkspaceEncoder(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
@@ -1283,7 +1300,8 @@ void API::addAssociationWorkspaceEncoder(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -1316,6 +1334,7 @@ void API::addAssociationWorkspaceEncoder(
 }
 
 void API::removeAssociationWorkspaceEncoder(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
@@ -1383,7 +1402,8 @@ void API::removeAssociationWorkspaceEncoder(
             throw e;
         }
 
-        sendSuccess(request, "", api, 200, sResponse);
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
     }
     catch(runtime_error e)
     {
