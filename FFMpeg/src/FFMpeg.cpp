@@ -3096,6 +3096,8 @@ void FFMpeg::overlayTextOnVideo(
         int fontSize,
         string fontColor,
         int textPercentageOpacity,
+        int shadowX,
+        int shadowY,
         bool boxEnable,
         string boxColor,
         int boxPercentageOpacity,
@@ -3152,7 +3154,8 @@ void FFMpeg::overlayTextOnVideo(
         {
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
 				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity, -1);
+				fontColor, textPercentageOpacity, shadowX, shadowY,
+				boxEnable, boxColor, boxPercentageOpacity, -1);
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
@@ -3415,6 +3418,8 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 	int fontSize,
 	string fontColor,
 	int textPercentageOpacity,
+	int shadowX,
+	int shadowY,
 	bool boxEnable,
 	string boxColor,
 	int boxPercentageOpacity,
@@ -3464,7 +3469,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		string ffmpegTextPosition_X_InPixel = 
 			regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
 		ffmpegTextPosition_X_InPixel = 
-			regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w");
+			regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
 		ffmpegTextPosition_X_InPixel = 
 			regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
 		ffmpegTextPosition_X_InPixel = 
@@ -3500,6 +3505,8 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 				ffmpegDrawTextFilter += ("@" + string(opacity));                
 			}
 		}
+		ffmpegDrawTextFilter += (":shadowx=" + to_string(shadowX));
+		ffmpegDrawTextFilter += (":shadowy=" + to_string(shadowY));
 		if (boxEnable)
 		{
 			ffmpegDrawTextFilter += (":box=1");
@@ -12123,6 +12130,16 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		if (isMetadataPresent(countdownInputRoot, field))
 			textPercentageOpacity = asInt(countdownInputRoot, field, -1);
 
+		int shadowx = 0;
+		field = "shadowx";
+		if (isMetadataPresent(countdownInputRoot, field))
+			shadowx = asInt(countdownInputRoot, field, -1);
+
+		int shadowy = 0;
+		field = "shadowy";
+		if (isMetadataPresent(countdownInputRoot, field))
+			shadowy = asInt(countdownInputRoot, field, -1);
+
 		bool boxEnable = false;
 		field = "boxEnable";
 		if (isMetadataPresent(countdownInputRoot, field))
@@ -12140,7 +12157,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
 			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
+			fontColor, textPercentageOpacity, shadowx, shadowy,
+			boxEnable, boxColor, boxPercentageOpacity,
 			streamingDurationInSeconds);
 	}
 

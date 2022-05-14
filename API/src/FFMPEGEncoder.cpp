@@ -4534,6 +4534,10 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			get("fontColor", "").asString();
 		int textPercentageOpacity = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
 			"textPercentageOpacity", -1);
+		int shadowX = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
+			"shadowX", 0);
+		int shadowY = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
+			"shadowY", 0);
 		bool boxEnable = JSONUtils::asBool(overlayTextMedatada["ingestedParametersRoot"],
 			"boxEnable", false);
 		string boxColor = overlayTextMedatada["ingestedParametersRoot"].
@@ -4558,6 +4562,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			fontSize,
 			fontColor,
 			textPercentageOpacity,
+			shadowX, shadowY,
 			boxEnable,
 			boxColor,
 			boxPercentageOpacity,

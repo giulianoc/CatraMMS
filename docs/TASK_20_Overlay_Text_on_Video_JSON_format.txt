@@ -25,7 +25,7 @@
 		],
 
 		// mandatory. The text string to be drawn
-		"Text": "...",
+		"text": "...",
 
 		// optional: the below parameters specify the X and Y in pixel where the text
 		//    has to be overlayed on the video. Default values for both are "0"
@@ -48,38 +48,42 @@
 		//    To show a text line sliding from right to left in the last row of the video frame. The "Text" is assumed to contain a single line with no newlines:
 		//          "TextPosition_X_InPixel"="-50*timestampInSeconds"
 		//          "TextPosition_Y_InPixel"="video_height-line_height"
-		"TextPosition_X_InPixel": "(video_width-text_width)/2",                                  
-		"TextPosition_Y_InPixel": "(video_height-text_height)/2",                                
+		"textPosition_X_InPixel": "(video_width-text_width)/2",                                  
+		"textPosition_Y_InPixel": "(video_height-text_height)/2",                                
 
 		// optional. Possible values: ...to be added
-		"FontType": "",
+		"fontType": "",
 
 		// optional. The font size to be used for drawing text
-		"FontSize": 24,
+		"fontSize": 24,
 
 		// optional. The color to be used for drawing fonts
-		"FontColor": "yellow",
+		"fontColor": "yellow",
 
 		// optional
-		"TextPercentageOpacity": 20,
+		"textPercentageOpacity": 20,
+
+		// optional, default is 0
+		"shadowX": 0,
+		"shadowY": 0,
 
 		// optional. Used to draw a box around text
-		"BoxEnable": true,
+		"boxEnable": true,
 
 		// optional. The color to be used for drawing box around text
-		"BoxColor": "red",
+		"boxColor": "red",
 
 		// optional
-		"BoxPercentageOpacity": 20,
+		"boxPercentageOpacity": 20,
 
 		// optional. Possible values: Low, Medium, High
 		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
 		//   the MaxEncodingPriority of the Workspace will be used.
-		"EncodingPriority": "Low",
+		"encodingPriority": "Low",
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
