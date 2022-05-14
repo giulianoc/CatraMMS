@@ -537,6 +537,7 @@ private:
 
 	string getDrawTextVideoFilterDescription(
 		string text,
+		string textFilePathName,
 		string textPosition_X_InPixel,
 		string textPosition_Y_InPixel,
 		string fontType,

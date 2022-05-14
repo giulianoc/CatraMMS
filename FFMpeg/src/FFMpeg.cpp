@@ -3120,6 +3120,7 @@ void FFMpeg::overlayTextOnVideo(
 		stagingEncodedAssetPathName
 	);
 
+	string textTemporaryFileName;
     try
     {
 		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
@@ -3152,8 +3153,18 @@ void FFMpeg::overlayTextOnVideo(
 
 
         {
+			textTemporaryFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(_currentIngestionJobKey)
+				+ "_"
+				+ to_string(_currentEncodingJobKey)
+				+ ".overlayText";
+			ofstream of(textTemporaryFileName, ofstream::trunc);
+			of << text;
+
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel,
+				fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowX, shadowY,
 				boxEnable, boxColor, boxPercentageOpacity, -1);
 
@@ -3248,8 +3259,13 @@ void FFMpeg::overlayTextOnVideo(
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
-                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                        + ", textTemporaryFileName: " + textTemporaryFileName);
                     bool exceptionInCaseOfError = false;
+                    FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
@@ -3258,9 +3274,14 @@ void FFMpeg::overlayTextOnVideo(
 						throw e;
                 }
 
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", textTemporaryFileName: " + textTemporaryFileName);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
+                exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
 
@@ -3411,7 +3432,8 @@ void FFMpeg::overlayTextOnVideo(
 }
 
 string FFMpeg::getDrawTextVideoFilterDescription(
-	string text,
+	string text,				// text or textFilePathName has to be filled
+	string textFilePathName,
 	string textPosition_X_InPixel,
 	string textPosition_Y_InPixel,
 	string fontType,
@@ -3484,7 +3506,10 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		ffmpegTextPosition_Y_InPixel = 
 			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
-		ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
+		if (textFilePathName != "")
+			ffmpegDrawTextFilter = string("drawtext=textfile='") + textFilePathName + "'";
+		else
+			ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
 		if (textPosition_X_InPixel != "")
 			ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
 		if (textPosition_Y_InPixel != "")
@@ -12156,7 +12181,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
 
 		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+			text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 			fontColor, textPercentageOpacity, shadowx, shadowy,
 			boxEnable, boxColor, boxPercentageOpacity,
 			streamingDurationInSeconds);
