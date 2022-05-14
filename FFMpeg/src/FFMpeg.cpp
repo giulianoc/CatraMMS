@@ -3161,6 +3161,7 @@ void FFMpeg::overlayTextOnVideo(
 				+ ".overlayText";
 			ofstream of(textTemporaryFileName, ofstream::trunc);
 			of << text;
+			of.flush();
 
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
 				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel,
@@ -3507,7 +3508,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
 		if (textFilePathName != "")
-			ffmpegDrawTextFilter = string("drawtext=textfile=") + textFilePathName;
+			ffmpegDrawTextFilter = string("drawtext=textfile='") + textFilePathName + "'";
 		else
 			ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
 		if (textPosition_X_InPixel != "")
