@@ -3507,7 +3507,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
 		if (textFilePathName != "")
-			ffmpegDrawTextFilter = string("drawtext=textfile='") + textFilePathName + "'";
+			ffmpegDrawTextFilter = string("drawtext=textfile=") + textFilePathName;
 		else
 			ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
 		if (textPosition_X_InPixel != "")
