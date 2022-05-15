@@ -403,10 +403,10 @@ int APICommon::operator()()
 					}
 				}
 
-				_logger->info(__FILEREF__ + "APIKey and Workspace verified successful"
-					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-					+ ", threadId: " + sThreadId
-				);
+				// _logger->info(__FILEREF__ + "APIKey and Workspace verified successful"
+				// 	+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+				// 	+ ", threadId: " + sThreadId
+				// );
             }
             catch(WrongBasicAuthentication e)
             {

@@ -126,7 +126,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		+ ", message: " + message
 	);
 
-	_logger->info(__FILEREF__ + "OpenSSL initialization");
+	_logger->debug(__FILEREF__ + "OpenSSL initialization");
 
 	{
 		OpenSSL_add_all_algorithms();
@@ -138,23 +138,23 @@ string AWSSigner::sign(string pemPathName, string message)
 		ERR_load_crypto_strings();
 	}
 
-	_logger->info(__FILEREF__ + "createPrivateRSA...");
+	_logger->debug(__FILEREF__ + "createPrivateRSA...");
 	RSA *rsa = NULL;
 	BIO* certbio = NULL;
 	{
-		_logger->info(__FILEREF__ + "Creating BIO");
+		_logger->debug(__FILEREF__ + "Creating BIO");
 		//  Create the Input/Output BIO's
 		certbio = BIO_new(BIO_s_file());
 
-		_logger->info(__FILEREF__ + "Loading certificate");
+		_logger->debug(__FILEREF__ + "Loading certificate");
 		// Loading the certificate from file (PEM)
 		int ret = BIO_read_filename(certbio, pemPathName.c_str());
 
-		_logger->info(__FILEREF__ + "PEM_read_bio_RSAPrivateKey...");
+		_logger->debug(__FILEREF__ + "PEM_read_bio_RSAPrivateKey...");
 		rsa = PEM_read_bio_RSAPrivateKey(certbio, &rsa, NULL, NULL);
 	}
 
-	_logger->info(__FILEREF__ + "RSASign...");
+	_logger->debug(__FILEREF__ + "RSASign...");
 	size_t signedMessageLength;
 	unsigned char* signedMessage = NULL;
 	{
@@ -162,7 +162,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		EVP_PKEY* priKey  = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(priKey, rsa);
 
-		_logger->info(__FILEREF__ + "EVP_DigestSignInit...");
+		_logger->debug(__FILEREF__ + "EVP_DigestSignInit...");
 		if (EVP_DigestSignInit(m_RSASignCtx, NULL, EVP_sha1(), NULL, priKey) <= 0)
 		{
 			_logger->error(__FILEREF__ + "EVP_DigestSignInit failed");
@@ -174,7 +174,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 			return "";
 		}
-		_logger->info(__FILEREF__ + "EVP_DigestSignUpdate...");
+		_logger->debug(__FILEREF__ + "EVP_DigestSignUpdate...");
 		if (EVP_DigestSignUpdate(m_RSASignCtx, message.c_str(), message.size()) <= 0)
 		{
 			_logger->error(__FILEREF__ + "EVP_DigestSignUpdate failed");
@@ -187,7 +187,7 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->info(__FILEREF__ + "EVP_DigestSignFinal...");
+		_logger->debug(__FILEREF__ + "EVP_DigestSignFinal...");
 		if (EVP_DigestSignFinal(m_RSASignCtx, NULL, &signedMessageLength) <= 0)
 		{
 			_logger->error(__FILEREF__ + "EVP_DigestSignFinal failed");
@@ -200,7 +200,7 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->info(__FILEREF__ + "EVP_DigestSignFinal...");
+		_logger->debug(__FILEREF__ + "EVP_DigestSignFinal...");
 		signedMessage = (unsigned char*) malloc(signedMessageLength);
 		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage, &signedMessageLength) <= 0)
 		{
@@ -215,9 +215,9 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->info(__FILEREF__ + "EVP_PKEY_free...");
+		_logger->debug(__FILEREF__ + "EVP_PKEY_free...");
 		EVP_PKEY_free(priKey);
-		_logger->info(__FILEREF__ + "EVP_MD_CTX_destroy...");
+		_logger->debug(__FILEREF__ + "EVP_MD_CTX_destroy...");
 		EVP_MD_CTX_destroy(m_RSASignCtx);
 		// EVP_MD_CTX_cleanup(m_RSASignCtx);
 	}
@@ -228,10 +228,10 @@ string AWSSigner::sign(string pemPathName, string message)
 	// you must not call RSA_free() on the underlying key or a double-free may result
 	// _logger->info(__FILEREF__ + "RSA_free...");
 	// RSA_free(rsa);
-	_logger->info(__FILEREF__ + "BIO_free...");
+	_logger->debug(__FILEREF__ + "BIO_free...");
 	BIO_free(certbio);
 
-	_logger->info(__FILEREF__ + "base64Text..."
+	_logger->debug(__FILEREF__ + "base64Text..."
 		+ ", signedMessageLength: " + to_string(signedMessageLength)
 	);
 	string signature;
@@ -239,37 +239,37 @@ string AWSSigner::sign(string pemPathName, string message)
 		BIO *bio, *b64;
 		BUF_MEM *bufferPtr;
 
-		_logger->info(__FILEREF__ + "BIO_new...");
+		_logger->debug(__FILEREF__ + "BIO_new...");
 		b64 = BIO_new(BIO_f_base64());
 		bio = BIO_new(BIO_s_mem());
 
-		_logger->info(__FILEREF__ + "BIO_push...");
+		_logger->debug(__FILEREF__ + "BIO_push...");
 		bio = BIO_push(b64, bio);
 
-		_logger->info(__FILEREF__ + "BIO_write...");
+		_logger->debug(__FILEREF__ + "BIO_write...");
 		BIO_write(bio, signedMessage, signedMessageLength);
 		BIO_flush(bio);
 		BIO_get_mem_ptr(bio, &bufferPtr);
 
-		_logger->info(__FILEREF__ + "BIO_set_close...");
+		_logger->debug(__FILEREF__ + "BIO_set_close...");
 		BIO_set_close(bio, BIO_NOCLOSE);
-		_logger->info(__FILEREF__ + "BIO_free_all...");
+		_logger->debug(__FILEREF__ + "BIO_free_all...");
 		BIO_free_all(bio);
 		// _logger->info(__FILEREF__ + "BIO_free...");
 		// BIO_free(b64);	// useless because of BIO_free_all
 
-		_logger->info(__FILEREF__ + "base64Text set...");
+		_logger->debug(__FILEREF__ + "base64Text set...");
 		char* base64Text=(*bufferPtr).data;
 
 		signature = base64Text;
 
 		BUF_MEM_free(bufferPtr);
 
-		_logger->info(__FILEREF__ + "signature: " + signature);
+		_logger->debug(__FILEREF__ + "signature: " + signature);
 	}
 	free(signedMessage);
 
-	_logger->info(__FILEREF__ + "signature before replace: " + signature);
+	_logger->debug(__FILEREF__ + "signature before replace: " + signature);
 
 	::replace(signature.begin(), signature.end(), '+', '-');
 	::replace(signature.begin(), signature.end(), '=', '_');
@@ -279,7 +279,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		remove_if(signature.begin(), signature.end(), ::isspace),
 		signature.end());
 
-	_logger->info(__FILEREF__ + "signature after replace: " + signature);
+	_logger->debug(__FILEREF__ + "signature after replace: " + signature);
 
 	return signature;
 	/*
