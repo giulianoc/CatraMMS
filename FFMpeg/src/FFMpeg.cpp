@@ -9031,6 +9031,9 @@ void FFMpeg::liveRecorder(
 	string userAgent,
     time_t utcRecordingPeriodStart, 
     time_t utcRecordingPeriodEnd, 
+
+	Json::Value filters,
+
     int segmentDurationInSeconds,
     string outputFileFormat,
 	string segmenterType,	// streamSegmenter or hlsSegmenter
@@ -9400,6 +9403,102 @@ void FFMpeg::liveRecorder(
 
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
+			}
+		}
+
+		if (filters != Json::nullValue)
+		{
+			bool blackdetect;
+			if (isMetadataPresent(filters, "blackdetect"))
+				blackdetect = true;
+			else
+				blackdetect = false;
+
+			bool blackframe;
+			if (isMetadataPresent(filters, "blackframe"))
+				blackframe = true;
+			else
+				blackframe = false;
+
+			bool freezedetect;
+			if (isMetadataPresent(filters, "freezedetect"))
+				freezedetect = true;
+			else
+				freezedetect = false;
+
+
+			bool silencedetect;
+			if (isMetadataPresent(filters, "silencedetect"))
+				silencedetect = true;
+			else
+				silencedetect = false;
+
+
+			if (blackdetect || blackframe || freezedetect)
+			{
+				string filter;
+
+				if (blackdetect)
+				{
+					double black_min_duration = asDouble(filters["blackdetect"],
+						"black_min_duration", 2);
+					double pixel_black_th = asDouble(filters["blackdetect"],
+						"pixel_black_th", 0.0);
+
+					if (filter != "")
+						filter += ",";
+					filter += ("blackdetect=d=" + to_string(black_min_duration)
+						+ ":pix_th=" + to_string(pixel_black_th) + "0.00");
+				}
+				if (blackframe)
+				{
+					int amount = asInt(filters["blackframe"],
+						"amount", 98);
+					int threshold = asInt(filters["blackframe"],
+						"threshold", 32);
+
+					if (filter != "")
+						filter += ",";
+					filter += ("blackframe=amount=" + to_string(amount)
+						+ ":threshold=" + to_string(threshold));
+				}
+				if (freezedetect)
+				{
+					int noiseInDb = asInt(filters["freezedetect"],
+						"noiseInDb", -60);
+					int duration = asInt(filters["freezedetect"],
+						"duration", 2);
+
+					if (filter != "")
+						filter += ",";
+					filter += ("freezedetect=noise=" + to_string(noiseInDb)
+						+ "dB:duration=" + to_string(duration));
+				}
+				
+				filter += ",showinfo,metadata=mode=print";
+				
+				ffmpegArgumentList.push_back("-filter:v");
+				ffmpegArgumentList.push_back(filter);
+			}
+
+			if (silencedetect)
+			{
+				string filter;
+
+				if (silencedetect)
+				{
+					double noise = asDouble(filters["silencedetect"],
+						"noise", 0.0001);
+
+					if (filter != "")
+						filter += ",";
+					filter += ("silencedetect=noise=" + to_string(noise));
+				}
+
+				filter += ",ashowinfo,ametadata=mode=print";
+				
+				ffmpegArgumentList.push_back("-filter:a");
+				ffmpegArgumentList.push_back(filter);
 			}
 		}
 

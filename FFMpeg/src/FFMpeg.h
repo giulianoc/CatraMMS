@@ -304,6 +304,9 @@ public:
 		string userAgent,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
+
+		Json::Value filters,
+
         int segmentDurationInSeconds,
         string outputFileFormat,
 		string segmenterType,
