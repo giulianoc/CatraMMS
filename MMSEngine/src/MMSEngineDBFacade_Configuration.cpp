@@ -2821,7 +2821,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				string sourceType = static_cast<string>(
 					resultSet->getString("sourceType"));
 				field = "sourceType";
-				streamRoot[field] = "sourceType";
+				streamRoot[field] = sourceType;
 
                 field = "encodersPoolLabel";
 				if (resultSet->isNull("encodersPoolLabel"))
