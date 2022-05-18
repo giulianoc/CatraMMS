@@ -1479,6 +1479,7 @@ Json::Value MMSEngineDBFacade::addStream(
 	string encodersPoolLabel,
 	string url,
 	string pushProtocol,
+	int64_t pushEncoderKey,
 	string pushServerName,
 	int pushServerPort,
 	string pushUri,
@@ -1524,7 +1525,7 @@ Json::Value MMSEngineDBFacade::addStream(
             lastSQLCommand = 
                 "insert into MMS_Conf_Stream(workspaceKey, label, sourceType, "
 				"encodersPoolLabel, url, "
-				"pushProtocol, pushServerName, pushServerPort, pushUri, "
+				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
 				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
@@ -1533,7 +1534,7 @@ Json::Value MMSEngineDBFacade::addStream(
 				"region, country, imageMediaItemKey, imageUniqueName, "
 				"position, userData) values ("
                 "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-				"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1554,6 +1555,10 @@ Json::Value MMSEngineDBFacade::addStream(
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
 				preparedStatement->setString(queryParameterIndex++, pushProtocol);
+			if (pushEncoderKey == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, pushEncoderKey);
 			if (pushServerName == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1795,6 +1800,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 	bool encodersPoolLabelToBeModified, string encodersPoolLabel,
 	bool urlToBeModified, string url,
 	bool pushProtocolToBeModified, string pushProtocol,
+	bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
 	bool pushServerNameToBeModified, string pushServerName,
 	bool pushServerPortToBeModified, int pushServerPort,
 	bool pushUriToBeModified, string pushUri,
@@ -1869,6 +1875,14 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += ("pushProtocol = ?");
+				oneParameterPresent = true;
+			}
+
+			if (pushEncoderKeyToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("pushEncoderKey = ?");
 				oneParameterPresent = true;
 			}
 
@@ -2085,6 +2099,14 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				else
 					preparedStatement->setString(queryParameterIndex++, pushProtocol);
 			}
+			if (pushEncoderKeyToBeModified)
+			{
+				if (pushEncoderKey == -1)
+					preparedStatement->setNull(queryParameterIndex++,
+						sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, pushEncoderKey);
+			}
 			if (pushServerNameToBeModified)
 			{
 				if (pushServerName == "")
@@ -2280,6 +2302,8 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				+ ", url (" + to_string(urlToBeModified) + "): " + url
 				+ ", pushProtocol (" + to_string(pushProtocolToBeModified) + "): "
 					+ pushProtocol
+				+ ", pushEncoderKey (" + to_string(pushEncoderKeyToBeModified) + "): "
+					+ to_string(pushEncoderKey)
 				+ ", pushServerName (" + to_string(pushServerNameToBeModified) + "): "
 					+ pushServerName
 				+ ", pushServerPort (" + to_string(pushServerPortToBeModified) + "): "
@@ -2747,7 +2771,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
             lastSQLCommand = 
                 string("select confKey, label, sourceType, encodersPoolLabel, url, "
-						"pushProtocol, pushServerName, pushServerPort, pushUri, "
+						"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 						"pushListenTimeout, captureLiveVideoDeviceNumber, "
 						"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
 						"captureLiveHeight, captureLiveAudioDeviceNumber, "
@@ -2847,6 +2871,12 @@ Json::Value MMSEngineDBFacade::getStreamList (
 					else
 						streamRoot[field] = static_cast<string>(
 							resultSet->getString("pushProtocol"));
+
+					field = "pushEncoderKey";
+					if (resultSet->isNull("pushEncoderKey"))
+						streamRoot[field] = Json::nullValue;
+					else
+						streamRoot[field] = resultSet->getInt64("pushEncoderKey");
 
 					field = "pushServerName";
 					if (resultSet->isNull("pushServerName"))
@@ -3066,7 +3096,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
     return streamListRoot;
 }
 
-tuple<int64_t, string, string, string, string, string, int, string, int,
+tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 	int, string, int, int, int, int, int, int64_t>
 	MMSEngineDBFacade::getStreamDetails(
     int64_t workspaceKey, string label,
@@ -3094,6 +3124,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 		string encodersPoolLabel;
 		string url;
 		string pushProtocol;
+		int64_t pushEncoderKey = -1;
 		string pushServerName;
 		int pushServerPort = -1;
 		string pushUri;
@@ -3109,7 +3140,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 		{
 			lastSQLCommand = "select confKey, sourceType, "
 				"encodersPoolLabel, url, "
-				"pushProtocol, pushServerName, pushServerPort, pushUri, "
+				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, satSourceSATConfKey, captureLiveVideoDeviceNumber, "
 				"captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
@@ -3156,6 +3187,8 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 				url = resultSet->getString("url");
 			if (!resultSet->isNull("pushProtocol"))
 				pushProtocol = resultSet->getString("pushProtocol");
+			if (!resultSet->isNull("pushEncoderKey"))
+				pushEncoderKey = resultSet->getInt64("pushEncoderKey");
 			if (!resultSet->isNull("pushServerName"))
 				pushServerName = resultSet->getString("pushServerName");
 			if (!resultSet->isNull("pushServerPort"))
@@ -3191,7 +3224,7 @@ tuple<int64_t, string, string, string, string, string, int, string, int,
 		conn = nullptr;
 
 		return make_tuple(confKey, sourceType, encodersPoolLabel, url,
-			pushProtocol, pushServerName, pushServerPort, pushUri, pushListenTimeout,
+			pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, pushListenTimeout,
 			captureLiveVideoDeviceNumber, captureLiveVideoInputFormat,
             captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
 			captureLiveAudioDeviceNumber, captureLiveChannelsNumber,
@@ -7352,6 +7385,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		string encodersPoolLabel;
 		string pullUrl;
 		string pushProtocol;
+		int64_t pushEncoderKey = -1;
 		string pushServerName;
 		int pushServerPort = -1;
 		string pushUri;
@@ -7367,14 +7401,14 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, string, int, string, int,
+			tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 				int, string, int, int, int, int, int, int64_t>
 				channelConfDetails = getStreamDetails(
 				workspaceKey, configurationLabel, warningIfMissing);
 			tie(confKey, streamSourceType,
 				encodersPoolLabel,
 				pullUrl,
-				pushProtocol, pushServerName, pushServerPort, pushUri,
+				pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri,
 				pushListenTimeout,
 				captureVideoDeviceNumber,
 				captureVideoInputFormat,
@@ -7422,6 +7456,12 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 
 		field = "streamSourceType";
 		streamInputRoot[field] = streamSourceType;
+
+		field = "pushEncoderKey";
+		streamInputRoot[field] = pushEncoderKey;
+
+		field = "pushServerName";
+		streamInputRoot[field] = pushServerName;
 
 		field = "encodersPoolLabel";
 		streamInputRoot[field] = encodersPoolLabel;

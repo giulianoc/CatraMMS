@@ -2358,6 +2358,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodersPoolLabel			VARCHAR (64) NULL,"
 					"url						VARCHAR (2048) NULL,"	// pull
                     "pushProtocol				VARCHAR (64) NULL,"
+					"pushEncoderKey				BIGINT UNSIGNED NULL,"
                     "pushServerName				VARCHAR (128) NULL,"
 					"pushServerPort				INT NULL,"
 					"pushUri					VARCHAR (2048) NULL,"
@@ -2706,6 +2707,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingPid				INT UNSIGNED NULL,"
                     "stagingEncodedAssetPathName VARCHAR (256) NULL,"
                     "failuresNumber           	INT NOT NULL,"
+					"isKilled					BIT(1) NULL,"
 					"creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
 					"utcScheduleStart_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(parameters, '$.utcScheduleStart')) NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "

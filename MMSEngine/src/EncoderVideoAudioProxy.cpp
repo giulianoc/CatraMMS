@@ -12096,6 +12096,9 @@ bool EncoderVideoAudioProxy::liveRecorder()
 bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
+	string streamSourceType;
+	int64_t pushEncoderKey;
+	string pushServerName;
 	string encodersPool;
 	int64_t confKey;
 	string liveURL;
@@ -12112,6 +12115,15 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
         string field = "confKey";
         confKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+
+		field = "pushEncoderKey";
+		pushEncoderKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+        field = "pushServerName";
+        pushServerName = _encodingItem->_encodingParametersRoot.get(field, "").asString();
+
+        field = "streamSourceType";
+        streamSourceType = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -12160,6 +12172,13 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		{
 			if (_encodingItem->_encoderKey == -1)
 			{
+				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
+				{
+					_currentUsedFFMpegEncoderKey = pushEncoderKey;
+					_currentUsedFFMpegEncoderHost =
+						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, pushServerName);
+				}
+				else
 				{
 					_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -12846,11 +12865,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							);
 
-							long previousEncodingStatusFailures =
+							bool isKilled =
 								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 									_encodingItem->_encodingJobKey, 
 									encodingStatusFailures);
-							if (previousEncodingStatusFailures < 0)
+							if (isKilled)
 							{
 								_logger->info(__FILEREF__ + "LiveRecorder Killed by user during waiting loop"
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -13710,6 +13729,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
+	string streamSourceType;
+	int64_t pushEncoderKey;
+	string pushServerName;
 	{
 		string field = "inputsRoot";
 		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
@@ -13724,10 +13746,24 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			field = "countdownInput";
 		Json::Value streamInputRoot = firstInputRoot[field];
 
-		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
+		if (proxyType == "vodProxy")
 		{
 			field = "EncodersPool";
 			encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+		}
+		else if (proxyType == "countdownProxy")
+		{
+			field = "EncodersPool";
+			encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "pushEncoderKey";
+			pushEncoderKey = JSONUtils::asInt64(streamInputRoot, field, -1);
+
+			field = "pushServerName";
+			pushServerName = streamInputRoot.get(field, "").asString();
+
+			field = "streamSourceType";
+			streamSourceType = streamInputRoot.get(field, "").asString();
 		}
 		else
 		{
@@ -13739,6 +13775,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 			field = "url";
 			liveURL = streamInputRoot.get(field, "").asString();
+
+			field = "pushEncoderKey";
+			pushEncoderKey = JSONUtils::asInt64(streamInputRoot, field, -1);
+
+			field = "pushServerName";
+			pushServerName = streamInputRoot.get(field, "").asString();
+
+			field = "streamSourceType";
+			streamSourceType = streamInputRoot.get(field, "").asString();
 		}
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
@@ -13865,13 +13910,22 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 		{
 			if (_encodingItem->_encoderKey == -1)
 			{
-				int64_t encoderKeyToBeSkipped = -1;
-				bool externalEncoderAllowed = true;
-				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped, externalEncoderAllowed);
-				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
-					= encoderURL;
+				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
+				{
+					_currentUsedFFMpegEncoderKey = pushEncoderKey;
+					_currentUsedFFMpegEncoderHost =
+						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, pushServerName);
+				}
+				else
+				{
+					int64_t encoderKeyToBeSkipped = -1;
+					bool externalEncoderAllowed = true;
+					pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+						encodersPool, _encodingItem->_workspace,
+						encoderKeyToBeSkipped, externalEncoderAllowed);
+					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
+						= encoderURL;
+				}
 
 				_logger->info(__FILEREF__ + "Configuration item"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -14616,11 +14670,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 										+ to_string(encodingStatusFailures)
 								);
 
-								long previousEncodingStatusFailures =
+								bool isKilled =
 									_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 										_encodingItem->_encodingJobKey, 
 										encodingStatusFailures);
-								if (previousEncodingStatusFailures < 0)
+								if (isKilled)
 								{
 									_logger->info(__FILEREF__
 										+ "LiveProxy Killed by user during waiting loop"
@@ -15693,6 +15747,8 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		string url;
 		bool pushProtocolToBeModified = false;
 		string pushProtocol;
+		bool pushEncoderKeyToBeModified = false;
+		int64_t pushEncoderKey = -1;
 		bool pushServerNameToBeModified = false;
 		string pushServerName;
 		bool pushServerPortToBeModified = false;
@@ -15742,6 +15798,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 			encodersPoolToBeModified, encodersPool,
 			urlToBeModified, url,
 			pushProtocolToBeModified, pushProtocol,
+			pushEncoderKeyToBeModified, pushEncoderKey,
 			pushServerNameToBeModified, pushServerName,
 			pushServerPortToBeModified, pushServerPort,
 			pushUriToBeModified, pushUri,
@@ -16570,11 +16627,11 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 								);
 
-								long previousEncodingStatusFailures =
+								bool isKilled =
 									_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 										_encodingItem->_encodingJobKey, 
 										encodingStatusFailures);
-								if (previousEncodingStatusFailures < 0)
+								if (isKilled)
 								{
 									_logger->info(__FILEREF__ + "LiveGrid Killed by user during waiting loop"
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)

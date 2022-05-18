@@ -2632,7 +2632,7 @@ tuple<int64_t, bool, string, string, string, int>
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getEncoderByEncodersPool"
+        _logger->info(__FILEREF__ + "getRunningEncoderByEncodersPool"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", encodersPoolLabel: " + encodersPoolLabel
             + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -3292,7 +3292,8 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
     } 
 }
 
-string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
+string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
+	string serverName)
 {
     string      lastSQLCommand;
     Json::Value encodersPoolListRoot;
@@ -3364,13 +3365,20 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
 
 
 		string encoderURL;
-		if (external)
-			encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
+		if (serverName != "")
+			encoderURL = protocol + "://" + serverName + ":" + to_string(port);
 		else
-			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
+		{
+			if (external)
+				encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
+			else
+				encoderURL = protocol + "://" + internalServerName + ":"
+					+ to_string(port);
+		}
 
         _logger->info(__FILEREF__ + "getEncoderURL"
 			+ ", encoderKey: " + to_string(encoderKey)
+			+ ", serverName: " + serverName
 			+ ", encoderURL: " + encoderURL
         );
 

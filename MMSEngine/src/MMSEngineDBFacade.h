@@ -1741,7 +1741,7 @@ public:
 		string outputFileFormat,
 		EncodingPriority encodingPriority,
 
-		int pushListenTimeout,
+		int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
 		int captureVideoDeviceNumber,
 		string captureVideoInputFormat, int captureFrameRate,
 		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
@@ -1893,9 +1893,13 @@ public:
         int64_t encodingJobKey,
         int encodingPid);
 
-	long updateEncodingJobFailuresNumber (
+	bool updateEncodingJobFailuresNumber (
         int64_t encodingJobKey,
         long failuresNumber);
+
+	void updateEncodingJobIsKilled (
+        int64_t encodingJobKey,
+        bool isKilled);
 
     void updateEncodingJobTranscoder (
 		int64_t encodingJobKey,
@@ -2084,6 +2088,7 @@ public:
 		string encodersPoolLabel,
 		string url,
 		string pushProtocol,
+		int64_t pushEncoderKey,
 		string pushServerName,
 		int pushServerPort,
 		string pushUri,
@@ -2114,6 +2119,7 @@ public:
 		bool encodersPoolLabelToBeModified, string encodersPoolLabel,
 		bool urlToBeModified, string url,
 		bool pushProtocolToBeModified, string pushProtocol,
+		bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
 		bool pushServerNameToBeModified, string pushServerName,
 		bool pushServerPortToBeModified, int pushServerPort,
 		bool pushUriToBeModified, string pushUri,
@@ -2146,7 +2152,7 @@ public:
 		string name, string region, string country, string url,
 		string labelOrder);
 
-	tuple<int64_t, string, string, string, string, string, int, string, int,
+	tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 		int, string, int, int, int, int, int, int64_t>
 		getStreamDetails(
 			int64_t workspaceKey, string label, bool warningIfMissing);
@@ -2400,7 +2406,7 @@ public:
 	int getEncodersNumberByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel);
 
-	string getEncoderURL(int64_t encoderKey);
+	string getEncoderURL(int64_t encoderKey, string serverName = "");
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

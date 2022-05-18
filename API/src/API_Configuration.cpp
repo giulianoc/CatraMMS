@@ -1066,6 +1066,7 @@ void API::addStream(
         string encodersPoolLabel;
         string url;
         string pushProtocol;
+        int64_t pushEncoderKey;
         string pushServerName;
         int pushServerPort;
         string pushUri;
@@ -1148,6 +1149,10 @@ void API::addStream(
             field = "pushProtocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				pushProtocol = requestBodyRoot.get(field, "").asString();            
+
+			field = "pushEncoderKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
             field = "pushServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1262,6 +1267,7 @@ void API::addStream(
 				encodersPoolLabel,
 				url,
 				pushProtocol,
+				pushEncoderKey,
 				pushServerName,
 				pushServerPort,
 				pushUri,
@@ -1355,6 +1361,7 @@ void API::modifyStream(
         string encodersPoolLabel;
         string url;
         string pushProtocol;
+        int64_t pushEncoderKey;
         string pushServerName;
         int pushServerPort;
         string pushUri;
@@ -1383,6 +1390,7 @@ void API::modifyStream(
 		bool encodersPoolLabelToBeModified;
 		bool urlToBeModified;
 		bool pushProtocolToBeModified;
+		bool pushEncoderKeyToBeModified;
 		bool pushServerNameToBeModified;
 		bool pushServerPortToBeModified;
 		bool pushUriToBeModified;
@@ -1476,6 +1484,14 @@ void API::modifyStream(
 			{
 				pushProtocol = requestBodyRoot.get(field, "").asString();            
 				pushProtocolToBeModified = true;
+			}
+
+			pushEncoderKeyToBeModified = false;
+			field = "pushEncoderKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+				pushEncoderKeyToBeModified = true;
 			}
 
 			pushServerNameToBeModified = false;
@@ -1689,6 +1705,7 @@ void API::modifyStream(
 				encodersPoolLabelToBeModified, encodersPoolLabel,
 				urlToBeModified, url,
 				pushProtocolToBeModified, pushProtocol,
+				pushEncoderKeyToBeModified, pushEncoderKey,
 				pushServerNameToBeModified, pushServerName,
 				pushServerPortToBeModified, pushServerPort,
 				pushUriToBeModified, pushUri,

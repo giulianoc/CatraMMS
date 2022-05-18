@@ -499,8 +499,8 @@ void API::killOrCancelEncodingJob(
 					//
 					// In case 1, the below killEncodingJob works fine and this is the solution
 					// In case 2, killEncodingJob will fail because there is no ffmpeg process running.
-					//		For this reason we call updateEncodingJobFailuresNumber and set failuresNumber
-					//		to a negative value. This is a 'aggreement' with EncoderVideoAudioProxy making
+					//		For this reason we call updateEncodingJobIsKilled and set isKilled
+					//		to true. This is an 'aggreement' with EncoderVideoAudioProxy making
 					//		the EncoderVideoAudioProxy thread to terminate his loop 
 
 					try
@@ -510,18 +510,32 @@ void API::killOrCancelEncodingJob(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
 						killEncodingJob(encoderKey, encodingJobKey);
+
+						// to make sure EncoderVideoProxyThread resources are released,
+						// the isKilled flag is also set
+						{
+							// this is the case 2
+							bool isKilled = true;
+
+							_logger->info(__FILEREF__ + "Setting isKilled flag"
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", isKilled: " + to_string(isKilled)
+							);
+							_mmsEngineDBFacade->updateEncodingJobIsKilled(
+								encodingJobKey, isKilled);
+						}
 					}
 					catch(runtime_error e)
 					{
 						// this is the case 2
-						long newFailuresNumber = -100;
+						bool isKilled = true;
 
-						_logger->info(__FILEREF__ + "Making FailuresNumber negative"
+						_logger->info(__FILEREF__ + "Setting isKilled flag"
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", newFailuresNumber: " + to_string(newFailuresNumber)
+							+ ", isKilled: " + to_string(isKilled)
 						);
-						_mmsEngineDBFacade->updateEncodingJobFailuresNumber(
-							encodingJobKey, newFailuresNumber);
+						_mmsEngineDBFacade->updateEncodingJobIsKilled(
+							encodingJobKey, isKilled);
 					}
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)

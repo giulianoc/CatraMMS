@@ -3608,18 +3608,14 @@ void MMSEngineDBFacade::updateEncodingPid (
     }
 }
 
-// this method is used in case of LiveProxy:
-// - it is always running except when it is killed by User
-// - failuresNumber > 0 means it is failing
-// - failuresNumber == 0 means it is running successful
-long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
-        int64_t encodingJobKey,
-        long failuresNumber)
+bool MMSEngineDBFacade::updateEncodingJobFailuresNumber (
+	int64_t encodingJobKey,
+	long failuresNumber)
 {
     
     string      lastSQLCommand;
-	long		previousFailuresNumber;
-    
+	bool		isKilled;
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
@@ -3631,7 +3627,8 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 
         {
             lastSQLCommand = 
-                "select failuresNumber from MMS_EncodingJob where encodingJobKey = ?";
+                "select IF(isKilled is null, 0, isKilled+0) as isKilled from MMS_EncodingJob "
+				"where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3648,7 +3645,7 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 			);
             if (resultSet->next())
             {
-				previousFailuresNumber = resultSet->getInt("failuresNumber");
+				isKilled = resultSet->getInt("isKilled") != 0;
             }
             else
             {
@@ -3770,7 +3767,134 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
         throw e;
     }
 
-	return previousFailuresNumber;
+	return isKilled;
+}
+
+void MMSEngineDBFacade::updateEncodingJobIsKilled (
+        int64_t encodingJobKey,
+        bool isKilled)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+			_logger->info(__FILEREF__ + "EncodingJob update"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", isKilled: " + to_string(isKilled)
+				);
+			if (isKilled)
+				lastSQLCommand = 
+					"update MMS_EncodingJob set isKilled = b'1' where encodingJobKey = ?";
+			else
+				lastSQLCommand = 
+					"update MMS_EncodingJob set isKilled = b'0' where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                // in case it is alyways failing, it will be already 1
+				/*
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", encodingPercentage: " + to_string(encodingPercentage)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+				*/
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::updateEncodingJobTranscoder (
@@ -7433,7 +7557,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string outputFileFormat,
 	EncodingPriority encodingPriority,
 
-	int pushListenTimeout,
+	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
 	int captureVideoDeviceNumber,
 	string captureVideoInputFormat, int captureFrameRate,
 	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
@@ -7526,6 +7650,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "pushListenTimeout";
 				parametersRoot[field] = pushListenTimeout;
+
+				field = "pushEncoderKey";
+				parametersRoot[field] = pushEncoderKey;
+
+				field = "pushServerName";
+				parametersRoot[field] = pushServerName;
 
 				field = "captureVideoDeviceNumber";
 				parametersRoot[field] = captureVideoDeviceNumber;

@@ -3633,7 +3633,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				string configurationLabel = ingestionJobRoot.get(field, "").asString();
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, string, int, string, int,
+				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 					int, string, int, int, int, int, int, int64_t> streamDetails
 					= _mmsEngineDBFacade->getStreamDetails(
 					requestWorkspace->_workspaceKey,
@@ -3641,7 +3641,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				);
 
 				int64_t streamConfKey;
-				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore,
+				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = streamDetails;
 
@@ -3903,7 +3903,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				string configurationLabel = ingestionJobRoot.get(field, "").asString();
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, string, int, string, int,
+				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 					int, string, int, int, int, int, int, int64_t> streamDetails
 					= _mmsEngineDBFacade->getStreamDetails(
 					requestWorkspace->_workspaceKey,
@@ -3911,7 +3911,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				);
 
 				int64_t streamConfKey;
-				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore,
+				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = streamDetails;
 
