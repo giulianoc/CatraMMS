@@ -13746,24 +13746,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			field = "countdownInput";
 		Json::Value streamInputRoot = firstInputRoot[field];
 
-		if (proxyType == "vodProxy")
+		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
 		{
+			// both vodProxy and countdownProxy work with VOD
 			field = "EncodersPool";
 			encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-		}
-		else if (proxyType == "countdownProxy")
-		{
-			field = "EncodersPool";
-			encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-			field = "pushEncoderKey";
-			pushEncoderKey = JSONUtils::asInt64(streamInputRoot, field, -1);
-
-			field = "pushServerName";
-			pushServerName = streamInputRoot.get(field, "").asString();
-
-			field = "streamSourceType";
-			streamSourceType = streamInputRoot.get(field, "").asString();
 		}
 		else
 		{
