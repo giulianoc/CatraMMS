@@ -9761,14 +9761,15 @@ void MMSEngineProcessor::httpCallbackThread(
     {
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be notified (HTTP Callback)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->warn(errorMessage);
+			string errorMessage = __FILEREF__
+				+ "No configured any media to be notified (HTTP Callback)"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
+			_logger->warn(errorMessage);
 
-            // throw runtime_error(errorMessage);
-        }
+			// throw runtime_error(errorMessage);
+		}
 
         string httpProtocol;
         string httpHostName;
@@ -9778,6 +9779,7 @@ void MMSEngineProcessor::httpCallbackThread(
         string httpMethod;
         long callbackTimeoutInSeconds;
 		int maxRetries;
+        string httpBody;
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
             string field = "Protocol";
@@ -9865,7 +9867,11 @@ void MMSEngineProcessor::httpCallbackThread(
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", httpMethod: " + httpMethod
             );
-            
+
+			field = "httpBody";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				httpBody = parametersRoot.get(field, "").asString();
+
             field = "Headers";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
@@ -9895,27 +9901,28 @@ void MMSEngineProcessor::httpCallbackThread(
             );
         }
 
-		int dependencyIndex = 0;
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType: dependencies)
-        {
-			bool stopIfReferenceProcessingError = false;
+		if (httpMethod == "POST" && httpBody != "")
+		{
+			_logger->info(__FILEREF__ + "POST with httpBody"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size())
+			);
 
-			try
+			int dependencyIndex = 0;
+			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
 			{
-                int64_t key;
-                MMSEngineDBFacade::ContentType referenceContentType;
-                Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError = false;
 
-                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-					= keyAndDependencyType;
-
-				Json::Value callbackMedatada;
-				if (httpMethod == "POST")
+				try
 				{
-					callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
+					int64_t key;
+					Validator::DependencyType dependencyType;
 
-					MMSEngineDBFacade::ContentType contentType;
+					tie(key, ignore, dependencyType,
+						stopIfReferenceProcessingError) = keyAndDependencyType;
+
 					int64_t physicalPathKey;
 					int64_t mediaItemKey;
 
@@ -9923,220 +9930,346 @@ void MMSEngineProcessor::httpCallbackThread(
 					{
 						mediaItemKey = key;
 
-						callbackMedatada["mediaItemKey"] = mediaItemKey;
-
-						{
-							bool warningIfMissing = false;
-							tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-								contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
-								_mmsEngineDBFacade->getMediaItemKeyDetails(
-									workspace->_workspaceKey, mediaItemKey, warningIfMissing);
-
-							string localTitle;
-							string userData;
-							tie(contentType, localTitle, userData, ignore, ignore, ignore)
-								= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-
-							callbackMedatada["title"] = localTitle;
-
-							if (userData == "")
-								callbackMedatada["userData"] = Json::nullValue;
-							else
-							{
-								Json::Value userDataRoot;
-								{
-									Json::CharReaderBuilder builder;
-									Json::CharReader* reader = builder.newCharReader();
-									string errors;
-
-									bool parsingSuccessful = reader->parse(userData.c_str(),
-										userData.c_str() + userData.size(), 
-										&userDataRoot, &errors);
-									delete reader;
-
-									if (!parsingSuccessful)
-									{
-										string errorMessage = __FILEREF__ + "failed to parse the userData"
-											+ ", errors: " + errors
-											+ ", userData: " + userData
-											;
-										_logger->error(errorMessage);
-
-										throw runtime_error(errors);
-									}
-								}
-
-								callbackMedatada["userData"] = userDataRoot;
-							}
-						}
-
-						{
-							int64_t encodingProfileKey = -1;
-							bool warningIfMissing = false;
-							tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-								_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-								warningIfMissing);
-
-							string physicalPath;
-							string fileName;
-							int64_t sizeInBytes;
-							string deliveryFileName;
-
-							tie(physicalPathKey, physicalPath, ignore, ignore, fileName, ignore, ignore)
-								= physicalPathDetails;
-
-							callbackMedatada["physicalPathKey"] = physicalPathKey;
-							callbackMedatada["fileName"] = fileName;
-							// callbackMedatada["physicalPath"] = physicalPath;
-						}
+						int64_t encodingProfileKey = -1;
+                
+						bool warningIfMissing = false;
+						tuple<int64_t, string, int, string, string, int64_t, string>
+							physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
+							encodingProfileKey, warningIfMissing);
+						tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore)
+							= physicalPathDetails;
 					}
 					else
 					{
 						physicalPathKey = key;
 
-						callbackMedatada["physicalPathKey"] = physicalPathKey;
-
 						{
 							bool warningIfMissing = false;
-							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-								mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+								string,int64_t, string, string>
+								mediaItemDetails =
 								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-									workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+									workspace->_workspaceKey, key, warningIfMissing);
 
-							string localTitle;
-							string userData;
-							tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore)
-								= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+							tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore,
+								ignore, ignore) = mediaItemDetails;
+						}
+					}
+
+					httpBody = regex_replace(httpBody, regex("${mediaItemKey}"),
+						to_string(mediaItemKey));
+					httpBody = regex_replace(httpBody, regex("${physicalPathKey}"),
+						to_string(physicalPathKey));
+
+					_logger->info(__FILEREF__ + "userHttpCallback"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", httpProtocol: " + httpProtocol
+						+ ", httpHostName: " + httpHostName
+						+ ", httpURI: " + httpURI
+						+ ", httpURLParameters: " + httpURLParameters
+						+ ", httpMethod: " + httpMethod
+						+ ", httpBody: " + httpBody
+					);
+
+					userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
+						httpPort, httpURI, httpURLParameters, httpMethod,
+						callbackTimeoutInSeconds, httpHeadersRoot, httpBody, maxRetries);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "http callback failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", dependencyIndex: " + to_string(dependencyIndex)
+						+ ", dependencies.size(): " + to_string(dependencies.size())
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					if (dependencies.size() > 1)
+					{
+						if (stopIfReferenceProcessingError)
+							throw runtime_error(errorMessage);
+					}
+					else
+						throw runtime_error(errorMessage);
+				}
+				catch (exception e)
+				{
+					string errorMessage = __FILEREF__ + "http callback failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", dependencyIndex: " + to_string(dependencyIndex);
+						+ ", dependencies.size(): " + to_string(dependencies.size())
+					;
+					_logger->error(errorMessage);
+
+					if (dependencies.size() > 1)
+					{
+						if (stopIfReferenceProcessingError)
+							throw runtime_error(errorMessage);
+					}
+					else
+						throw runtime_error(errorMessage);
+				}
+
+				dependencyIndex++;
+			}
+		}
+		else
+		{
+			int dependencyIndex = 0;
+			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
+			{
+				bool stopIfReferenceProcessingError = false;
+
+				try
+				{
+					int64_t key;
+					MMSEngineDBFacade::ContentType referenceContentType;
+					Validator::DependencyType dependencyType;
+
+					tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+						= keyAndDependencyType;
+
+					Json::Value callbackMedatada;
+					if (httpMethod == "POST")
+					{
+						callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
+
+						MMSEngineDBFacade::ContentType contentType;
+						int64_t physicalPathKey;
+						int64_t mediaItemKey;
+
+						if (dependencyType == Validator::DependencyType::MediaItemKey)
+						{
+							mediaItemKey = key;
 
 							callbackMedatada["mediaItemKey"] = mediaItemKey;
-							callbackMedatada["title"] = localTitle;
 
-							if (userData == "")
-								callbackMedatada["userData"] = Json::nullValue;
-							else
 							{
-								Json::Value userDataRoot;
+								bool warningIfMissing = false;
+								tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+									contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+									_mmsEngineDBFacade->getMediaItemKeyDetails(
+										workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+
+								string localTitle;
+								string userData;
+								tie(contentType, localTitle, userData, ignore, ignore, ignore)
+									= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+
+								callbackMedatada["title"] = localTitle;
+
+								if (userData == "")
+									callbackMedatada["userData"] = Json::nullValue;
+								else
 								{
-									Json::CharReaderBuilder builder;
-									Json::CharReader* reader = builder.newCharReader();
-									string errors;
-
-									bool parsingSuccessful = reader->parse(userData.c_str(),
-										userData.c_str() + userData.size(), 
-										&userDataRoot, &errors);
-									delete reader;
-
-									if (!parsingSuccessful)
+									Json::Value userDataRoot;
 									{
-										string errorMessage = __FILEREF__ + "failed to parse the userData"
-											+ ", errors: " + errors
-											+ ", userData: " + userData
-											;
-										_logger->error(errorMessage);
+										Json::CharReaderBuilder builder;
+										Json::CharReader* reader = builder.newCharReader();
+										string errors;
 
-										throw runtime_error(errors);
+										bool parsingSuccessful = reader->parse(userData.c_str(),
+											userData.c_str() + userData.size(), 
+											&userDataRoot, &errors);
+										delete reader;
+
+										if (!parsingSuccessful)
+										{
+											string errorMessage = __FILEREF__ + "failed to parse the userData"
+												+ ", errors: " + errors
+												+ ", userData: " + userData
+												;
+											_logger->error(errorMessage);
+
+											throw runtime_error(errors);
+										}
 									}
-								}
 
-								callbackMedatada["userData"] = userDataRoot;
+									callbackMedatada["userData"] = userDataRoot;
+								}
+							}
+
+							{
+								int64_t encodingProfileKey = -1;
+								bool warningIfMissing = false;
+								tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+									_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
+									warningIfMissing);
+
+								string physicalPath;
+								string fileName;
+								int64_t sizeInBytes;
+								string deliveryFileName;
+
+								tie(physicalPathKey, physicalPath, ignore, ignore, fileName, ignore, ignore)
+									= physicalPathDetails;
+
+								callbackMedatada["physicalPathKey"] = physicalPathKey;
+								callbackMedatada["fileName"] = fileName;
+								// callbackMedatada["physicalPath"] = physicalPath;
+							}
+						}
+						else
+						{
+							physicalPathKey = key;
+
+							callbackMedatada["physicalPathKey"] = physicalPathKey;
+
+							{
+								bool warningIfMissing = false;
+								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+									mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+										workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+
+								string localTitle;
+								string userData;
+								tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore)
+									= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+
+								callbackMedatada["mediaItemKey"] = mediaItemKey;
+								callbackMedatada["title"] = localTitle;
+
+								if (userData == "")
+									callbackMedatada["userData"] = Json::nullValue;
+								else
+								{
+									Json::Value userDataRoot;
+									{
+										Json::CharReaderBuilder builder;
+										Json::CharReader* reader = builder.newCharReader();
+										string errors;
+
+										bool parsingSuccessful = reader->parse(userData.c_str(),
+											userData.c_str() + userData.size(), 
+											&userDataRoot, &errors);
+										delete reader;
+
+										if (!parsingSuccessful)
+										{
+											string errorMessage = __FILEREF__ + "failed to parse the userData"
+												+ ", errors: " + errors
+												+ ", userData: " + userData
+												;
+											_logger->error(errorMessage);
+
+											throw runtime_error(errors);
+										}
+									}
+
+									callbackMedatada["userData"] = userDataRoot;
+								}
+							}
+
+							{
+								int64_t encodingProfileKey = -1;
+								tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+									_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+
+								string physicalPath;
+								string fileName;
+								int64_t sizeInBytes;
+								string deliveryFileName;
+
+								tie(physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
+
+								callbackMedatada["fileName"] = fileName;
+								// callbackMedatada["physicalPath"] = physicalPath;
 							}
 						}
 
+						if (contentType == MMSEngineDBFacade::ContentType::Video
+							|| contentType == MMSEngineDBFacade::ContentType::Audio)
 						{
-							int64_t encodingProfileKey = -1;
-							tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-								_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+							try
+							{
+								int64_t durationInMilliSeconds =
+									_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+									mediaItemKey, physicalPathKey);
 
-							string physicalPath;
-							string fileName;
-							int64_t sizeInBytes;
-							string deliveryFileName;
+								float durationInSeconds = durationInMilliSeconds / 1000;
 
-							tie(physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
-
-							callbackMedatada["fileName"] = fileName;
-							// callbackMedatada["physicalPath"] = physicalPath;
+								callbackMedatada["durationInSeconds"] = durationInSeconds;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKey: " + to_string(mediaItemKey)
+									+ ", physicalPathKey: " + to_string(physicalPathKey)
+									+ ", exception: " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKey: " + to_string(mediaItemKey)
+									+ ", physicalPathKey: " + to_string(physicalPathKey)
+								);
+							}
 						}
 					}
+					else
+						callbackMedatada = Json::nullValue;
 
-					if (contentType == MMSEngineDBFacade::ContentType::Video
-						|| contentType == MMSEngineDBFacade::ContentType::Audio)
+					string data;
+					if (callbackMedatada != Json::nullValue)
 					{
-						try
-						{
-							int64_t durationInMilliSeconds =
-								_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-								mediaItemKey, physicalPathKey);
+						Json::StreamWriterBuilder wbuilder;
 
-							float durationInSeconds = durationInMilliSeconds / 1000;
-
-							callbackMedatada["durationInSeconds"] = durationInSeconds;
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", physicalPathKey: " + to_string(physicalPathKey)
-								+ ", exception: " + e.what()
-							);
-						}
-						catch(exception e)
-						{
-							_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", physicalPathKey: " + to_string(physicalPathKey)
-							);
-						}
+						data = Json::writeString(wbuilder, callbackMedatada);
 					}
+
+					userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
+						httpPort, httpURI, httpURLParameters, httpMethod,
+						callbackTimeoutInSeconds, httpHeadersRoot, data, maxRetries);
 				}
-				else
-					callbackMedatada = Json::nullValue;
-
-				userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
-					httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeoutInSeconds,
-					httpHeadersRoot, callbackMedatada, maxRetries);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__ + "http callback failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", dependencyIndex: " + to_string(dependencyIndex)
-					+ ", dependencies.size(): " + to_string(dependencies.size())
-					+ ", e.what(): " + e.what()
-				;
-				_logger->error(errorMessage);
-
-				if (dependencies.size() > 1)
+				catch(runtime_error e)
 				{
-					if (stopIfReferenceProcessingError)
+					string errorMessage = __FILEREF__ + "http callback failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", dependencyIndex: " + to_string(dependencyIndex)
+						+ ", dependencies.size(): " + to_string(dependencies.size())
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					if (dependencies.size() > 1)
+					{
+						if (stopIfReferenceProcessingError)
+							throw runtime_error(errorMessage);
+					}
+					else
 						throw runtime_error(errorMessage);
 				}
-				else
-					throw runtime_error(errorMessage);
-			}
-			catch (exception e)
-			{
-				string errorMessage = __FILEREF__ + "http callback failed"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", dependencyIndex: " + to_string(dependencyIndex);
-					+ ", dependencies.size(): " + to_string(dependencies.size())
-				;
-				_logger->error(errorMessage);
-
-				if (dependencies.size() > 1)
+				catch (exception e)
 				{
-					if (stopIfReferenceProcessingError)
+					string errorMessage = __FILEREF__ + "http callback failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", dependencyIndex: " + to_string(dependencyIndex);
+						+ ", dependencies.size(): " + to_string(dependencies.size())
+					;
+					_logger->error(errorMessage);
+
+					if (dependencies.size() > 1)
+					{
+						if (stopIfReferenceProcessingError)
+							throw runtime_error(errorMessage);
+					}
+					else
 						throw runtime_error(errorMessage);
 				}
-				else
-					throw runtime_error(errorMessage);
-			}
 
-			dependencyIndex++;
+				dependencyIndex++;
+			}
 		}
 
 		_logger->info(__FILEREF__ + "Update IngestionJob"
@@ -26765,7 +26898,7 @@ void MMSEngineProcessor::userHttpCallback(
 	int httpPort, string httpURI, string httpURLParameters,
 	string httpMethod, long callbackTimeoutInSeconds,
 	Json::Value userHeadersRoot, 
-	Json::Value callbackMedatada, int maxRetries
+	string& data, int maxRetries
 )
 {
 
@@ -26807,6 +26940,7 @@ void MMSEngineProcessor::userHttpCallback(
                 + httpURI
                 + httpURLParameters;
 
+			/*
 			string data;
 			if (callbackMedatada != Json::nullValue)
 			{
@@ -26814,6 +26948,7 @@ void MMSEngineProcessor::userHttpCallback(
 
 				data = Json::writeString(wbuilder, callbackMedatada);
 			}
+			*/
 
 			list<string> header;
 

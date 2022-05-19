@@ -56,6 +56,11 @@
 		// optional. Default is POST. It could be GET or POST
 		"Method": "POST",
 
+		// optional, in case of POST, if this field is initialized, it will be used
+		//	as body of the POST. Otherwise it will be used a json containing
+		//	the metadata of the inherit contents
+		"httpBody": "",
+
 		// optional, headers semicolon separated
 		"Headers": "",
 		
