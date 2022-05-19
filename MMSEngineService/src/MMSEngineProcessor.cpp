@@ -12747,6 +12747,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		int64_t confKey = -1;
 		string streamSourceType;
+		bool defaultBroadcast = false;
 		string encodersPoolLabel;
 		string pullUrl;
 		int maxWidth = -1;
@@ -12814,6 +12815,10 @@ void MMSEngineProcessor::manageLiveProxy(
             string field = "EncodersPool";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				encodersPoolLabel = parametersRoot.get(field, "").asString();
+
+			field = "defaultBroadcast";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			timePeriod = false;
             field = "TimePeriod";
@@ -12977,6 +12982,12 @@ void MMSEngineProcessor::manageLiveProxy(
 				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
+
+				if (defaultBroadcast)
+				{
+					field = "defaultBroadcast";
+					inputRoot[field] = defaultBroadcast;
+				}
 			}
 
 			Json::Value localInputsRoot(Json::arrayValue);
@@ -13062,6 +13073,7 @@ void MMSEngineProcessor::manageVODProxy(
 		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
+		bool defaultBroadcast = false;
         {
             string field = "TimePeriod";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13113,6 +13125,10 @@ void MMSEngineProcessor::manageVODProxy(
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
+
+			field = "defaultBroadcast";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13216,6 +13232,12 @@ void MMSEngineProcessor::manageVODProxy(
 
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
+
+				if (defaultBroadcast)
+				{
+					field = "defaultBroadcast";
+					inputRoot[field] = defaultBroadcast;
+				}
 			}
 
 			inputsRoot.append(inputRoot);
@@ -13288,6 +13310,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		MMSEngineDBFacade::ContentType referenceContentType;
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
+		bool defaultBroadcast = false;
 		{
             int64_t key;
             Validator::DependencyType dependencyType;
@@ -13345,7 +13368,11 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
-			string field = "schedule";
+			string field = "defaultBroadcast";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+
+			field = "schedule";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13501,6 +13528,12 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				// inputRoot[field] = utcProxyPeriodEnd;
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
+
+				if (defaultBroadcast)
+				{
+					field = "defaultBroadcast";
+					inputRoot[field] = defaultBroadcast;
+				}
 			}
 
 			Json::Value localInputsRoot(Json::arrayValue);

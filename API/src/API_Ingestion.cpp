@@ -5173,7 +5173,7 @@ void API::changeLiveProxyPlaylist(
 					{
 						Json::Value newdPlaylistItemToBeAddedRoot;
 
-						field = "addedAsDefault";
+						field = "defaultBroadcast";
 						newdPlaylistItemToBeAddedRoot[field] = true;
 
 						field = "timePeriod";
@@ -5289,7 +5289,7 @@ void API::changeLiveProxyPlaylist(
 
 					Json::Value newdPlaylistItemToBeAddedRoot;
 
-					string field = "addedAsDefault";
+					string field = "defaultBroadcast";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
 					field = "timePeriod";
@@ -5382,7 +5382,7 @@ void API::changeLiveProxyPlaylist(
 
 					Json::Value newdPlaylistItemToBeAddedRoot;
 
-					string field = "addedAsDefault";
+					string field = "defaultBroadcast";
 					newdPlaylistItemToBeAddedRoot[field] = true;
 
 					field = "timePeriod";
