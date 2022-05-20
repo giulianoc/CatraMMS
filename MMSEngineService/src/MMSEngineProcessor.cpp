@@ -9869,7 +9869,7 @@ void MMSEngineProcessor::httpCallbackThread(
             );
 
 			field = "httpBody";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				httpBody = parametersRoot.get(field, "").asString();
 
             field = "Headers";
