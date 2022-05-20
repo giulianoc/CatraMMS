@@ -225,7 +225,7 @@ private:
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
-        string& data, int maxRetries);
+        string& data, string userName, string password, int maxRetries);
 
     void localCopyContentThread(
 		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,

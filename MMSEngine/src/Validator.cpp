@@ -2902,7 +2902,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     {
         string method = parametersRoot.get(field, "").asString();
                         
-        if (method != "GET" && method != "POST")
+        if (method != "GET" && method != "POST" && method != "PUT")
         {
             string errorMessage = string("Unknown Method")
                 + ", method: " + method

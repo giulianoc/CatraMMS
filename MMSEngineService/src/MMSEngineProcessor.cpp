@@ -9773,6 +9773,8 @@ void MMSEngineProcessor::httpCallbackThread(
 
         string httpProtocol;
         string httpHostName;
+        string userName;
+        string password;
         int httpPort;
         string httpURI;
         string httpURLParameters;
@@ -9791,6 +9793,14 @@ void MMSEngineProcessor::httpCallbackThread(
                 if (httpProtocol == "")
                     httpProtocol = "http";
             }
+
+            field = "userName";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                userName = parametersRoot.get(field, "").asString();
+
+            field = "password";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                password = parametersRoot.get(field, "").asString();
 
             field = "hostName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9877,9 +9887,9 @@ void MMSEngineProcessor::httpCallbackThread(
 			}
         }
 
-		if (httpMethod == "POST" && httpBody != "")
+		if ((httpMethod == "POST" || httpMethod == "PUT") && httpBody != "")
 		{
-			_logger->info(__FILEREF__ + "POST with httpBody"
+			_logger->info(__FILEREF__ + "POST/PUT with httpBody"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependencies.size: " + to_string(dependencies.size())
@@ -9950,7 +9960,8 @@ void MMSEngineProcessor::httpCallbackThread(
 
 					userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
 						httpPort, httpURI, httpURLParameters, httpMethod,
-						callbackTimeoutInSeconds, httpHeadersRoot, httpBody, maxRetries);
+						callbackTimeoutInSeconds, httpHeadersRoot, httpBody,
+						userName, password, maxRetries);
 				}
 				catch(runtime_error e)
 				{
@@ -10204,7 +10215,8 @@ void MMSEngineProcessor::httpCallbackThread(
 
 					userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
 						httpPort, httpURI, httpURLParameters, httpMethod,
-						callbackTimeoutInSeconds, httpHeadersRoot, data, maxRetries);
+						callbackTimeoutInSeconds, httpHeadersRoot, data,
+						userName, password, maxRetries);
 				}
 				catch(runtime_error e)
 				{
@@ -26874,7 +26886,7 @@ void MMSEngineProcessor::userHttpCallback(
 	int httpPort, string httpURI, string httpURLParameters,
 	string httpMethod, long callbackTimeoutInSeconds,
 	Json::Value userHeadersRoot, 
-	string& data, int maxRetries
+	string& data, string userName, string password, int maxRetries
 )
 {
 
@@ -26928,10 +26940,20 @@ void MMSEngineProcessor::userHttpCallback(
 
 			list<string> header;
 
-			if (httpMethod == "POST" && data != "")
+			if ((httpMethod == "POST" || httpMethod == "PUT") && data != "")
 				header.push_back("Content-Type: application/json");
 
-			for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
+			if (userName != "" && password != "")
+			{
+				string userPasswordEncoded = Convert::base64_encode(userName + ":" + password);
+				string basicAuthorization = string("Authorization: Basic ")
+					+ userPasswordEncoded;            
+
+				header.push_back(basicAuthorization);
+			}
+
+			for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size();
+				++userHeaderIndex)
 			{
 				string userHeader = userHeadersRoot[userHeaderIndex].asString();
 
@@ -26955,7 +26977,7 @@ void MMSEngineProcessor::userHttpCallback(
 				}
 				else
 				*/
-				if (httpMethod == "POST")
+				if (httpMethod == "POST" || httpMethod == "PUT")
 				{
 					request.setOpt(new curlpp::options::PostFields(data));
 					request.setOpt(new curlpp::options::PostFieldSize(data.length()));
@@ -26963,6 +26985,8 @@ void MMSEngineProcessor::userHttpCallback(
 			}
 
 			request.setOpt(new curlpp::options::Url(userURL));
+			if (httpMethod == "PUT")
+				request.setOpt(new curlpp::options::CustomRequest("PUT"));
 			request.setOpt(new curlpp::options::Timeout(callbackTimeoutInSeconds));
 
 			if (httpProtocol == "https")

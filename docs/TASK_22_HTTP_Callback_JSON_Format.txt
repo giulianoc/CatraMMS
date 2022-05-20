@@ -38,6 +38,12 @@
 		//		the dependencies have to be placed. 0 is same as Beginning
 		"DependenciesToBeAddedToReferencesAt": "End",
 
+		// optional. Username used for the HTTP basic authentication
+		"userName": "xxx",
+
+		// optional. password used for the HTTP basic authentication
+		"password": "xxx",
+
 		// optional. Default: http, it could be http or https
 		"protocol": "http",
 
@@ -53,11 +59,11 @@
 		// optional
 		"parameters": "?name1=value&name2=value",
 
-		// optional. Default is POST. It could be GET or POST
+		// optional. Default is POST. It could be GET, POST, PUT
 		"method": "POST",
 
-		// optional, in case of POST, if this field is initialized, it will be used
-		//	as body of the POST. Otherwise it will be used a json containing
+		// optional, in case of POST/PUT, if this field is initialized, it will be used
+		//	as body of the POST/PUT. Otherwise it will be used a json containing
 		//	the metadata of the inherit contents
 		"httpBody": "",
 
