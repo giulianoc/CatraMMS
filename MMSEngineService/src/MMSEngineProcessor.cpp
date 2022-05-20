@@ -9782,7 +9782,7 @@ void MMSEngineProcessor::httpCallbackThread(
         string httpBody;
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
-            string field = "Protocol";
+            string field = "protocol";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
                 httpProtocol = "http";
             else
@@ -9791,11 +9791,8 @@ void MMSEngineProcessor::httpCallbackThread(
                 if (httpProtocol == "")
                     httpProtocol = "http";
             }
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpProtocol: " + httpProtocol
-            );
 
-            field = "HostName";
+            field = "hostName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9806,11 +9803,8 @@ void MMSEngineProcessor::httpCallbackThread(
                 throw runtime_error(errorMessage);
             }
             httpHostName = parametersRoot.get(field, "").asString();
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpHostName: " + httpHostName
-            );
 
-            field = "Port";
+            field = "port";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 if (httpProtocol == "http")
@@ -9820,20 +9814,14 @@ void MMSEngineProcessor::httpCallbackThread(
             }
             else
                 httpPort = JSONUtils::asInt(parametersRoot, field, 0);
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpPort: " + to_string(httpPort)
-            );
 
-            field = "Timeout";
+            field = "timeout";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
                 callbackTimeoutInSeconds = 120;
             else
                 callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", callbackTimeoutInSeconds: " + to_string(callbackTimeoutInSeconds)
-            );
             
-            field = "URI";
+            field = "uri";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9844,18 +9832,12 @@ void MMSEngineProcessor::httpCallbackThread(
                 throw runtime_error(errorMessage);
             }
             httpURI = parametersRoot.get(field, "").asString();
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpURI: " + httpURI
-            );
 
-            field = "Parameters";
+            field = "parameters";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 httpURLParameters = parametersRoot.get(field, "XXX").asString();
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpURLParameters: " + httpURLParameters
-            );
 
-            field = "Method";
+            field = "method";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
                 httpMethod = "POST";
             else
@@ -9864,15 +9846,12 @@ void MMSEngineProcessor::httpCallbackThread(
                 if (httpMethod == "")
                     httpMethod = "POST";
             }
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", httpMethod: " + httpMethod
-            );
 
 			field = "httpBody";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				httpBody = parametersRoot.get(field, "").asString();
 
-            field = "Headers";
+            field = "headers";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// semicolon as separator
@@ -9887,7 +9866,7 @@ void MMSEngineProcessor::httpCallbackThread(
                 // httpHeadersRoot = parametersRoot[field];
             }
 
-            field = "MaxRetries";
+            field = "maxRetries";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				maxRetries = 2;
             else
@@ -9896,9 +9875,6 @@ void MMSEngineProcessor::httpCallbackThread(
 				if (maxRetries == 0)
 					maxRetries = 2;
 			}
-            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
-                    + ", maxRetries: " + to_string(maxRetries)
-            );
         }
 
 		if (httpMethod == "POST" && httpBody != "")
@@ -9956,9 +9932,9 @@ void MMSEngineProcessor::httpCallbackThread(
 						}
 					}
 
-					httpBody = regex_replace(httpBody, regex("${mediaItemKey}"),
+					httpBody = regex_replace(httpBody, regex("\\$\\{mediaItemKey\\}"),
 						to_string(mediaItemKey));
-					httpBody = regex_replace(httpBody, regex("${physicalPathKey}"),
+					httpBody = regex_replace(httpBody, regex("\\$\\{physicalPathKey\\}"),
 						to_string(physicalPathKey));
 
 					_logger->info(__FILEREF__ + "userHttpCallback"

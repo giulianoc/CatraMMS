@@ -771,8 +771,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
-			dependencies);
+        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
     }
     else if (type == "Local-Copy")
     {
@@ -2876,8 +2876,8 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "HostName",
-        "URI"
+        "hostName",
+        "uri"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2897,7 +2897,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
         }
     }
     
-    string field = "Method";
+    string field = "method";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string method = parametersRoot.get(field, "").asString();

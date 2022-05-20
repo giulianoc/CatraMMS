@@ -22,10 +22,9 @@ int main (int iArgc, char *pArgv [])
 	int64_t physicalPathKey = 5678;
 	string httpBody = "dkjh lkjsh skjh al ${aaaa} dslkjhdlkjhasd";
 	std::cout << "httpBody 1: " << httpBody << endl;
-	httpBody = regex_replace(httpBody, regex("${mediaItemKey}"),
-		to_string(mediaItemKey));
+	httpBody = regex_replace(httpBody, regex("mediaItemKey"), to_string(mediaItemKey));
 	std::cout << "httpBody 2: " << httpBody << endl;
-	httpBody = regex_replace(httpBody, regex("${aaaa}"),
+	httpBody = regex_replace(httpBody, regex("\\$\\{aaaa\\}"),
 		to_string(physicalPathKey));
 	std::cout << "httpBody 3: " << httpBody << endl;
 

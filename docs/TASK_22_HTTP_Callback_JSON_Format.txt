@@ -39,22 +39,22 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// optional. Default: http, it could be http or https
-		"Protocol": "http",
+		"protocol": "http",
 
 		// mandatory
-		"HostName": "hostname",
+		"hostName": "hostname",
 
 		// optional. Default: 80 for http and 443 for https
-		"Port": 80,
+		"port": 80,
 
 		// mandatory
-		"URI": "/path/.../name",
+		"uri": "/path/.../name",
 
 		// optional
-		"Parameters": "?name1=value&name2=value",
+		"parameters": "?name1=value&name2=value",
 
 		// optional. Default is POST. It could be GET or POST
-		"Method": "POST",
+		"method": "POST",
 
 		// optional, in case of POST, if this field is initialized, it will be used
 		//	as body of the POST. Otherwise it will be used a json containing
@@ -62,13 +62,13 @@
 		"httpBody": "",
 
 		// optional, headers semicolon separated
-		"Headers": "",
+		"headers": "",
 		
 		// optional, set maximum time in seconds the request is allowed to take, default is 120 seconds
-		"Timeout": 120,
+		"timeout": 120,
 
 		// optional. Default: 2
-		"MaxRetries": 2,
+		"maxRetries": 2,
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
