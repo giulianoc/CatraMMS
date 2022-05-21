@@ -11095,9 +11095,15 @@ void FFMpeg::liveProxy2(
 			}
 			else
 			{
-				if (lastPartOfFfmpegOutputFile.find("signal 3") == string::npos)
+				// signal: 3 is what the LiveProxy playlist is changed and
+				//		we need to use the new playlist
+				// e.what(): Child has exit abnormally because of an uncaught signal. Terminating signal: 3
+				if (string(e.what()).find("signal: 3") != string::npos)
 				{
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					stoppedBySigQuit = true;
+
+					errorMessage = __FILEREF__
+						+ "ffmpeg stopped by SIGQUIT (3): ffmpeg command failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -11111,10 +11117,7 @@ void FFMpeg::liveProxy2(
 				}
 				else
 				{
-					stoppedBySigQuit = true;
-
-					errorMessage = __FILEREF__
-						+ "ffmpeg stopped by SIGQUIT (3): ffmpeg command failed"
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)

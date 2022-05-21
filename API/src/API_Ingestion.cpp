@@ -4702,18 +4702,37 @@ void API::changeLiveProxyPlaylist(
             );
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
-				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
-					workspace->_workspaceKey, broadcasterIngestionJobKey);
+				string, string> ingestionJobDetails =
+				_mmsEngineDBFacade->getIngestionJobDetails (workspace->_workspaceKey,
+				broadcasterIngestionJobKey);
 
 			MMSEngineDBFacade::IngestionType	ingestionType;
+			MMSEngineDBFacade::IngestionStatus	ingestionStatus;
 			string			metaDataContent;
 
-			tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
+			tie(ignore, ingestionType, ingestionStatus, metaDataContent, ignore)
+				= ingestionJobDetails;
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 			{
 				string errorMessage = string("Ingestion type is not a Live/VODProxy")
 					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
+			string prefixIngestionStatus = "End_";
+			if (sIngestionStatus.size() >= prefixIngestionStatus.size() &&
+				0 == sIngestionStatus.compare(0, prefixIngestionStatus.size(),
+				prefixIngestionStatus))
+			{
+				string errorMessage = string("Ingestion job is already finished")
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+					+ ", sIngestionStatus: " + sIngestionStatus
 					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
 				;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -5072,44 +5091,69 @@ void API::changeLiveProxyPlaylist(
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, field))
 						{
 							Json::Value vodInputRoot = newReceivedPlaylistItemRoot[field];
+							MMSEngineDBFacade::ContentType vodContentType;
+							bool vodContentTypeInitialized = false;
 
-							field = "physicalPathKey";
+							field = "sources";
 							if (JSONUtils::isMetadataPresent(vodInputRoot, field))
 							{
-								int64_t physicalPathKey = JSONUtils::asInt64(vodInputRoot, field, -1);
+								Json::Value sourcesRoot = vodInputRoot[field];
 
-								string sourcePhysicalPathName;
-								MMSEngineDBFacade::ContentType vodContentType;
+								for (int sourceIndex = 0; sourceIndex < sourcesRoot.size();
+									sourceIndex++)
+								{
+									Json::Value sourceRoot = sourcesRoot[sourceIndex];
 
-								tuple<string, int, string, string, int64_t, string>
-									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-									physicalPathKey);
-								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
-									= physicalPathDetails;
+									field = "physicalPathKey";
+									if (JSONUtils::isMetadataPresent(sourceRoot, field))
+									{
+										int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot,
+											field, -1);
 
-								bool warningIfMissing = false;
-								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-									string,int64_t, string, string> mediaItemKeyDetails =
-									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-										workspace->_workspaceKey, physicalPathKey,
-										warningIfMissing);
+										string sourcePhysicalPathName;
 
-								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
-									ignore, ignore) = mediaItemKeyDetails;
+										tuple<string, int, string, string, int64_t, string>
+											physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+											physicalPathKey);
+										tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+											= physicalPathDetails;
 
-								field = "vodContentType";
-								vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+										bool warningIfMissing = false;
+										tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+											string,int64_t, string, string> mediaItemKeyDetails =
+											_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+												workspace->_workspaceKey, physicalPathKey,
+												warningIfMissing);
 
-								field = "sourcePhysicalPathName";
-								vodInputRoot[field] = sourcePhysicalPathName;
+										tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
+											ignore, ignore) = mediaItemKeyDetails;
 
-								field = "vodInput";
-								newReceivedPlaylistItemRoot[field] = vodInputRoot;
+										vodContentTypeInitialized = true;
 
-								newReceivedPlaylistRoot[newReceivedPlaylistIndex]
-									= newReceivedPlaylistItemRoot;
+										field = "sourcePhysicalPathName";
+										sourceRoot[field] = sourcePhysicalPathName;
+
+										sourcesRoot[sourceIndex] = sourceRoot;
+									}
+								}
+
+								field = "sources";
+								vodInputRoot[field] = sourcesRoot;
 							}
+
+							if (vodContentTypeInitialized)
+							{
+								field = "vodContentType";
+								vodInputRoot[field] =
+									MMSEngineDBFacade::toString(vodContentType);
+							}
+
+							field = "vodInput";
+							newReceivedPlaylistItemRoot[field] = vodInputRoot;
 						}
+
+						newReceivedPlaylistRoot[newReceivedPlaylistIndex]
+							= newReceivedPlaylistItemRoot;
 					}
 				}
 			}
