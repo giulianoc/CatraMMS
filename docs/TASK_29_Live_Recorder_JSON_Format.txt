@@ -62,6 +62,32 @@
 		// configuration label
 		"EncodersPool": "",
 
+		// optional
+		"videoFilters": [
+			"blackdetect": {
+				"black_min_duration": 2.0,
+				"pixel_black_th": 0.0
+			},
+			"blackframe": {
+				"amount": 98,
+				"threshold": 32
+			},
+			"freezedetect": {
+				"noiseInDb": -60,
+				"duration": 2
+			}
+		],
+
+		// optional
+		"audioFilters": [
+			"silencedetect": {
+				"noise": 0.0001
+			},
+			"volume": {
+				"factor": 5.0
+			}
+		],
+
 		// optional. the LiveRecorderVOD is the Media Item updated continuously containing
 		//	Live Recording. 
 		// This field is optional, if not present no LiveRecorderVOD is generated.

@@ -9408,31 +9408,43 @@ void FFMpeg::liveRecorder(
 
 		if (filters != Json::nullValue)
 		{
-			bool blackdetect;
-			if (isMetadataPresent(filters, "blackdetect"))
-				blackdetect = true;
-			else
-				blackdetect = false;
+			bool blackdetect = false;
+			bool blackframe = false;
+			bool freezedetect = false;
 
-			bool blackframe;
-			if (isMetadataPresent(filters, "blackframe"))
-				blackframe = true;
-			else
-				blackframe = false;
+			if (isMetadataPresent(filters, "video"))
+			{
+				if (isMetadataPresent(filters["video"], "blackdetect"))
+					blackdetect = true;
+				else
+					blackdetect = false;
 
-			bool freezedetect;
-			if (isMetadataPresent(filters, "freezedetect"))
-				freezedetect = true;
-			else
-				freezedetect = false;
+				if (isMetadataPresent(filters["video"], "blackframe"))
+					blackframe = true;
+				else
+					blackframe = false;
 
+				if (isMetadataPresent(filters["video"], "freezedetect"))
+					freezedetect = true;
+				else
+					freezedetect = false;
+			}
 
-			bool silencedetect;
-			if (isMetadataPresent(filters, "silencedetect"))
-				silencedetect = true;
-			else
-				silencedetect = false;
+			bool silencedetect = false;
+			bool volume = false;
 
+			if (isMetadataPresent(filters, "audio"))
+			{
+				if (isMetadataPresent(filters["audio"], "silencedetect"))
+					silencedetect = true;
+				else
+					silencedetect = false;
+
+				if (isMetadataPresent(filters["audio"], "volume"))
+					volume = true;
+				else
+					volume = false;
+			}
 
 			if (blackdetect || blackframe || freezedetect)
 			{
@@ -9440,9 +9452,9 @@ void FFMpeg::liveRecorder(
 
 				if (blackdetect)
 				{
-					double black_min_duration = asDouble(filters["blackdetect"],
+					double black_min_duration = asDouble(filters["video"]["blackdetect"],
 						"black_min_duration", 2);
-					double pixel_black_th = asDouble(filters["blackdetect"],
+					double pixel_black_th = asDouble(filters["video"]["blackdetect"],
 						"pixel_black_th", 0.0);
 
 					if (filter != "")
@@ -9452,9 +9464,9 @@ void FFMpeg::liveRecorder(
 				}
 				if (blackframe)
 				{
-					int amount = asInt(filters["blackframe"],
+					int amount = asInt(filters["video"]["blackframe"],
 						"amount", 98);
-					int threshold = asInt(filters["blackframe"],
+					int threshold = asInt(filters["video"]["blackframe"],
 						"threshold", 32);
 
 					if (filter != "")
@@ -9464,9 +9476,9 @@ void FFMpeg::liveRecorder(
 				}
 				if (freezedetect)
 				{
-					int noiseInDb = asInt(filters["freezedetect"],
+					int noiseInDb = asInt(filters["video"]["freezedetect"],
 						"noiseInDb", -60);
-					int duration = asInt(filters["freezedetect"],
+					int duration = asInt(filters["video"]["freezedetect"],
 						"duration", 2);
 
 					if (filter != "")
@@ -9487,7 +9499,7 @@ void FFMpeg::liveRecorder(
 
 				if (silencedetect)
 				{
-					double noise = asDouble(filters["silencedetect"],
+					double noise = asDouble(filters["audio"]["silencedetect"],
 						"noise", 0.0001);
 
 					if (filter != "")
@@ -9495,8 +9507,18 @@ void FFMpeg::liveRecorder(
 					filter += ("silencedetect=noise=" + to_string(noise));
 				}
 
+				if (volume)
+				{
+					double factor = asDouble(filters["audio"]["volume"],
+						"factor", 5.0);
+
+					if (filter != "")
+						filter += ",";
+					filter += ("volume=" + to_string(factor));
+				}
+
 				filter += ",ashowinfo,ametadata=mode=print";
-				
+
 				ffmpegArgumentList.push_back("-filter:a");
 				ffmpegArgumentList.push_back(filter);
 			}
