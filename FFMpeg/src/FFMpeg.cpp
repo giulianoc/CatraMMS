@@ -9501,6 +9501,14 @@ void FFMpeg::liveRecorder(
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
+				// this is to get all video tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:v");
+
+				// this is to get all audio tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:a");
+
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
 					asString();
 				string manifestFileName = outputRoot.get("manifestFileName", "").asString();
@@ -9632,32 +9640,37 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				pair<string, string> videoAudioFilters = addFilters(
+				tuple<string, string, string> allFilters = addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
+
+				string videoFilters;
+				string audioFilters;
+				string complexFilters;
+				tie(videoFilters, audioFilters, complexFilters) = allFilters;
 
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						addToArguments(parameter, ffmpegArgumentList);
 
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 				}
 				else
 				{
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
 					else if (otherOutputOptions.find("-filter:v") == string::npos)
 					{
@@ -9666,10 +9679,10 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("copy");
 					}
 
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 					else if (otherOutputOptions.find("-filter:a") == string::npos)
 					{
@@ -9775,6 +9788,14 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 			{
+				// this is to get all video tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:v");
+
+				// this is to get all audio tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:a");
+
 				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 				string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
 				string rtmpUserName = outputRoot.get("rtmpUserName", "").asString();
@@ -9928,32 +9949,38 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				pair<string, string> videoAudioFilters = addFilters(
+				tuple<string, string, string> allFilters = addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
+
+				string videoFilters;
+				string audioFilters;
+				string complexFilters;
+				tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
 
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						addToArguments(parameter, ffmpegArgumentList);
 
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 				}
 				else
 				{
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
 					else if (otherOutputOptions.find("-filter:v") == string::npos)
 					{
@@ -9962,10 +9989,10 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("copy");
 					}
 
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 					else if (otherOutputOptions.find("-filter:a") == string::npos)
 					{
@@ -9990,6 +10017,14 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "UDP_Stream")
 			{
+				// this is to get all video tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:v");
+
+				// this is to get all audio tracks
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("0:a");
+
 				string udpUrl = outputRoot.get("udpUrl", "").asString();
 
 				if (udpUrl == "")
@@ -10134,32 +10169,38 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				pair<string, string> videoAudioFilters = addFilters(
+				tuple<string, string, string> allFilters = addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
+
+				string videoFilters;
+				string audioFilters;
+				string complexFilters;
+				tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
 
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						addToArguments(parameter, ffmpegArgumentList);
 
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 				}
 				else
 				{
-					if (videoAudioFilters.first != "")
+					if (videoFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:v");
-						ffmpegArgumentList.push_back(videoAudioFilters.first);
+						ffmpegArgumentList.push_back(videoFilters);
 					}
 					else if (otherOutputOptions.find("-filter:v") == string::npos)
 					{
@@ -10168,10 +10209,10 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("copy");
 					}
 
-					if (videoAudioFilters.second != "")
+					if (audioFilters != "")
 					{
 						ffmpegArgumentList.push_back("-filter:a");
-						ffmpegArgumentList.push_back(videoAudioFilters.second);
+						ffmpegArgumentList.push_back(audioFilters);
 					}
 					else if (otherOutputOptions.find("-filter:a") == string::npos)
 					{
@@ -10193,6 +10234,33 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList.push_back("-f");
 				ffmpegArgumentList.push_back("mpegts");
 				ffmpegArgumentList.push_back(udpUrl);
+			}
+			else if (outputType == "NONE")
+			{
+				tuple<string, string, string> allFilters = addFilters(
+					filtersRoot, "", "", -1);
+
+				string videoFilters;
+				string audioFilters;
+				string complexFilters;
+				tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
+
+				if (videoFilters != "")
+				{
+					ffmpegArgumentList.push_back("-filter:v");
+					ffmpegArgumentList.push_back(videoFilters);
+				}
+
+				if (audioFilters != "")
+				{
+					ffmpegArgumentList.push_back("-filter:a");
+					ffmpegArgumentList.push_back(audioFilters);
+				}
+
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("null");
+				ffmpegArgumentList.push_back("-");
 			}
 			else
 			{
@@ -12435,31 +12503,43 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			ffmpegOutputArgumentList.push_back("-threads");
 			ffmpegOutputArgumentList.push_back("0");
 
-			pair<string, string> videoAudioFilters = addFilters(
+			tuple<string, string, string> allFilters = addFilters(
 				filtersRoot, ffmpegVideoResolutionParameter,
 				ffmpegDrawTextFilter, streamingDurationInSeconds);
 
-			if (videoAudioFilters.first != "")
+			string videoFilters;
+			string audioFilters;
+			string complexFilters;
+			tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
+
+			if (videoFilters != "")
 			{
 				ffmpegOutputArgumentList.push_back("-filter:v");
-				ffmpegOutputArgumentList.push_back(videoAudioFilters.first);
+				ffmpegOutputArgumentList.push_back(videoFilters);
 			}
-			if (videoAudioFilters.second != "")
+			if (audioFilters != "")
 			{
 				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(videoAudioFilters.second);
+				ffmpegOutputArgumentList.push_back(audioFilters);
 			}
 		}
 		else
 		{
-			pair<string, string> videoAudioFilters = addFilters(
+			tuple<string, string, string> allFilters = addFilters(
 				filtersRoot, ffmpegVideoResolutionParameter,
 				ffmpegDrawTextFilter, streamingDurationInSeconds);
 
-			if (videoAudioFilters.first != "")
+			string videoFilters;
+			string audioFilters;
+			string complexFilters;
+			tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
+
+			if (videoFilters != "")
 			{
 				ffmpegOutputArgumentList.push_back("-filter:v");
-				ffmpegOutputArgumentList.push_back(videoAudioFilters.first);
+				ffmpegOutputArgumentList.push_back(videoFilters);
 			}
 			else if (otherOutputOptions.find("-filter:v") == string::npos)
 			{
@@ -12468,10 +12548,10 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				ffmpegOutputArgumentList.push_back("copy");
 			}
 
-			if (videoAudioFilters.second != "")
+			if (audioFilters != "")
 			{
 				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(videoAudioFilters.second);
+				ffmpegOutputArgumentList.push_back(audioFilters);
 			}
 			else if (otherOutputOptions.find("-filter:a") == string::npos)
 			{
@@ -16842,7 +16922,7 @@ void FFMpeg::setStatus(
 	_startFFMpegMethod = chrono::system_clock::now();
 }
 
-pair<string, string> FFMpeg::addFilters(
+tuple<string, string, string> FFMpeg::addFilters(
 	Json::Value filtersRoot,
 	string ffmpegVideoResolutionParameter,
 	string ffmpegDrawTextFilter,
@@ -16851,6 +16931,7 @@ pair<string, string> FFMpeg::addFilters(
 {
 	string videoFilters;
 	string audioFilters;
+	string complexFilters;
 
 
 	if (ffmpegVideoResolutionParameter != "")
@@ -16870,122 +16951,147 @@ pair<string, string> FFMpeg::addFilters(
 	{
 		if (isMetadataPresent(filtersRoot, "video"))
 		{
-			if (isMetadataPresent(filtersRoot["video"], "blackdetect"))
+			for (int filterIndex = 0; filterIndex < filtersRoot["video"].size(); filterIndex++)
 			{
-				double black_min_duration = asDouble(filtersRoot["video"]["blackdetect"],
-					"black_min_duration", 2);
-				double pixel_black_th = asDouble(filtersRoot["video"]["blackdetect"],
-					"pixel_black_th", 0.0);
+				Json::Value filterRoot = filtersRoot["video"][filterIndex];
 
+				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (videoFilters != "")
 					videoFilters += ",";
-				videoFilters += ("blackdetect=d=" + to_string(black_min_duration)
-					+ ":pix_th=" + to_string(pixel_black_th));
-			}
-
-			if (isMetadataPresent(filtersRoot["video"], "blackframe"))
-			{
-				int amount = asInt(filtersRoot["video"]["blackframe"],
-					"amount", 98);
-				int threshold = asInt(filtersRoot["video"]["blackframe"],
-					"threshold", 32);
-
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("blackframe=amount=" + to_string(amount)
-					+ ":threshold=" + to_string(threshold));
-			}
-
-			if (isMetadataPresent(filtersRoot["video"], "freezedetect"))
-			{
-				int noiseInDb = asInt(filtersRoot["video"]["freezedetect"],
-					"noiseInDb", -60);
-				int duration = asInt(filtersRoot["video"]["freezedetect"],
-					"duration", 2);
-
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("freezedetect=noise=" + to_string(noiseInDb)
-					+ "dB:duration=" + to_string(duration));
-			}
-
-			if (isMetadataPresent(filtersRoot["video"], "fade"))
-			{
-				int duration = asInt(filtersRoot["video"]["fade"], "duration", 4);
-
-				if (streamingDurationInSeconds >= duration)
-				{
-					if (videoFilters != "")
-						videoFilters += ",";
-					// fade=type=in:duration=3,fade=type=out:duration=3:start_time=27
-					videoFilters += ("fade=type=in:duration=" + to_string(duration)
-						+ ",fade=type=out:duration=" + to_string(duration)
-						+ ":start_time=" + to_string(streamingDurationInSeconds - duration)
-					);
-				}
-				else
-				{
-					_logger->warn(__FILEREF__ + "fade filter, streaming duration to small"
-						+ ", fadeDuration: " + to_string(duration)
-						+ ", streamingDurationInSeconds: "
-							+ to_string(streamingDurationInSeconds)
-					);
-				}
-			}
-
-			if (isMetadataPresent(filtersRoot["video"], "showinfo"))
-			{
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("showinfo");
-			}
-
-			if (isMetadataPresent(filtersRoot["video"], "metadata"))
-			{
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("metadata=mode=print");
+				videoFilters += filter;
 			}
 		}
 
 		if (isMetadataPresent(filtersRoot, "audio"))
 		{
-			if (isMetadataPresent(filtersRoot["audio"], "silencedetect"))
+			for (int filterIndex = 0; filterIndex < filtersRoot["audio"].size(); filterIndex++)
 			{
-				double noise = asDouble(filtersRoot["audio"]["silencedetect"],
-					"noise", 0.0001);
+				Json::Value filterRoot = filtersRoot["audio"][filterIndex];
 
+				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (audioFilters != "")
 					audioFilters += ",";
-				audioFilters += ("silencedetect=noise=" + to_string(noise));
+				audioFilters += filter;
 			}
+		}
 
-			if (isMetadataPresent(filtersRoot["audio"], "volume"))
+		if (isMetadataPresent(filtersRoot, "complex"))
+		{
+			for (int filterIndex = 0; filterIndex < filtersRoot["complex"].size(); filterIndex++)
 			{
-				double factor = asDouble(filtersRoot["audio"]["volume"],
-					"factor", 5.0);
+				Json::Value filterRoot = filtersRoot["complex"][filterIndex];
 
-				if (audioFilters != "")
-					audioFilters += ",";
-				audioFilters += ("volume=" + to_string(factor));
-			}
-
-			if (isMetadataPresent(filtersRoot["audio"], "ashowinfo"))
-			{
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("ashowinfo");
-			}
-
-			if (isMetadataPresent(filtersRoot["audio"], "ametadata"))
-			{
-				if (videoFilters != "")
-					videoFilters += ",";
-				videoFilters += ("ametadata=mode=print");
+				string filter = getFilter(filterRoot, streamingDurationInSeconds);
+				if (complexFilters != "")
+					complexFilters += ",";
+				complexFilters += filter;
 			}
 		}
 	}
 
-	return make_pair(videoFilters, audioFilters);
+	return make_tuple(videoFilters, audioFilters, complexFilters);
+}
+
+string FFMpeg::getFilter(
+	Json::Value filterRoot,
+	int64_t streamingDurationInSeconds
+)
+{
+	string filter;
+
+
+	if (isMetadataPresent(filterRoot, "type"))
+	{
+		string errorMessage = string("filterRoot->type field does not exist");
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	string type = filterRoot.get("type", "").asString();
+
+	if (type == "blackdetect")
+	{
+		double black_min_duration = asDouble(filterRoot, "black_min_duration", 2);
+		double pixel_black_th = asDouble(filterRoot, "pixel_black_th", 0.0);
+
+		filter = ("blackdetect=d=" + to_string(black_min_duration)
+			+ ":pix_th=" + to_string(pixel_black_th));
+	}
+	else if (type == "blackframe")
+	{
+		int amount = asInt(filterRoot, "amount", 98);
+		int threshold = asInt(filterRoot, "threshold", 32);
+
+		filter = ("blackframe=amount=" + to_string(amount)
+			+ ":threshold=" + to_string(threshold));
+	}
+	else if (type == "freezedetect")
+	{
+		int noiseInDb = asInt(filterRoot, "noiseInDb", -60);
+		int duration = asInt(filterRoot, "duration", 2);
+
+		filter = ("freezedetect=noise=" + to_string(noiseInDb)
+			+ "dB:duration=" + to_string(duration));
+	}
+	else if (type == "fade")
+	{
+		int duration = asInt(filterRoot, "duration", 4);
+
+		if (streamingDurationInSeconds >= duration)
+		{
+			// fade=type=in:duration=3,fade=type=out:duration=3:start_time=27
+			filter = ("fade=type=in:duration=" + to_string(duration)
+				+ ",fade=type=out:duration=" + to_string(duration)
+				+ ":start_time=" + to_string(streamingDurationInSeconds - duration)
+			);
+		}
+		else
+		{
+			_logger->warn(__FILEREF__ + "fade filter, streaming duration to small"
+				+ ", fadeDuration: " + to_string(duration)
+				+ ", streamingDurationInSeconds: "
+					+ to_string(streamingDurationInSeconds)
+			);
+		}
+	}
+	else if (type == "showinfo")
+	{
+		filter = ("showinfo");
+	}
+	else if (type == "metadata")
+	{
+		filter = ("metadata=mode=print");
+	}
+	else if (type == "silencedetect")
+	{
+		double noise = asDouble(filterRoot, "noise", 0.0001);
+
+		filter = ("silencedetect=noise=" + to_string(noise));
+	}
+	else if (type == "volume")
+	{
+		double factor = asDouble(filterRoot, "factor", 5.0);
+
+		filter = ("volume=" + to_string(factor));
+	}
+	else if (type == "ashowinfo")
+	{
+		filter = ("ashowinfo");
+	}
+	else if (type == "ametadata")
+	{
+		filter = ("ametadata=mode=print");
+	}
+	else
+	{
+		string errorMessage = string("filterRoot->type is unknown")
+			+ ", type: " + type
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	return filter;
 }
 

@@ -561,10 +561,14 @@ private:
 		string stagingEncodedAssetPathName = ""
 	);
 
-	pair<string, string> addFilters(
+	tuple<string, string, string> addFilters(
 		Json::Value filtersRoot,
 		string ffmpegVideoResolutionParameter,
 		string ffmpegDrawTextFilter,
+		int64_t streamingDurationInSeconds);
+
+	string getFilter(
+		Json::Value filtersRoot,
 		int64_t streamingDurationInSeconds);
 
 	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,

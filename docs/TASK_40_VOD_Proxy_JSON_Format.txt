@@ -109,36 +109,53 @@
 
 				// optional
 				"filters": {
-					"video": {
-						"fade": {
+					"video": [
+						{
+							"type": "fade",
 							"duration": 4
 						},
-						"blackdetect": {
+						{
+							"type": "blackdetect",
 							"black_min_duration": 2.0,
 							"pixel_black_th": 0.0
 						},
-						"blackframe": {
+						{
+							"type": "blackframe",
 							"amount": 98,
 							"threshold": 32
 						},
-						"freezedetect": {
+						{
+							"type": "freezedetect",
 							"noiseInDb": -60,
 							"duration": 2
 						}
-					},
-					"audio": {
-						"silencedetect": {
+					],
+					"audio": [
+						{
+							"type": "silencedetect",
 							"noise": 0.0001
 						},
-						"volume": {
-							//	- 0.5: If we want our volume to be half
-							//		of the input volume
+						{
+							"type": "volume",
+							//	- 0.5: If we want our volume to be half of the input volume
 							//	- 1.5: 150% of current volume
 							//	- 10dB: increase the volume by 10dB
 							//	- -5dB: reduce the volume by 5dB
 							"factor": 5.0
 						}
-					}
+					],
+					"complex": [
+						{
+							"type": "blackframe",
+							"amount": 98,
+							"threshold": 32
+						},
+						{
+							"type": "blend",
+							"mode": "difference",
+							"shortest": 1
+						}
+					]
 				}
 
 				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
