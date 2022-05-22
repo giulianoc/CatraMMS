@@ -12755,8 +12755,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "otherOutputOptions";
 			localOutputRoot[field] = otherOutputOptions;
 
-			field = "audioVolumeChange";
-			localOutputRoot[field] = string("");
+			field = "filters";
+			localOutputRoot[field] = Json::nullValue;
 
 			field = "segmentDurationInSeconds";
 			localOutputRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
@@ -13716,7 +13716,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		string outputType;
 		string otherOutputOptions;
-		string audioVolumeChange;
+		Json::Value filtersRoot = Json::nullValue;
 		int fadeDuration = -1;
 		int64_t deliveryCode;
 		int segmentDurationInSeconds = 0;
@@ -13748,9 +13748,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			otherOutputOptions = outputRoot.get(field, "").asString();
 
-		field = "AudioVolumeChange";
+		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
-			audioVolumeChange = outputRoot.get(field, "").asString();
+			filtersRoot = outputRoot[field];
 
 		field = "fadeDuration";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
@@ -13930,8 +13930,8 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "fadeDuration";
 		localOutputRoot[field] = fadeDuration;
 
-		field = "audioVolumeChange";
-		localOutputRoot[field] = audioVolumeChange;
+		field = "filters";
+		localOutputRoot[field] = filtersRoot;
 
 		field = "segmentDurationInSeconds";
 		localOutputRoot[field] = segmentDurationInSeconds;

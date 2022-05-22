@@ -305,8 +305,6 @@ public:
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
 
-		Json::Value filters,
-
         int segmentDurationInSeconds,
         string outputFileFormat,
 		string segmenterType,
@@ -562,6 +560,12 @@ private:
 		string mmsSourceAssetPathName = "",
 		string stagingEncodedAssetPathName = ""
 	);
+
+	pair<string, string> addFilters(
+		Json::Value filtersRoot,
+		string ffmpegVideoResolutionParameter,
+		string ffmpegDrawTextFilter,
+		int64_t streamingDurationInSeconds);
 
 	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		Json::Value* inputsRoot, mutex* inputsRootMutex,

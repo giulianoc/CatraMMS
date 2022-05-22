@@ -6768,10 +6768,6 @@ void FFMPEGEncoder::liveRecorderThread(
 					utcRecordingPeriodStart);
 		}
 
-		Json::Value filters = Json::nullValue;
-		if (JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, "filters"))
-			filters = (liveRecording->_ingestedParametersRoot)["filters"];
-
 		Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
 
 		// liveRecording->_liveRecorderOutputRoots.clear();
@@ -6858,8 +6854,6 @@ void FFMPEGEncoder::liveRecorderThread(
 			userAgent,
 			utcRecordingPeriodStart,
 			utcRecordingPeriodEnd,
-
-			filters,
 
 			segmentDurationInSeconds,
 			outputFileFormat,

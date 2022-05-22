@@ -114,15 +114,39 @@
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
 				"OtherOutputOptions": "-map 0:1",
 
-				// optional: fade in/out duration in seconds
-				"fadeDuration": -1,
-
-				// optional: To change the audio volume
-				//	- 0.5: If we want our volume to be half of the input volume
-				//	- 1.5: 150% of current volume
-				//	- 10dB: increase the volume by 10dB
-				//	- -5dB: reduce the volume by 5dB
-				"AudioVolumeChange": "2.5",
+				// optional
+				"filters": {
+					"video": {
+						"fade": {
+							"duration": 4
+						},
+						"blackdetect": {
+							"black_min_duration": 2.0,
+							"pixel_black_th": 0.0
+						},
+						"blackframe": {
+							"amount": 98,
+							"threshold": 32
+						},
+						"freezedetect": {
+							"noiseInDb": -60,
+							"duration": 2
+						}
+					},
+					"audio": {
+						"silencedetect": {
+							"noise": 0.0001
+						},
+						"volume": {
+							//	- 0.5: If we want our volume to be half
+							//		of the input volume
+							//	- 1.5: 150% of current volume
+							//	- 10dB: increase the volume by 10dB
+							//	- -5dB: reduce the volume by 5dB
+							"factor": 5.0
+						}
+					}
+				}
 
 				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
 				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
