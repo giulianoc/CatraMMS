@@ -13835,9 +13835,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 		);
 
-		_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
-				_encodingItem->_encodingJobKey, 
-				encodingStatusFailures
+		killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+			_encodingItem->_encodingJobKey, 
+			encodingStatusFailures
 		);
 	}
 	catch(...)
