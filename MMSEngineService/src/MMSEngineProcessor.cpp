@@ -13717,7 +13717,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string outputType;
 		string otherOutputOptions;
 		Json::Value filtersRoot = Json::nullValue;
-		int fadeDuration = -1;
 		int64_t deliveryCode;
 		int segmentDurationInSeconds = 0;
 		int playlistEntriesNumber = 0;
@@ -13751,10 +13750,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			filtersRoot = outputRoot[field];
-
-		field = "fadeDuration";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-			fadeDuration = JSONUtils::asInt(outputRoot, field, -1);
 
 		if (outputType == "HLS" || outputType == "DASH")
 		{
@@ -13926,9 +13921,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "otherOutputOptions";
 		localOutputRoot[field] = otherOutputOptions;
-
-		field = "fadeDuration";
-		localOutputRoot[field] = fadeDuration;
 
 		field = "filters";
 		localOutputRoot[field] = filtersRoot;

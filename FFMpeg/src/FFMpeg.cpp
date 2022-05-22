@@ -17000,7 +17000,7 @@ string FFMpeg::getFilter(
 	string filter;
 
 
-	if (isMetadataPresent(filterRoot, "type"))
+	if (!isMetadataPresent(filterRoot, "type"))
 	{
 		string errorMessage = string("filterRoot->type field does not exist");
 		_logger->error(__FILEREF__ + errorMessage);
