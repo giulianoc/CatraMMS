@@ -488,7 +488,7 @@ void API::killOrCancelEncodingJob(
 					}
 				}
 			}
-			else if (type == "LiveProxy")
+			else if (type == "LiveProxy" || type == "VODProxy" || type == "Countdown")
 			{
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 				{
