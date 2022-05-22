@@ -16868,53 +16868,9 @@ pair<string, string> FFMpeg::addFilters(
 
 	if (filtersRoot != Json::nullValue)
 	{
-		bool blackdetect = false;
-		bool blackframe = false;
-		bool freezedetect = false;
-		bool fade = false;
-
 		if (isMetadataPresent(filtersRoot, "video"))
 		{
 			if (isMetadataPresent(filtersRoot["video"], "blackdetect"))
-				blackdetect = true;
-			else
-				blackdetect = false;
-
-			if (isMetadataPresent(filtersRoot["video"], "blackframe"))
-				blackframe = true;
-			else
-				blackframe = false;
-
-			if (isMetadataPresent(filtersRoot["video"], "freezedetect"))
-				freezedetect = true;
-			else
-				freezedetect = false;
-
-			if (isMetadataPresent(filtersRoot["video"], "fade"))
-				fade = true;
-			else
-				fade = false;
-		}
-
-		bool silencedetect = false;
-		bool volume = false;
-
-		if (isMetadataPresent(filtersRoot, "audio"))
-		{
-			if (isMetadataPresent(filtersRoot["audio"], "silencedetect"))
-				silencedetect = true;
-			else
-				silencedetect = false;
-
-			if (isMetadataPresent(filtersRoot["audio"], "volume"))
-				volume = true;
-			else
-				volume = false;
-		}
-
-		if (blackdetect || blackframe || freezedetect || fade)
-		{
-			if (blackdetect)
 			{
 				double black_min_duration = asDouble(filtersRoot["video"]["blackdetect"],
 					"black_min_duration", 2);
@@ -16926,7 +16882,8 @@ pair<string, string> FFMpeg::addFilters(
 				videoFilters += ("blackdetect=d=" + to_string(black_min_duration)
 					+ ":pix_th=" + to_string(pixel_black_th));
 			}
-			if (blackframe)
+
+			if (isMetadataPresent(filtersRoot["video"], "blackframe"))
 			{
 				int amount = asInt(filtersRoot["video"]["blackframe"],
 					"amount", 98);
@@ -16938,7 +16895,8 @@ pair<string, string> FFMpeg::addFilters(
 				videoFilters += ("blackframe=amount=" + to_string(amount)
 					+ ":threshold=" + to_string(threshold));
 			}
-			if (freezedetect)
+
+			if (isMetadataPresent(filtersRoot["video"], "freezedetect"))
 			{
 				int noiseInDb = asInt(filtersRoot["video"]["freezedetect"],
 					"noiseInDb", -60);
@@ -16950,8 +16908,8 @@ pair<string, string> FFMpeg::addFilters(
 				videoFilters += ("freezedetect=noise=" + to_string(noiseInDb)
 					+ "dB:duration=" + to_string(duration));
 			}
-		
-			if (fade)
+
+			if (isMetadataPresent(filtersRoot["video"], "fade"))
 			{
 				int duration = asInt(filtersRoot["video"]["fade"], "duration", 4);
 
@@ -16975,13 +16933,24 @@ pair<string, string> FFMpeg::addFilters(
 				}
 			}
 
-			if (blackdetect || blackframe || freezedetect)
-				videoFilters += ",showinfo,metadata=mode=print";
+			if (isMetadataPresent(filtersRoot["video"], "showinfo"))
+			{
+				if (videoFilters != "")
+					videoFilters += ",";
+				videoFilters += ("showinfo");
+			}
+
+			if (isMetadataPresent(filtersRoot["video"], "metadata"))
+			{
+				if (videoFilters != "")
+					videoFilters += ",";
+				videoFilters += ("metadata=mode=print");
+			}
 		}
 
-		if (silencedetect || volume)
+		if (isMetadataPresent(filtersRoot, "audio"))
 		{
-			if (silencedetect)
+			if (isMetadataPresent(filtersRoot["audio"], "silencedetect"))
 			{
 				double noise = asDouble(filtersRoot["audio"]["silencedetect"],
 					"noise", 0.0001);
@@ -16991,7 +16960,7 @@ pair<string, string> FFMpeg::addFilters(
 				audioFilters += ("silencedetect=noise=" + to_string(noise));
 			}
 
-			if (volume)
+			if (isMetadataPresent(filtersRoot["audio"], "volume"))
 			{
 				double factor = asDouble(filtersRoot["audio"]["volume"],
 					"factor", 5.0);
@@ -17001,8 +16970,19 @@ pair<string, string> FFMpeg::addFilters(
 				audioFilters += ("volume=" + to_string(factor));
 			}
 
-			if (silencedetect)
-				audioFilters += ",ashowinfo,ametadata=mode=print";
+			if (isMetadataPresent(filtersRoot["audio"], "ashowinfo"))
+			{
+				if (videoFilters != "")
+					videoFilters += ",";
+				videoFilters += ("ashowinfo");
+			}
+
+			if (isMetadataPresent(filtersRoot["audio"], "ametadata"))
+			{
+				if (videoFilters != "")
+					videoFilters += ",";
+				videoFilters += ("ametadata=mode=print");
+			}
 		}
 	}
 
