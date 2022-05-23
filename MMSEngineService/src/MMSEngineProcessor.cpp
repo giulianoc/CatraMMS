@@ -12576,7 +12576,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				if (JSONUtils::isMetadataPresent(framesToBeDetectedRoot, "physicalPathKeys"))
 				{
-					for(int physicalPathKeyIndex = 0;
+					for(int physicalPathKeyIndex = 0; physicalPathKeyIndex <
 						framesToBeDetectedRoot["physicalPathKeys"].size();
 						physicalPathKeyIndex++)
 					{
