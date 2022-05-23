@@ -6824,6 +6824,24 @@ void FFMPEGEncoder::liveRecorderThread(
 			}
 		}
 
+		Json::Value picturePathNamesToBeDetectedRoot = Json::nullValue;
+		{
+			if (JSONUtils::isMetadataPresent(liveRecording->_encodingParametersRoot,
+				"framesToBeDetectedRoot"))
+			{
+				if (JSONUtils::isMetadataPresent(
+					liveRecording->_encodingParametersRoot["framesToBeDetectedRoot"],
+					"picturePathNames"))
+				{
+					if (liveRecording->_encodingParametersRoot["framesToBeDetectedRoot"]
+						["picturePathNames"].size() > 0)
+						picturePathNamesToBeDetectedRoot =
+							liveRecording->_encodingParametersRoot
+							["framesToBeDetectedRoot"]["picturePathNames"];
+				}
+			}
+		}
+
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
 
@@ -6863,6 +6881,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_virtualVOD,
 
 			outputsRoot,
+
+			picturePathNamesToBeDetectedRoot,
 
 			&(liveRecording->_childPid)
 		);

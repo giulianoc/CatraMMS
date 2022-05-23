@@ -9066,6 +9066,8 @@ void FFMpeg::liveRecorder(
 	//
 	Json::Value outputsRoot,
 
+	Json::Value picturePathNamesToBeDetectedRoot,
+
 	pid_t* pChildPid)
 {
 	_currentApiName = "liveRecorder";
@@ -9401,6 +9403,30 @@ void FFMpeg::liveRecorder(
 
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
+			}
+		}
+
+		// to detect a frame we have to:
+		// 1. add -r 1 -loop 1 -i <picture path name of the frame to be detected>
+		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
+		if (picturePathNamesToBeDetectedRoot != Json::nullValue
+			&& picturePathNamesToBeDetectedRoot.size() > 0)
+		{
+			for(int frameToBeDetectedIndex = 0; 
+				frameToBeDetectedIndex < picturePathNamesToBeDetectedRoot.size();
+				frameToBeDetectedIndex++)
+			{
+				string picturePathName = picturePathNamesToBeDetectedRoot
+					[frameToBeDetectedIndex].asString();
+
+				ffmpegArgumentList.push_back("-r");
+				ffmpegArgumentList.push_back("1");
+
+				ffmpegArgumentList.push_back("-loop");
+				ffmpegArgumentList.push_back("1");
+
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(picturePathName);
 			}
 		}
 
@@ -10271,6 +10297,29 @@ void FFMpeg::liveRecorder(
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
+			}
+		}
+
+		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
+		if (picturePathNamesToBeDetectedRoot != Json::nullValue
+			&& picturePathNamesToBeDetectedRoot.size() > 0)
+		{
+			for(int frameToBeDetectedIndex = 0; 
+				frameToBeDetectedIndex < picturePathNamesToBeDetectedRoot.size();
+				frameToBeDetectedIndex++)
+			{
+				ffmpegArgumentList.push_back("-filter_complex");
+				ffmpegArgumentList.push_back("[0:v][" + to_string(frameToBeDetectedIndex + 1)
+					+ ":v]blend=difference:shortest=1,blackframe=99:32[differenceOut]");
+
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("[differenceOut_"
+					+ to_string(frameToBeDetectedIndex + 1) + "]");
+
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("null");
+
+				ffmpegArgumentList.push_back("-");
 			}
 		}
 

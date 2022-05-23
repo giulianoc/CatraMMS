@@ -321,6 +321,8 @@ public:
 
 		Json::Value outputsRoot,
 
+		Json::Value picturePathNamesToBeDetectedRoot,
+
 		pid_t* pChildPid);
 
 /*

@@ -12350,6 +12350,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
 		Json::Value outputsRoot = Json::nullValue;
+		Json::Value framesToBeDetectedRoot = Json::nullValue;
         {
 			{
 				field = "ConfigurationLabel";
@@ -12566,6 +12567,35 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "Outputs";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
+
+			if (JSONUtils::isMetadataPresent(parametersRoot, "framesToBeDetected"))
+			{
+				framesToBeDetectedRoot = parametersRoot["framesToBeDetected"];
+
+				Json::Value picturePathNamesRoot(Json::arrayValue);
+
+				if (JSONUtils::isMetadataPresent(framesToBeDetectedRoot, "physicalPathKeys"))
+				{
+					for(int physicalPathKeyIndex = 0;
+						framesToBeDetectedRoot["physicalPathKeys"].size();
+						physicalPathKeyIndex++)
+					{
+						int64_t physicalPathKey = JSONUtils::asInt64(
+							framesToBeDetectedRoot["physicalPathKeys"][physicalPathKeyIndex],
+							"", -1);
+						string picturePathNameToBeDetected;
+
+						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+						tie(picturePathNameToBeDetected, ignore, ignore, ignore, ignore, ignore)
+							= physicalPathDetails;
+
+						picturePathNamesRoot.append(picturePathNameToBeDetected);
+					}
+				}
+				framesToBeDetectedRoot["picturePathNames"] =
+					picturePathNamesRoot;
+			}
         }
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -12810,7 +12840,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorManifestDirectoryPath,	// used by FFMPEGEncoder.cpp to build virtualVOD
 			monitorManifestFileName,	// used by FFMPEGEncoder.cpp to build virtualVOD
 
-			localOutputsRoot);
+			localOutputsRoot, framesToBeDetectedRoot);
 	}
     catch(runtime_error e)
     {

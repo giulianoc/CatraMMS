@@ -110,6 +110,13 @@
 			"SegmentDurationInSeconds": 10
 		},
 
+		// optional: frames to be detected
+		"framesToBeDetected": {
+			"physicalPathKeys": [
+				1234
+			]
+		},
+
 		// Optional. This json array lists all the Outputs the Live-Recorder task has to generate.
 		"Outputs" = [
 			{
