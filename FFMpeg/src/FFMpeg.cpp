@@ -10310,7 +10310,8 @@ void FFMpeg::liveRecorder(
 			{
 				ffmpegArgumentList.push_back("-filter_complex");
 				ffmpegArgumentList.push_back("[0:v][" + to_string(frameToBeDetectedIndex + 1)
-					+ ":v]blend=difference:shortest=1,blackframe=99:32[differenceOut]");
+					+ ":v]blend=difference:shortest=1,blackframe=99:32[differenceOut"
+					+ to_string(frameToBeDetectedIndex + 1) + "]");
 
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[differenceOut_"
