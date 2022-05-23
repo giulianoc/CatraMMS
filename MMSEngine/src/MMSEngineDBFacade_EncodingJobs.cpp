@@ -7571,7 +7571,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string monitorManifestDirectoryPath,
 	string monitorManifestFileName,
 
-	Json::Value outputsRoot, Json::Value frameToBeDetectedRoot
+	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot
 )
 {
 
@@ -7729,8 +7729,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
 
-				field = "frameToBeDetectedRoot";
-				parametersRoot[field] = frameToBeDetectedRoot;
+				field = "framesToBeDetectedRoot";
+				parametersRoot[field] = framesToBeDetectedRoot;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

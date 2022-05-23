@@ -1756,7 +1756,7 @@ public:
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
 
-		Json::Value outputsRoot, Json::Value frameToBeDetectedRoot);
+		Json::Value outputsRoot, Json::Value framesToBeDetectedRoot);
 
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
