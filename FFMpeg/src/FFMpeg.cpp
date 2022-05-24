@@ -187,12 +187,30 @@ void FFMpeg::encodeContent(
 			audioBitRatesInfo
         );
 
-        _outputFfmpegPathFileName =
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
 
 		// special case:
 		//	- input is mp4 or ts
@@ -2802,12 +2820,31 @@ void FFMpeg::overlayImageOnVideo(
         // _currentEncodingJobKey              = encodingJobKey;
         
 
-        _outputFfmpegPathFileName =
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
 
         {
             string ffmpegImagePosition_X_InPixel = 
@@ -3143,13 +3180,31 @@ void FFMpeg::overlayTextOnVideo(
         // _currentIngestionJobKey             = ingestionJobKey;
         // _currentEncodingJobKey              = encodingJobKey;
         
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
 
-        _outputFfmpegPathFileName =
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
 
 
         {
@@ -4291,12 +4346,31 @@ void FFMpeg::videoSpeed(
         // _currentIngestionJobKey             = ingestionJobKey;
         // _currentEncodingJobKey              = encodingJobKey;
 
-        _outputFfmpegPathFileName =
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
 
         {
 			string videoPTS;
@@ -4838,13 +4912,31 @@ void FFMpeg::pictureInPicture(
         // _currentIngestionJobKey             = ingestionJobKey;
         // _currentEncodingJobKey              = encodingJobKey;
         
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
 
-        _outputFfmpegPathFileName =
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
 
         {
             string ffmpegOverlayPosition_X_InPixel = 
@@ -5391,12 +5483,31 @@ void FFMpeg::introOutroOverlay(
 			}
 		}
 
-        _outputFfmpegPathFileName =
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
 
 /*
 ffmpeg \
@@ -7394,14 +7505,31 @@ vector<string> FFMpeg::generateFramesToIngest(
         
     vector<string> generatedFramesFileNames;
     
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(_currentIngestionJobKey)
-            + "_"
-            + to_string(_currentEncodingJobKey)
-            + ".generateFrame.log"
-            ;
-        
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(_currentIngestionJobKey)
+			+ "_"
+			+ to_string(_currentEncodingJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".generateFrame.log";
+	}
+
     string localImageFileName;
     if (mjpeg)
     {
@@ -7741,11 +7869,28 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     }
     concatListFile.close();
 
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".concat.log"
-            ;
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".concat.log";
+	}
 
     // Then you can stream copy or re-encode your files
     // The -safe 0 above is not required if the paths are relative
@@ -7923,11 +8068,29 @@ void FFMpeg::cutWithoutEncoding(
 		throw runtime_error(errorMessage);
 	}
 
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".cut.log"
-            ;
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".cut.log";
+	}
+
 
     /*
         -ss: When used as an output option (before an output url), decodes but discards input 
@@ -8123,11 +8286,28 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			throw runtime_error(errorMessage);
 		}
 
-		_outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".cut.log"
-            ;
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey)
+				+ "_"
+				+ sUtcTimestamp
+				+ ".cut.log";
+		}
 
 		/*
 			-ss: When used as an output option (before an output url), decodes but discards input 
@@ -8697,11 +8877,29 @@ void FFMpeg::generateSlideshowMediaToIngest(
 		slideshowListFile.close();
 	}
 
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".slideshow.log"
-            ;
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".slideshow.log";
+	}
+
     
     // Then you can stream copy or re-encode your files
     // The -safe 0 above is not required if the paths are relative
@@ -8892,11 +9090,29 @@ void FFMpeg::extractTrackMediaToIngest(
 		throw runtime_error(errorMessage);
 	}
 
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".extractTrack.log"
-            ;
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".extractTrack.log";
+	}
+
 
     string mapParameters;
     bool videoTrackIsPresent = false;
@@ -9234,12 +9450,31 @@ void FFMpeg::liveRecorder(
             _logger->warn(errorMessage);
 		}
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey) + "_"
-			+ to_string(encodingJobKey)
-			+ ".liveRecorder.log"
-			;
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey)
+				+ "_"
+				+ to_string(encodingJobKey)
+				+ "_"
+				+ sUtcTimestamp
+				+ ".liveRecorder.log";
+		}
+
     
 		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S_%s." + outputFileFormat;
@@ -10308,10 +10543,19 @@ void FFMpeg::liveRecorder(
 				frameToBeDetectedIndex < picturePathNamesToBeDetectedRoot.size();
 				frameToBeDetectedIndex++)
 			{
+/*
+è possibile confrontare una parte del frame
+ffmpeg -i week-01.mp4 -filter_complex "[0]split=2[full][no_timer];[no_timer]drawbox=w=0.25*iw:h=ih:x=0.75*iw:y=0[no_timer];[no_timer]select='gt(scene,0.011)',metadata=print:file=frames/time.txt[no_timer];[no_timer][full]overlay" -vsync vfr frames/img%03d.jpg
+
+Basically, make two copies of the video, use drawbox on one copy to paint solid black over the quarter of the screen on the right, analyze scene change and record scores to file; then overlay the full unpainted frame on top of the painted ones. Due to how overlay syncs frames, only the full frames with corresponding timestamps will be used to overlay on top of the base selected frames.
+
+*/
 				ffmpegArgumentList.push_back("-filter_complex");
-				ffmpegArgumentList.push_back("[0:v][" + to_string(frameToBeDetectedIndex + 1)
-					+ ":v]blend=difference:shortest=1,blackframe=99:32[differenceOut_"
-					+ to_string(frameToBeDetectedIndex + 1) + "]");
+				ffmpegArgumentList.push_back(
+					"[0:v][" + to_string(frameToBeDetectedIndex + 1) + ":v]"
+					+ "blend=difference:shortest=1,blackframe=99:32"
+					+ "[differenceOut_" + to_string(frameToBeDetectedIndex + 1) + "]"
+				);
 
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[differenceOut_"
@@ -10424,6 +10668,7 @@ void FFMpeg::liveRecorder(
 			}
     	}
 
+		/*
 		if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcRecordingPeriodEnd - utcNow - 60))
 		{
 			char		sEndFfmpegCommand [64];
@@ -10457,6 +10702,7 @@ void FFMpeg::liveRecorder(
 
 			throw runtime_error("liveRecording exit before unexpectly");
 		}
+		*/
 
 		/*
 		if (monitorHLS)
@@ -10528,6 +10774,7 @@ void FFMpeg::liveRecorder(
 		_logger->error(errorMessage);
 
 		// copy ffmpeg log file
+		/*
 		{
 			char		sEndFfmpegCommand [64];
 
@@ -10559,13 +10806,16 @@ void FFMpeg::liveRecorder(
 				);
 			FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 		}
+		*/
 
+		bool exceptionInCaseOfError = false;
+		/*
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-		bool exceptionInCaseOfError = false;
 		FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+		*/
 
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10678,12 +10928,14 @@ void FFMpeg::liveRecorder(
 			throw e;
     }
 
+	/*
     _logger->info(__FILEREF__ + "Remove"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+	*/
 }
 
 void FFMpeg::liveProxy2(
@@ -11009,12 +11261,30 @@ void FFMpeg::liveProxy2(
 
 		try
 		{
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey) + "_"
-				+ to_string(encodingJobKey)
-				+ ".liveProxy." + to_string(currentInputIndex) + ".log"
-			;
+			{
+				char	sUtcTimestamp [64];
+				tm		tmUtcTimestamp;
+				time_t	utcTimestamp = chrono::system_clock::to_time_t(
+					chrono::system_clock::now());
+
+				localtime_r (&utcTimestamp, &tmUtcTimestamp);
+				sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+					tmUtcTimestamp.tm_year + 1900,
+					tmUtcTimestamp.tm_mon + 1,
+					tmUtcTimestamp.tm_mday,
+					tmUtcTimestamp.tm_hour,
+					tmUtcTimestamp.tm_min,
+					tmUtcTimestamp.tm_sec);
+
+				_outputFfmpegPathFileName =
+					_ffmpegTempDir + "/"
+					+ to_string(ingestionJobKey)
+					+ "_"
+					+ to_string(encodingJobKey)
+					+ "_"
+					+ sUtcTimestamp
+					+ ".liveProxy." + to_string(currentInputIndex) + ".log";
+			}
 
 			vector<string> ffmpegArgumentList;
 
@@ -11225,6 +11495,7 @@ void FFMpeg::liveProxy2(
 			_logger->error(errorMessage);
 
 			// copy ffmpeg log file
+			/*
 			{
 				char		sEndFfmpegCommand [64];
 
@@ -11259,7 +11530,9 @@ void FFMpeg::liveProxy2(
 					);
 				FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 			}
+			*/
 
+			/*
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -11269,6 +11542,7 @@ void FFMpeg::liveProxy2(
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -11369,6 +11643,7 @@ void FFMpeg::liveProxy2(
 			}
 		}
 
+		/*
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -11378,6 +11653,7 @@ void FFMpeg::liveProxy2(
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 		bool exceptionInCaseOfError = false;
 		FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+		*/
 	}
 }
 
@@ -13949,12 +14225,31 @@ void FFMpeg::liveGrid(
 				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 		}
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey) + "_"
-			+ to_string(encodingJobKey)
-			+ ".liveGrid.log"
-		;
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey)
+				+ "_"
+				+ to_string(encodingJobKey)
+				+ "_"
+				+ sUtcTimestamp
+				+ ".liveGrid.log";
+		}
+
 
 		/*
 			option 1 (using overlay/pad)
@@ -14582,6 +14877,7 @@ void FFMpeg::liveGrid(
 				+ ", e.what(): " + e.what()
 			;
 
+			/*
 			{
 				char		sEndFfmpegCommand [64];
 
@@ -14612,15 +14908,18 @@ void FFMpeg::liveGrid(
 					);
 				FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 			}
+			*/
 		}
         _logger->error(errorMessage);
 
+		/*
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+		*/
 
 		if (outputTypeLowerCase == "hls" && manifestDirectoryPath != "")
     	{
@@ -14665,12 +14964,14 @@ void FFMpeg::liveGrid(
 			throw e;
     }
 
+	/*
     _logger->info(__FILEREF__ + "Remove"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 	bool exceptionInCaseOfError = false;
 	FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+	*/
 }
 
 // destinationPathName will end with the new file format
@@ -14715,12 +15016,30 @@ void FFMpeg::changeFileFormat(
 			throw runtime_error(errorMessage);
 		}
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_" + to_string(physicalPathKey)
-			+ ".changeFileFormat.log"
-			;
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey)
+				+ "_"
+				+ to_string(physicalPathKey)
+				+ "_"
+				+ sUtcTimestamp
+				+ ".changeFileFormat.log";
+		}
 
 		/*
 		if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
@@ -14862,12 +15181,29 @@ void FFMpeg::streamingToFile(
 
     try
     {
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ ".streamingToFile.log"
-		;
-    
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+				_ffmpegTempDir + "/"
+				+ to_string(ingestionJobKey)
+				+ "_"
+				+ sUtcTimestamp
+				+ ".streamingToFile.log";
+		}
+
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
 		if (regenerateTimestamps)
 			ffmpegExecuteCommand += "-fflags +genpts ";
