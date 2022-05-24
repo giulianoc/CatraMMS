@@ -10553,6 +10553,9 @@ void FFMpeg::liveRecorder(
 
 					ffmpegArgumentList.push_back("-filter_complex");
 
+					int amount = asInt(frameToBeDetectedRoot, "amount", 99);
+					int threshold = asInt(frameToBeDetectedRoot, "threshold", 32);
+
 					string filter;
 
 					if (videoFrameToBeCropped)
@@ -10567,7 +10570,7 @@ void FFMpeg::liveRecorder(
 							+ ":x=" + to_string(videoCrop_X) + ":y=" + to_string(videoCrop_Y)
 							+ "[CROPPED];"
 							+ "[CROPPED][" + to_string(pictureIndex + 1) + ":v]"
-							+ "blend=difference:shortest=1,blackframe=99:32"
+							+ "blend=difference:shortest=1,blackframe=amount=" + to_string(amount) + ":threshold=" + to_string(threshold)
 							+ "[differenceOut_" + to_string(pictureIndex + 1) + "]"
 						;
 					}
@@ -10575,7 +10578,7 @@ void FFMpeg::liveRecorder(
 					{
 						filter =
 							"[0:v][" + to_string(pictureIndex + 1) + ":v]"
-							+ "blend=difference:shortest=1,blackframe=99:32"
+							+ "blend=difference:shortest=1,blackframe=amount=" + to_string(amount) + ":threshold=" + to_string(threshold)
 							+ "[differenceOut_" + to_string(pictureIndex + 1) + "]"
 						;
 					}

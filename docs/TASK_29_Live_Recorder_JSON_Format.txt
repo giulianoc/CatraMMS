@@ -114,6 +114,9 @@
 		"framesToBeDetected": [
 			{
 				// picture to be detected into the video
+				// At least when videoFrameToBeCropped is true, Width and Height
+				// of the picture have to be even. May be this is also true
+				// in case of videoFrameToBeCropped false.
 				"picturePhysicalPathKey": 1234,
 				// in case we have the comparition between the picture and
 				// a portion of the video first it has to be done a crop
