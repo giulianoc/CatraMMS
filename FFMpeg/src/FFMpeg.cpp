@@ -9282,7 +9282,7 @@ void FFMpeg::liveRecorder(
 	//
 	Json::Value outputsRoot,
 
-	Json::Value picturePathNamesToBeDetectedRoot,
+	Json::Value framesToBeDetectedRoot,
 
 	pid_t* pChildPid)
 {
@@ -9644,24 +9644,27 @@ void FFMpeg::liveRecorder(
 		// to detect a frame we have to:
 		// 1. add -r 1 -loop 1 -i <picture path name of the frame to be detected>
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (picturePathNamesToBeDetectedRoot != Json::nullValue
-			&& picturePathNamesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
 		{
-			for(int frameToBeDetectedIndex = 0; 
-				frameToBeDetectedIndex < picturePathNamesToBeDetectedRoot.size();
-				frameToBeDetectedIndex++)
+			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
+				pictureIndex++)
 			{
-				string picturePathName = picturePathNamesToBeDetectedRoot
-					[frameToBeDetectedIndex].asString();
+				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
-				ffmpegArgumentList.push_back("-r");
-				ffmpegArgumentList.push_back("1");
+				if (isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
+				{
+					string picturePathName = frameToBeDetectedRoot.get("picturePathName", "").
+						asString();
 
-				ffmpegArgumentList.push_back("-loop");
-				ffmpegArgumentList.push_back("1");
+					ffmpegArgumentList.push_back("-r");
+					ffmpegArgumentList.push_back("1");
 
-				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(picturePathName);
+					ffmpegArgumentList.push_back("-loop");
+					ffmpegArgumentList.push_back("1");
+
+					ffmpegArgumentList.push_back("-i");
+					ffmpegArgumentList.push_back(picturePathName);
+				}
 			}
 		}
 
@@ -10536,35 +10539,57 @@ void FFMpeg::liveRecorder(
 		}
 
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (picturePathNamesToBeDetectedRoot != Json::nullValue
-			&& picturePathNamesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
 		{
-			for(int frameToBeDetectedIndex = 0; 
-				frameToBeDetectedIndex < picturePathNamesToBeDetectedRoot.size();
-				frameToBeDetectedIndex++)
+			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
+				pictureIndex++)
 			{
-/*
-è possibile confrontare una parte del frame
-ffmpeg -i week-01.mp4 -filter_complex "[0]split=2[full][no_timer];[no_timer]drawbox=w=0.25*iw:h=ih:x=0.75*iw:y=0[no_timer];[no_timer]select='gt(scene,0.011)',metadata=print:file=frames/time.txt[no_timer];[no_timer][full]overlay" -vsync vfr frames/img%03d.jpg
+				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
-Basically, make two copies of the video, use drawbox on one copy to paint solid black over the quarter of the screen on the right, analyze scene change and record scores to file; then overlay the full unpainted frame on top of the painted ones. Due to how overlay syncs frames, only the full frames with corresponding timestamps will be used to overlay on top of the base selected frames.
+				if (isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
+				{
+					bool videoFrameToBeCropped = asBool(frameToBeDetectedRoot,
+						"videoFrameToBeCropped", false);
 
-*/
-				ffmpegArgumentList.push_back("-filter_complex");
-				ffmpegArgumentList.push_back(
-					"[0:v][" + to_string(frameToBeDetectedIndex + 1) + ":v]"
-					+ "blend=difference:shortest=1,blackframe=99:32"
-					+ "[differenceOut_" + to_string(frameToBeDetectedIndex + 1) + "]"
-				);
+					ffmpegArgumentList.push_back("-filter_complex");
 
-				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("[differenceOut_"
-					+ to_string(frameToBeDetectedIndex + 1) + "]");
+					string filter;
 
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("null");
+					if (videoFrameToBeCropped)
+					{
+						int width = asInt(frameToBeDetectedRoot, "width", -1);
+						int height = asInt(frameToBeDetectedRoot, "height", -1);
+						int videoCrop_X = asInt(frameToBeDetectedRoot, "videoCrop_X", -1);
+						int videoCrop_Y = asInt(frameToBeDetectedRoot, "videoCrop_Y", -1);
 
-				ffmpegArgumentList.push_back("-");
+						filter =
+							"[0:v]crop=w=" + to_string(width) + ":h=" + to_string(height)
+							+ ":x=" + to_string(videoCrop_X) + ":y=" + to_string(videoCrop_Y)
+							+ "[CROPPED];"
+							+ "[CROPPED][" + to_string(pictureIndex + 1) + ":v]"
+							+ "blend=difference:shortest=1,blackframe=99:32"
+							+ "[differenceOut_" + to_string(pictureIndex + 1) + "]"
+						;
+					}
+					else
+					{
+						filter =
+							"[0:v][" + to_string(pictureIndex + 1) + ":v]"
+							+ "blend=difference:shortest=1,blackframe=99:32"
+							+ "[differenceOut_" + to_string(pictureIndex + 1) + "]"
+						;
+					}
+					ffmpegArgumentList.push_back(filter);
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back("[differenceOut_"
+						+ to_string(pictureIndex + 1) + "]");
+
+					ffmpegArgumentList.push_back("-f");
+					ffmpegArgumentList.push_back("null");
+
+					ffmpegArgumentList.push_back("-");
+				}
 			}
 		}
 

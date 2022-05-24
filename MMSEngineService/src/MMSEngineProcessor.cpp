@@ -12572,29 +12572,43 @@ void MMSEngineProcessor::manageLiveRecorder(
 			{
 				framesToBeDetectedRoot = parametersRoot["framesToBeDetected"];
 
-				Json::Value picturePathNamesRoot(Json::arrayValue);
-
-				if (JSONUtils::isMetadataPresent(framesToBeDetectedRoot, "physicalPathKeys"))
+				for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
+					pictureIndex++)
 				{
-					for(int physicalPathKeyIndex = 0; physicalPathKeyIndex <
-						framesToBeDetectedRoot["physicalPathKeys"].size();
-						physicalPathKeyIndex++)
+					Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
+
+					if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot,
+						"picturePhysicalPathKey"))
 					{
-						int64_t physicalPathKey = JSONUtils::asInt64(
-							framesToBeDetectedRoot["physicalPathKeys"][physicalPathKeyIndex],
-							"", -1);
-						string picturePathNameToBeDetected;
+						int64_t physicalPathKey = JSONUtils::asInt64(frameToBeDetectedRoot,
+							"picturePhysicalPathKey", -1);
+						string picturePathName;
 
 						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPathDetails(physicalPathKey);
-						tie(picturePathNameToBeDetected, ignore, ignore, ignore, ignore, ignore)
+						tie(picturePathName, ignore, ignore, ignore, ignore, ignore)
 							= physicalPathDetails;
 
-						picturePathNamesRoot.append(picturePathNameToBeDetected);
+						bool videoFrameToBeCropped = JSONUtils::asBool(frameToBeDetectedRoot,
+							"videoFrameToBeCropped", false);
+						if (videoFrameToBeCropped)
+						{
+							int width;
+							int height;
+
+							tuple<int, int, string, int> imageDetails =
+								_mmsEngineDBFacade->getImageDetails(-1, physicalPathKey);
+							tie(width, height, ignore, ignore) = imageDetails;
+
+							frameToBeDetectedRoot["width"] = width;
+							frameToBeDetectedRoot["height"] = height;
+						}
+
+						frameToBeDetectedRoot["picturePathName"] = picturePathName;
+
+						framesToBeDetectedRoot[pictureIndex] = frameToBeDetectedRoot;
 					}
 				}
-				framesToBeDetectedRoot["picturePathNames"] =
-					picturePathNamesRoot;
 			}
         }
 

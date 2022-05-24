@@ -111,11 +111,22 @@
 		},
 
 		// optional: frames to be detected
-		"framesToBeDetected": {
-			"physicalPathKeys": [
-				1234
-			]
-		},
+		"framesToBeDetected": [
+			{
+				// picture to be detected into the video
+				"picturePhysicalPathKey": 1234,
+				// in case we have the comparition between the picture and
+				// a portion of the video first it has to be done a crop
+				// of the frame  of the video and then the comparition.
+				// In this scenario, videoFrameToBeCropped will be true
+				// and the crop of the video frame is done
+				// using videoCrop_X, videoCrop_Y and the width/height
+				// of the picture (picturePhysicalPathKey)
+				"videoFrameToBeCropped": false,
+				"videoCrop_X": 123,
+				"videoCrop_Y": 678
+			}
+		],
 
 		// Optional. This json array lists all the Outputs the Live-Recorder task has to generate.
 		"Outputs" = [
