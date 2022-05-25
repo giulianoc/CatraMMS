@@ -3323,7 +3323,14 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 				"select external, protocol, publicServerName, internalServerName, port "
 				"from MMS_Encoder " 
 				"where encoderKey = ? "
-				"and enabled = 1 ";
+				// 2022-05-22. Scenario: tried to kill a job of a just disabled encoder 
+				//	The kill did not work becuase this method did not return the URL
+				//	because of the below sql condition.
+				//	It was commented because it is not in this method that has to be
+				//	checked the enabled flag, this method is specific to return a url
+				//	of an encoder and ddoes not have to check the enabled flag
+				// "and enabled = 1 "
+			;
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
