@@ -75,11 +75,11 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "aruba-mms-transcoder-1"
-	scp -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
 	date
 
 	echo "aruba-mms-transcoder-2"
-	scp -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
 	date
 
 fi

@@ -3711,12 +3711,18 @@ pair<string, string> API::createDeliveryAuthorization(
 			string playURL;
 
 			bool monitorHLS = false;
+			bool liveRecorderVirtualVOD = false;
 			
 			field = "MonitorHLS";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				monitorHLS = true;
 
-			if (!monitorHLS && deliveryCode == -1)
+			field = "LiveRecorderVirtualVOD";
+			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				liveRecorderVirtualVOD = true;
+
+
+			if (!(monitorHLS || liveRecorderVirtualVOD) && deliveryCode == -1)
 			{
 				// no monitorHLS and no input delivery code
 
@@ -3744,7 +3750,7 @@ pair<string, string> API::createDeliveryAuthorization(
 					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
 				}
 			}
-			else if (!monitorHLS && deliveryCode != -1)
+			else if (!(monitorHLS || liveRecorderVirtualVOD) && deliveryCode != -1)
 			{
 				// no monitorHLS and delivery code received as input
 
@@ -3773,7 +3779,7 @@ pair<string, string> API::createDeliveryAuthorization(
 					throw runtime_error(errorMessage);
 				}
 			}
-			else if (monitorHLS && deliveryCode == -1)
+			else if ((monitorHLS || liveRecorderVirtualVOD) && deliveryCode == -1)
 			{
 				// monitorHLS and no delivery code received as input
 
@@ -3790,7 +3796,7 @@ pair<string, string> API::createDeliveryAuthorization(
 				deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
 				outputType = "HLS";
 			}
-			else if (monitorHLS && deliveryCode != -1)	// requested delivery code (it is an input)
+			else if ((monitorHLS || liveRecorderVirtualVOD) && deliveryCode != -1)	// requested delivery code (it is an input)
 			{
 				// monitorHLS and delivery code received as input
 				// monitorHLS is selected
