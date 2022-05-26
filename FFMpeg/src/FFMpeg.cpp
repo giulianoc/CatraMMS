@@ -9956,8 +9956,6 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				addToArguments(otherOutputOptions, ffmpegArgumentList);
-
 				{
 					string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
@@ -10047,6 +10045,9 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-media_seg_name");
 						ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
 					}
+
+					addToArguments(otherOutputOptions, ffmpegArgumentList);
+
 					ffmpegArgumentList.push_back(manifestFilePathName);
 				}
 			}

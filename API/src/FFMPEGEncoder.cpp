@@ -7578,11 +7578,11 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
 			// we will clone the proxies for monitoring check
-			int liveRecordingRunningCounter = 0;
+			int liveRecordingVirtualVODCounter = 0;
 			{
 				lock_guard<mutex> locker(*_liveRecordingMutex);
 
-				int liveRecordingNotRunningCounter = 0;
+				int liveRecordingNotVirtualVODCounter = 0;
 
 				#ifdef __VECTOR__
 				for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
@@ -7599,7 +7599,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					if (liveRecording->_running && liveRecording->_virtualVOD
 						&& startClone > liveRecording->_recordingStart)
 					{
-						liveRecordingRunningCounter++;
+						liveRecordingVirtualVODCounter++;
 
 						copiedRunningLiveRecordingCapability.push_back(
 							liveRecording->cloneForMonitorAndVirtualVOD());
@@ -7608,14 +7608,14 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					}
 					else
 					{
-						liveRecordingNotRunningCounter++;
+						liveRecordingNotVirtualVODCounter++;
 					}
 				}
 				_logger->info(__FILEREF__ + "virtualVOD, numbers"
-					+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter
-						+ liveRecordingNotRunningCounter)
-					+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
-					+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+					+ ", total LiveRecording: " + to_string(liveRecordingVirtualVODCounter
+						+ liveRecordingNotVirtualVODCounter)
+					+ ", liveRecordingVirtualVODCounter: " + to_string(liveRecordingVirtualVODCounter)
+					+ ", liveRecordingNotVirtualVODCounter: " + to_string(liveRecordingNotVirtualVODCounter)
 				);
 			}
 			_logger->info(__FILEREF__ + "virtualVOD clone"
@@ -7649,8 +7649,10 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
 						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): "
+							+ to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): "
+							+ to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
 
 					continue;
