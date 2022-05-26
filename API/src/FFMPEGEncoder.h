@@ -117,7 +117,7 @@ struct LiveRecording
 	string					_virtualVODStagingContentsPath;
 	int64_t					_liveRecorderVirtualVODImageMediaItemKey;
 
-	shared_ptr<LiveRecording> cloneForMonitor()
+	shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD()
 	{
 		shared_ptr<LiveRecording> liveRecording =
 			make_shared<LiveRecording>();

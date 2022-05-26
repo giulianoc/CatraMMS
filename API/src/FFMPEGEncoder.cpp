@@ -7567,57 +7567,129 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 		try
 		{
+			// this is to have a copy of LiveRecording
+			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
+
+			// this is to have access to _running and _proxyStart
+			//	to check if it is changed. In case the process is killed, it will access
+			//	also to _killedBecauseOfNotWorking and _errorMessage
+			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
+
+			chrono::system_clock::time_point startClone = chrono::system_clock::now();
+			// to avoid to maintain the lock too much time
+			// we will clone the proxies for monitoring check
+			int liveRecordingRunningCounter = 0;
+			{
+				lock_guard<mutex> locker(*_liveRecordingMutex);
+
+				int liveRecordingNotRunningCounter = 0;
+
+				#ifdef __VECTOR__
+				for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+				#else	// __MAP__
+				for(map<int64_t, shared_ptr<LiveRecording>>::iterator it =
+					_liveRecordingsCapability->begin(); it != _liveRecordingsCapability->end(); it++)
+				#endif
+				{
+					#ifdef __VECTOR__
+					#else	// __MAP__
+					shared_ptr<LiveRecording> liveRecording = it->second;
+					#endif
+
+					if (liveRecording->_running && liveRecording->_virtualVOD
+						&& startClone > liveRecording->_recordingStart)
+					{
+						liveRecordingRunningCounter++;
+
+						copiedRunningLiveRecordingCapability.push_back(
+							liveRecording->cloneForMonitorAndVirtualVOD());
+						sourceLiveRecordingCapability.push_back(
+                            liveRecording);
+					}
+					else
+					{
+						liveRecordingNotRunningCounter++;
+					}
+				}
+				_logger->info(__FILEREF__ + "virtualVOD, numbers"
+					+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter
+						+ liveRecordingNotRunningCounter)
+					+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
+					+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+				);
+			}
+			_logger->info(__FILEREF__ + "virtualVOD clone"
+				+ ", copiedRunningLiveRecordingCapability.size: " + to_string(copiedRunningLiveRecordingCapability.size())
+				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
+					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			);
+
 			chrono::system_clock::time_point startAllChannelsVirtualVOD = chrono::system_clock::now();
 
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-			#else	// __MAP__
-			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
-				it != _liveRecordingsCapability->end(); it++)
-			#endif
+			for (int liveRecordingIndex = 0;
+				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
+				liveRecordingIndex++)
 			{
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<LiveRecording> liveRecording = it->second;
-				#endif
+				shared_ptr<LiveRecording> copiedLiveRecording
+					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
+				shared_ptr<LiveRecording> sourceLiveRecording
+					= sourceLiveRecordingCapability[liveRecordingIndex];
 
-				if (liveRecording->_running && liveRecording->_virtualVOD)
+				_logger->info(__FILEREF__ + "virtualVOD"
+					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+				);
+
+				if (!sourceLiveRecording->_running ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
+					_logger->info(__FILEREF__ + "virtualVOD. LiveRecorder changed"
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
+						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
+						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
+					continue;
+				}
+
+				{
+					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
+
 					virtualVODsNumber++;
 
 					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD ..."
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", running: " + to_string(liveRecording->_running)
-						+ ", virtualVOD: " + to_string(liveRecording->_virtualVOD)
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", running: " + to_string(copiedLiveRecording->_running)
+						+ ", virtualVOD: " + to_string(copiedLiveRecording->_virtualVOD)
 						+ ", virtualVODsNumber: " + to_string(virtualVODsNumber)
 					);
-
-					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
 
 					long segmentsNumber = 0;
 
 					try
 					{
 						int64_t deliveryCode = JSONUtils::asInt64(
-							liveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
-						string ingestionJobLabel = liveRecording->_encodingParametersRoot
+							copiedLiveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
+						string ingestionJobLabel = copiedLiveRecording->_encodingParametersRoot
 							.get("ingestionJobLabel", "").asString();
 						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
-							+ to_string(deliveryCode) + "_" + to_string(liveRecording->_ingestionJobKey)
+							+ to_string(deliveryCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ")";
 
 						int64_t userKey;
 						string apiKey;
 						{
 							string field = "InternalMMS";
-							if (JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, field))
+							if (JSONUtils::isMetadataPresent(copiedLiveRecording->_ingestedParametersRoot, field))
 							{
 								// internalMMSRootPresent = true;
 
-								Json::Value internalMMSRoot = liveRecording->_ingestedParametersRoot[field];
+								Json::Value internalMMSRoot = copiedLiveRecording->_ingestedParametersRoot[field];
 
 								field = "userKey";
 								userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
@@ -7629,26 +7701,26 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						}
 
 						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
-							liveRecording->_ingestionJobKey,
-							liveRecording->_encodingJobKey,
+							copiedLiveRecording->_ingestionJobKey,
+							copiedLiveRecording->_encodingJobKey,
 
-							liveRecording->_monitorVirtualVODManifestDirectoryPath,
-							liveRecording->_monitorVirtualVODManifestFileName,
-							liveRecording->_virtualVODStagingContentsPath,
+							copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath,
+							copiedLiveRecording->_monitorVirtualVODManifestFileName,
+							copiedLiveRecording->_virtualVODStagingContentsPath,
 
 							deliveryCode,
 							ingestionJobLabel,
 							liveRecorderVirtualVODUniqueName,
 							_liveRecorderVirtualVODRetention,
-							liveRecording->_liveRecorderVirtualVODImageMediaItemKey,
+							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey,
 							userKey,
 							apiKey);
 					}
 					catch(runtime_error e)
 					{
 						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
-							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
 						;
 
@@ -7657,8 +7729,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					catch(exception e)
 					{
 						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
-							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
 						;
 
@@ -7666,8 +7738,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					}
 
 					_logger->info(__FILEREF__ + "Single Channel Virtual VOD"
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", segmentsNumber: " + to_string(segmentsNumber)
 						+ ", @MMS statistics@ - elapsed time (secs): @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
@@ -12550,7 +12622,7 @@ void FFMPEGEncoder::monitorThread()
 						liveRecordingRunningCounter++;
 
 						copiedRunningLiveRecordingCapability.push_back(
-							liveRecording->cloneForMonitor());
+							liveRecording->cloneForMonitorAndVirtualVOD());
 						sourceLiveRecordingCapability.push_back(
                             liveRecording);
 					}
