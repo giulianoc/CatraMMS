@@ -12927,6 +12927,21 @@ void FFMPEGEncoder::monitorThread()
 											long liveProxyChunkRetentionInSeconds =
 												(outputSegmentDurationInSeconds * outputPlaylistEntriesNumber)
 												+ (10 * 60);	// 10 minutes
+											_logger->info(__FILEREF__
+												+ "liveRecordingMonitor. segment check"
+												+ ", ingestionJobKey: " + to_string(
+													copiedLiveRecording->_ingestionJobKey)
+												+ ", encodingJobKey: " + to_string(
+													copiedLiveRecording->_encodingJobKey)
+												+ ", channelLabel: "
+													+ copiedLiveRecording->_channelLabel
+												+ ", outputSegmentDurationInSeconds: "
+													+ to_string(outputSegmentDurationInSeconds)
+												+ ", outputPlaylistEntriesNumber: "
+													+ to_string(outputPlaylistEntriesNumber)
+												+ ", liveProxyChunkRetentionInSeconds: "
+													+ to_string(liveProxyChunkRetentionInSeconds)
+											);
 
 											bool scanDirectoryFinished = false;
 											while (!scanDirectoryFinished)
