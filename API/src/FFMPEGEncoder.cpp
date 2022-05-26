@@ -7563,6 +7563,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 	while(!_liveRecorderVirtualVODIngestionThreadShutdown)
 	{
+		int virtualVODsNumber = 0;
+
 		try
 		{
 			chrono::system_clock::time_point startAllChannelsVirtualVOD = chrono::system_clock::now();
@@ -7583,11 +7585,14 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 				if (liveRecording->_running && liveRecording->_virtualVOD)
 				{
+					virtualVODsNumber++;
+
 					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD ..."
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 						+ ", running: " + to_string(liveRecording->_running)
 						+ ", virtualVOD: " + to_string(liveRecording->_virtualVOD)
+						+ ", virtualVODsNumber: " + to_string(virtualVODsNumber)
 					);
 
 					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
@@ -7696,7 +7701,10 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 			_logger->error(__FILEREF__ + errorMessage);
 		}
 
-		this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
+		if (virtualVODsNumber < 5)
+			this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds * 2));
+		else
+			this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
 	}
 }
 
@@ -9461,7 +9469,15 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		}
 		*/
 
-		string copiedManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
+		// 2022-05-26: non dovrebbe accadere ma, a volte, capita che il file ts non esiste, perchè eliminato
+		//	da ffmpeg, ma risiede ancora nel manifest. Per evitare quindi che la generazione del virtualVOD
+		//	si blocchi, consideriamo come se il manifest avesse solamente i segmenti successivi
+		//	La copia quindi del manifest originale viene fatta su un file temporaneo e gestiamo
+		//	noi il manifest "definitivo"
+
+		string tmpManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
+			sourceManifestFileName + ".tmp";
+		string destManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
 			sourceManifestFileName;
 
 		// create the destination directory and copy the manifest file
@@ -9484,22 +9500,24 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
-				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 			);
-			FileIO::copyFile(sourceManifestPathFileName, copiedManifestPathFileName);
+			FileIO::copyFile(sourceManifestPathFileName, tmpManifestPathFileName);
 		}
 
-		if (!FileIO::isFileExisting (copiedManifestPathFileName.c_str()))
+		if (!FileIO::isFileExisting (tmpManifestPathFileName.c_str()))
 		{
 			string errorMessage = string("manifest file not existing")
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 			;
 			_logger->error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+
+		ofstream ofManifestFile(destManifestPathFileName, ofstream::trunc);
 
 		// read start time of the first segment
 		// read start time and duration of the last segment
@@ -9512,33 +9530,79 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			_logger->info(__FILEREF__ + "Reading copied manifest file"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 			);
 
-			ifstream ifManifestFile(copiedManifestPathFileName);
+			ifstream ifManifestFile(tmpManifestPathFileName);
 			if (!ifManifestFile.is_open())
 			{
 				string errorMessage = string("Not authorized: manifest file not opened")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+					+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 				;
 				_logger->info(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			segmentsNumber = 0;
+			string firstPartOfManifest;
 			string manifestLine;
-			while(getline(ifManifestFile, manifestLine))
 			{
-				// #EXTINF:14.640000,
+				while(getline(ifManifestFile, manifestLine))
+				{
+					// #EXTM3U
+					// #EXT-X-VERSION:3
+					// #EXT-X-TARGETDURATION:19
+					// #EXT-X-MEDIA-SEQUENCE:0
+					// #EXTINF:10.000000,
+					// liveRecorder_760504_1653579715.ts
+					// ...
+					// we may have also
+					// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
+					// liveRecorder_1479919_334303_1622362660.ts
+
+					string extInfPrefix ("#EXTINF:");
+					string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
+					if (manifestLine.size() >= extInfPrefix.size()
+						&& 0 == manifestLine.compare(0, extInfPrefix.size(), extInfPrefix))
+					{
+						break;
+					}
+					else if (manifestLine.size() >= programDatePrefix.size()
+						&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
+						break;
+					else if (manifestLine[0] != '#')
+					{
+						break;
+					}
+					else
+					{
+						firstPartOfManifest += (manifestLine + "\n");
+					}
+				}
+			}
+
+			ofManifestFile << firstPartOfManifest;
+
+			segmentsNumber = 0;
+			do
+			{
+				// #EXTM3U
+				// #EXT-X-VERSION:3
+				// #EXT-X-TARGETDURATION:19
+				// #EXT-X-MEDIA-SEQUENCE:0
+				// #EXTINF:10.000000,
+				// liveRecorder_760504_1653579715.ts
+				// ...
+				// we may have also
 				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
 				// liveRecorder_1479919_334303_1622362660.ts
 
-				string prefix ("#EXTINF:");
-				if (manifestLine.size() >= prefix.size()
-					&& 0 == manifestLine.compare(0, prefix.size(), prefix))
+				string extInfPrefix ("#EXTINF:");
+				string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
+				if (manifestLine.size() >= extInfPrefix.size()
+					&& 0 == manifestLine.compare(0, extInfPrefix.size(), extInfPrefix))
 				{
 					size_t endOfSegmentDuration = manifestLine.find(",");
 					if (endOfSegmentDuration == string::npos)
@@ -9553,39 +9617,68 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 						throw runtime_error(errorMessage);
 					}
 
-					lastSegmentDuration = stod(manifestLine.substr(prefix.size(),
-						endOfSegmentDuration - prefix.size()));
+					lastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
+						endOfSegmentDuration - extInfPrefix.size()));
 				}
-
-				prefix = "#EXT-X-PROGRAM-DATE-TIME:";
-				if (manifestLine.size() >= prefix.size() && 0 == manifestLine.compare(0, prefix.size(), prefix))
-					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(prefix.size()));
-
-				if (firstSegmentDuration == -1.0 && firstSegmentUtcStartTimeInMillisecs == -1
-						&& lastSegmentDuration != -1.0 && lastSegmentUtcStartTimeInMillisecs != -1)
-				{
-					firstSegmentDuration = lastSegmentDuration;
-					firstSegmentUtcStartTimeInMillisecs = lastSegmentUtcStartTimeInMillisecs;
-				}
-
-				if (manifestLine != "" && manifestLine[0] != '#')
+				else if (manifestLine.size() >= programDatePrefix.size()
+					&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
+					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
+				else if (manifestLine != "" && manifestLine[0] != '#')
 				{
 					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" +
 						manifestLine;
 					string copiedTSPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
 						manifestLine;
 
-					_logger->info(__FILEREF__ + "Coping"
-						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-						+ ", sourceTSPathFileName: " + sourceTSPathFileName
-						+ ", copiedTSPathFileName: " + copiedTSPathFileName
-					);
-					FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
+					try
+					{
+						_logger->info(__FILEREF__ + "Coping"
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", sourceTSPathFileName: " + sourceTSPathFileName
+							+ ", copiedTSPathFileName: " + copiedTSPathFileName
+						);
+						FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage =
+							string("copyFile failed, previous segments of the manifest will be omitted")
+							+ ", sourceTSPathFileName: " + sourceTSPathFileName
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", e.what: " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						ofManifestFile.close();
+
+						ofManifestFile.open(destManifestPathFileName, ofstream::trunc);
+						ofManifestFile << firstPartOfManifest;
+
+						firstSegmentDuration = -1.0;
+						firstSegmentUtcStartTimeInMillisecs = -1;
+						lastSegmentDuration = -1.0;
+						lastSegmentUtcStartTimeInMillisecs = -1;
+
+						segmentsNumber = 0;
+
+						continue;
+					}
 
 					segmentsNumber++;
 				}
+
+				if (firstSegmentDuration == -1.0 && firstSegmentUtcStartTimeInMillisecs == -1
+					&& lastSegmentDuration != -1.0 && lastSegmentUtcStartTimeInMillisecs != -1)
+				{
+					firstSegmentDuration = lastSegmentDuration;
+					firstSegmentUtcStartTimeInMillisecs = lastSegmentUtcStartTimeInMillisecs;
+				}
+
+				ofManifestFile << manifestLine << endl;
 			}
+			while(getline(ifManifestFile, manifestLine));
 		}
 		utcStartTimeInMilliSecs = firstSegmentUtcStartTimeInMillisecs;
 		utcEndTimeInMilliSecs = lastSegmentUtcStartTimeInMillisecs + (lastSegmentDuration * 1000);
@@ -9595,12 +9688,25 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			_logger->info(__FILEREF__ + "Add end manifest line to copied manifest file"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 			);
 
-			string endLine = "\n";
-			ofstream ofManifestFile(copiedManifestPathFileName, ofstream::app);
-			ofManifestFile << endLine << "#EXT-X-ENDLIST" + endLine;
+			// string endLine = "\n";
+			ofManifestFile << endl << "#EXT-X-ENDLIST" << endl;
+			ofManifestFile.close();
+		}
+
+		if (segmentsNumber == 0)
+		{
+			string errorMessage = string("No segments found")
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName 
+				+ ", destManifestPathFileName: " + destManifestPathFileName 
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
 		{
@@ -12565,7 +12671,29 @@ void FFMPEGEncoder::monitorThread()
 							+ copiedLiveRecording->_segmentListFileName;
 
 						{
-							if(!FileIO::fileExisting(segmentListPathName))
+							// 2022-05-26: in case the file does not exist, try again to make sure
+							//	it really does not exist
+							bool segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
+
+							if (!segmentListFileExistence)
+							{
+								int sleepTimeInSeconds = 5;
+
+								_logger->warn(__FILEREF__
+									+ "liveRecordingMonitor. Segment list file does not exist, let's check again"
+									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
+									+ ", segmentListPathName: " + segmentListPathName
+									+ ", sleepTimeInSeconds: " + to_string(sleepTimeInSeconds)
+								);
+
+								this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
+
+								segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
+							}
+
+							if(!segmentListFileExistence)
 							{
 								liveRecorderWorking = false;
 

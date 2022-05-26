@@ -12509,10 +12509,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = true;
 
 				field = "LiveRecorderVirtualVODMaxDuration";
-				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
-					liveRecorderVirtualVODMaxDurationInMinutes = 30;
-				else
-					liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(virtualVODRoot, field, 120);
+				liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(
+					virtualVODRoot, field, 30);
 
 				field = "SegmentDurationInSeconds";
 				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
