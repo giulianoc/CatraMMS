@@ -12870,6 +12870,10 @@ void FFMPEGEncoder::monitorThread()
 						string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
 							asString();
 						string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+						int outputPlaylistEntriesNumber = JSONUtils::asInt(outputRoot,
+							"playlistEntriesNumber", 10);
+						int outputSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
+							"segmentDurationInSeconds", 10);
 
 						if (!liveRecorderWorking)
 							break;
@@ -12912,10 +12916,17 @@ void FFMPEGEncoder::monitorThread()
 												manifestDirectoryPathName + "/");
 
 											// chunks will be removed 10 minutes after the "capacity" of the playlist
-											// long liveProxyChunkRetentionInSeconds =
-											// 	(segmentDurationInSeconds * playlistEntriesNumber)
-											// 	+ 10 * 60;	// 10 minutes
-											long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+											// 2022-05-26: it was 10 minutes fixed. This is an error
+											// in case of LiveRecorderVirtualVOD because, in this scenario,
+											// the segments have to be present according
+											// LiveRecorderVirtualVODMaxDuration (otherwise we will have an error
+											// during the building of the VirtualVOD (segments not found).
+											// For this reason the retention has to consider segment duration
+											// and playlistEntriesNumber
+											// long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+											long liveProxyChunkRetentionInSeconds =
+												(outputSegmentDurationInSeconds * outputPlaylistEntriesNumber)
+												+ (10 * 60);	// 10 minutes
 
 											bool scanDirectoryFinished = false;
 											while (!scanDirectoryFinished)
