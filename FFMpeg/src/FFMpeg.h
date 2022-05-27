@@ -290,6 +290,8 @@ public:
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
+		string otherInputOptions,
+
 		string streamSourceType,
         string liveURL,
 		int listenTimeoutInSeconds,

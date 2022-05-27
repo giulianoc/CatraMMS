@@ -183,7 +183,9 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneHourInMinutes
+			#2022-05-26: cambiato da 1 hour a 1 day because, in case of virtualVOD
+			#of 2 hours, it was removing the segments when they were still in playlist
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
 		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete"
@@ -230,7 +232,9 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneHourInMinutes
+			#2022-05-26: cambiato da 1 hour a 1 day because, in case of virtualVOD
+			#of 2 hours, it was removing the segments when they were still in playlist
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error

@@ -9225,6 +9225,8 @@ void FFMpeg::liveRecorder(
 	string segmentListPathName,
 	string recordedFileNamePrefix,
 
+	string otherInputOptions,
+
 	// if streamSourceType is IP_PUSH means the liveURL should be like
 	//		rtmp://<local transcoder IP to bind>:<port>
 	//		listening for an incoming connection
@@ -9293,6 +9295,8 @@ void FFMpeg::liveRecorder(
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", segmentListPathName: " + segmentListPathName
 		+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+
+		+ ", otherInputOptions: " + otherInputOptions
 
 		+ ", streamSourceType: " + streamSourceType
 		+ ", liveURL: " + liveURL
@@ -9540,6 +9544,11 @@ void FFMpeg::liveRecorder(
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
+		}
+
+		if (otherInputOptions != "")
+		{
+			addToArguments(otherInputOptions, ffmpegArgumentList);
 		}
 
 		if (streamSourceType == "IP_PUSH")

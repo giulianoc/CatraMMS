@@ -34,6 +34,9 @@
 		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",
 
+		// optional: It is possible to use this field to specify any other input options
+		"otherInputOptions": "",
+
 		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"schedule": {

@@ -6827,6 +6827,9 @@ void FFMPEGEncoder::liveRecorderThread(
 		Json::Value framesToBeDetectedRoot = liveRecording->_encodingParametersRoot[
 			"framesToBeDetectedRoot"];
 
+		string otherInputOptions = liveRecording->_ingestedParametersRoot.get(
+			"otherInputOptions", "").asString();
+
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
 
@@ -6842,6 +6845,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_transcoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
+
+			otherInputOptions,
 
 			liveRecording->_streamSourceType,
 			StringUtils::trimTabToo(liveURL),
@@ -9548,6 +9553,10 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		//	si blocchi, consideriamo come se il manifest avesse solamente i segmenti successivi
 		//	La copia quindi del manifest originale viene fatta su un file temporaneo e gestiamo
 		//	noi il manifest "definitivo"
+		// 2022-05-27: Probabilmente era il crontab che rimuoveva i segmenti e causava il problema
+		//	descritto sopra. Per cui, fissato il retention del crontab, mantenere la playlist originale
+		//	probabilmente va bene. Ormai lasciamo cosi visto che funziona ed è piu robusto nel caso in cui
+		//	un segmento venisse eliminato
 
 		string tmpManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
 			sourceManifestFileName + ".tmp";
@@ -9615,7 +9624,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 					+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 				;
-				_logger->info(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -9630,11 +9639,9 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 					// #EXT-X-TARGETDURATION:19
 					// #EXT-X-MEDIA-SEQUENCE:0
 					// #EXTINF:10.000000,
+					// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
 					// liveRecorder_760504_1653579715.ts
 					// ...
-					// we may have also
-					// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
-					// liveRecorder_1479919_334303_1622362660.ts
 
 					string extInfPrefix ("#EXTINF:");
 					string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
@@ -9667,11 +9674,9 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				// #EXT-X-TARGETDURATION:19
 				// #EXT-X-MEDIA-SEQUENCE:0
 				// #EXTINF:10.000000,
+				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
 				// liveRecorder_760504_1653579715.ts
 				// ...
-				// we may have also
-				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
-				// liveRecorder_1479919_334303_1622362660.ts
 
 				string extInfPrefix ("#EXTINF:");
 				string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
@@ -9686,7 +9691,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 							+ ", manifestLine: " + manifestLine
 						;
-						_logger->info(__FILEREF__ + errorMessage);
+						_logger->error(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
