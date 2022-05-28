@@ -9551,6 +9551,15 @@ void FFMpeg::liveRecorder(
 			addToArguments(otherInputOptions, ffmpegArgumentList);
 		}
 
+		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		{
+			// 2022-05-28; in caso di framedetection, we will "regenerate" PTS 
+			//	The -vsync option is used to control output timestamps.
+			//	The drop parameter resets input timestamps and generates new ones
+			ffmpegArgumentList.push_back("-vsync");
+			ffmpegArgumentList.push_back("drop");
+		}
+
 		if (streamSourceType == "IP_PUSH")
 		{
 			// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
