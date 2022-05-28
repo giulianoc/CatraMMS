@@ -9556,8 +9556,8 @@ void FFMpeg::liveRecorder(
 			// 2022-05-28; in caso di framedetection, we will "regenerate" PTS 
 			//	The -vsync option is used to control output timestamps.
 			//	The drop parameter resets input timestamps and generates new ones
-			ffmpegArgumentList.push_back("-vsync");
-			ffmpegArgumentList.push_back("drop");
+			ffmpegArgumentList.push_back("-fflags");
+			ffmpegArgumentList.push_back("+genpts");
 		}
 
 		if (streamSourceType == "IP_PUSH")
