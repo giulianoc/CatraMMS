@@ -4812,7 +4812,7 @@ void API::changeLiveProxyPlaylist(
 
 					if (broadcastDefaultMediaType == "Stream")
 					{
-						field = "configurationLabel";
+						field = "streamConfigurationLabel";
 						string broadcastDefaultConfigurationLabel =
 							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
 						int maxWidth = -1;

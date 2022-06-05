@@ -241,6 +241,74 @@ install-packages()
 	fi
 }
 
+install-ftpserver()
+{
+	read -n 1 -s -r -p "install-ftpserver..."
+	echo ""
+
+	echo ""
+	read -n 1 -s -r -p "update..."
+	echo ""
+	apt-get -y vsftpd
+	echo "in /etc/vsftpd.conf set"
+	echo "anonymous_enable=NO"
+	echo "local_enable=YES"
+	echo "userlist_enable=YES"
+	echo "userlist_deny=NO"
+	echo "userlist_file=/etc/vsftpd_user_list"
+
+	echo "write_enable=YES"
+	echo "local_umask=022"
+	#echo "chroot_local_user=YES"
+
+	echo "#logging:"
+	echo "dual_log_enable=YES"
+	echo "xferlog_enable=YES"
+	echo "xferlog_file=/var/catramms/logs/vsftpd/vsftpd_wuftp.log"
+	echo "vsftpd_log_file=/var/catramms/logs/vsftpd/vsftpd_standard.log"
+	echo "# If you want, you can have your log file in standard ftpd xferlog format"
+	echo "xferlog_std_format=NO"
+	echo "log_ftp_protocol=YES"
+
+	echo "#timeouts in seconds"
+	echo "idle_session_timeout=600"
+	echo "data_connection_timeout=600"
+		
+	echo "#bytes al second"
+	echo "local_max_rate=1024000"
+	echo "#max_clients=1"
+	echo "#max clients from the same IP"
+	echo "max_per_ip=10"
+	echo "#For security reason, it is allowed to STOR and RETR files but"
+	echo "#it is not allowed to change the directory"
+	echo "cmds_allowed=USER,PASS,SYST,TYPE,PWD,PORT,PASV,LIST,STOR,RETR,DELE,REST,MDTM,SIZE,QUIT"
+	echo "abilitati all'FTP in /etc/vsftpd_user_list aggiungere solamente gli utenti abilitati all'FTP"
+
+	echo "Add /sbin/nologin in /etc/shells"
+
+	echo "listen_ipv6=NO"
+	echo "listen=YES"
+	echo "pasv_enable=Yes"
+	echo "pasv_min_port=10090"
+	echo "pasv_max_port=10100"
+	echo "pasv_address=54.76.8.245"
+
+
+	echo "To start the service at boot..."
+	echo "systemctl enable vsftpd"
+	echo "To restart the running service..."
+	echo "systemctl restart vsftpd"
+
+
+	echo "Per create un utente (i.e.: europa_tv)..."
+	echo "recupero group id (of ftp group)..."
+	echo "groupId=$(getent group ftp | cut -d':' -f3)"
+	echo "adduser..."
+	echo "adduser --gid $groupId --home /data/ftp-users/europa_tv europa_tv"
+	echo "usermod europa_tv -s /sbin/nologin"
+	echo "add user (europa_tv) to /etc/vsftpd_user_list"
+}
+
 
 create-directory()
 {

@@ -1324,10 +1324,10 @@ public:
 	// bool liveRecorderMainAndBackupChunksManagementCompleted(
 	// 	int64_t ingestionJobKey);
 
-	void getRunningLiveRecorderVirtualVODsDetails(
-		vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t,
-		string>>& runningLiveRecordersDetails
-	);
+	// void getRunningLiveRecorderVirtualVODsDetails(
+	// 	vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t,
+	// 	string>>& runningLiveRecordersDetails
+	// );
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     

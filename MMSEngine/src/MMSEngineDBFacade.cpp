@@ -655,6 +655,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
     }    
 }
 
+/*
 void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
 	vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>&
 	runningLiveRecordersDetails
@@ -817,6 +818,7 @@ void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
         throw e;
     }    
 }
+*/
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (
     int64_t workspaceKey

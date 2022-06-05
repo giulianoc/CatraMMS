@@ -378,7 +378,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			}
 
 			// PRIMARY KEY (requestStatisticKey, requestTimestamp):
-			//	requestTimestamp was necessary because of partition
+			//	requestTimestamp is necessary because of partition
             lastSQLCommand = 
 				"create table if not exists MMS_RequestStatistic ("
 					"requestStatisticKey		bigint unsigned NOT NULL AUTO_INCREMENT,"
@@ -415,27 +415,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+			// workspaceKey and requestTimestamp should be always present
             lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (title)";
-            statement->execute(lastSQLCommand);    
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }    
-
-        try
-        {
-            lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (requestTimestamp)";
+				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)
