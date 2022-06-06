@@ -15254,8 +15254,13 @@ void FFMpeg::streamingToFile(
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
 		if (regenerateTimestamps)
 			ffmpegExecuteCommand += "-fflags +genpts ";
+// 2022-06-06: cosa succede se sourceReferenceURL rappresenta un live?
+//		- destinationPathName diventerà enorme!!!
+//	Per questo motivo ho inserito un timeout di X hours
+		int maxStreamingHours = 5;
 		ffmpegExecuteCommand +=
 			string("-y -i \"" + sourceReferenceURL + "\" ")
+			+ "-t " + to_string(maxStreamingHours * 3600) + " "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
             + "-map 0:v -c:v copy -map 0:a -c:a copy "
 			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
