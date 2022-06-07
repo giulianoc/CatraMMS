@@ -46,6 +46,7 @@ set(CatraMMS_VERSION_MINOR 0)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(LibCrypto)
 find_package(ZLIB)
+find_package(aws-cpp-sdk-ec2)
 
 add_compile_options(-D_FILE_OFFSET_BITS=64)
 

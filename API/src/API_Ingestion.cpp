@@ -2553,6 +2553,7 @@ void API::uploadedBinary(
         }
 
         _logger->info(__FILEREF__ + "Content-Range details"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", contentRangePresent: " + to_string(contentRangePresent)
             + ", contentRangeStart: " + to_string(contentRangeStart)
             + ", contentRangeEnd: " + to_string(contentRangeEnd)

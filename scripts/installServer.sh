@@ -136,6 +136,11 @@ install-packages()
 	echo ""
 	apt-get -y install libpng-dev
 
+	echo ""
+	read -n 1 -s -r -p "install libtiff-dev..."
+	echo ""
+	apt-get -y install libtiff-dev
+
 	#used by ffmpeg:
 	echo ""
 	read -n 1 -s -r -p "install libxv1..."
@@ -153,9 +158,9 @@ install-packages()
 
 	#used by the opencv package
 	echo ""
-	read -n 1 -s -r -p "install libdc1394-22-dev..."
+	read -n 1 -s -r -p "install libdc1394-dev..."
 	echo ""
-	apt-get -y install libdc1394-22-dev
+	apt-get -y install libdc1394-dev
 
 	echo ""
 	read -n 1 -s -r -p "install libmysqlcppconn-dev..."
@@ -175,7 +180,7 @@ install-packages()
 	echo ""
 	read -n 1 -s -r -p "install libasound2-dev..."
 	echo ""
-	apt-get install libasound2-dev
+	apt-get -y install libasound2-dev
 
 	echo ""
 	read -n 1 -s -r -p "install libpangocairo-1.0-0..."
