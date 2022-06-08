@@ -85,9 +85,15 @@ if [ "$deploy" == "y" ]; then
 fi
 
 #make it downloadable from public
-echo -n "Load package to MMSRepository-free? " 
+echo -n "Load package to MMSRepository-free (ubuntu 20.04)? " 
 read deploy
 if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/var/catramms/storage/MMSRepository-free/packages
+fi
+
+echo -n "Load package to MMSRepository-free (ubuntu 22.04)? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/var/catramms/storage/MMSRepository-free/packages/ubuntu-22.04
 fi
 
