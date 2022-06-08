@@ -5093,61 +5093,77 @@ void API::changeLiveProxyPlaylist(
 						{
 							Json::Value vodInputRoot = newReceivedPlaylistItemRoot[field];
 							MMSEngineDBFacade::ContentType vodContentType;
-							bool vodContentTypeInitialized = false;
 
 							field = "sources";
-							if (JSONUtils::isMetadataPresent(vodInputRoot, field))
+							if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
 							{
-								Json::Value sourcesRoot = vodInputRoot[field];
+								string errorMessage = string(field + " is missing"
+									", json data: " + requestBody
+								);
+								_logger->error(__FILEREF__ + errorMessage);
 
-								for (int sourceIndex = 0; sourceIndex < sourcesRoot.size();
-									sourceIndex++)
+								throw runtime_error(errorMessage);
+							}
+
+							Json::Value sourcesRoot = vodInputRoot[field];
+
+							if (sourcesRoot.size() == 0)
+							{
+								string errorMessage = string("No source is present"
+									", json data: " + requestBody
+								);
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							for (int sourceIndex = 0; sourceIndex < sourcesRoot.size();
+								sourceIndex++)
+							{
+								Json::Value sourceRoot = sourcesRoot[sourceIndex];
+
+								field = "physicalPathKey";
+								if (!JSONUtils::isMetadataPresent(sourceRoot, field))
 								{
-									Json::Value sourceRoot = sourcesRoot[sourceIndex];
+									string errorMessage = string(field + " is missing"
+										", json data: " + requestBody
+									);
+									_logger->error(__FILEREF__ + errorMessage);
 
-									field = "physicalPathKey";
-									if (JSONUtils::isMetadataPresent(sourceRoot, field))
-									{
-										int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot,
-											field, -1);
-
-										string sourcePhysicalPathName;
-
-										tuple<string, int, string, string, int64_t, string>
-											physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-											physicalPathKey);
-										tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
-											= physicalPathDetails;
-
-										bool warningIfMissing = false;
-										tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-											string,int64_t, string, string> mediaItemKeyDetails =
-											_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-												workspace->_workspaceKey, physicalPathKey,
-												warningIfMissing);
-
-										tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
-											ignore, ignore) = mediaItemKeyDetails;
-
-										vodContentTypeInitialized = true;
-
-										field = "sourcePhysicalPathName";
-										sourceRoot[field] = sourcePhysicalPathName;
-
-										sourcesRoot[sourceIndex] = sourceRoot;
-									}
+									throw runtime_error(errorMessage);
 								}
+								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, field, -1);
 
-								field = "sources";
-								vodInputRoot[field] = sourcesRoot;
+								string sourcePhysicalPathName;
+
+								tuple<string, int, string, string, int64_t, string>
+									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+									physicalPathKey);
+								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+									= physicalPathDetails;
+
+								bool warningIfMissing = false;
+								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+									string,int64_t, string, string> mediaItemKeyDetails =
+									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+										workspace->_workspaceKey, physicalPathKey,
+										warningIfMissing);
+
+								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
+									ignore, ignore) = mediaItemKeyDetails;
+
+								field = "sourcePhysicalPathName";
+								sourceRoot[field] = sourcePhysicalPathName;
+
+								sourcesRoot[sourceIndex] = sourceRoot;
 							}
 
-							if (vodContentTypeInitialized)
-							{
-								field = "vodContentType";
-								vodInputRoot[field] =
-									MMSEngineDBFacade::toString(vodContentType);
-							}
+							field = "sources";
+							vodInputRoot[field] = sourcesRoot;
+
+							field = "vodContentType";
+							vodInputRoot[field] =
+								MMSEngineDBFacade::toString(vodContentType);
 
 							field = "vodInput";
 							newReceivedPlaylistItemRoot[field] = vodInputRoot;
