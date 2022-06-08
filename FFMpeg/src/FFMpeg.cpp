@@ -12390,6 +12390,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 		Json::Value vodInputRoot = inputRoot[field];
 
 		field = "vodContentType";
+		/*
 		if (!isMetadataPresent(vodInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12398,7 +12399,8 @@ pair<long, string> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string vodContentType = vodInputRoot.get(field, "").asString();
+		*/
+		string vodContentType = vodInputRoot.get(field, "video").asString();
 
 		vector<string> sources;
 		{
