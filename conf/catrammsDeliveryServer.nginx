@@ -5,6 +5,7 @@
 	root /var/catramms/storage/MMSRepository/;
 
 	location /healthy.txt {
+		return 200;
 	}
 
 	#1a
