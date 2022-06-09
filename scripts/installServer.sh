@@ -43,7 +43,6 @@ mms-account-creation()
 	echo ""
 }
 
-
 time-zone()
 {
 	read -n 1 -s -r -p "set time zone..."
@@ -313,7 +312,6 @@ install-ftpserver()
 	echo "usermod europa_tv -s /sbin/nologin"
 	echo "add user (europa_tv) to /etc/vsftpd_user_list"
 }
-
 
 create-directory()
 {
@@ -616,9 +614,9 @@ install-mms-packages()
 
 
 	packageName=aws-sdk-cpp
-	echo ""
 	package=$packageName
-	echo "Downloading $package..."
+	read -n 1 -s -r -p "Downloading $package..."
+	echo ""
 	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
@@ -760,6 +758,9 @@ moduleName=$1
 #       sudo fdisk /dev/nvme1n1 (p n p w)
 #       sudo mkfs.ext4 /dev/nvme1n1p1
 #2. Inizializzare /etc/fstab
+#2.1 apt install s3fs (nel caso non viene trovato, eseguirlo successivamente)
+#2.2 aggiungere anche le directory s3 montate tramite s3fs
+#2.3 creare, inizializzare /etc/passwd-s3fs e chmod 600 /etc/passwd-s3fs
 #3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
 #4. apt-get -y install nfs-common
 #5. sudo mount -a
