@@ -30,7 +30,31 @@ if [ "$deploy" == "y" ]; then
 	date
 fi
 
-echo -n "deploy su aws? " 
+echo -n "deploy su cloud production? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+	echo "aws-mms-api-gui-ohio-1"
+	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-3-12-189-135.us-east-2.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-ohio-1"
+	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-3-131-185-209.us-east-2.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-transcoder-ohio-1"
+	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-18-119-51-105.us-east-2.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aruba-mms-transcoder-1"
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
+	date
+
+	echo "aruba-mms-transcoder-2"
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
+	date
+fi
+
+echo -n "deploy su cibortv? " 
 read deploy
 if [ "$deploy" == "y" ]; then
 	echo "aws-mms-api-gui-1"
