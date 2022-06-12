@@ -44,14 +44,6 @@ if [ "$deploy" == "y" ]; then
 	echo "aws-mms-transcoder-ohio-1"
 	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-18-119-51-105.us-east-2.compute.amazonaws.com:/opt/catramms
 	date
-
-	echo "aruba-mms-transcoder-1"
-	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
-	date
-
-	echo "aruba-mms-transcoder-2"
-	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
-	date
 fi
 
 echo -n "deploy su cibortv? " 
