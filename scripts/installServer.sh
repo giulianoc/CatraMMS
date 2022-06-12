@@ -43,6 +43,7 @@ mms-account-creation()
 	echo ""
 }
 
+
 time-zone()
 {
 	read -n 1 -s -r -p "set time zone..."
@@ -313,6 +314,7 @@ install-ftpserver()
 	echo "add user (europa_tv) to /etc/vsftpd_user_list"
 }
 
+
 create-directory()
 {
 	moduleName=$1
@@ -424,7 +426,6 @@ create-directory()
 install-mms-packages()
 {
 	moduleName=$1
-	osVersion=$2
 
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
@@ -433,7 +434,7 @@ install-mms-packages()
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -441,11 +442,11 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
-		echo -n "$packageName version (i.e.: 7.1.0)? "
+		echo -n "$packageName version (i.e.: 7.0.10)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -455,29 +456,29 @@ install-mms-packages()
 		package=curlpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
 
 	packageName=ffmpeg
 	echo ""
-	echo -n "$packageName version (i.e.: 5.0.1)? "
+	echo -n "$packageName version (i.e.: 4.4)? "
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
 
 	packageName=nginx
 	echo ""
-	echo -n "$packageName version (i.e.: 1.22.0)? "
+	echo -n "$packageName version (i.e.: 1.19.4)? "
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -501,7 +502,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		echo -n "tomcat version (i.e.: 9.0.63)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		echo -n "tomcat version (i.e.: 9.0.62)? Look the version at https://www-eu.apache.org/dist/tomcat"
 		read VERSION
 		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
 		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
@@ -526,7 +527,7 @@ install-mms-packages()
 		echo "User=mms" >> /etc/systemd/system/tomcat.service
 		echo "Group=mms" >> /etc/systemd/system/tomcat.service
 		echo "" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64\"" >> /etc/systemd/system/tomcat.service
 		echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
 		echo "" >> /etc/systemd/system/tomcat.service
 		echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
@@ -560,13 +561,16 @@ install-mms-packages()
 		echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
 		echo "</Context>"
 		echo ""
+		echo "copiare catramms.war in /opt/catramms/tomcat/webapps"
+		echo "far partire tomcat in modo che crea la directory catramms"
+		echo "ln -s /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomcat/conf/catramms.properties"
 	fi
 
 	if [ "$moduleName" != "integration" ]; then
 		package=opencv
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -579,11 +583,11 @@ install-mms-packages()
 		#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
 		packageName=youtube-dl
 		echo ""
-		echo -n "$packageName version (i.e.: 2022-06-08)? "
+		echo -n "$packageName version (i.e.: 2021-04-05)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -592,11 +596,11 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		echo -n "$packageName version (i.e.: 1.0.1520)? "
+		echo -n "$packageName version (i.e.: 1.0.150)? "
 		read version
 		package=$packageName-$version-ubuntu
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 	fi
@@ -608,16 +612,16 @@ install-mms-packages()
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
 
 	packageName=aws-sdk-cpp
-	package=$packageName
-	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 	if [ "$moduleName" == "externalEncoder" ]; then
@@ -645,16 +649,8 @@ install-mms-packages()
 		echo ""
 		package=$packageName
 		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-	fi
-	if [ "$moduleName" == "engine" ]; then
-		packageName=engineMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$osVersion/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~
 	fi
 
 
@@ -758,9 +754,6 @@ moduleName=$1
 #       sudo fdisk /dev/nvme1n1 (p n p w)
 #       sudo mkfs.ext4 /dev/nvme1n1p1
 #2. Inizializzare /etc/fstab
-#2.1 apt install s3fs (nel caso non viene trovato, eseguirlo successivamente)
-#2.2 aggiungere anche le directory s3 montate tramite s3fs
-#2.3 creare, inizializzare /etc/passwd-s3fs e chmod 600 /etc/passwd-s3fs
 #3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
 #4. apt-get -y install nfs-common
 #5. sudo mount -a
@@ -783,9 +776,7 @@ if [ "$moduleName" == "storage" ]; then
 else
 	echo ""
 	create-directory $moduleName
-
-	osVersion=ubuntu-22.04
-	install-mms-packages $moduleName $osVersion
+	install-mms-packages $moduleName
 fi
 #firewall-rules $moduleName
 
