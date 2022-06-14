@@ -329,9 +329,13 @@ create-directory()
 
 	if [ "$moduleName" != "integration" ]; then
 		mkdir /var/catramms/storage
-		mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
 		mkdir /var/catramms/storage/nginxWorkingAreaRepository
 		mkdir /var/catramms/storage/MMSRepository
+		if [ "$moduleName" == "encoder" ]; then
+			ln -s /MMSTranscoderWorkingAreaRepository /var/catramms/storage/MMSTranscoderWorkingAreaRepository
+		else
+			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
+		fi
 	fi
 
 	mkdir /var/catramms/logs
