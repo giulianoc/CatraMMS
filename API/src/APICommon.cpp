@@ -1338,7 +1338,9 @@ string APICommon::getClientIPAddress(
 
 	string clientIPAddress;
 
-	auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
+	// REMOTE_ADDR is the address of the load balancer
+	// auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
+	auto remoteAddrIt = requestDetails.find("HTTP_X_FORWARDED_FOR");
 	if (remoteAddrIt != requestDetails.end())
 		clientIPAddress = remoteAddrIt->second;
 
