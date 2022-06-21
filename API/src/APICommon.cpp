@@ -553,7 +553,7 @@ int APICommon::operator()()
 			_logger->info(__FILEREF__ + "manageRequestAndResponse"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 				+ ", threadId: " + sThreadId
-				+ ", clientIPAddress: " + clientIPAddress
+				+ ", clientIPAddress: @" + clientIPAddress + "@"
 				+ ", method: @" + method + "@"
 				+ ", requestURI: " + requestURI
 				+ ", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent)
