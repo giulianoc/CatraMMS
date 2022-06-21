@@ -546,10 +546,14 @@ int APICommon::operator()()
 			auto methodIt = queryParameters.find("method");
 			if (methodIt != queryParameters.end())
 				method = methodIt->second;
+
+			string clientIPAddress = getClientIPAddress(requestDetails);
+
 			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
 			_logger->info(__FILEREF__ + "manageRequestAndResponse"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 				+ ", threadId: " + sThreadId
+				+ ", clientIPAddress: " + clientIPAddress
 				+ ", method: @" + method + "@"
 				+ ", requestURI: " + requestURI
 				+ ", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent)
@@ -1325,6 +1329,20 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
     );
 
     cout << completeHttpResponse;
+}
+
+string APICommon::getClientIPAddress(
+	unordered_map<string, string>& requestDetails
+)
+{
+
+	string clientIPAddress;
+
+	auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
+	if (remoteAddrIt != requestDetails.end())
+		clientIPAddress = remoteAddrIt->second;
+
+	return clientIPAddress;
 }
 
 string APICommon::getHtmlStandardMessage(int htmlResponseCode)

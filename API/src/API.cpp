@@ -1631,10 +1631,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        string clientIPAddress;
-        auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
-        if (remoteAddrIt != requestDetails.end())
-            clientIPAddress = remoteAddrIt->second;
+		string clientIPAddress = getClientIPAddress(requestDetails);
 
 		createDeliveryAuthorization(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace, clientIPAddress, queryParameters);
@@ -1653,10 +1650,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        string clientIPAddress;
-        auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
-        if (remoteAddrIt != requestDetails.end())
-            clientIPAddress = remoteAddrIt->second;
+		string clientIPAddress = getClientIPAddress(requestDetails);
 
 		createBulkOfDeliveryAuthorization(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace, clientIPAddress, queryParameters, requestBody);
@@ -1675,10 +1669,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        string clientIPAddress;
-        auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
-        if (remoteAddrIt != requestDetails.end())
-            clientIPAddress = remoteAddrIt->second;
+		string clientIPAddress = getClientIPAddress(requestDetails);
 
         createDeliveryCDN77Authorization(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace,

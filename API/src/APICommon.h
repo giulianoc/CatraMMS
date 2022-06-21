@@ -112,6 +112,8 @@ protected:
     void sendError(int htmlResponseCode, string errorMessage);
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
+	string getClientIPAddress(unordered_map<string, string>& requestDetails);
+
 private:
     int64_t			_requestIdentifier;
     unsigned long   _maxAPIContentLength;
