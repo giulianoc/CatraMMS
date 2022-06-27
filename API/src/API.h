@@ -358,7 +358,7 @@ private:
             vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
             vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            string& responseBody, Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
         
 	vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
@@ -367,7 +367,7 @@ private:
         vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
         vector<int64_t> dependOnIngestionJobKeysOverallInput,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-		string& responseBody, Json::Value& responseBodyTasksRoot);
+		/* string& responseBody, */ Json::Value& responseBodyTasksRoot);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
@@ -377,7 +377,7 @@ private:
             vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            string& responseBody, Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
 
     void uploadedBinary(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
