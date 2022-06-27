@@ -1,44 +1,44 @@
 {
-  "Label": "ingestContent Miss-Italia-nel-mondo_720m_14-4",
+  "Label": "ingestContent ${title}",
   "Type": "Workflow",
   "Task":
   {
-    "Label": "Add Content Miss-Italia-nel-mondo_720m_14-4",
+    "Label": "Add Content ${title}",
     "Type": "Add-Content",
     "Parameters": {
-      "Title": "Miss-Italia-nel-mondo_720m_14-4",
+      "Title": "${title}",
       "AllowUniqueNameOverride": false,
-      "FileFormat": "mp4",
-      "Ingester": "Marco",
-      "Retention": "10y"
+      "FileFormat": "${fileFormat}",
+      "Ingester": "${ingester}",
+      "Retention": "${retention}"
     },
     "OnSuccess": {
       "Task":
       {
-        "Label": "Miss-Italia-nel-mondo_720m_14-4",
+        "Label": "${title}",
         "Type": "GroupOfTasks",
         "Parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
-              "Label": "Generate Picture Miss-Italia-nel-mondo_720m_14-4",
+              "Label": "Generate Picture ${title}",
               "Type": "Workflow-As-Library",
               "Parameters": {
-                "Title": "Miss-Italia-nel-mondo_720m_14-4",
+                "Title": "${title}",
                 "WorkflowAsLibraryType": "MMS",
                 "WorkflowAsLibraryLabel": "Best Picture of the Video",
                 "AllowUniqueNameOverride": false,
-                "ImageRetention": "10y",
+                "ImageRetention": "${retention}",
                 "ImageTags": ["FACE"],
                 "ImageUserData": {},
-                "Ingester": "Marco",
+                "Ingester": "${ingester}",
                 "InitialFramesNumberToBeSkipped": 1500,
                 "InstantInSeconds": 60,
                 "UniqueName": ""
               }
             },
             {
-              "Label": "Encode Miss-Italia-nel-mondo_720m_14-4",
+              "Label": "Encode ${title}",
               "Type": "Encode",
               "Parameters": {
                 "ContentType": "video",

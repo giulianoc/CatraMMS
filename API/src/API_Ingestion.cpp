@@ -54,6 +54,8 @@ void API::ingestion(
         Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
 
         string responseBody;
+		Json::Value responseBodyRoot;
+		Json::Value responseBodyTasksRoot(Json::arrayValue);
         shared_ptr<MySQLConnection> conn;
 		bool dbTransactionStarted = false;
 
@@ -139,7 +141,7 @@ void API::ingestion(
                 ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
-                        mapLabelAndIngestionJobKey, responseBody); 
+                        mapLabelAndIngestionJobKey, responseBody, responseBodyTasksRoot);
             }
             else
             {
@@ -148,7 +150,7 @@ void API::ingestion(
                 ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
-                        responseBody);            
+                        responseBody, responseBodyTasksRoot);            
             }
 
 			string processedMetadataContent;
@@ -161,14 +163,31 @@ void API::ingestion(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit,
 				ingestionRootKey, processedMetadataContent);
 
-            string beginOfResponseBody = string("{ ")
-                + "\"workflow\": { "
-                    + "\"ingestionRootKey\": " + to_string(ingestionRootKey)
-                    + ", \"label\": \"" + rootLabel + "\" "
-                    + "}, "
-                    + "\"tasks\": [ ";
-            responseBody.insert(0, beginOfResponseBody);
-            responseBody += " ] }";
+			{
+				string beginOfResponseBody = string("{ ")
+					+ "\"workflow\": { "
+					+ "\"ingestionRootKey\": " + to_string(ingestionRootKey)
+					+ ", \"label\": \"" + rootLabel + "\" "
+					+ "}, "
+					+ "\"tasks\": [ ";
+				responseBody.insert(0, beginOfResponseBody);
+				responseBody += " ] }";
+
+				Json::Value responseBodyWorkflowRoot;
+				responseBodyWorkflowRoot["ingestionRootKey"] = ingestionRootKey;
+				responseBodyWorkflowRoot["label"] = rootLabel;
+
+				responseBodyRoot["workflow"] = responseBodyWorkflowRoot;
+				responseBodyRoot["tasks"] = responseBodyTasksRoot;
+
+				Json::StreamWriterBuilder wbuilder;
+				string newResponseBody = Json::writeString(wbuilder, responseBodyRoot);
+
+				_logger->info(__FILEREF__ + "test responseBody"
+					+ ", responseBody: " + responseBody
+					+ ", newResponseBody: " + newResponseBody
+            );
+			}
         }
         catch(AlreadyLocked e)
         {
@@ -974,7 +993,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         vector<int64_t> dependOnIngestionJobKeysOverallInput,
 
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-        string& responseBody)
+        string& responseBody, Json::Value& responseBodyTasksRoot)
 {
     string field = "Type";
     string type = taskRoot.get(field, "").asString();
@@ -1252,7 +1271,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                responseBody); 
+                responseBody, responseBodyTasksRoot);
 		}
 		else
 		{
@@ -1561,7 +1580,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, 
 			dependOnIngestionJobKeysForStarting, dependOnSuccess,
 			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-			responseBody); 
+			responseBody, responseBodyTasksRoot);
     }
 
 	// just log initial parameters
@@ -1678,13 +1697,20 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     if (taskLabel != "")
         (mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
     
-    if (responseBody != "")
-        responseBody += ", ";    
-    responseBody +=
-            (string("{ ")
-            + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKeyExecution) + ", "
-            + "\"label\": \"" + taskLabel + "\" "
-            + "}");
+	{
+		if (responseBody != "")
+			responseBody += ", ";    
+		responseBody +=
+			(string("{ ")
+				+ "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKeyExecution) + ", "
+				+ "\"label\": \"" + taskLabel + "\" "
+				+ "}");
+		Json::Value localresponseBodyTaskRoot;
+		localresponseBodyTaskRoot["ingestionJobKey"] = localDependOnIngestionJobKeyExecution;
+		localresponseBodyTaskRoot["label"] = taskLabel;
+		localresponseBodyTaskRoot["type"] = type;
+		responseBodyTasksRoot.append(localresponseBodyTaskRoot);
+	}
 
     vector<int64_t> localDependOnIngestionJobKeysForStarting;
     vector<int64_t> localDependOnIngestionJobKeysOverallInput;
@@ -1735,7 +1761,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 		referencesOutputIngestionJobKeys,
 
-		mapLabelAndIngestionJobKey, responseBody);
+		mapLabelAndIngestionJobKey, responseBody, responseBodyTasksRoot);
 
 
     return localDependOnIngestionJobKeysForStarting;
@@ -1748,7 +1774,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
 	vector<int64_t> dependOnIngestionJobKeysOverallInput,
 	unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-	string& responseBody)
+	string& responseBody, Json::Value& responseBodyTasksRoot)
 {
 
 	string type = "GroupOfTasks";
@@ -1864,7 +1890,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
+                    responseBody, responseBodyTasksRoot);
             }
             else
             {
@@ -1872,7 +1898,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, dependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
+                    responseBody, responseBodyTasksRoot);
             }
         }
         else
@@ -1887,7 +1913,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
+                        responseBody, responseBodyTasksRoot);
                 }
                 else
                 {
@@ -1895,7 +1921,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, dependOnSuccess,
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
+                        responseBody, responseBodyTasksRoot);
                 }
             }
             else
@@ -1908,7 +1934,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
+                        responseBody, responseBodyTasksRoot);
                 }
                 else
                 {
@@ -1916,7 +1942,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
+                        responseBody, responseBodyTasksRoot);
                 }
             }
             
@@ -2143,13 +2169,20 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	if (groupOfTaskLabel != "")
 		(mapLabelAndIngestionJobKey[groupOfTaskLabel]).push_back(localDependOnIngestionJobKeyExecution);
 
-    if (responseBody != "")
-        responseBody += ", ";    
-    responseBody +=
-            (string("{ ")
-            + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKeyExecution) + ", "
-            + "\"label\": \"" + groupOfTaskLabel + "\" "
-            + "}");
+	{
+		if (responseBody != "")
+			responseBody += ", ";    
+		responseBody +=
+				(string("{ ")
+				+ "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKeyExecution) + ", "
+				+ "\"label\": \"" + groupOfTaskLabel + "\" "
+				+ "}");
+		Json::Value localresponseBodyTaskRoot;
+		localresponseBodyTaskRoot["ingestionJobKey"] = localDependOnIngestionJobKeyExecution;
+		localresponseBodyTaskRoot["label"] = groupOfTaskLabel;
+		localresponseBodyTaskRoot["type"] = type;
+		responseBodyTasksRoot.append(localresponseBodyTaskRoot);
+	}
 
 	/*
 	 * 2019-10-01.
@@ -2223,7 +2256,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         dependOnIngestionJobKeysOverallInputOnError,
 
 		referencesOutputIngestionJobKeys,
-		mapLabelAndIngestionJobKey, responseBody);
+		mapLabelAndIngestionJobKey, responseBody, responseBodyTasksRoot);
 
     return localDependOnIngestionJobKeysForStarting;
 }
@@ -2236,7 +2269,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
         vector<int64_t>& referencesOutputIngestionJobKeys,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-        string& responseBody)
+        string& responseBody, Json::Value& responseBodyTasksRoot)
 {
 
     string field = "OnSuccess";
@@ -2277,7 +2310,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);            
+                    responseBody, responseBodyTasksRoot);
         }
         else
         {
@@ -2304,7 +2337,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 				ingestionRootKey, taskRoot, 
 				dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-				responseBody);            
+				responseBody, responseBodyTasksRoot);            
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2365,7 +2398,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
-                    responseBody);            
+                    responseBody, responseBodyTasksRoot);
         }
         else
         {
@@ -2392,7 +2425,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
-                    responseBody);
+                    responseBody, responseBodyTasksRoot);
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2449,7 +2482,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);            
+                    responseBody, responseBodyTasksRoot);
         }
         else
         {
@@ -2457,7 +2490,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);            
+                    responseBody, responseBodyTasksRoot);            
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'

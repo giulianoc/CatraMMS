@@ -254,7 +254,7 @@ install-ftpserver()
 	echo ""
 	read -n 1 -s -r -p "update..."
 	echo ""
-	apt-get -y vsftpd
+	apt install vsftpd
 	echo "in /etc/vsftpd.conf set"
 	echo "anonymous_enable=NO"
 	echo "local_enable=YES"
@@ -438,7 +438,7 @@ install-mms-packages()
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -450,7 +450,7 @@ install-mms-packages()
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -460,7 +460,7 @@ install-mms-packages()
 		package=curlpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -471,7 +471,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -482,7 +482,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -574,7 +574,7 @@ install-mms-packages()
 		package=opencv
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -591,7 +591,7 @@ install-mms-packages()
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -604,7 +604,7 @@ install-mms-packages()
 		read version
 		package=$packageName-$version-ubuntu
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 	fi
@@ -616,7 +616,7 @@ install-mms-packages()
 	read version
 	package=$packageName-$version-ubuntu
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
@@ -625,7 +625,7 @@ install-mms-packages()
 	echo ""
 	package=$packageName
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 	if [ "$moduleName" == "externalEncoder" ]; then
@@ -653,7 +653,7 @@ install-mms-packages()
 		echo ""
 		package=$packageName
 		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.mms-cloud-hub.com/packages/$package.tar.gz"
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
 		tar xvfz ~/$package.tar.gz -C ~
 	fi
 
