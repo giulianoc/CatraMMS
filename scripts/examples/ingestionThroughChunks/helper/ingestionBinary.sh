@@ -29,7 +29,7 @@ if [ $# -eq 4 ]; then
 		chunckSize=100000000		#100MB
 	fi
 
-	echo "chunckSize selected: $chunckSize"
+	#echo "chunckSize selected: $chunckSize"
 	ingestionNumberToBeContinued=0
 elif [ $# -eq 5 ]; then
 	ingestionNumberToBeContinued=0
@@ -96,7 +96,7 @@ while [  $ingestionNumber -lt $totalIngestionsNumber ]; do
 
 				retriesNumber=$((retriesNumber + 1))
 
-				echo "Pause $sleepingInSecondsInCaseOfIngestionError seconds..."
+				echo "Pause $sleepingInSecondsInCaseOfIngestionError seconds and will retry again..."
 				sleep $sleepingInSecondsInCaseOfIngestionError
 			fi
 			#else

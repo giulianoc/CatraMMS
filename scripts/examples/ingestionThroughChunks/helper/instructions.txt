@@ -16,8 +16,8 @@ Frame): Miss-Italia-nel-mondo_720m_14-4" }, { "ingestionJobKey": 469039, "label"
 
 2. mark the IngestionJobKey associated to the Add-Content task because it will be used in the next step when the media file will be ingested
 	In the previous example, the ingestionJobKey ssociated to the Add-Content task is "ingestionJobKey": 469030
-4. run ingestionThroughChunks.sh script to ingest the media file
-	i.e.: ./ingestionThroughChunks.sh <mmsUserKey> <mmsAPIKey> <Add-Content ingestionJobKey> <media path name>
+4. run ingestionBinary.sh script to ingest the media file
+	i.e.: ./ingestionBinary.sh <mmsUserKey> <mmsAPIKey> <Add-Content ingestionJobKey> <media path name>
 
 
 More details:
@@ -37,9 +37,9 @@ It is a script to ingest the ingestionWorkflow.json Workflow
 Usage: ./ingestionWorkflow.sh <mmsUserKey> <mmsAPIKey>
 
 
-ingestionThroughChunks.sh
+ingestionBinary.sh
 -------------------------
 it is the script to slit the media file in pieces and ingest them one by one
-Usage: ./ingestionThroughChunks.sh <mmsUserKey> <mmsAPIKey> <ingestion job key> <binary path name> [<chunk size in bytes]
+Usage: ./ingestionBinary.sh <mmsUserKey> <mmsAPIKey> <ingestion job key> <binary path name> [<chunk size in bytes]
 
 
