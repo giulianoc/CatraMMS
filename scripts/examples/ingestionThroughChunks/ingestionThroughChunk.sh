@@ -22,9 +22,14 @@ ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title
 
 if [ "$ingestionJobKey" == "" ]; then
 	echo "ingestionWorkflow.sh failed"
+	cat ./helper/ingestionWorkflowResult.json
+	rm ./helper/ingestionWorkflowResult.json
+	echo ""
 
 	exit 1
 fi
+
+rm ./helper/ingestionWorkflowResult.json
 
 #echo "./helper/ingestionBinary.sh $mmsUserKey \"$mmsAPIKey\" $ingestionJobKey \"$binaryFilePathName\""
 ./helper/ingestionBinary.sh $mmsUserKey "$mmsAPIKey" $ingestionJobKey "$binaryFilePathName"

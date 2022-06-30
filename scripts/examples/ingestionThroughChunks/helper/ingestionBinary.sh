@@ -7,7 +7,7 @@ binaryFilePathName=$4
 chunckSize=$5
 ingestionNumberToBeContinued=$6
 
-mmsBinaryHostname=mms-binary.cibortv-mms.com
+mmsBinaryHostname=mms-binary.catramms-cloud.com
 
 osName=$(uname -s)
 

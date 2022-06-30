@@ -16,11 +16,18 @@
 
 bool JSONUtils::isMetadataPresent(Json::Value root, string field)
 {
-    if (root.isObject() && root.isMember(field) && !root[field].isNull()
-)
+    if (root.isObject() && root.isMember(field) && !root[field].isNull())
         return true;
     else
         return false;
+}
+
+bool JSONUtils::isNull(Json::Value root, string field)
+{
+	if (root.isObject() && root.isMember(field) && root[field].isNull())
+		return true;
+	else
+		return false;
 }
 
 int JSONUtils::asInt(Json::Value root, string field, int defaultValue)

@@ -43,7 +43,6 @@ SET (SCRIPTs
 	satelliteController.sh.1
 	deploy.sh
 	installServer.sh
-	ingestionThroughChunks.sh
 	getIngestionsToBeManaged.sh
 )
 

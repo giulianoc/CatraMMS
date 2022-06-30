@@ -1653,6 +1653,11 @@ void API::modifyStream(
 				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
 				positionToBeModified = true;
 			}
+			else if (JSONUtils::isNull(requestBodyRoot, field))
+			{
+				// in order to set the field as null into the DB
+				positionToBeModified = true;
+			}
 
 			userDataToBeModified = false;
             field = "userData";
