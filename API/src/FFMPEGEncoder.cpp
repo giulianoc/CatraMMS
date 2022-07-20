@@ -3211,7 +3211,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2022-07-20: if we do not have a correct pid after 10 minutes
 				//	we will force encodingFinished to true
 				{
-					int64_t liveProxyLiveTimeInMinutes;
+/*
+					int64_t liveProxyLiveTimeInMinutes = 0;
 					{
 						chrono::system_clock::time_point now = chrono::system_clock::now();                           
 
@@ -3222,7 +3223,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 							liveProxyLiveTimeInMinutes = chrono::duration_cast<
 								chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
 					}
+*/
 					field = "encodingFinished";
+/*
 					if (selectedEncoding->_childPid <= 0
 						&& liveProxyLiveTimeInMinutes > 10
 						&& selectedLiveProxy->_running)
@@ -3235,6 +3238,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						responseBodyRoot[field] = true;
 					}
 					else
+*/
 						responseBodyRoot[field] = !selectedLiveProxy->_running;
 				}
 
