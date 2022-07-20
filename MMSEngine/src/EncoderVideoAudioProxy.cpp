@@ -13777,7 +13777,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
         waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
 			_encodingItem->_encodingParametersRoot, field, 600);
 
-        field = "maxAttemptsNumberInCaseOfErrors";
+        field = "MaxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
 			_encodingItem->_ingestedParametersRoot, field, -1);
 
