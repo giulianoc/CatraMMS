@@ -13822,6 +13822,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 
 	_logger->info(__FILEREF__ + "check maxAttemptsNumberInCaseOfErrors"
+		+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		+ ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
 	);
 
