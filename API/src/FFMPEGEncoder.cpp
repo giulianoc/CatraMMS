@@ -3208,8 +3208,35 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "errorMessage";
 				responseBodyRoot[field] = selectedLiveProxy->_errorMessage;
 
-				field = "encodingFinished";
-				responseBodyRoot[field] = !selectedLiveProxy->_running;
+				// 2022-07-20: if we do not have a correct pid after 10 minutes
+				//	we will force encodingFinished to true
+				{
+					int64_t liveProxyLiveTimeInMinutes;
+					{
+						chrono::system_clock::time_point now = chrono::system_clock::now();                           
+
+						if (now > selectedLiveProxy->_proxyStart)
+							liveProxyLiveTimeInMinutes = chrono::duration_cast<
+								chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
+						else	// it will be negative
+							liveProxyLiveTimeInMinutes = chrono::duration_cast<
+								chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
+					}
+					field = "encodingFinished";
+					if (selectedEncoding->_childPid <= 0
+						&& liveProxyLiveTimeInMinutes > 10
+						&& selectedLiveProxy->_running)
+					{
+						_logger->error(__FILEREF__ + "encodingStatus, forse encodingFinished to true"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
+						);
+
+						responseBodyRoot[field] = true;
+					}
+					else
+						responseBodyRoot[field] = !selectedLiveProxy->_running;
+				}
 
 				// 2020-06-11: it's a live, it does not have sense the encoding progress
 				field = "encodingProgress";
