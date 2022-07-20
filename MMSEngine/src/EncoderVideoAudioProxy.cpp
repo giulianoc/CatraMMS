@@ -13820,6 +13820,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 	bool urlForbidden = false;
 	bool urlNotFound = false;
 
+
+	_logger->info(__FILEREF__ + "check maxAttemptsNumberInCaseOfErrors"
+		+ ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+	);
+
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
 	long encodingStatusFailures = 0;
