@@ -12932,7 +12932,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		int64_t satSourceSATConfKey = -1;
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
-		long maxAttemptsNumberInCaseOfErrors;
+		// long maxAttemptsNumberInCaseOfErrors;
 		Json::Value outputsRoot;
 		bool timePeriod;
 		int64_t utcProxyPeriodStart = -1;
@@ -13055,12 +13055,12 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				otherInputOptions = parametersRoot.get(field, "").asString();
 
-			field = "MaxAttemptsNumberInCaseOfErrors";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				maxAttemptsNumberInCaseOfErrors = 3;
-			else
-				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
-					parametersRoot, field, 0);
+			// field = "MaxAttemptsNumberInCaseOfErrors";
+			// if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			// 	maxAttemptsNumberInCaseOfErrors = 3;
+			// else
+			// 	maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
+			// 		parametersRoot, field, 0);
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13163,7 +13163,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			inputsRoot,	// used by FFMPEGEncoder
 			streamSourceType,	// used by FFMPEGEncoder
 			utcProxyPeriodStart,	// used in MMSEngineDBFacade::getEncodingJobs
-			maxAttemptsNumberInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
+			// maxAttemptsNumberInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
 			waitingSecondsBetweenAttemptsInCaseOfErrors,	// used in EncoderVideoAudioProxy.cpp
 			localOutputsRoot		// used by FFMPEGEncoder
 		);

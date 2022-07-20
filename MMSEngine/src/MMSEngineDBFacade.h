@@ -1763,21 +1763,8 @@ public:
 		int64_t ingestionJobKey,
 		Json::Value inputsRoot,
 		string streamSourceType,
-		/*
-		int64_t liveURLConfKey, string configurationLabel, string url, string encodersPoolLabel,
-
-		int pushListenTimeout,
-		int captureVideoDeviceNumber,
-		string captureVideoInputFormat, int captureFrameRate,
-		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
-		int captureChannelsNumber,
-
-		int64_t satelliteServiceId, int64_t satelliteFrequency,
-		int64_t satelliteSymbolRate, string satelliteModulation, int satelliteVideoPid,
-		int satelliteAudioItalianPid,
-
-		bool timePeriod, */ int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
-		long maxAttemptsNumberInCaseOfErrors,
+		int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
+		// long maxAttemptsNumberInCaseOfErrors,
 		long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);
 

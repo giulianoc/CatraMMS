@@ -7998,7 +7998,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	Json::Value inputsRoot,
 	string streamSourceType,
 	int64_t utcProxyPeriodStart,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+	// long maxAttemptsNumberInCaseOfErrors,
+	long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
 )
 {
@@ -8018,7 +8019,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
 */
-            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+            // + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
             + ", outputsRoot.size: " + to_string(outputsRoot.size())
         );
@@ -8056,8 +8057,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "utcScheduleStart";
 				parametersRoot[field] = utcProxyPeriodStart;
 
-				field = "maxAttemptsNumberInCaseOfErrors";
-				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
+				// field = "maxAttemptsNumberInCaseOfErrors";
+				// parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
 
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;

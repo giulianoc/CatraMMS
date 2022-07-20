@@ -13779,7 +13779,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
         field = "maxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
-			_encodingItem->_encodingParametersRoot, field, 2);
+			_encodingItem->_ingestedParametersRoot, field, -1);
 
 		{
 			// Json::Value firstInputRoot = inputsRoot[0];
@@ -13823,30 +13823,38 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
 	long encodingStatusFailures = 0;
-	// 2020-04-19: Reset encodingStatusFailures into DB.
-	// That because if we comes from an error/exception
-	//	encodingStatusFailures is > than 0 but we consider here like
-	//	it is 0 because our variable is set to 0
-	try
+	if (maxAttemptsNumberInCaseOfErrors == -1)
 	{
-		_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-		);
+		// 2022-07-20: -1 means we always has to retry, so we will reset encodingStatusFailures to 0
 
-		killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber (
-			_encodingItem->_encodingJobKey, 
-			encodingStatusFailures
-		);
-	}
-	catch(...)
-	{
-		_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-		);
+		// 2022-07-20: this is to allow the next loop to exit after 2 errors
+		maxAttemptsNumberInCaseOfErrors = 2;
+
+		// 2020-04-19: Reset encodingStatusFailures into DB.
+		// That because if we comes from an error/exception
+		//	encodingStatusFailures is > than 0 but we consider here like
+		//	it is 0 because our variable is set to 0
+		try
+		{
+			_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+			);
+
+			killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+				_encodingItem->_encodingJobKey, 
+				encodingStatusFailures
+			);
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+			);
+		}
 	}
 
 	// 2020-03-11: we saw the following scenarios:
