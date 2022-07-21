@@ -3214,6 +3214,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					field = "encodingFinished";
 					if (selectedEncoding->_childPid <= 0 && selectedLiveProxy->_running)
 					{
+						_logger->error(__FILEREF__ + "11111"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
+						);
 						int64_t liveProxyLiveTimeInMinutes = 0;
 						{
 							chrono::system_clock::time_point now = chrono::system_clock::now();                           
@@ -3225,6 +3229,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								liveProxyLiveTimeInMinutes = chrono::duration_cast<
 									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
 						}
+						_logger->error(__FILEREF__ + "22222"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
+							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
+						);
 						if (liveProxyLiveTimeInMinutes > 10)
 						{
 							_logger->error(__FILEREF__ + "encodingStatus, forse encodingFinished to true"
