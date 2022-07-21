@@ -13831,7 +13831,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 	bool alwaysRetry = false;
 
-	long encodingStatusFailures = 0;
+	// long encodingStatusFailures = 0;
 	if (maxAttemptsNumberInCaseOfErrors == -1)
 	{
 		// 2022-07-20: -1 means we always has to retry, so we will reset encodingStatusFailures to 0
@@ -13849,12 +13849,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
 			);
 
 			killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 				_encodingItem->_encodingJobKey, 
-				encodingStatusFailures
+				// encodingStatusFailures
+				currentAttemptsNumberInCaseOfErrors
 			);
 		}
 		catch(...)
@@ -13862,7 +13864,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
 			);
 		}
 	}
@@ -14632,7 +14635,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						if (alwaysRetry)
 						{
-							encodingStatusFailures++;
+							// encodingStatusFailures++;
 
 							// in this scenario encodingFinished is true
 
@@ -14659,7 +14662,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 										+ to_string(currentAttemptsNumberInCaseOfErrors)
 									+ ", maxAttemptsNumberInCaseOfErrors: "
 										+ to_string(maxAttemptsNumberInCaseOfErrors)
-									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+									// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 								);
 								// 2021-02-12: moved sleep here because, in this case, if the task was killed
 								// during the sleep, it will check that.
@@ -14678,14 +14681,18 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 											+ to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: "
 											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", encodingStatusFailures: "
-											+ to_string(encodingStatusFailures)
+										// + ", encodingStatusFailures: "
+										// 	+ to_string(encodingStatusFailures)
+										+ ", currentAttemptsNumberInCaseOfErrors: "
+											+ to_string(currentAttemptsNumberInCaseOfErrors)
 									);
 
 									bool isKilled =
 										_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 											_encodingItem->_encodingJobKey, 
-											encodingStatusFailures);
+											// encodingStatusFailures
+											currentAttemptsNumberInCaseOfErrors
+									);
 									if (isKilled)
 									{
 										_logger->info(__FILEREF__
@@ -14694,8 +14701,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 												+ to_string(_encodingItem->_ingestionJobKey)
 											+ ", _encodingJobKey: "
 												+ to_string(_encodingItem->_encodingJobKey)
-											+ ", encodingStatusFailures: "
-												+ to_string(encodingStatusFailures)
+											// + ", encodingStatusFailures: "
+											// 	+ to_string(encodingStatusFailures)
 										);
 
 										// when previousEncodingStatusFailures is < 0 means:
@@ -14718,8 +14725,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 											+ to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: "
 											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", encodingStatusFailures: "
-											+ to_string(encodingStatusFailures)
+										// + ", encodingStatusFailures: "
+										// 	+ to_string(encodingStatusFailures)
 									);
 								}
 
@@ -14744,13 +14751,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						// we will make sure currentAttemptsNumberInCaseOfErrors is reset
 						currentAttemptsNumberInCaseOfErrors = 0;
 
-						if (encodingStatusFailures > 0)
+						// if (encodingStatusFailures > 0)
 						{
 							try
 							{
 								// update EncodingJob failures number to notify
 								// the GUI encodingJob is successful
-								encodingStatusFailures = 0;
+								// encodingStatusFailures = 0;
 
 								_logger->info(__FILEREF__
 									+ "updateEncodingJobFailuresNumber"
@@ -14758,15 +14765,18 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 										+ to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: "
 										+ to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: "
-										+ to_string(encodingStatusFailures)
+									// + ", encodingStatusFailures: "
+									// 	+ to_string(encodingStatusFailures)
+									+ ", currentAttemptsNumberInCaseOfErrors: "
+										+ to_string(currentAttemptsNumberInCaseOfErrors)
 								);
 
 								int64_t mediaItemKey = -1;
 								int64_t encodedPhysicalPathKey = -1;
 								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 										_encodingItem->_encodingJobKey, 
-										encodingStatusFailures
+										// encodingStatusFailures
+										currentAttemptsNumberInCaseOfErrors
 								);
 							}
 							catch(...)
@@ -14777,8 +14787,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 										+ to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: "
 										+ to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: "
-										+ to_string(encodingStatusFailures)
+									// + ", encodingStatusFailures: "
+									// 	+ to_string(encodingStatusFailures)
 								);
 							}
 						}
@@ -14932,7 +14942,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", _currentUsedFFMpegEncoderHost: "
 							+ _currentUsedFFMpegEncoderHost
 						+ ", _currentUsedFFMpegEncoderKey: "
@@ -14959,7 +14969,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							+ to_string(utcProxyPeriodEnd - utcNowCheckToExit)
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
-						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", killedByUser: " + to_string(killedByUser)
 						+ ", @MMS statistics@ - encodingDuration (secs): @"
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -15029,7 +15039,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
-						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", killedByUser: " + to_string(killedByUser)
 						+ ", @MMS statistics@ - encodingDuration (secs): @"
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -15047,7 +15057,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
-                    + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    // + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
                     + ", @MMS statistics@ - encodingDuration (secs): @"
 						+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -15150,26 +15160,31 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			// update EncodingJob failures number to notify the GUI EncodingJob is failing
 			try
 			{
-				encodingStatusFailures++;
+				// encodingStatusFailures++;
+				currentAttemptsNumberInCaseOfErrors++;
 
 				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", currentAttemptsNumberInCaseOfErrors: "
+						+ to_string(currentAttemptsNumberInCaseOfErrors)
 				);
 
 				int64_t mediaItemKey = -1;
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 					_encodingItem->_encodingJobKey, 
-					encodingStatusFailures);
+					// encodingStatusFailures
+					currentAttemptsNumberInCaseOfErrors
+			);
 			}
 			catch(...)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 				);
 			}
 
@@ -15204,26 +15219,30 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				// look currentAttemptsNumberInCaseOfErrors.
 				// So added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
-				encodingStatusFailures++;
+				// encodingStatusFailures++;
 
 				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", currentAttemptsNumberInCaseOfErrors: "
+						+ to_string(currentAttemptsNumberInCaseOfErrors)
 				);
 
 				int64_t mediaItemKey = -1;
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 					_encodingItem->_encodingJobKey, 
-					encodingStatusFailures);
+					// encodingStatusFailures
+					currentAttemptsNumberInCaseOfErrors
+				);
 			}
 			catch(...)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 				);
 			}
 
@@ -15259,26 +15278,30 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				// So added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
 
-				encodingStatusFailures++;
+				// encodingStatusFailures++;
 
 				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", currentAttemptsNumberInCaseOfErrors: "
+						+ to_string(currentAttemptsNumberInCaseOfErrors)
 				);
 
 				int64_t mediaItemKey = -1;
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 					_encodingItem->_encodingJobKey, 
-					encodingStatusFailures);
+					// encodingStatusFailures
+					currentAttemptsNumberInCaseOfErrors
+				);
 			}
 			catch(...)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 				);
 			}
 
@@ -15307,26 +15330,31 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			// update EncodingJob failures number to notify the GUI EncodingJob is failing
 			try
 			{
-				encodingStatusFailures++;
+				currentAttemptsNumberInCaseOfErrors++;
+				// encodingStatusFailures++;
 
 				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", currentAttemptsNumberInCaseOfErrors: "
+						+ to_string(currentAttemptsNumberInCaseOfErrors)
 				);
 
 				int64_t mediaItemKey = -1;
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 					_encodingItem->_encodingJobKey, 
-					encodingStatusFailures);
+					// encodingStatusFailures
+					currentAttemptsNumberInCaseOfErrors
+				);
 			}
 			catch(...)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 				);
 			}
 
