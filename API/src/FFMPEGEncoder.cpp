@@ -3211,16 +3211,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2022-07-20: if we do not have a correct pid after 10 minutes
 				//	we will force encodingFinished to true
 				{
-						_logger->error(__FILEREF__ + "0000"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						);
 					field = "encodingFinished";
 					if (selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
 					{
-						_logger->error(__FILEREF__ + "11111"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
-						);
 						int64_t liveProxyLiveTimeInMinutes = 0;
 						{
 							chrono::system_clock::time_point now = chrono::system_clock::now();                           
@@ -3232,14 +3225,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								liveProxyLiveTimeInMinutes = chrono::duration_cast<
 									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
 						}
-						_logger->error(__FILEREF__ + "22222"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
-							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
-						);
 						if (liveProxyLiveTimeInMinutes > 10)
 						{
-							_logger->error(__FILEREF__ + "encodingStatus, forse encodingFinished to true"
+							_logger->error(__FILEREF__ + "encodingStatus, force encodingFinished to true"
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
 								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
