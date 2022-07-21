@@ -3215,7 +3215,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
 					field = "encodingFinished";
-					if (selectedEncoding->_childPid <= 0 && selectedLiveProxy->_running)
+					if (selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
 					{
 						_logger->error(__FILEREF__ + "11111"
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
