@@ -3211,6 +3211,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2022-07-20: if we do not have a correct pid after 10 minutes
 				//	we will force encodingFinished to true
 				{
+						_logger->error(__FILEREF__ + "0000"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						);
 					field = "encodingFinished";
 					if (selectedEncoding->_childPid <= 0 && selectedLiveProxy->_running)
 					{
