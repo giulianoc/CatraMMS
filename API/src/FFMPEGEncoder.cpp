@@ -3211,34 +3211,42 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2022-07-20: if we do not have a correct pid after 10 minutes
 				//	we will force encodingFinished to true
 				{
-/*
-					int64_t liveProxyLiveTimeInMinutes = 0;
-					{
-						chrono::system_clock::time_point now = chrono::system_clock::now();                           
-
-						if (now > selectedLiveProxy->_proxyStart)
-							liveProxyLiveTimeInMinutes = chrono::duration_cast<
-								chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
-						else	// it will be negative
-							liveProxyLiveTimeInMinutes = chrono::duration_cast<
-								chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
-					}
-*/
 					field = "encodingFinished";
-/*
-					if (selectedEncoding->_childPid <= 0
-						&& liveProxyLiveTimeInMinutes > 10
-						&& selectedLiveProxy->_running)
+					if (selectedEncoding->_childPid <= 0 && selectedLiveProxy->_running)
 					{
-						_logger->error(__FILEREF__ + "encodingStatus, forse encodingFinished to true"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
-						);
+						int64_t liveProxyLiveTimeInMinutes = 0;
+						{
+							chrono::system_clock::time_point now = chrono::system_clock::now();                           
 
-						responseBodyRoot[field] = true;
+							if (now > selectedLiveProxy->_proxyStart)
+								liveProxyLiveTimeInMinutes = chrono::duration_cast<
+									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
+							else	// it will be negative
+								liveProxyLiveTimeInMinutes = chrono::duration_cast<
+									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
+						}
+						if (liveProxyLiveTimeInMinutes > 10)
+						{
+							_logger->error(__FILEREF__ + "encodingStatus, forse encodingFinished to true"
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
+								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
+							);
+
+							responseBodyRoot[field] = true;
+						}
+						else
+						{
+							_logger->warn(__FILEREF__ + "encodingStatus, encoding running but pid is <= 0!!!"
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
+								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
+							);
+
+							responseBodyRoot[field] = !selectedLiveProxy->_running;
+						}
 					}
 					else
-*/
 						responseBodyRoot[field] = !selectedLiveProxy->_running;
 				}
 
