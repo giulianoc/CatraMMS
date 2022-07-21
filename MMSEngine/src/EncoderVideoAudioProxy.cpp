@@ -14650,6 +14650,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 								+ ", _intervalInSecondsToCheckEncodingFinished: "
 									+ to_string(_intervalInSecondsToCheckEncodingFinished)
+								+ ", currentAttemptsNumberInCaseOfErrors: "
+									+ to_string(currentAttemptsNumberInCaseOfErrors)
+								+ ", maxAttemptsNumberInCaseOfErrors: "
+									+ to_string(maxAttemptsNumberInCaseOfErrors)
+								+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							);
 							// 2021-02-12: moved sleep here because, in this case, if the task was killed
 							// during the sleep, it will check that.

@@ -3214,6 +3214,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					field = "encodingFinished";
 					if (selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
 					{
+						// 2022-07-21: pensavo si verificasse questo scenario
+						//	(selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
+						//	in realtà sembra non si verifica mai
 						int64_t liveProxyLiveTimeInMinutes = 0;
 						{
 							chrono::system_clock::time_point now = chrono::system_clock::now();                           
