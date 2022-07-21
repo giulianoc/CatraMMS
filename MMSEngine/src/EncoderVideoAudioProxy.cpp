@@ -13829,10 +13829,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
+	bool alwaysRetry = false;
+
 	long encodingStatusFailures = 0;
 	if (maxAttemptsNumberInCaseOfErrors == -1)
 	{
 		// 2022-07-20: -1 means we always has to retry, so we will reset encodingStatusFailures to 0
+		alwaysRetry = true;
 
 		// 2022-07-20: this is to allow the next loop to exit after 2 errors
 		maxAttemptsNumberInCaseOfErrors = 2;
@@ -14627,64 +14630,50 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						;
 						_logger->error(errorMessage);
 
-						encodingStatusFailures++;
-
-						// in this scenario encodingFinished is true
-
-						_logger->info(__FILEREF__
-							+ "Start waiting loop for the next call"
-							+ ", _ingestionJobKey: "
-								+ to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: "
-								+ to_string(_encodingItem->_encodingJobKey)
-						);
-
-						chrono::system_clock::time_point startWaiting
-							= chrono::system_clock::now();
-						chrono::system_clock::time_point now;
-						do
+						if (alwaysRetry)
 						{
-							_logger->info(__FILEREF__ + "sleep_for"
+							encodingStatusFailures++;
+
+							// in this scenario encodingFinished is true
+
+							_logger->info(__FILEREF__
+								+ "Start waiting loop for the next call"
 								+ ", _ingestionJobKey: "
 									+ to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", _intervalInSecondsToCheckEncodingFinished: "
-									+ to_string(_intervalInSecondsToCheckEncodingFinished)
-								+ ", currentAttemptsNumberInCaseOfErrors: "
-									+ to_string(currentAttemptsNumberInCaseOfErrors)
-								+ ", maxAttemptsNumberInCaseOfErrors: "
-									+ to_string(maxAttemptsNumberInCaseOfErrors)
-								+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
 							);
-							// 2021-02-12: moved sleep here because, in this case, if the task was killed
-							// during the sleep, it will check that.
-							// Before the sleep was after the check, so when the sleep is finished,
-							// the flow will go out of the loop and no check is done and Task remains up
-							// even if user kiiled it.
-							this_thread::sleep_for(chrono::seconds(
-								_intervalInSecondsToCheckEncodingFinished));
 
-							// update EncodingJob failures number to notify the GUI EncodingJob is failing
-							try
+							chrono::system_clock::time_point startWaiting
+								= chrono::system_clock::now();
+							chrono::system_clock::time_point now;
+							do
 							{
-								_logger->info(__FILEREF__
-									+ "check and update encodingJob FailuresNumber"
+								_logger->info(__FILEREF__ + "sleep_for"
 									+ ", _ingestionJobKey: "
 										+ to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: "
-										+ to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: "
-										+ to_string(encodingStatusFailures)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _intervalInSecondsToCheckEncodingFinished: "
+										+ to_string(_intervalInSecondsToCheckEncodingFinished)
+									+ ", currentAttemptsNumberInCaseOfErrors: "
+										+ to_string(currentAttemptsNumberInCaseOfErrors)
+									+ ", maxAttemptsNumberInCaseOfErrors: "
+										+ to_string(maxAttemptsNumberInCaseOfErrors)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 								);
+								// 2021-02-12: moved sleep here because, in this case, if the task was killed
+								// during the sleep, it will check that.
+								// Before the sleep was after the check, so when the sleep is finished,
+								// the flow will go out of the loop and no check is done and Task remains up
+								// even if user kiiled it.
+								this_thread::sleep_for(chrono::seconds(
+									_intervalInSecondsToCheckEncodingFinished));
 
-								bool isKilled =
-									_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
-										_encodingItem->_encodingJobKey, 
-										encodingStatusFailures);
-								if (isKilled)
+								// update EncodingJob failures number to notify the GUI EncodingJob is failing
+								try
 								{
 									_logger->info(__FILEREF__
-										+ "LiveProxy Killed by user during waiting loop"
+										+ "check and update encodingJob FailuresNumber"
 										+ ", _ingestionJobKey: "
 											+ to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: "
@@ -14693,39 +14682,56 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 											+ to_string(encodingStatusFailures)
 									);
 
-									// when previousEncodingStatusFailures is < 0 means:
-									// 1. the live proxy is not starting (ffmpeg is generating continuously an error)
-									// 2. User killed the encoding through MMS GUI or API
-									// 3. the kill procedure (in API module) was not able to kill the ffmpeg process,
-									//		because it does not exist the process and set the failuresNumber DB field
-									//		to a negative value in order to communicate with this thread 
-									// 4. This thread, when it finds a negative failuresNumber, knows the encoding
-									//		was killed and exit from the loop
-									encodingFinished = true;
-									killedByUser = true;
-								}
-							}
-							catch(...)
-							{
-								_logger->error(__FILEREF__
-									+ "updateEncodingJobFailuresNumber FAILED"
-									+ ", _ingestionJobKey: "
-										+ to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: "
-										+ to_string(_encodingItem->_encodingJobKey)
-									+ ", encodingStatusFailures: "
-										+ to_string(encodingStatusFailures)
-								);
-							}
+									bool isKilled =
+										_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+											_encodingItem->_encodingJobKey, 
+											encodingStatusFailures);
+									if (isKilled)
+									{
+										_logger->info(__FILEREF__
+											+ "LiveProxy Killed by user during waiting loop"
+											+ ", _ingestionJobKey: "
+												+ to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+											+ ", encodingStatusFailures: "
+												+ to_string(encodingStatusFailures)
+										);
 
-							now = chrono::system_clock::now();
+										// when previousEncodingStatusFailures is < 0 means:
+										// 1. the live proxy is not starting (ffmpeg is generating continuously an error)
+										// 2. User killed the encoding through MMS GUI or API
+										// 3. the kill procedure (in API module) was not able to kill the ffmpeg process,
+										//		because it does not exist the process and set the failuresNumber DB field
+										//		to a negative value in order to communicate with this thread 
+										// 4. This thread, when it finds a negative failuresNumber, knows the encoding
+										//		was killed and exit from the loop
+										encodingFinished = true;
+										killedByUser = true;
+									}
+								}
+								catch(...)
+								{
+									_logger->error(__FILEREF__
+										+ "updateEncodingJobFailuresNumber FAILED"
+										+ ", _ingestionJobKey: "
+											+ to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", encodingStatusFailures: "
+											+ to_string(encodingStatusFailures)
+									);
+								}
+
+								now = chrono::system_clock::now();
+							}
+							while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
+									< chrono::seconds(
+										waitingSecondsBetweenAttemptsInCaseOfErrors)
+									&& (timePeriod || currentAttemptsNumberInCaseOfErrors <
+										maxAttemptsNumberInCaseOfErrors)
+									&& !killedByUser);
 						}
-						while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
-								< chrono::seconds(
-									waitingSecondsBetweenAttemptsInCaseOfErrors)
-						 		&& (timePeriod || currentAttemptsNumberInCaseOfErrors <
-									maxAttemptsNumberInCaseOfErrors)
-								&& !killedByUser);
 
 						// if (chunksWereNotGenerated)
 						// 	encodingFinished = true;
