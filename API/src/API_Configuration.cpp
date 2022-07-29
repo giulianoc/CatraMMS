@@ -1438,29 +1438,21 @@ void API::modifyStream(
                 }
             }
 
+			labelToBeModified = false;
             string field = "label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
+				label = requestBodyRoot.get(field, "").asString();            
+				labelToBeModified = true;
             }    
-            label = requestBodyRoot.get(field, "").asString();            
-			labelToBeModified = true;
 
+			sourceTypeToBeModified = false;
             field = "sourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }    
-            sourceType = requestBodyRoot.get(field, "").asString();            
-			sourceTypeToBeModified = true;
+				sourceType = requestBodyRoot.get(field, "").asString();            
+				sourceTypeToBeModified = true;
+            }
 
 			encodersPoolLabelToBeModified = false;
             field = "encodersPoolLabel";
