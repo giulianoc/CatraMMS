@@ -1448,9 +1448,9 @@ void API::modifyStream(
 
 			sourceTypeToBeModified = false;
             field = "sourceType";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				sourceType = requestBodyRoot.get(field, "").asString();            
+				sourceType = requestBodyRoot.get(field, "").asString();
 				sourceTypeToBeModified = true;
             }
 
