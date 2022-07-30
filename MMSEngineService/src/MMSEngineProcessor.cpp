@@ -23563,203 +23563,234 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		-1	// ingestionJobKey,
 	);
 
-    {
-		chrono::system_clock::time_point start = chrono::system_clock::now();
+	bool alreadyExecuted = true;
 
-        _logger->info(__FILEREF__ + "DBDataRetention: Ingestion Data started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-
-		try
-		{
-			_mmsEngineDBFacade->retentionOfIngestionData();
-		}
-		catch(runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
-			);
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-		catch(exception e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
-			);
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "DBDataRetention: Ingestion Data finished"
+	try
+	{
+		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(
+			MMSEngineDBFacade::OncePerDayType::DBDataRetention);
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", exception: " + e.what()
 		);
-    }
 
-    {
-		chrono::system_clock::time_point start = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "DBDataRetention: Delivery Autorization started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-
-		try
-		{
-			_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
-		}
-		catch(runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
-			);
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-		catch(exception e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
-			);
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "DBDataRetention: Delivery Autorization finished"
+		// no throw since it is running in a detached thread
+		// throw e;
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", exception: " + e.what()
 		);
-    }
 
+		// no throw since it is running in a detached thread
+		// throw e;
+	}
+
+	if (!alreadyExecuted)
     {
-		chrono::system_clock::time_point start = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "DBDataRetention: Statistic Data started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-
-		try
 		{
-			_mmsEngineDBFacade->retentionOfStatisticData();
-		}
-		catch(runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "DBDataRetention: Ingestion Data started"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
 			);
 
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-		catch(exception e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
+			try
+			{
+				_mmsEngineDBFacade->retentionOfIngestionData();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "DBDataRetention: Ingestion Data finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			);
+		}
+
+		{
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "DBDataRetention: Delivery Autorization started"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
+			try
+			{
+				_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
 
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "DBDataRetention: Statistic Data finished"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-		);
-    }
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
 
-    {
-		chrono::system_clock::time_point start = chrono::system_clock::now();
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
 
-		_logger->info(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-
-		try
-		{
-			// Scenarios: IngestionJob in final status but EncodingJob not in final status
-			_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
-		}
-		catch(runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "DBDataRetention: Delivery Autorization finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			);
+		}
+
+		{
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "DBDataRetention: Statistic Data started"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-		catch(exception e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
+			try
+			{
+				_mmsEngineDBFacade->retentionOfStatisticData();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "DBDataRetention: Statistic Data finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			);
+		}
+
+		{
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status started"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
+			try
+			{
+				// Scenarios: IngestionJob in final status but EncodingJob not in final status
+				_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
 
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status finished"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-		);
-    }
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
 
-    {
-		chrono::system_clock::time_point start = chrono::system_clock::now();
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
 
-		_logger->info(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-
-		try
-		{
-			// Scenarios: EncodingJob in final status but IngestionJob not in final status
-			//		even it it was passed long time
-			_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
-		}
-		catch(runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			);
+		}
+
+		{
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status started"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
-		catch(exception e)
-		{
-			_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
+			try
+			{
+				// Scenarios: EncodingJob in final status but IngestionJob not in final status
+				//		even it it was passed long time
+				_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", exception: " + e.what()
+				);
+
+				// no throw since it is running in a detached thread
+				// throw e;
+			}
+
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", exception: " + e.what()
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 			);
-
-			// no throw since it is running in a detached thread
-			// throw e;
 		}
-
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status finished"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-		);
-    }
+	}
 }
 
 void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()

@@ -2118,3 +2118,142 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
     return lastInsertId;
 }
 
+bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
+{
+    string		lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	_logger->info(__FILEREF__ + "oncePerDayExecution"
+	);
+
+	bool		alreadyExecuted;
+    try
+    {
+		/*
+			this method is called when a procedure, identified by 'oncePerDayKey'
+			parameter, has to be executed once a day
+			It returns:
+				- true if the procedure was already executed for today
+				- false if the procedure was NOT already executed for today
+					and has to be executed
+		*/
+
+		string today_yyyy_mm_dd;
+		{
+			tm			tmDateTime;
+			char		strDateTime [64];
+			time_t utcTime = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+
+			localtime_r (&utcTime, &tmDateTime);
+
+			sprintf (strDateTime, "%04d-%02d-%02d",
+				tmDateTime.tm_year + 1900,
+				tmDateTime.tm_mon + 1,
+				tmDateTime.tm_mday
+			);
+			today_yyyy_mm_dd = strDateTime;
+		}
+
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+
+        {
+            lastSQLCommand = 
+				"update MMS_OncePerDayExecution set lastExecutionTime = ? "
+				"where type = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, today_yyyy_mm_dd);
+            preparedStatement->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(oncePerDayType));
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@ (oncePerDayExecution)"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", today_yyyy_mm_dd: " + today_yyyy_mm_dd
+				+ ", type: " + MMSEngineDBFacade::toString(oncePerDayType)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+
+			alreadyExecuted = (rowsUpdated == 0 ? true : false);
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+
+		return alreadyExecuted;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+}
+

@@ -195,7 +195,90 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-        
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_OncePerDayExecution ("
+					"type						VARCHAR (128) NOT NULL,"
+					"lastExecutionTime			VARCHAR (128) NULL,"
+					"constraint MMS_OncePerDayExecution PRIMARY KEY (type))"
+					"ENGINE=InnoDB";
+			statement->execute(lastSQLCommand);
+		}
+		catch(sql::SQLException se)
+		{
+			if (isRealDBError(se.what()))
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+				);
+
+				throw se;
+			}
+		}
+
+        try
+        {
+			{
+				OncePerDayType oncePerDayType = OncePerDayType::DBDataRetention;
+
+				lastSQLCommand = 
+					"select count(*) from MMS_OncePerDayExecution where type = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(oncePerDayType));
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", type: " + MMSEngineDBFacade::toString(oncePerDayType)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
+				{
+					if (resultSet->getInt64(1) == 0)
+					{
+						lastSQLCommand = 
+							"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
+							"values (?, NULL)";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setString(queryParameterIndex++,
+							MMSEngineDBFacade::toString(oncePerDayType));
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", type: " + MMSEngineDBFacade::toString(oncePerDayType)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
+				}
+            }
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
 		try
 		{
 			lastSQLCommand = 

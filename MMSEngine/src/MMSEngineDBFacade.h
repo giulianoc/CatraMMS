@@ -161,6 +161,33 @@ public:
                     );
     }
 
+    enum class OncePerDayType {
+		DBDataRetention						= 0
+    };
+    static const char* toString(const OncePerDayType& oncePerDayType)
+    {
+        switch (oncePerDayType)
+        {
+            case OncePerDayType::DBDataRetention:
+                return "DBDataRetention";
+            default:
+                throw runtime_error(string("Wrong OncePerDayType"));
+        }
+    }
+    static OncePerDayType toOncePerDayType(const string& oncePerDayType)
+    {
+        string lowerCase;
+        lowerCase.resize(oncePerDayType.size());
+        transform(oncePerDayType.begin(), oncePerDayType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "dbdataretention")
+            return OncePerDayType::DBDataRetention;
+        else
+            throw runtime_error(string("Wrong OncePerDayType")
+                    + ", current oncePerDayType: " + oncePerDayType
+                    );
+    }
+
     enum class ContentType {
 		Video		= 0,
 		Audio		= 1,
@@ -2451,6 +2478,8 @@ public:
 
 	Json::Value getDirectURLInputRoot(
 		string url);
+
+	bool oncePerDayExecution(OncePerDayType oncePerDayType);
 
 
 private:
