@@ -654,7 +654,7 @@ install-mms-packages()
 		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
 		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
 	else
-		ln -s /var/catramms/storage/commonConfiguration/.aws .
+		ln -s /var/catramms/storage/commonConfiguration/.aws ~
 	fi
 
 
