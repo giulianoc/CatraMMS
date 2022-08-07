@@ -90,7 +90,7 @@ install-packages()
 	if [ "$moduleName" == "storage" ]; then
 
 		#for storage just nfs is enougth
-		apt install nfs-kernel-server
+		apt -y install nfs-kernel-server
 
 		return
 	fi
@@ -332,13 +332,15 @@ create-directory()
 		mkdir /var/catramms/storage/nginxWorkingAreaRepository
 		mkdir /var/catramms/storage/MMSRepository
 		if [ "$moduleName" == "encoder" ]; then
-			ln -s /MMSTranscoderWorkingAreaRepository /var/catramms/storage/MMSTranscoderWorkingAreaRepository
+			ln -s /mnt/MMSTranscoderWorkingAreaRepository /var/catramms/storage/MMSTranscoderWorkingAreaRepository
 		else
 			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
 		fi
 	fi
 
-	mkdir /var/catramms/logs
+	ln -s /mnt/logs /var/catramms/logs
+	chmod -R mms:mms /mnt/logs
+
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 		mkdir /var/catramms/logs/tomcat-gui
 	fi
@@ -356,36 +358,36 @@ create-directory()
 	fi
 
 	if [ "$moduleName" != "integration" ]; then
-		mkdir /mmsStorage
-		mkdir /mmsRepository0000
-		chown mms:mms /mmsRepository0000
+		mkdir /mnt/mmsStorage
+		mkdir /mnt/mmsRepository0000
+		chown mms:mms /mnt/mmsRepository0000
 	fi
 
 	read -n 1 -s -r -p "links..."
 	echo ""
 
 	if [ "$moduleName" == "externalEncoder" ]; then
-		mkdir /mmsStorage/IngestionRepository
-		chown mms:mms /mmsStorage/IngestionRepository
-		mkdir /mmsStorage/MMSWorkingAreaRepository
-		chown mms:mms /mmsStorage/MMSWorkingAreaRepository
-		mkdir /mmsStorage/MMSRepository-free
-		chown mms:mms /mmsStorage/MMSRepository-free
-		mkdir /mmsStorage/MMSLive
-		chown mms:mms /mmsStorage/MMSLive
+		mkdir /mnt/mmsStorage/IngestionRepository
+		chown mms:mms /mnt/mmsStorage/IngestionRepository
+		mkdir /mnt/mmsStorage/MMSWorkingAreaRepository
+		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
+		mkdir /mnt/mmsStorage/MMSRepository-free
+		chown mms:mms /mnt/mmsStorage/MMSRepository-free
+		mkdir /mnt/mmsStorage/MMSLive
+		chown mms:mms /mnt/mmsStorage/MMSLive
 	fi
 
 	if [ "$moduleName" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
-		ln -s /mmsStorage/IngestionRepository /var/catramms/storage
-		ln -s /mmsStorage/MMSGUI /var/catramms/storage
-		ln -s /mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
-		ln -s /mmsStorage/dbDump /var/catramms/storage
-		ln -s /mmsStorage/commonConfiguration /var/catramms/storage
-		ln -s /mmsStorage/MMSRepository-free /var/catramms/storage
-		#Assuming the partition for the first repository containing the media files is /mmsRepository0000
-		ln -s /mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-		ln -s /mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		ln -s /mnt/mmsStorage/IngestionRepository /var/catramms/storage
+		ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
+		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+		ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
+		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
+		#Assuming the partition for the first repository containing the media files is /mnt/mmsRepository0000
+		ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
 
 		ln -s /var/catramms/storage /home/mms
 	fi
@@ -410,20 +412,32 @@ create-directory()
 
 	chown -R mms:mms /opt/catramms
 	chown -R mms:mms /var/catramms
+}
+
+adds-to-bashrc()
+{
+	moduleName=$1
+
+	read -n 1 -s -r -p "adds-to-bashrc..."
+	echo ""
 
 	read -n 1 -s -r -p ".bashrc..."
 	echo ""
 	echo -n "serverName for the 'bash prompt' (i.e. engine-db-1): "
 	read serverName
 
-	echo "export PATH=\$PATH:~mms" >> /home/mms/.bashrc
+	if [ "$moduleName" != "storage" ]; then
+		echo "export PATH=\$PATH:~mms" >> /home/mms/.bashrc
+		echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
+		echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
+		echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
+		echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
+	fi
+
 	echo "alias h='history'" >> /home/mms/.bashrc
-	echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
-	echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
-	echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
 	echo "export EDITOR=/usr/bin/vi" >> /home/mms/.bashrc
+
 	echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
-	echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
 	echo "date" >> /home/mms/.bashrc
 }
 
@@ -688,7 +702,8 @@ firewall-rules()
 		ufw allow 443
 	elif [ "$moduleName" == "engine" ]; then
 		# -> mysql
-		ufw allow 3306
+		#ufw allow 3306
+		ufw allow from 10.0.0.0/16 to any port 3306
 	elif [ "$moduleName" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
@@ -696,8 +711,10 @@ firewall-rules()
 		ufw allow 8088
 	elif [ "$moduleName" == "storage" ]; then
 		ufw allow nfs
-		ufw allow 111
-		ufw allow 13035
+		#ufw allow 111
+		ufw allow from 10.0.0.0/16 to any port 111
+		#ufw allow 13035
+		ufw allow from 10.0.0.0/16 to any port 13035
 	fi
 
 	ufw enable
@@ -758,7 +775,7 @@ moduleName=$1
 #       sudo fdisk /dev/nvme1n1 (p n p w)
 #       sudo mkfs.ext4 /dev/nvme1n1p1
 #2. Inizializzare /etc/fstab
-#3. creare directory /logs /mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
+#3. creare directory /logs /mnt/mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
 #4. apt-get -y install nfs-common
 #5. sudo mount -a
 #6 sudo su; ./installServer.sh <module>
@@ -766,31 +783,33 @@ moduleName=$1
 #8. remove installServer.sh
 #9. remove ssh key from /home/ubuntu/.ssh/authorized_keys
 
-#ssh-port
+ssh-port
 mms-account-creation
 time-zone
 install-packages $moduleName
 
+adds-to-bashrc $moduleName
 if [ "$moduleName" == "storage" ]; then
+
 	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
 	echo "- open /etc/default/nfs-kernel-server"
 	echo "-	comment out the line RPCMOUNTDOPTS=--manage-gids"
 	echo "- add the following line RPCMOUNTDOPTS=\"-p 13035\""
-	echo "- Restart NFSd with sudo /etc/init.d/nfs-kernel-server restart"
+	echo "- Restart NFSd with sudo systemctl restart nfs-kernel-server"
 else
 	echo ""
 	create-directory $moduleName
-	install-mms-packages $moduleName
+	#install-mms-packages $moduleName
 fi
-#firewall-rules $moduleName
+firewall-rules $moduleName
 
 if [ "$moduleName" == "storage" ]; then
 
 	echo "- fdisk and mkfs to format the disks"
-	echo "- mkdir /MMSRepository/MMS_XXXX"
+	echo "- mkdir /mnt/MMSRepository/MMS_XXXX"
 	echo "- initialize /etc/fstab"
 	echo "- mount -a"
-	echo "- chown -R mms:mms /MMSRepository"
+	echo "- chown -R mms:mms /mnt/MMSRepository"
 	echo "- initialize /etc/exports"
 	echo "- exportfs -ra"
 else
@@ -799,12 +818,12 @@ else
 	echo ""
 	echo "- in case of api/engine/load-balancer, initialize /etc/hosts"
 	echo ""
-	echo "- run the commands as mms user 'sudo mkdir /mmsRepository0001; sudo chown mms:mms /mmsRepository0001; ln -s /mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
+	echo "- run the commands as mms user 'sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
 	echo ""
-	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mmsStorage): mkdir /mmsStorage/IngestionRepository; mkdir /mmsStorage/MMSGUI; mkdir /mmsStorage/MMSWorkingAreaRepository; mkdir /mmsStorage/MMSRepository-free; mkdir /mmsStorage/MMSLive; mkdir /mmsStorage/dbDump; mkdir /mmsStorage/commonConfiguration; chown -R mms:mms /mmsStorage/*"
+	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mnt/mmsStorage): mkdir /mnt/mmsStorage/IngestionRepository; mkdir /mnt/mmsStorage/MMSGUI; mkdir /mnt/mmsStorage/MMSWorkingAreaRepository; mkdir /mnt/mmsStorage/MMSRepository-free; mkdir /mnt/mmsStorage/MMSLive; mkdir /mnt/mmsStorage/dbDump; mkdir /mnt/mmsStorage/commonConfiguration; chown -R mms:mms /mnt/mmsStorage/*"
 	echo ""
 	echo "- in case it is NOT an external transcoder OR it is a nginx-load-balancer, in /etc/fstab add:"
-	echo "10.24.71.41:zpool-127340/mmsStorage	/mmsStorage	nfs	rw,_netdev,mountproto=tcp	0	0"
+	echo "10.24.71.41:zpool-127340/mnt/mmsStorage	/mmsStorage	nfs	rw,_netdev,mountproto=tcp	0	0"
 	echo "for each MMSRepository:"
 	echo "10.24.71.41:zpool-127340/mmsRepository0000	/mmsRepository0000	nfs	rw,_netdev,mountproto=tcp	0	0"
 	echo "if the NAS Repository does not have the access to the IP of the new server, add it, go to the OVH Site, login to the CiborTV project, click on Server → NAS e CDN, Aggiungi un accesso per mmsStorage, Aggiungi un accesso per mmsRepository0000"
