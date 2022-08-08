@@ -520,7 +520,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		echo -n "tomcat version (i.e.: 9.0.62)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		echo -n "tomcat version (i.e.: 9.0.65)? Look the version at https://www-eu.apache.org/dist/tomcat"
 		read VERSION
 		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
 		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
@@ -545,7 +545,7 @@ install-mms-packages()
 		echo "User=mms" >> /etc/systemd/system/tomcat.service
 		echo "Group=mms" >> /etc/systemd/system/tomcat.service
 		echo "" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64\"" >> /etc/systemd/system/tomcat.service
+		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
 		echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
 		echo "" >> /etc/systemd/system/tomcat.service
 		echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
@@ -816,7 +816,7 @@ else
 	echo ""
 	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
 	echo ""
-	echo "- in case of api/engine/load-balancer, initialize /etc/hosts"
+	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add 10.0.0.2 db-server-active)"
 	echo ""
 	echo "- run the commands as mms user 'sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
 	echo ""
