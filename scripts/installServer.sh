@@ -698,8 +698,12 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleName" == "api" ]; then
 		# -> http(nginx) and https(nginx)
-		ufw allow 8088
-		ufw allow 443
+		ufw allow 8088	#mms-api
+		ufw allow 8089	#mms-gui
+		ufw allow 8090	#mms-binary
+		ufw allow 8091	#mms-delivery
+		ufw allow 8092	#mms-delivery-path
+		ufw allow 8093	#mms-delivery-f
 	elif [ "$moduleName" == "engine" ]; then
 		# -> mysql
 		#ufw allow 3306
