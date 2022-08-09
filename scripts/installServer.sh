@@ -699,7 +699,7 @@ firewall-rules()
 	ufw allow 9255
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		#engine -> transcoder(nginx)
+		#api and engine -> transcoder(nginx)
 		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
 
 		#connection rtmp from public
