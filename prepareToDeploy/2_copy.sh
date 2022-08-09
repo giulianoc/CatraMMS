@@ -45,6 +45,10 @@ if [ "$deploy" == "y" ]; then
 	echo "hetzner-transcoder-1"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@49.12.33.127:/opt/catramms
 	date
+
+	echo "hetzner-transcoder-2"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@23.88.119.17:/opt/catramms
+	date
 fi
 
 echo -n "deploy su cibortv? " 
