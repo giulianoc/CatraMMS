@@ -40,12 +40,17 @@ removePreviousVersions()
 }
 
 
-linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
-#linuxName using centos will be "centos", next remove "
-linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
+#linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
+##linuxName using centos will be "centos", next remove "
+#linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
 
-if [ ! -f "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz" ]; then
-    echo "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz does not exist."
+#if [ ! -f "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz" ]; then
+#    echo "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz does not exist."
+
+#	exit
+#fi
+if [ ! -f "/opt/catramms/CatraMMS-$version.tar.gz" ]; then
+    echo "/opt/catramms/CatraMMS-$version.tar.gz does not exist."
 
 	exit
 fi
@@ -64,8 +69,10 @@ rm -f CatraMMS
 
 sleep 1
 
-echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
-tar xvfz CatraMMS-$version-$linuxName.tar.gz
+#echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
+#tar xvfz CatraMMS-$version-$linuxName.tar.gz
+echo "tar xvfz CatraMMS-$version.tar.gz"
+tar xvfz CatraMMS-$version.tar.gz
 
 echo "ln -s CatraMMS-$version CatraMMS"
 ln -s CatraMMS-$version CatraMMS
