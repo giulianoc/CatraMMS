@@ -2539,7 +2539,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             apiKey = Encrypt::opensslEncrypt(sourceApiKey);
 			_logger->info(__FILEREF__ + "Encrypt::opensslEncrypt"
 				+ ", sourceApiKey: " + sourceApiKey
-				+ ", apiKey: " + apiKey
+				+ ", apiKey: '" + apiKey + "'"
 			);
 
             bool isOwner = isSharedWorkspace ? false : true;
