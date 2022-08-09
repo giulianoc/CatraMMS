@@ -6604,6 +6604,23 @@ void FFMPEGEncoder::liveRecorderThread(
 		// this is the global shared path where the chunks would be moved for the ingestion
         liveRecording->_stagingContentsPath =
 			liveRecorderMedatada.get("stagingContentsPath", "").asString();
+		// 2022-08-09: the stagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
+		// 		into the shared working area.
+		// 		In case of an external encoder, the external working area does not have this directory
+		// 		and the encoder will fail. For this reason, the directory is created if it does not exist
+		if (!FileIO::directoryExisting(liveRecording->_stagingContentsPath))
+		{
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			_logger->info(__FILEREF__ + "Creating directory"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			);
+			FileIO::createDirectory(liveRecording->_stagingContentsPath,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
+				noErrorIfExists, recursive);
+		}
+
         liveRecording->_segmentListFileName =
 			liveRecorderMedatada.get("segmentListFileName", "").asString();
         liveRecording->_recordedFileNamePrefix =
@@ -6739,7 +6756,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
 
 		bool monitorHLS;
-		bool virtualVOD;
+		// bool virtualVOD;
 		// Json::Value monitorVirtualVODEncodingProfileDetailsRoot = Json::nullValue;
 		// bool monitorIsVideo = true;
 		// string monitorManifestDirectoryPath;
@@ -8774,7 +8791,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	catch (runtime_error e)
 	{
 		string errorMessage = e.what();
-		_logger->error(__FILEREF__ + "Moving of the chunk failed"
+		_logger->error(__FILEREF__ + "Coping/Moving of the chunk failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", exception: " + errorMessage
 		);
