@@ -2537,6 +2537,10 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
             string sourceApiKey = emailAddress + "__SEP__" + to_string(e());
             apiKey = Encrypt::opensslEncrypt(sourceApiKey);
+			_logger->info(__FILEREF__ + "Encrypt::opensslEncrypt"
+				+ ", sourceApiKey: " + sourceApiKey
+				+ ", apiKey: " + apiKey
+			);
 
             bool isOwner = isSharedWorkspace ? false : true;
 			bool isDefault = false;
