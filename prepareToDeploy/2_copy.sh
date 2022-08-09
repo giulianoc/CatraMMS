@@ -33,16 +33,16 @@ fi
 echo -n "deploy su cloud production? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "aws-mms-api-gui-ohio-1"
-	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-3-12-189-135.us-east-2.compute.amazonaws.com:/opt/catramms
+	echo "hetzner-api-gui-2"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@168.119.250.162:/opt/catramms
 	date
 
-	echo "aws-mms-engine-db-ohio-1"
-	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-3-131-185-209.us-east-2.compute.amazonaws.com:/opt/catramms
+	echo "hetzner-engine-db-2"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@168.119.60.134:/opt/catramms
 	date
 
-	echo "aws-mms-transcoder-ohio-1"
-	scp -i ~/ssh-keys/aws-mms-key-ohio.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-18-119-51-105.us-east-2.compute.amazonaws.com:/opt/catramms
+	echo "hetzner-transcoder-1"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@49.12.33.127:/opt/catramms
 	date
 fi
 

@@ -106,6 +106,11 @@ install-packages()
 	apt-get -y install nfs-common
 
 	echo ""
+	read -n 1 -s -r -p "install cifs-utils..."
+	echo ""
+	apt-get -y install cifs-utils
+
+	echo ""
 	read -n 1 -s -r -p "install libfcgi-dev..."
 	echo ""
 	apt-get -y install libfcgi-dev
@@ -339,7 +344,7 @@ create-directory()
 	fi
 
 	ln -s /mnt/logs /var/catramms/logs
-	chmod -R mms:mms /mnt/logs
+	chown -R mms:mms /mnt/logs
 
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 		mkdir /var/catramms/logs/tomcat-gui
@@ -445,6 +450,8 @@ install-mms-packages()
 {
 	moduleName=$1
 
+	architecture=x86_64-ubuntu-22.04
+
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
@@ -452,7 +459,7 @@ install-mms-packages()
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -460,11 +467,11 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
-		echo -n "$packageName version (i.e.: 7.0.10)? "
+		echo -n "$packageName version (i.e.: 7.1.0)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -474,29 +481,29 @@ install-mms-packages()
 		package=curlpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
 
 	packageName=ffmpeg
 	echo ""
-	echo -n "$packageName version (i.e.: 4.4)? "
+	echo -n "$packageName version (i.e.: 5.1)? "
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
 
 	packageName=nginx
 	echo ""
-	echo -n "$packageName version (i.e.: 1.19.4)? "
+	echo -n "$packageName version (i.e.: 1.22.0)? "
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
@@ -588,7 +595,7 @@ install-mms-packages()
 		package=opencv
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	fi
 
@@ -601,11 +608,11 @@ install-mms-packages()
 		#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
 		packageName=youtube-dl
 		echo ""
-		echo -n "$packageName version (i.e.: 2021-04-05)? "
+		echo -n "$packageName version (i.e.: 2022-08-07)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
@@ -614,11 +621,11 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		echo -n "$packageName version (i.e.: 1.0.150)? "
+		echo -n "$packageName version (i.e.: 1.0.1530)? "
 		read version
-		package=$packageName-$version-ubuntu
+		package=$packageName-$version
 		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 	fi
@@ -626,20 +633,21 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.2030)? "
+	echo -n "$packageName version (i.e.: 1.0.2390)? "
 	read version
-	package=$packageName-$version-ubuntu
+	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
 
 
 	packageName=aws-sdk-cpp
-	echo ""
 	package=$packageName
+	read -n 1 -s -r -p "Downloading $package..."
+	echo ""
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
 	if [ "$moduleName" == "externalEncoder" ]; then
@@ -654,7 +662,7 @@ install-mms-packages()
 		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
 		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
 	else
-		ln -s /var/catramms/storage/commonConfiguration/.aws ~
+		ln -s /var/catramms/storage/commonConfiguration/.aws ~mms
 	fi
 
 
@@ -667,7 +675,7 @@ install-mms-packages()
 		echo ""
 		package=$packageName
 		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.cibortv-mms.com/packages/$package.tar.gz"
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 		tar xvfz ~/$package.tar.gz -C ~
 	fi
 
@@ -692,18 +700,18 @@ firewall-rules()
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		#engine -> transcoder(nginx)
-		ufw allow 8088
+		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleName" == "api" ]; then
 		# -> http(nginx) and https(nginx)
-		ufw allow 8088	#mms-api
-		ufw allow 8089	#mms-gui
-		ufw allow 8090	#mms-binary
-		ufw allow 8091	#mms-delivery
-		ufw allow 8092	#mms-delivery-path
-		ufw allow 8093	#mms-delivery-f
+		ufw allow from 10.0.0.0/16 to any port 8088	#mms-api
+		ufw allow from 10.0.0.0/16 to any port 8089	#mms-gui
+		ufw allow from 10.0.0.0/16 to any port 8090	#mms-binary
+		ufw allow from 10.0.0.0/16 to any port 8091	#mms-delivery
+		ufw allow from 10.0.0.0/16 to any port 8092	#mms-delivery-path
+		ufw allow from 10.0.0.0/16 to any port 8093	#mms-delivery-f
 	elif [ "$moduleName" == "engine" ]; then
 		# -> mysql
 		#ufw allow 3306
@@ -714,7 +722,7 @@ firewall-rules()
 		ufw allow 443
 		ufw allow 8088
 	elif [ "$moduleName" == "storage" ]; then
-		ufw allow nfs
+		ufw allow from 10.0.0.0/16 to any port nfs
 		#ufw allow 111
 		ufw allow from 10.0.0.0/16 to any port 111
 		#ufw allow 13035
