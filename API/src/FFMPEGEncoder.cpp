@@ -8732,6 +8732,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			_logger->info(__FILEREF__ + "Chunk copying"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
 				+ ", dest: " + stagingContentsPath
 			);
@@ -8752,6 +8753,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			_logger->info(__FILEREF__ + "Chunk moving"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
 				+ ", dest: " + stagingContentsPath
 			);
@@ -8772,7 +8774,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	catch (runtime_error e)
 	{
 		string errorMessage = e.what();
-		_logger->error(__FILEREF__ + "Moving of the chink failed"
+		_logger->error(__FILEREF__ + "Moving of the chunk failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", exception: " + errorMessage
 		);
