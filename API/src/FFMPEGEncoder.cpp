@@ -9685,6 +9685,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		// request.setOpt(new curlpp::options::Post(true));
+		request.setOpt(new curlpp::options::CustomRequest{"POST"});
 		request.setOpt(new curlpp::options::PostFieldSizeLarge(chunkFileSize));
 
 		// Setting the URL to retrive.
