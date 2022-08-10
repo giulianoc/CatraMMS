@@ -9318,14 +9318,12 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
-    /*    
-    logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
+    logger->info(__FILEREF__ + "curlUploadCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
         + ", curlUploadData->fileSizeInBytes: " + to_string(curlUploadData->fileSizeInBytes)
     );
-    */
 
     if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
@@ -9686,8 +9684,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			header.push_back(basicAuthorization);
 		}
 
-		request.setOpt(new curlpp::options::Post(true));
-		// request.setOpt(new curlpp::options::PostFieldSize(chunkFileSize));
+		// request.setOpt(new curlpp::options::Post(true));
+		request.setOpt(new curlpp::options::PostFieldSizeLarge(chunkFileSize));
 
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(mmsBinaryURL));
