@@ -6620,7 +6620,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			"ingestionJobKey", -1);
 
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
-			"externalEncoder", true);
+			"externalEncoder", false);
 
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
@@ -9318,12 +9318,14 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
+	/*
     logger->info(__FILEREF__ + "curlUploadCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
         + ", curlUploadData->fileSizeInBytes: " + to_string(curlUploadData->fileSizeInBytes)
     );
+	*/
 
     if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
