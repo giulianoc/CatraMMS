@@ -98,6 +98,7 @@ struct LiveRecording
 	string					_errorMessage;
 
 	int64_t					_ingestionJobKey;
+	bool					_externalEncoder;
 	Json::Value				_encodingParametersRoot;
 	Json::Value				_ingestedParametersRoot;
 	string					_streamSourceType;
@@ -124,6 +125,7 @@ struct LiveRecording
 
 		liveRecording->_running = _running;
 		liveRecording->_encodingJobKey = _encodingJobKey;
+		liveRecording->_externalEncoder = _externalEncoder;
 		liveRecording->_ffmpeg = _ffmpeg;
 		liveRecording->_childPid = _childPid;
 		liveRecording->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
@@ -383,7 +385,7 @@ private:
 	pair<string, double> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string streamSourceType, 
-		// bool highAvailability, bool main,
+		bool externalEncoder,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value ingestedParametersRoot,
@@ -396,7 +398,7 @@ private:
 	pair<string, double> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string streamSourceType, 
-		// bool highAvailability, bool main,
+		bool externalEncoder,
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value ingestedParametersRoot,
@@ -441,15 +443,12 @@ private:
 	void liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t ingestionJobKey,
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
-		string stagingContentsPath,
 		string addContentTitle,
 		string uniqueName,
-		// bool highAvailability,
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot,
-		bool copy);
+		Json::Value encodingParametersRoot);
 	long liveRecorder_buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,

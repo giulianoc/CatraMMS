@@ -42,9 +42,10 @@ public:
 
     virtual ~EncodersLoadBalancer();
 
-    string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string encoderToSkip);
+    string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace,
+		string encoderToSkip);
     
-	pair<int64_t, string> getEncoderURL(
+	tuple<int64_t, string, bool> getEncoderURL(
 		string encodersPoolLabel, shared_ptr<Workspace> workspace,
 		int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 

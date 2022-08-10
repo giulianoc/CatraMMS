@@ -3292,7 +3292,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
     } 
 }
 
-string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
+pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 	string serverName)
 {
     string      lastSQLCommand;
@@ -3389,7 +3389,7 @@ string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 			+ ", encoderURL: " + encoderURL
         );
 
-		return encoderURL;
+		return make_pair(encoderURL, external);
     }
     catch(sql::SQLException se)
     {

@@ -2321,6 +2321,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 	bool responseInitialized = false;
 	try
 	{
+		bool externalEncoder = false;
+
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
@@ -2331,10 +2333,12 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "getEncoderHost"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2855,8 +2859,9 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -3932,6 +3937,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -3942,10 +3948,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4286,8 +4294,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -4937,15 +4946,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 	try
 	{
 		string stagingEncodedAssetPathName;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5217,8 +5229,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -5899,6 +5912,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 	try
 	{
 		string stagingEncodedAssetPathName;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -5910,10 +5924,12 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6241,8 +6257,9 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -6713,6 +6730,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -6724,10 +6742,12 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7076,8 +7096,9 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -7502,6 +7523,7 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -7513,10 +7535,12 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7805,8 +7829,9 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -8231,6 +8256,7 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -8242,10 +8268,12 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -8532,8 +8560,9 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -9037,6 +9066,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 	bool responseInitialized = false;
 	try
 	{
+		bool externalEncoder = false;
+
 		if (_encodingItem->_encoderKey == -1) // || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
@@ -9047,10 +9078,12 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9337,8 +9370,9 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			// stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -9711,6 +9745,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 	try
 	{
 		string slideShowMediaPathName;
+		bool externalEncoder = false;
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
@@ -9722,10 +9757,12 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
-            pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+			tuple<int64_t, string, bool> encoderDetails =
+				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+				externalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -10015,8 +10052,9 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-				_encodingItem->_encoderKey);
+			pair<string, bool> encoderDetails =
+				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			slideShowMediaPathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -12170,13 +12208,16 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
+			bool externalEncoder = false;
+
 			if (_encodingItem->_encoderKey == -1)
 			{
 				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
 				{
 					_currentUsedFFMpegEncoderKey = pushEncoderKey;
-					_currentUsedFFMpegEncoderHost =
+					pair<string, bool> encoderDetails =
 						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, pushServerName);
+					tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 				}
 				else
 				{
@@ -12188,12 +12229,12 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					int64_t encoderKeyToBeSkipped = -1;
 					bool externalEncoderAllowed = true;
-					pair<int64_t, string> encoderURL =
+					tuple<int64_t, string, bool> encoderDetails =
 						_encodersLoadBalancer->getEncoderURL(
 							encodersPool, _encodingItem->_workspace,
 							encoderKeyToBeSkipped, externalEncoderAllowed);
-					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
-						= encoderURL;
+					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+						externalEncoder) = encoderDetails;
 				}
 
 				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
@@ -12526,6 +12567,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					Json::Value liveRecorderMedatada;
 
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveRecorderMedatada["externalEncoder"] = externalEncoder;
 					liveRecorderMedatada["userAgent"] = userAgent;
 					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
 					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
@@ -12747,8 +12789,9 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-					_encodingItem->_encoderKey);
+				pair<string, bool> encoderDetails =
+					_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+				tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 
 				// we have to reset _encodingItem->_encoderKey because in case we will come back
@@ -13916,23 +13959,27 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 		bool responseInitialized = false;
 		try
 		{
+			bool externalEncoder = false;
+
 			if (_encodingItem->_encoderKey == -1)
 			{
 				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
 				{
 					_currentUsedFFMpegEncoderKey = pushEncoderKey;
-					_currentUsedFFMpegEncoderHost =
+					pair<string, bool> encoderDetails =
 						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, pushServerName);
+					tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 				}
 				else
 				{
 					int64_t encoderKeyToBeSkipped = -1;
 					bool externalEncoderAllowed = true;
-					pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-						encodersPool, _encodingItem->_workspace,
-						encoderKeyToBeSkipped, externalEncoderAllowed);
-					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost)
-						= encoderURL;
+					tuple<int64_t, string, bool> encoderDetails =
+						_encodersLoadBalancer->getEncoderURL(
+							encodersPool, _encodingItem->_workspace,
+							encoderKeyToBeSkipped, externalEncoderAllowed);
+					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+						externalEncoder) = encoderDetails;
 				}
 
 				_logger->info(__FILEREF__ + "Configuration item"
@@ -14435,8 +14482,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-					_encodingItem->_encoderKey);
+				pair<string, bool> encoderDetails =
+					_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+				tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 				// manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
 
@@ -16015,6 +16063,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
+			bool externalEncoder = false;
+
 			if (_encodingItem->_encoderKey == -1)
 			{
 				/*
@@ -16024,10 +16074,12 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 				*/
 				int64_t encoderKeyToBeSkipped = -1;
 				bool externalEncoderAllowed = true;
-				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
-					encoderKeyToBeSkipped, externalEncoderAllowed);
-				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+				tuple<int64_t, string, bool> encoderDetails =
+					_encodersLoadBalancer->getEncoderURL(
+						encodersPool, _encodingItem->_workspace,
+						encoderKeyToBeSkipped, externalEncoderAllowed);
+				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
+						externalEncoder) = encoderDetails;
 
 				_logger->info(__FILEREF__ + "Configuration item"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -16482,8 +16534,9 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(
-					_encodingItem->_encoderKey);
+				pair<string, bool> encoderDetails =
+					_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+				tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 				// manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
 

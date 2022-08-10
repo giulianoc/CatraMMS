@@ -6619,6 +6619,9 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_ingestionJobKey = JSONUtils::asInt64(liveRecorderMedatada,
 			"ingestionJobKey", -1);
 
+        liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
+			"externalEncoder", false);
+
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -6633,6 +6636,10 @@ void FFMPEGEncoder::liveRecorderThread(
 		// 		into the shared working area.
 		// 		In case of an external encoder, the external working area does not have this directory
 		// 		and the encoder will fail. For this reason, the directory is created if it does not exist
+		// 2022-08-10: in case of an external encoder, the chunk has to be ingested
+		//	as push, so the stagingContentsPath dir is not used at all
+		//	For this reason the directory check is useless and it is commented
+		/*
 		if (!FileIO::directoryExisting(liveRecording->_stagingContentsPath))
 		{
 			bool noErrorIfExists = true;
@@ -6645,6 +6652,7 @@ void FFMPEGEncoder::liveRecorderThread(
 				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
 				noErrorIfExists, recursive);
 		}
+		*/
 
         liveRecording->_segmentListFileName =
 			liveRecorderMedatada.get("segmentListFileName", "").asString();
@@ -7545,7 +7553,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
 									liveRecording->_streamSourceType,
-									// highAvailability, main,
+									liveRecording->_externalEncoder,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_ingestedParametersRoot,
@@ -7563,7 +7571,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
 									liveRecording->_streamSourceType,
-									// highAvailability, main,
+									liveRecording->_externalEncoder,
 									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_ingestedParametersRoot,
@@ -7881,7 +7889,7 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string streamSourceType,
-	// bool highAvailability, bool main,
+	bool externalEncoder,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value ingestedParametersRoot,
@@ -8219,18 +8227,25 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						+ ", addContentTitle: " + addContentTitle
 					);
 
-					liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-						transcoderStagingContentsPath, currentRecordedAssetFileName,
-						stagingContentsPath,
-						addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-						ingestedParametersRoot, encodingParametersRoot,
-						false);
+					if (externalEncoder)
+						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
+							transcoderStagingContentsPath, currentRecordedAssetFileName,
+							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
+							ingestedParametersRoot, encodingParametersRoot);
+					else
+						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
+							transcoderStagingContentsPath, currentRecordedAssetFileName,
+							stagingContentsPath,
+							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
+							ingestedParametersRoot, encodingParametersRoot,
+							false);
 				}
 				catch(runtime_error e)
 				{
-					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder failed"
+					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", externalEncoder: " + to_string(externalEncoder)
 						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 						+ ", stagingContentsPath: " + stagingContentsPath
@@ -8243,9 +8258,10 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				}
 				catch(exception e)
 				{
-					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder failed"
+					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", externalEncoder: " + to_string(externalEncoder)
 						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 						+ ", stagingContentsPath: " + stagingContentsPath
@@ -8301,7 +8317,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string streamSourceType,
-	// bool highAvailability, bool main,
+	bool externalEncoder,
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value ingestedParametersRoot,
@@ -8644,18 +8660,25 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", addContentTitle: " + addContentTitle
 									);
 
-									liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-										transcoderStagingContentsPath, toBeIngestedSegmentFileName,
-										stagingContentsPath,
-										addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-										ingestedParametersRoot, encodingParametersRoot,
-										true);
+									if (externalEncoder)
+										liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
+											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
+											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
+											ingestedParametersRoot, encodingParametersRoot);
+									else
+										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
+											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
+											stagingContentsPath,
+											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
+											ingestedParametersRoot, encodingParametersRoot,
+											true);
 								}
 								catch(runtime_error e)
 								{
-									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder failed"
+									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", externalEncoder: " + to_string(externalEncoder)
 										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
 										+ ", stagingContentsPath: " + stagingContentsPath
@@ -8668,9 +8691,10 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 								}
 								catch(exception e)
 								{
-									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder failed"
+									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", externalEncoder: " + to_string(externalEncoder)
 										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
 										+ ", stagingContentsPath: " + stagingContentsPath
@@ -9317,15 +9341,12 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	int64_t ingestionJobKey,
 	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
-	string stagingContentsPath,
 	string addContentTitle,
 	string uniqueName,
-	// bool highAvailability,
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot,
-	bool copy)
+	Json::Value encodingParametersRoot)
 {
 	string mmsAPIURL;
 	ostringstream response;

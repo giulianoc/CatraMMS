@@ -2420,7 +2420,7 @@ public:
 	int getEncodersNumberByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel);
 
-	string getEncoderURL(int64_t encoderKey, string serverName = "");
+	pair<string, bool> getEncoderURL(int64_t encoderKey, string serverName = "");
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

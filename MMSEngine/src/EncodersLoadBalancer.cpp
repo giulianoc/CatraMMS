@@ -90,7 +90,7 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
 }
 */
 
-pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
+tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	string encodersPoolLabel, shared_ptr<Workspace> workspace,
 	int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed)
 {
@@ -115,8 +115,8 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 		string internalServerName;
 		int port;
 
-		tie(encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port)
-			= encoderByEncodersPool;
+		tie(encoderKey, externalEncoder, protocol, publicServerName,
+			internalServerName, port) = encoderByEncodersPool;
 
 		string encoderURL;
 		if (externalEncoder)
@@ -132,7 +132,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 			+ ", encoderURL: " + encoderURL
         );
 
-		return make_pair(encoderKey, encoderURL);
+		return make_tuple(encoderKey, encoderURL, externalEncoder);
 	}
     catch(EncoderNotFound e)
     {

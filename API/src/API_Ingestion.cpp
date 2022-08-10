@@ -5722,8 +5722,10 @@ void API::changeLiveProxyPlaylist(
 				// (timing to be run in the future). In this case broadcastEncoderKey will be -1
 				if (broadcastEncoderKey > 0)
 				{
-					string transcoderHost = _mmsEngineDBFacade->getEncoderURL(
+					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(
 						broadcastEncoderKey);
+					string transcoderHost;
+					tie(transcoderHost, ignore) = encoderDetails;
 
 					ffmpegEncoderURL = 
 						transcoderHost
