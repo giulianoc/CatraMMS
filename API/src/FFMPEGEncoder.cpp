@@ -9687,7 +9687,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		request.setOpt(new curlpp::options::Post(true));
-		request.setOpt(new curlpp::options::PostFieldSize(chunkFileSize));
+		// request.setOpt(new curlpp::options::PostFieldSize(chunkFileSize));
 
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(mmsBinaryURL));
