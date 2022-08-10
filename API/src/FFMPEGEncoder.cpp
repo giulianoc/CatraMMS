@@ -6620,7 +6620,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			"ingestionJobKey", -1);
 
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
-			"externalEncoder", false);
+			"externalEncoder", true);
 
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
