@@ -164,6 +164,13 @@ struct EncodingCompleted
 
 class FFMPEGEncoder: public APICommon {
 public:
+	struct CurlUploadData {
+		ifstream	mediaSourceFileStream;
+
+		int64_t		lastByteSent;
+		int64_t		fileSizeInBytes;        
+	};
+
     FFMPEGEncoder(
 		Json::Value configuration, 
 		// string encoderCapabilityConfigurationPathName,
@@ -327,11 +334,16 @@ private:
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
     int									_mmsAPIPort;
-    // string								_mmsAPIUser;
-    // string								_mmsAPIPassword;
     string								_mmsAPIIngestionURI;
     string								_mmsAPIVersion;
     int									_mmsAPITimeoutInSeconds;
+
+	string						_mmsBinaryProtocol;
+	string						_mmsBinaryHostname;
+	int							_mmsBinaryPort;
+	string						_mmsBinaryIngestionURI;
+	string						_mmsBinaryVersion;
+	int							_mmsBinaryTimeoutInSeconds;
 
     void encodeContentThread(
         // FCGX_Request& request,
@@ -401,7 +413,32 @@ private:
 	bool liveRecorder_isLastLiveRecorderFile(int64_t ingestionJobKey, int64_t encodingJobKey,
 			time_t currentRecordedFileCreationTime, string transcoderStagingContentsPath,
 			string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk);
-	void liveRecorder_ingestRecordedMedia(
+	void liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
+		int64_t ingestionJobKey,
+		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+		string stagingContentsPath,
+		string addContentTitle,
+		string uniqueName,
+		// bool highAvailability,
+		Json::Value userDataRoot,
+		string fileFormat,
+		Json::Value ingestedParametersRoot,
+		Json::Value encodingParametersRoot,
+		bool copy);
+	tuple<int64_t, string, string> liveRecorder_buildRecordedMediaWorkflow(
+		int64_t ingestionJobKey,
+		bool externalEncoder,
+		string currentRecordedAssetFileName,
+		string stagingContentsPath,
+		string addContentTitle,
+		string uniqueName,
+		Json::Value userDataRoot,
+		string fileFormat,
+		Json::Value ingestedParametersRoot,
+		Json::Value encodingParametersRoot
+	);
+
+	void liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t ingestionJobKey,
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
 		string stagingContentsPath,
