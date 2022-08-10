@@ -22,7 +22,7 @@
 
 SET (SOURCES
 	AWSSigner.cpp
-	Workspace.cpp
+	MMSCURL.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
@@ -38,6 +38,7 @@ SET (SOURCES
 	MMSEngineDBFacade_UserWorkspace.cpp
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp
+	Workspace.cpp
 	JSONUtils.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
@@ -48,10 +49,11 @@ SET (SOURCES
 )
 SET (HEADERS
 	AWSSigner.h
-	Workspace.h
+	MMSCURL.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
 	PersistenceLock.h
+	Workspace.h
 	JSONUtils.h
 	Validator.h
 	ActiveEncodingsManager.h

@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "MMSCURL.h"
 #include <fstream>
 #include <sstream>
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -6620,7 +6621,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			"ingestionJobKey", -1);
 
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
-			"externalEncoder", false);
+			"externalEncoder", true);
 
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
@@ -9310,6 +9311,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	}
 }
 
+/*
 size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     FFMPEGEncoder::CurlUploadData* curlUploadData = (FFMPEGEncoder::CurlUploadData*) f;
@@ -9318,16 +9320,6 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
-	/*
-    logger->info(__FILEREF__ + "curlUploadCallback"
-        + ", currentFilePosition: " + to_string(currentFilePosition)
-        + ", size: " + to_string(size)
-        + ", nmemb: " + to_string(nmemb)
-        + ", curlUploadData->fileSizeInBytes: " + to_string(curlUploadData->fileSizeInBytes)
-    );
-	*/
-
-    if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
     else
         curlUploadData->mediaSourceFileStream.read(ptr,
@@ -9337,6 +9329,7 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     
     return charsRead;        
 };
+*/
 
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	int64_t ingestionJobKey,
@@ -9382,6 +9375,18 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			+ _mmsAPIIngestionURI
             ;
 
+		string sResponse = MMSCURL::postPutString(
+			ingestionJobKey,
+			mmsAPIURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
+		);
+		/*
 		list<string> header;
 
 		header.push_back("Content-Type: application/json");
@@ -9459,6 +9464,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 
            	throw runtime_error(message);
 		}
+		*/
 
 		try
 		{
@@ -9576,30 +9582,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch (curlpp::LogicError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (LogicError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-            
-		throw e;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (RuntimeError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
-	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
@@ -9645,6 +9627,29 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			transcoderStagingContentsPath + currentRecordedAssetFileName,
 			inCaseOfLinkHasItToBeRead);
 
+		mmsBinaryURL =
+			_mmsBinaryProtocol
+			+ "://"
+			+ _mmsBinaryHostname + ":"
+			+ to_string(_mmsBinaryPort)
+			+ "/catramms/"
+			+ _mmsBinaryVersion
+			+ _mmsBinaryIngestionURI
+			+ "/" + to_string(addContentIngestionJobKey)
+		;
+
+		string sResponse = MMSCURL::postPutFile(
+			ingestionJobKey,
+			mmsBinaryURL,
+			"POST",	// requestType
+			_mmsBinaryTimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			transcoderStagingContentsPath + currentRecordedAssetFileName,
+			chunkFileSize,
+			_logger);
+
+		/*
 		CurlUploadData curlUploadData;
 		curlUploadData.mediaSourceFileStream.open(
 			transcoderStagingContentsPath + currentRecordedAssetFileName, ios::binary);
@@ -9663,17 +9668,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			bool upload = true;
 			request.setOpt(new curlpp::options::Upload(upload));
 		}
-
-		mmsBinaryURL =
-			_mmsBinaryProtocol
-			+ "://"
-			+ _mmsBinaryHostname + ":"
-			+ to_string(_mmsBinaryPort)
-			+ "/catramms/"
-			+ _mmsBinaryVersion
-			+ _mmsBinaryIngestionURI
-			+ "/" + to_string(addContentIngestionJobKey)
-		;
 
 		list<string> header;
 
@@ -9748,30 +9742,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 
 			throw runtime_error(message);
 		}
-	}
-	catch (curlpp::LogicError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed (LogicError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-            
-		throw e;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed (RuntimeError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
+		*/
 	}
 	catch (runtime_error e)
 	{
