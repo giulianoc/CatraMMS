@@ -10715,6 +10715,83 @@ void FFMpeg::liveRecorder(
 			}
     	}
 
+		if (segmenterType == "streamSegmenter")
+		{
+			if (segmentListPath != "" && FileIO::directoryExisting(segmentListPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", segmentListPath: " + segmentListPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+			}
+		}
+		else // if (segmenterType == "hlsSegmenter")
+		{
+			if (segmentListPath != "" && FileIO::directoryExisting(segmentListPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", segmentListPath: " + segmentListPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+			}
+		}
+
 		/*
 		if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcRecordingPeriodEnd - utcNow - 60))
 		{
@@ -10920,6 +10997,83 @@ void FFMpeg::liveRecorder(
 				}
 			}
     	}
+
+		if (segmenterType == "streamSegmenter")
+		{
+			if (FileIO::directoryExisting(segmentListPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", segmentListPath: " + segmentListPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+			}
+		}
+		else // if (segmenterType == "hlsSegmenter")
+		{
+			if (FileIO::directoryExisting(segmentListPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", segmentListPath: " + segmentListPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", segmentListPath: " + segmentListPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+			}
+		}
 
 		/*
 		if (monitorHLS)
