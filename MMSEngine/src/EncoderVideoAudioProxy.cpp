@@ -12369,7 +12369,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									_encodingItem->_workspace->_directoryName,
 									to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
 									"/",    // _encodingItem->_relativePath,
-									to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
+									"content",	// to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
 									-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 									-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 									removeLinuxPathIfExist);
