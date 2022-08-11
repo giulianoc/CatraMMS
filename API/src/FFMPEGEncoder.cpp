@@ -9892,9 +9892,12 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	try
 	{
 		{
-			liveRecorderVirtualVODName = to_string(liveRecorderIngestionJobKey)
-				+ "_liveRecorderVirtualVOD"
-			;
+			if (externalEncoder)
+				liveRecorderVirtualVODName = "content";
+			else
+				liveRecorderVirtualVODName = to_string(liveRecorderIngestionJobKey)
+					+ "_liveRecorderVirtualVOD"
+				;
 
 			if (stagingLiveRecorderVirtualVODPathName != ""
 				&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
