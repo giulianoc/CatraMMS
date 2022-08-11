@@ -7765,9 +7765,16 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD ..."
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+						+ ", externalEncoder: " + to_string(copiedLiveRecording->_externalEncoder)
 						+ ", running: " + to_string(copiedLiveRecording->_running)
 						+ ", virtualVOD: " + to_string(copiedLiveRecording->_virtualVOD)
 						+ ", virtualVODsNumber: " + to_string(virtualVODsNumber)
+						+ ", monitorVirtualVODManifestDirectoryPath: "
+							+ copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath
+						+ ", monitorVirtualVODManifestFileName: "
+							+ copiedLiveRecording->_monitorVirtualVODManifestFileName
+						+ ", virtualVODStagingContentsPath: "
+							+ copiedLiveRecording->_virtualVODStagingContentsPath
 					);
 
 					long segmentsNumber = 0;
@@ -9876,16 +9883,6 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 )
 {
 
-	_logger->info(__FILEREF__ + "Received liveRecorder_buildAndIngestVirtualVOD"
-		+ ", ingestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-		+ ", encodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-		+ ", externalEncoder: " + to_string(externalEncoder)
-		+ ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
-		+ ", sourceManifestFileName: " + sourceManifestFileName
-		+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-		+ ", deliveryCode: " + to_string(deliveryCode)
-	);
-
 	long segmentsNumber = 0;
 
 	// let's build the live recorder virtual VOD
@@ -9897,17 +9894,36 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	int64_t utcStartTimeInMilliSecs = -1;
 	int64_t utcEndTimeInMilliSecs = -1;
 
-	string liveRecorderVirtualVODName;
+	string virtualVODM3u8DirectoryName;
 	string tarGzStagingLiveRecorderVirtualVODPathName;
 	try
 	{
 		{
-			if (externalEncoder)
-				liveRecorderVirtualVODName = "content";
-			else
-				liveRecorderVirtualVODName = to_string(liveRecorderIngestionJobKey)
-					+ "_liveRecorderVirtualVOD"
-				;
+			// virtualVODM3u8DirectoryName = to_string(liveRecorderIngestionJobKey)
+			// 	+ "_liveRecorderVirtualVOD"
+			// ;
+			{
+				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
+				if (endOfPathIndex == string::npos)
+				{
+					string errorMessage = string("No stagingLiveRecorderVirtualVODPathName found")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+				// stagingLiveRecorderVirtualVODPathName is initialized in EncoderVideoAudioProxy.cpp
+				// and virtualVODM3u8DirectoryName will be the name of the directory of the m3u8 of the Virtual VOD
+				// In case of externalEncoder, since PUSH is used, virtualVODM3u8DirectoryName has to be 'content'
+				// (see the Add-Content Task documentation). For this reason, in EncoderVideoAudioProxy.cpp,
+				// 'content' is used
+				virtualVODM3u8DirectoryName =
+					stagingLiveRecorderVirtualVODPathName.substr(endOfPathIndex + 1);
+			}
+
 
 			if (stagingLiveRecorderVirtualVODPathName != ""
 				&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
@@ -10229,7 +10245,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				executeCommand =
 					"tar cfz " + tarGzStagingLiveRecorderVirtualVODPathName
 					+ " -C " + stagingLiveRecorderVirtualVODDirectory
-					+ " " + liveRecorderVirtualVODName;
+					+ " " + virtualVODM3u8DirectoryName;
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
 				);
