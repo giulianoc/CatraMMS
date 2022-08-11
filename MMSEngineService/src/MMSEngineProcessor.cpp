@@ -23960,6 +23960,8 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
         string md5FileCheckSum, int fileSizeInBytes)
 {
 
+	/*
+		2022-08-11: even in case of m3u8-tar.gz it is a file (.tar.gz)
 	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case it is a directory with segments inside
@@ -23977,6 +23979,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 		}
 	}
 	else
+	*/
 	{
 		// we added the following two parameters for the FileIO::fileExisting method
 		// because, in the scenario where still MMS generates the file to be ingested
