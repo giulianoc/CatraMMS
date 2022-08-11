@@ -69,6 +69,7 @@
 		//	Live Recording. 
 		// This field is optional, if not present no LiveRecorderVOD is generated.
 		// By default LiveRecorderVirtualVOD is not present
+		// VirtualVOD works also in case of an external transcoder
 		"LiveRecorderVirtualVOD": {
 
 			// optional. it specifies the max duration of the LiveRecorderVOD in minutes
@@ -90,6 +91,7 @@
 		// monitorHLS allows to monitor the input stream providing an HLS delivery
 		//	that can be used inside a player.
 		// This field is optional, if not present no monitor HLS is generated. By default monitorHLS is not present
+		// MonitorHLS dows NOT work in case of an external transcoder
 		"MonitorHLS": {
 
 			// optional: this parameter is needed in case we need a specific encoding profile for the monitor HLS.

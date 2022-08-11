@@ -427,7 +427,7 @@ private:
 		Json::Value ingestedParametersRoot,
 		Json::Value encodingParametersRoot,
 		bool copy);
-	tuple<int64_t, string, string> liveRecorder_buildRecordedMediaWorkflow(
+	tuple<int64_t, string, string> liveRecorder_buildChunkIngestionWorkflow(
 		int64_t ingestionJobKey,
 		bool externalEncoder,
 		string currentRecordedAssetFileName,
@@ -452,6 +452,7 @@ private:
 	long liveRecorder_buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,
+		bool externalEncoder,
 
 		string sourceSegmentsDirectoryPathName,
 		string sourceManifestFileName,
@@ -464,6 +465,22 @@ private:
 		int64_t liveRecorderVirtualVODImageMediaItemKey,
 		int64_t liveRecorderUserKey,
 		string liveRecorderApiKey);
+	string liveRecorder_buildVirtualVODIngestionWorkflow(
+		int64_t liveRecorderIngestionJobKey,
+		int64_t liveRecorderEncodingJobKey,
+		bool externalEncoder,
+
+		int64_t utcStartTimeInMilliSecs,
+		int64_t utcEndTimeInMilliSecs,
+		int64_t deliveryCode,
+		string liveRecorderIngestionJobLabel,
+		string tarGzStagingLiveRecorderVirtualVODPathName,
+		string liveRecorderVirtualVODUniqueName,
+		string liveRecorderVirtualVODRetention,
+		int64_t liveRecorderVirtualVODImageMediaItemKey);
+	long liveRecorder_getAddContentIngestionJobKey(
+		int64_t ingestionJobKey,
+		string ingestionResponse);
 
 	void liveProxyThread(
         // FCGX_Request& request,

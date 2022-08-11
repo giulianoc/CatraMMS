@@ -28,12 +28,6 @@
 #include "FFMPEGEncoder.h"
 #include "MMSStorage.h"
 
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-
 extern char** environ;
 
 int main(int argc, char** argv) 
@@ -6631,6 +6625,7 @@ void FFMPEGEncoder::liveRecorderThread(
         string userAgent = liveRecorderMedatada.get("userAgent", "").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
+		// see the comments in EncoderVideoAudioProxy.cpp
         liveRecording->_stagingContentsPath =
 			liveRecorderMedatada.get("stagingContentsPath", "").asString();
 		// 2022-08-09: the stagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
@@ -6659,8 +6654,13 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecorderMedatada.get("segmentListFileName", "").asString();
         liveRecording->_recordedFileNamePrefix =
 			liveRecorderMedatada.get("recordedFileNamePrefix", "").asString();
-        liveRecording->_virtualVODStagingContentsPath =
-			liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
+		// see the comments in EncoderVideoAudioProxy.cpp
+		if (liveRecording->_externalEncoder)
+			liveRecording->_virtualVODStagingContentsPath =
+				liveRecorderMedatada.get("virtualVODTranscoderStagingContentsPath", "").asString();
+		else
+			liveRecording->_virtualVODStagingContentsPath =
+				liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
         liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
 			JSONUtils::asInt64(liveRecorderMedatada,
 				"liveRecorderVirtualVODImageMediaItemKey", -1);
@@ -6806,6 +6806,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			if (monitorHLS || liveRecording->_virtualVOD)
 			{
+				// see the comments in EncoderVideoAudioProxy.cpp
 				liveRecording->_monitorVirtualVODManifestDirectoryPath =
 					liveRecording->_encodingParametersRoot
 					.get("monitorManifestDirectoryPath", "").asString();
@@ -7803,6 +7804,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
 							copiedLiveRecording->_ingestionJobKey,
 							copiedLiveRecording->_encodingJobKey,
+							copiedLiveRecording->_externalEncoder,
 
 							copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath,
 							copiedLiveRecording->_monitorVirtualVODManifestFileName,
@@ -8882,7 +8884,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	string workflowMetadata;
 	try
 	{
-		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildRecordedMediaWorkflow(
+		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildChunkIngestionWorkflow(
 			ingestionJobKey,
 			false,	// externalEncoder,
 			currentRecordedAssetFileName,
@@ -9130,160 +9132,17 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			+ _mmsAPIIngestionURI
             ;
 
-		list<string> header;
-
-		header.push_back("Content-Type: application/json");
-		{
-			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-			string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-		// timeout consistent with nginx configuration (fastcgi_read_timeout)
-		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-		if (_mmsAPIProtocol == "https")
-		{
-			/*
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-			*/
-
-			/*
-			// cert is stored PEM coded in file... 
-			// since PEM is default, we needn't set it for PEM 
-			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-			equest.setOpt(sslCertType);
-
-			// set the cert for client authentication
-			// "testcert.pem"
-			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-			request.setOpt(sslCert);
-			*/
-
-			/*
-			// sorry, for engine we must set the passphrase
-			//   (if the key has one...)
-			// const char *pPassphrase = NULL;
-			if(pPassphrase)
-			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-			// if we use a key stored in a crypto engine,
-			//   we must set the key type to "ENG"
-			// pKeyType  = "PEM";
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-			// set the private key (file or ID in engine)
-			// pKeyName  = "testkey.pem";
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-			// set the file with the certs vaildating the server
-			// *pCACertFile = "cacert.pem";
-			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-			*/
-
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-               
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-               
-			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "Ingesting recorded media file"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
+		string sResponse = MMSCURL::postPutString(
+			ingestionJobKey,
+			mmsAPIURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
 		);
-		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-		request.perform();
-		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				;
-			_logger->info(message);
-		}
-		else
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				+ ", responseCode: " + to_string(responseCode)
-				;
-			_logger->error(message);
-
-           	throw runtime_error(message);
-		}
-	}
-	catch (curlpp::LogicError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-            
-		throw e;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
 	}
 	catch (runtime_error e)
 	{
@@ -9311,26 +9170,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	}
 }
 
-/*
-size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
-{
-    FFMPEGEncoder::CurlUploadData* curlUploadData = (FFMPEGEncoder::CurlUploadData*) f;
-
-    auto logger = spdlog::get("Encoder");
-
-    int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
-
-        curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
-    else
-        curlUploadData->mediaSourceFileStream.read(ptr,
-			curlUploadData->fileSizeInBytes - currentFilePosition);
-
-    int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
-    
-    return charsRead;        
-};
-*/
-
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	int64_t ingestionJobKey,
 	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
@@ -9350,7 +9189,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	// create the workflow and ingest it
 	try
 	{
-		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildRecordedMediaWorkflow(
+		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildChunkIngestionWorkflow(
 			ingestionJobKey,
 			true,	// externalEncoder,
 			"",	// currentRecordedAssetFileName,
@@ -9386,201 +9225,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			"application/json",	// contentType
 			_logger
 		);
-		/*
-		list<string> header;
 
-		header.push_back("Content-Type: application/json");
-		{
-			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-			string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-		// timeout consistent with nginx configuration (fastcgi_read_timeout)
-		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-		if (_mmsAPIProtocol == "https")
-		{
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-               
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "Ingesting recorded media file"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-		request.perform();
-		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				;
-			_logger->info(message);
-		}
-		else
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				+ ", responseCode: " + to_string(responseCode)
-				;
-			_logger->error(message);
-
-           	throw runtime_error(message);
-		}
-		*/
-
-		try
-		{
-			/*
-			{
-				"tasks" :
-				[
-					{
-						"ingestionJobKey" : 10793,
-						"label" : "Add Content test",
-						"type" : "Add-Content"
-					},
-					{
-						"ingestionJobKey" : 10794,
-						"label" : "Frame Containing Face: test",
-						"type" : "Face-Recognition"
-					},
-					...
-				],
-				"workflow" :
-				{
-					"ingestionRootKey" : 831,
-					"label" : "ingestContent test"
-				}
-			}
-			*/
-			Json::Value ingestionResultResponse;
-
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(sResponse.c_str(),
-				sResponse.c_str() + sResponse.size(), 
-				&ingestionResultResponse, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__
-					+ "ingestion workflow. Failed to parse the response body"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errors: " + errors
-					+ ", sResponse: " + sResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string field = "tasks";
-			if (!JSONUtils::isMetadataPresent(ingestionResultResponse, field))
-			{
-				string errorMessage = __FILEREF__
-					"ingestion workflow. Response Body json is not well format"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errors: " + errors
-					+ ", sResponse: " + sResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			Json::Value tasksRoot = ingestionResultResponse[field];
-
-			for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
-			{
-				Json::Value ingestionJobRoot = tasksRoot[taskIndex];
-
-				field = "type";
-				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-				{
-					string errorMessage = __FILEREF__
-						"ingestion workflow. Response Body json is not well format"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-						+ ", sResponse: " + sResponse
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string type = ingestionJobRoot.get(field, "").asString();
-
-				if (type == "Add-Content")
-				{
-					field = "ingestionJobKey";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-					{
-						string errorMessage = __FILEREF__
-							"ingestion workflow. Response Body json is not well format"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-							+ ", sResponse: " + sResponse
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					addContentIngestionJobKey = JSONUtils::asInt64(ingestionJobRoot, field, -1);
-
-					break;
-				}
-			}
-        }
-		catch(...)
-		{
-			string errorMessage =
-				string("ingestion workflow. Response Body json is not well format")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sResponse: " + sResponse
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		addContentIngestionJobKey = liveRecorder_getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
 	catch (runtime_error e)
 	{
@@ -9648,101 +9294,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			transcoderStagingContentsPath + currentRecordedAssetFileName,
 			chunkFileSize,
 			_logger);
-
-		/*
-		CurlUploadData curlUploadData;
-		curlUploadData.mediaSourceFileStream.open(
-			transcoderStagingContentsPath + currentRecordedAssetFileName, ios::binary);
-		curlUploadData.lastByteSent = -1;
-		curlUploadData.fileSizeInBytes = chunkFileSize;
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		{
-			curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadCallback);
-			curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
-			request.setOpt(curlUploadCallbackFunction);
-			request.setOpt(curlUploadDataData);
-
-			bool upload = true;
-			request.setOpt(new curlpp::options::Upload(upload));
-		}
-
-		list<string> header;
-
-		header.push_back(string("Content-Length: ") + to_string(chunkFileSize));
-		{
-			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-			string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		// request.setOpt(new curlpp::options::Post(true));
-		request.setOpt(new curlpp::options::CustomRequest{"POST"});
-		request.setOpt(new curlpp::options::PostFieldSizeLarge(chunkFileSize));
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(mmsBinaryURL));
-
-		// timeout consistent with nginx configuration (fastcgi_read_timeout)
-		request.setOpt(new curlpp::options::Timeout(_mmsBinaryTimeoutInSeconds));
-
-		if (_mmsBinaryProtocol == "https")
-		{
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-              
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		_logger->info(__FILEREF__ + "Ingesting recorded media file (binary)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", binary: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-		);
-		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-		request.perform();
-		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-		(curlUploadData.mediaSourceFileStream).close();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
-		{
-			string message = __FILEREF__ + "Ingested recorded response (binary)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", sResponse: " + sResponse
-			;
-			_logger->info(message);
-		}
-		else
-		{
-			string message = __FILEREF__ + "Ingested recorded response (binary)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", sResponse: " + sResponse
-				+ ", responseCode: " + to_string(responseCode)
-			;
-			_logger->error(message);
-
-			throw runtime_error(message);
-		}
-		*/
 	}
 	catch (runtime_error e)
 	{
@@ -9770,7 +9321,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	}
 }
 
-tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildRecordedMediaWorkflow(
+tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 	int64_t ingestionJobKey,
 	bool externalEncoder,
 	string currentRecordedAssetFileName,
@@ -10309,6 +9860,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	int64_t liveRecorderIngestionJobKey,
 	int64_t liveRecorderEncodingJobKey,
+	bool externalEncoder,
 
 	string sourceSegmentsDirectoryPathName,
 	string sourceManifestFileName,
@@ -10775,6 +10327,384 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	string workflowMetadata;
 	try
 	{
+		workflowMetadata = liveRecorder_buildVirtualVODIngestionWorkflow(
+			liveRecorderIngestionJobKey,
+			liveRecorderEncodingJobKey,
+			externalEncoder,
+
+			utcStartTimeInMilliSecs,
+			utcEndTimeInMilliSecs,
+			deliveryCode,
+			liveRecorderIngestionJobLabel,
+			tarGzStagingLiveRecorderVirtualVODPathName,
+			liveRecorderVirtualVODUniqueName,
+			liveRecorderVirtualVODRetention,
+			liveRecorderVirtualVODImageMediaItemKey);
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	// ingest the Live Recorder VOD
+	ostringstream response;
+	string mmsAPIURL;
+	int64_t addContentIngestionJobKey = -1;
+	try
+	{
+		mmsAPIURL =
+			_mmsAPIProtocol
+			+ "://"
+			+ _mmsAPIHostname + ":"
+			+ to_string(_mmsAPIPort)
+			+ "/catramms/"
+			+ _mmsAPIVersion
+			+ _mmsAPIIngestionURI
+		;
+
+		string sResponse = MMSCURL::postPutString(
+			liveRecorderIngestionJobKey,
+			mmsAPIURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(liveRecorderUserKey),
+			liveRecorderApiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
+		);
+
+		if (externalEncoder)
+		{
+			addContentIngestionJobKey = liveRecorder_getAddContentIngestionJobKey(
+				liveRecorderIngestionJobKey, sResponse);
+		}
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	if (externalEncoder)
+	{
+		string mmsBinaryURL;
+		// ingest binary
+		try
+		{
+			if (addContentIngestionJobKey == -1)
+			{
+				string errorMessage =
+					string("Ingested URL failed, addContentIngestionJobKey is not valid")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			bool inCaseOfLinkHasItToBeRead = false;
+			int64_t chunkFileSize = FileIO::getFileSizeInBytes(
+				tarGzStagingLiveRecorderVirtualVODPathName,
+				inCaseOfLinkHasItToBeRead);
+
+			mmsBinaryURL =
+				_mmsBinaryProtocol
+				+ "://"
+				+ _mmsBinaryHostname + ":"
+				+ to_string(_mmsBinaryPort)
+				+ "/catramms/"
+				+ _mmsBinaryVersion
+				+ _mmsBinaryIngestionURI
+				+ "/" + to_string(addContentIngestionJobKey)
+			;
+
+			string sResponse = MMSCURL::postPutFile(
+				liveRecorderIngestionJobKey,
+				mmsBinaryURL,
+				"POST",	// requestType
+				_mmsBinaryTimeoutInSeconds,
+				to_string(liveRecorderUserKey),
+				liveRecorderApiKey,
+				tarGzStagingLiveRecorderVirtualVODPathName,
+				chunkFileSize,
+				_logger);
+
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+				);
+				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			}
+		}
+		catch (runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "Ingestion binary failed"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", mmsBinaryURL: " + mmsBinaryURL
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			);
+
+			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+				);
+				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			}
+
+			throw e;
+		}
+		catch (exception e)
+		{
+			_logger->error(__FILEREF__ + "Ingestion binary failed"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", mmsBinaryURL: " + mmsBinaryURL
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + response.str()
+			);
+
+			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+				);
+				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			}
+
+			throw e;
+		}
+	}
+
+	return segmentsNumber;
+}
+
+long FFMPEGEncoder::liveRecorder_getAddContentIngestionJobKey(
+	int64_t ingestionJobKey,
+	string ingestionResponse
+)
+{
+	try
+	{
+		int64_t addContentIngestionJobKey;
+
+		/*
+		{
+			"tasks" :
+			[
+				{
+					"ingestionJobKey" : 10793,
+					"label" : "Add Content test",
+					"type" : "Add-Content"
+				},
+				{
+					"ingestionJobKey" : 10794,
+					"label" : "Frame Containing Face: test",
+					"type" : "Face-Recognition"
+				},
+				...
+			],
+			"workflow" :
+			{
+				"ingestionRootKey" : 831,
+				"label" : "ingestContent test"
+			}
+		}
+		*/
+		Json::Value ingestionResponseRoot;
+
+		Json::CharReaderBuilder builder;
+		Json::CharReader* reader = builder.newCharReader();
+		string errors;
+
+		bool parsingSuccessful = reader->parse(ingestionResponse.c_str(),
+			ingestionResponse.c_str() + ingestionResponse.size(), 
+			&ingestionResponseRoot, &errors);
+		delete reader;
+
+		if (!parsingSuccessful)
+		{
+			string errorMessage = __FILEREF__
+				+ "ingestion workflow. Failed to parse the response body"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errors: " + errors
+				+ ", ingestionResponse: " + ingestionResponse
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string field = "tasks";
+		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
+		{
+			string errorMessage = __FILEREF__
+				"ingestion workflow. Response Body json is not well format"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errors: " + errors
+				+ ", ingestionResponse: " + ingestionResponse
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value tasksRoot = ingestionResponseRoot[field];
+
+		for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
+		{
+			Json::Value ingestionJobRoot = tasksRoot[taskIndex];
+
+			field = "type";
+			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			{
+				string errorMessage = __FILEREF__
+					"ingestion workflow. Response Body json is not well format"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errors: " + errors
+					+ ", ingestionResponse: " + ingestionResponse
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string type = ingestionJobRoot.get(field, "").asString();
+
+			if (type == "Add-Content")
+			{
+				field = "ingestionJobKey";
+				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				{
+					string errorMessage = __FILEREF__
+						"ingestion workflow. Response Body json is not well format"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", ingestionResponse: " + ingestionResponse
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				addContentIngestionJobKey = JSONUtils::asInt64(ingestionJobRoot, field, -1);
+
+				break;
+			}
+		}
+
+		return addContentIngestionJobKey;
+	}
+	catch(...)
+	{
+		string errorMessage =
+			string("ingestion workflow. Response Body json is not well format")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ingestionResponse: " + ingestionResponse
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
+	int64_t liveRecorderIngestionJobKey,
+	int64_t liveRecorderEncodingJobKey,
+	bool externalEncoder,
+
+	int64_t utcStartTimeInMilliSecs,
+	int64_t utcEndTimeInMilliSecs,
+	int64_t deliveryCode,
+	string liveRecorderIngestionJobLabel,
+	string tarGzStagingLiveRecorderVirtualVODPathName,
+	string liveRecorderVirtualVODUniqueName,
+	string liveRecorderVirtualVODRetention,
+	int64_t liveRecorderVirtualVODImageMediaItemKey
+)
+{
+	string workflowMetadata;
+
+	try
+	{
 		// {
         // 	"Label": "<workflow label>",
         // 	"Type": "Workflow",
@@ -10863,10 +10793,13 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		field = "FileFormat";
 		addContentParametersRoot[field] = "m3u8-tar.gz";
 
-		// 2021-05-30: changed from copy to move with the idea to have better performance
-		string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
-        field = "SourceURL";
-        addContentParametersRoot[field] = sourceURL;
+		if (!externalEncoder)
+		{
+			// 2021-05-30: changed from copy to move with the idea to have better performance
+			string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
+			field = "SourceURL";
+			addContentParametersRoot[field] = sourceURL;
+		}
 
 		field = "Ingester";
 		addContentParametersRoot[field] = "Live Recorder Task";
@@ -10967,6 +10900,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 			+ ", " + addContentLabel + ", "
 		);
+
+		return workflowMetadata;
 	}
 	catch (runtime_error e)
 	{
@@ -10976,15 +10911,6 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			+ ", e.what: " + e.what()
 		;
 		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
 
 		throw runtime_error(errorMessage);
 	}
@@ -10997,207 +10923,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
 		throw runtime_error(errorMessage);
 	}
-
-	// ingest the Live Recorder VOD
-	ostringstream response;
-	string mmsAPIURL;
-	try
-	{
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ "/catramms/"
-			+ _mmsAPIVersion
-			+ _mmsAPIIngestionURI
-		;
-
-		list<string> header;
-
-		header.push_back("Content-Type: application/json");
-		{
-			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-			string userPasswordEncoded = Convert::base64_encode(to_string(liveRecorderUserKey) + ":" + liveRecorderApiKey);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-		// timeout consistent with nginx configuration (fastcgi_read_timeout)
-		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-		if (_mmsAPIProtocol == "https")
-		{
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-              
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-              
-			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		_logger->info(__FILEREF__ + "Ingesting Live Recorder VOD workflow"
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-		request.perform();
-		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
-		{
-			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				;
-			_logger->info(message);
-		}
-		else
-		{
-			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				+ ", responseCode: " + to_string(responseCode)
-				;
-			_logger->error(message);
-
-			throw runtime_error(message);
-		}
-	}
-	catch (curlpp::LogicError& e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed (LogicError)")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", e.what: " + e.what()
-			+ ", response.str(): " + response.str()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch (curlpp::RuntimeError& e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed (RuntimeError)")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", e.what: " + e.what()
-			+ ", response.str(): " + response.str()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", e.what: " + e.what()
-			+ ", response.str(): " + response.str()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch (exception e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", response.str(): " + response.str()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-
-	return segmentsNumber;
 }
 
 void FFMPEGEncoder::liveProxyThread(

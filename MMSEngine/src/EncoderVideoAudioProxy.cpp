@@ -12256,7 +12256,10 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					// the recorder generates the chunks in a local(transcoder) directory
 					string transcoderStagingContentsPath;
 
-					// the chunks are moved to a shared directory to be ingested using a copy/move source URL
+					// in case of 'localTranscoder', the chunks are moved to a shared directory,
+					//		specified by 'stagingContentsPath', to be ingested using a copy/move source URL
+					// in case of an external encoder, 'stagingContentsPath' is not used and the chunk
+					//		is ingested using PUSH through the binary MMS URL (mms-binary)
 					string stagingContentsPath;
 
 					// playlist where the recorder writes the chunks generated
@@ -12264,9 +12267,17 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					string recordedFileNamePrefix;
 
-					// the virtual VOD is generated into a shared directory to be ingested
-					// using a copy/move source URL
+					// The VirtualVOD is built based on the HLS generated
+					// in the Live Directory (.../MMSLive/1/<deliverycode>/...)
+					// In case of an external encoder, the monitor will not work because the Live Directory
+					// is not the one shared with the MMS Platform, but the generated HLS will be used
+					// to build the Virtual VOD
+					// In case of a local encoder, the virtual VOD is generated into a shared directory
+					//		(virtualVODStagingContentsPath) to be ingested using a copy/move source URL
+					// In case of an external encoder, the virtual VOD is generated in a local directory
+					//	(virtualVODTranscoderStagingContentsPath) to be ingested using PUSH (mms-binary)
 					string virtualVODStagingContentsPath;
+					string virtualVODTranscoderStagingContentsPath;
 
 					int64_t liveRecorderVirtualVODImageMediaItemKey = -1;
 
@@ -12337,17 +12348,32 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 						if (virtualVOD)
 						{
-							bool removeLinuxPathIfExist = false;
-							bool neededForTranscoder = false;
-							virtualVODStagingContentsPath = _mmsStorage->getStagingAssetPathName(
-								neededForTranscoder,
-								_encodingItem->_workspace->_directoryName,
-								to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
-								"/",    // _encodingItem->_relativePath,
-								to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
-								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-								removeLinuxPathIfExist);
+							{
+								bool removeLinuxPathIfExist = false;
+								bool neededForTranscoder = false;
+								virtualVODStagingContentsPath = _mmsStorage->getStagingAssetPathName(
+									neededForTranscoder,
+									_encodingItem->_workspace->_directoryName,
+									to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
+									"/",    // _encodingItem->_relativePath,
+									to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
+									-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+									-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+									removeLinuxPathIfExist);
+							}
+							{
+								bool removeLinuxPathIfExist = false;
+								bool neededForTranscoder = true;
+								virtualVODTranscoderStagingContentsPath = _mmsStorage->getStagingAssetPathName(
+									neededForTranscoder,
+									_encodingItem->_workspace->_directoryName,
+									to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
+									"/",    // _encodingItem->_relativePath,
+									to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
+									-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+									-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+									removeLinuxPathIfExist);
+							}
 						}
 
 						if (virtualVOD && _liveRecorderVirtualVODImageLabel != "")
@@ -12566,12 +12592,15 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					Json::Value liveRecorderMedatada;
 
-					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveRecorderMedatada["ingestionJobKey"]
+						= (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveRecorderMedatada["externalEncoder"] = externalEncoder;
 					liveRecorderMedatada["userAgent"] = userAgent;
 					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
 					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
 					liveRecorderMedatada["virtualVODStagingContentsPath"] = virtualVODStagingContentsPath;
+					liveRecorderMedatada["virtualVODTranscoderStagingContentsPath"]
+						= virtualVODTranscoderStagingContentsPath;
 					liveRecorderMedatada["liveRecorderVirtualVODImageMediaItemKey"] =
 						liveRecorderVirtualVODImageMediaItemKey;
 					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
@@ -12584,7 +12613,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					{
 						Json::StreamWriterBuilder wbuilder;
-                    
+
 						body = Json::writeString(wbuilder, liveRecorderMedatada);
 					}
 				}
