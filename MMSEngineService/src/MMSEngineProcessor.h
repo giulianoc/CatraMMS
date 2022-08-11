@@ -477,11 +477,11 @@ private:
         string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
 
-	void manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey,
-		string tarBinaryPathName, string workspaceIngestionRepository,
-		string sourcePathName
-		);
+	// void manageTarFileInCaseOfIngestionOfSegments(
+	// 	int64_t ingestionJobKey,
+	// 	string tarBinaryPathName, string workspaceIngestionRepository,
+	// 	string sourcePathName
+	// 	);
 
     int progressDownloadCallback(
         int64_t ingestionJobKey,

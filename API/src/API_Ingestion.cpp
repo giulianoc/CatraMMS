@@ -2638,7 +2638,9 @@ void API::uploadedBinary(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string fileFormat = parametersRoot.get(field, "").asString();
-				if (fileFormat == "m3u8")
+				// 2022-08-11: I guess the correct fileFormat is m3u8-tar.gz and not m3u8
+				// if (fileFormat == "m3u8")
+				if (fileFormat == "m3u8-tar.gz")
 					segmentedContent = true;
 			}
 		}
@@ -2721,14 +2723,7 @@ void API::uploadedBinary(
 					// by a convention, the directory inside the tar file has to be named as 'content'
                     string localSourceBinaryPathFile = "/content.tar.gz";
 
-					_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-						+ ", destBinaryPathName: " + destBinaryPathName
-						+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
-						+ ", localSourceBinaryPathFile: " + localSourceBinaryPathFile
-					);
-
-					manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+					_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
 							destBinaryPathName, workspaceIngestionRepository,
 							localSourceBinaryPathFile);
 				}
@@ -2880,14 +2875,7 @@ void API::uploadedBinary(
 						// by a convention, the directory inside the tar file has to be named as 'content'
 						string localSourceBinaryPathFile = "/content.tar.gz";
 
-						_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-							+ ", destBinaryPathName: " + destBinaryPathName
-							+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
-							+ ", localSourceBinaryPathFile: " + localSourceBinaryPathFile
-						);
-
-						manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+						_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
 							destBinaryPathName, workspaceIngestionRepository,
 							localSourceBinaryPathFile);
 					}
@@ -3144,6 +3132,7 @@ void API::uploadedBinary(
     }    
 }
 
+/*
 void API::manageTarFileInCaseOfIngestionOfSegments(
 		int64_t ingestionJobKey,
 		string tarBinaryPathName, string workspaceIngestionRepository,
@@ -3292,6 +3281,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 		throw runtime_error(errorMessage);
 	}
 }
+*/
 
 void API::stopUploadFileProgressThread()
 {

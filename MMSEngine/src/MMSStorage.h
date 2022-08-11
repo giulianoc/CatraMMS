@@ -189,6 +189,11 @@ public:
 	void deleteWorkspace(
 		shared_ptr<Workspace> workspace);
 
+	void manageTarFileInCaseOfIngestionOfSegments(
+		int64_t ingestionJobKey,
+		string tarBinaryPathName, string workspaceIngestionRepository,
+		string sourcePathName);
+
 private:
 	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
     shared_ptr<spdlog::logger>  _logger;

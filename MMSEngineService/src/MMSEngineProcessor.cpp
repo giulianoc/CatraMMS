@@ -23960,8 +23960,6 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
         string md5FileCheckSum, int fileSizeInBytes)
 {
 
-	/*
-		2022-08-11: even in case of m3u8-tar.gz it is a file (.tar.gz)
 	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case it is a directory with segments inside
@@ -23979,7 +23977,6 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 		}
 	}
 	else
-	*/
 	{
 		// we added the following two parameters for the FileIO::fileExisting method
 		// because, in the scenario where still MMS generates the file to be ingested
@@ -24643,12 +24640,7 @@ RESUMING FILE TRANSFERS
 						// by a convention, the directory inside the tar file has to be named as 'content'
 						string sourcePathName = "/content.tar.gz";
 
-						_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-							+ ", destBinaryPathName: " + destBinaryPathName
-							+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-							+ ", sourcePathName: " + sourcePathName
-						);
-						manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+						_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
 							destBinaryPathName, workspaceIngestionRepository,
 							sourcePathName);
 					}
@@ -27283,12 +27275,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-					+ ", destBinaryPathName: " + destBinaryPathName
-					+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-					+ ", sourcePathName: " + sourcePathName
-				);
-				manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+				_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
 					destBinaryPathName, workspaceIngestionRepository,
 					sourcePathName);
 			}
@@ -27465,12 +27452,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-					+ ", destBinaryPathName: " + destBinaryPathName
-					+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-					+ ", sourcePathName: " + sourcePathName
-				);
-				manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+				_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
 					destBinaryPathName, workspaceIngestionRepository,
 					sourcePathName);
 			}
@@ -27586,12 +27568,17 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
     }
 }
 
+/*
 void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		int64_t ingestionJobKey,
 		string tarBinaryPathName, string workspaceIngestionRepository,
 		string sourcePathName
 	)
 {
+	// tarBinaryPathName like /var/catramms/storage/IngestionRepository/users/2/1449874_source.tar.gz
+	// workspaceIngestionRepository like /var/catramms/storage/IngestionRepository/users/2
+	// sourcePathName: /var/catramms/storage/MMSWorkingAreaRepository/Staging/2_1449859_virtualVOD_2022_08_11_12_41_46_0212/1449859_liveRecorderVirtualVOD.tar.gz
+
 	string executeCommand;
 	try
 	{
@@ -27746,6 +27733,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		throw runtime_error(errorMessage);
 	}
 }
+*/
 
 
 int MMSEngineProcessor::progressDownloadCallback(

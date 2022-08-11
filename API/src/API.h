@@ -389,10 +389,10 @@ private:
             unordered_map<string, string>& requestDetails
     );
     
-	void manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey,
-		string tarBinaryPathName, string workspaceIngestionRepository,
-		string sourcePathName);
+	// void manageTarFileInCaseOfIngestionOfSegments(
+	// 	int64_t ingestionJobKey,
+	// 	string tarBinaryPathName, string workspaceIngestionRepository,
+	// 	string sourcePathName);
 
     void addEncodingProfilesSet(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
