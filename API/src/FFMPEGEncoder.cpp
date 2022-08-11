@@ -9876,6 +9876,16 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 )
 {
 
+	_logger->info(__FILEREF__ + "Received liveRecorder_buildAndIngestVirtualVOD"
+		+ ", ingestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		+ ", encodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+		+ ", externalEncoder: " + to_string(externalEncoder)
+		+ ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
+		+ ", sourceManifestFileName: " + sourceManifestFileName
+		+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+		+ ", deliveryCode: " + to_string(deliveryCode)
+	);
+
 	long segmentsNumber = 0;
 
 	// let's build the live recorder virtual VOD
