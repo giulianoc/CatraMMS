@@ -143,8 +143,9 @@ string MMSCURL::postPutFile(
 		long responseCode = curlpp::infos::ResponseCode::get(request);
 		if (responseCode == 201)
 		{
-			string message = __FILEREF__ + "postPutFile"
+			string message = __FILEREF__ + "postPutFile success"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", responseCode: " + to_string(responseCode) 
 				+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 					chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 				+ ", sResponse: " + sResponse

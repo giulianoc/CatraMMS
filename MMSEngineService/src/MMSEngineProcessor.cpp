@@ -23963,7 +23963,9 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case it is a directory with segments inside
-		if (!FileIO::directoryExisting(mediaSourcePathName))
+		if (!FileIO::directoryExisting(mediaSourcePathName,
+			_waitingNFSSync_maxMillisecondsToWait,
+			_waitingNFSSync_milliSecondsWaitingBetweenChecks))
 		{
 			string errorMessage = __FILEREF__ + "Media Source directory does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23978,11 +23980,14 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	{
 		// we added the following two parameters for the FileIO::fileExisting method
 		// because, in the scenario where still MMS generates the file to be ingested
-		// (i.e.: generate frames task and other tasks), and the NFS is used, we saw sometimes
-		// FileIO::fileExisting returns false even if the file is there. This is due because of NFS 
+		// (i.e.: generate frames task and other tasks), and the NFS is used,
+		// we saw sometimes
+		// FileIO::fileExisting returns false even if the file is there.
+		// This is due because of NFS 
 		// delay to present the file 
 		if (!FileIO::fileExisting(mediaSourcePathName,
-			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
+			_waitingNFSSync_maxMillisecondsToWait,
+			_waitingNFSSync_milliSecondsWaitingBetweenChecks))
 		{
 			string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
