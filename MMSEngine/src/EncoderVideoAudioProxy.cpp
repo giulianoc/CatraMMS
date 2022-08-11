@@ -12369,6 +12369,15 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									_encodingItem->_workspace->_directoryName,
 									to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
 									"/",    // _encodingItem->_relativePath,
+									// next param. is initialized with "content" because:
+									//	- this is the external encoder scenario
+									//	- in this scenario, the m3u8 virtual VOD, will be ingested
+									//		using PUSH and the mms-binary url
+									//	- In this case (PUSH of m3u8) there is the convention that
+									//		the directory name has to be 'content'
+									//		(see the TASK_01_Add_Content_JSON_Format.txt documentation)
+									//	- the last part of the virtualVODTranscoderStagingContentsPath variable
+									//		is used to name the m3u8 virtual vod directory
 									"content",	// to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
 									-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 									-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
