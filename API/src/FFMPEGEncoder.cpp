@@ -6674,6 +6674,9 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel = liveRecording->_ingestedParametersRoot.get(
 			"ConfigurationLabel", "").asString();
 
+		liveRecording->_lastRecordedAssetFileName			= "";
+		liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
+
         liveRecording->_streamSourceType = liveRecorderMedatada["encodingParametersRoot"].get(
 			"streamSourceType", "IP_PULL").asString();
 		int ipMMSAsServer_listenTimeoutInSeconds =
@@ -8332,7 +8335,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	Json::Value encodingParametersRoot,
 	Json::Value ingestedParametersRoot,
 	string transcoderStagingContentsPath,
-	string stagingContentsPath,
+	string sharedStagingContentsPath,
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
@@ -8352,7 +8355,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", outputFileFormat: " + outputFileFormat
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
@@ -8428,7 +8431,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", manifestLine: " + manifestLine
 						;
-						_logger->info(__FILEREF__ + errorMessage);
+						_logger->error(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -8456,6 +8459,16 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						toBeIngestedSegmentFileName = manifestLine;
 					else
 						currentSegmentFileName = manifestLine;
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "manifest line not used by our algorithm"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestLine: " + manifestLine
+					);
+
+					continue;
 				}
 
 				if (
@@ -8490,7 +8503,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						toBeIngested = true;
 					}
 
-					// ingestion
+					// ingest the asset and initilize
+					// newLastRecordedAssetFileName and newLastRecordedAssetDurationInSeconds
 					{
 						int64_t toBeIngestedSegmentUtcEndTimeInMillisecs =
 							toBeIngestedSegmentUtcStartTimeInMillisecs + (toBeIngestedSegmentDuration * 1000);
@@ -8513,6 +8527,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 							return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
 						}
 
+						// initialize metadata and ingest the asset
 						{
 							string uniqueName;
 							{
@@ -8666,7 +8681,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
 										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", stagingContentsPath: " + stagingContentsPath
+										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 									);
 
@@ -8678,7 +8693,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									else
 										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
-											stagingContentsPath,
+											sharedStagingContentsPath,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 											ingestedParametersRoot, encodingParametersRoot,
 											true);
@@ -8691,7 +8706,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", externalEncoder: " + to_string(externalEncoder)
 										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", stagingContentsPath: " + stagingContentsPath
+										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 										+ ", outputFileFormat: " + outputFileFormat
 										+ ", e.what(): " + e.what()
@@ -8707,7 +8722,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", externalEncoder: " + to_string(externalEncoder)
 										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", stagingContentsPath: " + stagingContentsPath
+										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 										+ ", outputFileFormat: " + outputFileFormat
 									);
@@ -8737,11 +8752,15 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 			//	we have lastRecordedAssetFileName with a filename that does not exist into the playlist
 			// This is a scenario that should never happen but, in case it happens, we have to manage otherwise
 			// no chunks will be ingested
-			if (lastRecordedAssetFileName != ""		// file name is present
+			// lastRecordedAssetFileName has got from playlist in the previous liveRecorder_processHLSSegmenterOutput call
+			if (lastRecordedAssetFileName != ""
 				&& !toBeIngested					// file name does not exist into the playlist
 			)
 			{
-				_logger->error(__FILEREF__ + "Filename not found: scenario that should never happen"
+				// 2022-08-12: this scenario happens when the 'monitorin' kills the recording process,
+				//	so the playlist is reset and start from scratch.
+
+				_logger->warn(__FILEREF__ + "Filename not found: probable the playlist was reset (may be because of a kill of the monitor process)"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", toBeIngested: " + to_string(toBeIngested)
@@ -8756,6 +8775,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 				);
 
 				newLastRecordedAssetFileName = "";
+				newLastRecordedAssetDurationInSeconds = 0.0;
 			}
 		}
 	}
@@ -8765,7 +8785,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
             + ", e.what(): " + e.what()
         );
@@ -8778,7 +8798,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
         );
                 
@@ -8791,7 +8811,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	int64_t ingestionJobKey,
 	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
-	string stagingContentsPath,
+	string sharedStagingContentsPath,
 	string addContentTitle,
 	string uniqueName,
 	// bool highAvailability,
@@ -8811,17 +8831,17 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + stagingContentsPath
+				+ ", dest: " + sharedStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startCopying = chrono::system_clock::now();
-			FileIO::copyFile(transcoderStagingContentsPath + currentRecordedAssetFileName, stagingContentsPath);
+			FileIO::copyFile(transcoderStagingContentsPath + currentRecordedAssetFileName, sharedStagingContentsPath);
 			chrono::system_clock::time_point endCopying = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk copied"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + stagingContentsPath
+				+ ", dest: " + sharedStagingContentsPath
 				+ ", @MMS COPY statistics@ - copyingDuration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endCopying - startCopying).count()) + "@"
 			);
@@ -8832,17 +8852,17 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + stagingContentsPath
+				+ ", dest: " + sharedStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-			FileIO::moveFile(transcoderStagingContentsPath + currentRecordedAssetFileName, stagingContentsPath);
+			FileIO::moveFile(transcoderStagingContentsPath + currentRecordedAssetFileName, sharedStagingContentsPath);
 			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk moved"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + stagingContentsPath
+				+ ", dest: " + sharedStagingContentsPath
 				+ ", @MMS MOVE statistics@ - movingDuration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
 			);
@@ -8895,7 +8915,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			ingestionJobKey,
 			false,	// externalEncoder,
 			currentRecordedAssetFileName,
-			stagingContentsPath,
+			sharedStagingContentsPath,
 			addContentTitle,
 			uniqueName,
 			userDataRoot,

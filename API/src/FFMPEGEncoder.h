@@ -403,7 +403,7 @@ private:
 		Json::Value encodingParametersRoot,
 		Json::Value ingestedParametersRoot,
 		string transcoderStagingContentsPath,
-		string stagingContentsPath,
+		string sharedStagingContentsPath,
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
@@ -418,7 +418,7 @@ private:
 	void liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		int64_t ingestionJobKey,
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
-		string stagingContentsPath,
+		string sharedStagingContentsPath,
 		string addContentTitle,
 		string uniqueName,
 		// bool highAvailability,
