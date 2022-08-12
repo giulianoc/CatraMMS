@@ -6617,9 +6617,6 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
 			"externalEncoder", false);
 
-        liveRecording->_monitoringEnabled = JSONUtils::asBool(liveRecorderMedatada,
-			"monitoring", false);
-
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -6674,6 +6671,12 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecorderMedatada["encodingParametersRoot"];
 		liveRecording->_ingestedParametersRoot =
 			liveRecorderMedatada["ingestedParametersRoot"];
+
+		liveRecording->_monitoringEnabled = JSONUtils::asBool(
+			liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
+		liveRecording->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
+			liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+
 		liveRecording->_channelLabel = liveRecording->_ingestedParametersRoot.get(
 			"ConfigurationLabel", "").asString();
 
@@ -13968,7 +13971,7 @@ void FFMPEGEncoder::monitorThread()
 					continue;
 				}
 
-				if (liveRecorderWorking) // && rtmpOutputFound)
+				if (liveRecorderWorking && copiedLiveRecording->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. isFrameIncreasing check"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)

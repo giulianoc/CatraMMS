@@ -98,6 +98,7 @@ struct LiveRecording
 	string					_errorMessage;
 
 	bool					_monitoringEnabled;
+	bool					_monitoringFrameIncreasingEnabled;
 
 	int64_t					_ingestionJobKey;
 	bool					_externalEncoder;
@@ -127,6 +128,7 @@ struct LiveRecording
 
 		liveRecording->_running = _running;
 		liveRecording->_monitoringEnabled = _monitoringEnabled;
+		liveRecording->_monitoringFrameIncreasingEnabled = _monitoringFrameIncreasingEnabled;
 		liveRecording->_encodingJobKey = _encodingJobKey;
 		liveRecording->_externalEncoder = _externalEncoder;
 		liveRecording->_ffmpeg = _ffmpeg;
