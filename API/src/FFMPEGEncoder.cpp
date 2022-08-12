@@ -6617,6 +6617,9 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
 			"externalEncoder", false);
 
+        liveRecording->_monitoringEnabled = JSONUtils::asBool(liveRecorderMedatada,
+			"monitoring", false);
+
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -13252,7 +13255,7 @@ void FFMPEGEncoder::monitorThread()
 					shared_ptr<LiveRecording> liveRecording = it->second;
 					#endif
 
-					if (liveRecording->_running)
+					if (liveRecording->_running && liveRecording->_monitoringEnabled)
 					{
 						liveRecordingRunningCounter++;
 

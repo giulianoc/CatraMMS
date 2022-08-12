@@ -97,6 +97,8 @@ struct LiveRecording
 
 	string					_errorMessage;
 
+	bool					_monitoringEnabled;
+
 	int64_t					_ingestionJobKey;
 	bool					_externalEncoder;
 	Json::Value				_encodingParametersRoot;
@@ -124,6 +126,7 @@ struct LiveRecording
 			make_shared<LiveRecording>();
 
 		liveRecording->_running = _running;
+		liveRecording->_monitoringEnabled = _monitoringEnabled;
 		liveRecording->_encodingJobKey = _encodingJobKey;
 		liveRecording->_externalEncoder = _externalEncoder;
 		liveRecording->_ffmpeg = _ffmpeg;
