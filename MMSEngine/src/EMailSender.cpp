@@ -43,21 +43,21 @@ void EMailSender:: sendEmail(
     //      --insecure
     
     // string emailServerURL = "smtp://smtp.gmail.com:587";
-    string emailProtocol = _configuration["EmailNotification"].get("protocol", "XXX").asString();
-    string emailServer = _configuration["EmailNotification"].get("server", "XXX").asString();
+    string emailProtocol = _configuration["EmailNotification"].get("protocol", "").asString();
+    string emailServer = _configuration["EmailNotification"].get("server", "").asString();
     int emailPort = JSONUtils::asInt(_configuration["EmailNotification"], "port", 0);
-    string userName = _configuration["EmailNotification"].get("userName", "XXX").asString();
+    string userName = _configuration["EmailNotification"].get("userName", "").asString();
     string password;
     {
-        string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
+        string encryptedPassword = _configuration["EmailNotification"].get("password", "").asString();
         password = Encrypt::opensslDecrypt(encryptedPassword);        
     }
-    string from = _configuration["EmailNotification"].get("from", "XXX").asString();
+    string from = _configuration["EmailNotification"].get("from", "").asString();
     // string to = "giulianoc@catrasoftware.it";
     string cc;
 	
 	if (useMMSCCToo)
-		cc = _configuration["EmailNotification"].get("cc", "XXX").asString();
+		cc = _configuration["EmailNotification"].get("cc", "").asString();
     
     string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
     
