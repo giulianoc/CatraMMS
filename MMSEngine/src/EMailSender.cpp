@@ -61,6 +61,15 @@ void EMailSender:: sendEmail(
     
     string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
     
+        _logger->info(__FILEREF__ + "aaa Sending email"
+            + ", emailServerURL: " + emailServerURL
+            + ", userName: " + userName
+            + ", password: " + password
+            + ", from: " + from
+            + ", to: " + tosCommaSeparated
+            + ", cc: " + cc
+            + ", subject: " + subject
+        );
 
     CURL *curl;
     CURLcode res = CURLE_OK;
