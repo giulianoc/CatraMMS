@@ -258,6 +258,17 @@
 			}
 		],
 
+		// The system, during the live recording, performs several checks to be sure streaming is OK and,
+		//	in case of issue, it might restart the recording.
+		// This check can be disabled setting this flag to false.
+		// Default is true
+		"monitoringEnabled": true,
+		// The system, during the live recording, checks if the frames number is always increasing and,
+		//	in case of issue, it might restart the recording.
+		// This check can be disabled setting this flag to false.
+		// Default is true
+		"monitoringFrameIncreasingEnabled": true,
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:

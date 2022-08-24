@@ -21,6 +21,6 @@ mediaItemKey=1356895
 ttlInSeconds=3600
 ttlInSeconds=200
 
-curl -k -v -u 8:1e1h1m1h1o1l1e1809151C1d1q1v1r1p1h1v1d111f1r1p1b1b1V1H1S1b1b0908171:1909171914 "https://mms-api.restream.ovh/catramms/v1/delivery/vod/$mediaItemKey/0?encodingProfileLabel=MMS_MP4_H264_2500Kb_medium_720p25_high422_AAC_160&ttlInSeconds=$ttlInSeconds&maxRetries=$maxRetries&authorizationThroughPath=true&redirect=false"
+curl -k -v -u 1:HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWsxneGgze6eodeJQdLUANhVG77nV7HNtDpn "https://mms-api.cibortv-mms.com/catramms/1.0.1/delivery/vod/346564?ttlInSeconds=$ttlInSeconds&maxRetries=10000000&authorizationThroughPath=true&redirect=false"
 
 
