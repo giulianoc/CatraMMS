@@ -10071,13 +10071,19 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 			{
+				// 2022-09-01: scenario: mando un m3u8 multi tracce ricevuto da HWM (serie C)
+				//	verso un rtmp della CDN77, mi fallisce perchè un flv/rtmp non puo' essere
+				//	multi traccia.
+				//	Quindi mi assicuro di mandare una sola traccia (la prima)
+				ffmpegArgumentList.push_back("-map");
 				// this is to get all video tracks
+				// ffmpegArgumentList.push_back("0:v");
+				ffmpegArgumentList.push_back("0:v:0");
 				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:v");
-
 				// this is to get all audio tracks
-				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:a");
+				// ffmpegArgumentList.push_back("0:a");
+				ffmpegArgumentList.push_back("0:a:0");
+
 
 				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 				string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
