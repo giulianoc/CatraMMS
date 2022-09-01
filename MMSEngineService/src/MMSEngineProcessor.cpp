@@ -13758,6 +13758,8 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		string outputType;
 		string otherOutputOptions;
+		int videoTrackIndexToBeUsed = -1;
+		int audioTrackIndexToBeUsed = -1;
 		Json::Value filtersRoot = Json::nullValue;
 		int64_t deliveryCode;
 		int segmentDurationInSeconds = 0;
@@ -13788,6 +13790,14 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "OtherOutputOptions";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			otherOutputOptions = outputRoot.get(field, "").asString();
+
+		field = "videoTrackIndexToBeUsed";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			videoTrackIndexToBeUsed = outputRoot.get(field, -1).asInt();
+
+		field = "audioTrackIndexToBeUsed";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			audioTrackIndexToBeUsed = outputRoot.get(field, -1).asInt();
 
 		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
@@ -13968,6 +13978,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "otherOutputOptions";
 		localOutputRoot[field] = otherOutputOptions;
+
+		field = "videoTrackIndexToBeUsed";
+		localOutputRoot[field] = videoTrackIndexToBeUsed;
+
+		field = "audioTrackIndexToBeUsed";
+		localOutputRoot[field] = audioTrackIndexToBeUsed;
 
 		field = "filters";
 		localOutputRoot[field] = filtersRoot;

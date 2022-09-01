@@ -9781,15 +9781,24 @@ void FFMpeg::liveRecorder(
 			bool isVideo = encodingProfileContentType == "Video" ? true : false;
 			string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 
+			int videoTrackIndexToBeUsed = asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
+			int audioTrackIndexToBeUsed = asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
+
 			if (outputType == "HLS" || outputType == "DASH")
 			{
 				// this is to get all video tracks
 				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:v");
+				if (videoTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:v");
+				else
+					ffmpegArgumentList.push_back(string("0:v:") + to_string(videoTrackIndexToBeUsed));
 
 				// this is to get all audio tracks
 				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:a");
+				if (audioTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:a");
+				else
+					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
 					asString();
@@ -10076,14 +10085,15 @@ void FFMpeg::liveRecorder(
 				//	multi traccia.
 				//	Quindi mi assicuro di mandare una sola traccia (la prima)
 				ffmpegArgumentList.push_back("-map");
-				// this is to get all video tracks
-				// ffmpegArgumentList.push_back("0:v");
-				ffmpegArgumentList.push_back("0:v:0");
+				if (videoTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:v:0");
+				else
+					ffmpegArgumentList.push_back(string("0:v:") + to_string(videoTrackIndexToBeUsed));
 				ffmpegArgumentList.push_back("-map");
-				// this is to get all audio tracks
-				// ffmpegArgumentList.push_back("0:a");
-				ffmpegArgumentList.push_back("0:a:0");
-
+				if (audioTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:a:0");
+				else
+					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
 				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 				string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
@@ -10308,11 +10318,17 @@ void FFMpeg::liveRecorder(
 			{
 				// this is to get all video tracks
 				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:v");
+				if (videoTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:v");
+				else
+					ffmpegArgumentList.push_back(string("0:v:") + to_string(videoTrackIndexToBeUsed));
 
 				// this is to get all audio tracks
 				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back("0:a");
+				if (audioTrackIndexToBeUsed == -1)
+					ffmpegArgumentList.push_back("0:a");
+				else
+					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
 				string udpUrl = outputRoot.get("udpUrl", "").asString();
 
@@ -12828,6 +12844,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
 		string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+
+		int videoTrackIndexToBeUsed = asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
+		int audioTrackIndexToBeUsed = asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
 		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
 			.asString();
