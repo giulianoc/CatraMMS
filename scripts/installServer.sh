@@ -364,6 +364,7 @@ create-directory()
 
 	if [ "$moduleName" != "integration" ]; then
 		mkdir /mnt/mmsStorage
+		chown mms:mms /mnt/mmsStorage
 		mkdir /mnt/mmsRepository0000
 		chown mms:mms /mnt/mmsRepository0000
 	fi
@@ -621,7 +622,7 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		echo -n "$packageName version (i.e.: 1.0.1530)? "
+		echo -n "$packageName version (i.e.: 1.0.1610)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
@@ -633,7 +634,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.2390)? "
+	echo -n "$packageName version (i.e.: 1.0.2460)? "
 	read version
 	package=$packageName-$version
 	echo "Downloading $package..."
@@ -701,6 +702,12 @@ firewall-rules()
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 		#api and engine -> transcoder(nginx)
 		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
+
+		#external encoder (aws api 1, 2, aws engine 1, 2
+		#ufw allow from 63.35.35.24 to any port 8088
+		#ufw allow from 52.50.243.155 to any port 8088
+		#ufw allow from 34.248.199.119 to any port 8088
+		#ufw allow from 52.49.243.7 to any port 8088
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
