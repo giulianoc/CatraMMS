@@ -11307,6 +11307,18 @@ void FFMpeg::liveProxy2(
 			pair<long, string> inputDetils = liveProxyInput(ingestionJobKey, encodingJobKey,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
+
+			{
+				ostringstream ffmpegInputArgumentListStream;
+				if (!ffmpegInputArgumentList.empty())
+					copy(ffmpegInputArgumentList.begin(), ffmpegInputArgumentList.end(),
+						ostream_iterator<string>(ffmpegInputArgumentListStream, " "));
+				_logger->info(__FILEREF__ + "liveProxy: ffmpegInputArgumentList"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ffmpegInputArgumentList: " + ffmpegInputArgumentListStream.str()
+				);
+			}
 		}
 		catch(runtime_error e)
 		{
@@ -11349,6 +11361,18 @@ void FFMpeg::liveProxy2(
 				otherOutputOptionsBecauseOfMaxWidth,
 				currentInputRoot, streamingDurationInSeconds,
 				outputsRoot, ffmpegOutputArgumentList);
+
+			{
+				ostringstream ffmpegOutputArgumentListStream;
+				if (!ffmpegOutputArgumentList.empty())
+					copy(ffmpegOutputArgumentList.begin(), ffmpegOutputArgumentList.end(),
+						ostream_iterator<string>(ffmpegOutputArgumentListStream, " "));
+				_logger->info(__FILEREF__ + "liveProxy: ffmpegOutputArgumentList"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ffmpegOutputArgumentList: " + ffmpegOutputArgumentListStream.str()
+				);
+			}
 		}
 		catch(runtime_error e)
 		{
