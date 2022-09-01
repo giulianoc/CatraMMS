@@ -13885,39 +13885,44 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
 		{
 			string encodingProfileLabel = outputRoot.get(labelField, "").asString();
-
-			MMSEngineDBFacade::ContentType contentType;
-			if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+			if (encodingProfileLabel != "")
 			{
-				contentType = MMSEngineDBFacade::toContentType(
-					outputRoot.get(contentTypeField, "").asString());
+				MMSEngineDBFacade::ContentType contentType;
+				if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+				{
+					contentType = MMSEngineDBFacade::toContentType(
+						outputRoot.get(contentTypeField, "").asString());
 
-				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					workspace->_workspaceKey, contentType, encodingProfileLabel);
-			}
-			else
-			{
-				bool contentTypeToBeUsed = false;
-				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
-			}
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace->_workspaceKey, contentType, encodingProfileLabel);
+				}
+				else
+				{
+					bool contentTypeToBeUsed = false;
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace->_workspaceKey, contentType, encodingProfileLabel,
+						contentTypeToBeUsed);
+				}
 
-			_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingProfileLabel: " + encodingProfileLabel
-				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-			);
+				_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingProfileLabel: " + encodingProfileLabel
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				);
+			}
 		}
 
 		if (encodingProfileKey != -1)
 		{
 			string jsonEncodingProfile;
 
-			tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+			tuple<string, MMSEngineDBFacade::ContentType,
+				MMSEngineDBFacade::DeliveryTechnology, string>
 				encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
 				workspace->_workspaceKey, encodingProfileKey);
-			tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
+			tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile)
+				= encodingProfileDetails;
 
 			{
 				Json::CharReaderBuilder builder;
