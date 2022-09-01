@@ -12793,7 +12793,10 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		if (isMetadataPresent(outputRoot, "filters"))
 			filtersRoot = outputRoot["filters"];
 
-		Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		if (isMetadataPresent(outputRoot, "encodingProfileDetails"))
+			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+
 		string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 
 		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
