@@ -12134,6 +12134,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
+	bool exitInCaseOfUrlNotFoundOrForbidden;
 	string streamSourceType;
 	int64_t pushEncoderKey;
 	string pushServerName;
@@ -12148,10 +12149,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool virtualVOD = false;
 	string outputFileFormat;
 	{
-        // string field = "EncodersPool";
-        // encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+        string field = "exitInCaseOfUrlNotFoundOrForbidden";
+        exitInCaseOfUrlNotFoundOrForbidden = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot,
+			field, false);
 
-        string field = "confKey";
+		field = "confKey";
         confKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "pushEncoderKey";
@@ -12199,9 +12201,40 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool urlNotFound = false;
 
 	time_t utcNowToCheckExit = 0;
-	while (!killedByUser && !urlForbidden && !urlNotFound
-			&& utcNowToCheckExit < utcRecordingPeriodEnd)
+	while (!killedByUser // && !urlForbidden && !urlNotFound
+		&& utcNowToCheckExit < utcRecordingPeriodEnd)
 	{
+		if (urlForbidden || urlNotFound)
+		{
+			if (exitInCaseOfUrlNotFoundOrForbidden)
+			{
+				_logger->warn(__FILEREF__ + "url not found or forbidden, terminate the LiveRecorder task"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", exitInCaseOfUrlNotFoundOrForbidden: " + to_string(exitInCaseOfUrlNotFoundOrForbidden)
+					+ ", urlForbidden: " + to_string(urlForbidden)
+					+ ", urlNotFound: " + to_string(urlNotFound)
+				);
+
+				break;
+			}
+			else
+			{
+				int waitingInSeconsBeforeTryingAgain = 30;
+
+				_logger->warn(__FILEREF__ + "url not found or forbidden, wait a bit and try again"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", exitInCaseOfUrlNotFoundOrForbidden: " + to_string(exitInCaseOfUrlNotFoundOrForbidden)
+					+ ", urlForbidden: " + to_string(urlForbidden)
+					+ ", urlNotFound: " + to_string(urlNotFound)
+					+ ", waitingInSeconsBeforeTryingAgain: " + to_string(waitingInSeconsBeforeTryingAgain)
+				);
+
+				this_thread::sleep_for(chrono::seconds(waitingInSeconsBeforeTryingAgain));
+			}
+		}
+
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveRecorderURI;
 		ostringstream response;
@@ -13080,6 +13113,9 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 }
                 catch(...)
                 {
+					/* 2022-09-03: Since we introdiced the exitInCaseOfUrlNotFoundOrForbidden flag,
+						I guess the below urlNotFound management is not needed anymore
+
 					// 2020-05-20: The initial loop will make the liveRecording to exit in case of urlNotFound.
 					//	This is because in case the URL is not found, does not have sense to try again the liveRecording.
 					//	This is true in case the URL not found error happens at the beginning of the liveRecording.
@@ -13116,13 +13152,14 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						this_thread::sleep_for(chrono::seconds(waitingInSeconsBeforeTryingAgain));
 					}
 					else
+					*/
 					{
 						_logger->info(__FILEREF__ + "it is not a fake urlNotFound"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", urlNotFound: " + to_string(urlNotFound)
-							+ ", @MMS statistics@ - encodingDurationInMinutes: @" + to_string(encodingDurationInMinutes) + "@"
-							+ ", urlNotFoundFakeAfterMinutes: " + to_string(urlNotFoundFakeAfterMinutes)
+							// + ", @MMS statistics@ - encodingDurationInMinutes: @" + to_string(encodingDurationInMinutes) + "@"
+							// + ", urlNotFoundFakeAfterMinutes: " + to_string(urlNotFoundFakeAfterMinutes)
 							+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
 						);

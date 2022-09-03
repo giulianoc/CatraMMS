@@ -37,6 +37,13 @@
 		// optional: It is possible to use this field to specify any other input options
 		"otherInputOptions": "",
 
+		// optional
+		// - in case it is true, the Task will terminate in case of URL not found or forbidden error
+		// - in case of false, the Task will terminate according the schedule and,
+		//		in case of URL not found or forbidden error, it will sleep 30 seconds and retry
+		// Default is false
+		"exitInCaseOfUrlNotFoundOrForbidden": false,
+
 		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"schedule": {
