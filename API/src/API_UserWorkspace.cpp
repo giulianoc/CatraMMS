@@ -1015,11 +1015,19 @@ void API::shareWorkspace_(
 			int64_t userKey = get<0>(userKeyAndConfirmationCode);
 			string confirmationCode = get<1>(userKeyAndConfirmationCode);
 
+			string confirmationURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				confirmationURL += (":" + to_string(_guiPort));
+			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
+				+ to_string(userKey)
+				+ "&confirmationCode=" + confirmationCode);
+
             _logger->info(__FILEREF__ + "Registered User and shared Workspace"
                 + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                 + ", email: " + email
                 + ", userKey: " + to_string(userKey)
                 + ", confirmationCode: " + confirmationCode
+                + ", confirmationURL: " + confirmationURL
             );
 
 			Json::Value registrationRoot;
@@ -1031,13 +1039,6 @@ void API::shareWorkspace_(
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
-
-			string confirmationURL = _guiProtocol + "://" + _guiHostname;
-			if (_guiProtocol == "https" && _guiPort != 443)
-				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
-				+ to_string(userKey)
-				+ "&confirmationCode=" + confirmationCode);
 
             string to = email;
             string subject = "Confirmation code";
