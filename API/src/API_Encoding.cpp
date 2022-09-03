@@ -456,17 +456,51 @@ void API::killOrCancelEncodingJob(
 				{
 					if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 					{
-						_logger->info(__FILEREF__ + "killEncodingJob"
-							+ ", encoderKey: " + to_string(encoderKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-						);
-
+						// In this case we may have 2 scenarios:
+						// 1. process (ffmpeg) is running
+						// 2. process (ffmpeg) fails to run and we have the Task in the loop
+						//		within EncoderVideoAudioProxy trying to make ffmpeg starting calling the Transcoder.
+						//
+						// In case 1, the below killEncodingJob works fine and this is the solution
+						// In case 2, killEncodingJob will fail because there is no ffmpeg process running.
+						//		For this reason we call updateEncodingJobIsKilled and set isKilled
+						//		to true. This is an 'aggreement' with EncoderVideoAudioProxy making
+						//		the EncoderVideoAudioProxy thread to terminate his loop 
 						try
 						{
+							_logger->info(__FILEREF__ + "killEncodingJob"
+								+ ", encoderKey: " + to_string(encoderKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+							);
 							killEncodingJob(encoderKey, encodingJobKey);
+
+							// to make sure EncoderVideoProxyThread resources are released,
+							// the isKilled flag is also set
+							{
+								// this is the case 2
+								bool isKilled = true;
+
+								_logger->info(__FILEREF__ + "Setting isKilled flag"
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", isKilled: " + to_string(isKilled)
+								);
+								_mmsEngineDBFacade->updateEncodingJobIsKilled(
+									encodingJobKey, isKilled);
+							}
 						}
 						catch (...)
 						{
+							// this is the case 2
+							bool isKilled = true;
+
+							_logger->info(__FILEREF__ + "Setting isKilled flag"
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", isKilled: " + to_string(isKilled)
+							);
+							_mmsEngineDBFacade->updateEncodingJobIsKilled(
+								encodingJobKey, isKilled);
+
+							/* 2022-09-03: it should be needed anymore
 							_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
 								+ ", encoderKey: " + to_string(encoderKey)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -484,6 +518,7 @@ void API::killOrCancelEncodingJob(
 									false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 									ingestionJobKey, "killEncodingJob failed");
 							}
+							*/
 						}
 					}
 				}
