@@ -1078,7 +1078,7 @@ void API::addStream(
         int captureLiveHeight;
         int captureLiveAudioDeviceNumber;
         int captureLiveChannelsNumber;
-		int64_t satSourceSATConfKey;
+		int64_t tvSourceTVConfKey;
 
         string type;
         string description;
@@ -1198,9 +1198,9 @@ void API::addStream(
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
-			field = "sourceSATConfKey";
+			field = "sourceTVConfKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				satSourceSATConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
+				tvSourceTVConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
 
             field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1279,7 +1279,7 @@ void API::addStream(
 				captureLiveHeight,
 				captureLiveAudioDeviceNumber,
 				captureLiveChannelsNumber,
-				satSourceSATConfKey,
+				tvSourceTVConfKey,
 				type, description,
 				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				userData);
@@ -1373,7 +1373,7 @@ void API::modifyStream(
         int captureLiveHeight;
         int captureLiveAudioDeviceNumber;
         int captureLiveChannelsNumber;
-		int64_t satSourceSATConfKey;
+		int64_t tvSourceTVConfKey;
 
         string type;
         string description;
@@ -1402,7 +1402,7 @@ void API::modifyStream(
 		bool captureLiveHeightToBeModified;
 		bool captureLiveAudioDeviceNumberToBeModified;
 		bool captureLiveChannelsNumberToBeModified;
-		bool satSourceSATConfKeyToBeModified;
+		bool tvSourceTVConfKeyToBeModified;
 		bool typeToBeModified;
 		bool descriptionToBeModified;
 		bool nameToBeModified;
@@ -1574,12 +1574,12 @@ void API::modifyStream(
 				captureLiveChannelsNumberToBeModified = true;
 			}
 
-			satSourceSATConfKeyToBeModified = false;
-			field = "sourceSATConfKey";
+			tvSourceTVConfKeyToBeModified = false;
+			field = "sourceTVConfKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				satSourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
-				satSourceSATConfKeyToBeModified = true;
+				tvSourceTVConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				tvSourceTVConfKeyToBeModified = true;
 			}
 
 			typeToBeModified = false;
@@ -1714,7 +1714,7 @@ void API::modifyStream(
 				captureLiveHeightToBeModified, captureLiveHeight,
 				captureLiveAudioDeviceNumberToBeModified, captureLiveAudioDeviceNumber,
 				captureLiveChannelsNumberToBeModified, captureLiveChannelsNumber,
-				satSourceSATConfKeyToBeModified, satSourceSATConfKey,
+				tvSourceTVConfKeyToBeModified, tvSourceTVConfKey,
 				typeToBeModified, type,
 				descriptionToBeModified, description,
 				nameToBeModified, name,
@@ -1960,7 +1960,7 @@ void API::streamList(
 			if (sourceTypeIt->second == "IP_PULL"
 				|| sourceTypeIt->second == "IP_PUSH"
 				|| sourceTypeIt->second == "CaptureLive"
-				|| sourceTypeIt->second == "Satellite"
+				|| sourceTypeIt->second == "TV"
 			)
 				sourceType = sourceTypeIt->second;
 			else
@@ -2087,14 +2087,14 @@ void API::streamList(
 }
 
 
-void API::addSourceSATStream(
+void API::addSourceTVStream(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addSourceSATStream";
+    string api = "addSourceTVStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2275,8 +2275,8 @@ void API::addSourceSATStream(
         string sResponse;
         try
         {
-			Json::Value sourceSATStreamRoot =
-				_mmsEngineDBFacade->addSourceSATStream(
+			Json::Value sourceTVStreamRoot =
+				_mmsEngineDBFacade->addSourceTVStream(
 				serviceId, networkId, transportStreamId,
 				name, satellite, frequency, lnb,
 				videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid,
@@ -2284,11 +2284,11 @@ void API::addSourceSATStream(
 			);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceSATStreamRoot);
+            sResponse = Json::writeString(wbuilder, sourceTVStreamRoot);
 		}
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2296,7 +2296,7 @@ void API::addSourceSATStream(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2338,14 +2338,14 @@ void API::addSourceSATStream(
     }
 }
 
-void API::modifySourceSATStream(
+void API::modifySourceTVStream(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "modifySourceSATStream";
+    string api = "modifySourceTVStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2571,8 +2571,8 @@ void API::modifySourceSATStream(
             }
             confKey = stoll(confKeyIt->second);
 
-			Json::Value sourceSATStreamRoot =
-				_mmsEngineDBFacade->modifySourceSATStream(
+			Json::Value sourceTVStreamRoot =
+				_mmsEngineDBFacade->modifySourceTVStream(
 				confKey,
                 serviceIdToBeModified, serviceId,
 				networkIdToBeModified, networkId,
@@ -2594,11 +2594,11 @@ void API::modifySourceSATStream(
 			);
 
             Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceSATStreamRoot);
+            sResponse = Json::writeString(wbuilder, sourceTVStreamRoot);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2606,7 +2606,7 @@ void API::modifySourceSATStream(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2648,13 +2648,13 @@ void API::modifySourceSATStream(
     }
 }
 
-void API::removeSourceSATStream(
+void API::removeSourceTVStream(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeSourceSATStream";
+    string api = "removeSourceTVStream";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2678,7 +2678,7 @@ void API::removeSourceSATStream(
             }
             confKey = stoll(confKeyIt->second);
             
-            _mmsEngineDBFacade->removeSourceSATStream(confKey);
+            _mmsEngineDBFacade->removeSourceTVStream(confKey);
 
             sResponse = (
                     string("{ ") 
@@ -2688,7 +2688,7 @@ void API::removeSourceSATStream(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2696,7 +2696,7 @@ void API::removeSourceSATStream(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceSATStream failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -2736,13 +2736,13 @@ void API::removeSourceSATStream(
     }
 }
 
-void API::sourceSatStreamList(
+void API::sourceTVStreamList(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
 {
-    string api = "sourceSatStreamList";
+    string api = "sourceTVStreamList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -2859,18 +2859,18 @@ void API::sourceSatStreamList(
 			if (nameOrderIt->second == "asc" || nameOrderIt->second == "desc")
 				nameOrder = nameOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "satChannelList: 'nameOrder' parameter is unknown"
+				_logger->warn(__FILEREF__ + "tvChannelList: 'nameOrder' parameter is unknown"
 					+ ", nameOrder: " + nameOrderIt->second);
 		}
 
         {
-            Json::Value sourceSATStreamRoot =
-				_mmsEngineDBFacade->getSourceSATStreamList(
+            Json::Value sourceTVStreamRoot =
+				_mmsEngineDBFacade->getSourceTVStreamList(
 				confKey, start, rows,
 				serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, sourceSATStreamRoot);
+            string responseBody = Json::writeString(wbuilder, sourceTVStreamRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

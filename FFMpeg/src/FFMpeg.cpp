@@ -9232,7 +9232,7 @@ void FFMpeg::liveRecorder(
 	//		listening for an incoming connection
 	// else if streamSourceType is CaptureLive, liveURL is not used
 	// else means the liveURL is "any thing" referring a stream
-	string streamSourceType,	// IP_PULL, Satellite, IP_PUSH, CaptureLive
+	string streamSourceType,	// IP_PULL, TV, IP_PUSH, CaptureLive
     string liveURL,
 	// Used only in case streamSourceType is IP_PUSH, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
@@ -9494,7 +9494,7 @@ void FFMpeg::liveRecorder(
 			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 			+ ", streamingDuration: " + to_string(streamingDuration)
 		);
-		if (streamSourceType == "IP_PUSH" || streamSourceType == "Satellite")
+		if (streamSourceType == "IP_PUSH" || streamSourceType == "TV")
 		{
 			if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
 			{
@@ -9600,7 +9600,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (streamSourceType == "IP_PULL" || streamSourceType == "Satellite")
+		else if (streamSourceType == "IP_PULL" || streamSourceType == "TV")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
@@ -11947,7 +11947,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 	// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
 	// }
 
-	//	"streamInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "confKey": 2464, "configurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "streamSourceType": "IP_PULL", "pushListenTimeout": -1, "satelliteAudioItalianPid": -1, "satelliteFrequency": -1, "satelliteModulation": "", "satelliteServiceId": -1, "satelliteSymbolRate": -1, "satelliteVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
+	//	"streamInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "confKey": 2464, "configurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "streamSourceType": "IP_PULL", "pushListenTimeout": -1, "tvAudioItalianPid": -1, "tvFrequency": -1, "tvModulation": "", "tvServiceId": -1, "tvSymbolRate": -1, "tvVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
 	if (isMetadataPresent(inputRoot, "streamInput"))
 	{
 		field = "streamInput";
@@ -12241,7 +12241,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 					+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
 				);
 
-				if (streamSourceType == "IP_PUSH" || streamSourceType == "Satellite")
+				if (streamSourceType == "IP_PUSH" || streamSourceType == "TV")
 				{
 					if (pushListenTimeout > 0 && pushListenTimeout > streamingDurationInSeconds)
 					{
@@ -12369,7 +12369,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
 			}
-			else if (streamSourceType == "IP_PULL" || streamSourceType == "Satellite")
+			else if (streamSourceType == "IP_PULL" || streamSourceType == "TV")
 			{
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);

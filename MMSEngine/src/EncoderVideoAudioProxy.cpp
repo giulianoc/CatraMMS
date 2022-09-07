@@ -15935,8 +15935,8 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		int captureAudioDeviceNumber = -1;
 		bool captureChannelsNumberToBeModified = false;
 		int captureChannelsNumber = -1;
-		bool satSourceSATConfKeyToBeModified = false;
-		int64_t satSourceSATConfKey = -1;
+		bool tvSourceTVConfKeyToBeModified = false;
+		int64_t tvSourceTVConfKey = -1;
 		bool typeToBeModified = false;
 		string type;
 		bool descriptionToBeModified = false;
@@ -15974,7 +15974,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 			captureHeightToBeModified, captureHeight,
 			captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
 			captureChannelsNumberToBeModified, captureChannelsNumber,
-			satSourceSATConfKeyToBeModified, satSourceSATConfKey,
+			tvSourceTVConfKeyToBeModified, tvSourceTVConfKey,
 			typeToBeModified, type,
 			descriptionToBeModified, description,
 			nameToBeModified, name,

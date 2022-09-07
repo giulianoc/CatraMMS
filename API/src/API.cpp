@@ -2094,7 +2094,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         streamList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
-    else if (method == "addSourceSATStream")
+    else if (method == "addSourceTVStream")
     {
         if (!admin)
         {
@@ -2108,10 +2108,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addSourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+        addSourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters, requestBody);
     }
-    else if (method == "modifySourceSATStream")
+    else if (method == "modifySourceTVStream")
     {
         if (!admin)
         {
@@ -2125,10 +2125,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifySourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+        modifySourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeSourceSATStream")
+    else if (method == "removeSourceTVStream")
     {
         if (!admin)
         {
@@ -2142,12 +2142,12 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeSourceSATStream(sThreadId, requestIdentifier, responseBodyCompressed,
+        removeSourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
-    else if (method == "sourceSatStreamList")
+    else if (method == "sourceTVStreamList")
     {
-        sourceSatStreamList(sThreadId, requestIdentifier, responseBodyCompressed,
+        sourceTVStreamList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
     else if (method == "addAWSChannelConf")

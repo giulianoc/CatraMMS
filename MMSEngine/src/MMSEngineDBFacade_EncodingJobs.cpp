@@ -7563,8 +7563,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 	int captureChannelsNumber,
 
-	int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
-	string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
+	int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
+	string tvModulation, int tvVideoPid, int tvAudioItalianPid,
 
 	bool monitorHLS,
 	bool liveRecorderVirtualVOD,
@@ -7678,23 +7678,23 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "captureChannelsNumber";
 				parametersRoot[field] = captureChannelsNumber;
 
-				field = "satelliteServiceId";
-				parametersRoot[field] = satelliteServiceId;
+				field = "tvServiceId";
+				parametersRoot[field] = tvServiceId;
 
-				field = "satelliteFrequency";
-				parametersRoot[field] = satelliteFrequency;
+				field = "tvFrequency";
+				parametersRoot[field] = tvFrequency;
 
-				field = "satelliteSymbolRate";
-				parametersRoot[field] = satelliteSymbolRate;
+				field = "tvSymbolRate";
+				parametersRoot[field] = tvSymbolRate;
 
-				field = "satelliteModulation";
-				parametersRoot[field] = satelliteModulation;
+				field = "tvModulation";
+				parametersRoot[field] = tvModulation;
 
-				field = "satelliteVideoPid";
-				parametersRoot[field] = satelliteVideoPid;
+				field = "tvVideoPid";
+				parametersRoot[field] = tvVideoPid;
 
-				field = "satelliteAudioItalianPid";
-				parametersRoot[field] = satelliteAudioItalianPid;
+				field = "tvAudioItalianPid";
+				parametersRoot[field] = tvAudioItalianPid;
 
 				field = "userAgent";
 				parametersRoot[field] = userAgent;

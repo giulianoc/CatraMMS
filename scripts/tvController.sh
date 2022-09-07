@@ -4,7 +4,7 @@
 
 #each frequency corrispond to a transponder providing several channels
 
-#satellite directory contains dvblast configuration file managed (created and updated) by the mmsEncoder.
+#tv directory contains dvblast configuration file managed (created and updated) by the mmsEncoder.
 #	the name of these files are: <frequency>-<symbol rate>-<modulation>
 #	the extension of the file could be:
 #		- .txt: process is already up and running
@@ -12,24 +12,24 @@
 #When the mmsEncoder stops the channel will updates the content of the dvblast configuration file removing
 #	the configuration and leaving the file empty. This script, in this scenario, kills the process and remove the configuration file
 
-satelliteChannelConfigurationDirectory=/var/catramms/satellite
-satelliteLogsChannelsDir=/var/catramms/logs/satellite
+tvChannelConfigurationDirectory=/var/catramms/tv
+tvLogsChannelsDir=/var/catramms/logs/tv
 dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_UNIVERSAL.channel.dvbv5.conf
 frontendToBeUsed=1
 
 debug=1
 
 
-mkdir -p $satelliteChannelConfigurationDirectory
-mkdir -p $satelliteLogsChannelsDir
+mkdir -p $tvChannelConfigurationDirectory
+mkdir -p $tvLogsChannelsDir
 
 #retention log file
 threeDaysInMinutes=4320
-find $satelliteLogsChannelsDir -mmin +$threeDaysInMinutes -type f -delete
+find $tvLogsChannelsDir -mmin +$threeDaysInMinutes -type f -delete
 
 getFreeDeviceNumber()
 {
-    satelliteFrequency=$1
+    tvFrequency=$1
 
 	selectedDeviceNumber=255
 
@@ -38,9 +38,9 @@ getFreeDeviceNumber()
 		#-x parameter just tunes and exit
 
 		if [ $debug -eq 1 ]; then
-			echo "getFreeDeviceNumber. dvbv5-zap $satelliteFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName"
+			echo "getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName"
 		fi
-		dvbv5-zap $satelliteFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
+		dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
 		if [ $? -eq 0 ]
 		then
 			selectedDeviceNumber=$deviceNumber
@@ -58,13 +58,13 @@ getFreeDeviceNumber()
 
 getActualDeviceNumber()
 {
-    satelliteFrequency=$1
+    tvFrequency=$1
 
 	selectedDeviceNumber=255
 
 	for deviceNumber in 0 1 2 3 4 5 6 7 8 9
 	do
-		pgrep -f "dvblast -f $satelliteFrequency -a $deviceNumber" > /dev/null
+		pgrep -f "dvblast -f $tvFrequency -a $deviceNumber" > /dev/null
 		pgrepStatus=$?
 		if [ $pgrepStatus -eq 0 ]
 		then
@@ -104,7 +104,7 @@ startOfProcess()
 		modulationParameter="-m $modulation"
 	fi
 
-	logPathName=$satelliteLogsChannelsDir/$frequency".log"
+	logPathName=$tvLogsChannelsDir/$frequency".log"
 	if [ $debug -eq 1 ]; then
 		echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &"
 	fi
@@ -150,7 +150,7 @@ if [ $debug -eq 1 ]; then
 	echo "script started"
 fi
 
-configurationFiles=$(ls $satelliteChannelConfigurationDirectory)
+configurationFiles=$(ls $tvChannelConfigurationDirectory)
 for configurationFileName in $configurationFiles
 do
 	#for each <frequency>-<symbol rate>-<modulation>
@@ -176,7 +176,7 @@ do
 	fi
 
 
-	pidProcessPathName=/var/catramms/pids/satellite_$frequency".pid"
+	pidProcessPathName=/var/catramms/pids/tv_$frequency".pid"
 
 	isProcessRunningFunc $frequency
 	isProcessRunning=$?
@@ -187,7 +187,7 @@ do
 		if [ $isProcessRunning -eq 0 ]; then
 			echo "Process is not up and running, start it"
 
-			startOfProcess $frequency $symbolRate $modulation $satelliteChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+			startOfProcess $frequency $symbolRate $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		fi
 
 		continue
@@ -213,7 +213,7 @@ do
 		fi
 	fi
 
-	fileSize=$(stat -c%s "$satelliteChannelConfigurationDirectory/$configurationFileName")
+	fileSize=$(stat -c%s "$tvChannelConfigurationDirectory/$configurationFileName")
 	#15 because we cannot have a conf less than 15 chars
 	if [ $fileSize -lt 15 ]; then
 		if [ $debug -eq 1 ]; then
@@ -223,17 +223,17 @@ do
 		#process is alredy killed (see above statements)
 
 		if [ $debug -eq 1 ]; then
-			echo "rm -f $satelliteChannelConfigurationDirectory/$configurationFileName"
+			echo "rm -f $tvChannelConfigurationDirectory/$configurationFileName"
 		fi
-		rm -f $satelliteChannelConfigurationDirectory/$configurationFileName
+		rm -f $tvChannelConfigurationDirectory/$configurationFileName
 	else
-		startOfProcess $frequency $symbolRate $modulation $satelliteChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+		startOfProcess $frequency $symbolRate $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		processReturn=$?
 		if [ $processReturn -eq 0 ]; then
 			if [ $debug -eq 1 ]; then
-				echo "mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.txt"
+				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.txt"
 			fi
-			mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation".changed" $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation".txt"
+			mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".changed" $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".txt"
 		else
 			if [ $debug -eq 1 ]; then
 				echo "Start of the process failed, processReturn: $processReturn"

@@ -1774,9 +1774,9 @@ public:
 		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 		int captureChannelsNumber,
 
-		int64_t satelliteServiceId, int64_t satelliteFrequency,
-		int64_t satelliteSymbolRate, string satelliteModulation, int satelliteVideoPid,
-		int satelliteAudioItalianPid,
+		int64_t tvServiceId, int64_t tvFrequency,
+		int64_t tvSymbolRate, string tvModulation, int tvVideoPid,
+		int tvAudioItalianPid,
 
 		bool monitorHLS,
 		bool liveRecorderVirtualVOD,
@@ -2114,7 +2114,7 @@ public:
 		int captureHeight,
 		int captureAudioDeviceNumber,
 		int captureChannelsNumber,
-		int64_t satSourceSATConfKey,
+		int64_t tvSourceTVConfKey,
         string type,
         string description,
         string name,
@@ -2145,7 +2145,7 @@ public:
 		bool captureHeightToBeModified, int captureHeight,
 		bool captureAudioDeviceNumberToBeModified, int captureAudioDeviceNumber,
 		bool captureChannelsNumberToBeModified, int captureChannelsNumber,
-		bool satSourceSATConfKeyToBeModified, int64_t satSourceSATConfKey,
+		bool tvSourceTVConfKeyToBeModified, int64_t tvSourceTVConfKey,
 		bool typeToBeModified, string type,
 		bool descriptionToBeModified, string description,
 		bool nameToBeModified, string name,
@@ -2174,7 +2174,7 @@ public:
 	tuple<string, string, string> getStreamDetails(
 		int64_t workspaceKey, int64_t confKey);
 
-	Json::Value addSourceSATStream(
+	Json::Value addSourceTVStream(
 		int64_t serviceId,
 		int64_t networkId,
 		int64_t transportStreamId,
@@ -2194,7 +2194,7 @@ public:
 		string deliverySystem
 	);
 
-	Json::Value modifySourceSATStream(
+	Json::Value modifySourceTVStream(
 		int64_t confKey,
 
 		bool serviceIdToBeModified, int64_t serviceId,
@@ -2216,17 +2216,17 @@ public:
 		bool deliverySystemToBeModified, string deliverySystem
 	);
 
-    void removeSourceSATStream(
+    void removeSourceTVStream(
         int64_t confKey);
 
-    Json::Value getSourceSATStreamList (
+    Json::Value getSourceTVStreamList (
         int64_t confKey,
 		int start, int rows,
 		int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
 		string nameOrder);
 
-    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceSATStreamDetails(
+    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceTVStreamDetails(
         int64_t confKey, bool warningIfMissing);
 
 	int64_t addAWSChannelConf(

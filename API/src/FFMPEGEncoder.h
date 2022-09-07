@@ -215,8 +215,8 @@ public:
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
-		mutex* satelliteChannelsPortsMutex,
-		long* satelliteChannelPort_CurrentOffset,
+		mutex* tvChannelsPortsMutex,
+		long* tvChannelPort_CurrentOffset,
 
 		shared_ptr<spdlog::logger> logger);
     
@@ -323,17 +323,17 @@ private:
 	bool						_liveRecorderVirtualVODIngestionThreadShutdown;
 	string						_liveRecorderVirtualVODImageLabel;
 
-	string						_satelliteChannelConfigurationDirectory;
+	string						_tvChannelConfigurationDirectory;
 
     mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<EncodingCompleted>>*	_encodingCompletedMap;
 	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
 
-	mutex*						_satelliteChannelsPortsMutex;
-	long*						_satelliteChannelPort_CurrentOffset;
-	long						_satelliteChannelPort_Start;
-	long						_satelliteChannelPort_MaxNumberOfOffsets;
+	mutex*						_tvChannelsPortsMutex;
+	long*						_tvChannelPort_CurrentOffset;
+	long						_tvChannelPort_Start;
+	long						_tvChannelPort_MaxNumberOfOffsets;
 
 	int							_monitorCheckInSeconds;
 	bool						_monitorThreadShutdown;
@@ -547,27 +547,27 @@ private:
 
 	void encodingCompletedRetention();
 
-	void createOrUpdateSatelliteDvbLastConfigurationFile(
+	void createOrUpdateTVDvbLastConfigurationFile(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		string multicastIP,
 		string multicastPort,
-		int64_t satelliteServiceId,
-		int64_t satelliteFrequency,
-		int64_t satelliteSymbolRate,
-		string satelliteModulation,
-		int satelliteVideoPid,
-		int satelliteAudioItalianPid,
+		int64_t tvServiceId,
+		int64_t tvFrequency,
+		int64_t tvSymbolRate,
+		string tvModulation,
+		int tvVideoPid,
+		int tvAudioItalianPid,
 		bool toBeAdded
 	);
 
-	pair<string, string> getSatelliteMulticastFromDvblastConfigurationFile(
+	pair<string, string> getTVMulticastFromDvblastConfigurationFile(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		int64_t satelliteServiceId,
-		int64_t satelliteFrequency,
-		int64_t satelliteSymbolRate,
-		string satelliteModulation
+		int64_t tvServiceId,
+		int64_t tvFrequency,
+		int64_t tvSymbolRate,
+		string tvModulation
 	);
 };
 

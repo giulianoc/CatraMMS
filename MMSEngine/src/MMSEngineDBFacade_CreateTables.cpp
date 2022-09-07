@@ -2418,7 +2418,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					// IP_PULL, IP_PUSH, CaptureLive, Satellite
+					// IP_PULL, IP_PUSH, CaptureLive, TV
 					"sourceType					VARCHAR (64) NOT NULL,"
                     "encodersPoolLabel			VARCHAR (64) NULL,"
 					"url						VARCHAR (2048) NULL,"	// pull
@@ -2435,7 +2435,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"captureLiveHeight				INT NULL,"
 					"captureLiveAudioDeviceNumber	INT NULL,"
 					"captureLiveChannelsNumber		INT NULL,"
-                    "satSourceSATConfKey		BIGINT UNSIGNED NULL,"
+                    "tvSourceTVConfKey			BIGINT UNSIGNED NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "name						VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
@@ -2468,7 +2468,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-				"create table if not exists MMS_Conf_SourceSATStream ("
+				"create table if not exists MMS_Conf_SourceTVStream ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
 					"serviceId					BIGINT UNSIGNED NULL,"
 					"networkId					BIGINT UNSIGNED NULL,"
@@ -2487,7 +2487,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"symbolRate					BIGINT UNSIGNED NULL,"
                     "country					VARCHAR (64) NULL,"
                     "deliverySystem				VARCHAR (64) NULL,"
-                    "constraint MMS_Conf_SourceSATStream_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey), "
                     "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);

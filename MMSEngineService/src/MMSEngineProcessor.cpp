@@ -12331,7 +12331,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int captureHeight = -1;
 		int captureAudioDeviceNumber = -1;
 		int captureChannelsNumber = -1;
-		int64_t satSourceSATConfKey = -1;
+		int64_t tvSourceTVConfKey = -1;
 
 		int64_t deliveryCode;
 
@@ -12380,7 +12380,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						captureVideoInputFormat,
 						captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber,
-						satSourceSATConfKey) = channelConfDetails;
+						tvSourceTVConfKey) = channelConfDetails;
 
 					// default is IP_PULL
 					if (streamSourceType == "")
@@ -12619,12 +12619,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// next code is the same in the Validator class
 		time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
-		int64_t satelliteServiceId = -1;
-		int64_t satelliteFrequency = -1;
-		int64_t satelliteSymbolRate = -1;
-		string satelliteModulation;
-		int satelliteVideoPid = -1;
-		int satelliteAudioItalianPid = -1;
+		int64_t tvServiceId = -1;
+		int64_t tvFrequency = -1;
+		int64_t tvSymbolRate = -1;
+		string tvModulation;
+		int tvVideoPid = -1;
+		int tvAudioItalianPid = -1;
 		string liveURL;
 
 		if (streamSourceType == "IP_PULL")
@@ -12634,17 +12634,17 @@ void MMSEngineProcessor::manageLiveRecorder(
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (streamSourceType == "Satellite")
+		else if (streamSourceType == "TV")
 		{
 			bool warningIfMissing = false;
 			tuple<int64_t, int64_t, int64_t, string, int, int>
-				satChannelConfDetails =
-				_mmsEngineDBFacade->getSourceSATStreamDetails(
-				satSourceSATConfKey, warningIfMissing);
+				tvChannelConfDetails =
+				_mmsEngineDBFacade->getSourceTVStreamDetails(
+				tvSourceTVConfKey, warningIfMissing);
 
-			tie(satelliteServiceId, satelliteFrequency,
-				satelliteSymbolRate, satelliteModulation,
-				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
+			tie(tvServiceId, tvFrequency,
+				tvSymbolRate, tvModulation,
+				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 		}
 
 		{
@@ -12731,7 +12731,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 				}
-				else if (streamSourceType == "Satellite")
+				else if (streamSourceType == "TV")
 				{
 					// monitorHLS is true
 					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
@@ -12844,8 +12844,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			captureWidth, captureHeight, captureAudioDeviceNumber,
 			captureChannelsNumber,
 
-			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
-			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+			tvServiceId, tvFrequency, tvSymbolRate,
+			tvModulation, tvVideoPid, tvAudioItalianPid,
 
 			monitorHLS,
 			liveRecorderVirtualVOD,
@@ -12929,7 +12929,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		int captureHeight = -1;
 		int captureAudioDeviceNumber = -1;
 		int captureChannelsNumber = -1;
-		int64_t satSourceSATConfKey = -1;
+		int64_t tvSourceTVConfKey = -1;
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		// long maxAttemptsNumberInCaseOfErrors;
@@ -12966,7 +12966,7 @@ void MMSEngineProcessor::manageLiveProxy(
 						captureVideoInputFormat,
 						captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber,
-						satSourceSATConfKey) = channelConfDetails;
+						tvSourceTVConfKey) = channelConfDetails;
 
 					// default is IP_PULL
 					if (streamSourceType == "")
@@ -13082,12 +13082,12 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		int64_t satelliteServiceId = -1;
-		int64_t satelliteFrequency = -1;
-		int64_t satelliteSymbolRate = -1;
-		string satelliteModulation;
-		int satelliteVideoPid = -1;
-		int satelliteAudioItalianPid = -1;
+		int64_t tvServiceId = -1;
+		int64_t tvFrequency = -1;
+		int64_t tvSymbolRate = -1;
+		string tvModulation;
+		int tvVideoPid = -1;
+		int tvAudioItalianPid = -1;
 		string liveURL;
 
 		if (streamSourceType == "IP_PULL")
@@ -13097,17 +13097,17 @@ void MMSEngineProcessor::manageLiveProxy(
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
 		}
-		else if (streamSourceType == "Satellite")
+		else if (streamSourceType == "TV")
 		{
 			bool warningIfMissing = false;
 			tuple<int64_t, int64_t, int64_t, string, int, int>
-				satChannelConfDetails =
-				_mmsEngineDBFacade->getSourceSATStreamDetails(
-				satSourceSATConfKey, warningIfMissing);
+				tvChannelConfDetails =
+				_mmsEngineDBFacade->getSourceTVStreamDetails(
+				tvSourceTVConfKey, warningIfMissing);
 
-			tie(satelliteServiceId, satelliteFrequency,
-				satelliteSymbolRate, satelliteModulation,
-				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
+			tie(tvServiceId, tvFrequency,
+				tvSymbolRate, tvModulation,
+				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 		}
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
