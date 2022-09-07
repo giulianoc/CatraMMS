@@ -2474,7 +2474,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"networkId					BIGINT UNSIGNED NULL,"
 					"transportStreamId			BIGINT UNSIGNED NULL,"
 					"name						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
-					"satellite					VARCHAR (64) NOT NULL,"
+					"satellite					VARCHAR (64) NULL,"
 					"frequency					BIGINT UNSIGNED NOT NULL,"
 					"lnb						VARCHAR (64) NULL,"
 					"videoPid					INT UNSIGNED NULL,"

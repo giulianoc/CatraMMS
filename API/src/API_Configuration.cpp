@@ -2177,15 +2177,8 @@ void API::addSourceTVStream(
 			name = requestBodyRoot.get(field, "").asString();            
 
 			field = "satellite";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			satellite = requestBodyRoot.get(field, "").asString();            
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				satellite = requestBodyRoot.get(field, "").asString();            
 
 			field = "frequency";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

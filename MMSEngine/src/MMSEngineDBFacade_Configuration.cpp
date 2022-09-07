@@ -3496,7 +3496,10 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			else
 				preparedStatement->setInt64(queryParameterIndex++, transportStreamId);
 			preparedStatement->setString(queryParameterIndex++, name);
-			preparedStatement->setString(queryParameterIndex++, satellite);
+			if (satellite == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, satellite);
             preparedStatement->setInt64(queryParameterIndex++, frequency);
 			if (lnb == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -4547,7 +4550,10 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
                 streamRoot[field] = static_cast<string>(resultSet->getString("name"));
 
                 field = "satellite";
-                streamRoot[field] = static_cast<string>(resultSet->getString("satellite"));
+				if (resultSet->isNull("satellite"))
+					streamRoot[field] = Json::nullValue;
+				else
+					streamRoot[field] = static_cast<string>(resultSet->getString("satellite"));
 
                 field = "frequency";
                 streamRoot[field] = resultSet->getInt64("frequency");
