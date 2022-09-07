@@ -39,8 +39,8 @@ SET (SCRIPTs
 	incrontab.sh
 	sqlQueries.txt
 	checkStatistics.sh
-	satelliteController.sh
-	satelliteController.sh.1
+	tvController.sh
+	tvController.sh.1
 	deploy.sh
 	installServer.sh
 	getIngestionsToBeManaged.sh
