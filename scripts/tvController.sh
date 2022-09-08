@@ -9,12 +9,12 @@
 #	the extension of the file could be:
 #		- .txt: process is already up and running
 #		- .changed: there was a change into the file to be managed
-#When the mmsEncoder stops the channel will updates the content of the dvblast configuration file removing
-#	the configuration and leaving the file empty. This script, in this scenario, kills the process and remove the configuration file
+#When the mmsEncoder stops the channel will updates the content of the dvblast configuration file removing the configuration and leaving the file empty. This script, in this scenario, kills the process and remove the configuration file
 
 tvChannelConfigurationDirectory=/var/catramms/tv
 tvLogsChannelsDir=/var/catramms/logs/tv
-dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_UNIVERSAL.channel.dvbv5.conf
+#dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_UNIVERSAL.channel.dvbv5.conf
+dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_terrestrian_2022_09_07.channel.dvbv5.conf
 frontendToBeUsed=1
 
 debug=1

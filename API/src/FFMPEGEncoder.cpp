@@ -11050,7 +11050,6 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 		// liveProxy->_liveProxyOutputRoots.clear();
 		{
-
 			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
@@ -11139,6 +11138,7 @@ void FFMPEGEncoder::liveProxyThread(
 				string tvMulticastIP;
 				string tvMulticastPort;
 
+				// in case there is already a serviceId running, we will use the same multicastIP-Port
 				pair<string, string> tvMulticast = getTVMulticastFromDvblastConfigurationFile(
 					liveProxy->_ingestionJobKey, encodingJobKey,
 					tvServiceId, tvFrequency, tvSymbolRate,
