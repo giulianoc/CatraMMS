@@ -1774,8 +1774,8 @@ public:
 		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 		int captureChannelsNumber,
 
-		int64_t tvServiceId, int64_t tvFrequency,
-		int64_t tvSymbolRate, string tvModulation, int tvVideoPid,
+		string tvType, int64_t tvServiceId, int64_t tvFrequency,
+		int64_t tvSymbolRate, int64_t tvBandwidthInMhz, string tvModulation, int tvVideoPid,
 		int tvAudioItalianPid,
 
 		bool monitorHLS,
@@ -2175,6 +2175,7 @@ public:
 		int64_t workspaceKey, int64_t confKey);
 
 	Json::Value addSourceTVStream(
+		string type,
 		int64_t serviceId,
 		int64_t networkId,
 		int64_t transportStreamId,
@@ -2190,6 +2191,7 @@ public:
 		string modulation,
 		string polarization,
 		int64_t symbolRate,
+		int64_t bandwidthInHz,
 		string country,
 		string deliverySystem
 	);
@@ -2197,6 +2199,7 @@ public:
 	Json::Value modifySourceTVStream(
 		int64_t confKey,
 
+		bool typeToBeModified, string type,
 		bool serviceIdToBeModified, int64_t serviceId,
 		bool networkIdToBeModified, int64_t networkId,
 		bool transportStreamIdToBeModified, int64_t transportStreamId,
@@ -2212,6 +2215,7 @@ public:
 		bool modulationToBeModified, string modulation,
 		bool polarizationToBeModified, string polarization,
 		bool symbolRateToBeModified, int64_t symbolRate,
+		bool bandwidthInHzToBeModified, int64_t bandwidthInHz,
 		bool countryToBeModified, string country,
 		bool deliverySystemToBeModified, string deliverySystem
 	);
@@ -2222,12 +2226,12 @@ public:
     Json::Value getSourceTVStreamList (
         int64_t confKey,
 		int start, int rows,
-		int64_t serviceId, string name, int64_t frequency, string lnb,
+		string type, int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
 		string nameOrder);
 
-    tuple<int64_t, int64_t, int64_t, string, int, int> getSourceTVStreamDetails(
-        int64_t confKey, bool warningIfMissing);
+    tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
+		getSourceTVStreamDetails(int64_t confKey, bool warningIfMissing);
 
 	int64_t addAWSChannelConf(
 		int64_t workspaceKey,

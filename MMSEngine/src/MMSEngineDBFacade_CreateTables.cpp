@@ -2469,7 +2469,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
 				"create table if not exists MMS_Conf_SourceTVStream ("
-                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "confKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"type						VARCHAR (64) NOT NULL,"
 					"serviceId					BIGINT UNSIGNED NULL,"
 					"networkId					BIGINT UNSIGNED NULL,"
 					"transportStreamId			BIGINT UNSIGNED NULL,"
@@ -2485,6 +2486,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"modulation					VARCHAR (64) NULL,"
                     "polarization				VARCHAR (64) NULL,"
 					"symbolRate					BIGINT UNSIGNED NULL,"
+					"bandwidthInHz				BIGINT UNSIGNED NULL,"
                     "country					VARCHAR (64) NULL,"
                     "deliverySystem				VARCHAR (64) NULL,"
                     "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey), "

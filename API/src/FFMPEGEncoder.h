@@ -552,9 +552,11 @@ private:
 		int64_t encodingJobKey,
 		string multicastIP,
 		string multicastPort,
+		string tvType,
 		int64_t tvServiceId,
 		int64_t tvFrequency,
 		int64_t tvSymbolRate,
+		int64_t tvBandwidthInMhz,
 		string tvModulation,
 		int tvVideoPid,
 		int tvAudioItalianPid,
@@ -564,9 +566,11 @@ private:
 	pair<string, string> getTVMulticastFromDvblastConfigurationFile(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
+		string tvType,
 		int64_t tvServiceId,
 		int64_t tvFrequency,
 		int64_t tvSymbolRate,
+		int64_t tvBandwidthInMhz,
 		string tvModulation
 	);
 };

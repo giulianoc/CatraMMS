@@ -5,7 +5,7 @@
 #each frequency corrispond to a transponder providing several channels
 
 #tv directory contains dvblast configuration file managed (created and updated) by the mmsEncoder.
-#	the name of these files are: <frequency>-<symbol rate>-<modulation>
+#	the name of these files are: <frequency>-<symbol rate>-<bandwidthInMHz>-<modulation>
 #	the extension of the file could be:
 #		- .txt: process is already up and running
 #		- .changed: there was a change into the file to be managed
@@ -14,8 +14,9 @@
 tvChannelConfigurationDirectory=/var/catramms/tv
 tvLogsChannelsDir=/var/catramms/logs/tv
 #dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_UNIVERSAL.channel.dvbv5.conf
-dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_terrestrian_2022_09_07.channel.dvbv5.conf
-frontendToBeUsed=1
+dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_terrestrial_2022_09_07.channel.dvbv5.conf
+#frontendToBeUsed=1
+frontendToBeUsed=0
 
 debug=1
 debugFilename=/tmp/tvController.log
@@ -85,11 +86,16 @@ getActualDeviceNumber()
 
 startOfProcess()
 {
-    frequency=$1
-    symbolRate=$2
-    modulation=$3
-    dvblastConfPathName=$4
-	pidProcessPathName=$5
+    type=$1
+    frequency=$2
+	if [ "$type" == "satellite" ]; then
+		symbolRate=$3
+	else
+		bandwidthInMhz=$3
+	fi
+    modulation=$4
+    dvblastConfPathName=$5
+	pidProcessPathName=$6
 
 	getFreeDeviceNumber $frequency
 	deviceNumber=$?
@@ -107,10 +113,18 @@ startOfProcess()
 
 	logPathName=$tvLogsChannelsDir/$frequency".log"
 	if [ $debug -eq 1 ]; then
-		echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
+		if [ "$type" == "satellite" ]; then
+			echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
+		else
+			echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -b $bandwidthInMhz $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
+		fi
 	fi
 
-	nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &
+	if [ "$type" == "satellite" ]; then
+		nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &
+	else
+		nohup dvblast -f $frequency -a $deviceNumber -b $bandwidthInMhz $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &
+	fi
 	echo $! > $pidProcessPathName
 	#I saw it returned 0 even if the process failed. Better to check if the process is running
 	#processReturn=$?
@@ -154,7 +168,7 @@ fi
 configurationFiles=$(ls $tvChannelConfigurationDirectory)
 for configurationFileName in $configurationFiles
 do
-	#for each <frequency>-<symbol rate>-<modulation>
+	#for each <frequency>-<symbol rate>-<bandwidthInMhz>-<modulation>
 
 	fileExtension=${configurationFileName##*.}
 	if [ $debug -eq 1 ]; then
@@ -162,18 +176,28 @@ do
 	fi
 
 	if [ "$fileExtension" == "txt" ]; then
-		frequencySymbolRateModulation=$(basename $configurationFileName .txt)
+		frequencySymbolRateBandwidthInMhzModulation=$(basename $configurationFileName .txt)
 	else
-		frequencySymbolRateModulation=$(basename $configurationFileName .changed)
+		frequencySymbolRateBandwidthInMhzModulation=$(basename $configurationFileName .changed)
 	fi
-	frequency=$(echo $frequencySymbolRateModulation | cut -d'-' -f1)
-	symbolRate=$(echo $frequencySymbolRateModulation | cut -d'-' -f2)
-	modulation=$(echo $frequencySymbolRateModulation | cut -d'-' -f3)
+	frequency=$(echo $frequencySymbolRateBandwidthInMhzModulation | cut -d'-' -f1)
+	symbolRate=$(echo $frequencySymbolRateBandwidthInMhzModulation | cut -d'-' -f2)
+	bandwidthInMhz=$(echo $frequencySymbolRateBandwidthInMhzModulation | cut -d'-' -f3)
+	modulation=$(echo $frequencySymbolRateBandwidthInMhzModulation | cut -d'-' -f4)
 	if [ "$modulation" == "" ]; then
 		modulation="n.a."
 	fi
+	#symbolRate is used by dvblast in case of satellite
+	#bandwidthInMhz is used by dvblast in case of digital terrestrial
+	if [ "$symbolRate" == "" ]; then
+		type="digitalTerrestrial"
+		localParam=$bandwidthInMhz
+	else
+		type="satellite"
+		localParam=$symbolRate
+	fi
 	if [ $debug -eq 1 ]; then
-		echo "frequency: $frequency, symbolRate: $symbolRate, modulation: $modulation" >> $debugFilename
+		echo "frequency: $frequency, type: $type, symbolRate: $symbolRate, bandwidthInMhz: $bandwidthInMhz, modulation: $modulation" >> $debugFilename
 	fi
 
 
@@ -188,7 +212,7 @@ do
 		if [ $isProcessRunning -eq 0 ]; then
 			echo "Process is not up and running, start it"
 
-			startOfProcess $frequency $symbolRate $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+			startOfProcess $type $frequency $localParam $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		fi
 
 		continue
@@ -228,13 +252,13 @@ do
 		fi
 		rm -f $tvChannelConfigurationDirectory/$configurationFileName
 	else
-		startOfProcess $frequency $symbolRate $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+		startOfProcess $type $frequency $localParam $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		processReturn=$?
 		if [ $processReturn -eq 0 ]; then
 			if [ $debug -eq 1 ]; then
-				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.txt" >> $debugFilename
+				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.txt" >> $debugFilename
 			fi
-			mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".changed" $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".txt"
+			mv $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation".changed" $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation".txt"
 		else
 			if [ $debug -eq 1 ]; then
 				echo "Start of the process failed, processReturn: $processReturn" >> $debugFilename

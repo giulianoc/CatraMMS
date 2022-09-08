@@ -2103,6 +2103,7 @@ void API::addSourceTVStream(
 
     try
     {
+		string type;
 		int64_t serviceId;
 		int64_t networkId;
 		int64_t transportStreamId;
@@ -2118,6 +2119,7 @@ void API::addSourceTVStream(
 		string modulation;
 		string polarization;
 		int64_t symbolRate;
+		int64_t bandwidthInHz;
 		string country;
 		string deliverySystem;
 
@@ -2147,7 +2149,18 @@ void API::addSourceTVStream(
                 }
             }
 
-			string field = "serviceId";
+			string field = "type";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			type = requestBodyRoot.get(field, "").asString();            
+
+			field = "serviceId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				serviceId = -1;
 			else
@@ -2237,6 +2250,12 @@ void API::addSourceTVStream(
 			else
 				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
+			field = "bandwidthInHz";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				bandwidthInHz = -1;
+			else
+				bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+
 			field = "country";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				country = requestBodyRoot.get(field, "").asString();            
@@ -2270,10 +2289,11 @@ void API::addSourceTVStream(
         {
 			Json::Value sourceTVStreamRoot =
 				_mmsEngineDBFacade->addSourceTVStream(
-				serviceId, networkId, transportStreamId,
+				type, serviceId, networkId, transportStreamId,
 				name, satellite, frequency, lnb,
 				videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid,
-				modulation, polarization, symbolRate, country, deliverySystem
+				modulation, polarization, symbolRate, bandwidthInHz,
+				country, deliverySystem
 			);
 
             Json::StreamWriterBuilder wbuilder;
@@ -2347,6 +2367,8 @@ void API::modifySourceTVStream(
 
     try
     {
+		bool typeToBeModified;
+		string type;
 		bool serviceIdToBeModified;
 		int64_t serviceId = -1;
 		bool networkIdToBeModified;
@@ -2377,6 +2399,8 @@ void API::modifySourceTVStream(
 		string polarization;
 		bool symbolRateToBeModified;
 		int64_t symbolRate = -1;
+		bool bandwidthInHzToBeModified;
+		int64_t bandwidthInHz = -1;
 		bool countryToBeModified;
 		string country;
 		bool deliverySystemToBeModified;
@@ -2409,7 +2433,14 @@ void API::modifySourceTVStream(
                 }
             }
 
-            string field = "serviceId";
+            string field = "type";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				type = requestBodyRoot.get(field, "").asString();            
+				typeToBeModified = true;
+            }
+
+            field = "serviceId";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);
@@ -2514,6 +2545,13 @@ void API::modifySourceTVStream(
 				symbolRateToBeModified = true;
             }
 
+            field = "bandwidthInHz";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				bandwidthInHzToBeModified = true;
+            }
+
             field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -2567,6 +2605,7 @@ void API::modifySourceTVStream(
 			Json::Value sourceTVStreamRoot =
 				_mmsEngineDBFacade->modifySourceTVStream(
 				confKey,
+                typeToBeModified, type,
                 serviceIdToBeModified, serviceId,
 				networkIdToBeModified, networkId,
 				transportStreamIdToBeModified, transportStreamId,
@@ -2582,6 +2621,7 @@ void API::modifySourceTVStream(
 				modulationToBeModified, modulation,
 				polarizationToBeModified, polarization,
 				symbolRateToBeModified, symbolRate,
+				bandwidthInHzToBeModified, bandwidthInHz,
 				countryToBeModified, country,
 				deliverySystemToBeModified, deliverySystem
 			);
@@ -2782,6 +2822,11 @@ void API::sourceTVStreamList(
 			}
 		}
 
+		string type;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+			type = typeIt->second;
+
 		int64_t serviceId = -1;
 		auto serviceIdIt = queryParameters.find("serviceId");
 		if (serviceIdIt != queryParameters.end() && serviceIdIt->second != "")
@@ -2860,7 +2905,7 @@ void API::sourceTVStreamList(
             Json::Value sourceTVStreamRoot =
 				_mmsEngineDBFacade->getSourceTVStreamList(
 				confKey, start, rows,
-				serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
+				type, serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, sourceTVStreamRoot);

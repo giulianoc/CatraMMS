@@ -12619,9 +12619,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// next code is the same in the Validator class
 		time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
+		string tvType;
 		int64_t tvServiceId = -1;
 		int64_t tvFrequency = -1;
 		int64_t tvSymbolRate = -1;
+		int64_t tvBandwidthInMhz = -1;
 		string tvModulation;
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
@@ -12637,14 +12639,17 @@ void MMSEngineProcessor::manageLiveRecorder(
 		else if (streamSourceType == "TV")
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, int64_t, int64_t, string, int, int>
+			tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 				tvChannelConfDetails =
 				_mmsEngineDBFacade->getSourceTVStreamDetails(
 				tvSourceTVConfKey, warningIfMissing);
 
-			tie(tvServiceId, tvFrequency,
-				tvSymbolRate, tvModulation,
+			int64_t tvBandwidthInHz;
+			tie(tvType, tvServiceId, tvFrequency,
+				tvSymbolRate, tvBandwidthInHz, tvModulation,
 				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
+			if (tvBandwidthInHz > 0)
+				tvBandwidthInMhz = tvBandwidthInHz / 1000000;
 		}
 
 		{
@@ -12844,7 +12849,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			captureWidth, captureHeight, captureAudioDeviceNumber,
 			captureChannelsNumber,
 
-			tvServiceId, tvFrequency, tvSymbolRate,
+			tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
 			tvModulation, tvVideoPid, tvAudioItalianPid,
 
 			monitorHLS,
@@ -13082,9 +13087,11 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
+		string tvType;
 		int64_t tvServiceId = -1;
 		int64_t tvFrequency = -1;
 		int64_t tvSymbolRate = -1;
+		int64_t tvBandwidthInMhz = -1;
 		string tvModulation;
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
@@ -13100,14 +13107,17 @@ void MMSEngineProcessor::manageLiveProxy(
 		else if (streamSourceType == "TV")
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, int64_t, int64_t, string, int, int>
+			tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 				tvChannelConfDetails =
 				_mmsEngineDBFacade->getSourceTVStreamDetails(
 				tvSourceTVConfKey, warningIfMissing);
 
-			tie(tvServiceId, tvFrequency,
-				tvSymbolRate, tvModulation,
+			int64_t tvBandwidthInHz;
+			tie(tvType, tvServiceId, tvFrequency,
+				tvSymbolRate, tvBandwidthInHz, tvModulation,
 				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
+			if (tvBandwidthInHz > 0)
+				tvBandwidthInMhz = tvBandwidthInHz / 1000000;
 		}
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,

@@ -3440,6 +3440,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 }
 
 Json::Value MMSEngineDBFacade::addSourceTVStream(
+	string type,
 	int64_t serviceId,
 	int64_t networkId,
 	int64_t transportStreamId,
@@ -3455,6 +3456,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 	string modulation,
 	string polarization,
 	int64_t symbolRate,
+	int64_t bandwidthInHz,
 	string country,
 	string deliverySystem
 )
@@ -3473,16 +3475,19 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_SourceTVStream(serviceId, networkId, transportStreamId, "
+                "insert into MMS_Conf_SourceTVStream( "
+				"type, serviceId, networkId, transportStreamId, "
 				"name, satellite, frequency, lnb, "
 				"videoPid, audioPids, audioItalianPid, audioEnglishPid, teletextPid, "
-				"modulation, polarization, symbolRate, country, deliverySystem "
+				"modulation, polarization, symbolRate, bandwidthInHz, "
+				"country, deliverySystem "
 				") values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, type);
 			if (serviceId == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 			else
@@ -3537,6 +3542,10 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
 			else
 				preparedStatement->setInt64(queryParameterIndex++, symbolRate);
+			if (bandwidthInHz == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, bandwidthInHz);
 			if (country == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -3549,6 +3558,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
             preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", type: " + type
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", networkId: " + to_string(networkId)
 				+ ", transportStreamId: " + to_string(transportStreamId)
@@ -3564,6 +3574,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 				+ ", modulation: " + modulation
 				+ ", polarization: " + polarization
 				+ ", symbolRate: " + to_string(symbolRate)
+				+ ", bandwidthInHz: " + to_string(bandwidthInHz)
 				+ ", country: " + country
 				+ ", deliverySystem: " + deliverySystem
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3577,6 +3588,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 		{
 			int start = 0;
 			int rows = 1;
+			string type;
 			int64_t serviceId;
 			string name;
 			int64_t frequency;
@@ -3585,7 +3597,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			string audioPids;
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
-				confKey, start, rows, serviceId, name, frequency, lnb,
+				confKey, start, rows, type, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
@@ -3690,6 +3702,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 Json::Value MMSEngineDBFacade::modifySourceTVStream(
 	int64_t confKey,
 
+	bool typeToBeModified, string type,
 	bool serviceIdToBeModified, int64_t serviceId,
 	bool networkIdToBeModified, int64_t networkId,
 	bool transportStreamIdToBeModified, int64_t transportStreamId,
@@ -3705,6 +3718,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 	bool modulationToBeModified, string modulation,
 	bool polarizationToBeModified, string polarization,
 	bool symbolRateToBeModified, int64_t symbolRate,
+	bool bandwidthInHzToBeModified, int64_t bandwidthInHz,
 	bool countryToBeModified, string country,
 	bool deliverySystemToBeModified, string deliverySystem
 )
@@ -3723,6 +3737,14 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
         {
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
+
+			if (typeToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("type = ?");
+				oneParameterPresent = true;
+			}
 
 			if (serviceIdToBeModified)
 			{
@@ -3844,6 +3866,14 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 				oneParameterPresent = true;
 			}
 
+			if (bandwidthInHzToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("bandwidthInHz = ?");
+				oneParameterPresent = true;
+			}
+
 			if (countryToBeModified)
 			{
 				if (oneParameterPresent)
@@ -3878,6 +3908,13 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			if (typeToBeModified)
+			{
+				if (type == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, type);
+			}
 			if (serviceIdToBeModified)
 			{
 				if (serviceId == -1)
@@ -3983,6 +4020,13 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 				else
 					preparedStatement->setInt64(queryParameterIndex++, symbolRate);
 			}
+			if (bandwidthInHzToBeModified)
+			{
+				if (bandwidthInHz == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, bandwidthInHz);
+			}
 			if (countryToBeModified)
 			{
 				if (country == "")
@@ -4003,6 +4047,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", type (" + to_string(typeToBeModified) + "): " + type
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", networkId: " + to_string(networkId)
 				+ ", transportStreamId: " + to_string(transportStreamId)
@@ -4018,6 +4063,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 				+ ", modulation (" + to_string(modulationToBeModified) + "): " + modulation
 				+ ", polarization (" + to_string(polarizationToBeModified) + "): " + polarization
 				+ ", symbolRate: " + to_string(symbolRate)
+				+ ", bandwidthInHz: " + to_string(bandwidthInHz)
 				+ ", country (" + to_string(countryToBeModified) + "): " + country
 				+ ", deliverySystem (" + to_string(deliverySystemToBeModified) + "): " + deliverySystem
 				+ ", confKey: " + to_string(confKey)
@@ -4044,6 +4090,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 		{
 			int start = 0;
 			int rows = 1;
+			string type;
 			int64_t serviceId;
 			string name;
 			int64_t frequency;
@@ -4052,7 +4099,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 			string audioPids;
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
-				confKey, start, rows, serviceId, name, frequency, lnb,
+				confKey, start, rows, type, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
@@ -4116,7 +4163,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4135,7 +4182,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
         throw e;
     }        
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -4267,7 +4314,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
 Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 	int64_t confKey,
 	int start, int rows,
-	int64_t serviceId, string name, int64_t frequency, string lnb,
+	string type, int64_t serviceId, string name, int64_t frequency, string lnb,
 	int videoPid, string audioPids,
 	string nameOrder)
 {
@@ -4284,6 +4331,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             + ", confKey: " + to_string(confKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
+            + ", type: " + type
             + ", frequency: " + to_string(frequency)
             + ", lnb: " + lnb
             + ", serviceId: " + to_string(serviceId)
@@ -4315,6 +4363,12 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
+			}
+            
+            if (type != "")
+			{
+				field = "type";
+				requestParametersRoot[field] = type;
 			}
             
             if (serviceId != -1)
@@ -4371,6 +4425,13 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			else
 				sqlWhere += ("and sc.confKey = ? ");
 		}
+        if (type != "")
+		{
+			if (sqlWhere == "")
+				sqlWhere += ("sc.type = ? ");
+			else
+				sqlWhere += ("and sc.type = ? ");
+		}
         if (serviceId != -1)
 		{
 			if (sqlWhere == "")
@@ -4426,6 +4487,8 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             int queryParameterIndex = 1;
             if (confKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, confKey);
+            if (type != "")
+                preparedStatement->setString(queryParameterIndex++, type);
             if (serviceId != -1)
 				preparedStatement->setInt64(queryParameterIndex++, serviceId);
             if (name != "")
@@ -4443,6 +4506,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confKey: " + to_string(confKey)
+				+ ", type: " + type
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", name: " + "%" + name + "%"
 				+ ", frequency: " + to_string(frequency)
@@ -4475,10 +4539,11 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 				orderByCondition = "order by sc.name " + nameOrder + " ";
 
 			lastSQLCommand = 
-				string("select sc.confKey, sc.serviceId, sc.networkId, sc.transportStreamId, sc.name, sc.satellite, "
+				string("select sc.confKey, sc.type, sc.serviceId, "
+					"sc.networkId, sc.transportStreamId, sc.name, sc.satellite, "
 					"sc.frequency, sc.lnb, sc.videoPid, sc.audioPids, "
 					"sc.audioItalianPid, sc.audioEnglishPid, sc.teletextPid, "
-					"sc.modulation, sc.polarization, sc.symbolRate, "
+					"sc.modulation, sc.polarization, sc.symbolRate, sc.bandwidthInHz, "
 					"sc.country, sc.deliverySystem "
 					"from MMS_Conf_SourceTVStream sc ") 
 				+ sqlWhere
@@ -4490,6 +4555,8 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             int queryParameterIndex = 1;
             if (confKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, confKey);
+            if (type != "")
+                preparedStatement->setString(queryParameterIndex++, type);
             if (serviceId != -1)
 				preparedStatement->setInt64(queryParameterIndex++, serviceId);
             if (name != "")
@@ -4509,6 +4576,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confKey: " + to_string(confKey)
+				+ ", type: " + type
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", name: " + "%" + name + "%"
 				+ ", frequency: " + to_string(frequency)
@@ -4527,6 +4595,9 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
                 field = "confKey";
                 streamRoot[field] = resultSet->getInt64("confKey");
+
+                field = "type";
+                streamRoot[field] = static_cast<string>(resultSet->getString("type"));
 
                 field = "serviceId";
 				if (resultSet->isNull("serviceId"))
@@ -4612,6 +4683,12 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 				else
 					streamRoot[field] = resultSet->getInt64("symbolRate");
 
+                field = "bandwidthInHz";
+				if (resultSet->isNull("bandwidthInHz"))
+					streamRoot[field] = Json::nullValue;
+				else
+					streamRoot[field] = resultSet->getInt64("bandwidthInHz");
+
 				field = "country";
 				if (resultSet->isNull("country"))
 					streamRoot[field] = Json::nullValue;
@@ -4662,7 +4739,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4681,7 +4758,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
         throw e;
     } 
     catch(exception e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -4702,7 +4779,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
     return streamListRoot;
 }
 
-tuple<int64_t, int64_t, int64_t, string, int, int>
+tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 	MMSEngineDBFacade::getSourceTVStreamDetails(
 	int64_t confKey, bool warningIfMissing
 )
@@ -4722,15 +4799,17 @@ tuple<int64_t, int64_t, int64_t, string, int, int>
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
+		string type;
 		int64_t serviceId;
 		int64_t frequency;
 		int64_t symbolRate;
+		int64_t bandwidthInHz;
 		string modulation;
 		int videoPid;
 		int audioItalianPid;
         {
-			lastSQLCommand = "select serviceId, frequency, symbolRate, "
-				"modulation, videoPid, audioItalianPid "
+			lastSQLCommand = "select type, serviceId, frequency, symbolRate, "
+				"bandwidthInHz, modulation, videoPid, audioItalianPid "
 				"from MMS_Conf_SourceTVStream "
 				"where confKey = ?"
 			;
@@ -4761,9 +4840,11 @@ tuple<int64_t, int64_t, int64_t, string, int, int>
 				throw ConfKeyNotFound(errorMessage);                    
             }
 
+			type = resultSet->getString("type");
 			serviceId = resultSet->getInt64("serviceId");
 			frequency = resultSet->getInt64("frequency");
 			symbolRate = resultSet->getInt64("symbolRate");
+			bandwidthInHz = resultSet->getInt64("bandwidthInHz");
 			modulation = resultSet->getString("modulation");
 			videoPid = resultSet->getInt("videoPid");
 			audioItalianPid = resultSet->getInt("audioItalianPid");
@@ -4775,8 +4856,8 @@ tuple<int64_t, int64_t, int64_t, string, int, int>
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(serviceId, frequency, symbolRate, modulation,
-			videoPid, audioItalianPid);
+		return make_tuple(type, serviceId, frequency, symbolRate, bandwidthInHz,
+			modulation, videoPid, audioItalianPid);
     }
     catch(sql::SQLException se)
     {
@@ -7425,9 +7506,11 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 				streamSourceType = "IP_PULL";
 		}
 
+		string tvType;
 		int64_t tvServiceId = -1;
 		int64_t tvFrequency = -1;
 		int64_t tvSymbolRate = -1;
+		int64_t tvBandwidthInHz = -1;
 		string tvModulation;
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
@@ -7443,12 +7526,12 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		else if (streamSourceType == "TV")
 		{
 			bool warningIfMissing = false;
-			tuple<int64_t, int64_t, int64_t, string, int, int>
+			tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 				tvChannelConfDetails = getSourceTVStreamDetails(
 				tvSourceTVConfKey, warningIfMissing);
 
-			tie(tvServiceId, tvFrequency,
-				tvSymbolRate, tvModulation,
+			tie(tvType, tvServiceId, tvFrequency,
+				tvSymbolRate, tvBandwidthInHz, tvModulation,
 				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 		}
 
@@ -7523,6 +7606,9 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 
 		if (streamSourceType == "TV")
 		{
+			field = "tvType";
+			streamInputRoot[field] = tvType;
+
 			field = "tvServiceId";
 			streamInputRoot[field] = tvServiceId;
 
@@ -7531,6 +7617,9 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 
 			field = "tvSymbolRate";
 			streamInputRoot[field] = tvSymbolRate;
+
+			field = "tvBandwidthInHz";
+			streamInputRoot[field] = tvBandwidthInHz;
 
 			field = "tvModulation";
 			streamInputRoot[field] = tvModulation;

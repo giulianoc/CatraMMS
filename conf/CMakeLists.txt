@@ -32,7 +32,7 @@ SET (CONFs
 	catrammsEncoderServer.nginx
 	mms.cfg
 	crontab.txt
-	3_terrestrian_2022_09_07.channel.dvbv5.conf
+	3_terrestrial_2022_09_07.channel.dvbv5.conf
 	3_EXTENDED_2021_07_19.channel.dvbv5.conf
 	3_UNIVERSAL_2021_07_19.channel.dvbv5.conf
 	3_UNIVERSAL.channel.dvbv5.conf
