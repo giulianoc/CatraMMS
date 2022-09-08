@@ -4843,9 +4843,16 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 			type = resultSet->getString("type");
 			serviceId = resultSet->getInt64("serviceId");
 			frequency = resultSet->getInt64("frequency");
-			symbolRate = resultSet->getInt64("symbolRate");
-			bandwidthInHz = resultSet->getInt64("bandwidthInHz");
-			modulation = resultSet->getString("modulation");
+			if (resultSet->isNull("symbolRate"))
+				symbolRate = -1;
+			else
+				symbolRate = resultSet->getInt64("symbolRate");
+			if (resultSet->isNull("bandwidthInHz"))
+				bandwidthInHz = -1;
+			else
+				bandwidthInHz = resultSet->getInt64("bandwidthInHz");
+			if (!resultSet->isNull("bandwidthInHz"))
+				modulation = resultSet->getString("modulation");
 			videoPid = resultSet->getInt("videoPid");
 			audioItalianPid = resultSet->getInt("audioItalianPid");
         }
