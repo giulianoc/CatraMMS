@@ -14329,6 +14329,8 @@ void FFMPEGEncoder::createOrUpdateTVDvbLastConfigurationFile(
 		{
 			if (tvModulation == "PSK/8")
 				localModulation = "psk_8";
+			else if (tvModulation == "QAM/64")
+				localModulation = "QAM_64";
 			else if (tvModulation == "QPSK")
 				localModulation = "qpsk";
 			else
@@ -14523,6 +14525,8 @@ pair<string, string> FFMPEGEncoder::getTVMulticastFromDvblastConfigurationFile(
 		{
 			if (tvModulation == "PSK/8")
 				localModulation = "psk_8";
+			else if (tvModulation == "QAM/64")
+				localModulation = "QAM_64";
 			else if (tvModulation == "QPSK")
 				localModulation = "qpsk";
 			else
