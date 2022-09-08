@@ -1775,7 +1775,7 @@ public:
 		int captureChannelsNumber,
 
 		string tvType, int64_t tvServiceId, int64_t tvFrequency,
-		int64_t tvSymbolRate, int64_t tvBandwidthInMhz, string tvModulation, int tvVideoPid,
+		int64_t tvSymbolRate, int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid,
 		int tvAudioItalianPid,
 
 		bool monitorHLS,

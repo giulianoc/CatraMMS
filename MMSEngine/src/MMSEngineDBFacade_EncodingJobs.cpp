@@ -7564,7 +7564,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int captureChannelsNumber,
 
 	string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
-	int64_t tvBandwidthInMhz, string tvModulation, int tvVideoPid, int tvAudioItalianPid,
+	int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid, int tvAudioItalianPid,
 
 	bool monitorHLS,
 	bool liveRecorderVirtualVOD,
@@ -7690,8 +7690,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "tvSymbolRate";
 				parametersRoot[field] = tvSymbolRate;
 
-				field = "tvBandwidthInMhz";
-				parametersRoot[field] = tvBandwidthInMhz;
+				field = "tvBandwidthInHz";
+				parametersRoot[field] = tvBandwidthInHz;
 
 				field = "tvModulation";
 				parametersRoot[field] = tvModulation;

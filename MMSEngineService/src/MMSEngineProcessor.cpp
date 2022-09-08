@@ -12623,7 +12623,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t tvServiceId = -1;
 		int64_t tvFrequency = -1;
 		int64_t tvSymbolRate = -1;
-		int64_t tvBandwidthInMhz = -1;
+		int64_t tvBandwidthInHz = -1;
 		string tvModulation;
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
@@ -12644,12 +12644,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 				_mmsEngineDBFacade->getSourceTVStreamDetails(
 				tvSourceTVConfKey, warningIfMissing);
 
-			int64_t tvBandwidthInHz;
 			tie(tvType, tvServiceId, tvFrequency,
 				tvSymbolRate, tvBandwidthInHz, tvModulation,
 				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
-			if (tvBandwidthInHz > 0)
-				tvBandwidthInMhz = tvBandwidthInHz / 1000000;
 		}
 
 		{
@@ -12849,7 +12846,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			captureWidth, captureHeight, captureAudioDeviceNumber,
 			captureChannelsNumber,
 
-			tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+			tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz,
 			tvModulation, tvVideoPid, tvAudioItalianPid,
 
 			monitorHLS,
@@ -13087,14 +13084,14 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		string tvType;
-		int64_t tvServiceId = -1;
-		int64_t tvFrequency = -1;
-		int64_t tvSymbolRate = -1;
-		int64_t tvBandwidthInMhz = -1;
-		string tvModulation;
-		int tvVideoPid = -1;
-		int tvAudioItalianPid = -1;
+		// string tvType;
+		// int64_t tvServiceId = -1;
+		// int64_t tvFrequency = -1;
+		// int64_t tvSymbolRate = -1;
+		// int64_t tvBandwidthInMhz = -1;
+		// string tvModulation;
+		// int tvVideoPid = -1;
+		// int tvAudioItalianPid = -1;
 		string liveURL;
 
 		if (streamSourceType == "IP_PULL")
@@ -13106,6 +13103,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else if (streamSourceType == "TV")
 		{
+			/*
 			bool warningIfMissing = false;
 			tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 				tvChannelConfDetails =
@@ -13118,6 +13116,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 			if (tvBandwidthInHz > 0)
 				tvBandwidthInMhz = tvBandwidthInHz / 1000000;
+			*/
 		}
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,

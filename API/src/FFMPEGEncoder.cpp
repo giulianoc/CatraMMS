@@ -6567,7 +6567,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	int64_t tvServiceId = -1;
 	int64_t tvFrequency = -1;
 	int64_t tvSymbolRate = -1;
-	int64_t tvBandwidthInMhz = -1;
+	int64_t tvBandwidthInHz = -1;
 	string tvModulation;
 	int tvVideoPid = -1;
 	int tvAudioItalianPid = -1;
@@ -6737,9 +6737,9 @@ void FFMPEGEncoder::liveRecorderThread(
 			tvSymbolRate = JSONUtils::asInt64(
 				liveRecorderMedatada["encodingParametersRoot"],
 				"tvSymbolRate", -1);
-			tvBandwidthInMhz = JSONUtils::asInt64(
+			tvBandwidthInHz = JSONUtils::asInt64(
 				liveRecorderMedatada["encodingParametersRoot"],
-				"tvBandwidthInMhz", -1);
+				"tvBandwidthInHz", -1);
 			tvModulation = liveRecorderMedatada["encodingParametersRoot"].
 				get("tvModulation", "").asString();
 			tvVideoPid = JSONUtils::asInt(
@@ -6757,7 +6757,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			pair<string, string> tvMulticast =
 				getTVMulticastFromDvblastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation);
 			tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
 
@@ -6780,7 +6781,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				true);
 		}
@@ -6995,7 +6997,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -7073,7 +7076,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -7168,7 +7172,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -7255,7 +7260,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -7342,7 +7348,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -7429,7 +7436,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
 				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+				tvType, tvServiceId, tvFrequency, tvSymbolRate,
+				tvBandwidthInHz / 1000000,
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
@@ -11134,7 +11142,7 @@ void FFMPEGEncoder::liveProxyThread(
 				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 				string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11152,7 +11160,8 @@ void FFMPEGEncoder::liveProxyThread(
 				// in case there is already a serviceId running, we will use the same multicastIP-Port
 				pair<string, string> tvMulticast = getTVMulticastFromDvblastConfigurationFile(
 					liveProxy->_ingestionJobKey, encodingJobKey,
-					tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+					tvType, tvServiceId, tvFrequency, tvSymbolRate,
+					tvBandwidthInHz / 1000000,
 					tvModulation);
 				tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
 
@@ -11179,7 +11188,8 @@ void FFMPEGEncoder::liveProxyThread(
 				createOrUpdateTVDvbLastConfigurationFile(
 					liveProxy->_ingestionJobKey, encodingJobKey,
 					tvMulticastIP, tvMulticastPort,
-					tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+					tvType, tvServiceId, tvFrequency, tvSymbolRate,
+					tvBandwidthInHz / 1000000,
 					tvModulation, tvVideoPid, tvAudioItalianPid,
 					true);
 			}
@@ -11284,7 +11294,7 @@ void FFMPEGEncoder::liveProxyThread(
 				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 				string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11296,7 +11306,8 @@ void FFMPEGEncoder::liveProxyThread(
 					createOrUpdateTVDvbLastConfigurationFile(
 						liveProxy->_ingestionJobKey, encodingJobKey,
 						tvMulticastIP, tvMulticastPort,
-						tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+						tvType, tvServiceId, tvFrequency, tvSymbolRate,
+						tvBandwidthInHz / 1000000,
 						tvModulation, tvVideoPid, tvAudioItalianPid,
 						false);
 				}
@@ -11368,7 +11379,7 @@ void FFMPEGEncoder::liveProxyThread(
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11380,7 +11391,8 @@ void FFMPEGEncoder::liveProxyThread(
 						createOrUpdateTVDvbLastConfigurationFile(
 							liveProxy->_ingestionJobKey, encodingJobKey,
 							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+							tvType, tvServiceId, tvFrequency, tvSymbolRate,
+							tvBandwidthInHz / 1000000,
 							tvModulation, tvVideoPid, tvAudioItalianPid,
 							false);
 					}
@@ -11475,7 +11487,7 @@ void FFMPEGEncoder::liveProxyThread(
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11487,7 +11499,8 @@ void FFMPEGEncoder::liveProxyThread(
 						createOrUpdateTVDvbLastConfigurationFile(
 							liveProxy->_ingestionJobKey, encodingJobKey,
 							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+							tvType, tvServiceId, tvFrequency, tvSymbolRate,
+							tvBandwidthInHz / 1000000,
 							tvModulation, tvVideoPid, tvAudioItalianPid,
 							false);
 					}
@@ -11577,7 +11590,7 @@ void FFMPEGEncoder::liveProxyThread(
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11589,7 +11602,8 @@ void FFMPEGEncoder::liveProxyThread(
 						createOrUpdateTVDvbLastConfigurationFile(
 							liveProxy->_ingestionJobKey, encodingJobKey,
 							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+							tvType, tvServiceId, tvFrequency, tvSymbolRate,
+							tvBandwidthInHz / 1000000,
 							tvModulation, tvVideoPid, tvAudioItalianPid,
 							false);
 					}
@@ -11679,7 +11693,7 @@ void FFMPEGEncoder::liveProxyThread(
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11691,7 +11705,8 @@ void FFMPEGEncoder::liveProxyThread(
 						createOrUpdateTVDvbLastConfigurationFile(
 							liveProxy->_ingestionJobKey, encodingJobKey,
 							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+							tvType, tvServiceId, tvFrequency, tvSymbolRate,
+							tvBandwidthInHz / 1000000,
 							tvModulation, tvVideoPid, tvAudioItalianPid,
 							false);
 					}
@@ -11781,7 +11796,7 @@ void FFMPEGEncoder::liveProxyThread(
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInMhz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInMhz", -1);
+					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
@@ -11793,7 +11808,8 @@ void FFMPEGEncoder::liveProxyThread(
 						createOrUpdateTVDvbLastConfigurationFile(
 							liveProxy->_ingestionJobKey, encodingJobKey,
 							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInMhz,
+							tvType, tvServiceId, tvFrequency, tvSymbolRate,
+							tvBandwidthInHz / 1000000,
 							tvModulation, tvVideoPid, tvAudioItalianPid,
 							false);
 					}
