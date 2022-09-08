@@ -18,6 +18,7 @@ dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_terrestrian_2022_09_07.channel
 frontendToBeUsed=1
 
 debug=1
+debugFilename=/tmp/tvController.log
 
 
 mkdir -p $tvChannelConfigurationDirectory
@@ -38,7 +39,7 @@ getFreeDeviceNumber()
 		#-x parameter just tunes and exit
 
 		if [ $debug -eq 1 ]; then
-			echo "getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName"
+			echo "getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName" >> $debugFilename
 		fi
 		dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
 		if [ $? -eq 0 ]
@@ -50,7 +51,7 @@ getFreeDeviceNumber()
 	done
 
 	if [ $debug -eq 1 ]; then
-		echo "getFreeDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber"
+		echo "getFreeDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
 	fi
 
 	return $selectedDeviceNumber
@@ -76,7 +77,7 @@ getActualDeviceNumber()
 	done
 
 	if [ $debug -eq 1 ]; then
-		echo "getActualDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber"
+		echo "getActualDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
 	fi
 
 	return $selectedDeviceNumber
@@ -106,7 +107,7 @@ startOfProcess()
 
 	logPathName=$tvLogsChannelsDir/$frequency".log"
 	if [ $debug -eq 1 ]; then
-		echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &"
+		echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
 	fi
 
 	nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &
@@ -138,7 +139,7 @@ isProcessRunningFunc()
 		localIsProcessRunning=0
 	fi
 	if [ $debug -eq 1 ]; then
-		echo "isProcessRunning: $localIsProcessRunning"
+		echo "isProcessRunning: $localIsProcessRunning" >> $debugFilename
 	fi
 
 	return $localIsProcessRunning
@@ -147,7 +148,7 @@ isProcessRunningFunc()
 # MAIN MAIN MAIN
 
 if [ $debug -eq 1 ]; then
-	echo "script started"
+	echo "script started" >> $debugFilename
 fi
 
 configurationFiles=$(ls $tvChannelConfigurationDirectory)
@@ -157,7 +158,7 @@ do
 
 	fileExtension=${configurationFileName##*.}
 	if [ $debug -eq 1 ]; then
-		echo "configurationFileName: $configurationFileName, fileExtension: $fileExtension"
+		echo "configurationFileName: $configurationFileName, fileExtension: $fileExtension" >> $debugFilename
 	fi
 
 	if [ "$fileExtension" == "txt" ]; then
@@ -172,7 +173,7 @@ do
 		modulation="n.a."
 	fi
 	if [ $debug -eq 1 ]; then
-		echo "frequency: $frequency, symbolRate: $symbolRate, modulation: $modulation"
+		echo "frequency: $frequency, symbolRate: $symbolRate, modulation: $modulation" >> $debugFilename
 	fi
 
 
@@ -199,7 +200,7 @@ do
 		if [ -s $pidProcessPathName ]; then
 
 			if [ $debug -eq 1 ]; then
-				echo "kill. pidProcessPathName: $(cat $pidProcessPathName)"
+				echo "kill. pidProcessPathName: $(cat $pidProcessPathName)" >> $debugFilename
 			fi
 
 			kill -9 $(cat $pidProcessPathName) > /dev/null 2>&1
@@ -217,13 +218,13 @@ do
 	#15 because we cannot have a conf less than 15 chars
 	if [ $fileSize -lt 15 ]; then
 		if [ $debug -eq 1 ]; then
-			echo "dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName"
+			echo "dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName" >> $debugFilename
 		fi
 
 		#process is alredy killed (see above statements)
 
 		if [ $debug -eq 1 ]; then
-			echo "rm -f $tvChannelConfigurationDirectory/$configurationFileName"
+			echo "rm -f $tvChannelConfigurationDirectory/$configurationFileName" >> $debugFilename
 		fi
 		rm -f $tvChannelConfigurationDirectory/$configurationFileName
 	else
@@ -231,12 +232,12 @@ do
 		processReturn=$?
 		if [ $processReturn -eq 0 ]; then
 			if [ $debug -eq 1 ]; then
-				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.txt"
+				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateModulation.txt" >> $debugFilename
 			fi
 			mv $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".changed" $tvChannelConfigurationDirectory/$frequencySymbolRateModulation".txt"
 		else
 			if [ $debug -eq 1 ]; then
-				echo "Start of the process failed, processReturn: $processReturn"
+				echo "Start of the process failed, processReturn: $processReturn" >> $debugFilename
 			fi
 		fi
 	fi
@@ -244,6 +245,6 @@ do
 done
 
 if [ $debug -eq 1 ]; then
-	echo "script finished"
+	echo "script finished" >> $debugFilename
 fi
 
