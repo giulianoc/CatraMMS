@@ -6775,8 +6775,13 @@ void FFMPEGEncoder::liveRecorderThread(
 					% _tvChannelPort_MaxNumberOfOffsets;
 			}
 
+			// overrun_nonfatal=1 prevents ffmpeg from exiting,
+			//		it can recover in most circumstances.
+			// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
 			liveURL = string("udp://@") + tvMulticastIP
-				+ ":" + tvMulticastPort;
+				+ ":" + tvMulticastPort
+				+ "?overrun_nonfatal=1&fifo_size=50000000"
+			;
 
 			createOrUpdateTVDvbLastConfigurationFile(
 				liveRecording->_ingestionJobKey, encodingJobKey,
@@ -11177,7 +11182,13 @@ void FFMPEGEncoder::liveProxyThread(
 						% _tvChannelPort_MaxNumberOfOffsets;
 				}
 
-				string newURL = string("udp://@") + tvMulticastIP + ":" + tvMulticastPort;
+				// overrun_nonfatal=1 prevents ffmpeg from exiting,
+				//		it can recover in most circumstances.
+				// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
+				string newURL = string("udp://@") + tvMulticastIP
+					+ ":" + tvMulticastPort
+					+ "?overrun_nonfatal=1&fifo_size=50000000"
+				;
 
 				streamInputRoot["url"] = newURL;
 				streamInputRoot["tvMulticastIP"] = tvMulticastIP;
