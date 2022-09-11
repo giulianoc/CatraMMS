@@ -12188,7 +12188,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		if (isMetadataPresent(outputRoot, "drawTextDetails"))
 		{
 			string field = "drawTextDetails";
-			Json::Value drawTextDetailsRoot = inputRoot[field];
+			Json::Value drawTextDetailsRoot = outputRoot[field];
 
 			field = "text";
 			if (!isMetadataPresent(drawTextDetailsRoot, field))
