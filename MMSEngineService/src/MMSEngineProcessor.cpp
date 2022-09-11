@@ -13788,6 +13788,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		bool awsSignedURL = false;
 		int awsExpirationInMinutes = 1440;	// 1 day
 		string udpUrl;
+		Json::Value drawTextDetailsRoot = Json::nullValue;
 
 
 		string field = "OutputType";
@@ -13980,6 +13981,10 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			}
 		}
 
+		field = "drawTextDetails";
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+			drawTextDetailsRoot = outputRoot[field];
+
 		Json::Value localOutputRoot;
 
 		field = "outputType";
@@ -14046,6 +14051,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;
+
+		if (drawTextDetailsRoot != Json::nullValue)
+		{
+			field = "drawTextDetails";
+			localOutputRoot[field] = drawTextDetailsRoot;
+		}
 
 		localOutputsRoot.append(localOutputRoot);
 	}

@@ -12080,6 +12080,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
 {
+	/*
 	string ffmpegDrawTextFilter;
 	if (isMetadataPresent(inputRoot, "countdownInput"))
 	{
@@ -12158,6 +12159,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			boxEnable, boxColor, boxPercentageOpacity,
 			streamingDurationInSeconds);
 	}
+	*/
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
