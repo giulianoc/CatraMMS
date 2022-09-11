@@ -3501,37 +3501,41 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 	bool boxEnable,
 	string boxColor,
 	int boxPercentageOpacity,
-	int64_t streamingDurationInSeconds
+	int64_t streamingDurationInSeconds	// used in case of countdown
 )
 {
 
 	string ffmpegDrawTextFilter;
 
 	{
-		// see https://ffmpeg.org/ffmpeg-filters.html
-		// see https://ffmpeg.org/ffmpeg-utils.html
-		//
-		// expr_int_format, eif
-		//	Evaluate the expression’s value and output as formatted integer.
-		//	The first argument is the expression to be evaluated, just as for the expr function.
-		//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
-		//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
-		//
-		string ffmpegText = regex_replace(text, regex(":"), "\\:");
-		ffmpegText = regex_replace(ffmpegText,
-			regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
-		ffmpegText = regex_replace(ffmpegText,
-			regex("hours_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/3600),24))\\:d\\:2}");
-		ffmpegText = regex_replace(ffmpegText,
-			regex("mins_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/60),60))\\:d\\:2}");
-		ffmpegText = regex_replace(ffmpegText,
-			regex("secs_counter"), "%{eif\\:trunc(mod(countDownDurationInSecs-t\\,60))\\:d\\:2}");
-		ffmpegText = regex_replace(ffmpegText,
-			regex("cents_counter"), "%{eif\\:(mod(countDownDurationInSecs-t\\,1)*pow(10,2))\\:d\\:2}");
-		if (streamingDurationInSeconds != -1)
+		// management of the text, many processing is in case of a countdown
+		string ffmpegText;
 		{
+			// see https://ffmpeg.org/ffmpeg-filters.html
+			// see https://ffmpeg.org/ffmpeg-utils.html
+			//
+			// expr_int_format, eif
+			//	Evaluate the expression’s value and output as formatted integer.
+			//	The first argument is the expression to be evaluated, just as for the expr function.
+			//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
+			//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
+			//
+			ffmpegText = regex_replace(text, regex(":"), "\\:");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+				regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
+			ffmpegText = regex_replace(ffmpegText,
+				regex("hours_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/3600),24))\\:d\\:2}");
+			ffmpegText = regex_replace(ffmpegText,
+				regex("mins_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/60),60))\\:d\\:2}");
+			ffmpegText = regex_replace(ffmpegText,
+				regex("secs_counter"), "%{eif\\:trunc(mod(countDownDurationInSecs-t\\,60))\\:d\\:2}");
+			ffmpegText = regex_replace(ffmpegText,
+				regex("cents_counter"), "%{eif\\:(mod(countDownDurationInSecs-t\\,1)*pow(10,2))\\:d\\:2}");
+			if (streamingDurationInSeconds != -1)
+			{
+				ffmpegText = regex_replace(ffmpegText,
+					regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+			}
 		}
 
 		/*
@@ -3624,680 +3628,6 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 
 	return ffmpegDrawTextFilter;
 }
-
-/*
-void FFMpeg::awaitingTheBegining(
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-
-        string mmsSourceVideoAssetPathName,
-		int64_t videoDurationInMilliSeconds,
-
-		time_t utcCountDownEnd,
-
-		string text,
-		string textPosition_X_InPixel,
-		string textPosition_Y_InPixel,
-		string fontType,
-		int fontSize,
-		string fontColor,
-		int textPercentageOpacity,
-		bool boxEnable,
-		string boxColor,
-		int boxPercentageOpacity,
-
-		string outputType,
-		Json::Value encodingProfileDetailsRoot,
-		string manifestDirectoryPath,
-		string manifestFileName,
-		int segmentDurationInSeconds,
-		int playlistEntriesNumber,
-		bool isVideo,
-		string rtmpUrl,
-		string udpUrl,
-
-		pid_t* pChildPid)
-{
-	int iReturnedStatus = 0;
-
-	_currentApiName = "awaitingTheBegining";
-
-	setStatus(
-		ingestionJobKey,
-		encodingJobKey,
-		videoDurationInMilliSeconds,
-		mmsSourceVideoAssetPathName
-	);
-
-    try
-    {
-		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
-		)
-		{
-			string errorMessage = string("Source video asset path name not existing")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		time_t utcNow;
-		{
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
-
-			if (utcCountDownEnd <= utcNow)
-			{
-				time_t tooLateTime = utcNow - utcCountDownEnd;
-
-				string errorMessage = __FILEREF__ + "AwaitingTheBeginning timing. "
-					+ "Too late to start"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", utcNow: " + to_string(utcNow)
-					+ ", utcCountDownEnd: " + to_string(utcCountDownEnd)
-					+ ", tooLateTime: " + to_string(tooLateTime)
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		time_t streamingDurationInSeconds;
-		int streamLoopNumber;
-		{
-			streamingDurationInSeconds = utcCountDownEnd - utcNow;
-
-			_logger->info(__FILEREF__ + "AwaitingTheBeginning timing. "
-				+ "Streaming duration"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", utcNow: " + to_string(utcNow)
-				+ ", utcCountDownEnd: " + to_string(utcCountDownEnd)
-				+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
-				+ ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
-			);
-
-			streamLoopNumber = streamingDurationInSeconds
-				/ (videoDurationInMilliSeconds / 1000);
-			streamLoopNumber += 2;
-		}
-
-		if (encodingProfileDetailsRoot == Json::nullValue)
-		{
-			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		vector<string> ffmpegEncodingProfileArgumentList;
-		{
-			try
-			{
-				string httpStreamingFileFormat;    
-				string ffmpegHttpStreamingParameter = "";
-				bool encodingProfileIsVideo = true;
-
-				string ffmpegFileFormatParameter = "";
-
-				string ffmpegVideoCodecParameter = "";
-				string ffmpegVideoProfileParameter = "";
-				string ffmpegVideoResolutionParameter = "";
-				int videoBitRateInKbps = -1;
-				string ffmpegVideoBitRateParameter = "";
-				string ffmpegVideoOtherParameters = "";
-				string ffmpegVideoMaxRateParameter = "";
-				string ffmpegVideoBufSizeParameter = "";
-				string ffmpegVideoFrameRateParameter = "";
-				string ffmpegVideoKeyFramesRateParameter = "";
-				bool twoPasses;
-				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
-
-				string ffmpegAudioCodecParameter = "";
-				string ffmpegAudioBitRateParameter = "";
-				string ffmpegAudioOtherParameters = "";
-				string ffmpegAudioChannelsParameter = "";
-				string ffmpegAudioSampleRateParameter = "";
-				vector<string> audioBitRatesInfo;
-
-
-				settingFfmpegParameters(
-					encodingProfileDetailsRoot,
-					encodingProfileIsVideo,
-
-					httpStreamingFileFormat,
-					ffmpegHttpStreamingParameter,
-
-					ffmpegFileFormatParameter,
-
-					ffmpegVideoCodecParameter,
-					ffmpegVideoProfileParameter,
-					ffmpegVideoOtherParameters,
-					twoPasses,
-					ffmpegVideoFrameRateParameter,
-					ffmpegVideoKeyFramesRateParameter,
-					videoBitRatesInfo,
-
-					ffmpegAudioCodecParameter,
-					ffmpegAudioOtherParameters,
-					ffmpegAudioChannelsParameter,
-					ffmpegAudioSampleRateParameter,
-					audioBitRatesInfo
-				);
-
-				tuple<string, int, int, int, string, string, string> videoBitRateInfo
-					= videoBitRatesInfo[0];
-				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
-					ffmpegVideoBitRateParameter,
-					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
-
-				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
-
-				if (twoPasses)
-				{
-					twoPasses = false;
-
-					string errorMessage = __FILEREF__ + "in case of awaitingTheBeginning it is not possible to have a two passes encoding. Change it to false"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", twoPasses: " + to_string(twoPasses)
-					;
-					_logger->warn(errorMessage);
-				}
-
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-				// we cannot have two video filters parameters (-vf), one is for the overlay.
-				// If it is needed we have to combine both using the same -vf parameter and using the
-				// comma (,) as separator. For now we will just comment it and the resolution will be the one
-				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
-				ffmpegEncodingProfileArgumentList.push_back("-threads");
-				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", e.what(): " + e.what()
-				;
-				_logger->error(errorMessage);
-
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-				;
-				throw e;
-			}
-		}
-
-		string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
-			streamingDurationInSeconds);
-
-		vector<string> ffmpegArgumentList;
-		ostringstream ffmpegArgumentListStream;
-		{
-			ffmpegArgumentList.push_back("ffmpeg");
-			// global options
-			// input options
-			ffmpegArgumentList.push_back("-re");
-			ffmpegArgumentList.push_back("-stream_loop");
-			ffmpegArgumentList.push_back(to_string(streamLoopNumber));
-			ffmpegArgumentList.push_back("-i");
-			ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
-			ffmpegArgumentList.push_back("-t");
-			ffmpegArgumentList.push_back(to_string(streamingDurationInSeconds));
-
-			for (string parameter: ffmpegEncodingProfileArgumentList)
-				addToArguments(parameter, ffmpegArgumentList);
-
-			// output options
-			// addToArguments(ffmpegDrawTextFilter, ffmpegArgumentList);
-			ffmpegArgumentList.push_back("-vf");
-			ffmpegArgumentList.push_back(ffmpegDrawTextFilter);
-
-			{
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
-
-					_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
-
-					// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-					// I saw just once that the directory was not created and the liveencoder remains in the loop
-					// where:
-					//	1. the encoder returns an error because of the missing directory
-					//	2. EncoderVideoAudioProxy calls again the encoder
-					// So, for this reason, the below check is done
-					if (!FileIO::directoryExisting(manifestDirectoryPath))
-					{
-						_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						);
-
-						_logger->info(__FILEREF__ + "Create directory"
-							+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						);
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						FileIO::createDirectory(manifestDirectoryPath,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP |
-							S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-
-					if (outputType == "HLS")
-					{
-						ffmpegArgumentList.push_back("-hls_flags");
-						ffmpegArgumentList.push_back("append_list");
-						ffmpegArgumentList.push_back("-hls_time");
-						ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
-						ffmpegArgumentList.push_back("-hls_list_size");
-						ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
-
-						// Segment files removed from the playlist are deleted after a period of time
-						// equal to the duration of the segment plus the duration of the playlist
-						ffmpegArgumentList.push_back("-hls_flags");
-						ffmpegArgumentList.push_back("delete_segments");
-
-						// Set the number of unreferenced segments to keep on disk
-						// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
-						// to download segments which were recently referenced in the playlist.
-						// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
-						ffmpegArgumentList.push_back("-hls_delete_threshold");
-						ffmpegArgumentList.push_back(to_string(1));
-
-						// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
-						// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
-						// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-						// 2020-07-19: commented, if it is needed just test it
-						// ffmpegArgumentList.push_back("-hls_start_number_source");
-						// ffmpegArgumentList.push_back("datetime");
-
-						// 2020-07-19: commented, if it is needed just test it
-						// ffmpegArgumentList.push_back("-start_number");
-						// ffmpegArgumentList.push_back(to_string(10));
-					}
-					else if (outputType == "DASH")
-					{
-						ffmpegArgumentList.push_back("-seg_duration");
-						ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
-						ffmpegArgumentList.push_back("-window_size");
-						ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
-
-						// it is important to specify -init_seg_name because those files
-						// will not be removed in EncoderVideoAudioProxy.cpp
-						ffmpegArgumentList.push_back("-init_seg_name");
-						ffmpegArgumentList.push_back("init-stream$RepresentationID$.$ext$");
-
-						// the only difference with the ffmpeg default is that default is $Number%05d$
-						// We had to change it to $Number%01d$ because otherwise the generated file containing
-						// 00001 00002 ... but the videojs player generates file name like 1 2 ...
-						// and the streaming was not working
-						ffmpegArgumentList.push_back("-media_seg_name");
-						ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
-					}
-					ffmpegArgumentList.push_back(manifestFilePathName);
-				}
-				else if (outputType == "RTMP_Stream")
-				{
-					if (rtmpUrl == "")
-					{
-						string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", rtmpUrl: " + rtmpUrl
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					ffmpegArgumentList.push_back("-bsf:a");
-					ffmpegArgumentList.push_back("aac_adtstoasc");
-					// 2020-08-13: commented bacause -c:v copy is already present
-					// ffmpegArgumentList.push_back("-vcodec");
-					// ffmpegArgumentList.push_back("copy");
-
-					// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
-					ffmpegArgumentList.push_back("-f");
-					ffmpegArgumentList.push_back("flv");
-					ffmpegArgumentList.push_back(rtmpUrl);
-				}
-				else if (outputType == "UDP_Stream")
-				{
-					if (udpUrl == "")
-					{
-						string errorMessage = __FILEREF__ + "udpUrl cannot be empty"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", udpUrl: " + udpUrl
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					// ffmpegArgumentList.push_back("-bsf:a");
-					// ffmpegArgumentList.push_back("aac_adtstoasc");
-					// 2020-08-13: commented bacause -c:v copy is already present
-					// ffmpegArgumentList.push_back("-vcodec");
-					// ffmpegArgumentList.push_back("copy");
-
-					// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
-					ffmpegArgumentList.push_back("-f");
-					ffmpegArgumentList.push_back("mpegts");
-					ffmpegArgumentList.push_back(udpUrl);
-				}
-				else
-				{
-					string errorMessage = __FILEREF__ + "awaitingThebeginning. Wrong output type"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", outputType: " + outputType;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-
-			ostringstream ffmpegArgumentListStream;
-			int iReturnedStatus = 0;
-			chrono::system_clock::time_point startFfmpegCommand;
-			chrono::system_clock::time_point endFfmpegCommand;
-
-			try
-			{
-				_outputFfmpegPathFileName =
-					_ffmpegTempDir + "/"
-					+ to_string(_currentIngestionJobKey)
-					+ "_"
-					+ to_string(_currentEncodingJobKey)
-					+ ".awaitingTheBeginning.log";
-
-				{
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-					utcNow = chrono::system_clock::to_time_t(now);
-				}
-
-				if (!ffmpegArgumentList.empty())
-					copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
-						ostream_iterator<string>(ffmpegArgumentListStream, " "));
-
-				_logger->info(__FILEREF__ + "awaitingTheBegining: Executing ffmpeg command"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-				);
-
-				startFfmpegCommand = chrono::system_clock::now();
-
-				bool redirectionStdOutput = true;
-				bool redirectionStdError = true;
-
-				ProcessUtility::forkAndExec (
-					_ffmpegPath + "/ffmpeg",
-					ffmpegArgumentList,
-					_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
-					pChildPid, &iReturnedStatus);
-				if (iReturnedStatus != 0)
-				{
-					string errorMessage = __FILEREF__ + "awaitingTheBegining: ffmpeg command failed"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", iReturnedStatus: " + to_string(iReturnedStatus)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					;
-					_logger->error(errorMessage);
-
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "awaitingTheBegining command failed"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
-					throw runtime_error(errorMessage);
-				}
-
-				endFfmpegCommand = chrono::system_clock::now();
-
-				_logger->info(__FILEREF__ + "awaitingTheBegining: Executed ffmpeg command"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-				);
-
-				{
-					if (outputType == "HLS" || outputType == "DASH")
-					{
-						if (manifestDirectoryPath != "")
-						{
-							if (FileIO::directoryExisting(manifestDirectoryPath))
-							{
-								try
-								{
-									_logger->info(__FILEREF__ + "removeDirectory"
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = __FILEREF__ + "remove directory failed"
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(errorMessage);
-
-									// throw e;
-								}
-								catch(exception e)
-								{
-									string errorMessage = __FILEREF__ + "remove directory failed"
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(errorMessage);
-
-									// throw e;
-								}
-							}
-						}
-					}
-				}
-
-				if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcCountDownEnd - utcNow - 60))
-				{
-
-					throw runtime_error("awaitingTheBeginning exit before unexpectly");
-				}
-			}
-			catch(runtime_error e)
-			{
-				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-					_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				string errorMessage;
-				if (iReturnedStatus == 9)	// 9 means: SIGKILL
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-						+ ", e.what(): " + e.what()
-					;
-				else
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-						+ ", e.what(): " + e.what()
-					;
-				_logger->error(errorMessage);
-
-				// copy ffmpeg log file
-				{
-					char		sEndFfmpegCommand [64];
-
-					time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(chrono::system_clock::now());
-					tm		tmUtcEndFfmpegCommand;
-					localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
-					sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
-						tmUtcEndFfmpegCommand. tm_year + 1900,
-						tmUtcEndFfmpegCommand. tm_mon + 1,
-						tmUtcEndFfmpegCommand. tm_mday,
-						tmUtcEndFfmpegCommand. tm_hour,
-						tmUtcEndFfmpegCommand. tm_min,
-						tmUtcEndFfmpegCommand. tm_sec);
-
-					string debugOutputFfmpegPathFileName =
-						_ffmpegTempDir + "/"
-						+ to_string(ingestionJobKey) + "_"
-						+ to_string(encodingJobKey) + "_"
-						+ sEndFfmpegCommand
-						+ ".awaitingTheBeginning.log.debug"
-					;
-
-					_logger->info(__FILEREF__ + "Coping"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
-					);
-					FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
-				}
-
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-				{
-					if (outputType == "HLS" || outputType == "DASH")
-					{
-						if (manifestDirectoryPath != "")
-						{
-							if (FileIO::directoryExisting(manifestDirectoryPath))
-							{
-								try
-								{
-									_logger->info(__FILEREF__ + "removeDirectory"
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = __FILEREF__ + "remove directory failed"
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(errorMessage);
-
-									// throw e;
-								}
-								catch(exception e)
-								{
-									string errorMessage = __FILEREF__ + "remove directory failed"
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", manifestDirectoryPath: " + manifestDirectoryPath
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(errorMessage);
-
-									// throw e;
-								}
-							}
-						}
-					}
-				}
-
-				if (iReturnedStatus == 9)	// 9 means: SIGKILL
-					throw FFMpegEncodingKilledByUser();
-				else
-					throw e;
-			}
-
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-		}
-    }
-    catch(FFMpegEncodingKilledByUser e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg awaitingTheBeginning failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-
-        throw e;
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg awaitingTheBeginning failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg awaitingTheBeginning failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-
-        throw e;
-    }
-}
-*/
 
 void FFMpeg::videoSpeed(
         string mmsSourceVideoAssetPathName,
@@ -12851,6 +12181,85 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
 			.asString();
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
+
+		string ffmpegDrawTextFilter;
+		if (isMetadataPresent(outputRoot, "drawTextDetails"))
+		{
+			string field = "drawTextDetails";
+			Json::Value drawTextDetailsRoot = inputRoot[field];
+
+			field = "text";
+			if (!isMetadataPresent(drawTextDetailsRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string text = drawTextDetailsRoot.get(field, "").asString();
+
+			string textPosition_X_InPixel = "";
+			field = "textPosition_X_InPixel";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				textPosition_X_InPixel = drawTextDetailsRoot.get(field, "").asString();
+
+			string textPosition_Y_InPixel = "";
+			field = "textPosition_Y_InPixel";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				textPosition_Y_InPixel = drawTextDetailsRoot.get(field, "").asString();
+
+			string fontType = "";
+			field = "fontType";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				fontType = drawTextDetailsRoot.get(field, "").asString();
+
+			int fontSize = -1;
+			field = "fontSize";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				fontSize = asInt(drawTextDetailsRoot, field, -1);
+
+			string fontColor = "";
+			field = "fontColor";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				fontColor = drawTextDetailsRoot.get(field, "").asString();
+
+			int textPercentageOpacity = -1;
+			field = "textPercentageOpacity";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				textPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
+
+			int shadowx = 0;
+			field = "shadowx";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				shadowx = asInt(drawTextDetailsRoot, field, -1);
+
+			int shadowy = 0;
+			field = "shadowy";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				shadowy = asInt(drawTextDetailsRoot, field, -1);
+
+			bool boxEnable = false;
+			field = "boxEnable";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				boxEnable = asBool(drawTextDetailsRoot, field, false);
+
+			string boxColor = "";
+			field = "boxColor";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				boxColor = drawTextDetailsRoot.get(field, "").asString();
+
+			int boxPercentageOpacity = -1;
+			field = "boxPercentageOpacity";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				boxPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
+
+			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+				text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				fontColor, textPercentageOpacity, shadowx, shadowy,
+				boxEnable, boxColor, boxPercentageOpacity,
+				streamingDurationInSeconds);
+		}
 
 		/*
 		int fadeDuration = asInt(outputRoot, "fadeDuration", -1);
