@@ -2300,7 +2300,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "text"
+		"drawTextDetails"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2320,81 +2320,106 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         }
     }
 
-    string field = "fontType";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-        string fontType = parametersRoot.get(field, "").asString();
-                        
-        if (!isFontTypeValid(fontType))
-        {
-            string errorMessage = string("Unknown fontType")
-                + ", fontType: " + fontType
-                + ", label: " + label
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+	{
+		Json::Value drawTextDetailsRoot = parametersRoot["drawTextDetails"];
 
-            throw runtime_error(errorMessage);
-        }
-    }
+		vector<string> mandatoryFields = {
+			"text"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, drawTextDetailsRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
 
-    field = "fontColor";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-        string fontColor = parametersRoot.get(field, "").asString();
-                        
-        if (!isColorValid(fontColor))
-        {
-            string errorMessage = string("Unknown fontColor")
-                + ", fontColor: " + fontColor
-                + ", label: " + label
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+				throw runtime_error(errorMessage);
+			}
+		}
 
-            throw runtime_error(errorMessage);
-        }
-    }
+		string field = "fontType";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			string fontType = drawTextDetailsRoot.get(field, "").asString();
 
-    field = "textPercentageOpacity";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-        int textPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
-                        
-        if (textPercentageOpacity > 100)
-        {
-            string errorMessage = string("Wrong textPercentageOpacity")
-                + ", textPercentageOpacity: " + to_string(textPercentageOpacity)
-                + ", label: " + label
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+			if (!isFontTypeValid(fontType))
+			{
+				string errorMessage = string("Unknown fontType")
+					+ ", fontType: " + fontType
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
+				throw runtime_error(errorMessage);
+			}
+		}
 
-    field = "boxEnable";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-        bool boxEnable = JSONUtils::asBool(parametersRoot, field, true);                        
-    }
+		field = "fontColor";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			string fontColor = drawTextDetailsRoot.get(field, "").asString();
 
-    field = "boxPercentageOpacity";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-        int boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
-                        
-        if (boxPercentageOpacity > 100)
-        {
-            string errorMessage = string("Wrong boxPercentageOpacity")
-                + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
-                + ", label: " + label
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+			if (!isColorValid(fontColor))
+			{
+				string errorMessage = string("Unknown fontColor")
+					+ ", fontColor: " + fontColor
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
+				throw runtime_error(errorMessage);
+			}
+		}
 
-    field = "encodingPriority";
+		field = "textPercentageOpacity";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+
+			if (textPercentageOpacity > 100)
+			{
+				string errorMessage = string("Wrong textPercentageOpacity")
+					+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		field = "boxEnable";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, true);                        
+		}
+
+		field = "boxPercentageOpacity";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+
+			if (boxPercentageOpacity > 100)
+			{
+				string errorMessage = string("Wrong boxPercentageOpacity")
+					+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+
+    string field = "encodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = parametersRoot.get(field, "").asString();
@@ -3879,96 +3904,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		{
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			field = "OutputType";
-			string liveRecordingOutputType;
-			if (JSONUtils::isMetadataPresent(outputRoot, field))
-			{
-				liveRecordingOutputType = outputRoot.get(field, "").asString();
-				if (!isLiveProxyOutputTypeValid(liveRecordingOutputType))
-				{
-					string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
-						+ ", Field: " + field
-						+ ", liveRecordingOutputType: " + liveRecordingOutputType
-						+ ", label: " + label
-						;
-					_logger->error(__FILEREF__ + errorMessage);
-        
-					throw runtime_error(errorMessage);
-				}
-			}
-
-			if (liveRecordingOutputType == "HLS")
-			{
-				vector<string> mandatoryFields = {
-					"DeliveryCode"
-				};
-				for (string mandatoryField: mandatoryFields)
-				{
-					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", Field: " + mandatoryField
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-							;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-			}
-			else if (liveRecordingOutputType == "RTMP_Stream")
-			{
-				vector<string> mandatoryFields = {
-					"RtmpUrl"
-				};
-				for (string mandatoryField: mandatoryFields)
-				{
-					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", Field: " + mandatoryField
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-							;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-			}
-			else if (liveRecordingOutputType == "AWS_CHANNEL")
-			{
-			}
-			else if (liveRecordingOutputType == "UDP_Stream")
-			{
-				vector<string> mandatoryFields = {
-					"udpUrl"
-				};
-				for (string mandatoryField: mandatoryFields)
-				{
-					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-					{
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", Field: " + mandatoryField
-							+ ", sParametersRoot: " + sParametersRoot
-							+ ", label: " + label
-							;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-			}
+			validateOutputRootMetadata(workspaceKey, label, outputRoot);
 		}
 	}
 
@@ -4110,96 +4046,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
-		field = "OutputType";
-		string liveProxyOutputType;
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-		{
-			liveProxyOutputType = outputRoot.get(field, "").asString();
-			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
-			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
-					+ ", Field: " + field
-					+ ", liveProxyOutputType: " + liveProxyOutputType
-					+ ", label: " + label
-					;
-				_logger->error(__FILEREF__ + errorMessage);
-        
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		if (liveProxyOutputType == "HLS")
-		{
-			vector<string> mandatoryFields = {
-				"DeliveryCode"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "RTMP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"RtmpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "AWS_CHANNEL")
-		{
-		}
-		else if (liveProxyOutputType == "UDP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"udpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
+		validateOutputRootMetadata(workspaceKey, label, outputRoot);
 	}
 
     field = "ProcessingStartingFrom";
@@ -4586,96 +4433,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 			}
 		}
 
-		field = "OutputType";
-		string liveProxyOutputType;
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-		{
-			liveProxyOutputType = outputRoot.get(field, "").asString();
-			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
-			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
-					+ ", Field: " + field
-					+ ", liveProxyOutputType: " + liveProxyOutputType
-					+ ", label: " + label
-					;
-				_logger->error(__FILEREF__ + errorMessage);
-        
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		if (liveProxyOutputType == "HLS")
-		{
-			vector<string> mandatoryFields = {
-				"DeliveryCode"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "RTMP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"RtmpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "AWS_CHANNEL")
-		{
-		}
-		else if (liveProxyOutputType == "UDP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"udpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
+		validateOutputRootMetadata(workspaceKey, label, outputRoot);
 	}
 
     field = "ProcessingStartingFrom";
@@ -4807,29 +4565,6 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	{
-		vector<string> mandatoryFields = {
-			"Text"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-
 	field = "Outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
@@ -4866,96 +4601,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
-		field = "OutputType";
-		string liveProxyOutputType;
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-		{
-			liveProxyOutputType = outputRoot.get(field, "").asString();
-			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
-			{
-				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
-					+ ", Field: " + field
-					+ ", liveProxyOutputType: " + liveProxyOutputType
-					+ ", label: " + label
-					;
-				_logger->error(__FILEREF__ + errorMessage);
-        
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		if (liveProxyOutputType == "HLS")
-		{
-			vector<string> mandatoryFields = {
-				"DeliveryCode"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "RTMP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"RtmpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else if (liveProxyOutputType == "AWS_CHANNEL")
-		{
-		}
-		else if (liveProxyOutputType == "UDP_Stream")
-		{
-			vector<string> mandatoryFields = {
-				"udpUrl"
-			};
-			for (string mandatoryField: mandatoryFields)
-			{
-				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-				{
-					Json::StreamWriterBuilder wbuilder;
-					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
-            
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", Field: " + mandatoryField
-						+ ", sParametersRoot: " + sParametersRoot
-						+ ", label: " + label
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
+		validateOutputRootMetadata(workspaceKey, label, outputRoot);
 	}
 
     field = "ProcessingStartingFrom";
@@ -7330,5 +6976,201 @@ void Validator::validateEncodingProfileRootImageMetadata(
             }
         }
     }
+}
+
+void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
+	Json::Value outputRoot)
+{
+
+	string field = "OutputType";
+	string liveProxyOutputType;
+	if (JSONUtils::isMetadataPresent(outputRoot, field))
+	{
+		liveProxyOutputType = outputRoot.get(field, "").asString();
+		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
+				+ ", Field: " + field
+				+ ", liveProxyOutputType: " + liveProxyOutputType
+				+ ", label: " + label
+				;
+			_logger->error(__FILEREF__ + errorMessage);
+       
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	if (liveProxyOutputType == "HLS")
+	{
+		vector<string> mandatoryFields = {
+			"DeliveryCode"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (liveProxyOutputType == "RTMP_Stream")
+	{
+		vector<string> mandatoryFields = {
+			"RtmpUrl"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (liveProxyOutputType == "AWS_CHANNEL")
+	{
+	}
+	else if (liveProxyOutputType == "UDP_Stream")
+	{
+		vector<string> mandatoryFields = {
+			"udpUrl"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+
+	if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
+	{
+		Json::Value drawTextDetailsRoot = outputRoot["drawTextDetails"];
+
+		vector<string> mandatoryFields = {
+			"text"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, drawTextDetailsRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+                   ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string field = "fontType";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			string fontType = drawTextDetailsRoot.get(field, "").asString();
+
+			if (!isFontTypeValid(fontType))
+			{
+				string errorMessage = string("Unknown fontType")
+					+ ", fontType: " + fontType
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		field = "fontColor";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			string fontColor = drawTextDetailsRoot.get(field, "").asString();
+
+			if (!isColorValid(fontColor))
+			{
+				string errorMessage = string("Unknown fontColor")
+					+ ", fontColor: " + fontColor
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		field = "textPercentageOpacity";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+
+			if (textPercentageOpacity > 100)
+			{
+				string errorMessage = string("Wrong textPercentageOpacity")
+					+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		field = "boxEnable";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, true);                        
+		}
+
+		field = "boxPercentageOpacity";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+
+			if (boxPercentageOpacity > 100)
+			{
+				string errorMessage = string("Wrong boxPercentageOpacity")
+					+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+					+ ", label: " + label
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
 }
 

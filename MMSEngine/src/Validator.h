@@ -259,6 +259,8 @@ private:
         bool encodingProfileFieldsToBeManaged);
 
 	void validateCrossReference(string label, Json::Value crossReferenceRoot, bool mediaItemKeyMandatory);
+
+	void validateOutputRootMetadata(int64_t workspaceKey, string label, Json::Value outputRoot);
 };
 
 #endif /* VALIDATOR_H */
