@@ -4584,28 +4584,20 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(
 			overlayTextMedatada["encodingParametersRoot"], "sourceDurationInMilliSeconds", -1);
 
-		string text = overlayTextMedatada["ingestedParametersRoot"].get("text", "").asString();
-		string textPosition_X_InPixel = overlayTextMedatada["ingestedParametersRoot"].
-			get("textPosition_X_InPixel", "").asString();
-		string textPosition_Y_InPixel = overlayTextMedatada["ingestedParametersRoot"].
-			get("textPosition_Y_InPixel", "").asString();
-		string fontType = overlayTextMedatada["ingestedParametersRoot"].
-			get("fontType", "").asString();
-        int fontSize = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"], "fontSize", -1);
-		string fontColor = overlayTextMedatada["ingestedParametersRoot"].
-			get("fontColor", "").asString();
-		int textPercentageOpacity = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
+		Json::Value drawTextDetailsRoot = overlayTextMedatada["ingestedParametersRoot"]["drawTextDetails"];
+		string text = drawTextDetailsRoot.get("text", "").asString();
+		string textPosition_X_InPixel = drawTextDetailsRoot.get("textPosition_X_InPixel", "").asString();
+		string textPosition_Y_InPixel = drawTextDetailsRoot.get("textPosition_Y_InPixel", "").asString();
+		string fontType = drawTextDetailsRoot.get("fontType", "").asString();
+        int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
+		string fontColor = drawTextDetailsRoot.get("fontColor", "").asString();
+		int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
 			"textPercentageOpacity", -1);
-		int shadowX = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
-			"shadowX", 0);
-		int shadowY = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
-			"shadowY", 0);
-		bool boxEnable = JSONUtils::asBool(overlayTextMedatada["ingestedParametersRoot"],
-			"boxEnable", false);
-		string boxColor = overlayTextMedatada["ingestedParametersRoot"].
-			get("boxColor", "").asString();
-		int boxPercentageOpacity = JSONUtils::asInt(overlayTextMedatada["ingestedParametersRoot"],
-			"boxPercentageOpacity", -1);
+		int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
+		int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
+		bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
+		string boxColor = drawTextDetailsRoot.get("boxColor", "").asString();
+		int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, "boxPercentageOpacity", -1);
 
         string stagingEncodedAssetPathName = overlayTextMedatada.
 			get("stagingEncodedAssetPathName", "").asString();
