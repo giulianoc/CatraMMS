@@ -4705,13 +4705,16 @@ void API::changeLiveProxyPlaylist(
         }
 		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
 
+
+		// next try/catch initialize the belows parameters using the broadcaster info
+
 		// check of ingestion job and retrieve some fields
 		int64_t utcBroadcasterStart;
 		int64_t utcBroadcasterEnd;
 
 		int64_t broadcastIngestionJobKey;
 		string broadcastDefaultMediaType;	// options: Stream, Media, Countdown, Direct URL
-		// // used in case mediaType is Stream
+		// used in case mediaType is Stream
 		Json::Value broadcastDefaultStreamInputRoot = Json::nullValue;
 		// used in case mediaType is Media
 		Json::Value broadcastDefaultVodInputRoot = Json::nullValue;
@@ -4943,15 +4946,47 @@ void API::changeLiveProxyPlaylist(
 						bool boxEnable = false;
 						string boxColor;
 						int boxPercentageOpacity = -1;
+
+						Json::Value broadcastDrawTextDetailsRoot;
+						{
+							field = "text";
+							broadcastDrawTextDetailsRoot[field] = broadcastDefaultText;
+
+							field = "textPosition_X_InPixel";
+							broadcastDrawTextDetailsRoot[field] = broadcastDefaultTextPosition_X_InPixel;
+
+							field = "textPosition_Y_InPixel";
+							broadcastDrawTextDetailsRoot[field] = broadcastDefaultTextPosition_Y_InPixel;
+
+							field = "fontType";
+							broadcastDrawTextDetailsRoot[field] = fontType;
+
+							field = "fontSize";
+							broadcastDrawTextDetailsRoot[field] = fontSize;
+
+							field = "fontColor";
+							broadcastDrawTextDetailsRoot[field] = fontColor;
+
+							field = "textPercentageOpacity";
+							broadcastDrawTextDetailsRoot[field] = textPercentageOpacity;
+
+							field = "boxEnable";
+							broadcastDrawTextDetailsRoot[field] = boxEnable;
+
+							field = "boxColor";
+							broadcastDrawTextDetailsRoot[field] = boxColor;
+
+							field = "boxPercentageOpacity";
+							broadcastDrawTextDetailsRoot[field] = boxPercentageOpacity;
+						}
+
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
 						broadcastDefaultCountdownInputRoot
 							= _mmsEngineDBFacade->getCountdownInputRoot(
 							sourcePhysicalPathName, broadcastDefaultPhysicalPathKey,
-							videoDurationInMilliSeconds, broadcastDefaultText,
-							broadcastDefaultTextPosition_X_InPixel,
-							broadcastDefaultTextPosition_Y_InPixel,
-							fontType, fontSize, fontColor, textPercentageOpacity,
-							boxEnable, boxColor, boxPercentageOpacity);
+							videoDurationInMilliSeconds,
+							broadcastDrawTextDetailsRoot
+						);
 					}
 					else if (broadcastDefaultMediaType == "Direct URL")
 					{

@@ -7716,6 +7716,8 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	string mmsSourceVideoAssetPathName,
 	int64_t physicalPathKey,
 	int64_t videoDurationInMilliSeconds,
+	Json::Value broadcastDrawTextDetailsRoot
+	/*
 	string text,
 	string textPosition_X_InPixel,
 	string textPosition_Y_InPixel,
@@ -7725,7 +7727,9 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	int textPercentageOpacity,
 	bool boxEnable,
 	string boxColor,
-	int boxPercentageOpacity)
+	int boxPercentageOpacity
+	*/
+)
 {
 	Json::Value countdownInputRoot;
 
@@ -7740,6 +7744,10 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 		field = "videoDurationInMilliSeconds";
 		countdownInputRoot[field] = videoDurationInMilliSeconds;
 
+		field = "broadcastDrawTextDetails";
+		countdownInputRoot[field] = broadcastDrawTextDetailsRoot;
+
+		/*
 		field = "text";
 		countdownInputRoot[field] = text;
 
@@ -7769,6 +7777,7 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 
 		field = "boxPercentageOpacity";
 		countdownInputRoot[field] = boxPercentageOpacity;
+		*/
 	}
     catch(runtime_error e)
     {

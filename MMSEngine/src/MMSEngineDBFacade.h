@@ -2469,16 +2469,8 @@ public:
 		string mmsSourceVideoAssetPathName,
 		int64_t physicalPathKey,
 		int64_t videoDurationInMilliSeconds,
-		string text,
-		string textPosition_X_InPixel,
-		string textPosition_Y_InPixel,
-		string fontType,
-		int fontSize,
-		string fontColor,
-		int textPercentageOpacity,
-		bool boxEnable,
-		string boxColor,
-		int boxPercentageOpacity);
+		Json::Value broadcastDrawTextDetailsRoot
+	);
 
 	Json::Value getDirectURLInputRoot(
 		string url);

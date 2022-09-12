@@ -13606,6 +13606,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			referenceContentType == MMSEngineDBFacade::ContentType::Image ? true : false
 		);
 
+		/*
 		string text;
 		string textPosition_X_InPixel;
 		string textPosition_Y_InPixel;
@@ -13665,6 +13666,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 20);
 		}
+		*/
 
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
 		Json::Value inputsRoot;
@@ -13677,11 +13679,19 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		}
 		else
 		{
+			Json::Value broadcastDrawTextDetailsRoot = Json::nullValue;
+
+			string field = "broadcastDrawTextDetails";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				broadcastDrawTextDetailsRoot = parametersRoot[field];
+
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
 			Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
 				mmsSourceVideoAssetPathName, sourcePhysicalPathKey, videoDurationInMilliSeconds,
-				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity);
+				broadcastDrawTextDetailsRoot
+				// text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				// fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity
+			);
 
 			Json::Value inputRoot;
 			{

@@ -10711,7 +10711,8 @@ void FFMpeg::liveProxy2(
 			);
 			liveProxyOutput(ingestionJobKey, encodingJobKey,
 				otherOutputOptionsBecauseOfMaxWidth,
-				currentInputRoot, streamingDurationInSeconds,
+				currentInputRoot,
+				streamingDurationInSeconds,
 				outputsRoot, ffmpegOutputArgumentList);
 
 			{
@@ -12076,90 +12077,102 @@ pair<long, string> FFMpeg::liveProxyInput(
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	string otherOutputOptionsBecauseOfMaxWidth,
-	Json::Value inputRoot, long streamingDurationInSeconds,
+	Json::Value inputRoot,
+	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
 {
-	/*
+	// 2022-09-12: next if è usato solo nel caso di broadcastDrawTextDetails.
+	//		Infatti, in genere i parametri del 'draw text' vengono inizializzati
+	//		all'interno di outputRoot.
+	//		Nel caso del Broadcast (Live Channel), outputRoot è comune a tutta la playlist,
+	//		per cui non possiamo utilizzare outputRoot altrimenti avremmo il draw text
+	//		anche per gli altri item della playlist quali LiveProxy, VODProxy, ...
+	//		Per questo motivo:
+	//			1. vngono aggiunti questi parametri in forma eccezionale per il Broadcast
+	//			2. questi parametri saranno gestiti qui
 	string ffmpegDrawTextFilter;
 	if (isMetadataPresent(inputRoot, "countdownInput"))
 	{
-		string field = "countdownInput";
-		Json::Value countdownInputRoot = inputRoot[field];
+		Json::Value countdownInputRoot = inputRoot["countdownInput"];
 
-		field = "text";
-		if (!isMetadataPresent(countdownInputRoot, field))
+		if (isMetadataPresent(countdownInputRoot, "broadcastDrawTextDetails"))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
+			Json::Value broadcastDrawTextDetailsRoot = countdownInputRoot["broadcastDrawTextDetails"];
 
-			throw runtime_error(errorMessage);
+			string field = "text";
+			if (!isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string text = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			string textPosition_X_InPixel = "";
+			field = "textPosition_X_InPixel";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				textPosition_X_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			string textPosition_Y_InPixel = "";
+			field = "textPosition_Y_InPixel";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				textPosition_Y_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			string fontType = "";
+			field = "fontType";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				fontType = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			int fontSize = -1;
+			field = "fontSize";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				fontSize = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
+			string fontColor = "";
+			field = "fontColor";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				fontColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			int textPercentageOpacity = -1;
+			field = "textPercentageOpacity";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				textPercentageOpacity = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
+			int shadowx = 0;
+			field = "shadowx";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				shadowx = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
+			int shadowy = 0;
+			field = "shadowy";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				shadowy = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
+			bool boxEnable = false;
+			field = "boxEnable";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				boxEnable = asBool(broadcastDrawTextDetailsRoot, field, false);
+
+			string boxColor = "";
+			field = "boxColor";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				boxColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
+
+			int boxPercentageOpacity = -1;
+			field = "boxPercentageOpacity";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				boxPercentageOpacity = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
+			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+				text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				fontColor, textPercentageOpacity, shadowx, shadowy,
+				boxEnable, boxColor, boxPercentageOpacity,
+				streamingDurationInSeconds);
 		}
-		string text = countdownInputRoot.get(field, "").asString();
-
-		string textPosition_X_InPixel = "";
-		field = "textPosition_X_InPixel";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPosition_X_InPixel = countdownInputRoot.get(field, "").asString();
-
-		string textPosition_Y_InPixel = "";
-		field = "textPosition_Y_InPixel";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPosition_Y_InPixel = countdownInputRoot.get(field, "").asString();
-
-		string fontType = "";
-		field = "fontType";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontType = countdownInputRoot.get(field, "").asString();
-
-		int fontSize = -1;
-		field = "fontSize";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontSize = asInt(countdownInputRoot, field, -1);
-
-		string fontColor = "";
-		field = "fontColor";
-		if (isMetadataPresent(countdownInputRoot, field))
-			fontColor = countdownInputRoot.get(field, "").asString();
-
-		int textPercentageOpacity = -1;
-		field = "textPercentageOpacity";
-		if (isMetadataPresent(countdownInputRoot, field))
-			textPercentageOpacity = asInt(countdownInputRoot, field, -1);
-
-		int shadowx = 0;
-		field = "shadowx";
-		if (isMetadataPresent(countdownInputRoot, field))
-			shadowx = asInt(countdownInputRoot, field, -1);
-
-		int shadowy = 0;
-		field = "shadowy";
-		if (isMetadataPresent(countdownInputRoot, field))
-			shadowy = asInt(countdownInputRoot, field, -1);
-
-		bool boxEnable = false;
-		field = "boxEnable";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxEnable = asBool(countdownInputRoot, field, false);
-
-		string boxColor = "";
-		field = "boxColor";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxColor = countdownInputRoot.get(field, "").asString();
-
-		int boxPercentageOpacity = -1;
-		field = "boxPercentageOpacity";
-		if (isMetadataPresent(countdownInputRoot, field))
-			boxPercentageOpacity = asInt(countdownInputRoot, field, -1);
-
-		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-			text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-			fontColor, textPercentageOpacity, shadowx, shadowy,
-			boxEnable, boxColor, boxPercentageOpacity,
-			streamingDurationInSeconds);
 	}
-	*/
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
@@ -12184,8 +12197,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			.asString();
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
 
-		string ffmpegDrawTextFilter;
-		if (isMetadataPresent(outputRoot, "drawTextDetails"))
+		if (ffmpegDrawTextFilter == "" && isMetadataPresent(outputRoot, "drawTextDetails"))
 		{
 			string field = "drawTextDetails";
 			Json::Value drawTextDetailsRoot = outputRoot[field];

@@ -584,7 +584,8 @@ private:
 
 	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		string otherOutputOptionsBecauseOfMaxWidth,
-		Json::Value inputRoot, long streamingDurationInSeconds,
+		Json::Value inputRoot,
+		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);
 
