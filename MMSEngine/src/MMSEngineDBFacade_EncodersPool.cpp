@@ -504,7 +504,7 @@ void MMSEngineDBFacade::removeEncoder(
     }        
 }
 
-pair<string, string> MMSEngineDBFacade::getEncoderDetails (
+tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 	int64_t encoderKey
 )
 {
@@ -525,12 +525,13 @@ pair<string, string> MMSEngineDBFacade::getEncoderDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		string label;
 		string publicServerName;
 		string internalServerName;
 
 		{
 			lastSQLCommand =
-				"select publicServerName, internalServerName "
+				"select label, publicServerName, internalServerName "
 				"from MMS_Encoder "
 				"where encoderKey = ?"
 				;
@@ -549,11 +550,19 @@ pair<string, string> MMSEngineDBFacade::getEncoderDetails (
 					chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-            if (resultSet->next())
+            if (!resultSet->next())
             {
-				publicServerName = static_cast<string>(resultSet->getString("publicServerName"));
-				internalServerName = static_cast<string>(resultSet->getString("internalServerName"));
-            }
+				string errorMessage = string("Encoder was not found")
+					+ ", encoderKey: " + to_string(encoderKey)
+				;
+				_logger->error(errorMessage);
+
+				throw EncoderNotFound(errorMessage);
+			}
+
+			label = static_cast<string>(resultSet->getString("label"));
+			publicServerName = static_cast<string>(resultSet->getString("publicServerName"));
+			internalServerName = static_cast<string>(resultSet->getString("internalServerName"));
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -562,7 +571,7 @@ pair<string, string> MMSEngineDBFacade::getEncoderDetails (
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_pair(publicServerName, internalServerName);
+		return make_tuple(label, publicServerName, internalServerName);
     }
     catch(sql::SQLException se)
     {
@@ -585,6 +594,25 @@ pair<string, string> MMSEngineDBFacade::getEncoderDetails (
 
         throw se;
     }    
+    catch(EncoderNotFound e)
+    {        
+        _logger->error(__FILEREF__ + "Encoder Not Found"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2990,8 +3018,63 @@ tuple<int64_t, bool, string, string, string, int>
 
         throw se;
     }    
+    catch(EncoderNotFound e)
+    {
+        _logger->error(__FILEREF__ + "Encoder Not Found"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			try
+			{
+				// conn->_sqlConnection->rollback(); OR execute ROLLBACK
+				if (!autoCommit)
+				{
+					shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+					statement->execute("ROLLBACK");
+				}
+
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+			catch(sql::SQLException se)
+			{
+				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+					+ ", exceptionMessage: " + se.what()
+				);
+
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				_connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "exception doing unborrow"
+					+ ", exceptionMessage: " + e.what()
+				);
+
+				/*
+					_logger->debug(__FILEREF__ + "DB connection unborrow"
+						+ ", getConnectionId: " + to_string(conn->getConnectionId())
+					);
+					_connectionPool->unborrow(conn);
+					conn = nullptr;
+				*/
+			}
+        }
+
+        throw e;
+    }
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand

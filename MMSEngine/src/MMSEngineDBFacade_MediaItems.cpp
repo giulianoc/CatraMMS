@@ -4934,6 +4934,25 @@ void MMSEngineDBFacade::getAudioDetails(
 
         throw se;
     }
+    catch(MediaItemKeyNotFound e)
+    {
+        _logger->error(__FILEREF__ + "MediaItemKeyNotFound"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }    
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
@@ -5096,6 +5115,25 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 
         throw se;
     }
+    catch(MediaItemKeyNotFound e)
+    {
+        _logger->error(__FILEREF__ + "MediaItemKeyNotFound"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }    
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
@@ -7902,6 +7940,17 @@ void MMSEngineDBFacade::addCrossReference (
 			throw DeadlockFound(exceptionMessage);
 		else
 			throw se;
+    }
+    catch(DeadlockFound e)
+    {
+        _logger->error(__FILEREF__ + "DeadlockFound"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
     }
     catch(runtime_error e)
     {

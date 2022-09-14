@@ -2386,7 +2386,7 @@ public:
 	void removeEncoder(
 		int64_t encoderKey);
 
-	pair<string, string> getEncoderDetails (int64_t encoderKey);
+	tuple<string, string, string> getEncoderDetails (int64_t encoderKey);
 
 	bool isEncoderRunning(bool external, string protocol,
 		string publicServerName, string internalServerName, int port);

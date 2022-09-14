@@ -1480,7 +1480,7 @@ Json::Value MMSEngineDBFacade::addStream(
 	string url,
 	string pushProtocol,
 	int64_t pushEncoderKey,
-	string pushServerName,
+	string pushServerName,		// indica il nome del server (public or internal)
 	int pushServerPort,
 	string pushUri,
 	int pushListenTimeout,
@@ -2876,7 +2876,31 @@ Json::Value MMSEngineDBFacade::getStreamList (
 					if (resultSet->isNull("pushEncoderKey"))
 						streamRoot[field] = Json::nullValue;
 					else
-						streamRoot[field] = resultSet->getInt64("pushEncoderKey");
+					{
+						int64_t pushEncoderKey = resultSet->getInt64("pushEncoderKey");
+						streamRoot[field] = pushEncoderKey;
+
+						if (pushEncoderKey >= 0)
+						{
+							try
+							{
+								tuple<string, string, string> encoderDetails
+									= getEncoderDetails (pushEncoderKey);
+
+								string pushEncoderLabel;
+								tie(pushEncoderLabel, ignore, ignore) = encoderDetails;
+	
+								field = "pushEncoderLabel";
+								streamRoot[field] = pushEncoderLabel;
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "getEncoderDetails failed"
+									+ ", pushEncoderKey: " + to_string(pushEncoderKey)
+								);
+							}
+						}
+					}
 
 					field = "pushServerName";
 					if (resultSet->isNull("pushServerName"))
@@ -3125,7 +3149,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 		string url;
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushServerName;
+		string pushServerName;		// indica il nome del server (public or internal)
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
@@ -7478,7 +7502,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		string pullUrl;
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushServerName;
+		string pushServerName;	// indica il nome del server (public or internal)
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
