@@ -11993,7 +11993,8 @@ pair<long, string> FFMpeg::liveProxyInput(
 		}
 		int64_t videoDurationInMilliSeconds = asInt64(countdownInputRoot, field, -1);
 
-		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
+		if (!externalEncoder
+			&& !FileIO::fileExisting(mmsSourceVideoAssetPathName)        
 			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
 		)
 		{
