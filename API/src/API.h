@@ -15,6 +15,7 @@
 #define API_h
 
 #include "MMSStorage.h"
+#include "MMSDeliveryAuthorization.h"
 #include "APICommon.h"
 
 
@@ -41,6 +42,7 @@ public:
     API(Json::Value configuration, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
+		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
 		mutex* fcgiAcceptMutex,
 		FileUploadProgressData* fileUploadProgressData,
 		shared_ptr<spdlog::logger> logger);
@@ -77,6 +79,8 @@ public:
 
 private:
 	shared_ptr<MMSStorage>				_mmsStorage;
+	shared_ptr<MMSDeliveryAuthorization>	_mmsDeliveryAuthorization;
+
     MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
     int					_maxIngestionsNumberWorkspaceDefaultValue;
@@ -455,6 +459,7 @@ private:
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
 
+	/*
 	pair<string, string> createDeliveryAuthorization(
 		int64_t userKey,
 		shared_ptr<Workspace> requestWorkspace,
@@ -478,6 +483,7 @@ private:
 		bool warningIfMissingMediaItemKey,
 		bool filteredByStatistic
 	);
+	*/
 
 	void createBulkOfDeliveryAuthorization(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
@@ -502,7 +508,7 @@ private:
 	int64_t checkDeliveryAuthorizationThroughPath(
 		string contentURI);
 
-	string getSignedPath(string contentURI, time_t expirationTime);
+	// string getSignedPath(string contentURI, time_t expirationTime);
 
     void addYouTubeConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

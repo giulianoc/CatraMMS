@@ -9177,7 +9177,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			+ _mmsAPIIngestionURI
             ;
 
-		string sResponse = MMSCURL::postPutString(
+		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
 			mmsAPIURL,
 			"POST",	// requestType
@@ -9259,7 +9259,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			+ _mmsAPIIngestionURI
             ;
 
-		string sResponse = MMSCURL::postPutString(
+		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
 			mmsAPIURL,
 			"POST",	// requestType
@@ -9329,7 +9329,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			+ "/" + to_string(addContentIngestionJobKey)
 		;
 
-		string sResponse = MMSCURL::postPutFile(
+		string sResponse = MMSCURL::httpPostPutFile(
 			ingestionJobKey,
 			mmsBinaryURL,
 			"POST",	// requestType
@@ -10465,7 +10465,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			+ _mmsAPIIngestionURI
 		;
 
-		string sResponse = MMSCURL::postPutString(
+		string sResponse = MMSCURL::httpPostPutString(
 			liveRecorderIngestionJobKey,
 			mmsAPIURL,
 			"POST",	// requestType
@@ -10562,7 +10562,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				+ "/" + to_string(addContentIngestionJobKey)
 			;
 
-			string sResponse = MMSCURL::postPutFile(
+			string sResponse = MMSCURL::httpPostPutFile(
 				liveRecorderIngestionJobKey,
 				mmsBinaryURL,
 				"POST",	// requestType
@@ -11058,8 +11058,8 @@ void FFMPEGEncoder::liveProxyThread(
             throw runtime_error(errorMessage);
         }
 
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(
-			liveProxyMetadata, "ingestionJobKey", -1);
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::asBool(liveProxyMetadata, "externalEncoder", false);
 
 		liveProxy->_outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
 		// liveProxy->_liveProxyOutputRoots.clear();
@@ -11273,6 +11273,7 @@ void FFMPEGEncoder::liveProxyThread(
 			liveProxy->_ffmpeg->liveProxy2(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
+				externalEncoder,
 				&(liveProxy->_inputsRootMutex),
 				&(liveProxy->_inputsRoot),
 				liveProxy->_outputsRoot,

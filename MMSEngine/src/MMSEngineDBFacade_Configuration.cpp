@@ -7714,6 +7714,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	string mmsSourceVideoAssetPathName,
+	string mmsSourceVideoAssetDeliveryURL,
 	int64_t physicalPathKey,
 	int64_t videoDurationInMilliSeconds,
 	Json::Value broadcastDrawTextDetailsRoot
@@ -7737,6 +7738,9 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
     {
 		string field = "mmsSourceVideoAssetPathName";
 		countdownInputRoot[field] = mmsSourceVideoAssetPathName;
+
+		field = "mmsSourceVideoAssetDeliveryURL";
+		countdownInputRoot[field] = mmsSourceVideoAssetDeliveryURL;
 
 		field = "physicalPathKey";
 		countdownInputRoot[field] = physicalPathKey;

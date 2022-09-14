@@ -4827,6 +4827,50 @@ void API::changeLiveProxyPlaylist(
             }
 			Json::Value broadcasterRoot = internalMMSRoot[field];
 
+			field = "broadcastIngestionJobKey";
+			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0);
+			if (broadcastIngestionJobKey == 0)
+			{
+                string errorMessage = __FILEREF__ + "No broadcastIngestionJobKey found"
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+			field = "schedule";
+			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
+			{
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+			Json::Value proxyPeriodRoot = metadataContentRoot[field];
+
+			field = "TimePeriod";
+			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false);
+			if (!timePeriod)
+			{
+                string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have TimePeriod"
+					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+					+ ", timePeriod: " + to_string(timePeriod);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+			field = "start";
+			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+
+			field = "end";
+			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+
 			field = "broadcastDefaultPlaylistItem";
 			if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
 			{
@@ -4923,6 +4967,7 @@ void API::changeLiveProxyPlaylist(
 
 						MMSEngineDBFacade::ContentType vodContentType;
 						string sourcePhysicalPathName;
+						string sourcePhysicalDeliveryURL;
 						int64_t videoDurationInMilliSeconds;
 						{
 							tuple<string, int, string, string, int64_t, string>
@@ -4931,10 +4976,46 @@ void API::changeLiveProxyPlaylist(
 							tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 								= physicalPathDetails;
 
-						int64_t sourceMediaItemKey = -1;
-						videoDurationInMilliSeconds = _mmsEngineDBFacade->
-							getMediaDurationInMilliseconds(sourceMediaItemKey,
-							broadcastDefaultPhysicalPathKey);
+							int64_t sourceMediaItemKey = -1;
+							videoDurationInMilliSeconds = _mmsEngineDBFacade->
+								getMediaDurationInMilliseconds(sourceMediaItemKey,
+								broadcastDefaultPhysicalPathKey);
+
+							// calculate delivery URL in case of an external encoder
+							{
+								int64_t utcNow;
+								{
+									chrono::system_clock::time_point now = chrono::system_clock::now();
+									utcNow = chrono::system_clock::to_time_t(now);
+								}
+
+								pair<string, string> deliveryAuthorizationDetails =
+									_mmsDeliveryAuthorization->createDeliveryAuthorization(
+									-1,	// userKey,
+									workspace,
+									"",	// clientIPAddress,
+
+									-1,	// mediaItemKey,
+									"",	// uniqueName,
+									-1,	// encodingProfileKey,
+									"",	// encodingProfileLabel,
+
+									broadcastDefaultPhysicalPathKey,
+
+									-1,	// ingestionJobKey,	(in case of live)
+									-1,	// deliveryCode,
+
+									abs(utcNow - utcBroadcasterEnd),	// ttlInSeconds,
+									999999,	// maxRetries,
+									false,	// save,
+									"MMS_SignedToken",	// deliveryType,
+
+									false,	// warningIfMissingMediaItemKey,
+									true	// filteredByStatistic
+								);
+
+								tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+							}
 						}
 
 						// string textPosition_X_InPixel = "(video_width-text_width)/2";
@@ -4983,7 +5064,8 @@ void API::changeLiveProxyPlaylist(
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
 						broadcastDefaultCountdownInputRoot
 							= _mmsEngineDBFacade->getCountdownInputRoot(
-							sourcePhysicalPathName, broadcastDefaultPhysicalPathKey,
+							sourcePhysicalPathName, sourcePhysicalDeliveryURL,
+							broadcastDefaultPhysicalPathKey,
 							videoDurationInMilliSeconds,
 							broadcastDrawTextDetailsRoot
 						);
@@ -5028,49 +5110,6 @@ void API::changeLiveProxyPlaylist(
                 throw runtime_error(errorMessage);
             }
 
-			field = "broadcastIngestionJobKey";
-			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0);
-			if (broadcastIngestionJobKey == 0)
-			{
-                string errorMessage = __FILEREF__ + "No broadcastIngestionJobKey found"
-					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
-					+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey);
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-			field = "schedule";
-			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
-			{
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
-                    + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }    
-			Json::Value proxyPeriodRoot = metadataContentRoot[field];
-
-			field = "TimePeriod";
-			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false);
-			if (!timePeriod)
-			{
-                string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have TimePeriod"
-					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
-					+ ", timePeriod: " + to_string(timePeriod);
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-			field = "start";
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
-			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
-
-			field = "end";
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
-			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
         catch(runtime_error e)
         {

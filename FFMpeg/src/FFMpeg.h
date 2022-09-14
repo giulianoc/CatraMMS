@@ -377,6 +377,7 @@ public:
 	void liveProxy2(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
+		bool externalEncoder,
 
 		mutex* inputsRootMutex,
 		Json::Value* inputsRoot,
@@ -579,7 +580,8 @@ private:
 		Json::Value* inputsRoot, mutex* inputsRootMutex,
 		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
-	pair<long, string> liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
+	pair<long, string> liveProxyInput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
 
 	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,

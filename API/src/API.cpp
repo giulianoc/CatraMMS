@@ -144,6 +144,10 @@ int main(int argc, char** argv)
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
 			mmsEngineDBFacade, configuration, logger);
 
+		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
+			make_shared<MMSDeliveryAuthorization>(configuration,
+			mmsStorage, mmsEngineDBFacade, logger);
+
 		FCGX_Init();
 
 		int threadsNumber = JSONUtils::asInt(configuration["api"], "threadsNumber", 1);
@@ -162,6 +166,7 @@ int main(int argc, char** argv)
 			shared_ptr<API> api = make_shared<API>(configuration, 
                 mmsEngineDBFacade,
 				mmsStorage,
+				mmsDeliveryAuthorization,
                 &fcgiAcceptMutex,
                 &fileUploadProgressData,
                 logger
@@ -228,6 +233,7 @@ int main(int argc, char** argv)
 API::API(Json::Value configuration, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
+		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
 		mutex* fcgiAcceptMutex,
 		FileUploadProgressData* fileUploadProgressData,
 		shared_ptr<spdlog::logger> logger)
@@ -237,6 +243,7 @@ API::API(Json::Value configuration,
 		logger) 
 {
 	_mmsStorage = mmsStorage;
+	_mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 
     string encodingPriority =  _configuration["api"]["workspaceDefaults"].get("encodingPriority", "low").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -2527,7 +2534,8 @@ void API::createDeliveryAuthorization(
 		try
 		{
 			bool warningIfMissingMediaItemKey = false;
-			pair<string, string> deliveryAuthorizationDetails = createDeliveryAuthorization(
+			pair<string, string> deliveryAuthorizationDetails =
+				_mmsDeliveryAuthorization->createDeliveryAuthorization(
 				userKey,
 				requestWorkspace,
 				clientIPAddress,
@@ -2770,7 +2778,8 @@ void API::createBulkOfDeliveryAuthorization(
 					try
 					{
 						bool warningIfMissingMediaItemKey = true;
-						deliveryAuthorizationDetails = createDeliveryAuthorization(
+						deliveryAuthorizationDetails =
+							_mmsDeliveryAuthorization->createDeliveryAuthorization(
 							userKey,
 							requestWorkspace,
 							clientIPAddress,
@@ -2865,7 +2874,8 @@ void API::createBulkOfDeliveryAuthorization(
 					try
 					{
 						bool warningIfMissingMediaItemKey = true;
-						deliveryAuthorizationDetails = createDeliveryAuthorization(
+						deliveryAuthorizationDetails =
+							_mmsDeliveryAuthorization->createDeliveryAuthorization(
 							userKey,
 							requestWorkspace,
 							clientIPAddress,
@@ -2959,7 +2969,8 @@ void API::createBulkOfDeliveryAuthorization(
 					try
 					{
 						bool warningIfMissingMediaItemKey = false;
-						deliveryAuthorizationDetails = createDeliveryAuthorization(
+						deliveryAuthorizationDetails =
+							_mmsDeliveryAuthorization->createDeliveryAuthorization(
 							userKey,
 							requestWorkspace,
 							clientIPAddress,
@@ -3089,6 +3100,7 @@ void API::createBulkOfDeliveryAuthorization(
     }
 }
 
+/*
 pair<string, string> API::createDeliveryAuthorization(
 	int64_t userKey,
 	shared_ptr<Workspace> requestWorkspace,
@@ -3308,17 +3320,15 @@ pair<string, string> API::createDeliveryAuthorization(
 				+ deliveryURI
 			;
 		}
-		/*
-		else
-		{
-			string errorMessage = string("wrong vodDeliveryType")
-				+ ", deliveryType: " + deliveryType
-			;
-			_logger->error(__FILEREF__ + errorMessage);
+		//else
+		//{
+			//string errorMessage = string("wrong vodDeliveryType")
+				//+ ", deliveryType: " + deliveryType
+			//;
+			//_logger->error(__FILEREF__ + errorMessage);
 
-			throw runtime_error(errorMessage);
-		}
-		*/
+			//throw runtime_error(errorMessage);
+		//}
 
 		if (!filteredByStatistic)
 		{
@@ -3595,17 +3605,15 @@ pair<string, string> API::createDeliveryAuthorization(
 						+ deliveryURI
 					;
 				}
-				/*
-				else
-				{
-					string errorMessage = string("wrong deliveryType")
-						+ ", deliveryType: " + deliveryType
-					;
-					_logger->error(__FILEREF__ + errorMessage);
+				//else
+				//{
+					//string errorMessage = string("wrong deliveryType")
+						//+ ", deliveryType: " + deliveryType
+					//;
+					//_logger->error(__FILEREF__ + errorMessage);
 
-					throw runtime_error(errorMessage);
-				}
-				*/
+					//throw runtime_error(errorMessage);
+				//}
 			}
 
 			try
@@ -3871,17 +3879,15 @@ pair<string, string> API::createDeliveryAuthorization(
 						+ deliveryURI
 					;
 				}
-				/*
-				else
-				{
-					string errorMessage = string("wrong deliveryType")
-						+ ", deliveryType: " + deliveryType
-					;
-					_logger->error(__FILEREF__ + errorMessage);
+				//else
+				//{
+					//string errorMessage = string("wrong deliveryType")
+						//+ ", deliveryType: " + deliveryType
+					//;
+					//_logger->error(__FILEREF__ + errorMessage);
 
-					throw runtime_error(errorMessage);
-				}
-				*/
+					//throw runtime_error(errorMessage);
+				//}
 			}
 
 			try
@@ -4007,17 +4013,15 @@ pair<string, string> API::createDeliveryAuthorization(
 					+ deliveryURI
 				;
 			}
-			/*
-			else
-			{
-				string errorMessage = string("wrong deliveryType")
-					+ ", deliveryType: " + deliveryType
-				;
-				_logger->error(__FILEREF__ + errorMessage);
+			// else
+			// {
+				// string errorMessage = string("wrong deliveryType")
+					// + ", deliveryType: " + deliveryType
+				// ;
+				// _logger->error(__FILEREF__ + errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-			*/
+				// throw runtime_error(errorMessage);
+			// }
 
 			_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveGrid"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4029,6 +4033,7 @@ pair<string, string> API::createDeliveryAuthorization(
 
 	return make_pair(deliveryURL, deliveryFileName);
 }
+*/
 
 int64_t API::checkDeliveryAuthorizationThroughParameter(
 		string contentURI, string tokenParameter)
@@ -4353,7 +4358,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 			}
 
-			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
 
 			_logger->info(__FILEREF__ + "Authorization through path (m3u8)"
 				+ ", contentURI: " + contentURI
@@ -4373,7 +4378,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 				}
 
-				string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
 
 				_logger->info(__FILEREF__ + "Authorization through path (m3u8 2)"
 					+ ", contentURI: " + contentURI
@@ -4404,7 +4409,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 			}
 
-			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
 
 			_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
 				+ ", contentURI: " + contentURI
@@ -4424,7 +4429,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 				}
 
-				string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
 
 				_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
 					+ ", contentURI: " + contentURI
@@ -4448,7 +4453,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		}
 		else
 		{
-			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
 
 			_logger->info(__FILEREF__ + "Authorization through path"
 				+ ", contentURI: " + contentURI
@@ -4501,6 +4506,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 	return tokenComingFromURL;
 }
 
+/*
 string API::getSignedPath(string contentURI, time_t expirationTime)
 {
 	string token = to_string(expirationTime) + contentURI;
@@ -4532,6 +4538,7 @@ string API::getSignedPath(string contentURI, time_t expirationTime)
 
 	return md5Base64;
 }
+*/
 
 void API::createDeliveryCDN77Authorization(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

@@ -27,6 +27,13 @@ using namespace std;
     #endif
 #endif
 
+struct ServerNotReachable: public exception {
+	char const* what() const throw()
+	{
+		return "Server not reachable";
+	};
+};
+
 class MMSCURL {
     
 public:
@@ -39,7 +46,16 @@ public:
 		int64_t		fileSizeInBytes;        
 	};
 
-	static string postPutFile(
+	static string httpGet(
+		int64_t ingestionJobKey,
+		string url,
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		shared_ptr<spdlog::logger> logger
+	);
+
+	static string httpPostPutFile(
 		int64_t ingestionJobKey,
 		string url,
 		string requestType,	// POST or PUT
@@ -51,7 +67,7 @@ public:
 		shared_ptr<spdlog::logger> logger
 	);
 
-	static string postPutString(
+	static string httpPostPutString(
 		int64_t ingestionJobKey,
 		string url,
 		string requestType,	// POST or PUT

@@ -13,6 +13,7 @@
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ThreadsStatistic.h"
+#include "MMSDeliveryAuthorization.h"
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
@@ -63,6 +64,7 @@ public:
             shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<long> processorsThreadsNumber,
 			shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
+			shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
             ActiveEncodingsManager* pActiveEncodingsManager,
 			mutex* cpuUsageMutex,
 			deque<int>* cpuUsage,
@@ -89,6 +91,8 @@ private:
     ActiveEncodingsManager*             _pActiveEncodingsManager;
 
 	shared_ptr<ThreadsStatistic>		_mmsThreadsStatistic;
+
+	shared_ptr<MMSDeliveryAuthorization>	_mmsDeliveryAuthorization;
 
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
@@ -147,9 +151,10 @@ private:
 	string					_mmsAPIProtocol;
 	string					_mmsAPIHostname;
 	int						_mmsAPIPort;
-	string					_mmsAPIIngestionURI;
 	string					_mmsAPIVersion;
     int						_mmsAPITimeoutInSeconds;
+	string					_mmsAPIIngestionURI;
+	string					_mmsAPIVODDeliveryURI;
 
 	int						_waitingNFSSync_maxMillisecondsToWait;
 	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;

@@ -225,6 +225,10 @@ int main (int iArgc, char *pArgv [])
 	shared_ptr<ThreadsStatistic>	mmsThreadsStatistic =
 		make_shared<ThreadsStatistic>(logger);
 
+	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
+		make_shared<MMSDeliveryAuthorization>(configuration,
+		mmsStorage, mmsEngineDBFacade, logger);
+
     vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
     {
         int processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
@@ -241,6 +245,7 @@ int main (int iArgc, char *pArgv [])
 					mmsStorage,
 					processorsThreadsNumber,
 					mmsThreadsStatistic,
+					mmsDeliveryAuthorization,
 					&activeEncodingsManager,
 					&cpuUsageMutex,
 					&cpuUsage,

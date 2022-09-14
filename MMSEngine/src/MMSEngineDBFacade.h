@@ -2467,6 +2467,7 @@ public:
 
 	Json::Value getCountdownInputRoot(
 		string mmsSourceVideoAssetPathName,
+		string mmsSourceVideoAssetDeliveryURL,
 		int64_t physicalPathKey,
 		int64_t videoDurationInMilliSeconds,
 		Json::Value broadcastDrawTextDetailsRoot

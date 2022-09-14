@@ -39,6 +39,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	shared_ptr<MMSStorage> mmsStorage,
 	shared_ptr<long> processorsThreadsNumber,
 	shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
+	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
 	ActiveEncodingsManager* pActiveEncodingsManager,
 	mutex* cpuUsageMutex,
 	deque<int>* cpuUsage,
@@ -53,6 +54,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _mmsStorage         = mmsStorage;
     _processorsThreadsNumber = processorsThreadsNumber;
 	_mmsThreadsStatistic		= mmsThreadsStatistic;
+	_mmsDeliveryAuthorization	= mmsDeliveryAuthorization;
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
     _processorMMS                   = System::getHostName();
@@ -223,6 +225,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
+    );
+    _mmsAPIVODDeliveryURI = _configuration["api"].get("vodDeliveryURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI
     );
     _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -13478,64 +13484,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
             throw runtime_error(errorMessage);
         }
 
-		string mmsSourceVideoAssetPathName;
-		MMSEngineDBFacade::ContentType referenceContentType;
-		int64_t sourceMediaItemKey;
-		int64_t sourcePhysicalPathKey;
 		bool defaultBroadcast = false;
-		{
-            int64_t key;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType	= dependencies[0];
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
-			{
-                int64_t encodingProfileKey = -1;
-                
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
-				tie(sourcePhysicalPathKey, mmsSourceVideoAssetPathName, ignore, ignore,
-					ignore, ignore, ignore) = physicalPath;
-
-				sourceMediaItemKey = key;
-
-				// sourcePhysicalPathKey = -1;
-			}
-			else
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPathDetails(key);
-				tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPath;
-
-				sourcePhysicalPathKey = key;
-            
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-				MMSEngineDBFacade::ContentType localContentType;
-				string localTitle;
-				string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
-						localIngestionJobKey, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-			}
-		}
-
-		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-			sourceMediaItemKey, sourcePhysicalPathKey);
-
 		bool timePeriod = true;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
@@ -13586,6 +13535,100 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
+		string mmsSourceVideoAssetPathName;
+		string mmsSourceVideoAssetDeliveryURL;
+		MMSEngineDBFacade::ContentType referenceContentType;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+		{
+            int64_t key;
+            Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
+
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType	= dependencies[0];
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
+
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+                int64_t encodingProfileKey = -1;
+                
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
+					_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+				tie(sourcePhysicalPathKey, mmsSourceVideoAssetPathName, ignore, ignore,
+					ignore, ignore, ignore) = physicalPath;
+
+				sourceMediaItemKey = key;
+
+				// sourcePhysicalPathKey = -1;
+			}
+			else
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPath =
+					_mmsStorage->getPhysicalPathDetails(key);
+				tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPath;
+
+				sourcePhysicalPathKey = key;
+
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+
+				MMSEngineDBFacade::ContentType localContentType;
+				string localTitle;
+				string userData;
+                string ingestionDate;
+				int64_t localIngestionJobKey;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+			}
+
+			// calculate delivery URL in case of an external encoder
+			{
+				int64_t utcNow;
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+
+				pair<string, string> deliveryAuthorizationDetails =
+					_mmsDeliveryAuthorization->createDeliveryAuthorization(
+					-1,	// userKey,
+					workspace,
+					"",	// clientIPAddress,
+
+					-1,	// mediaItemKey,
+					"",	// uniqueName,
+					-1,	// encodingProfileKey,
+					"",	// encodingProfileLabel,
+
+					sourcePhysicalPathKey,
+
+					-1,	// ingestionJobKey,	(in case of live)
+					-1,	// deliveryCode,
+
+					abs(utcNow - utcProxyPeriodEnd),	// ttlInSeconds,
+					999999,	// maxRetries,
+					false,	// save,
+					"MMS_SignedToken",	// deliveryType,
+
+					false,	// warningIfMissingMediaItemKey,
+					true	// filteredByStatistic
+				);
+
+				tie(mmsSourceVideoAssetDeliveryURL, ignore) = deliveryAuthorizationDetails;
+			}
+		}
+
+		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+			sourceMediaItemKey, sourcePhysicalPathKey);
+
 		Json::Value outputsRoot;
 		{
 			string field = "Outputs";
@@ -13606,68 +13649,6 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			referenceContentType == MMSEngineDBFacade::ContentType::Image ? true : false
 		);
 
-		/*
-		string text;
-		string textPosition_X_InPixel;
-		string textPosition_Y_InPixel;
-		string fontType;
-		int fontSize = 22;
-		string fontColor;
-		int textPercentageOpacity = -1;
-		bool boxEnable = false;
-		string boxColor;
-		int boxPercentageOpacity = 20;
-		{
-			string field = "Text";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			text = parametersRoot.get(field, "").asString();
-
-			field = "TextPosition_X_InPixel";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				textPosition_X_InPixel = parametersRoot.get(field, "").asString();
-
-			field = "TextPosition_Y_InPixel";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				textPosition_Y_InPixel = parametersRoot.get(field, "").asString();
-
-			field = "FontType";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				fontType = parametersRoot.get(field, "").asString();
-
-			field = "FontSize";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				fontSize = JSONUtils::asInt(parametersRoot, field, 22);
-
-			field = "FontColor";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				fontColor = parametersRoot.get(field, "").asString();
-
-			field = "TextPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				textPercentageOpacity = JSONUtils::asInt(parametersRoot, field, -1);
-
-			field = "BoxEnable";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				boxEnable = JSONUtils::asBool(parametersRoot, field, false);
-
-			field = "BoxColor";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				boxColor = parametersRoot.get(field, "").asString();
-
-			field = "BoxPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 20);
-		}
-		*/
-
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist (inputsRoot) already ready
 		Json::Value inputsRoot;
 		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS")
@@ -13687,7 +13668,8 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
 			Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
-				mmsSourceVideoAssetPathName, sourcePhysicalPathKey, videoDurationInMilliSeconds,
+				mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL,
+				sourcePhysicalPathKey, videoDurationInMilliSeconds,
 				broadcastDrawTextDetailsRoot
 				// text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				// fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity

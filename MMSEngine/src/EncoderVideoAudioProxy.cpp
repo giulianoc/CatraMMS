@@ -14332,6 +14332,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 					Json::Value liveProxyMetadata;
 
+					liveProxyMetadata["externalEncoder"] = externalEncoder;
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;

@@ -10418,6 +10418,7 @@ void FFMpeg::liveRecorder(
 void FFMpeg::liveProxy2(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
+	bool externalEncoder,
 
 	// only one between streamInput and vodInput has to be present
 	// array of: "inputRoot": {
@@ -10656,7 +10657,8 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			pair<long, string> inputDetils = liveProxyInput(ingestionJobKey, encodingJobKey,
+			pair<long, string> inputDetils = liveProxyInput(
+				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
 
@@ -11240,7 +11242,7 @@ int FFMpeg::getNextLiveProxyInput(
 }
 
 pair<long, string> FFMpeg::liveProxyInput(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
@@ -11966,7 +11968,10 @@ pair<long, string> FFMpeg::liveProxyInput(
 		string field = "countdownInput";
 		Json::Value countdownInputRoot = inputRoot[field];
 
-		field = "mmsSourceVideoAssetPathName";
+		if (externalEncoder)
+			field = "mmsSourceVideoAssetDeliveryURL";
+		else
+			field = "mmsSourceVideoAssetPathName";
 		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
