@@ -1680,6 +1680,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			int start = 0;
 			int rows = 1;
 			string label;
+			bool labelLike = true;
 			string url;
 			string sourceType;
 			string type;
@@ -1689,7 +1690,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			string labelOrder;
 			Json::Value streamListRoot = getStreamList (
 				workspaceKey, confKey,
-				start, rows, label, url, sourceType, type, name,
+				start, rows, label, labelLike, url, sourceType, type, name,
 				region, country, labelOrder);
 
 			string field = "response";
@@ -2352,6 +2353,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			int start = 0;
 			int rows = 1;
 			string label;
+			bool labelLike = true;
 			string url;
 			string sourceType;
 			string type;
@@ -2361,7 +2363,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			string labelOrder;
 			Json::Value streamListRoot = getStreamList (
 				workspaceKey, confKey,
-				start, rows, label, url, sourceType, type, name, region, country, labelOrder);
+				start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
@@ -2578,7 +2580,7 @@ void MMSEngineDBFacade::removeStream(
 Json::Value MMSEngineDBFacade::getStreamList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
-	string label, string url, string sourceType, string type,
+	string label, bool labelLike, string url, string sourceType, string type,
 	string name, string region, string country,
 	string labelOrder	// "" or "asc" or "desc"
 )
@@ -2598,6 +2600,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", label: " + label
+            + ", labelLike: " + to_string(labelLike)
             + ", url: " + url
             + ", sourceType: " + sourceType
             + ", type: " + type
@@ -2640,6 +2643,11 @@ Json::Value MMSEngineDBFacade::getStreamList (
 			{
 				field = "label";
 				requestParametersRoot[field] = label;
+			}
+            
+			{
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
 			}
             
             if (url != "")
@@ -2692,7 +2700,12 @@ Json::Value MMSEngineDBFacade::getStreamList (
         if (liveURLKey != -1)
 			sqlWhere += ("and confKey = ? ");
         if (label != "")
-            sqlWhere += ("and LOWER(label) like LOWER(?) ");
+		{
+			if (labelLike)
+				sqlWhere += ("and LOWER(label) like LOWER(?) ");
+			else
+				sqlWhere += ("and LOWER(label) = LOWER(?) ");
+		}
         if (url != "")
             sqlWhere += ("and url like ? ");
         if (sourceType != "")
@@ -2719,7 +2732,12 @@ Json::Value MMSEngineDBFacade::getStreamList (
             if (liveURLKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
             if (label != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+			{
+				if (labelLike)
+					preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+				else
+					preparedStatement->setString(queryParameterIndex++, label);
+			}
             if (url != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + url + "%");
             if (sourceType != "")
@@ -2791,8 +2809,12 @@ Json::Value MMSEngineDBFacade::getStreamList (
             if (liveURLKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
             if (label != "")
-                preparedStatement->setString(queryParameterIndex++,
-					string("%") + label + "%");
+			{
+				if (labelLike)
+					preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+				else
+					preparedStatement->setString(queryParameterIndex++, label);
+			}
             if (url != "")
                 preparedStatement->setString(queryParameterIndex++,
 					string("%") + url + "%");
@@ -2818,6 +2840,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", liveURLKey: " + to_string(liveURLKey)
 				+ ", label: " + "%" + label + "%"
+				+ ", labelLike: " + to_string(labelLike)
 				+ ", url: " + "%" + url + "%"
 				+ ", sourceType: " + sourceType
 				+ ", type: " + type

@@ -1937,6 +1937,13 @@ void API::streamList(
 			label = curlpp::unescape(firstDecoding);
 		}
 
+		bool labelLike = true;
+		auto labelLikeIt = queryParameters.find("labelLike");
+		if (labelLikeIt != queryParameters.end() && labelLikeIt->second != "")
+		{
+			labelLike = (labelLikeIt->second == "true" ? true : false);
+		}
+
 		string url;
 		auto urlIt = queryParameters.find("url");
 		if (urlIt != queryParameters.end() && urlIt->second != "")
@@ -2046,7 +2053,7 @@ void API::streamList(
         {
             
             Json::Value streamListRoot = _mmsEngineDBFacade->getStreamList(
-                    workspace->_workspaceKey, liveURLKey, start, rows, label, 
+                    workspace->_workspaceKey, liveURLKey, start, rows, label, labelLike,
 					url, sourceType, type, name, region, country, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;

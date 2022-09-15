@@ -2162,7 +2162,7 @@ public:
     Json::Value getStreamList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
-		string label, string sourceType, string type,
+		string label, bool labelLike, string sourceType, string type,
 		string name, string region, string country, string url,
 		string labelOrder);
 
