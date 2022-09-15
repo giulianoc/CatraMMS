@@ -194,9 +194,10 @@ install-packages()
 
 	#Per il transcoder sat
 	echo ""
-	read -n 1 -s -r -p "install dvb-tools..."
+	read -n 1 -s -r -p "install dvb-tools/dvblast..."
 	echo ""
 	apt install -y dvb-tools
+	apt install dvblast
 
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 
@@ -699,15 +700,18 @@ firewall-rules()
 	#ufw allow ssh
 	ufw allow 9255
 
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleName" == "encoder" ]; then
 		#api and engine -> transcoder(nginx)
 		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
 
+		#connection rtmp from public
+		ufw allow 30000:31000/tcp
+	elif [ "$moduleName" == "externalEncoder" ]; then
 		#external encoder (aws api 1, 2, aws engine 1, 2
-		#ufw allow from 63.35.35.24 to any port 8088
-		#ufw allow from 52.50.243.155 to any port 8088
-		#ufw allow from 34.248.199.119 to any port 8088
-		#ufw allow from 52.49.243.7 to any port 8088
+		ufw allow from 63.35.35.24 to any port 8088
+		ufw allow from 52.50.243.155 to any port 8088
+		ufw allow from 34.248.199.119 to any port 8088
+		ufw allow from 52.49.243.7 to any port 8088
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
