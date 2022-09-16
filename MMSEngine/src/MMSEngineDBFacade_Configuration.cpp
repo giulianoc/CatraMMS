@@ -1476,7 +1476,7 @@ Json::Value MMSEngineDBFacade::addStream(
     int64_t workspaceKey,
     string label,
 	string sourceType,
-	string encodersPoolLabel,
+	int64_t encodersPoolKey,
 	string url,
 	string pushProtocol,
 	int64_t pushEncoderKey,
@@ -1524,7 +1524,7 @@ Json::Value MMSEngineDBFacade::addStream(
 
             lastSQLCommand = 
                 "insert into MMS_Conf_Stream(workspaceKey, label, sourceType, "
-				"encodersPoolLabel, url, "
+				"encodersPoolKey, url, "
 				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
@@ -1542,10 +1542,10 @@ Json::Value MMSEngineDBFacade::addStream(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, sourceType);
-			if (encodersPoolLabel == "")
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			if (encodersPoolKey == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 			else
-				preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
+				preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
 			if (url == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1657,7 +1657,7 @@ Json::Value MMSEngineDBFacade::addStream(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", encodersPoolKey: " + to_string(encodersPoolKey)
 				+ ", url: " + url
 				+ ", type: " + type
 				+ ", description: " + description
@@ -1798,7 +1798,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
     bool labelToBeModified, string label,
 
 	bool sourceTypeToBeModified, string sourceType,
-	bool encodersPoolLabelToBeModified, string encodersPoolLabel,
+	bool encodersPoolKeyToBeModified, int64_t encodersPoolKey,
 	bool urlToBeModified, string url,
 	bool pushProtocolToBeModified, string pushProtocol,
 	bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
@@ -1855,11 +1855,11 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				oneParameterPresent = true;
 			}
 
-			if (encodersPoolLabelToBeModified)
+			if (encodersPoolKeyToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("encodersPoolLabel = ?");
+				setSQL += ("encodersPoolKey = ?");
 				oneParameterPresent = true;
 			}
 
@@ -2076,13 +2076,12 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				preparedStatement->setString(queryParameterIndex++, label);
 			if (sourceTypeToBeModified)
 				preparedStatement->setString(queryParameterIndex++, sourceType);
-			if (encodersPoolLabelToBeModified)
+			if (encodersPoolKeyToBeModified)
 			{
-				if (encodersPoolLabel == "")
-					preparedStatement->setNull(queryParameterIndex++,
-						sql::DataType::VARCHAR);
+				if (encodersPoolKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 				else
-					preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
+					preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
 			}
 			if (urlToBeModified)
 			{
@@ -2298,8 +2297,8 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				+ ", label (" + to_string(labelToBeModified) + "): " + label
 				+ ", sourceType (" + to_string(sourceTypeToBeModified) + "): "
 					+ sourceType
-				+ ", encodersPoolLabel (" + to_string(encodersPoolLabelToBeModified) + "): "
-					+ encodersPoolLabel
+				+ ", encodersPoolKey (" + to_string(encodersPoolKeyToBeModified) + "): "
+					+ to_string(encodersPoolKey)
 				+ ", url (" + to_string(urlToBeModified) + "): " + url
 				+ ", pushProtocol (" + to_string(pushProtocolToBeModified) + "): "
 					+ pushProtocol
@@ -2788,7 +2787,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string("select confKey, label, sourceType, encodersPoolLabel, url, "
+                string("select confKey, label, sourceType, encodersPoolKey, url, "
 						"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 						"pushListenTimeout, captureLiveVideoDeviceNumber, "
 						"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
@@ -2870,12 +2869,32 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				field = "sourceType";
 				streamRoot[field] = sourceType;
 
-                field = "encodersPoolLabel";
-				if (resultSet->isNull("encodersPoolLabel"))
+                field = "encodersPoolKey";
+				if (resultSet->isNull("encodersPoolKey"))
 					streamRoot[field] = Json::nullValue;
 				else
-					streamRoot[field] = static_cast<string>(
-						resultSet->getString("encodersPoolLabel"));
+				{
+					int64_t encodersPoolKey = resultSet->getInt64("encodersPoolKey");
+					streamRoot[field] = encodersPoolKey;
+
+					if (encodersPoolKey >= 0)
+					{
+						try
+						{
+							string encodersPoolLabel =
+								getEncodersPoolDetails (encodersPoolKey);
+
+							field = "encodersPoolLabel";
+							streamRoot[field] = encodersPoolLabel;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "getEncodersPoolDetails failed"
+								+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+							);
+						}
+					}
+				}
 
 				// if (sourceType == "IP_PULL")
 				{
@@ -3186,7 +3205,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 		int64_t tvSourceTVConfKey = -1;
 		{
 			lastSQLCommand = "select confKey, sourceType, "
-				"encodersPoolLabel, url, "
+				"encodersPoolKey, url, "
 				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, "
 				"captureLiveVideoInputFormat, "
@@ -3228,8 +3247,24 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 
 			confKey = resultSet->getInt64("confKey");
 			sourceType = resultSet->getString("sourceType");
-			if (!resultSet->isNull("encodersPoolLabel"))
-				encodersPoolLabel = resultSet->getString("encodersPoolLabel");
+			if (!resultSet->isNull("encodersPoolKey"))
+			{
+				int64_t encodersPoolKey = resultSet->getInt64("encodersPoolKey");
+
+				if (encodersPoolKey >= 0)
+				{
+					try
+					{
+						encodersPoolLabel = getEncodersPoolDetails (encodersPoolKey);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "getEncodersPoolDetails failed"
+							+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+						);
+					}
+				}
+			}
 			if (!resultSet->isNull("url"))
 				url = resultSet->getString("url");
 			if (!resultSet->isNull("pushProtocol"))

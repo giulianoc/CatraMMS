@@ -2099,7 +2099,7 @@ public:
         int64_t workspaceKey,
         string label,
 		string sourceType,
-		string encodersPoolLabel,
+		int64_t encodersPoolKey,
 		string url,
 		string pushProtocol,
 		int64_t pushEncoderKey,
@@ -2130,7 +2130,7 @@ public:
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
 		bool sourceTypeToBeModified, string sourceType,
-		bool encodersPoolLabelToBeModified, string encodersPoolLabel,
+		bool encodersPoolKeyToBeModified, int64_t encodersPoolKey,
 		bool urlToBeModified, string url,
 		bool pushProtocolToBeModified, string pushProtocol,
 		bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
@@ -2410,6 +2410,8 @@ public:
 		string label, string serverName, int port,
 		string labelOrder	// "" or "asc" or "desc"
 	);
+
+	string getEncodersPoolDetails (int64_t encodersPoolKey);
 
 	Json::Value getEncodersPoolList (
 		int start, int rows,

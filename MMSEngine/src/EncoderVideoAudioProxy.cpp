@@ -15907,7 +15907,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		bool sourceTypeToBeModified = false;
 		string sourceType;
 		bool encodersPoolToBeModified = false;
-		string encodersPool;
+		int64_t encodersPoolKey;
 		bool urlToBeModified = false;
 		string url;
 		bool pushProtocolToBeModified = false;
@@ -15960,7 +15960,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 			_encodingItem->_workspace->_workspaceKey,
 			labelToBeModified, label,
 			sourceTypeToBeModified, sourceType,
-			encodersPoolToBeModified, encodersPool,
+			encodersPoolToBeModified, encodersPoolKey,
 			urlToBeModified, url,
 			pushProtocolToBeModified, pushProtocol,
 			pushEncoderKeyToBeModified, pushEncoderKey,

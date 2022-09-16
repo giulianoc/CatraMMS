@@ -1063,7 +1063,7 @@ void API::addStream(
         string label;
 		string sourceType;
 
-        string encodersPoolLabel;
+        int64_t encodersPoolKey;
         string url;
         string pushProtocol;
         int64_t pushEncoderKey;
@@ -1138,9 +1138,9 @@ void API::addStream(
             }    
             sourceType = requestBodyRoot.get(field, "").asString();            
 
-            field = "encodersPoolLabel";
+            field = "encodersPoolKey";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				encodersPoolLabel = requestBodyRoot.get(field, "").asString();            
+				encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
             field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1264,7 +1264,7 @@ void API::addStream(
 			Json::Value streamRoot = _mmsEngineDBFacade->addStream(
                 workspace->_workspaceKey, label,
 				sourceType,
-				encodersPoolLabel,
+				encodersPoolKey,
 				url,
 				pushProtocol,
 				pushEncoderKey,
@@ -1358,7 +1358,7 @@ void API::modifyStream(
         string label;
 		string sourceType;
 
-        string encodersPoolLabel;
+        int64_t encodersPoolKey;
         string url;
         string pushProtocol;
         int64_t pushEncoderKey;
@@ -1387,7 +1387,7 @@ void API::modifyStream(
         
 		bool labelToBeModified;
 		bool sourceTypeToBeModified;
-		bool encodersPoolLabelToBeModified;
+		bool encodersPoolKeyToBeModified;
 		bool urlToBeModified;
 		bool pushProtocolToBeModified;
 		bool pushEncoderKeyToBeModified;
@@ -1454,12 +1454,12 @@ void API::modifyStream(
 				sourceTypeToBeModified = true;
             }
 
-			encodersPoolLabelToBeModified = false;
-            field = "encodersPoolLabel";
+			encodersPoolKeyToBeModified = false;
+            field = "encodersPoolKey";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				encodersPoolLabel = requestBodyRoot.get(field, "").asString();            
-				encodersPoolLabelToBeModified = true;
+				encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+				encodersPoolKeyToBeModified = true;
 			}
 
 			urlToBeModified = false;
@@ -1699,7 +1699,7 @@ void API::modifyStream(
                 confKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
-				encodersPoolLabelToBeModified, encodersPoolLabel,
+				encodersPoolKeyToBeModified, encodersPoolKey,
 				urlToBeModified, url,
 				pushProtocolToBeModified, pushProtocol,
 				pushEncoderKeyToBeModified, pushEncoderKey,
