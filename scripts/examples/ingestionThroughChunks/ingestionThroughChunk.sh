@@ -45,6 +45,11 @@ else
 	#it has to be continued, retrieve the ingestionJobKey
 
 	ingestionJobKey=$(cat /tmp/ingestionJobKey.txt)
+	if [ "$ingestionJobKey" == "" ]; then
+		echo "ingestionJobKey not found, it is not possible to continue the upload"
+
+		exit 1
+	fi
 fi
 
 
