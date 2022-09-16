@@ -713,6 +713,12 @@ firewall-rules()
 		ufw allow from 34.248.199.119 to any port 8088
 		ufw allow from 52.49.243.7 to any port 8088
 
+		#this allows multicast (terrestrial/satellite solution)
+		#ufw allow out proto udp to 224.0.0.0/3
+		#ufw allow out proto udp to ff00::/8
+		#ufw allow in proto udp to 224.0.0.0/3
+		#ufw allow in proto udp to ff00::/8
+
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleName" == "api" ]; then
