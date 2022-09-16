@@ -4,14 +4,16 @@ mmsUserKey=$1
 mmsAPIKey=$2
 ingestionJobKey=$3
 binaryFilePathName=$4
-chunckSize=$5
-ingestionNumberToBeContinued=$6
+ingestionNumberToBeContinued=$5
+chunckSize=$6
 
 mmsBinaryHostname=mms-binary.catramms-cloud.com
 
 osName=$(uname -s)
 
 if [ $# -eq 4 ]; then
+	ingestionNumberToBeContinued=0
+
 	if [ "$osName" == "Darwin" ]; then
 		binaryFileSize=$(stat -f%z "$binaryFilePathName")
 	else
@@ -30,9 +32,25 @@ if [ $# -eq 4 ]; then
 	fi
 
 	#echo "chunckSize selected: $chunckSize"
-	ingestionNumberToBeContinued=0
 elif [ $# -eq 5 ]; then
-	ingestionNumberToBeContinued=0
+	if [ "$osName" == "Darwin" ]; then
+		binaryFileSize=$(stat -f%z "$binaryFilePathName")
+	else
+		binaryFileSize=$(stat -c%s "$binaryFilePathName")
+	fi
+	if [ $binaryFileSize -lt 100000 ]; then			#100KB
+		chunckSize=10000			#10KB
+	elif [ $binaryFileSize -lt 10000000 ]; then		#10MB
+		chunckSize=1000000			#1MB
+	elif [ $binaryFileSize -lt 100000000 ]; then	#100MB
+		chunckSize=10000000			#10MB
+	elif [ $binaryFileSize -lt 1000000000 ]; then	#1GB
+		chunckSize=100000000		#100MB
+	else
+		chunckSize=100000000		#100MB
+	fi
+
+	#echo "chunckSize selected: $chunckSize"
 elif [ $# -ne 6 ]; then
 	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <ingestion job key> <binary path name> [<chunk size in bytes]"
 
