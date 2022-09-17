@@ -2772,7 +2772,7 @@ void API::uploadedBinary(
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
-                        + ", workspaceIngestionBinarySizeInBytes: " + to_string(workspaceIngestionBinarySizeInBytes)
+                        + ", workspaceIngestionBinarySizeInBytes (expected): " + to_string(workspaceIngestionBinarySizeInBytes)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
