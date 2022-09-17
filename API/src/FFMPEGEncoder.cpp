@@ -3359,8 +3359,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
+		bool lightKill = false;
+        auto lightKillIt = queryParameters.find("lightKill");
+        if (lightKillIt != queryParameters.end())
+			lightKill = lightKillIt->second == "true" ? true : false;
+
 		_logger->info(__FILEREF__ + "Received killEncodingJob"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", lightKill: " + to_string(lightKill)
 		);
 
 		pid_t			pidToBeKilled;
@@ -3471,6 +3477,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		_logger->info(__FILEREF__ + "ProcessUtility::killProcess. Found Encoding to kill"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+			+ ", lightKill: " + to_string(lightKill)
 		);
 
 		if (pidToBeKilled == 0)
@@ -3494,7 +3501,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			chrono::system_clock::time_point startKillProcess
 				= chrono::system_clock::now();
 
-			ProcessUtility::killProcess(pidToBeKilled);
+			// if (lightKill)
+			// 	ProcessUtility::termProcess(pidToBeKilled);
+			// else
+				ProcessUtility::killProcess(pidToBeKilled);
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
 			_logger->info(__FILEREF__ + "killProcess statistics"

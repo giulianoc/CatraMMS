@@ -294,7 +294,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-	void killEncodingJob(int64_t encoderKey, int64_t encodingJobKey);
+	void killEncodingJob(int64_t encoderKey, int64_t encodingJobKey, bool lightKill);
 
     void mediaItemsList(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

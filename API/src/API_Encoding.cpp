@@ -425,16 +425,20 @@ void API::killOrCancelEncodingJob(
 
     try
     {
-        int64_t encodingJobKey = -1;
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
-        {
-            encodingJobKey = stoll(encodingJobKeyIt->second);
-        }
+		int64_t encodingJobKey = -1;
+		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+		if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
+			encodingJobKey = stoll(encodingJobKeyIt->second);
+
+		bool lightKill = false;
+		auto lightKillIt = queryParameters.find("lightKill");
+		if (lightKillIt != queryParameters.end() && lightKillIt->second != "")
+			lightKill = lightKillIt->second == "true" ? true : false;
 
         {
 			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
-				encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
+				encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
+					encodingJobKey);
 
 			int64_t ingestionJobKey;
 			string type;
@@ -472,10 +476,11 @@ void API::killOrCancelEncodingJob(
 								+ ", encoderKey: " + to_string(encoderKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
-							killEncodingJob(encoderKey, encodingJobKey);
+							killEncodingJob(encoderKey, encodingJobKey, lightKill);
 
 							// to make sure EncoderVideoProxyThread resources are released,
 							// the isKilled flag is also set
+							if (!lightKill)
 							{
 								// this is the case 2
 								bool isKilled = true;
@@ -491,34 +496,37 @@ void API::killOrCancelEncodingJob(
 						catch (...)
 						{
 							// this is the case 2
-							bool isKilled = true;
-
-							_logger->info(__FILEREF__ + "Setting isKilled flag"
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", isKilled: " + to_string(isKilled)
-							);
-							_mmsEngineDBFacade->updateEncodingJobIsKilled(
-								encodingJobKey, isKilled);
-
-							/* 2022-09-03: it should be needed anymore
-							_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-								+ ", encoderKey: " + to_string(encoderKey)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-							);
-
+							if (!lightKill)
 							{
-								_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
-									+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+								bool isKilled = true;
+
+								_logger->info(__FILEREF__ + "Setting isKilled flag"
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", isKilled: " + to_string(isKilled)
+								);
+								_mmsEngineDBFacade->updateEncodingJobIsKilled(
+									encodingJobKey, isKilled);
+
+								/* 2022-09-03: it should be needed anymore
+								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+									+ ", encoderKey: " + to_string(encoderKey)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
 								);
 
-								_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
-									MMSEngineDBFacade::EncodingError::KilledByUser,
-									false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
-									ingestionJobKey, "killEncodingJob failed");
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+									);
+
+									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+										ingestionJobKey, "killEncodingJob failed");
+								}
+								*/
 							}
-							*/
 						}
 					}
 				}
@@ -544,10 +552,11 @@ void API::killOrCancelEncodingJob(
 							+ ", encoderKey: " + to_string(encoderKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
-						killEncodingJob(encoderKey, encodingJobKey);
+						killEncodingJob(encoderKey, encodingJobKey, lightKill);
 
 						// to make sure EncoderVideoProxyThread resources are released,
 						// the isKilled flag is also set
+						if (!lightKill)
 						{
 							// this is the case 2
 							bool isKilled = true;
@@ -563,24 +572,30 @@ void API::killOrCancelEncodingJob(
 					catch(runtime_error e)
 					{
 						// this is the case 2
-						bool isKilled = true;
+						if (!lightKill)
+						{
+							bool isKilled = true;
 
-						_logger->info(__FILEREF__ + "Setting isKilled flag"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", isKilled: " + to_string(isKilled)
-						);
-						_mmsEngineDBFacade->updateEncodingJobIsKilled(
-							encodingJobKey, isKilled);
+							_logger->info(__FILEREF__ + "Setting isKilled flag"
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", isKilled: " + to_string(isKilled)
+							);
+							_mmsEngineDBFacade->updateEncodingJobIsKilled(
+								encodingJobKey, isKilled);
+						}
 					}
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
-					MMSEngineDBFacade::EncodingError encodingError
-						= MMSEngineDBFacade::EncodingError::CanceledByUser;
-					_mmsEngineDBFacade->updateEncodingJob(
+					if (!lightKill)
+					{
+						MMSEngineDBFacade::EncodingError encodingError
+							= MMSEngineDBFacade::EncodingError::CanceledByUser;
+						_mmsEngineDBFacade->updateEncodingJob(
 							encodingJobKey, encodingError,
 							false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 							ingestionJobKey, "Canceled By User");
+					}
 				}
 			}
 			else
@@ -591,16 +606,19 @@ void API::killOrCancelEncodingJob(
 						+ ", encoderKey: " + to_string(encoderKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					);
-					killEncodingJob(encoderKey, encodingJobKey);
+					killEncodingJob(encoderKey, encodingJobKey, lightKill);
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
-					MMSEngineDBFacade::EncodingError encodingError
-						= MMSEngineDBFacade::EncodingError::CanceledByUser;
-					_mmsEngineDBFacade->updateEncodingJob(
+					if (!lightKill)
+					{
+						MMSEngineDBFacade::EncodingError encodingError
+							= MMSEngineDBFacade::EncodingError::CanceledByUser;
+						_mmsEngineDBFacade->updateEncodingJob(
 							encodingJobKey, encodingError,
 							false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 							ingestionJobKey, "Canceled By User");
+					}
 				}
 			}
 
@@ -1339,7 +1357,7 @@ void API::removeEncodingProfilesSet(
     }
 }
 
-void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
+void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey, bool lightKill)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;
@@ -1357,6 +1375,7 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
 			transcoderHost
 			+ _ffmpegEncoderKillEncodingURI
 			+ "/" + to_string(encodingJobKey)
+			+ "?lightKill=" + to_string(lightKill)
 		;
 
 		list<string> header;
