@@ -32,13 +32,13 @@ if [ "$continueFromIndex" = "" ]; then
 	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionWorkflow.sh failed"
 		cat ./helper/ingestionWorkflowResult.json
-		rm ./helper/ingestionWorkflowResult.json
+		rm -f ./helper/ingestionWorkflowResult.json
 		echo ""
 
 		exit 1
 	fi
 
-	rm ./helper/ingestionWorkflowResult.json
+	rm -f ./helper/ingestionWorkflowResult.json
 
 	echo "$ingestionJobKey" > /tmp/$filename.ingestionJobKey
 else
@@ -60,5 +60,5 @@ fi
 #echo "./helper/ingestionBinary.sh $mmsUserKey \"$mmsAPIKey\" $ingestionJobKey \"$binaryFilePathName\""
 ./helper/ingestionBinary.sh $mmsUserKey "$mmsAPIKey" $ingestionJobKey "$binaryFilePathName" $continueFromIndex
 
-rm /tmp/$filename.ingestionJobKey
+rm -f /tmp/$filename.ingestionJobKey
 

@@ -22,7 +22,8 @@ else
 	fileFormat="mp4"
 fi
 
-if ! command -v jq &> /dev/null
+#if ! command -v jq &> /dev/null
+if ! [ -x "$(command -v jq)" ]
 then
     echo "The 'jq' command could not be found, please install it"
 
