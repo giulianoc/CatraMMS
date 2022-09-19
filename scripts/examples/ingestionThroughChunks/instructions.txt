@@ -17,3 +17,8 @@ Usage: ./ingestionThroughChunk.sh <mmsUserKey> <mmsAPIKey> <title> <ingester> <r
 <binaryFilePathName>: pathname of the content to be ingested
 <continueFromIndex>: this is optional, it is used to continue the upload of a content when the script is interrupted. For example, if the script is interrupted when it was uploading the chunk nr. 100 (i.e. the last message was IngestionNumber 100/171), in order to continue, this parameter has to be set to 100
 
+Examples:
+./ingestionThroughChunk.sh 10 HNVsOoVhHx0WNIxFu-ThBA1vAPEKWsxneGgze6TodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv
+
+nohup ./ingestionThroughChunk.sh 10 HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWSxneGgze6eAodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv > /tmp/ing.log &
+
