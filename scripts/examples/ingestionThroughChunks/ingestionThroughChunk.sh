@@ -18,7 +18,7 @@ elif [ $# -eq 6 ]; then
 fi
 
 
-if [ "$continueFromIndex" == "" ]; then
+if [ "$continueFromIndex" = "" ]; then
 
 	#start from scratch
 
@@ -29,7 +29,7 @@ if [ "$continueFromIndex" == "" ]; then
 	#echo "./helper/ingestionWorkflow.sh $mmsUserKey \"$mmsAPIKey\" \"$title\" \"$ingester\" $retention $fileFormat"
 	ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$ingester" $retention $fileFormat)
 
-	if [ "$ingestionJobKey" == "" ]; then
+	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionWorkflow.sh failed"
 		cat ./helper/ingestionWorkflowResult.json
 		rm ./helper/ingestionWorkflowResult.json
@@ -49,7 +49,7 @@ else
 
 	filename=$(basename -- "$binaryFilePathName")
 	ingestionJobKey=$(cat /tmp/$filename.ingestionJobKey)
-	if [ "$ingestionJobKey" == "" ]; then
+	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionJobKey not found, it is not possible to continue the upload"
 
 		exit 1
