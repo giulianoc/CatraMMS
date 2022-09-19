@@ -20,5 +20,6 @@ Usage: ./ingestionThroughChunk.sh <mmsUserKey> <mmsAPIKey> <title> <ingester> <r
 Examples:
 ./ingestionThroughChunk.sh 10 HNVsOoVhHx0WNIxFu-ThBA1vAPEKWsxneGgze6TodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv
 
-nohup ./ingestionThroughChunk.sh 10 HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWSxneGgze6eAodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv > /tmp/ing.log &
+nohup ./ingestionThroughChunk.sh 10 HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWSxneGgze6eAodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv &
+tail -f nohup.out 
 
