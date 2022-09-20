@@ -2258,3 +2258,34 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
     }
 }
 
+MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTechnology(string fileFormat)
+{
+	MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
+	string fileFormatLowerCase;
+
+
+	fileFormatLowerCase.resize(fileFormat.size());                                                
+	transform(fileFormat.begin(), fileFormat.end(),                                               
+		fileFormatLowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+	if (fileFormatLowerCase == "mp4"
+		|| fileFormatLowerCase == "mkv"
+		|| fileFormatLowerCase == "mov"
+		|| fileFormatLowerCase == "webm"
+	)
+		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
+	else if (fileFormatLowerCase == "hls"
+		|| fileFormatLowerCase == "dash"
+	)
+		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
+	else if (fileFormatLowerCase == "ts"
+		|| fileFormatLowerCase == "mts"
+		|| fileFormatLowerCase == "avi"
+	)
+		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+	else
+		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+
+	return deliveryTechnology;
+}
+

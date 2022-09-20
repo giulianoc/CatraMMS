@@ -908,6 +908,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						string label = encodingMedatada.get("Label", "XXX").asString();
 						string fileFormat = encodingMedatada.get("FileFormat", "XXX").asString();
 
+						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
+							MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
+
+						/*
 						string fileFormatLowerCase;
 						fileFormatLowerCase.resize(fileFormat.size());
 						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
@@ -921,6 +925,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							{
 								if (fileFormatLowerCase == "mp4")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
+								else if (fileFormatLowerCase == "mkv")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "mov")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
@@ -931,30 +937,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else if (fileFormatLowerCase == "mts")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								else if (fileFormatLowerCase == "mkv")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else if (fileFormatLowerCase == "avi")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								/*
-								else
-								{
-									string errorMessage = __FILEREF__ + "Wrong fileFormat"
-										+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
-										+ ", fileFormat: " + fileFormat
-									;
-									_logger->error(errorMessage);
-
-									continue;
-								}
-								*/
 							}
 							else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
 									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
 										audioSuffix.size(), audioSuffix))
 							{
 								if (fileFormatLowerCase == "mp4")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
+								else if (fileFormatLowerCase == "mkv")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
@@ -985,11 +979,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								continue;
 							}
 						}
+						*/
 						_logger->info(__FILEREF__ + "Encoding technology"
 							+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
 							+ ", label: " + label
 							+ ", fileFormat: " + fileFormat
-							+ ", fileFormatLowerCase: " + fileFormatLowerCase
+							// + ", fileFormatLowerCase: " + fileFormatLowerCase
 							+ ", deliveryTechnology: " + toString(deliveryTechnology)
 						);
 

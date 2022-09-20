@@ -1104,21 +1104,29 @@ void API::addEncodingProfile(
 				field = "FileFormat";
 				string fileFormat = encodingProfileRoot.get(field, "").asString();
 
+				deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
+				/*
 				string fileFormatLowerCase;
 				fileFormatLowerCase.resize(fileFormat.size());
 				transform(fileFormat.begin(), fileFormat.end(),
 					fileFormatLowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-				if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
+				if (fileFormatLowerCase == "hls"
+					|| fileFormatLowerCase == "dash"
+				)
 					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
-				else if (fileFormatLowerCase == "mp4")
+				else if (fileFormatLowerCase == "mp4"
+					|| fileFormatLowerCase == "mkv"
+					|| fileFormatLowerCase == "mov"
+				)
 					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 				else
 					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+				*/
 
 				_logger->info(__FILEREF__ + "deliveryTechnology"
 					+ ", fileFormat: " + fileFormat
-					+ ", fileFormatLowerCase: " + fileFormatLowerCase
+					// + ", fileFormatLowerCase: " + fileFormatLowerCase
 					+ ", deliveryTechnology: " + MMSEngineDBFacade::toString(deliveryTechnology)
 				);
 			}

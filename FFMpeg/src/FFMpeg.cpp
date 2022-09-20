@@ -3208,15 +3208,24 @@ void FFMpeg::overlayTextOnVideo(
 
 
         {
-			textTemporaryFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(_currentIngestionJobKey)
-				+ "_"
-				+ to_string(_currentEncodingJobKey)
-				+ ".overlayText";
-			ofstream of(textTemporaryFileName, ofstream::trunc);
-			of << text;
-			of.flush();
+			{
+				textTemporaryFileName =
+					_ffmpegTempDir + "/"
+					+ to_string(_currentIngestionJobKey)
+					+ "_"
+					+ to_string(_currentEncodingJobKey)
+					+ ".overlayText";
+				ofstream of(textTemporaryFileName, ofstream::trunc);
+				of << text;
+				of.flush();
+			}
+
+			_logger->info(__FILEREF__ + "overlayTextOnVideo: added text into a temporary file"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", textTemporaryFileName: " + textTemporaryFileName
+				+ ", text: " + text
+			);
 
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
 				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel,

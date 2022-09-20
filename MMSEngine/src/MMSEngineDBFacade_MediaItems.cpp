@@ -1915,6 +1915,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							}
 							else
 							{
+								MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
+									MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileExtension);
+								profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
+								/*
 								string fileExtensionLowerCase;
 								fileExtensionLowerCase.resize(fileExtension.size());
 								transform(fileExtension.begin(), fileExtension.end(), fileExtensionLowerCase.begin(),
@@ -1934,6 +1938,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									profileRoot[field] =
 										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::Download);
 								}
+								*/
 							}
 						}
                         else

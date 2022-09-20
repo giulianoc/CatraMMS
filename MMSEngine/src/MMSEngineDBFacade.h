@@ -2480,6 +2480,7 @@ public:
 
 	bool oncePerDayExecution(OncePerDayType oncePerDayType);
 
+	static MMSEngineDBFacade::DeliveryTechnology fileFormatToDeliveryTechnology(string fileFormat);
 
 private:
     shared_ptr<spdlog::logger>                          _logger;
