@@ -31,7 +31,11 @@ second=${arrVersion[1]}
 third=${arrVersion[2]}
 newThird=$((third+$incrementVersion))
 tagName=$first"."$second"."$newThird
-echo "tagName: $tagName"
+
+echo "new tagname: $tagName"
+printf "${RED}"
+read -n 1 -s -r -p "Press any key to continue"
+printf "${NC}"
 
 
 RED='\033[0;31m'
