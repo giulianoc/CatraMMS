@@ -19,6 +19,10 @@ currentDir=$(pwd)
 moduleName=$(basename $currentDir)
 
 
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+
 #calculate new version, i.e: 1.0.2345
 versionpathname=$(dirname $0)
 versionpathname=$versionpathname"/../version.txt"
@@ -34,12 +38,8 @@ tagName=$first"."$second"."$newThird
 
 echo ""
 printf "${RED}"
-read -n 1 -s -r -p "new tagname: $tagName"
+read -n 1 -s -r -p "new tagname: $tagName, press any key to continue"
 printf "${NC}"
-
-
-RED='\033[0;31m'
-NC='\033[0m' # No Color
 
 
 echo ""
