@@ -375,7 +375,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. Locks)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", active: 0"
 				+ ", processorMMS: " + processorMMS
@@ -385,6 +385,8 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
         }
 
+		// 2022-09-27: next procedure should be already covered by retentionOfIngestionData,
+		//		anyway, we will leave it here
         {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed"
 					+ ", processorMMS: " + processorMMS
@@ -410,7 +412,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 				+ ", processorMMS: " + processorMMS
@@ -423,6 +425,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
         }
 
+		// 2022-09-27: moved to retentionOfIngestionData.
+		//		Scenario: we had a lot of Start_TaskQueued too old that were not 'clean' because the engine
+		//			was not restarted. All these 'Start_TaskQueued too old' were blocking all the other tasks.
+		//			For this reason we moved this clean procedure in retentionOfIngestionData that is call
+		//			once a day
+		/*
         {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. IngestionJobs not completed "
 				+ "(state Start_TaskQueued) and too old to be considered "
@@ -441,7 +449,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
             preparedStatement->setInt(queryParameterIndex++, _doNotManageIngestionsOlderThanDays);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. IngestionJobs not completed)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
@@ -486,6 +494,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				}
 			}
 		}
+		*/
 
         {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. IngestionJobs assigned without final state"
@@ -500,7 +509,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. IngestionJobs assigned without final state)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -527,7 +536,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();            
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", processorMMS: " + processorMMS
@@ -551,7 +560,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. MediaItems retention assigned)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -560,6 +569,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
         }
 
+		// 2022-09-27: non sono sicuro che la prossima procedura sia corretta:
+		//	- nel caso di LiveRecorder, LiveProxy, ..., questi task potrebbero durare tanto tempo
+		//	- anche nel caso di un encoding, nella ripartenza abbiamo le chiamate a encodingStatus che
+		//		dovrebbero gestire questo scenario
+		//	Provo a commentarlo
+		/*
         {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Old EncodingJobs retention Processing"
 					+ ", processorMMS: " + processorMMS
@@ -578,7 +593,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();            
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. Old EncodingJobs retention Processing)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", processorMMS: " + processorMMS
@@ -589,6 +604,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
+		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

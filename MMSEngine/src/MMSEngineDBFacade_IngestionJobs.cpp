@@ -6314,6 +6314,73 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			);
 		}
 
+        {
+			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs not completed "
+				+ "(state Start_TaskQueued) and too old to be considered "
+				+ "by MMSEngineDBFacade::getIngestionsToBeManaged"
+				// + ", processorMMS: " + processorMMS
+			);
+			// 2021-07-17: In this scenario the IngestionJobs would remain infinite time:
+            lastSQLCommand = 
+                "select ingestionJobKey from MMS_IngestionJob "
+				"where status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
+				// "where (processorMMS is NULL or processorMMS = ?) "
+				// "and status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            // preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+            preparedStatement->setInt(queryParameterIndex++, _doNotManageIngestionsOlderThanDays);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. IngestionJobs not completed)"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				// + ", processorMMS: " + processorMMS
+				+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+				+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            while (resultSet->next())
+            {
+				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
+				string errorMessage = "Canceled by MMS because not completed and too old";
+				try
+				{
+					_logger->info(__FILEREF__ + "Update IngestionJob"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + "End_CanceledByMMS"
+						+ ", errorMessage: " + errorMessage
+					);
+					updateIngestionJob (ingestionJobKey,
+						MMSEngineDBFacade::IngestionStatus::End_CanceledByMMS,
+						errorMessage);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + "End_CanceledByMMS"
+						+ ", errorMessage: " + errorMessage
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + "End_CanceledByMMS"
+						+ ", errorMessage: " + errorMessage
+						+ ", e.what(): " + e.what()
+					);
+				}
+			}
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );

@@ -1,21 +1,38 @@
 #!/bin/bash
 
 
-if [ $# -ne 2 ]
+if [ $# -ne 1 ]
 then
-    echo "usage $0 <version tag, i.e.: 1.0.0> <tag message>"
+    echo "usage $0 <tag message>"
 	echo "Reminder to list tags: git tag -n --sort=taggerdate"
 
     exit
 fi
 
-tagName=$1
-tagMessage=$2
+#tagName=$1
+tagMessage=$1
+
 
 deployDirectory=/opt/catrasoftware/deploy
 
 currentDir=$(pwd)
 moduleName=$(basename $currentDir)
+
+
+#calculate new version, i.e: 1.0.2345
+versionpathname=$(dirname $0)
+versionpathname=$versionpathname"/../version.txt"
+#echo "versionpathname: $versionpathname"
+incrementVersion=5
+version=$(cat $versionpathname)
+arrVersion=(${version//./ })
+first=${arrVersion[0]}
+second=${arrVersion[1]}
+third=${arrVersion[2]}
+newThird=$((third+$incrementVersion))
+tagName=$first"."$second"."$newThird
+echo "tagName: $tagName"
+
 
 RED='\033[0;31m'
 NC='\033[0m' # No Color
