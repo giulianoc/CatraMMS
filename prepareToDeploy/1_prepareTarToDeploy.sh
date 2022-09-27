@@ -32,9 +32,9 @@ third=${arrVersion[2]}
 newThird=$((third+$incrementVersion))
 tagName=$first"."$second"."$newThird
 
-echo "new tagname: $tagName"
+echo ""
 printf "${RED}"
-read -n 1 -s -r -p "Press any key to continue"
+read -n 1 -s -r -p "new tagname: $tagName"
 printf "${NC}"
 
 
