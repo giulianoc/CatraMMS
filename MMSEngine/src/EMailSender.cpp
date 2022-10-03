@@ -61,13 +61,16 @@ void EMailSender:: sendEmail(
     
     string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
     
+	_logger->info(__FILEREF__ + "aaa");
     CURL *curl;
     CURLcode res = CURLE_OK;
     struct curl_slist *recipients = NULL;
     deque<string> emailLines;
   
+	_logger->info(__FILEREF__ + "aaa");
     emailLines.push_back(string("From: <") + from + ">" + "\r\n");
 
+	_logger->info(__FILEREF__ + "aaa");
 	string sTosForEmail;
 	{
 		stringstream ssTosCommaSeparated(tosCommaSeparated);
@@ -87,6 +90,7 @@ void EMailSender:: sendEmail(
 	emailLines.push_back(string("To: ") + sTosForEmail + "\r\n");
     // emailLines.push_back(string("To: <") + to + ">" + "\r\n");
 
+	_logger->info(__FILEREF__ + "aaa");
     if (cc != "")
 	{
         emailLines.push_back(string("Cc: <") + cc + ">" + "\r\n");
@@ -99,8 +103,10 @@ void EMailSender:: sendEmail(
     
     curl = curl_easy_init();
 
+	_logger->info(__FILEREF__ + "aaa");
     if(curl) 
     {
+	_logger->info(__FILEREF__ + "aaa");
         curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
         if (userName != "")
             curl_easy_setopt(curl, CURLOPT_USERNAME, userName.c_str());
@@ -119,6 +125,7 @@ void EMailSender:: sendEmail(
          */
         curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from.c_str());
 
+	_logger->info(__FILEREF__ + "aaa");
         /* Add two recipients, in this particular case they correspond to the
          * To: and Cc: addressees in the header, but they could be any kind of
          * recipient. */
@@ -136,10 +143,12 @@ void EMailSender:: sendEmail(
 		}
         // recipients = curl_slist_append(recipients, to.c_str());
 
+	_logger->info(__FILEREF__ + "aaa");
         if (cc != "")
             recipients = curl_slist_append(recipients, cc.c_str());
         curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
 
+	_logger->info(__FILEREF__ + "aaa");
         /* We're using a callback function to specify the payload (the headers and
          * body of the message). You could just use the CURLOPT_READDATA option to
          * specify a FILE pointer to read from. */
@@ -152,6 +161,7 @@ void EMailSender:: sendEmail(
         _logger->info(__FILEREF__ + "Sending email"
             + ", emailServerURL: " + emailServerURL
             + ", userName: " + userName
+            + ", password: " + password
             + ", from: " + from
             + ", to: " + tosCommaSeparated
             + ", cc: " + cc
