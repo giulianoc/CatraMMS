@@ -4171,46 +4171,42 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
 			field = "userAPIKey";
 			workspaceDetailRoot[field] = userAPIKeyRoot;
-		}
 
-		/*
-		if (encoders)
-		{
-			Json::Value encodersRoot(Json::arrayValue);
+			if (admin)
 			{
-				string lastSQLCommand =
-					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-					"e.serverName, e.port, e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
-					"e.maxLiveRecordingCapabilities "
-					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm "
-					"where e.encoderKey = ewm.encoderKey "
-					"and ewm.workspaceKey = ?";
-				shared_ptr<sql::PreparedStatement> preparedStatementEncoders (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
-				preparedStatementEncoders->setInt64(queryParameterIndex++, workspaceKey);
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				shared_ptr<sql::ResultSet> resultSetEncoders (
-					preparedStatementEncoders->executeQuery());
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", workspaceKey: " + to_string(workspaceKey)
-					+ ", resultSetEncoders->rowsCount: " + to_string(resultSetEncoders->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-				while(resultSetEncoders->next())
 				{
-					Json::Value encoderRoot = getEncoderRoot(resultSetEncoders);
+					string lastSQLCommand =
+						"select u.userKey as workspaceOwnerUserKey, u.name as workspaceOwnerUserName "
+						"from MMS_APIKey ak, MMS_User u "
+						"where ak.userKey = u.userKey "
+						"and ak.workspaceKey = ? and ak.isOwner = b'1'";
+					shared_ptr<sql::PreparedStatement> preparedStatementOwnerWorkspace (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatementOwnerWorkspace->setInt64(queryParameterIndex++, workspaceKey);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSetOwnerWorkspace (
+						preparedStatementOwnerWorkspace->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", resultSetOwnerWorkspace->rowsCount: " + to_string(resultSetOwnerWorkspace->rowsCount())
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if(resultSetOwnerWorkspace->next())
+					{
+						field = "workspaceOwnerUserKey";
+						workspaceDetailRoot[field] =
+							resultSetOwnerWorkspace->getInt64("workspaceOwnerUserKey");
 
-					encodersRoot.append(encoderRoot);
+						field = "workspaceOwnerUserName";
+						workspaceDetailRoot[field] = static_cast<string>(
+							resultSetOwnerWorkspace->getString("workspaceOwnerUserName"));
+					}
 				}
 			}
-
-			field = "encoders";
-			workspaceDetailRoot[field] = encodersRoot;
 		}
-		*/
     }
     catch(sql::SQLException se)
     {
