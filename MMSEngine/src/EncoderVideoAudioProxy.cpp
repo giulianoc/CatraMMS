@@ -15062,7 +15062,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
                 catch(...)
                 {
-					encoderNotReachableFailures++;
+					// encoderNotReachableFailures++;
 
 					// 2020-11-23. Scenario:
 					//	1. I shutdown the encoder because I had to upgrade OS version
