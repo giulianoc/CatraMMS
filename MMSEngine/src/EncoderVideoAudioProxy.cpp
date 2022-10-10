@@ -15077,7 +15077,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", encoderNotReachableFailures: "
+							+ to_string(encoderNotReachableFailures)
+						+ ", _maxEncoderNotReachableFailures: "
+							+ to_string(_maxEncoderNotReachableFailures)
 						+ ", _currentUsedFFMpegEncoderHost: "
 							+ _currentUsedFFMpegEncoderHost
 						+ ", _currentUsedFFMpegEncoderKey: "
