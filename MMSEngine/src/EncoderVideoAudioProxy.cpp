@@ -15062,6 +15062,17 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
                 catch(...)
                 {
+					encoderNotReachableFailures++;
+
+					// 2020-11-23. Scenario:
+					//	1. I shutdown the encoder because I had to upgrade OS version
+					//	2. this thread remained in this loop (while(!encodingFinished))
+					//		and the channel did not work until the Encoder was working again
+					//	In this scenario, so when the encoder is not reachable at all, the engine
+					//	has to select a new encoder.
+					//	For this reason we added this EncoderNotReachable catch
+					//	and the encoderNotReachableFailures variable
+
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
 						+ ", _ingestionJobKey: "
 							+ to_string(_encodingItem->_ingestionJobKey)
