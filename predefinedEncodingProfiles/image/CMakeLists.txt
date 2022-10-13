@@ -25,6 +25,7 @@ SET (PROFILEs
 	MMS_JPG_W120.json
 	MMS_JPG_W240.json
 	MMS_JPG_W160.json
+	MMS_JPG_W576.json
 	MMS_JPG_W40.json
 	MMS_JPG_W60.json
 	MMS_JPG_H700.json
