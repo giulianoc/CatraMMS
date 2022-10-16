@@ -102,7 +102,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				if (onlyTasksNotInvolvingMMSEngineThreads)
 				{
 					string tasksNotInvolvingMMSEngineThreadsList =
-						"'GroupOfTask'"
+						"'GroupOfTasks'"
 						", 'Encode'"
 						", 'Video-Speed'"
 						", 'Picture-InPicture'"
@@ -151,7 +151,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				if (onlyTasksNotInvolvingMMSEngineThreads)
 				{
 					string tasksNotInvolvingMMSEngineThreadsList =
-						"'GroupOfTask'"
+						"'GroupOfTasks'"
 						", 'Encode'"
 						", 'Video-Speed'"
 						", 'Picture-InPicture'"
@@ -2590,7 +2590,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 // all dependencies from the keys dependent from ingestionJobKey (without dependOnSuccess check)
                 // and so on recursively
                 int maxHierarchicalLevelsManaged = 50;
-                for (int hierarchicalLevelIndex = 0; hierarchicalLevelIndex < maxHierarchicalLevelsManaged; hierarchicalLevelIndex++)
+                for (int hierarchicalLevelIndex = 0; hierarchicalLevelIndex < maxHierarchicalLevelsManaged;
+					hierarchicalLevelIndex++)
                 {
 					// in the first select we have to found the dependencies according dependOnSuccess,
 					// so in case the parent task was successful, we have to set End_NotToBeExecuted for
@@ -2602,7 +2603,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
 					// );
 					// 2019-09-23: we have to exclude the IngestionJobKey of the GroupOfTasks. This is because:
-					// - GroupOfTasks cannot tbe set to End_NotToBeExecuted, it has always to be executed
+					// - GroupOfTasks cannot be set to End_NotToBeExecuted, it has always to be executed
 
 					// 2019-10-05: referenceOutputDependency==1 specifies that this dependency comes
 					//	from a ReferenceOutput, it means his parent is a GroupOfTasks.
@@ -2651,14 +2652,18 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                         dependenciesFound = true;
 
                         if (hierarchicalIngestionJobKeysDependencies == "")
-                            hierarchicalIngestionJobKeysDependencies = to_string(resultSet->getInt64("ingestionJobKey"));
+                            hierarchicalIngestionJobKeysDependencies =
+								to_string(resultSet->getInt64("ingestionJobKey"));
                         else
-                            hierarchicalIngestionJobKeysDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
+                            hierarchicalIngestionJobKeysDependencies +=
+								(", " + to_string(resultSet->getInt64("ingestionJobKey")));
                         
                         if (ingestionJobKeysToFindDependencies == "")
-                            ingestionJobKeysToFindDependencies = to_string(resultSet->getInt64("ingestionJobKey"));
+                            ingestionJobKeysToFindDependencies =
+								to_string(resultSet->getInt64("ingestionJobKey"));
                         else
-                            ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
+                            ingestionJobKeysToFindDependencies +=
+								(", " + to_string(resultSet->getInt64("ingestionJobKey")));
                     }
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
@@ -2708,7 +2713,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					"startProcessing = IF(startProcessing IS NULL, NOW(), startProcessing), "
 					"endProcessing = NOW() where ingestionJobKey in (" + hierarchicalIngestionJobKeysDependencies + ")";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++,
 						MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted));
@@ -2717,7 +2723,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 int rowsUpdated = preparedStatement->executeUpdate();
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", IngestionStatus::End_NotToBeExecuted: " + MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted)
+					+ ", IngestionStatus::End_NotToBeExecuted: "
+						+ MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
@@ -2735,7 +2742,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                     "select ir.ingestionRootKey, ir.status "
                     "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                     "where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
