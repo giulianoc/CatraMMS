@@ -5316,7 +5316,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
         _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+            + ", ffprobeExecuteCommand: @" + ffprobeExecuteCommand + "@"
             + ", @FFMPEG statistics@ - duration (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(
 				endFfmpegCommand - startFfmpegCommand).count()) + "@"
