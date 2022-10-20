@@ -11132,6 +11132,8 @@ void FFMpeg::liveProxy2(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentNumberOfRepeatingSameInput: "
 							+ to_string(currentNumberOfRepeatingSameInput)
+						+ ", maxTimesRepeatingSameInput: "
+							+ to_string(maxTimesRepeatingSameInput)
 						+ ", sleepInSecondsInCaseOfRepeating: "
 							+ to_string(sleepInSecondsInCaseOfRepeating)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
