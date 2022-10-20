@@ -57,7 +57,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _startCheckingFrameInfoInMinutes = asInt(configuration["ffmpeg"],
 		"startCheckingFrameInfoInMinutes", 5);
 
-    _charsToBeReadFromFfmpegErrorOutput     = 2024;
+    _charsToBeReadFromFfmpegErrorOutput     = 1024 * 3;
     
     _twoPasses = false;
     _currentlyAtSecondPass = false;
@@ -10657,6 +10657,7 @@ void FFMpeg::liveProxy2(
 		vector<string> ffmpegInputArgumentList;
 		long streamingDurationInSeconds = -1;
 		string otherOutputOptionsBecauseOfMaxWidth;
+		string streamSourceType;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10666,10 +10667,11 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			pair<long, string> inputDetils = liveProxyInput(
+			tuple<long, string, string> inputDetils = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
-			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth) = inputDetils;
+			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, streamSourceType)
+				= inputDetils;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -10938,13 +10940,45 @@ void FFMpeg::liveProxy2(
 			if (streamingDurationInSeconds != -1 &&
 				endFfmpegCommand - startFfmpegCommand < chrono::seconds(streamingDurationInSeconds - 60))
 			{
-				throw runtime_error(
-					string("liveProxy exit before unexpectly, tried ")
-					+ to_string(maxTimesRepeatingSameInput) + " times"
-				);
+				// exit too early
+
+				// 2022-10-20. scenario:
+				//	- (1) type is IP_PUSH (ffmpeg is a server)
+				//	- (2) the client just disconnect
+				// In this case ffmpeg has to return to listen for a new connection.
+				// In case we exit with the below runtime_error, since it is "too early to finish",
+				// it will pass about 10 seconds before ffmpeg return to be executed and to listen
+				// for new connection.
+				// We we will manage this scenario and will avoid the exception in this case
+				if (streamSourceType == "IP_PUSH")	// (1)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+						_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					if (lastPartOfFfmpegOutputFile.find("Input/output error") != string::npos)	// (2)
+					{
+					}
+					else
+					{
+						throw runtime_error(
+							string("liveProxy exit before unexpectly, tried ")
+							+ to_string(maxTimesRepeatingSameInput) + " times"
+						);
+					}
+				}
+				else
+				{
+					throw runtime_error(
+						string("liveProxy exit before unexpectly, tried ")
+						+ to_string(maxTimesRepeatingSameInput) + " times"
+					);
+				}
 			}
 			else
+			{
+				// we finished one input and, may be, go to the next input
+
 				currentNumberOfRepeatingSameInput = 0;
+			}
 		}
 		catch(runtime_error e)
 		{
@@ -11006,44 +11040,6 @@ void FFMpeg::liveProxy2(
 				}
 			}
 			_logger->error(errorMessage);
-
-			// copy ffmpeg log file
-			/*
-			{
-				char		sEndFfmpegCommand [64];
-
-				time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(
-					chrono::system_clock::now());
-				tm		tmUtcEndFfmpegCommand;
-				localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
-				sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
-					tmUtcEndFfmpegCommand. tm_year + 1900,
-					tmUtcEndFfmpegCommand. tm_mon + 1,
-					tmUtcEndFfmpegCommand. tm_mday,
-					tmUtcEndFfmpegCommand. tm_hour,
-					tmUtcEndFfmpegCommand. tm_min,
-					tmUtcEndFfmpegCommand. tm_sec);
-
-				string debugOutputFfmpegPathFileName =
-					_ffmpegTempDir + "/"
-					+ to_string(ingestionJobKey) + "_"
-					+ to_string(encodingJobKey) + "_"
-					+ sEndFfmpegCommand
-					+ ".liveProxy." + to_string(currentInputIndex) + ".log.debug"
-				;
-
-				_logger->info(__FILEREF__ + "Coping"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", currentInputIndex: " + to_string(currentInputIndex)
-					+ ", currentNumberOfRepeatingSameInput: "
-						+ to_string(currentNumberOfRepeatingSameInput)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
-					);
-				FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
-			}
-			*/
 
 			/*
 			_logger->info(__FILEREF__ + "Remove"
@@ -11115,6 +11111,8 @@ void FFMpeg::liveProxy2(
 				}
 			}
 
+			// next code will decide to throw an exception or not (we are in an error scenario) 
+
 			if (iReturnedStatus == 9)	// 9 means: SIGKILL
 				throw FFMpegEncodingKilledByUser();
 			else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
@@ -11123,37 +11121,69 @@ void FFMpeg::liveProxy2(
 				throw FFMpegURLNotFound();
 			else if (!stoppedBySigQuit)
 			{
-				currentNumberOfRepeatingSameInput++;
-				if (currentNumberOfRepeatingSameInput >= maxTimesRepeatingSameInput)
+				// let's decide here if an exception has to be generated
+				// or we have to execute the command again
+
+				// 2022-10-20. scenario:
+				//	- (1) type is IP_PUSH (ffmpeg is a server)
+				//	- (2) the client just disconnected because of a client issue
+				//	- (3) ffmpeg exit too early
+				// In this case ffmpeg has to return to listen as soon as possible for a new connection.
+				// In case we return an exception, since it is "too early to finish",
+				// it will pass about 10 seconds before ffmpeg returns to be executed and listen
+				// again for new connection.
+				// We we will manage this scenario and ffmpeg will be executed
+				// again without returning the exception
+				if (streamSourceType == "IP_PUSH"												// (1)
+					&& lastPartOfFfmpegOutputFile.find("Input/output error") != string::npos	// (2)
+					&& (streamingDurationInSeconds != -1 &&										// (3)
+						endFfmpegCommand - startFfmpegCommand <
+							chrono::seconds(streamingDurationInSeconds - 60)
+					)
+				)
 				{
-					_logger->info(__FILEREF__
-						+ "Command is NOT executed anymore, reached max number of repeating"
+					_logger->info(__FILEREF__ + "Command is executed again (IP_PUSH scenario)"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentNumberOfRepeatingSameInput: "
 							+ to_string(currentNumberOfRepeatingSameInput)
-						+ ", maxTimesRepeatingSameInput: "
-							+ to_string(maxTimesRepeatingSameInput)
-						+ ", sleepInSecondsInCaseOfRepeating: "
-							+ to_string(sleepInSecondsInCaseOfRepeating)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					throw e;
 				}
 				else
 				{
-					_logger->info(__FILEREF__ + "Command is executed again"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", currentNumberOfRepeatingSameInput: "
-							+ to_string(currentNumberOfRepeatingSameInput)
-						+ ", sleepInSecondsInCaseOfRepeating: "
-							+ to_string(sleepInSecondsInCaseOfRepeating)
-						+ ", currentInputIndex: " + to_string(currentInputIndex)
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					currentNumberOfRepeatingSameInput++;
+					if (currentNumberOfRepeatingSameInput >= maxTimesRepeatingSameInput)
+					{
+						_logger->info(__FILEREF__
+							+ "Command is NOT executed anymore, reached max number of repeating"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", currentNumberOfRepeatingSameInput: "
+								+ to_string(currentNumberOfRepeatingSameInput)
+							+ ", maxTimesRepeatingSameInput: "
+								+ to_string(maxTimesRepeatingSameInput)
+							+ ", sleepInSecondsInCaseOfRepeating: "
+								+ to_string(sleepInSecondsInCaseOfRepeating)
+							+ ", currentInputIndex: " + to_string(currentInputIndex)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+						throw e;
+					}
+					else
+					{
+						_logger->info(__FILEREF__ + "Command is executed again"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", currentNumberOfRepeatingSameInput: "
+								+ to_string(currentNumberOfRepeatingSameInput)
+							+ ", sleepInSecondsInCaseOfRepeating: "
+								+ to_string(sleepInSecondsInCaseOfRepeating)
+							+ ", currentInputIndex: " + to_string(currentInputIndex)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 
-					currentInputIndex--;
-					this_thread::sleep_for(chrono::seconds(sleepInSecondsInCaseOfRepeating));
+						currentInputIndex--;
+						this_thread::sleep_for(chrono::seconds(sleepInSecondsInCaseOfRepeating));
+					}
 				}
 			}
 		}
@@ -11252,12 +11282,13 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-pair<long, string> FFMpeg::liveProxyInput(
+tuple<long, string, string> FFMpeg::liveProxyInput(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
+	string streamSourceType;
 
 
 	// "inputRoot": {
@@ -11306,7 +11337,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string streamSourceType = streamInputRoot.get(field, "").asString();
+		streamSourceType = streamInputRoot.get(field, "").asString();
 
 		int maxWidth = -1;
 		field = "maxWidth";
@@ -12089,7 +12120,7 @@ pair<long, string> FFMpeg::liveProxyInput(
 		throw runtime_error(errorMessage);
 	}
 
-	return make_pair(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth);
+	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, streamSourceType);
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
