@@ -10640,7 +10640,8 @@ void FFMpeg::liveProxy2(
 	//	- we have to return to the engine because the engine has to register the failure
 	//	- if we increase 'max repeating':
 	//		- transcoder does not return to engine even in case of failure (max repeating is > 1)
-	//		- engine calls getEncodingStatus and get a 'success' (transcoding is repeating and the failure is not raised to the engine). So failures number engine variable is set to 0
+	//		- engine calls getEncodingStatus and get a 'success' (transcoding is repeating and
+	//			the failure is not raised to the engine). So failures number engine variable is set to 0
 	//		- transcoder, after repeating, raise the failure to engine but the engine,
 	//			as mentioned before, already reset failures number to 0
 	//	The result is that engine never reach max number of failures and encoding request,
@@ -10940,38 +10941,10 @@ void FFMpeg::liveProxy2(
 			if (streamingDurationInSeconds != -1 &&
 				endFfmpegCommand - startFfmpegCommand < chrono::seconds(streamingDurationInSeconds - 60))
 			{
-				// exit too early
-
-				// 2022-10-20. scenario:
-				//	- (1) type is IP_PUSH (ffmpeg is a server)
-				//	- (2) the client just disconnect
-				// In this case ffmpeg has to return to listen for a new connection.
-				// In case we exit with the below runtime_error, since it is "too early to finish",
-				// it will pass about 10 seconds before ffmpeg return to be executed and to listen
-				// for new connection.
-				// We we will manage this scenario and will avoid the exception in this case
-				if (streamSourceType == "IP_PUSH")	// (1)
-				{
-					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-						_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-					if (lastPartOfFfmpegOutputFile.find("Input/output error") != string::npos)	// (2)
-					{
-					}
-					else
-					{
-						throw runtime_error(
-							string("liveProxy exit before unexpectly, tried ")
-							+ to_string(maxTimesRepeatingSameInput) + " times"
-						);
-					}
-				}
-				else
-				{
-					throw runtime_error(
-						string("liveProxy exit before unexpectly, tried ")
-						+ to_string(maxTimesRepeatingSameInput) + " times"
-					);
-				}
+				throw runtime_error(
+					string("liveProxy exit before unexpectly, tried ")
+					+ to_string(maxTimesRepeatingSameInput) + " times"
+				);
 			}
 			else
 			{
@@ -11123,23 +11096,28 @@ void FFMpeg::liveProxy2(
 			{
 				// let's decide here if an exception has to be generated
 				// or we have to execute the command again
+				// In linea di massima, vedi commento sopra prima del while, è necessario
+				// ritornare una eccezione in caso di errore. C'è pero' un caso particolare descritto
+				// sotto (scenario 2022-10-20).
 
 				// 2022-10-20. scenario:
 				//	- (1) type is IP_PUSH (ffmpeg is a server)
 				//	- (2) the client just disconnected because of a client issue
 				//	- (3) ffmpeg exit too early
 				// In this case ffmpeg has to return to listen as soon as possible for a new connection.
-				// In case we return an exception, since it is "too early to finish",
-				// it will pass about 10 seconds before ffmpeg returns to be executed and listen
-				// again for new connection.
-				// We we will manage this scenario and ffmpeg will be executed
-				// again without returning the exception
+				// In case we return an exception it will pass about 10-15 seconds before ffmpeg returns
+				// to be executed and listen again for a new connection.
+				// To make ffmpeg to listen as soon as possible, we will not return an exception
+				// Aggiungo anche un controllo che assicura la ripetizione di ffmpeg solo nel caso in cui
+				// ffmpeg non stia dando errori in continuazione e stia funzionando correttamente
+				// da almeno XXX secondi (4)
 				if (streamSourceType == "IP_PUSH"												// (1)
 					&& lastPartOfFfmpegOutputFile.find("Input/output error") != string::npos	// (2)
 					&& (streamingDurationInSeconds != -1 &&										// (3)
 						endFfmpegCommand - startFfmpegCommand <
 							chrono::seconds(streamingDurationInSeconds - 60)
 					)
+					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(10 * 60)	// (4)
 				)
 				{
 					_logger->info(__FILEREF__ + "Command is executed again (IP_PUSH scenario)"
