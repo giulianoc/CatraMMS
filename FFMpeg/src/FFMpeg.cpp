@@ -10458,7 +10458,9 @@ void FFMpeg::liveProxy2(
 	//
 	Json::Value outputsRoot,
 
-	pid_t* pChildPid)
+	pid_t* pChildPid,
+	chrono::system_clock::time_point* pProxyStart
+)
 {
 	_currentApiName = "liveProxy";
 
@@ -10659,6 +10661,8 @@ void FFMpeg::liveProxy2(
 		long streamingDurationInSeconds = -1;
 		string otherOutputOptionsBecauseOfMaxWidth;
 		string streamSourceType;
+		int pushListenTimeout;
+		int64_t utcProxyPeriodStart;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10668,11 +10672,11 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string> inputDetils = liveProxyInput(
+			tuple<long, string, string, int, int64_t> inputDetils = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
-			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, streamSourceType)
-				= inputDetils;
+			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
+				streamSourceType, pushListenTimeout, utcProxyPeriodStart) = inputDetils;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -11128,9 +11132,25 @@ void FFMpeg::liveProxy2(
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 
-					// 2022-10-21: ho visto che il comando rieseguito esce con stato 9 (SIGKILL)
-					//	per cui ho aggiunto un minimo di sleep
-					this_thread::sleep_for(chrono::seconds(5));
+					// in this scenario (IP_PUSH) the monitor thread, in case the client does not
+					// reconnect istantaneously, kills the process.
+					// For this reason, we will set again the liveProxy->_proxyStart variable
+					{
+						if (utcProxyPeriodStart != -1)
+						{
+							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+								chrono::system_clock::now())
+								*pProxyStart = chrono::system_clock::now() +
+									chrono::seconds(pushListenTimeout);
+							else
+								*pProxyStart = chrono::system_clock::from_time_t(
+									utcProxyPeriodStart) +
+									chrono::seconds(pushListenTimeout);
+						}
+						else
+							*pProxyStart = chrono::system_clock::now() +
+								chrono::seconds(pushListenTimeout);
+					}
 				}
 				else
 				{
@@ -11264,13 +11284,15 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string> FFMpeg::liveProxyInput(
+tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
 	string streamSourceType;
+	int pushListenTimeout = -1;
+	int64_t utcProxyPeriodStart = -1;
 
 
 	// "inputRoot": {
@@ -11282,7 +11304,7 @@ tuple<long, string, string> FFMpeg::liveProxyInput(
 	if (isMetadataPresent(inputRoot, field))
 		timePeriod = asBool(inputRoot, field, false);
 
-	int64_t utcProxyPeriodStart = -1;
+	// int64_t utcProxyPeriodStart = -1;
 	field = "utcScheduleStart";
 	if (isMetadataPresent(inputRoot, field))
 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
@@ -11336,7 +11358,7 @@ tuple<long, string, string> FFMpeg::liveProxyInput(
 		if (isMetadataPresent(streamInputRoot, field))
 			userAgent = streamInputRoot.get(field, "").asString();
 
-		int pushListenTimeout = -1;
+		// int pushListenTimeout = -1;
 		field = "pushListenTimeout";
 		if (isMetadataPresent(streamInputRoot, field))
 			pushListenTimeout = asInt(streamInputRoot, field, -1);
@@ -12102,7 +12124,8 @@ tuple<long, string, string> FFMpeg::liveProxyInput(
 		throw runtime_error(errorMessage);
 	}
 
-	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, streamSourceType);
+	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
+		streamSourceType, pushListenTimeout, utcProxyPeriodStart);
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,

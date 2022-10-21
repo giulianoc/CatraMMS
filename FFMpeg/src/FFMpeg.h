@@ -384,7 +384,9 @@ public:
 
 		Json::Value outputsRoot,
 
-		pid_t* pChildPid);
+		pid_t* pChildPid,
+		chrono::system_clock::time_point* pProxyStart
+	);
 
 	/*
 	void vodProxy(
@@ -580,7 +582,7 @@ private:
 		Json::Value* inputsRoot, mutex* inputsRootMutex,
 		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
-	tuple<long, string, string> liveProxyInput(
+	tuple<long, string, string, int, int64_t> liveProxyInput(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
 

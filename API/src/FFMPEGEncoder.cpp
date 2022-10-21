@@ -11231,7 +11231,7 @@ void FFMPEGEncoder::liveProxyThread(
 
 					if (streamSourceType == "IP_PUSH")
 					{
-						int pushListenTimeout = JSONUtils::asInt64(
+						int pushListenTimeout = JSONUtils::asInt(
 							streamInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
@@ -11287,7 +11287,9 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_inputsRootMutex),
 				&(liveProxy->_inputsRoot),
 				liveProxy->_outputsRoot,
-				&(liveProxy->_childPid));
+				&(liveProxy->_childPid),
+				&(liveProxy->_proxyStart)
+			);
 		}
 
 		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
