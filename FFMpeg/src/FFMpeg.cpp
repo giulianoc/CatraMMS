@@ -11188,6 +11188,29 @@ void FFMpeg::liveProxy2(
 					}
 				}
 			}
+			else // if (stoppedBySigQuit)
+			{
+				// 2022-10-21: this is the scenario where the LiveProxy playlist is changed (signal: 3)
+				//	and we need to use the new playlist
+				//	This is the ffmpeg 'client side'.
+				//	The above condition (!stoppedBySigQuit) is the scenario server side.
+				//	This is what happens:
+				//		time A: a new playlist is received by MMS and a SigQuit (signal: 3) is sent
+				//			to the ffmpeg client side
+				//		time A + few milliseconds: the ffmpeg client side starts again
+				//			with the new 'input' (1)
+				//		time A + few seconds: The server ffmpeg recognizes the client disconnect and exit
+				//		time A + few seconds + few milliseconds: The ffmpeg server side starts again (2)
+				//
+				//	The problem is that The ffmpeg server starts too late (2). The ffmpeg client (1)
+				//	already failed because the ffmpeg server was not listening yet.
+				//	So ffmpeg client exit from this method, reach the engine and returns after about 15 seconds.
+				//	In this scenario the player already disconnected and has to retry again the URL to start again.
+				//
+				//	To avoid this problem, we add here (ffmpeg client) a delay to wait ffmpeg server to starts
+				//	Based on my statistics I think 3 seconds should be enought
+				this_thread::sleep_for(chrono::seconds(3));
+			}
 		}
 
 		/*
