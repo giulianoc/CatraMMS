@@ -11208,8 +11208,9 @@ void FFMpeg::liveProxy2(
 				//	In this scenario the player already disconnected and has to retry again the URL to start again.
 				//
 				//	To avoid this problem, we add here (ffmpeg client) a delay to wait ffmpeg server to starts
-				//	Based on my statistics I think 3 seconds should be enought
-				this_thread::sleep_for(chrono::seconds(3));
+				//	Based on my statistics I think 2 seconds should be enought
+				int sleepInSecondsToBeSureServerIsRunning = 2;
+				this_thread::sleep_for(chrono::seconds(sleepInSecondsToBeSureServerIsRunning));
 			}
 		}
 
