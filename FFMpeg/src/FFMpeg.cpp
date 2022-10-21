@@ -11130,7 +11130,7 @@ void FFMpeg::liveProxy2(
 
 					// 2022-10-21: ho visto che il comando rieseguito esce con stato 9 (SIGKILL)
 					//	per cui ho aggiunto un minimo di sleep
-					this_thread::sleep_for(chrono::seconds(1));
+					this_thread::sleep_for(chrono::seconds(5));
 				}
 				else
 				{
