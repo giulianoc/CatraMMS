@@ -10963,7 +10963,7 @@ void FFMpeg::liveProxy2(
 			if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			{
 				errorMessage = __FILEREF__
-					+ "ffmpeg: ffmpeg command failed because killed by the user"
+					+ "ffmpeg: ffmpeg execution command failed because killed by the user"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -10985,7 +10985,7 @@ void FFMpeg::liveProxy2(
 					stoppedBySigQuit = true;
 
 					errorMessage = __FILEREF__
-						+ "ffmpeg stopped by SIGQUIT (3): ffmpeg command failed"
+						+ "ffmpeg execution stopped by SIGQUIT (3): ffmpeg command failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -10999,7 +10999,7 @@ void FFMpeg::liveProxy2(
 				}
 				else
 				{
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg execution command failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -11127,6 +11127,10 @@ void FFMpeg::liveProxy2(
 							+ to_string(currentNumberOfRepeatingSameInput)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+
+					// 2022-10-21: ho visto che il comando rieseguito esce con stato 9 (SIGKILL)
+					//	per cui ho aggiunto un minimo di sleep
+					this_thread::sleep_for(chrono::seconds(1));
 				}
 				else
 				{
