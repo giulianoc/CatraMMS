@@ -4705,6 +4705,12 @@ void API::changeLiveProxyPlaylist(
         }
 		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
 
+		string switchBehaviour;
+        auto switchBehaviourIt = queryParameters.find("switchBehaviour");
+        if (switchBehaviourIt == queryParameters.end())
+			switchBehaviour = "applyNewPlaylistNow";
+		else
+			switchBehaviour = switchBehaviourIt->second;
 
 		// next try/catch initialize the belows parameters using the broadcaster info
 
@@ -5795,6 +5801,8 @@ void API::changeLiveProxyPlaylist(
 						transcoderHost
 						+ _ffmpegEncoderChangeLiveProxyPlaylistURI
 						+ "/" + to_string(broadcastEncodingJobKey)
+						// switchBehaviour: applyNewPlaylistNow or applyNewPlaylistAtNextSwitch
+						+ "?switchBehaviour=" + switchBehaviour
 					;
 
 					list<string> header;

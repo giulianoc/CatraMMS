@@ -3564,6 +3564,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
+		string switchBehaviour;
+        auto switchBehaviourIt = queryParameters.find("switchBehaviour");
+        if (switchBehaviourIt == queryParameters.end())
+			switchBehaviour = "applyNewPlaylistNow";
+		else
+			switchBehaviour = switchBehaviourIt->second;
+
 		_logger->info(__FILEREF__ + "Received changeLiveProxyPlaylist"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 		);
@@ -3658,24 +3665,30 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveProxy->_inputsRoot = newInputsRoot;
 			}
 
-			try
+			// 2022-10-21: abbiamo due opzioni:
+			//	- apply the new playlist now
+			//	- apply the new playlist at next switch
+			if (switchBehaviour == "applyNewPlaylistNow")
 			{
-				_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
-					+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", selectedLiveProxy->_childPid: " + to_string(selectedLiveProxy->_childPid)
-				);
-				ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = string("ProcessUtility::kill (quit) Process failed")
-					+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
-					+ ", _childPid: " + to_string(selectedLiveProxy->_childPid)
-					+ ", e.what(): " + e.what()
-				;
-				_logger->error(__FILEREF__ + errorMessage);
+				try
+				{
+					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", selectedLiveProxy->_childPid: " + to_string(selectedLiveProxy->_childPid)
+					);
+					ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("ProcessUtility::kill (quit) Process failed")
+						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
+						+ ", _childPid: " + to_string(selectedLiveProxy->_childPid)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+				}
 			}
 		}
 
