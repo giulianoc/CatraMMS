@@ -3667,7 +3667,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			// 2022-10-21: abbiamo due opzioni:
 			//	- apply the new playlist now
-			//	- apply the new playlist at next switch
+			//	- apply the new playlist at the end of current media
 			if (switchBehaviour == "applyNewPlaylistNow")
 			{
 				try
