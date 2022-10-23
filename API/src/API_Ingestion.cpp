@@ -5292,6 +5292,7 @@ void API::changeLiveProxyPlaylist(
 
 							MMSEngineDBFacade::ContentType vodContentType;
 							string sourcePhysicalPathName;
+							int64_t videoDurationInMilliSeconds;
 							{
 								tuple<string, int, string, string, int64_t, string>
 									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
@@ -5307,10 +5308,16 @@ void API::changeLiveProxyPlaylist(
 										warningIfMissing);
 								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
 									ignore, ignore) = mediaItemKeyDetails;
+
+								videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(             
+									-1, physicalPathKey);                                                       
 							}
 
 							field = "mmsSourceVideoAssetPathName";
 							countdownInputRoot[field] = sourcePhysicalPathName;
+
+							field = "videoDurationInMilliSeconds";
+							countdownInputRoot[field] = videoDurationInMilliSeconds;
 
 							field = "vodContentType";
 							countdownInputRoot[field] =
