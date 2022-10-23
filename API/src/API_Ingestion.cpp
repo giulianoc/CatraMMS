@@ -5309,7 +5309,7 @@ void API::changeLiveProxyPlaylist(
 									ignore, ignore) = mediaItemKeyDetails;
 							}
 
-							field = "sourcePhysicalPathName";
+							field = "mmsSourceVideoAssetPathName";
 							countdownInputRoot[field] = sourcePhysicalPathName;
 
 							field = "vodContentType";
