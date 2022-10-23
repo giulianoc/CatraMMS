@@ -5183,7 +5183,7 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			// check the received playlist
-			// in case of vodInput, the physicalPathKey is received but we need to set
+			// in case of vodInput/countdownInput, the physicalPathKey is received but we need to set
 			// vodContentType and sourcePhysicalPathName
 			{
 				for (int newReceivedPlaylistIndex = 0;
@@ -5194,6 +5194,7 @@ void API::changeLiveProxyPlaylist(
 						newReceivedPlaylistIndex];
 					{
 						string field = "vodInput";
+						string fieldCountdown = "countdownInput";
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, field))
 						{
 							Json::Value vodInputRoot = newReceivedPlaylistItemRoot[field];
@@ -5272,6 +5273,51 @@ void API::changeLiveProxyPlaylist(
 
 							field = "vodInput";
 							newReceivedPlaylistItemRoot[field] = vodInputRoot;
+						}
+						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, fieldCountdown))
+						{
+							Json::Value countdownInputRoot = newReceivedPlaylistItemRoot[fieldCountdown];
+
+							field = "physicalPathKey";
+							if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
+							{
+								string errorMessage = string(field + " is missing"
+									", json data: " + requestBody
+								);
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							int64_t physicalPathKey = JSONUtils::asInt64(countdownInputRoot, field, -1);
+
+							MMSEngineDBFacade::ContentType vodContentType;
+							string sourcePhysicalPathName;
+							{
+								tuple<string, int, string, string, int64_t, string>
+									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+									physicalPathKey);
+								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+									= physicalPathDetails;
+
+								bool warningIfMissing = false;
+								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+									string,int64_t, string, string> mediaItemKeyDetails =
+									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+										workspace->_workspaceKey, physicalPathKey,
+										warningIfMissing);
+								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
+									ignore, ignore) = mediaItemKeyDetails;
+							}
+
+							field = "sourcePhysicalPathName";
+							countdownInputRoot[field] = sourcePhysicalPathName;
+
+							field = "vodContentType";
+							countdownInputRoot[field] =
+								MMSEngineDBFacade::toString(vodContentType);
+
+							field = "countdownInputRoot";
+							newReceivedPlaylistItemRoot[field] = countdownInputRoot;
 						}
 
 						newReceivedPlaylistRoot[newReceivedPlaylistIndex]

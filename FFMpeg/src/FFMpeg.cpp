@@ -11360,6 +11360,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		if (!isMetadataPresent(streamInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", Field: " + field;
 			_logger->error(errorMessage);
 
@@ -11552,82 +11554,6 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
-
-		/*
-		2022-01-03: this method is just to set the input parameters because
-			we have to start the ffmpeg command, for sure we do NOT have
-			to wait because we are too early to run the ffmpeg command
-		if (timePeriod)
-		{
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
-
-			if (utcNow < utcProxyPeriodStart)
-			{
-				while (utcNow < utcProxyPeriodStart)
-				{
-					time_t sleepTime = utcProxyPeriodStart - utcNow;
-
-					_logger->info(__FILEREF__ + "LiveProxy timing. "
-						+ "Too early to start the LiveProxy, just sleep "
-						+ to_string(sleepTime) + " seconds"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", utcNow: " + to_string(utcNow)
-						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-					);
-
-					this_thread::sleep_for(chrono::seconds(sleepTime));
-
-					{
-						chrono::system_clock::time_point now = chrono::system_clock::now();
-						utcNow = chrono::system_clock::to_time_t(now);
-					}
-				}
-			}
-			else if (utcProxyPeriodEnd <= utcNow)
-			{
-				time_t tooLateTime = utcNow - utcProxyPeriodEnd;
-
-				string errorMessage = __FILEREF__ + "LiveProxy timing. "
-					+ "Too late to start the LiveProxy"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", tooLateTime: " + to_string(tooLateTime)
-				;
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			else
-			{
-				time_t delayTime = utcNow - utcProxyPeriodStart;
-
-				string errorMessage = __FILEREF__ + "LiveProxy timing. "
-					+ "We are a bit late to start the LiveProxy, let's start it"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcNow: " + to_string(utcNow)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-                    + ", delayTime: " + to_string(delayTime)
-				;
-
-				_logger->warn(errorMessage);
-			}
-		}
-		else
-		{
-			chrono::system_clock::time_point now = chrono::system_clock::now();
-			utcNow = chrono::system_clock::to_time_t(now);
-		}
-		*/
 
 		{
 			if (timePeriod)
@@ -11920,6 +11846,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		if (!isMetadataPresent(vodInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", Field: " + field;
 			_logger->error(errorMessage);
 
@@ -11933,6 +11861,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			if (!isMetadataPresent(vodInputRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
 
@@ -11948,6 +11878,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				if (!isMetadataPresent(sourceRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
 
@@ -12045,6 +11977,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", Field: " + field;
 			_logger->error(errorMessage);
 
@@ -12056,6 +11990,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		if (!isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", Field: " + field;
 			_logger->error(errorMessage);
 
@@ -12142,7 +12078,10 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "streamInput or vodInput or countdownInput is not present";
+		string errorMessage = __FILEREF__ + "streamInput or vodInput or countdownInput is not present"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		;
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
