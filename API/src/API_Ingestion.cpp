@@ -5316,7 +5316,7 @@ void API::changeLiveProxyPlaylist(
 							countdownInputRoot[field] =
 								MMSEngineDBFacade::toString(vodContentType);
 
-							field = "countdownInputRoot";
+							field = "countdownInput";
 							newReceivedPlaylistItemRoot[field] = countdownInputRoot;
 						}
 
