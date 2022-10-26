@@ -11124,7 +11124,7 @@ void FFMpeg::liveProxy2(
 						endFfmpegCommand - startFfmpegCommand <
 							chrono::seconds(streamingDurationInSeconds - 60)
 					)
-					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(10 * 60)	// (4)
+					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(5 * 60)	// (4)
 				)
 				{
 					_logger->info(__FILEREF__ + "Command is executed again (IP_PUSH scenario)"

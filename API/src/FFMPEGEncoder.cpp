@@ -686,7 +686,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -885,7 +888,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -1085,7 +1091,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -1284,7 +1293,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -1483,7 +1495,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -1682,7 +1697,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -1881,7 +1899,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -2080,7 +2101,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -2279,7 +2303,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -2479,7 +2506,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
@@ -2684,7 +2714,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
 
-				_logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
+					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
+				);
 
 				sendError(request, 400, errorMessage);
 
