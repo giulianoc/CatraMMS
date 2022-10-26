@@ -11009,6 +11009,9 @@ void FFMpeg::liveProxy2(
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
 						+ ", currentNumberOfRepeatingSameInput: "
 							+ to_string(currentNumberOfRepeatingSameInput)
+						+ ", ffmpegCommandDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startFfmpegCommand).count()) + "@"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
