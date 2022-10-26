@@ -105,19 +105,19 @@ then
 
 		if [ $toBeRestartedBecauseEngine -eq 1 ]
 		then
-			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE ENGINE" >> ~/MMS_RESTART.txt
+			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE ENGINE" >> ~/MMS_RESTART.txt
 		elif [ $toBeRestartedBecauseLoadBalancer -eq 1 ]
 		then
-			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE LOAD BALANCER" >> ~/MMS_RESTART.txt
+			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE LOAD BALANCER" >> ~/MMS_RESTART.txt
 		else
-			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE API or ENCODER" >> ~/MMS_RESTART.txt
+			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE API or ENCODER" >> ~/MMS_RESTART.txt
 		fi
 
 		~/mmsStopALL.sh
 		sleep 1
 		~/mmsStartALL.sh
 
-		echo "	$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
+		echo "	$(date +'%Y-%m-%d %H:%M:%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
 	fi
 else
 
