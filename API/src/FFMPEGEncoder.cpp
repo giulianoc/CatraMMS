@@ -6860,17 +6860,8 @@ void FFMPEGEncoder::liveRecorderThread(
         string outputFileFormat = liveRecording->_encodingParametersRoot
 			.get("outputFileFormat", "").asString();
 
-
-		bool monitorHLS;
-		// bool virtualVOD;
-		// Json::Value monitorVirtualVODEncodingProfileDetailsRoot = Json::nullValue;
-		// bool monitorIsVideo = true;
-		// string monitorManifestDirectoryPath;
-		// string monitorManifestFileName;
-		// int monitorVirtualVODPlaylistEntriesNumber = -1;
-		// int monitorVirtualVODSegmentDurationInSeconds = -1;
 		{
-			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
+			bool monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
 			liveRecording->_virtualVOD = JSONUtils::asBool(
 				liveRecording->_encodingParametersRoot,
@@ -7008,6 +6999,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
 			encodingJobKey,
+			liveRecording->_externalEncoder,
 			liveRecording->_transcoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
@@ -7032,9 +7024,6 @@ void FFMPEGEncoder::liveRecorderThread(
 			segmentDurationInSeconds,
 			outputFileFormat,
 			liveRecording->_segmenterType,
-
-			monitorHLS,
-			liveRecording->_virtualVOD,
 
 			outputsRoot,
 

@@ -69,6 +69,9 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _currentStagingEncodedAssetPathName = "";	// just for log
 
 	_startFFMpegMethod = chrono::system_clock::now();
+
+	_incrontabConfigurationDirectory	= "/home/mms/mms/conf";
+	_incrontabConfigurationFileName		= "incrontab.txt";
 }
 
 FFMpeg::~FFMpeg() 
@@ -8561,6 +8564,7 @@ void FFMpeg::extractTrackMediaToIngest(
 void FFMpeg::liveRecorder(
     int64_t ingestionJobKey,
     int64_t encodingJobKey,
+	bool externalEncoder,
 	string segmentListPathName,
 	string recordedFileNamePrefix,
 
@@ -8593,34 +8597,6 @@ void FFMpeg::liveRecorder(
     string outputFileFormat,
 	string segmenterType,	// streamSegmenter or hlsSegmenter
 
-	// monitorHLS-VirtualVOD
-	bool monitorHLS,
-	bool virtualVOD,
-	// Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
-	// bool monitorIsVideo,
-	// string monitorManifestDirectoryPath,
-	// string monitorManifestFileName,
-	// int monitorVirtualVODPlaylistEntriesNumber,
-	// int monitorVirtualVODSegmentDurationInSeconds,
-
-	// array, each element is an output containing the following fields
-	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
-	//  #in case of HLS or DASH
-	//		string otherOutputOptions
-	//		string audioVolumeChange
-	//      Json::Value encodingProfileDetailsRoot,
-	//      string encodingProfileContentType
-	//      int segmentDurationInSeconds,
-	//      int playlistEntriesNumber,
-	//      string manifestDirectoryPath,
-	//      string manifestFileName,
-	//  #in case of RTMP_Stream
-	//		string otherOutputOptions
-	//		string audioVolumeChange
-	//      Json::Value encodingProfileDetailsRoot,
-	//      string encodingProfileContentType
-	//      string rtmpUrl,
-	//
 	Json::Value outputsRoot,
 
 	Json::Value framesToBeDetectedRoot,
@@ -8654,9 +8630,6 @@ void FFMpeg::liveRecorder(
 		+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 		+ ", outputFileFormat: " + outputFileFormat
 		+ ", segmenterType: " + segmenterType
-
-		+ ", monitorHLS: " + to_string(monitorHLS)
-		+ ", virtualVOD: " + to_string(virtualVOD)
 	);
 
 	setStatus(
@@ -9341,13 +9314,6 @@ void FFMpeg::liveRecorder(
 					// So, for this reason, the below check is done
 					if (!FileIO::directoryExisting(manifestDirectoryPath))
 					{
-						_logger->warn(__FILEREF__
-							+ "manifestDirectoryPath does not exist!!! It will be created"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						);
-
 						_logger->info(__FILEREF__ + "Create directory"
 							+ ", manifestDirectoryPath: " + manifestDirectoryPath
 						);
@@ -9358,6 +9324,9 @@ void FFMpeg::liveRecorder(
 							S_IRGRP | S_IXGRP |
 							S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 					}
+
+					if (externalEncoder)
+						addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
 
 					if (outputType == "HLS")
 					{
@@ -10035,6 +10004,9 @@ void FFMpeg::liveRecorder(
 			{
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 
+				if (externalEncoder)
+					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
 				if (manifestDirectoryPath != "")
 				{
 					if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -10150,50 +10122,6 @@ void FFMpeg::liveRecorder(
 			throw runtime_error("liveRecording exit before unexpectly");
 		}
 		*/
-
-		/*
-		if (monitorHLS)
-		{
-			if (monitorManifestDirectoryPath != "")
-			{
-				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
-				{
-					try
-					{
-						_logger->info(__FILEREF__ + "removeDirectory"
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-					catch(exception e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-				}
-			}
-		}
-		*/
 	}
     catch(runtime_error e)
     {
@@ -10280,6 +10208,9 @@ void FFMpeg::liveRecorder(
 			{
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 
+				if (externalEncoder)
+					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
 				if (manifestDirectoryPath != "")
 				{
 					if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -10359,50 +10290,6 @@ void FFMpeg::liveRecorder(
 				}
 			}
 		}
-
-		/*
-		if (monitorHLS)
-		{
-			if (monitorManifestDirectoryPath != "")
-			{
-				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
-				{
-					try
-					{
-						_logger->info(__FILEREF__ + "removeDirectory"
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-					catch(exception e)
-					{
-						string errorMessage = __FILEREF__ + "remove directory failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						// throw e;
-					}
-				}
-			}
-		}
-		*/
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
@@ -17149,5 +17036,274 @@ string FFMpeg::getFilter(
 	}
 
 	return filter;
+}
+
+void FFMpeg::addToIncrontab(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string directoryToBeMonitored
+)
+{
+	try
+	{
+		_logger->info(__FILEREF__ + "Received addToIncrontab"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", directoryToBeMonitored: " + directoryToBeMonitored
+		);
+
+		if (!FileIO::directoryExisting(_incrontabConfigurationDirectory))
+		{
+			_logger->info(__FILEREF__ + "addToIncrontab: create directory"
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _incrontabConfigurationDirectory: " + _incrontabConfigurationDirectory
+			);
+
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(
+				_incrontabConfigurationDirectory,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IWUSR | S_IXGRP |
+				S_IROTH | S_IWUSR | S_IXOTH,
+				noErrorIfExists, recursive);
+		}
+
+		string incrontabConfigurationPathName =
+			_incrontabConfigurationDirectory
+			+ "/" + _incrontabConfigurationFileName
+		;
+
+		bool directoryAlreadyMonitored = false;
+		{
+			ifstream ifConfigurationFile (incrontabConfigurationPathName);
+			if (!ifConfigurationFile)
+			{
+				string errorMessage = __FILEREF__
+					+ "addToIncrontab: open incontab configuration file failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string configuration;
+			while(getline(ifConfigurationFile, configuration))
+			{
+				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+
+				if (configuration.size() >= directoryToBeMonitored.size()
+					&& 0 == configuration.compare(0, directoryToBeMonitored.size(),
+					directoryToBeMonitored))
+				{
+					directoryAlreadyMonitored = true;
+
+					break;
+				}
+			}
+
+			ifConfigurationFile.close();
+		}
+
+		if (directoryAlreadyMonitored)
+		{
+			string errorMessage = __FILEREF__
+				+ "addToIncrontab: directory is already into the incontab configuration file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			ofstream ofConfigurationFile (incrontabConfigurationPathName, ofstream::app);
+			if (!ofConfigurationFile)
+			{
+				string errorMessage = __FILEREF__
+					+ "addToIncrontab: open incontab configuration file failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string configuration = directoryToBeMonitored
+				+ " IN_MODIFY,IN_CLOSE_WRITE,IN_CREATE,IN_DELETE,IN_MOVED_FROM,IN_MOVED_TO,IN_MOVE_SELF /opt/catramms/CatraMMS/scripts/incrontab.sh $% $@ $#";
+
+			_logger->info(__FILEREF__ + "addToIncrontab: add incontab configuration file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", configuration: " + configuration
+			);
+
+			ofConfigurationFile << configuration << endl;
+			ofConfigurationFile.close();
+		}
+
+		{
+			string incrontabExecuteCommand = "/usr/bin/crontab " + incrontabConfigurationPathName;
+
+			_logger->info(__FILEREF__ + "addToIncrontab: Executing ffprobe command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
+			);
+
+			int executeCommandStatus = ProcessUtility::execute(incrontabExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "addToIncrontab: incrontab command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+        }
+	}
+	catch (...)
+	{
+		string errorMessage = __FILEREF__ + "addToIncrontab failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		;
+		_logger->error(errorMessage);
+	}
+}
+
+void FFMpeg::removeFromIncrontab(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string directoryToBeMonitored
+)
+{
+	try
+	{
+		_logger->info(__FILEREF__ + "Received removeFromIncrontab"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", directoryToBeMonitored: " + directoryToBeMonitored
+		);
+
+		string incrontabConfigurationPathName =
+			_incrontabConfigurationDirectory
+			+ "/" + _incrontabConfigurationFileName
+		;
+
+		bool foundMonitoryDirectory = false;
+		vector<string> vConfiguration;
+		{
+			ifstream ifConfigurationFile (incrontabConfigurationPathName);
+			if (!ifConfigurationFile)
+			{
+				string errorMessage = __FILEREF__
+					+ "removeFromIncrontab: open incontab configuration file failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string configuration;
+			while(getline(ifConfigurationFile, configuration))
+			{
+				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+
+				if (configuration.size() >= directoryToBeMonitored.size()
+					&& 0 == configuration.compare(0, directoryToBeMonitored.size(),
+					directoryToBeMonitored))
+				{
+					foundMonitoryDirectory = true;
+				}
+				else
+				{
+					vConfiguration.push_back(trimmedConfiguration);
+				}
+			}
+		}
+
+		if (!foundMonitoryDirectory)
+		{
+			string errorMessage = __FILEREF__
+				+ "removeFromIncrontab: monitoring directory is not found into the incontab configuration file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			ofstream ofConfigurationFile (incrontabConfigurationPathName, ofstream::trunc);
+			if (!ofConfigurationFile)
+			{
+				string errorMessage = __FILEREF__
+					+ "removeFromIncrontab: open incontab configuration file failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			for (string configuration: vConfiguration)
+				ofConfigurationFile << configuration << endl;
+			ofConfigurationFile.close();
+		}
+
+		{
+			string incrontabExecuteCommand = "/usr/bin/crontab " + incrontabConfigurationPathName;
+
+			_logger->info(__FILEREF__ + "removeFromIncrontab: Executing ffprobe command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
+			);
+
+			int executeCommandStatus = ProcessUtility::execute(incrontabExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "removeFromIncrontab: incrontab command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+        }
+	}
+	catch (...)
+	{
+		string errorMessage = __FILEREF__ + "removeFromIncrontab failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		;
+		_logger->error(errorMessage);
+	}
 }
 

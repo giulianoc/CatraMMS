@@ -287,6 +287,7 @@ public:
 	void liveRecorder(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
+		bool externalEncoder,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
@@ -310,16 +311,6 @@ public:
         int segmentDurationInSeconds,
         string outputFileFormat,
 		string segmenterType,
-
-		// monitorHLS
-		bool monitorHLS,
-		bool virtualVOD,
-		// Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
-		// bool monitorIsVideo,
-		// string monitorManifestDirectoryPath,
-		// string monitorManifestFileName,
-		// int monitorVirtualVODPlaylistEntriesNumber,
-		// int monitorVirtualVODSegmentDurationInSeconds,
 
 		Json::Value outputsRoot,
 
@@ -542,6 +533,9 @@ private:
     int				_waitingNFSSync_maxMillisecondsToWait;
     int				_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
+	string			_incrontabConfigurationDirectory;
+	string			_incrontabConfigurationFileName;
+
 
 	string getDrawTextVideoFilterDescription(
 		string text,
@@ -634,6 +628,16 @@ private:
     void removeHavingPrefixFileName(string directoryName, string prefixFileName);
 
 	long getFrameByOutputLog(string ffmpegEncodingStatus);
+
+	void addToIncrontab(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string directoryToBeMonitored);
+
+	void removeFromIncrontab(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string directoryToBeMonitored);
 };
 
 #endif
