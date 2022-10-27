@@ -2465,7 +2465,7 @@ public:
 
 	Json::Value getVodInputRoot(
 		MMSEngineDBFacade::ContentType vodContentType,
-		vector<pair<int64_t, string>>& sources);
+		vector<tuple<int64_t, string, int64_t>>& sources);
 
 	Json::Value getCountdownInputRoot(
 		string mmsSourceVideoAssetPathName,

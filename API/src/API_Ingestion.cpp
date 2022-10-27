@@ -4905,7 +4905,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
-						vector<pair<int64_t, string>> sources;
+						vector<tuple<int64_t, string, int64_t>> sources;
 
 						MMSEngineDBFacade::ContentType vodContentType;
 
@@ -4946,9 +4946,13 @@ void API::changeLiveProxyPlaylist(
 										ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
 
+								int64_t durationInMilliSeconds =
+									_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+									-1, broadcastDefaultPhysicalPathKey);
+
 								sources.push_back(
-									make_pair(broadcastDefaultPhysicalPathKey,
-									sourcePhysicalPathName));
+									make_tuple(broadcastDefaultPhysicalPathKey,
+									sourcePhysicalPathName, durationInMilliSeconds));
 							}
 						}
 

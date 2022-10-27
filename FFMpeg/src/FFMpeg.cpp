@@ -11859,6 +11859,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string vodContentType = vodInputRoot.get(field, "Video").asString();
 
 		vector<string> sources;
+		int64_t durationOfInputsInMilliSeconds = 0;
 		{
 			field = "sources";
 			if (!isMetadataPresent(vodInputRoot, field))
@@ -11890,6 +11891,10 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				}
 				string sourcePhysicalPathName = sourceRoot.get(field, "").asString();
 				sources.push_back(sourcePhysicalPathName);
+
+				field = "durationInMilliSeconds";
+				if (isMetadataPresent(sourceRoot, field))
+					durationOfInputsInMilliSeconds += asInt64(sourceRoot, field, 0);
 			}
 		}
 
@@ -11950,8 +11955,26 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			}
 			else
 			{
-				ffmpegInputArgumentList.push_back("-stream_loop");
-				ffmpegInputArgumentList.push_back("-1");
+				/*
+					2022-10-27: -stream_loop works only in case of ONE input
+						In case of multiple inputs there is no options without re-encoding
+						see https://video.stackexchange.com/questions/12905/repeat-loop-input-video-with-ffmpeg
+						There is the '-f concat' option (the files inside one .txt file) but in case
+						of a huge period, the .txt file would be too big.
+
+						So, in case of multiple inputs:
+						1. we will not using -stream_loop options
+						2. we will not using -t in case streamingDurationInSeconds > sum of duration of inputs 
+							This is important because, using -t, in case the sum of inputs is < of the -t value,
+							ffmpeg will not exit even if the input will terminate to stream
+						3. we will relay on the liveProxy loop that will restart istantaneously ffmpeg
+							again repeating again the inputs
+				*/
+				if (sources.size() == 1)
+				{
+					ffmpegInputArgumentList.push_back("-stream_loop");
+					ffmpegInputArgumentList.push_back("-1");
+				}
 			}
 
 			for(string sourcePhysicalPathName: sources)
@@ -11962,8 +11985,19 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			if (timePeriod)
 			{
-				ffmpegInputArgumentList.push_back("-t");
-				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
+				if (sources.size() == 1)
+				{
+					ffmpegInputArgumentList.push_back("-t");
+					ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
+				}
+				else
+				{
+					if (durationOfInputsInMilliSeconds / 1000 >= streamingDurationInSeconds)
+					{
+						ffmpegInputArgumentList.push_back("-t");
+						ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
+					}
+				}
 			}
 		}
 	}

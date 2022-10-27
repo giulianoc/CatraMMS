@@ -7742,7 +7742,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getVodInputRoot(
 	MMSEngineDBFacade::ContentType vodContentType,
-	vector<pair<int64_t, string>>& sources
+	vector<tuple<int64_t, string, int64_t>>& sources
 )
 {
 	Json::Value vodInputRoot;
@@ -7754,10 +7754,13 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 
 		Json::Value sourcesRoot(Json::arrayValue);
 
-		for (pair<int64_t, string> source: sources)
+		for (tuple<int64_t, string, int64_t> source: sources)
 		{
-			int64_t physicalPathKey = source.first;
-			string sourcePhysicalPathName = source.second;
+			int64_t physicalPathKey;
+			string sourcePhysicalPathName;
+			int64_t durationInMilliSeconds;
+
+			tie(physicalPathKey, sourcePhysicalPathName, durationInMilliSeconds) = source;
 
 
 			Json::Value sourceRoot;
@@ -7767,6 +7770,9 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 
 			field = "physicalPathKey";
 			sourceRoot[field] = physicalPathKey;
+
+			field = "durationInMilliSeconds";
+			sourceRoot[field] = durationInMilliSeconds;
 
 			sourcesRoot.append(sourceRoot);
 		}
@@ -7800,18 +7806,6 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	int64_t physicalPathKey,
 	int64_t videoDurationInMilliSeconds,
 	Json::Value broadcastDrawTextDetailsRoot
-	/*
-	string text,
-	string textPosition_X_InPixel,
-	string textPosition_Y_InPixel,
-	string fontType,
-	int fontSize,
-	string fontColor,
-	int textPercentageOpacity,
-	bool boxEnable,
-	string boxColor,
-	int boxPercentageOpacity
-	*/
 )
 {
 	Json::Value countdownInputRoot;
