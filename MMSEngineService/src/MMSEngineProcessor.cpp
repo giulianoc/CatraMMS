@@ -13335,7 +13335,7 @@ void MMSEngineProcessor::manageVODProxy(
 		}
 		else
 		{
-			vector<tuple<int64_t, string, int64_t>> sources;
+			vector<tuple<int64_t, string, string, int64_t>> sources;
 
 			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType: dependencies)
@@ -13393,8 +13393,45 @@ void MMSEngineProcessor::manageVODProxy(
 					_mmsEngineDBFacade->getMediaDurationInMilliseconds(
 						-1, sourcePhysicalPathKey);
 
+				// calculate delivery URL in case of an external encoder
+				string sourcePhysicalDeliveryURL;
+				{
+					int64_t utcNow;
+					{
+						chrono::system_clock::time_point now = chrono::system_clock::now();
+						utcNow = chrono::system_clock::to_time_t(now);
+					}
+
+					pair<string, string> deliveryAuthorizationDetails =
+						_mmsDeliveryAuthorization->createDeliveryAuthorization(
+						-1,	// userKey,
+						workspace,
+						"",	// clientIPAddress,
+
+						-1,	// mediaItemKey,
+						"",	// uniqueName,
+						-1,	// encodingProfileKey,
+						"",	// encodingProfileLabel,
+
+						sourcePhysicalPathKey,
+
+						-1,	// ingestionJobKey,	(in case of live)
+						-1,	// deliveryCode,
+
+						365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+						999999,	// maxRetries,
+						false,	// save,
+						"MMS_SignedToken",	// deliveryType,
+
+						false,	// warningIfMissingMediaItemKey,
+						true	// filteredByStatistic
+					);
+
+					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+				}
+
 				sources.push_back(make_tuple(sourcePhysicalPathKey, sourcePhysicalPathName,
-					durationInMilliSeconds));
+					sourcePhysicalDeliveryURL, durationInMilliSeconds));
 			}
 
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist

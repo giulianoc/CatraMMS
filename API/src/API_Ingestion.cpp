@@ -4905,7 +4905,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
-						vector<tuple<int64_t, string, int64_t>> sources;
+						vector<tuple<int64_t, string, string, int64_t>> sources;
 
 						MMSEngineDBFacade::ContentType vodContentType;
 
@@ -4950,9 +4950,47 @@ void API::changeLiveProxyPlaylist(
 									_mmsEngineDBFacade->getMediaDurationInMilliseconds(
 									-1, broadcastDefaultPhysicalPathKey);
 
+								// calculate delivery URL in case of an external encoder
+								string sourcePhysicalDeliveryURL;
+								{
+									int64_t utcNow;
+									{
+										chrono::system_clock::time_point now = chrono::system_clock::now();
+										utcNow = chrono::system_clock::to_time_t(now);
+									}
+
+									pair<string, string> deliveryAuthorizationDetails =
+										_mmsDeliveryAuthorization->createDeliveryAuthorization(
+										-1,	// userKey,
+										workspace,
+										"",	// clientIPAddress,
+
+										-1,	// mediaItemKey,
+										"",	// uniqueName,
+										-1,	// encodingProfileKey,
+										"",	// encodingProfileLabel,
+
+										broadcastDefaultPhysicalPathKey,
+
+										-1,	// ingestionJobKey,	(in case of live)
+										-1,	// deliveryCode,
+
+										abs(utcNow - utcBroadcasterEnd),	// ttlInSeconds,
+										999999,	// maxRetries,
+										false,	// save,
+										"MMS_SignedToken",	// deliveryType,
+
+										false,	// warningIfMissingMediaItemKey,
+										true	// filteredByStatistic
+									);
+
+									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+								}
+
 								sources.push_back(
 									make_tuple(broadcastDefaultPhysicalPathKey,
-									sourcePhysicalPathName, durationInMilliSeconds));
+									sourcePhysicalPathName, sourcePhysicalDeliveryURL,
+									durationInMilliSeconds));
 							}
 						}
 

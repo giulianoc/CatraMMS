@@ -23,6 +23,8 @@
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
 
+			// It works also in case of an external transcoder
+
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
@@ -44,6 +46,7 @@
 		"Outputs" = [
 			{
 				// optional, possible values: HLS, DASH, RTMP_Stream, AWS_CHANNEL.
+				// HLS and DASH do NOT work in case of an external transcoder
 				// Default: HLS
 				"OutputType": "HLS",
 

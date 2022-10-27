@@ -11887,7 +11887,10 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			{
 				Json::Value sourceRoot = sourcesRoot[sourceIndex];
 
-				field = "sourcePhysicalPathName";
+				if (externalEncoder)
+					field = "sourcePhysicalDeliveryURL";
+				else
+					field = "sourcePhysicalPathName";
 				if (!isMetadataPresent(sourceRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
