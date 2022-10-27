@@ -10648,6 +10648,27 @@ void FFMpeg::liveProxy2(
 	//			as mentioned before, already reset failures number to 0
 	//	The result is that engine never reach max number of failures and encoding request,
 	//	even if it is failing, never exit from the engine loop (EncoderVideoAudioProxy.cpp)
+
+	//	In case ffmpeg fails after at least XXX minutes, this is not considered a failure
+	//	and it will be executed again. This is very important because it makes sure ffmpeg
+	//	is not failing continuously without working at all.
+	//	Here follows some scenarios where it is important to execute again ffmpeg and not returning to
+	//	EncoderVideoAudioProxy:
+	// case 1:
+	// 2022-10-20. scenario (ffmpeg is a server):
+	//	- (1) streamSourceType is IP_PUSH
+	//	- (2) the client just disconnected because of a client issue
+	//	- (3) ffmpeg exit too early
+	// In this case ffmpeg has to return to listen as soon as possible for a new connection.
+	// In case we return an exception it will pass about 10-15 seconds before ffmpeg returns
+	// to be executed and listen again for a new connection.
+	// To make ffmpeg to listen as soon as possible, we will not return an exception
+	// da almeno XXX secondi (4)
+	// case 2:
+	// 2022-10-26. scenario (ffmpeg is a client):
+	//	Nel caso in cui devono essere "ripetuti" multiple inputs, vedi commento 2022-10-27.
+	//  In questo scenario quando ffmpeg termina la prima ripetizione, deve essere eseguito
+	//	nuovamente per la successiva ripetizione.
 	int maxTimesRepeatingSameInput = 1;
 	int currentNumberOfRepeatingSameInput = 0;
 	int sleepInSecondsInCaseOfRepeating = 5;
@@ -11101,41 +11122,29 @@ void FFMpeg::liveProxy2(
 				throw FFMpegURLNotFound();
 			else if (!stoppedBySigQuit)
 			{
-				// let's decide here if an exception has to be generated
-				// or we have to execute the command again
-				// In linea di massima, vedi commento sopra prima del while, è necessario
-				// ritornare una eccezione in caso di errore. C'è pero' un caso particolare descritto
-				// sotto (scenario 2022-10-20).
-
-				// 2022-10-20. scenario:
-				//	- (1) type is IP_PUSH (ffmpeg is a server)
-				//	- (2) the client just disconnected because of a client issue
-				//	- (3) ffmpeg exit too early
-				// In this case ffmpeg has to return to listen as soon as possible for a new connection.
-				// In case we return an exception it will pass about 10-15 seconds before ffmpeg returns
-				// to be executed and listen again for a new connection.
-				// To make ffmpeg to listen as soon as possible, we will not return an exception
-				// Aggiungo anche un controllo che assicura la ripetizione di ffmpeg solo nel caso in cui
-				// ffmpeg non stia dando errori in continuazione e stia funzionando correttamente
-				// da almeno XXX secondi (4)
-				if (streamSourceType == "IP_PUSH"												// (1)
-					&& lastPartOfFfmpegOutputFile.find("Input/output error") != string::npos	// (2)
-					&& (streamingDurationInSeconds != -1 &&										// (3)
+				// see the comment before 'while'
+				if (
+					// terminato troppo presto
+					(streamingDurationInSeconds != -1 &&
 						endFfmpegCommand - startFfmpegCommand <
 							chrono::seconds(streamingDurationInSeconds - 60)
 					)
-					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(5 * 60)	// (4)
+					// per almeno XXX minuti ha strimmato correttamente
+					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(5 * 60)
 				)
 				{
-					_logger->info(__FILEREF__ + "Command is executed again (IP_PUSH scenario)"
+					_logger->info(__FILEREF__ + "Command has to be executed again"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ffmpegCommandDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startFfmpegCommand).count()) + "@"
 						+ ", currentNumberOfRepeatingSameInput: "
 							+ to_string(currentNumberOfRepeatingSameInput)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 
-					// in this scenario (IP_PUSH) the monitor thread, in case the client does not
+					// in case of IP_PUSH the monitor thread, in case the client does not
 					// reconnect istantaneously, kills the process.
 					// For this reason, we will set again the liveProxy->_proxyStart variable
 					{
