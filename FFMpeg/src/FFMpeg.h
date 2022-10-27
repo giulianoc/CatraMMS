@@ -535,6 +535,7 @@ private:
 
 	string			_incrontabConfigurationDirectory;
 	string			_incrontabConfigurationFileName;
+	string			_incrontabBinary;
 
 
 	string getDrawTextVideoFilterDescription(

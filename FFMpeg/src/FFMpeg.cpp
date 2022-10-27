@@ -72,6 +72,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
 
 	_incrontabConfigurationDirectory	= "/home/mms/mms/conf";
 	_incrontabConfigurationFileName		= "incrontab.txt";
+	_incrontabBinary					= "/usr/bin/crontab";
 }
 
 FFMpeg::~FFMpeg() 
@@ -17151,7 +17152,8 @@ void FFMpeg::addToIncrontab(
 		}
 
 		{
-			string incrontabExecuteCommand = "/usr/bin/crontab " + incrontabConfigurationPathName;
+			string incrontabExecuteCommand = _incrontabBinary + " "
+				+ incrontabConfigurationPathName;
 
 			_logger->info(__FILEREF__ + "addToIncrontab: Executing ffprobe command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17273,7 +17275,8 @@ void FFMpeg::removeFromIncrontab(
 		}
 
 		{
-			string incrontabExecuteCommand = "/usr/bin/crontab " + incrontabConfigurationPathName;
+			string incrontabExecuteCommand = _incrontabBinary + " "
+				+ incrontabConfigurationPathName;
 
 			_logger->info(__FILEREF__ + "removeFromIncrontab: Executing ffprobe command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
