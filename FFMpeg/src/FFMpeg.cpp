@@ -10637,7 +10637,7 @@ void FFMpeg::liveProxy2(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
-			liveProxyOutput(ingestionJobKey, encodingJobKey,
+			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
 				currentInputRoot,
 				streamingDurationInSeconds,
@@ -10827,6 +10827,9 @@ void FFMpeg::liveProxy2(
 					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
 						.asString();
 
+					if (externalEncoder)
+						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
 					if (manifestDirectoryPath != "")
 					{
 						if (FileIO::directoryExisting(manifestDirectoryPath))
@@ -10988,6 +10991,9 @@ void FFMpeg::liveProxy2(
 				{
 					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
 						.asString();
+
+					if (externalEncoder)
+						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
 
 					if (manifestDirectoryPath != "")
 					{
@@ -12092,6 +12098,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
+	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
 	Json::Value inputRoot,
 	long streamingDurationInSeconds,
@@ -12545,6 +12552,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 					S_IRGRP | S_IXGRP |
 					S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 			}
+
+			if (externalEncoder)
+				addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
 
 			if (outputType == "HLS")
 			{
