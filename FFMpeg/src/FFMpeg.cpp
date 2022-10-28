@@ -10743,6 +10743,17 @@ void FFMpeg::liveProxy2(
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 			);
 
+			int executeCommandStatus = ProcessUtility::execute("pwd > /tmp/dir.txt");
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "getMediaInfo: ffmpeg: ffprobe command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				;
+				_logger->error(errorMessage);
+			}
+
 			startFfmpegCommand = chrono::system_clock::now();
 
 			bool redirectionStdOutput = true;
