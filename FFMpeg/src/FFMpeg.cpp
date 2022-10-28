@@ -10805,10 +10805,42 @@ void FFMpeg::liveProxy2(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			);
 
-/*
 			if (endlessPlaylistListPathName != ""
 				&& FileIO::fileExisting(endlessPlaylistListPathName))
 			{
+				if (externalEncoder)
+				{
+					ifstream ifConfigurationFile (endlessPlaylistListPathName);
+					if (ifConfigurationFile)
+					{
+						string configuration;
+						string prefixFile = "file '";
+						while(getline(ifConfigurationFile, configuration))
+						{
+							if (configuration.size() >= prefixFile.size()
+								&& 0 == configuration.compare(0, prefixFile.size(),
+									prefixFile))
+							{
+								string mediaFileName = configuration.substr(
+									prefixFile.size(),
+									configuration.size() - prefixFile.size() - 1);
+
+								_logger->info(__FILEREF__ + "Remove"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", mediaPathName: "
+										+ _ffmpegEndlessRecursivePlaylistDir + "/"
+										+ mediaFileName);
+								bool exceptionInCaseOfError = false;
+								FileIO::remove(_ffmpegEndlessRecursivePlaylistDir + "/"
+									+ mediaFileName, exceptionInCaseOfError);    
+							}
+						}
+
+						ifConfigurationFile.close();
+					}
+				}
+
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -10817,7 +10849,6 @@ void FFMpeg::liveProxy2(
 				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
 				endlessPlaylistListPathName = "";
 			}
-*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -10972,10 +11003,42 @@ void FFMpeg::liveProxy2(
 			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 			*/
 
-/*
 			if (endlessPlaylistListPathName != ""
 				&& FileIO::fileExisting(endlessPlaylistListPathName))
 			{
+				if (externalEncoder)
+				{
+					ifstream ifConfigurationFile (endlessPlaylistListPathName);
+					if (ifConfigurationFile)
+					{
+						string configuration;
+						string prefixFile = "file '";
+						while(getline(ifConfigurationFile, configuration))
+						{
+							if (configuration.size() >= prefixFile.size()
+								&& 0 == configuration.compare(0, prefixFile.size(),
+									prefixFile))
+							{
+								string mediaFileName = configuration.substr(
+									prefixFile.size(),
+									configuration.size() - prefixFile.size() - 1);
+
+								_logger->info(__FILEREF__ + "Remove"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", mediaPathName: "
+										+ _ffmpegEndlessRecursivePlaylistDir + "/"
+										+ mediaFileName);
+								bool exceptionInCaseOfError = false;
+								FileIO::remove(_ffmpegEndlessRecursivePlaylistDir + "/"
+									+ mediaFileName, exceptionInCaseOfError);    
+							}
+						}
+
+						ifConfigurationFile.close();
+					}
+				}
+
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -10984,7 +11047,6 @@ void FFMpeg::liveProxy2(
 				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
 				endlessPlaylistListPathName = "";
 			}
-*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -11988,6 +12050,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 							<< "'" << endl;
 					}
 				}
+				playlistListFile << "file '" << endlessPlaylistListFileName << "'" << endl;
 				playlistListFile.close();
 
 				ffmpegInputArgumentList.push_back("-f");
