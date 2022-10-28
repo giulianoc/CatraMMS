@@ -4905,7 +4905,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
-						vector<tuple<int64_t, string, string, int64_t>> sources;
+						vector<tuple<int64_t, string, string>> sources;
 
 						MMSEngineDBFacade::ContentType vodContentType;
 
@@ -4946,9 +4946,9 @@ void API::changeLiveProxyPlaylist(
 										ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
 
-								int64_t durationInMilliSeconds =
-									_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-									-1, broadcastDefaultPhysicalPathKey);
+								// int64_t durationInMilliSeconds =
+								// 	_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+								// 	-1, broadcastDefaultPhysicalPathKey);
 
 								// calculate delivery URL in case of an external encoder
 								string sourcePhysicalDeliveryURL;
@@ -4989,8 +4989,7 @@ void API::changeLiveProxyPlaylist(
 
 								sources.push_back(
 									make_tuple(broadcastDefaultPhysicalPathKey,
-									sourcePhysicalPathName, sourcePhysicalDeliveryURL,
-									durationInMilliSeconds));
+									sourcePhysicalPathName, sourcePhysicalDeliveryURL));
 							}
 						}
 
@@ -5283,25 +5282,64 @@ void API::changeLiveProxyPlaylist(
 								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, field, -1);
 
 								string sourcePhysicalPathName;
+								{
+									tuple<string, int, string, string, int64_t, string>
+										physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+										physicalPathKey);
+									tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
+										= physicalPathDetails;
 
-								tuple<string, int, string, string, int64_t, string>
-									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-									physicalPathKey);
-								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
-									= physicalPathDetails;
+									bool warningIfMissing = false;
+									tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
+										string,int64_t, string, string> mediaItemKeyDetails =
+										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+											workspace->_workspaceKey, physicalPathKey,
+											warningIfMissing);
 
-								bool warningIfMissing = false;
-								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-									string,int64_t, string, string> mediaItemKeyDetails =
-									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-										workspace->_workspaceKey, physicalPathKey,
-										warningIfMissing);
-
-								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
-									ignore, ignore) = mediaItemKeyDetails;
-
+									tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
+										ignore, ignore) = mediaItemKeyDetails;
+								}
 								field = "sourcePhysicalPathName";
 								sourceRoot[field] = sourcePhysicalPathName;
+
+								// calculate delivery URL in case of an external encoder
+								string sourcePhysicalDeliveryURL;
+								{
+									int64_t utcNow;
+									{
+										chrono::system_clock::time_point now = chrono::system_clock::now();
+										utcNow = chrono::system_clock::to_time_t(now);
+									}
+
+									pair<string, string> deliveryAuthorizationDetails =
+										_mmsDeliveryAuthorization->createDeliveryAuthorization(
+										-1,	// userKey,
+										workspace,
+										"",	// clientIPAddress,
+
+										-1,	// mediaItemKey,
+										"",	// uniqueName,
+										-1,	// encodingProfileKey,
+										"",	// encodingProfileLabel,
+
+										physicalPathKey,
+
+										-1,	// ingestionJobKey,	(in case of live)
+										-1,	// deliveryCode,
+
+										abs(utcNow - utcBroadcasterEnd),	// ttlInSeconds,
+										999999,	// maxRetries,
+										false,	// save,
+										"MMS_SignedToken",	// deliveryType,
+
+										false,	// warningIfMissingMediaItemKey,
+										true	// filteredByStatistic
+									);
+
+									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+								}
+								field = "sourcePhysicalDeliveryURL";
+								sourceRoot[field] = sourcePhysicalDeliveryURL;
 
 								sourcesRoot[sourceIndex] = sourceRoot;
 							}

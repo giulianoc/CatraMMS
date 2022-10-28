@@ -13335,7 +13335,7 @@ void MMSEngineProcessor::manageVODProxy(
 		}
 		else
 		{
-			vector<tuple<int64_t, string, string, int64_t>> sources;
+			vector<tuple<int64_t, string, string>> sources;
 
 			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType: dependencies)
@@ -13389,9 +13389,9 @@ void MMSEngineProcessor::manageVODProxy(
 						ignore, ignore) = mediaItemKeyDetails;
 				}
 
-				int64_t durationInMilliSeconds =
-					_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-						-1, sourcePhysicalPathKey);
+				// int64_t durationInMilliSeconds =
+				// 	_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+				// 		-1, sourcePhysicalPathKey);
 
 				// calculate delivery URL in case of an external encoder
 				string sourcePhysicalDeliveryURL;
@@ -13431,7 +13431,7 @@ void MMSEngineProcessor::manageVODProxy(
 				}
 
 				sources.push_back(make_tuple(sourcePhysicalPathKey, sourcePhysicalPathName,
-					sourcePhysicalDeliveryURL, durationInMilliSeconds));
+					sourcePhysicalDeliveryURL));
 			}
 
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
