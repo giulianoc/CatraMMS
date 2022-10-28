@@ -17181,11 +17181,11 @@ void FFMpeg::addToIncrontab(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
 			;
-			_logger->error(errorMessage);
+			_logger->warn(errorMessage);
 
-			throw runtime_error(errorMessage);
+			// throw runtime_error(errorMessage);
 		}
-
+		else
 		{
 			ofstream ofConfigurationFile (incrontabConfigurationPathName, ofstream::app);
 			if (!ofConfigurationFile)
@@ -17318,11 +17318,9 @@ void FFMpeg::removeFromIncrontab(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
 			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
+			_logger->warn(errorMessage);
 		}
-
+		else
 		{
 			ofstream ofConfigurationFile (incrontabConfigurationPathName, ofstream::trunc);
 			if (!ofConfigurationFile)
