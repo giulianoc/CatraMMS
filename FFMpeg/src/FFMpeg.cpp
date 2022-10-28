@@ -10569,7 +10569,7 @@ void FFMpeg::liveProxy2(
 		vector<string> ffmpegInputArgumentList;
 		long streamingDurationInSeconds = -1;
 		string otherOutputOptionsBecauseOfMaxWidth;
-		string streamSourceType;
+		string endlessPlaylistListPathName;
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
 		try
@@ -10581,11 +10581,11 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string, int, int64_t> inputDetils = liveProxyInput(
+			tuple<long, string, string, int, int64_t> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
-				streamSourceType, pushListenTimeout, utcProxyPeriodStart) = inputDetils;
+				endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart) = inputDetails;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -10803,6 +10803,18 @@ void FFMpeg::liveProxy2(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			);
 
+			if (endlessPlaylistListPathName != ""
+				&& FileIO::fileExisting(endlessPlaylistListPathName))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", endlessPlaylistListPathName: " + endlessPlaylistListPathName);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
+				endlessPlaylistListPathName = "";
+			}
+
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
@@ -10952,6 +10964,18 @@ void FFMpeg::liveProxy2(
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 			*/
+
+			if (endlessPlaylistListPathName != ""
+				&& FileIO::fileExisting(endlessPlaylistListPathName))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", endlessPlaylistListPathName: " + endlessPlaylistListPathName);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
+				endlessPlaylistListPathName = "";
+			}
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -11225,7 +11249,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
-	string streamSourceType;
+	string endlessPlaylistListPathName;
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
 
@@ -11278,7 +11302,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		streamSourceType = streamInputRoot.get(field, "").asString();
+		string streamSourceType = streamInputRoot.get(field, "").asString();
 
 		int maxWidth = -1;
 		field = "maxWidth";
@@ -11867,19 +11891,10 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			else
 			{
 				/*
-					2022-10-27: -stream_loop works only in case of ONE input
-						In case of multiple inputs there is no options without re-encoding
-						see https://video.stackexchange.com/questions/12905/repeat-loop-input-video-with-ffmpeg
-						There is the '-f concat' option (the files inside one .txt file) but in case
-						of a huge period, the .txt file would be too big.
-
-						So, in case of multiple inputs:
-						1. we will not using -stream_loop options
-						2. we will not using -t in case streamingDurationInSeconds > sum of duration of inputs 
-							This is important because, using -t, in case the sum of inputs is < of the -t value,
-							ffmpeg will not exit even if the input will terminate to stream
-						3. we will relay on the liveProxy loop that will restart istantaneously ffmpeg
-							again repeating again the inputs
+					2022-10-27: -stream_loop works only in case of ONE input.
+						In case of multiple VODs we will use the '-f concat' option implementing
+						an endless recursive playlist
+						see https://video.stackexchange.com/questions/18982/is-it-possible-to-create-an-endless-loop-using-concat
 				*/
 				if (sources.size() == 1)
 				{
@@ -11888,27 +11903,63 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				}
 			}
 
-			for(string sourcePhysicalPathName: sources)
+			if (sources.size() == 1)
 			{
 				ffmpegInputArgumentList.push_back("-i");
-				ffmpegInputArgumentList.push_back(sourcePhysicalPathName);
+				ffmpegInputArgumentList.push_back(sources[0]);
+			}
+			else // if (sources.size() > 1)
+			{
+				// build the endless recursive playlist file like (i.e:
+				//	ffconcat version 1.0
+				//	file 'storage/MMSRepository/MMS_0003/1/000/004/016/2030954_97080_24.mp4'
+				//	file 'storage/MMSRepository/MMS_0003/1/000/004/235/2143253_99028_24.mp4'
+				//	...
+				//	file 'XXX_YYY_endlessPlaylist.txt'
+
+				string endlessPlaylistListFileName =
+					to_string(ingestionJobKey) + "_" + to_string(encodingJobKey)
+					+ "_endlessPlaylist.txt";
+				endlessPlaylistListPathName = _ffmpegTempDir
+					+ "/endlessRecursivePlaylist/" + endlessPlaylistListFileName;
+				;
+        
+				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
+				playlistListFile << "ffconcat version 1.0" << endl;
+				for(string sourcePhysicalPathName: sources)
+				{
+					_logger->info(__FILEREF__ + "ffmpeg: adding physical path"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+					);
+
+					size_t storageIndex = sourcePhysicalPathName.find("/storage/");
+					if (storageIndex == string::npos)
+					{
+						_logger->error(__FILEREF__ + "physical path has a wrong path"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+						);
+
+						continue;
+					}
+
+					playlistListFile << "file '"
+						<< sourcePhysicalPathName.substr(storageIndex + 1)
+						<< "'" << endl;
+				}
+				playlistListFile.close();
+
+				ffmpegInputArgumentList.push_back("-f");
+				ffmpegInputArgumentList.push_back("concat");
+				ffmpegInputArgumentList.push_back("-i");
+				ffmpegInputArgumentList.push_back(endlessPlaylistListPathName);
 			}
 
 			if (timePeriod)
 			{
-				if (sources.size() == 1)
-				{
-					ffmpegInputArgumentList.push_back("-t");
-					ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
-				}
-				else
-				{
-					if (durationOfInputsInMilliSeconds / 1000 >= streamingDurationInSeconds)
-					{
-						ffmpegInputArgumentList.push_back("-t");
-						ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
-					}
-				}
+				ffmpegInputArgumentList.push_back("-t");
+				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
 	}
@@ -12036,7 +12087,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	}
 
 	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
-		streamSourceType, pushListenTimeout, utcProxyPeriodStart);
+		endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart);
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
