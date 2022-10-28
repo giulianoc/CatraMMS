@@ -26,6 +26,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
 
     _ffmpegPath = configuration["ffmpeg"].get("path", "").asString();
     _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
+    _ffmpegEndlessRecursivePlaylistDir = configuration["ffmpeg"].get("endlessRecursivePlaylistDir", "").asString();
     _ffmpegTtfFontDir = configuration["ffmpeg"].get("ttfFontDir", "").asString();
 
     _youTubeDlPath = configuration["youTubeDl"].get("path", "").asString();
@@ -11920,8 +11921,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				string endlessPlaylistListFileName =
 					to_string(ingestionJobKey) + "_" + to_string(encodingJobKey)
 					+ "_endlessPlaylist.txt";
-				endlessPlaylistListPathName = _ffmpegTempDir
-					+ "/endlessRecursivePlaylist/" + endlessPlaylistListFileName;
+				endlessPlaylistListPathName = _ffmpegEndlessRecursivePlaylistDir
+					+ "/" + endlessPlaylistListFileName;
 				;
         
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);

@@ -510,6 +510,7 @@ private:
     shared_ptr<spdlog::logger>  _logger;
     string          _ffmpegPath;
     string          _ffmpegTempDir;
+    string			_ffmpegEndlessRecursivePlaylistDir;
     string          _ffmpegTtfFontDir;
     int             _charsToBeReadFromFfmpegErrorOutput;
     bool            _twoPasses;

@@ -8,9 +8,9 @@
 #include "catralibraries/ProcessUtility.h"
 
 MMSStorage::MMSStorage(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-        Json::Value configuration,
-        shared_ptr<spdlog::logger> logger) 
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	Json::Value configuration,
+	shared_ptr<spdlog::logger> logger) 
 {
 
 	try
@@ -178,6 +178,14 @@ void MMSStorage::createDirectories(
 			+ ", ffmpegArea: " + getFFMPEGArea(storage)
 		);
 		FileIO::createDirectory(getFFMPEGArea(storage),
+            S_IRUSR | S_IWUSR | S_IXUSR |
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+		logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", ffmpegEndlessRecursivePlaylistArea: "
+				+ getFFMPEGEndlessRecursivePlaylistArea(storage)
+		);
+		FileIO::createDirectory(getFFMPEGEndlessRecursivePlaylistArea(storage),
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -734,6 +742,10 @@ string MMSStorage::getLiveRootRepository(string storage) {
     
 string MMSStorage::getFFMPEGArea(string storage) {
 	return storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
+}
+
+string MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(string storage) {
+	return storage + "MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/";
 }
 
 string MMSStorage::getNginxArea(string storage) {

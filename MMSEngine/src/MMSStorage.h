@@ -60,6 +60,8 @@ public:
 
 	static string getFFMPEGArea(string storage);
 
+	static string getFFMPEGEndlessRecursivePlaylistArea(string storage);
+
 	static string getNginxArea(string storage);
 
     string getErrorRootRepository (void);
