@@ -43,10 +43,10 @@ if [ $eventName == "IN_MOVED_TO" ]
 then
 	if [ $debug -eq 1 ]
 	then
-		echo "rsync -az -e \"ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem\" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory)" >> $debugFileName
-		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) >> $debugFileName 2>&1 
+		echo "rsync -az -e \"ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory)" >> $debugFileName
+		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) >> $debugFileName 2>&1 
 	else
-		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) > /dev/null
+		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) > /dev/null
 	fi
 fi
 
