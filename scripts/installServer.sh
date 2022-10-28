@@ -250,6 +250,15 @@ install-packages()
 
 		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
 	fi
+
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+		echo ""
+		read -n 1 -s -r -p "install incron..."
+		echo ""
+		apt-get -y install incron
+
+		echo "mms" > /etc/incron.allow
+	fi
 }
 
 install-ftpserver()

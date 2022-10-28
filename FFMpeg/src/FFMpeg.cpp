@@ -17152,35 +17152,25 @@ void FFMpeg::addToIncrontab(
 		bool directoryAlreadyMonitored = false;
 		{
 			ifstream ifConfigurationFile (incrontabConfigurationPathName);
-			if (!ifConfigurationFile)
+			if (ifConfigurationFile)
 			{
-				string errorMessage = __FILEREF__
-					+ "addToIncrontab: open incontab configuration file failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", incrontabConfigurationPathName: " + incrontabConfigurationPathName
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string configuration;
-			while(getline(ifConfigurationFile, configuration))
-			{
-				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
-
-				if (configuration.size() >= directoryToBeMonitored.size()
-					&& 0 == configuration.compare(0, directoryToBeMonitored.size(),
-					directoryToBeMonitored))
+				string configuration;
+				while(getline(ifConfigurationFile, configuration))
 				{
-					directoryAlreadyMonitored = true;
+					string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
 
-					break;
+					if (configuration.size() >= directoryToBeMonitored.size()
+						&& 0 == configuration.compare(0, directoryToBeMonitored.size(),
+						directoryToBeMonitored))
+					{
+						directoryAlreadyMonitored = true;
+
+						break;
+					}
 				}
-			}
 
-			ifConfigurationFile.close();
+				ifConfigurationFile.close();
+			}
 		}
 
 		if (directoryAlreadyMonitored)
@@ -17214,7 +17204,7 @@ void FFMpeg::addToIncrontab(
 			string configuration = directoryToBeMonitored
 				+ " IN_MODIFY,IN_CLOSE_WRITE,IN_CREATE,IN_DELETE,IN_MOVED_FROM,IN_MOVED_TO,IN_MOVE_SELF /opt/catramms/CatraMMS/scripts/incrontab.sh $% $@ $#";
 
-			_logger->info(__FILEREF__ + "addToIncrontab: add incontab configuration file"
+			_logger->info(__FILEREF__ + "addToIncrontab: adding incontab configuration"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", configuration: " + configuration
@@ -17228,7 +17218,7 @@ void FFMpeg::addToIncrontab(
 			string incrontabExecuteCommand = _incrontabBinary + " "
 				+ incrontabConfigurationPathName;
 
-			_logger->info(__FILEREF__ + "addToIncrontab: Executing ffprobe command"
+			_logger->info(__FILEREF__ + "addToIncrontab: Executing incontab command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
@@ -17305,6 +17295,12 @@ void FFMpeg::removeFromIncrontab(
 					&& 0 == configuration.compare(0, directoryToBeMonitored.size(),
 					directoryToBeMonitored))
 				{
+					_logger->info(__FILEREF__ + "removeFromIncrontab: removing incontab configuration"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", configuration: " + configuration
+					);
+
 					foundMonitoryDirectory = true;
 				}
 				else
@@ -17351,7 +17347,7 @@ void FFMpeg::removeFromIncrontab(
 			string incrontabExecuteCommand = _incrontabBinary + " "
 				+ incrontabConfigurationPathName;
 
-			_logger->info(__FILEREF__ + "removeFromIncrontab: Executing ffprobe command"
+			_logger->info(__FILEREF__ + "removeFromIncrontab: Executing incontab command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", incrontabExecuteCommand: " + incrontabExecuteCommand
