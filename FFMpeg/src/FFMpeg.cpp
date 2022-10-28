@@ -10804,6 +10804,7 @@ void FFMpeg::liveProxy2(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
 			);
 
+/*
 			if (endlessPlaylistListPathName != ""
 				&& FileIO::fileExisting(endlessPlaylistListPathName))
 			{
@@ -10815,6 +10816,7 @@ void FFMpeg::liveProxy2(
 				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
 				endlessPlaylistListPathName = "";
 			}
+*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -10969,6 +10971,7 @@ void FFMpeg::liveProxy2(
 			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 			*/
 
+/*
 			if (endlessPlaylistListPathName != ""
 				&& FileIO::fileExisting(endlessPlaylistListPathName))
 			{
@@ -10980,6 +10983,7 @@ void FFMpeg::liveProxy2(
 				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
 				endlessPlaylistListPathName = "";
 			}
+*/
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
