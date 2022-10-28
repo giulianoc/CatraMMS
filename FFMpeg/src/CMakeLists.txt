@@ -21,9 +21,11 @@
 # with the authors.
 
 SET (SOURCES
+	MMSCURL.cpp
 	FFMpeg.cpp
 )
 SET (HEADERS
+	MMSCURL.h
 	FFMpeg.h
 )
 
@@ -37,6 +39,7 @@ if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
 	include_directories ("/usr/include/mysql-cppconn/jdbc")
 endif()
 
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")

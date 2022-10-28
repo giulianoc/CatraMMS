@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include "MMSCURL.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/StringUtils.h"
@@ -11802,7 +11803,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string vodContentType = vodInputRoot.get(field, "Video").asString();
 
 		vector<string> sources;
-		int64_t durationOfInputsInMilliSeconds = 0;
+		// int64_t durationOfInputsInMilliSeconds = 0;
 		{
 			field = "sources";
 			if (!isMetadataPresent(vodInputRoot, field))
@@ -11838,9 +11839,9 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				string sourcePhysicalPathName = sourceRoot.get(field, "").asString();
 				sources.push_back(sourcePhysicalPathName);
 
-				field = "durationInMilliSeconds";
-				if (isMetadataPresent(sourceRoot, field))
-					durationOfInputsInMilliSeconds += asInt64(sourceRoot, field, 0);
+				// field = "durationInMilliSeconds";
+				// if (isMetadataPresent(sourceRoot, field))
+				// 	durationOfInputsInMilliSeconds += asInt64(sourceRoot, field, 0);
 			}
 		}
 
@@ -11944,20 +11945,48 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 						+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
 					);
 
-					size_t storageIndex = sourcePhysicalPathName.find("/storage/");
-					if (storageIndex == string::npos)
+					if (externalEncoder)
 					{
-						_logger->error(__FILEREF__ + "physical path has a wrong path"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+						size_t fileNameIndex = sourcePhysicalPathName.find_last_of("/");
+						if (fileNameIndex == string::npos)
+						{
+							_logger->error(__FILEREF__ + "physical path has a wrong path"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+							);
+
+							continue;
+						}
+						string destBinaryFileName = sourcePhysicalPathName.substr(fileNameIndex + 1);
+						string destBinaryPathName = _ffmpegEndlessRecursivePlaylistDir
+							+ "/" + destBinaryFileName;
+
+						// sourcePhysicalPathName is like https://mms-delivery-path.catramms-cloud.com/token_mDEs0rZTXRyMkOCngnG87w==,1666987919/MMS_0000/1/000/229/507/1429406_231284_changeFileFormat.mp4
+						MMSCURL::downloadFile(
+							ingestionJobKey,
+							sourcePhysicalPathName,
+							destBinaryPathName,
+							_logger
 						);
-
-						continue;
+						playlistListFile << "file '" << destBinaryFileName << "'" << endl;
 					}
+					else
+					{
+						size_t storageIndex = sourcePhysicalPathName.find("/storage/");
+						if (storageIndex == string::npos)
+						{
+							_logger->error(__FILEREF__ + "physical path has a wrong path"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+							);
 
-					playlistListFile << "file '"
-						<< sourcePhysicalPathName.substr(storageIndex + 1)
-						<< "'" << endl;
+							continue;
+						}
+
+						playlistListFile << "file '"
+							<< sourcePhysicalPathName.substr(storageIndex + 1)
+							<< "'" << endl;
+					}
 				}
 				playlistListFile.close();
 

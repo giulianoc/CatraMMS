@@ -23,7 +23,6 @@
 SET (SOURCES
 	AWSSigner.cpp
 	MMSDeliveryAuthorization.cpp
-	MMSCURL.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
@@ -51,7 +50,6 @@ SET (SOURCES
 SET (HEADERS
 	AWSSigner.h
 	MMSDeliveryAuthorization.h
-	MMSCURL.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
 	PersistenceLock.h
