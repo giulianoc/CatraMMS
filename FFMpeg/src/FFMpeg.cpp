@@ -73,7 +73,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
 
 	_incrontabConfigurationDirectory	= "/home/mms/mms/conf";
 	_incrontabConfigurationFileName		= "incrontab.txt";
-	_incrontabBinary					= "/usr/bin/crontab";
+	_incrontabBinary					= "/usr/bin/incrontab";
 }
 
 FFMpeg::~FFMpeg() 
