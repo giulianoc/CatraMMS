@@ -256,6 +256,8 @@ install-packages()
 		read -n 1 -s -r -p "install incron..."
 		echo ""
 		apt-get -y install incron
+		systemctl enable incron.service
+		service incron start
 
 		echo "mms" > /etc/incron.allow
 	fi
@@ -406,6 +408,11 @@ create-directory()
 		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
 
 		ln -s /var/catramms/storage /home/mms
+	fi
+
+	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+		mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		ln -s /var/catramms/storage /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 	fi
 
 	ln -s /var/catramms/logs /home/mms
