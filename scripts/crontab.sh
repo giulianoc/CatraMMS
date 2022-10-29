@@ -12,6 +12,7 @@ threeDaysInMinutes=4320
 fiveDaysInMinutes=7200
 tenDaysInMinutes=14400
 twentyDaysInMinutes=28800
+sixMonthsInMinutes=259299
 
 if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 -a $# -ne 4 ]
 then
@@ -176,6 +177,8 @@ else
 		then
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
+
+		find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete
 
 		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"

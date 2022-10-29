@@ -53,7 +53,7 @@
 		"Outputs" = [
 			{
 				// optional, possible values: HLS, DASH, RTMP_Stream, AWS_CHANNEL.
-				// HLS and DASH do NOT work in case of an external transcoder
+				// HLS and DASH works also in case of an external transcoder
 				// Default: HLS
 				"OutputType": "HLS",
 
