@@ -6231,6 +6231,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
         {
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot"
 					);
+			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			// we will remove by steps to avoid error because of transaction log overflow
 			int maxToBeRemoved = 100;
@@ -6302,6 +6303,8 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			}
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot"
 				+ ", totalRowsRemoved: " + to_string(totalRowsRemoved)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+					chrono::system_clock::now() - startRetention).count()) + "@"
 			);
         }
 
@@ -6311,6 +6314,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 		{
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time "
 				"to download/move/copy/upload the content");
+			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			long totalRowsUpdated = 0;
 			int maxRetriesOnError = 2;
@@ -6402,6 +6406,8 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time "
 				"to download/move/copy/upload the content"
 				+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+					chrono::system_clock::now() - startRetention).count()) + "@"
 			);
 		}
 
@@ -6410,6 +6416,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				+ "(state Start_TaskQueued) and too old to be considered "
 				+ "by MMSEngineDBFacade::getIngestionsToBeManaged"
 			);
+			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			long totalRowsUpdated = 0;
 			int maxRetriesOnError = 2;
@@ -6493,6 +6500,8 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				+ "(state Start_TaskQueued) and too old to be considered "
 				+ "by MMSEngineDBFacade::getIngestionsToBeManaged"
 				+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+					chrono::system_clock::now() - startRetention).count()) + "@"
 			);
 		}
 
