@@ -1194,6 +1194,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+            lastSQLCommand = 
+                "create index MMS_Encoder_idx on MMS_Encoder (publicServerName)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
             lastSQLCommand =
                 "create table if not exists MMS_EncoderWorkspaceMapping ("
                     "encoderKey					BIGINT UNSIGNED NOT NULL,"
@@ -1472,7 +1491,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
+                "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority, processingStartingFrom)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -2487,6 +2506,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey), "
                     "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) "
                     "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_Conf_SourceTVStream_idx1 on MMS_Conf_SourceTVStream (name)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

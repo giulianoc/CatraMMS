@@ -4018,7 +4018,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				string segmenterType = "hlsSegmenter";
 				// string segmenterType = "streamSegmenter";
 				if (segmenterType == "hlsSegmenter")
-					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcStartTimeInMilliSecs') desc ";
+					orderBy = "order by mi.utcStartTimeInMilliSecs_virtual desc ";
 				else
 					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
 			}

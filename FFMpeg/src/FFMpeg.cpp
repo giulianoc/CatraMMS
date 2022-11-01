@@ -10745,17 +10745,6 @@ void FFMpeg::liveProxy2(
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 			);
 
-			int executeCommandStatus = ProcessUtility::execute("pwd > /tmp/dir.txt");
-			if (executeCommandStatus != 0)
-			{
-				string errorMessage = __FILEREF__
-					+ "getMediaInfo: ffmpeg: ffprobe command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-				;
-				_logger->error(errorMessage);
-			}
-
 			startFfmpegCommand = chrono::system_clock::now();
 
 			bool redirectionStdOutput = true;
@@ -11898,8 +11887,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 					throw runtime_error(errorMessage);
 				}
-				string sourcePhysicalPathName = sourceRoot.get(field, "").asString();
-				sources.push_back(sourcePhysicalPathName);
+				string sourcePhysicalReference = sourceRoot.get(field, "").asString();
+				sources.push_back(sourcePhysicalReference);
 
 				// field = "durationInMilliSeconds";
 				// if (isMetadataPresent(sourceRoot, field))
@@ -12000,53 +11989,89 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
         
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
 				playlistListFile << "ffconcat version 1.0" << endl;
-				for(string sourcePhysicalPathName: sources)
+				for(string sourcePhysicalReference: sources)
 				{
+					// sourcePhysicalReference will be:
+					//	a URL in case of externalEncoder 
+					//	a storage path name in case of a local encoder
+
 					_logger->info(__FILEREF__ + "ffmpeg: adding physical path"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+						+ ", sourcePhysicalReference: " + sourcePhysicalReference
 					);
 
 					if (externalEncoder)
 					{
-						size_t fileNameIndex = sourcePhysicalPathName.find_last_of("/");
-						if (fileNameIndex == string::npos)
+						bool isStreaming = false;
+
+						string destBinaryPathName;
+						string destBinaryFileName;
 						{
-							_logger->error(__FILEREF__ + "physical path has a wrong path"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
-							);
+							size_t fileNameIndex = sourcePhysicalReference.find_last_of("/");
+							if (fileNameIndex == string::npos)
+							{
+								_logger->error(__FILEREF__ + "physical path has a wrong path"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", sourcePhysicalReference: " + sourcePhysicalReference
+								);
 
-							continue;
+								continue;
+							}
+							destBinaryFileName = sourcePhysicalReference.substr(fileNameIndex + 1);
+
+							size_t extensionIndex = destBinaryFileName.find_last_of(".");
+							if (extensionIndex != string::npos)
+							{
+								if (destBinaryFileName.substr(extensionIndex + 1) == "m3u8")
+								{
+									isStreaming = true;
+									destBinaryFileName = destBinaryFileName.substr(0, extensionIndex) + ".mp4";
+								}
+							}
+
+							destBinaryPathName = _ffmpegEndlessRecursivePlaylistDir
+								+ "/" + destBinaryFileName;
 						}
-						string destBinaryFileName = sourcePhysicalPathName.substr(fileNameIndex + 1);
-						string destBinaryPathName = _ffmpegEndlessRecursivePlaylistDir
-							+ "/" + destBinaryFileName;
 
-						// sourcePhysicalPathName is like https://mms-delivery-path.catramms-cloud.com/token_mDEs0rZTXRyMkOCngnG87w==,1666987919/MMS_0000/1/000/229/507/1429406_231284_changeFileFormat.mp4
-						MMSCURL::downloadFile(
-							ingestionJobKey,
-							sourcePhysicalPathName,
-							destBinaryPathName,
-							_logger
-						);
+						// sourcePhysicalReference is like https://mms-delivery-path.catramms-cloud.com/token_mDEs0rZTXRyMkOCngnG87w==,1666987919/MMS_0000/1/000/229/507/1429406_231284_changeFileFormat.mp4
+						if (isStreaming)
+						{
+							// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
+							bool regenerateTimestamps = false;
+
+							streamingToFile(
+								ingestionJobKey,
+								regenerateTimestamps,
+								sourcePhysicalReference,
+								destBinaryPathName);
+						}
+						else
+						{
+							MMSCURL::downloadFile(
+								ingestionJobKey,
+								sourcePhysicalReference,
+								destBinaryPathName,
+								_logger
+							);
+						}
+						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method
 						playlistListFile << "file '" << destBinaryFileName << "'" << endl;
 					}
 					else
 					{
-						size_t storageIndex = sourcePhysicalPathName.find("/storage/");
+						size_t storageIndex = sourcePhysicalReference.find("/storage/");
 						if (storageIndex == string::npos)
 						{
 							_logger->error(__FILEREF__ + "physical path has a wrong path"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", sourcePhysicalPathName: " + sourcePhysicalPathName
+								+ ", sourcePhysicalReference: " + sourcePhysicalReference
 							);
 
 							continue;
 						}
 
 						playlistListFile << "file '"
-							<< sourcePhysicalPathName.substr(storageIndex + 1)
+							<< sourcePhysicalReference.substr(storageIndex + 1)
 							<< "'" << endl;
 					}
 				}

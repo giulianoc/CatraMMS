@@ -468,7 +468,7 @@ install-mms-packages()
 {
 	moduleName=$1
 
-	architecture=x86_64-ubuntu-22.04
+	architecture=ubuntu-22.04
 
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
@@ -859,7 +859,7 @@ if [ "$moduleName" == "storage" ]; then
 	echo "- exportfs -ra"
 else
 	echo ""
-	echo "in caso di hetzner transcoder ibrido, 1. assegna il server al vSwitch (tramite hetzner WEB page), 2. decidere un nuovo IP e scriverlo nel documento Hetzner Info su google drive, 3. aggiungere la configurazione di un nuovo IP internal in /etc/netplan/01-netcfg.yaml"
+	echo "in caso di hetzner engine/transcoder ibrido, 1. assegna il server al vSwitch (tramite hetzner WEB page), 2. decidere un nuovo IP e scriverlo nel documento Hetzner Info su google drive, 3. aggiungere la configurazione di un nuovo IP internal in /etc/netplan/01-netcfg.yaml"
 	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
 	echo ""
 	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add 10.0.0.2 db-server-active)"
