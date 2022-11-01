@@ -1395,136 +1395,171 @@ void MMSEngineDBFacade::retentionOfStatisticData()
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		// check if next partition already exist and, if not, create it
+		int maxRetriesOnError = 2;
+		int currentRetriesOnError = 0;
+		bool toBeExecutedAgain = true;
+		while (toBeExecutedAgain)
 		{
-			string currentPartition_YYYYMM_1;
-			string currentPartition_YYYYMM_2;
+			try
 			{
-				// 2022-05-01: changed from one to two months because, the first of each
-				//	month, until this procedure do not run, it would not work
-				chrono::duration<int, ratio<60*60*24*30>> two_month(2);
+				// check if next partition already exist and, if not, create it
+				{
+					string currentPartition_YYYYMM_1;
+					string currentPartition_YYYYMM_2;
+					{
+						// 2022-05-01: changed from one to two months because, the first of each
+						//	month, until this procedure do not run, it would not work
+						chrono::duration<int, ratio<60*60*24*30>> two_month(2);
 
-				chrono::system_clock::time_point today = chrono::system_clock::now();
-				chrono::system_clock::time_point nextMonth = today + two_month;
-				time_t utcTime_nextMonth = chrono::system_clock::to_time_t(nextMonth);
+						chrono::system_clock::time_point today = chrono::system_clock::now();
+						chrono::system_clock::time_point nextMonth = today + two_month;
+						time_t utcTime_nextMonth = chrono::system_clock::to_time_t(nextMonth);
 
-				char strDateTime [64];
-				tm tmDateTime;
+						char strDateTime [64];
+						tm tmDateTime;
 
-				localtime_r (&utcTime_nextMonth, &tmDateTime);
+						localtime_r (&utcTime_nextMonth, &tmDateTime);
 
-				sprintf (strDateTime, "%04d-%02d-01",
-				tmDateTime. tm_year + 1900,
-				tmDateTime. tm_mon + 1);
-				currentPartition_YYYYMM_1 = strDateTime;
+						sprintf (strDateTime, "%04d-%02d-01",
+						tmDateTime. tm_year + 1900,
+						tmDateTime. tm_mon + 1);
+						currentPartition_YYYYMM_1 = strDateTime;
 
-				sprintf (strDateTime, "%04d_%02d_01",
-				tmDateTime. tm_year + 1900,      
-				tmDateTime. tm_mon + 1);   
-				currentPartition_YYYYMM_2 = strDateTime;
-			}                                           
+						sprintf (strDateTime, "%04d_%02d_01",
+						tmDateTime. tm_year + 1900,      
+						tmDateTime. tm_mon + 1);   
+						currentPartition_YYYYMM_2 = strDateTime;
+					}                                           
 
-			lastSQLCommand = 
-				"select partition_name "
-				"from information_schema.partitions "
-				"where table_name = 'MMS_RequestStatistic' "
-				"and partition_name = 'p_" + currentPartition_YYYYMM_2 + "'"
-			;
+					lastSQLCommand = 
+						"select partition_name "
+						"from information_schema.partitions "
+						"where table_name = 'MMS_RequestStatistic' "
+						"and partition_name = 'p_" + currentPartition_YYYYMM_2 + "'"
+					;
 
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", elapsed (millisecs): @"
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (!resultSet->next())
-			{
-				lastSQLCommand = 
-					"ALTER TABLE MMS_RequestStatistic ADD PARTITION (PARTITION p_"
-					+ currentPartition_YYYYMM_2
-					+ " VALUES LESS THAN (to_days('" + currentPartition_YYYYMM_1 + "')) "
-					+ ") "
-				;
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", elapsed (millisecs): @"
+							+ to_string(chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (!resultSet->next())
+					{
+						lastSQLCommand = 
+							"ALTER TABLE MMS_RequestStatistic ADD PARTITION (PARTITION p_"
+							+ currentPartition_YYYYMM_2
+							+ " VALUES LESS THAN (to_days('" + currentPartition_YYYYMM_1 + "')) "
+							+ ") "
+						;
 
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
 
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-			}
-		}
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
+				}
 	
-		// check if a partition has to be removed because "expired", if yes, remove it
-		{
-			string currentPartition_YYYYMM_2;
+				// check if a partition has to be removed because "expired", if yes, remove it
+				{
+					string currentPartition_YYYYMM_2;
+					{
+						chrono::duration<int, ratio<60*60*24*30>> retentionMonths(
+							_statisticRetentionInMonths);
+
+						chrono::system_clock::time_point today = chrono::system_clock::now();
+						chrono::system_clock::time_point retention = today - retentionMonths;
+						time_t utcTime_retention = chrono::system_clock::to_time_t(retention);
+
+						char strDateTime [64];
+						tm tmDateTime;
+
+						localtime_r (&utcTime_retention, &tmDateTime);
+
+						sprintf (strDateTime, "%04d_%02d_01",
+							tmDateTime. tm_year + 1900,      
+							tmDateTime. tm_mon + 1);   
+						currentPartition_YYYYMM_2 = strDateTime;
+					}                                           
+
+					lastSQLCommand = 
+						"select partition_name "
+						"from information_schema.partitions "
+						"where table_name = 'MMS_RequestStatistic' "
+						"and partition_name = 'p_" + currentPartition_YYYYMM_2 + "'"
+					;
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", elapsed (millisecs): @"
+							+ to_string(chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (resultSet->next())
+					{
+						lastSQLCommand = 
+							"ALTER TABLE MMS_RequestStatistic DROP PARTITION p_"
+							+ currentPartition_YYYYMM_2
+						;
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
+				}
+
+				toBeExecutedAgain = false;
+			}
+			catch(sql::SQLException se)
 			{
-				chrono::duration<int, ratio<60*60*24*30>> retentionMonths(
-					_statisticRetentionInMonths);
+				currentRetriesOnError++;
+				if (currentRetriesOnError >= maxRetriesOnError)
+					throw se;
 
-				chrono::system_clock::time_point today = chrono::system_clock::now();
-				chrono::system_clock::time_point retention = today - retentionMonths;
-				time_t utcTime_retention = chrono::system_clock::to_time_t(retention);
-
-				char strDateTime [64];
-				tm tmDateTime;
-
-				localtime_r (&utcTime_retention, &tmDateTime);
-
-				sprintf (strDateTime, "%04d_%02d_01",
-					tmDateTime. tm_year + 1900,      
-					tmDateTime. tm_mon + 1);   
-				currentPartition_YYYYMM_2 = strDateTime;
-			}                                           
-
-			lastSQLCommand = 
-				"select partition_name "
-				"from information_schema.partitions "
-				"where table_name = 'MMS_RequestStatistic' "
-				"and partition_name = 'p_" + currentPartition_YYYYMM_2 + "'"
-			;
-
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", elapsed (millisecs): @"
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-			{
-				lastSQLCommand = 
-					"ALTER TABLE MMS_RequestStatistic DROP PARTITION p_"
-					+ currentPartition_YYYYMM_2
-				;
-
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
-
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "@SQL statistics@"
+				// Deadlock!!!
+				_logger->error(__FILEREF__ + "SQL exception"
 					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
+					+ ", se.what(): " + se.what()
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 				);
+
+				{
+					int secondsBetweenRetries = 15;
+					_logger->info(__FILEREF__ + "retentionOfStatisticData failed, "
+						+ "waiting before to try again"
+						+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+						+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+						+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+				}
 			}
 		}
 
@@ -1557,7 +1592,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
     }
     catch(runtime_error e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "runtime_error exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1576,7 +1611,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
     }
     catch(exception e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -1591,6 +1626,6 @@ void MMSEngineDBFacade::retentionOfStatisticData()
         }
 
         throw e;
-    }    
+    }
 }
 

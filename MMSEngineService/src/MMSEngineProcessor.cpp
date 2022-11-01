@@ -23641,6 +23641,10 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	try
 	{
+		_logger->info(__FILEREF__ + "DBDataRetention: oncePerDayExecution"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		);
+
 		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(
 			MMSEngineDBFacade::OncePerDayType::DBDataRetention);
 	}

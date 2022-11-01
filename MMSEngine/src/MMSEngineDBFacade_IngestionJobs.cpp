@@ -5871,59 +5871,99 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		// Scenarios: EncodingJob in final status but IngestionJob not in final status
-		//	This is independently by the specific instance of mms-engine (because in this scenario
-		//	often the processor field is empty) but someone has to do it
-		//	This scenario may happen in case the mms-engine is shutdown not in friendly way
+		long totalRowsUpdated = 0;
+		int maxRetriesOnError = 2;
+		int currentRetriesOnError = 0;
+		bool toBeExecutedAgain = true;
+		while (toBeExecutedAgain)
 		{
-			int toleranceInHours = 4;
-			lastSQLCommand = 
-				"select ij.ingestionJobKey, ej.encodingJobKey, "
-				"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
-				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
-				"where ij.ingestionJobKey = ej.ingestionJobKey "
-				"and ij.status not like 'End_%' and ej.status like 'End_%'"
-				"and ej.encodingJobEnd < DATE_SUB(NOW(), INTERVAL ? HOUR)";
-			;
-
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, toleranceInHours);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			while (resultSet->next())
+			try
 			{
-				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
-				int64_t encodingJobKey = resultSet->getInt64("encodingJobKey");
-				string ingestionJobStatus = resultSet->getString("ingestionJobStatus");
-				string encodingJobStatus = resultSet->getString("encodingJobStatus");
+				// Scenarios: EncodingJob in final status but IngestionJob not in final status
+				//	This is independently by the specific instance of mms-engine (because in this scenario
+				//	often the processor field is empty) but someone has to do it
+				//	This scenario may happen in case the mms-engine is shutdown not in friendly way
+				int toleranceInHours = 4;
+				lastSQLCommand = 
+					"select ij.ingestionJobKey, ej.encodingJobKey, "
+					"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
+					"from MMS_IngestionJob ij, MMS_EncodingJob ej "
+					"where ij.ingestionJobKey = ej.ingestionJobKey "
+					"and ij.status not like 'End_%' and ej.status like 'End_%'"
+					"and ej.encodingJobEnd < DATE_SUB(NOW(), INTERVAL ? HOUR)";
+				;
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt(queryParameterIndex++, toleranceInHours);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", toleranceInHours: " + to_string(toleranceInHours)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				while (resultSet->next())
+				{
+					int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+					int64_t encodingJobKey = resultSet->getInt64("encodingJobKey");
+					string ingestionJobStatus = resultSet->getString("ingestionJobStatus");
+					string encodingJobStatus = resultSet->getString("encodingJobStatus");
+
+					{
+						string errorMessage = string("Found IngestionJob having wrong status")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus
+							+ ", encodingJobStatus: " + encodingJobStatus
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						updateIngestionJob (
+							conn,
+							ingestionJobKey,
+							IngestionStatus::End_CanceledByMMS,
+							errorMessage);
+
+						totalRowsUpdated++;
+					}
+				}
+
+				toBeExecutedAgain = false;
+			}
+			catch(sql::SQLException se)
+			{
+				currentRetriesOnError++;
+				if (currentRetriesOnError >= maxRetriesOnError)
+					throw se;
+
+				// Deadlock!!!
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
 				{
-					string errorMessage = string("Found IngestionJob having wrong status")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobStatus: " + ingestionJobStatus
-						+ ", encodingJobStatus: " + encodingJobStatus
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					updateIngestionJob (
-						conn,
-						ingestionJobKey,
-						IngestionStatus::End_CanceledByMMS,
-						errorMessage);
+					int secondsBetweenRetries = 15;
+					_logger->info(__FILEREF__ + "fixIngestionJobsHavingWrongStatus failed, "
+						+ "waiting before to try again"
+						+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+						+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+						+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
 				}
 			}
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", toleranceInHours: " + to_string(toleranceInHours)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
+
+		_logger->info(__FILEREF__ + "fixIngestionJobsHavingWrongStatus "
+			+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
+		);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -6196,42 +6236,69 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			int maxToBeRemoved = 100;
 			int totalRowsRemoved = 0;
 			bool moreRowsToBeRemoved = true;
-			while (moreRowsToBeRemoved)
+			int maxRetriesOnError = 2;
+			int currentRetriesOnError = 0;
+			while (moreRowsToBeRemoved && currentRetriesOnError < maxRetriesOnError)
 			{
-				// 2022-01-30: we cannot remove any OLD ingestionroot/ingestionjob/encodingjob
-				//			because we have the sheduled jobs (recording, proxy, ...) that
-				//			can be scheduled to be run on the future
-				//			For this reason I added the status condition
-				// scenarios anomalous:
-				//	- encoding is in a final state but ingestion is not: we already have the
-				//		fixIngestionJobsHavingWrongStatus method
-				//	- ingestion is in a final state but encoding is not: we already have the
-				//		fixEncodingJobsHavingWrongStatus method
-				lastSQLCommand = 
-					"delete from MMS_IngestionRoot "
-					"where ingestionDate < DATE_SUB(NOW(), INTERVAL ? DAY) "
-					"and status like 'Completed%' "
-					"limit ?";
+				try
+				{
+					// 2022-01-30: we cannot remove any OLD ingestionroot/ingestionjob/encodingjob
+					//			because we have the sheduled jobs (recording, proxy, ...) that
+					//			can be scheduled to be run on the future
+					//			For this reason I added the status condition
+					// scenarios anomalous:
+					//	- encoding is in a final state but ingestion is not: we already have the
+					//		fixIngestionJobsHavingWrongStatus method
+					//	- ingestion is in a final state but encoding is not: we already have the
+					//		fixEncodingJobsHavingWrongStatus method
+					lastSQLCommand = 
+						"delete from MMS_IngestionRoot "
+						"where ingestionDate < DATE_SUB(NOW(), INTERVAL ? DAY) "
+						"and status like 'Completed%' "
+						"limit ?";
 
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
-				preparedStatement->setInt(queryParameterIndex++,
-					_ingestionWorkflowRetentionInDays);
-				preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt(queryParameterIndex++,
+						_ingestionWorkflowRetentionInDays);
+					preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
 
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
-					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-				totalRowsRemoved += rowsUpdated;
-				if (rowsUpdated == 0)
-					moreRowsToBeRemoved = false;
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					totalRowsRemoved += rowsUpdated;
+					if (rowsUpdated == 0)
+						moreRowsToBeRemoved = false;
+
+					currentRetriesOnError = 0;
+				}
+				catch(sql::SQLException se)
+				{
+					// Deadlock!!!
+					_logger->error(__FILEREF__ + "SQL exception"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", se.what(): " + se.what()
+						+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+					);
+
+					currentRetriesOnError++;
+
+					int secondsBetweenRetries = 15;
+					_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot failed, "
+						+ "waiting before to try again"
+						+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+						+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+						+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+				}
 			}
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionRoot"
 				+ ", totalRowsRemoved: " + to_string(totalRowsRemoved)
@@ -6242,83 +6309,99 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 		// IngestionJobs taking too time to download/move/copy/upload
 		// the content are set to failed
 		{
-			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time to download/move/copy/upload the content"
-				);
-			lastSQLCommand = 
-				"select ingestionJobKey from MMS_IngestionJob "
-				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
-				"and DATE_ADD(startProcessing, INTERVAL ? HOUR) <= NOW() "
-				;
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInHours);
+			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time "
+				"to download/move/copy/upload the content");
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			while (resultSet->next())
+			long totalRowsUpdated = 0;
+			int maxRetriesOnError = 2;
+			int currentRetriesOnError = 0;
+			bool toBeExecutedAgain = true;
+			while (toBeExecutedAgain)
 			{
-				int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-				{     
-           			IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
+				try
+				{
+					lastSQLCommand = 
+						"select ingestionJobKey from MMS_IngestionJob "
+						"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
+						"and DATE_ADD(startProcessing, INTERVAL ? HOUR) <= NOW() "
+						;
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+					preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInHours);
 
-					string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
-					string processorMMS;
-					_logger->info(__FILEREF__ + "Update IngestionJob"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", IngestionStatus: " + toString(newIngestionStatus)
-						+ ", errorMessage: " + errorMessage
-						+ ", processorMMS: " + processorMMS
-					);                            
-    				try
-    				{
-						updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+						+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+						+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+						+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+						+ ", _contentNotTransferredRetentionInHours: " + to_string(_contentNotTransferredRetentionInHours)
+						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					while (resultSet->next())
+					{
+						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+						{     
+							IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
+
+							string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
+							string processorMMS;
+							_logger->info(__FILEREF__ + "Update IngestionJob"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + toString(newIngestionStatus)
+								+ ", errorMessage: " + errorMessage
+								+ ", processorMMS: " + processorMMS
+							);                            
+							updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+							totalRowsUpdated++;
+						}
 					}
-    				catch(sql::SQLException se)
-    				{
-        				string exceptionMessage(se.what());
-        
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", exceptionMessage: " + exceptionMessage
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}    
-    				catch(runtime_error e)
-    				{
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", e.what(): " + e.what()
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}        
-    				catch(exception e)
-    				{        
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}        
+
+					toBeExecutedAgain = false;
+				}
+				catch(sql::SQLException se)
+				{
+					// Deadlock!!!
+					_logger->error(__FILEREF__ + "SQL exception"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", se.what(): " + se.what()
+						+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+					);
+
+					currentRetriesOnError++;
+					if (currentRetriesOnError >= maxRetriesOnError)
+						toBeExecutedAgain = false;
+					else
+					{
+						int secondsBetweenRetries = 15;
+						_logger->info(__FILEREF__
+							+ "retentionOfIngestionData. IngestionJobs taking too time failed, "
+							+ "waiting before to try again"
+							+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+							+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+							+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+						);
+						this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+					}
 				}
 			}
-			_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
-				+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
-				+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
-				+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
-				+ ", _contentNotTransferredRetentionInHours: " + to_string(_contentNotTransferredRetentionInHours)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+
+			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time "
+				"to download/move/copy/upload the content"
+				+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
 			);
 		}
 
@@ -6326,67 +6409,91 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs not completed "
 				+ "(state Start_TaskQueued) and too old to be considered "
 				+ "by MMSEngineDBFacade::getIngestionsToBeManaged"
-				// + ", processorMMS: " + processorMMS
 			);
-			// 2021-07-17: In this scenario the IngestionJobs would remain infinite time:
-            lastSQLCommand = 
-                "select ingestionJobKey from MMS_IngestionJob "
-				"where status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
-				// "where (processorMMS is NULL or processorMMS = ?) "
-				// "and status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            // preparedStatement->setString(queryParameterIndex++, processorMMS);
-            preparedStatement->setString(queryParameterIndex++,
-				MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-            preparedStatement->setInt(queryParameterIndex++, _doNotManageIngestionsOlderThanDays);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. IngestionJobs not completed)"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				// + ", processorMMS: " + processorMMS
-				+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
-				+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            while (resultSet->next())
-            {
-				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-				string errorMessage = "Canceled by MMS because not completed and too old";
+			long totalRowsUpdated = 0;
+			int maxRetriesOnError = 2;
+			int currentRetriesOnError = 0;
+			bool toBeExecutedAgain = true;
+			while (toBeExecutedAgain)
+			{
 				try
 				{
-					_logger->info(__FILEREF__ + "Update IngestionJob"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", IngestionStatus: " + "End_CanceledByMMS"
-						+ ", errorMessage: " + errorMessage
+					// 2021-07-17: In this scenario the IngestionJobs would remain infinite time:
+					lastSQLCommand = 
+						"select ingestionJobKey from MMS_IngestionJob "
+						"where status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
+						// "where (processorMMS is NULL or processorMMS = ?) "
+						// "and status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					// preparedStatement->setString(queryParameterIndex++, processorMMS);
+					preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+					preparedStatement->setInt(queryParameterIndex++, _doNotManageIngestionsOlderThanDays);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded. IngestionJobs not completed)"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						// + ", processorMMS: " + processorMMS
+						+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+						+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
+						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
 					);
-					updateIngestionJob (ingestionJobKey,
-						MMSEngineDBFacade::IngestionStatus::End_CanceledByMMS,
-						errorMessage);
+					while (resultSet->next())
+					{
+						int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
+						string errorMessage = "Canceled by MMS because not completed and too old";
+
+						_logger->info(__FILEREF__ + "Update IngestionJob"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_CanceledByMMS"
+							+ ", errorMessage: " + errorMessage
+						);
+						updateIngestionJob (ingestionJobKey,
+							MMSEngineDBFacade::IngestionStatus::End_CanceledByMMS,
+							errorMessage);
+						totalRowsUpdated++;
+					}
+
+					toBeExecutedAgain = false;
 				}
-				catch(runtime_error e)
+				catch(sql::SQLException se)
 				{
-					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", IngestionStatus: " + "End_CanceledByMMS"
-						+ ", errorMessage: " + errorMessage
-						+ ", e.what(): " + e.what()
+					// Deadlock!!!
+					_logger->error(__FILEREF__ + "SQL exception"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", se.what(): " + se.what()
+						+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 					);
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", IngestionStatus: " + "End_CanceledByMMS"
-						+ ", errorMessage: " + errorMessage
-						+ ", e.what(): " + e.what()
-					);
+
+					currentRetriesOnError++;
+					if (currentRetriesOnError >= maxRetriesOnError)
+						toBeExecutedAgain = false;
+					else
+					{
+						int secondsBetweenRetries = 15;
+						_logger->info(__FILEREF__
+							+ "retentionOfIngestionData. IngestionJobs taking too time failed, "
+							+ "waiting before to try again"
+							+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+							+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+							+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+						);
+						this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+					}
 				}
 			}
+
+			_logger->info(__FILEREF__ + "retentionOfIngestionData. IngestionJobs not completed "
+				+ "(state Start_TaskQueued) and too old to be considered "
+				+ "by MMSEngineDBFacade::getIngestionsToBeManaged"
+				+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
+			);
 		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -6418,7 +6525,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
     }
     catch(runtime_error e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "runtime_error exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -6437,7 +6544,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
     }
     catch(exception e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );

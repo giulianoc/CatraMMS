@@ -5158,63 +5158,103 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 	_logger->info(__FILEREF__ + "fixEncodingJobsHavingWrongStatus"
 			);
 
-    try
+	try
     {
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		// Scenarios: IngestionJob in final status but EncodingJob not in final status
-		//	This is independently by the specific instance of mms-engine (because in this scenario
-		//	often the processor field is empty) but someone has to do it
-		//	This scenario may happen in case the mms-engine is shutdown not in friendly way
+		long totalRowsUpdated = 0;
+		int maxRetriesOnError = 2;
+		int currentRetriesOnError = 0;
+		bool toBeExecutedAgain = true;
+		while (toBeExecutedAgain)
 		{
-			lastSQLCommand = 
-				"select ij.ingestionJobKey, ej.encodingJobKey, "
-				"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
-				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
-				"where ij.ingestionJobKey = ej.ingestionJobKey "
-				"and ij.status like 'End_%' and ej.status not like 'End_%'"
-			;
-
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-			while (resultSet->next())
+			try
 			{
-				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
-				int64_t encodingJobKey = resultSet->getInt64("encodingJobKey");
-				string ingestionJobStatus = resultSet->getString("ingestionJobStatus");
-				string encodingJobStatus = resultSet->getString("encodingJobStatus");
+				// Scenarios: IngestionJob in final status but EncodingJob not in final status
+				//	This is independently by the specific instance of mms-engine (because in this scenario
+				//	often the processor field is empty) but someone has to do it
+				//	This scenario may happen in case the mms-engine is shutdown not in friendly way
+				lastSQLCommand = 
+					"select ij.ingestionJobKey, ej.encodingJobKey, "
+					"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
+					"from MMS_IngestionJob ij, MMS_EncodingJob ej "
+					"where ij.ingestionJobKey = ej.ingestionJobKey "
+					"and ij.status like 'End_%' and ej.status not like 'End_%'"
+				;
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				while (resultSet->next())
+				{
+					int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+					int64_t encodingJobKey = resultSet->getInt64("encodingJobKey");
+					string ingestionJobStatus = resultSet->getString("ingestionJobStatus");
+					string encodingJobStatus = resultSet->getString("encodingJobStatus");
+
+					{
+						string errorMessage = string("Found EncodingJob with wrong status")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus
+							+ ", encodingJobStatus: " + encodingJobStatus
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						updateEncodingJob (
+							encodingJobKey,
+							EncodingError::CanceledByMMS,
+							false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+							ingestionJobKey,
+							errorMessage
+						);
+
+						totalRowsUpdated++;
+					}
+				}
+
+				toBeExecutedAgain = false;
+			}
+			catch(sql::SQLException se)
+			{
+				currentRetriesOnError++;
+				if (currentRetriesOnError >= maxRetriesOnError)
+					throw se;
+
+				// Deadlock!!!
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+				);
 
 				{
-					string errorMessage = string("Found EncodingJob with wrong status")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobStatus: " + ingestionJobStatus
-						+ ", encodingJobStatus: " + encodingJobStatus
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					updateEncodingJob (
-						encodingJobKey,
-						EncodingError::CanceledByMMS,
-						false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
-						ingestionJobKey,
-						errorMessage
+					int secondsBetweenRetries = 15;
+					_logger->info(__FILEREF__ + "fixEncodingJobsHavingWrongStatus failed, "
+						+ "waiting before to try again"
+						+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+						+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+						+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
 					);
+					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
 				}
 			}
 		}
+
+		_logger->info(__FILEREF__ + "fixEncodingJobsHavingWrongStatus "
+			+ ", totalRowsUpdated: " + to_string(totalRowsUpdated)
+		);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

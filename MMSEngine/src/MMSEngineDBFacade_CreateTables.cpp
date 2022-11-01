@@ -1491,7 +1491,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority, processingStartingFrom)";
+                "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -1582,6 +1582,26 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
 
         try
         {

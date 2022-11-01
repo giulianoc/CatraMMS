@@ -1971,32 +1971,61 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 			int maxToBeRemoved = 100;
 			int totalRowsRemoved = 0;
 			bool moreRowsToBeRemoved = true;
+			int maxRetriesOnError = 2;
+			int currentRetriesOnError = 0;
 			while (moreRowsToBeRemoved)
 			{
-				lastSQLCommand = 
-					"delete from MMS_DeliveryAuthorization "
-					"where DATE_ADD(authorizationTimestamp, "
-						"INTERVAL (ttlInSeconds + ?) SECOND) < NOW() "
-					"limit ?";
+				try
+				{
+					lastSQLCommand = 
+						"delete from MMS_DeliveryAuthorization "
+						"where DATE_ADD(authorizationTimestamp, "
+							"INTERVAL (ttlInSeconds + ?) SECOND) < NOW() "
+						"limit ?";
 
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
-				preparedStatement->setInt(queryParameterIndex++, retention);
-				preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt(queryParameterIndex++, retention);
+					preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
 
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", retention: " + to_string(retention)
-					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-				totalRowsRemoved += rowsUpdated;
-				if (rowsUpdated == 0)
-					moreRowsToBeRemoved = false;
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", retention: " + to_string(retention)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					totalRowsRemoved += rowsUpdated;
+					if (rowsUpdated == 0)
+						moreRowsToBeRemoved = false;
+
+					currentRetriesOnError = 0;
+				}
+				catch(sql::SQLException se)
+				{
+					currentRetriesOnError++;
+					if (currentRetriesOnError >= maxRetriesOnError)
+						throw se;
+
+					// Deadlock!!!
+					_logger->error(__FILEREF__ + "SQL exception"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", se.what(): " + se.what()
+						+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+					);
+
+					int secondsBetweenRetries = 15;
+					_logger->info(__FILEREF__ + "retentionOfDeliveryAuthorization failed, "
+						+ "waiting before to try again"
+						+ ", currentRetriesOnError: " + to_string(currentRetriesOnError)
+						+ ", maxRetriesOnError: " + to_string(maxRetriesOnError)
+						+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+				}
 			}
 
 			_logger->info(__FILEREF__ + "Deletion obsolete DeliveryAuthorization"

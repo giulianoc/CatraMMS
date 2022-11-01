@@ -1316,13 +1316,14 @@ void EncoderVideoAudioProxy::operator()()
 
     try
     {
-        _logger->info(__FILEREF__ + "updateEncodingJob NoError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		_logger->info(__FILEREF__ + "updateEncodingJob NoError"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", isIngestionJobCompleted: " + to_string(isIngestionJobCompleted)
+			+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+		);
 
 		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
 		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
