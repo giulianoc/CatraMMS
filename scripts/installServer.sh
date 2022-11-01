@@ -862,6 +862,8 @@ else
 	echo "in caso di hetzner engine/transcoder ibrido, 1. assegna il server al vSwitch (tramite hetzner WEB page), 2. decidere un nuovo IP e scriverlo nel documento Hetzner Info su google drive, 3. aggiungere la configurazione di un nuovo IP internal in /etc/netplan/01-netcfg.yaml"
 	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
 	echo ""
+	echo "- in case of engine ibrido, cambiare hostname (di default è quello assegnato da hetzner). In caso di engine è importante cambiare il nome dell'hostname perchè viene inserito nel DB. Per cambiare hostname seguire le istruzioni: https://www.cyberciti.biz/faq/ubuntu-20-04-lts-change-hostname-permanently/"
+	echo ""
 	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add 10.0.0.2 db-server-active)"
 	echo ""
 	echo "- run the commands as mms user 'sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
