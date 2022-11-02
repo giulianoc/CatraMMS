@@ -8,10 +8,9 @@ then
 fi
 
 tsvPathName=$1
-
 userKey=$2
 apiKey=$3
 mmsApiHostname=$4
 
-awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/image.awk $tsvPathName
+awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/kids.awk $tsvPathName
 

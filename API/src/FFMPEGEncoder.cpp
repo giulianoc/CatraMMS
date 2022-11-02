@@ -4054,7 +4054,7 @@ void FFMPEGEncoder::encodeContentThread(
 				encodingMedatada["encodingParametersRoot"].get("contentType", "").asString());
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
         string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "").asString();
-        string relativePath = sourceToBeEncodedRoot.get("sourceRelativePath", "").asString();
+        // string relativePath = sourceToBeEncodedRoot.get("sourceRelativePath", "").asString();
         int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 
@@ -4080,7 +4080,7 @@ void FFMPEGEncoder::encodeContentThread(
 				videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
                 physicalPathKey,
                 workspaceDirectoryName,
-                relativePath,
+                // relativePath,
                 encodingJobKey,
                 ingestionJobKey,
 				&(encoding->_childPid)

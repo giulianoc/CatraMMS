@@ -9,9 +9,9 @@ BEGIN {
 
 {
 	title=$2;
-	imageURL=$6;
+	imageURL=$8;
 
-	if (NR == 1 && title == "TITOLO")
+	if (NR == 1 && title == "Titolo")
 	{
 		printf("First row skipped\n");
 		
@@ -24,18 +24,18 @@ BEGIN {
 		fileFormat="png";
 	else if (index(imageURLLower, ".jpg") != 0)
 		fileFormat="jpg";
-	if (title != "" && imageURL != "" and fileFormat != "")
+	if (title != "" && imageURL != "" && fileFormat != "")
 	{
 		printf("\n") >> outputPathName;
 
-		gsub(/\//, "\\\/", title);
+		gsub(/\//, "\\/", title);
 		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", title);
 
-		gsub(/\//, "\\\/", imageURL);
+		gsub(/\//, "\\/", imageURL);
 
 		# printf("imageURL: %s\n", imageURL);
 		# printf("fileFormat: %s\n", fileFormat);
-		printf("sed \"s/__title__/%s/g\" ./utility/movie_ingestionImageTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./outputIngestionImage.json\n", title, imageURL, fileFormat, retention) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/ingestionImageTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__fileformat__/%s/g\" | sed \"s/__retention__/%s/g\" > ./outputIngestionImage.json\n", title, imageURL, fileFormat, retention) >> outputPathName;
 
 		printf("curl -k -u %s:%s -d @./outputIngestionImage.json -H \"Content-Type: application/json\" https://%s/catramms/1.0.1/workflow\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}

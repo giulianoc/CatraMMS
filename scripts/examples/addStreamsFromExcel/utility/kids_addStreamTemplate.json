@@ -1,0 +1,22 @@
+
+{
+	"label": "__title__",
+	"sourceType": "IP_PULL",
+	"url": "__url__",
+	"type": "direct-movie",
+	"description": "__description__",
+	"name": "__title__",
+	"region": "",
+	"country": "",
+	"imageUniqueName": "__title__",
+	"userData": {
+		"staging": true,
+		"production": true,
+		"year": __year__,
+		"categories": [__categories__],
+		"channelName": "__title__",
+		"language": "__language__",
+		"duration": "__duration__"
+	}
+}
+

@@ -94,7 +94,7 @@ void FFMpeg::encodeContent(
 	int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
 	int64_t physicalPathKey,
 	string customerDirectoryName,
-	string relativePath,
+	// string relativePath,
 	int64_t encodingJobKey,
 	int64_t ingestionJobKey,
 	pid_t* pChildPid)
