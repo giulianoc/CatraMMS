@@ -3718,12 +3718,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				try
 				{
-					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+					_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", selectedLiveProxy->_childPid: " + to_string(selectedLiveProxy->_childPid)
 					);
-					ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
+					ProcessUtility::termProcess(selectedLiveProxy->_childPid);
 				}
 				catch(runtime_error e)
 				{
@@ -13024,7 +13024,7 @@ void FFMPEGEncoder::monitorThread()
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
@@ -13118,7 +13118,7 @@ void FFMPEGEncoder::monitorThread()
 						int maxMilliSecondsToWait = 3000;
 						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								+ ", configurationLabel: " + configurationLabel
@@ -13186,7 +13186,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
@@ -13245,7 +13245,7 @@ void FFMPEGEncoder::monitorThread()
 
 				if (!liveProxyWorking)
 				{
-					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
+					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
@@ -13261,8 +13261,9 @@ void FFMPEGEncoder::monitorThread()
 						//		failing. May be because it could not finish his sample/frame
 						//		to process. The result is that the channels were not restarted.
 						//		This is an ipothesys, not 100% sure
-						ProcessUtility::killProcess(sourceLiveProxy->_childPid);
-						// ProcessUtility::quitProcess(copiedLiveProxy->_childPid);
+						// 2022-11-02: using termProcess, it should be the right method
+						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
+						ProcessUtility::termProcess(sourceLiveProxy->_childPid);
 						sourceLiveProxy->_killedBecauseOfNotWorking = true;
 						{
 							char strDateTime [64];
@@ -13995,7 +13996,7 @@ void FFMPEGEncoder::monitorThread()
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'no segments were generated'";
 
-										_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
+										_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/termProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 											+ ", manifestFilePathName: " + manifestFilePathName
@@ -14089,7 +14090,7 @@ void FFMPEGEncoder::monitorThread()
 						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(
 							maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/termProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -14132,7 +14133,7 @@ void FFMPEGEncoder::monitorThread()
 
 				if (!liveRecorderWorking)
 				{
-					_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
+					_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/termProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
@@ -14147,8 +14148,9 @@ void FFMPEGEncoder::monitorThread()
 						//		failing. May be because it could not finish his sample/frame
 						//		to process. The result is that the channels were not restarted.
 						//		This is an ipothesys, not 100% sure
-						ProcessUtility::killProcess(sourceLiveRecording->_childPid);
-						// ProcessUtility::quitProcess(liveRecording->_childPid);
+						// 2022-11-02: using termProcess, it should be the right method
+						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
+						ProcessUtility::termProcess(sourceLiveRecording->_childPid);
 						sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						{
 							char strDateTime [64];
