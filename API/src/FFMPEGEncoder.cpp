@@ -3405,6 +3405,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		pid_t			pidToBeKilled;
 		bool			encodingFound = false;
+		bool			liveProxyFound = false;
+		bool			liveRecorderFound = false;
 
 		{
 			// see comment 2020-11-30
@@ -3448,7 +3450,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
-					encodingFound = true;
+					liveProxyFound = true;
 					pidToBeKilled = liveProxy->_childPid;
 
 					break;
@@ -3459,13 +3461,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				_liveProxiesCapability->find(encodingJobKey);
 			if (it != _liveProxiesCapability->end())
 			{
-				encodingFound = true;
+				liveProxyFound = true;
 				pidToBeKilled = it->second->_childPid;
 			}
 			#endif
 		}
 
-		if (!encodingFound)
+		if (!liveProxyFound)
 		{
 			// see comment 2020-11-30
 			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
@@ -3478,7 +3480,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				if (liveRecording->_encodingJobKey == encodingJobKey)
 				{
-					encodingFound = true;
+					liveRecorderFound = true;
 					pidToBeKilled = liveRecording->_childPid;
 
 					break;
@@ -3489,13 +3491,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				_liveRecordingsCapability->find(encodingJobKey);
 			if (it != _liveRecordingsCapability->end())
 			{
-				encodingFound = true;
+				liveRecorderFound = true;
 				pidToBeKilled = it->second->_childPid;
 			}
 			#endif
 		}
 
-        if (!encodingFound)
+        if (!liveRecorderFound)
         {
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 				+ ", " + NoEncodingJobKeyFound().what();
@@ -3537,11 +3539,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (lightKill)
 			{
-				_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
-				);
-				ProcessUtility::termProcess(pidToBeKilled);
+				if (liveProxyFound)
+				{
+					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
+					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+					);
+					ProcessUtility::quitProcess(pidToBeKilled);
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+					);
+					ProcessUtility::termProcess(pidToBeKilled);
+				}
 			}
 			else
 			{
@@ -3718,12 +3732,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				try
 				{
-					_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
+					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
+					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", selectedLiveProxy->_childPid: " + to_string(selectedLiveProxy->_childPid)
 					);
-					ProcessUtility::termProcess(selectedLiveProxy->_childPid);
+					ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
 				}
 				catch(runtime_error e)
 				{
@@ -13024,7 +13039,7 @@ void FFMPEGEncoder::monitorThread()
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
@@ -13118,7 +13133,7 @@ void FFMPEGEncoder::monitorThread()
 						int maxMilliSecondsToWait = 3000;
 						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								+ ", configurationLabel: " + configurationLabel
@@ -13186,7 +13201,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
@@ -13245,7 +13260,7 @@ void FFMPEGEncoder::monitorThread()
 
 				if (!liveProxyWorking)
 				{
-					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/termProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
+					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
@@ -13261,10 +13276,10 @@ void FFMPEGEncoder::monitorThread()
 						//		failing. May be because it could not finish his sample/frame
 						//		to process. The result is that the channels were not restarted.
 						//		This is an ipothesys, not 100% sure
-						// 2022-11-02: using termProcess, it should be the right method
+						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
 						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
-						ProcessUtility::termProcess(sourceLiveProxy->_childPid);
-						sourceLiveProxy->_killedBecauseOfNotWorking = true;
+						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
+						ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
 						{
 							char strDateTime [64];
 							{
@@ -14150,8 +14165,8 @@ void FFMPEGEncoder::monitorThread()
 						//		This is an ipothesys, not 100% sure
 						// 2022-11-02: using termProcess, it should be the right method
 						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
+						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						ProcessUtility::termProcess(sourceLiveRecording->_childPid);
-						sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						{
 							char strDateTime [64];
 							{
