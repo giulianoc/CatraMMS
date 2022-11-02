@@ -3539,25 +3539,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (lightKill)
 			{
-				// if (liveProxyFound)
-				{
-					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
-					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", pidToBeKilled: " + to_string(pidToBeKilled)
-					);
-					ProcessUtility::quitProcess(pidToBeKilled);
-				}
-				/*
-				else
-				{
-					_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", pidToBeKilled: " + to_string(pidToBeKilled)
-					);
-					ProcessUtility::termProcess(pidToBeKilled);
-				}
-				*/
+				// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liverecording e liveProxy
+				_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+				);
+				ProcessUtility::quitProcess(pidToBeKilled);
 			}
 			else
 			{
@@ -3734,7 +3721,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				try
 				{
-					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
+					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
 					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -13278,7 +13265,7 @@ void FFMPEGEncoder::monitorThread()
 						//		failing. May be because it could not finish his sample/frame
 						//		to process. The result is that the channels were not restarted.
 						//		This is an ipothesys, not 100% sure
-						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp (liveProxy2)
+						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
 						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
 						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
 						ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
@@ -14165,7 +14152,7 @@ void FFMPEGEncoder::monitorThread()
 						//		failing. May be because it could not finish his sample/frame
 						//		to process. The result is that the channels were not restarted.
 						//		This is an ipothesys, not 100% sure
-						// 2022-11-02: using termProcess, it should be the right method
+						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liverecording
 						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
 						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						ProcessUtility::quitProcess(sourceLiveRecording->_childPid);

@@ -9952,18 +9952,21 @@ void FFMpeg::liveRecorder(
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 				ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-        _logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-        );
-
-		bool redirectionStdOutput = true;
-		bool redirectionStdError = true;
-
-		// while(sigQuitReceived)
+		bool sigQuitReceived = true;
+		while(sigQuitReceived)
 		{
+			sigQuitReceived = false;
+
+			_logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			);
+
+			bool redirectionStdOutput = true;
+			bool redirectionStdError = true;
+
 			startFfmpegCommand = chrono::system_clock::now();
 
 			ProcessUtility::forkAndExec (
@@ -9976,6 +9979,27 @@ void FFMpeg::liveRecorder(
 
 			if (iReturnedStatus != 0)
 			{
+				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+					_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+				// Exiting normally, received signal 3.
+				if (lastPartOfFfmpegOutputFile.find("signal 3") != string::npos)
+				{
+					sigQuitReceived = true;
+
+					string errorMessage = __FILEREF__
+						+ "liveRecorder: ffmpeg command received SIGQUIT and is called again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					;
+					_logger->error(errorMessage);
+
+					continue;
+				}
+
 				string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
