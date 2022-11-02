@@ -3536,9 +3536,21 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				= chrono::system_clock::now();
 
 			if (lightKill)
-				ProcessUtility::quitProcess(pidToBeKilled);
+			{
+				_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+				);
+				ProcessUtility::termProcess(pidToBeKilled);
+			}
 			else
+			{
+				_logger->info(__FILEREF__ + "ProcessUtility::killProcess"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+				);
 				ProcessUtility::killProcess(pidToBeKilled);
+			}
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
 			_logger->info(__FILEREF__ + "killProcess statistics"

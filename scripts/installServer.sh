@@ -639,7 +639,7 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		echo -n "$packageName version (i.e.: 1.0.1610)? "
+		echo -n "$packageName version (i.e.: 1.0.1640)? "
 		read version
 		package=$packageName-$version
 		echo "Downloading $package..."
