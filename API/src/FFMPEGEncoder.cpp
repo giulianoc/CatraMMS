@@ -3535,9 +3535,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			chrono::system_clock::time_point startKillProcess
 				= chrono::system_clock::now();
 
-			// if (lightKill)
-			// 	ProcessUtility::termProcess(pidToBeKilled);
-			// else
+			if (lightKill)
+				ProcessUtility::quitProcess(pidToBeKilled);
+			else
 				ProcessUtility::killProcess(pidToBeKilled);
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
