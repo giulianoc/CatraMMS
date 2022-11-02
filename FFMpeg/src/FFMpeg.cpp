@@ -9959,36 +9959,40 @@ void FFMpeg::liveRecorder(
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
         );
 
-        startFfmpegCommand = chrono::system_clock::now();
-
 		bool redirectionStdOutput = true;
 		bool redirectionStdError = true;
 
-		ProcessUtility::forkAndExec (
-			_ffmpegPath + "/ffmpeg",
-			ffmpegArgumentList,
-			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
-			pChildPid, &iReturnedStatus);
-		if (iReturnedStatus != 0)
-        {
-			string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-                + ", iReturnedStatus: " + to_string(iReturnedStatus)
-				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            ;
-            _logger->error(errorMessage);
+		// while(sigQuitReceived)
+		{
+			startFfmpegCommand = chrono::system_clock::now();
 
-			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "liveRecorder: command failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-            ;
-            throw runtime_error(errorMessage);
-        }
+			ProcessUtility::forkAndExec (
+				_ffmpegPath + "/ffmpeg",
+				ffmpegArgumentList,
+				_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+				pChildPid, &iReturnedStatus);
 
-        endFfmpegCommand = chrono::system_clock::now();
+			endFfmpegCommand = chrono::system_clock::now();
+
+			if (iReturnedStatus != 0)
+			{
+				string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				;
+				_logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__ + "liveRecorder: command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				throw runtime_error(errorMessage);
+			}
+		}
 
         _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
