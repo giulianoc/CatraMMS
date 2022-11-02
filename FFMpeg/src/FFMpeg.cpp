@@ -9987,7 +9987,7 @@ void FFMpeg::liveRecorder(
 					sigQuitReceived = true;
 
 					string errorMessage = __FILEREF__
-						+ "liveRecorder: ffmpeg command received SIGQUIT and is called again"
+						+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT and is called again"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", iReturnedStatus: " + to_string(iReturnedStatus)
@@ -10000,7 +10000,7 @@ void FFMpeg::liveRecorder(
 					continue;
 				}
 
-				string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
+				string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg: ffmpeg execution command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", iReturnedStatus: " + to_string(iReturnedStatus)
@@ -10160,7 +10160,7 @@ void FFMpeg::liveRecorder(
 			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg: ffmpeg execution command failed because killed by the user"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -10169,7 +10169,7 @@ void FFMpeg::liveRecorder(
 				+ ", e.what(): " + e.what()
 			;
 		else
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg execution command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
