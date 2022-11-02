@@ -1383,7 +1383,7 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey, bool light
 			transcoderHost
 			+ _ffmpegEncoderKillEncodingURI
 			+ "/" + to_string(encodingJobKey)
-			+ "?lightKill=" + to_string(lightKill)
+			+ "?lightKill=" + (lightKill ? "true" : "false)
 		;
 
 		list<string> header;
