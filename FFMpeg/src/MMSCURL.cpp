@@ -306,7 +306,7 @@ string MMSCURL::httpPostPutString(
 			sResponse.pop_back();
 
 		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
+		if (responseCode == 200 || responseCode == 201)
 		{
 			string message = __FILEREF__ + "httpPostPutString"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
