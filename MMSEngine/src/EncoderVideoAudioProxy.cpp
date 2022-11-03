@@ -2331,12 +2331,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
-			/*
-			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					encodersPool, _encodingItem->_workspace,
-					encoderToSkip);
-			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
@@ -2419,63 +2413,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 				"application/json", // contentType
 				_logger
 			);
-
-			/*
-            list<string> header;
-
-            header.push_back("Content-Type: application/json");
-            {
-                string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
-                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-                header.push_back(basicAuthorization);
-            }
-            
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
-
-            // Setting the URL to retrive.
-            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-
-			// timeout consistent with nginx configuration (fastcgi_read_timeout)
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
-
-            // if (_ffmpegEncoderProtocol == "https")
-			string httpsPrefix("https");
-			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
-                
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
-                
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-            }
-            request.setOpt(new curlpp::options::HttpHeader(header));
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            _logger->info(__FILEREF__ + "Encoding media file"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", body: " + body
-            );
-			responseInitialized = true;
-            request.perform();
-
-            string sResponse = response.str();
-            // LF and CR create problems to the json parser...
-            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-                sResponse.pop_back();
-			*/
 
             Json::Value encodeContentResponse;
             try
@@ -2883,34 +2820,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
 
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
-
 		throw e;
 	}
 	catch (curlpp::LogicError & e) 
@@ -2923,34 +2832,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", exception: " + e.what()
 			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
-
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
 
 		throw e;
 	}
@@ -2965,34 +2846,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
-
 		throw e;
 	}
 	catch (runtime_error e)
@@ -3006,34 +2859,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
-
 		throw e;
 	}
 	catch (exception e)
@@ -3046,34 +2871,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", exception: " + e.what()
 			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
-
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
 
 		throw e;
 	}
