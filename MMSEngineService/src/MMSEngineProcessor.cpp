@@ -21011,7 +21011,150 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
 
+					// calculate delivery URL in case of an external encoder
+					string sourcePhysicalDeliveryURL;
+					{
+						int64_t utcNow;
+						{
+							chrono::system_clock::time_point now = chrono::system_clock::now();
+							utcNow = chrono::system_clock::to_time_t(now);
+						}
 
+						pair<string, string> deliveryAuthorizationDetails =
+							_mmsDeliveryAuthorization->createDeliveryAuthorization(
+							-1,	// userKey,
+							workspace,
+							"",	// clientIPAddress,
+
+							-1,	// mediaItemKey,
+							"",	// uniqueName,
+							-1,	// encodingProfileKey,
+							"",	// encodingProfileLabel,
+
+							sourcePhysicalPathKey,
+
+							-1,	// ingestionJobKey,	(in case of live)
+							-1,	// deliveryCode,
+
+							365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+							999999,	// maxRetries,
+							false,	// save,
+							"MMS_SignedToken",	// deliveryType,
+
+							false,	// warningIfMissingMediaItemKey,
+							true	// filteredByStatistic
+						);
+
+						tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+					}
+
+					Json::Value videoTracksRoot(Json::arrayValue);
+					Json::Value audioTracksRoot(Json::arrayValue);
+					{
+						if (contentType == MMSEngineDBFacade::ContentType::Video)
+						{
+							vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+							int64_t sourceMediaItemKey = -1;
+							_mmsEngineDBFacade->getVideoDetails(
+								sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+
+							for (tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack:
+									videoTracks)
+							{
+								int trackIndex;
+								tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+									= videoTrack;
+
+								if (trackIndex != -1)
+								{
+									Json::Value videoTrackRoot;
+
+									string field = "trackIndex";
+									videoTrackRoot[field] = trackIndex;
+
+									videoTracksRoot.append(videoTrackRoot);
+								}
+							}
+
+							for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
+									audioTracks)
+							{
+								int trackIndex;
+								string language;
+								tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
+									= audioTrack;
+
+								if (trackIndex != -1 && language != "")
+								{
+									Json::Value audioTrackRoot;
+
+									string field = "trackIndex";
+									audioTrackRoot[field] = trackIndex;
+
+									field = "language";
+									audioTrackRoot[field] = language;
+
+									audioTracksRoot.append(audioTrackRoot);
+								}
+							}
+						}
+						else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+						{
+							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+							int64_t sourceMediaItemKey = -1;
+							_mmsEngineDBFacade->getAudioDetails(
+								sourceMediaItemKey, sourcePhysicalPathKey, audioTracks);
+
+							for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
+									audioTracks)
+							{
+								int trackIndex;
+								string language;
+								tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
+									= audioTrack;
+
+								if (trackIndex != -1 && language != "")
+								{
+									Json::Value audioTrackRoot;
+
+									string field = "trackIndex";
+									audioTrackRoot[field] = trackIndex;
+
+									field = "language";
+									audioTrackRoot[field] = language;
+
+									audioTracksRoot.append(audioTrackRoot);
+								}
+							}
+						}
+					}
+
+					string encodedFileName;
+					{
+						string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
+						string fileFormatLowerCase;
+						fileFormatLowerCase.resize(fileFormat.size());
+						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+							[](unsigned char c){return tolower(c); } );
+
+						encodedFileName =
+							to_string(ingestionJobKey)
+							+ "_"
+							+ to_string(encodingProfileKey);
+
+						if (fileFormatLowerCase == "hls"
+							|| fileFormatLowerCase == "dash")
+							;
+						else
+						{
+							encodedFileName.append(".");
+							encodedFileName.append(fileFormatLowerCase);
+						}
+					}
+    
 					Json::Value sourceRoot;
 
 					string field = "stopIfReferenceProcessingError";
@@ -21026,6 +21169,9 @@ void MMSEngineProcessor::manageEncodeTask(
 					field = "mmsSourceAssetPathName";
 					sourceRoot[field] = mmsSourceAssetPathName;
 
+					field = "sourcePhysicalDeliveryURL";
+					sourceRoot[field] = sourcePhysicalDeliveryURL;
+
 					field = "sourceDurationInMilliSecs";
 					sourceRoot[field] = sourceDurationInMilliSecs;
 
@@ -21037,6 +21183,15 @@ void MMSEngineProcessor::manageEncodeTask(
 
 					field = "sourceFileExtension";
 					sourceRoot[field] = sourceFileExtension;
+
+					field = "videoTracks";
+					sourceRoot[field] = videoTracksRoot;
+
+					field = "audioTracks";
+					sourceRoot[field] = audioTracksRoot;
+
+					field = "encodedFileName";
+					sourceRoot[field] = encodedFileName;
 
 					sourcesToBeEncodedRoot.append(sourceRoot);
 				}

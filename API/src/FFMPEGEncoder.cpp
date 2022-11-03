@@ -4069,25 +4069,22 @@ void FFMPEGEncoder::encodeContentThread(
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
 				encodingMedatada["encodingParametersRoot"].get("contentType", "").asString());
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
-        string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "").asString();
-        // string relativePath = sourceToBeEncodedRoot.get("sourceRelativePath", "").asString();
         int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 
 		Json::Value videoTracksRoot;
 		string field = "videoTracks";
-        if (JSONUtils::isMetadataPresent(encodingMedatada, field))
-			videoTracksRoot = encodingMedatada[field];
+        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			videoTracksRoot = sourceToBeEncodedRoot[field];
 		Json::Value audioTracksRoot;
 		field = "audioTracks";
-        if (JSONUtils::isMetadataPresent(encodingMedatada, field))
-			audioTracksRoot = encodingMedatada[field];
+        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			audioTracksRoot = sourceToBeEncodedRoot[field];
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->encodeContent(
                 mmsSourceAssetPathName,
                 durationInMilliSeconds,
-                // encodedFileName,
                 stagingEncodedAssetPathName,
                 encodingProfileDetailsRoot,
                 contentType == MMSEngineDBFacade::ContentType::Video,
@@ -4095,8 +4092,6 @@ void FFMPEGEncoder::encodeContentThread(
 				audioTracksRoot,
 				videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
                 physicalPathKey,
-                workspaceDirectoryName,
-                // relativePath,
                 encodingJobKey,
                 ingestionJobKey,
 				&(encoding->_childPid)

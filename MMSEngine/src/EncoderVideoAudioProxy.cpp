@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "MMSCURL.h"                                                                                          
 #include "AWSSigner.h"
 #include <fstream>
 // #include <sstream>
@@ -2255,6 +2256,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     int64_t sourcePhysicalPathKey;
     int64_t encodingProfileKey;    
 	string sourceFileName;
+	string encodedFileName;
 	try
     {
 		sourcesToBeEncodedRoot = _encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"];
@@ -2288,6 +2290,9 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         field = "sourceFileName";
         sourceFileName = sourceToBeEncodedRoot.get(field, "").asString();
 
+        field = "encodedFileName";
+        encodedFileName = sourceToBeEncodedRoot.get(field, "").asString();
+
         field = "encodingProfileKey";
         encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
 				field, 0);
@@ -2318,8 +2323,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 	string stagingEncodedAssetPathName;
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegEncodeURI;
-	ostringstream response;
-	bool responseInitialized = false;
+	// ostringstream response;
+	// bool responseInitialized = false;
 	try
 	{
 		bool externalEncoder = false;
@@ -2348,11 +2353,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                 + ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
             );
-            // ffmpegEncoderURL = 
-            //         _ffmpegEncoderProtocol
-            //         + "://"
-            //         + _currentUsedFFMpegEncoderHost + ":"
-            //         + to_string(_ffmpegEncoderPort)
             ffmpegEncoderURL =
 				_currentUsedFFMpegEncoderHost
 				+ ffmpegURI
@@ -2360,10 +2360,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			;
             string body;
             {
-				string encodedFileName;
-				// string mmsSourceAssetPathName;
-
-    
 				_logger->info(__FILEREF__ + "building body for encoder 1"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2373,72 +2369,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				);
 
-				string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
-				string fileFormatLowerCase;
-				fileFormatLowerCase.resize(fileFormat.size());
-				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-					[](unsigned char c){return tolower(c); } );
-
 				// stagingEncodedAssetPathName preparation
 				{
-					size_t extensionIndex = sourceFileName.find_last_of(".");
-					if (extensionIndex == string::npos)
-					{
-						string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", sourceFileName: " + sourceFileName;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					{
-						encodedFileName =
-							to_string(_encodingItem->_ingestionJobKey)
-							+ "_"
-							+ to_string(_encodingItem->_encodingJobKey)
-							+ "_" 
-							+ to_string(encodingProfileKey);
-
-						/*
-						if (fileFormatLowerCase == "mp4")
-							encodedFileName.append(".mp4");
-						else if (fileFormatLowerCase == "mov")
-							encodedFileName.append(".mov");
-						else if (fileFormatLowerCase == "hls"
-							|| fileFormatLowerCase == "dash")
-							;
-						else if (fileFormatLowerCase == "webm")
-							encodedFileName.append(".webm");
-						else if (fileFormatLowerCase == "ts")
-							encodedFileName.append(".ts");
-						else if (fileFormatLowerCase == "mkv")
-							encodedFileName.append(".mkv");
-						else
-						{
-							string errorMessage = __FILEREF__ + "Unknown fileFormat"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", fileFormat: " + fileFormat
-								;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						*/
-						if (fileFormatLowerCase == "hls"
-							|| fileFormatLowerCase == "dash")
-							;
-						else
-						{
-							encodedFileName.append(".");
-							encodedFileName.append(fileFormatLowerCase);
-						}
-					}
-
 					bool removeLinuxPathIfExist = true;
 					bool neededForTranscoder = false;
 					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
@@ -2450,111 +2382,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 						removeLinuxPathIfExist);
-
-					if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
-					{
-						// In this case, the path is a directory where to place the segments
-
-						if (!FileIO::directoryExisting(stagingEncodedAssetPathName)) 
-						{
-							_logger->info(__FILEREF__ + "Create directory"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-							);
-
-							bool noErrorIfExists = true;
-							bool recursive = true;
-							FileIO::createDirectory(
-									stagingEncodedAssetPathName,
-									S_IRUSR | S_IWUSR | S_IXUSR |
-									S_IRGRP | S_IXGRP |
-									S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-						}        
-					}
-				}
-
-				Json::Value videoTracksRoot(Json::arrayValue);
-				Json::Value audioTracksRoot(Json::arrayValue);
-				if (contentType == MMSEngineDBFacade::ContentType::Video)
-				{
-					vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
-					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
-
-					int64_t sourceMediaItemKey = -1;
-					_mmsEngineDBFacade->getVideoDetails(
-						sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
-
-					for (tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack:
-							videoTracks)
-					{
-						int trackIndex;
-						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-							= videoTrack;
-
-						if (trackIndex != -1)
-						{
-							Json::Value videoTrackRoot;
-
-							string field = "trackIndex";
-							videoTrackRoot[field] = trackIndex;
-
-							videoTracksRoot.append(videoTrackRoot);
-						}
-					}
-
-					for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
-							audioTracks)
-					{
-						int trackIndex;
-						string language;
-						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
-							= audioTrack;
-
-						if (trackIndex != -1 && language != "")
-						{
-							Json::Value audioTrackRoot;
-
-							string field = "trackIndex";
-							audioTrackRoot[field] = trackIndex;
-
-							field = "language";
-							audioTrackRoot[field] = language;
-
-							audioTracksRoot.append(audioTrackRoot);
-						}
-					}
-				}
-				else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-				{
-					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
-
-					int64_t sourceMediaItemKey = -1;
-					_mmsEngineDBFacade->getAudioDetails(
-						sourceMediaItemKey, sourcePhysicalPathKey, audioTracks);
-
-					for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
-							audioTracks)
-					{
-						int trackIndex;
-						string language;
-						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
-							= audioTrack;
-
-						if (trackIndex != -1 && language != "")
-						{
-							Json::Value audioTrackRoot;
-
-							string field = "trackIndex";
-							audioTrackRoot[field] = trackIndex;
-
-							field = "language";
-							audioTrackRoot[field] = language;
-
-							audioTracksRoot.append(audioTrackRoot);
-						}
-					}
 				}
 
 				_logger->info(__FILEREF__ + "building body for encoder 2"
@@ -2567,14 +2394,10 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 				);
 
                 Json::Value encodingMedatada;
-                
-                encodingMedatada["encodedFileName"] = encodedFileName;
+
                 encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
-                encodingMedatada["workspaceDirectoryName"] = _encodingItem->_workspace->_directoryName;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-                encodingMedatada["videoTracks"] = videoTracksRoot;
-                encodingMedatada["audioTracks"] = audioTracksRoot;
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
@@ -2584,7 +2407,20 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     body = Json::writeString(wbuilder, encodingMedatada);
                 }
             }
-            
+
+			string sResponse = MMSCURL::httpPostPutString(
+				_encodingItem->_ingestionJobKey,
+				ffmpegEncoderURL,
+				"POST", // requestType
+				_ffmpegEncoderTimeoutInSeconds,
+				_ffmpegEncoderUser,
+				_ffmpegEncoderPassword,
+				body,
+				"application/json", // contentType
+				_logger
+			);
+
+			/*
             list<string> header;
 
             header.push_back("Content-Type: application/json");
@@ -2608,59 +2444,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-            {
-                /*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-                 */
-                                                                                                  
-                
-                /*
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                request.setOpt(sslCert);
-                 */
-
-                /*
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                if(pPassphrase)
-                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-                */
-                
                 // disconnect if we can't validate server's cert
                 bool bSslVerifyPeer = false;
                 curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -2692,6 +2475,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             // LF and CR create problems to the json parser...
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
+			*/
 
             Json::Value encodeContentResponse;
             try
@@ -3094,7 +2878,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -3137,7 +2921,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -3178,7 +2962,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -3219,7 +3003,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -3260,7 +3044,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
