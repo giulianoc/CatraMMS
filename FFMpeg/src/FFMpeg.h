@@ -313,7 +313,8 @@ public:
 
 		Json::Value picturePathNamesToBeDetectedRoot,
 
-		pid_t* pChildPid);
+		pid_t* pChildPid,
+		chrono::system_clock::time_point* pRecordingStart);
 
 /*
 	void liveProxy(

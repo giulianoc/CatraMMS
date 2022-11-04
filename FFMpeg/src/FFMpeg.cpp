@@ -8578,7 +8578,7 @@ void FFMpeg::liveRecorder(
 	string streamSourceType,	// IP_PULL, TV, IP_PUSH, CaptureLive
     string liveURL,
 	// Used only in case streamSourceType is IP_PUSH, Maximum time to wait for the incoming connection
-	int listenTimeoutInSeconds,
+	int pushListenTimeout,
 
 	// parameters used only in case streamSourceType is CaptureLive
 	int captureLive_videoDeviceNumber,
@@ -8601,7 +8601,9 @@ void FFMpeg::liveRecorder(
 
 	Json::Value framesToBeDetectedRoot,
 
-	pid_t* pChildPid)
+	pid_t* pChildPid,
+	chrono::system_clock::time_point* pRecordingStart
+)
 {
 	_currentApiName = "liveRecorder";
 
@@ -8615,7 +8617,7 @@ void FFMpeg::liveRecorder(
 
 		+ ", streamSourceType: " + streamSourceType
 		+ ", liveURL: " + liveURL
-		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", pushListenTimeout: " + to_string(pushListenTimeout)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
 		+ ", captureLive_videoInputFormat: " + captureLive_videoInputFormat
 		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
@@ -8806,9 +8808,11 @@ void FFMpeg::liveRecorder(
 			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 			+ ", streamingDuration: " + to_string(streamingDuration)
 		);
+
+		int localPushListenTimeout = pushListenTimeout;
 		if (streamSourceType == "IP_PUSH" || streamSourceType == "TV")
 		{
-			if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
+			if (localPushListenTimeout > 0 && localPushListenTimeout > streamingDuration)
 			{
 				// 2021-02-02: sceanrio:
 				//	streaming duration is 25 seconds
@@ -8823,10 +8827,10 @@ void FFMpeg::liveRecorder(
 					+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 					+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 					+ ", streamingDuration: " + to_string(streamingDuration)
-					+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+					+ ", localPushListenTimeout: " + to_string(localPushListenTimeout)
 				);
 
-				listenTimeoutInSeconds = streamingDuration;
+				localPushListenTimeout = streamingDuration;
 			}
 		}
 
@@ -8882,20 +8886,20 @@ void FFMpeg::liveRecorder(
 			{
 				ffmpegArgumentList.push_back("-listen");
 				ffmpegArgumentList.push_back("1");
-				if (listenTimeoutInSeconds > 0)
+				if (localPushListenTimeout > 0)
 				{
 					// no timeout means it will listen infinitely
 					ffmpegArgumentList.push_back("-timeout");
-					ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
+					ffmpegArgumentList.push_back(to_string(localPushListenTimeout));
 				}
 			}
 			else if (
 				liveURL.find("udp://") != string::npos
 			)
 			{
-				if (listenTimeoutInSeconds > 0)
+				if (localPushListenTimeout > 0)
 				{
-					int64_t listenTimeoutInMicroSeconds = listenTimeoutInSeconds;
+					int64_t listenTimeoutInMicroSeconds = localPushListenTimeout;
 					listenTimeoutInMicroSeconds *= 1000000;
 					liveURL += "?timeout=" + to_string(listenTimeoutInMicroSeconds);
 				}
@@ -9994,6 +9998,21 @@ void FFMpeg::liveRecorder(
 					;
 					_logger->error(errorMessage);
 
+					// in case of IP_PUSH the monitor thread, in case the client does not
+					// reconnect istantaneously, kills the process.
+					// In general, if ffmpeg restart, liveMonitoring has to wait, for this reason
+					// we will set again the pRecordingStart variable
+					{
+						if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) <
+							chrono::system_clock::now())
+							*pRecordingStart = chrono::system_clock::now() +
+								chrono::seconds(localPushListenTimeout);
+						else
+							*pRecordingStart = chrono::system_clock::from_time_t(
+								utcRecordingPeriodStart) +
+								chrono::seconds(localPushListenTimeout);
+					}
+
 					continue;
 				}
 
@@ -10780,6 +10799,9 @@ void FFMpeg::liveProxy2(
 				ffmpegArgumentList,
 				_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 				pChildPid, &iReturnedStatus);
+
+			endFfmpegCommand = chrono::system_clock::now();
+
 			if (iReturnedStatus != 0)
 			{
 				string errorMessage = __FILEREF__ + "liveProxy: Executed ffmpeg command failed"
@@ -10804,8 +10826,6 @@ void FFMpeg::liveProxy2(
 				;
 				throw runtime_error(errorMessage);
 			}
-
-			endFfmpegCommand = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "liveProxy: Executed ffmpeg command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11157,8 +11177,10 @@ void FFMpeg::liveProxy2(
 
 					// in case of IP_PUSH the monitor thread, in case the client does not
 					// reconnect istantaneously, kills the process.
-					// For this reason, we will set again the liveProxy->_proxyStart variable
+					// In general, if ffmpeg restart, liveMonitoring has to wait, for this reason
+					// we will set again the liveProxy->_proxyStart variable
 					{
+						// pushListenTimeout in case it is not PUSH, it will be -1
 						if (utcProxyPeriodStart != -1)
 						{
 							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
@@ -11205,6 +11227,27 @@ void FFMpeg::liveProxy2(
 								+ to_string(sleepInSecondsInCaseOfRepeating)
 							+ ", currentInputIndex: " + to_string(currentInputIndex)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+
+						// in case of IP_PUSH the monitor thread, in case the client does not
+						// reconnect istantaneously, kills the process.
+						// In general, if ffmpeg restart, liveMonitoring has to wait, for this reason
+						// we will set again the liveProxy->_proxyStart variable
+						{
+							if (utcProxyPeriodStart != -1)
+							{
+								if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+									chrono::system_clock::now())
+									*pProxyStart = chrono::system_clock::now() +
+										chrono::seconds(pushListenTimeout);
+								else
+									*pProxyStart = chrono::system_clock::from_time_t(
+										utcProxyPeriodStart) +
+										chrono::seconds(pushListenTimeout);
+							}
+							else
+								*pProxyStart = chrono::system_clock::now() +
+									chrono::seconds(pushListenTimeout);
+						}
 
 						currentInputIndex--;
 						this_thread::sleep_for(chrono::seconds(sleepInSecondsInCaseOfRepeating));

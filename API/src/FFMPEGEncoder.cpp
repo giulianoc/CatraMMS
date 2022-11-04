@@ -7040,7 +7040,8 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			framesToBeDetectedRoot,
 
-			&(liveRecording->_childPid)
+			&(liveRecording->_childPid),
+			&(liveRecording->_recordingStart)
 		);
 
 		if (liveRecording->_streamSourceType == "TV"
