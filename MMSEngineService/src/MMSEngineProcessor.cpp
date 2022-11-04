@@ -16453,10 +16453,10 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				string message = __FILEREF__ + "Ingested CutLive workflow response"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
 					+ ", sResponse: " + sResponse
 					+ ", responseCode: " + to_string(responseCode)
+					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+					+ ", workflowMetadata: " + workflowMetadata
 					;
 				_logger->error(message);
 

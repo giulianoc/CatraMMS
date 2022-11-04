@@ -3,7 +3,7 @@
 	"label": "__title__",
 	"sourceType": "IP_PULL",
 	"url": "__url__",
-	"type": "direct-movie",
+	"type": "direct-kids",
 	"description": "__description__",
 	"name": "__title__",
 	"region": "",

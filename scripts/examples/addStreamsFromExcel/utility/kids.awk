@@ -51,10 +51,6 @@ BEGIN {
 				categories=categories", ";
 			categories=categories"\\\""category"\\\"";
 		}
-		category="kids";
-		if (categories != "")
-			categories=categories", ";
-		categories=categories"\\\""category"\\\"";
 
 		printf("sed \"s/__title__/%s/g\" ./utility/kids_addStreamTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__duration__/%s/g\" > ./outputAddStream.json\n", title, movieURL, description, year, categories, language, duration) >> outputPathName;
 
