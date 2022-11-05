@@ -4062,8 +4062,10 @@ void FFMPEGEncoder::encodeContentThread(
 
         externalEncoder = JSONUtils::asBool(encodingMedatada, "externalEncoder", false);
 
-        int videoTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"], "VideoTrackIndex", -1);
-        int audioTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"], "AudioTrackIndex", -1);
+        int videoTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"],
+			"VideoTrackIndex", -1);
+        int audioTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"],
+			"AudioTrackIndex", -1);
 
 		Json::Value sourcesToBeEncodedRoot = encodingMedatada["encodingParametersRoot"]["sourcesToBeEncodedRoot"];
 		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
