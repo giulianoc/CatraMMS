@@ -4015,7 +4015,7 @@ void FFMPEGEncoder::encodeContentThread(
     );
 
 	bool externalEncoder = false;
-	string sourceStagingAssetPathName;
+	string sourceAssetPathName;
 	string encodedStagingAssetPathName;
 	int64_t ingestionJobKey = 1;
     try
@@ -4151,22 +4151,22 @@ void FFMPEGEncoder::encodeContentThread(
 				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
 				bool regenerateTimestamps = false;
 
-				sourceStagingAssetPathName = sourceTranscoderStagingAssetPathName + ".mp4";
+				sourceAssetPathName = sourceTranscoderStagingAssetPathName + ".mp4";
 
 				encoding->_ffmpeg->streamingToFile(
 					ingestionJobKey,
 					regenerateTimestamps,
 					sourcePhysicalDeliveryURL,
-					sourceStagingAssetPathName);
+					sourceAssetPathName);
 			}
 			else
 			{
-				sourceStagingAssetPathName = sourceTranscoderStagingAssetPathName;
+				sourceAssetPathName = sourceTranscoderStagingAssetPathName;
 
 				MMSCURL::downloadFile(
 					ingestionJobKey,
 					sourcePhysicalDeliveryURL,
-					sourceStagingAssetPathName,
+					sourceAssetPathName,
 					_logger
 				);
 			}
@@ -4181,7 +4181,7 @@ void FFMPEGEncoder::encodeContentThread(
 		}
 		else
 		{
-			field = "sourcePhysicalPathName";
+			field = "mmsSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -4192,7 +4192,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
@@ -4211,13 +4211,13 @@ void FFMPEGEncoder::encodeContentThread(
         _logger->info(__FILEREF__ + "encodeContent"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+            + ", sourceAssetPathName: " + sourceAssetPathName
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->encodeContent(
-			sourceStagingAssetPathName,
+			sourceAssetPathName,
 			durationInMilliSeconds,
 			encodedStagingAssetPathName,
 			encodingProfileDetailsRoot,
@@ -4235,7 +4235,7 @@ void FFMPEGEncoder::encodeContentThread(
         _logger->info(__FILEREF__ + "encodeContent finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+            + ", sourceAssetPathName: " + sourceAssetPathName
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
 
@@ -4260,11 +4260,11 @@ void FFMPEGEncoder::encodeContentThread(
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
 				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceStagingAssetPathName, exceptionInCaseOfError);
+				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
 			{
@@ -4320,16 +4320,16 @@ void FFMPEGEncoder::encodeContentThread(
 
 		if (externalEncoder)
 		{
-			if (sourceStagingAssetPathName != "" && FileIO::fileExisting(sourceStagingAssetPathName))
+			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
 				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceStagingAssetPathName, exceptionInCaseOfError);
+				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
 			if (encodedStagingAssetPathName != "")
@@ -4401,16 +4401,16 @@ void FFMPEGEncoder::encodeContentThread(
 
 		if (externalEncoder)
 		{
-			if (sourceStagingAssetPathName != "" && FileIO::fileExisting(sourceStagingAssetPathName))
+			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
 				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceStagingAssetPathName, exceptionInCaseOfError);
+				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
 			if (encodedStagingAssetPathName != "")
@@ -4489,16 +4489,16 @@ void FFMPEGEncoder::encodeContentThread(
 
 		if (externalEncoder)
 		{
-			if (sourceStagingAssetPathName != "" && FileIO::fileExisting(sourceStagingAssetPathName))
+			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceStagingAssetPathName: " + sourceStagingAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
 				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceStagingAssetPathName, exceptionInCaseOfError);
+				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
 			if (encodedStagingAssetPathName != "")
