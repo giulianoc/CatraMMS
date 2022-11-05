@@ -148,7 +148,7 @@ private:
 
     bool                    _localCopyTaskEnabled;
 
-	string					_mmsAPIIngestionURL;
+	string					_mmsWorkflowIngestionURL;
 	string					_mmsBinaryIngestionURL;
     int						_mmsAPITimeoutInSeconds;
 	string					_mmsAPIVODDeliveryURI;

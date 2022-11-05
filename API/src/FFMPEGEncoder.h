@@ -590,7 +590,7 @@ private:
 		int64_t variantFileSizeInBytes,
 		int64_t userKey,
 		string apiKey,
-		string mmsAPIIngestionURL,                                                                                
+		string mmsWorkflowIngestionURL,                                                                                
 		string mmsBinaryIngestionURL
 	);
 };

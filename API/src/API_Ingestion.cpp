@@ -18,6 +18,7 @@
 */
 #include "JSONUtils.h"
 #include "catralibraries/DateTime.h"
+#include "catralibraries/Encrypt.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -1027,8 +1028,10 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			string field = "userKey";
 			internalMMSRoot[field] = userKey;
 
+			string apiKeyEncrypted = Encrypt::opensslEncrypt(apiKey);
+
 			field = "apiKey";
-			internalMMSRoot[field] = apiKey;
+			internalMMSRoot[field] = apiKeyEncrypted;
 		}
 
 		string internalMMSField = "internalMMS";

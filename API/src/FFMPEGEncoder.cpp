@@ -20,6 +20,7 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
+#include "catralibraries/Encrypt.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/DateTime.h"
@@ -4316,11 +4317,12 @@ void FFMPEGEncoder::encodeContentThread(
 					userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 					field = "apiKey";
-					apiKey = internalMMSRoot.get(field, "").asString();
+					string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
 
-			field = "mmsAPIIngestionURL";
+			field = "mmsWorkflowIngestionURL";
 			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -4331,7 +4333,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsAPIIngestionURL = encodingMedatada.get(field, "").asString();
+			string mmsWorkflowIngestionURL = encodingMedatada.get(field, "").asString();
 
 			field = "mmsBinaryIngestionURL";
 			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
@@ -4362,7 +4364,7 @@ void FFMPEGEncoder::encodeContentThread(
 				variantFileSizeInBytes,
 				userKey,
 				apiKey,
-				mmsAPIIngestionURL,                                                                                
+				mmsWorkflowIngestionURL,                                                                                
 				mmsBinaryIngestionURL
 			);
 
@@ -4775,7 +4777,7 @@ void FFMPEGEncoder::ingestAVariant(
 	int64_t variantFileSizeInBytes,
 	int64_t userKey,
 	string apiKey,
-	string mmsAPIIngestionURL,
+	string mmsWorkflowIngestionURL,
 	string mmsBinaryIngestionURL
 )
 {
@@ -4789,7 +4791,7 @@ void FFMPEGEncoder::ingestAVariant(
 
 		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
-			mmsAPIIngestionURL,
+			mmsWorkflowIngestionURL,
 			"POST",	// requestType
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
@@ -4805,7 +4807,7 @@ void FFMPEGEncoder::ingestAVariant(
 	{
 		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIIngestionURL: " + mmsAPIIngestionURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 		);
@@ -4816,7 +4818,7 @@ void FFMPEGEncoder::ingestAVariant(
 	{
 		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIIngestionURL: " + mmsAPIIngestionURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 		);
@@ -8455,8 +8457,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 								userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 								field = "apiKey";
-								apiKey = internalMMSRoot.get(field, "").asString();
-
+								string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+								apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 							}
 						}
 
@@ -10056,7 +10058,8 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 				field = "OnSuccess";
     			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))

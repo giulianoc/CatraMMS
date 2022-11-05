@@ -277,7 +277,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
-	_mmsAPIIngestionURL =
+	_mmsWorkflowIngestionURL =
 		mmsAPIProtocol
 		+ "://"
 		+ mmsAPIHostname + ":"
@@ -14899,7 +14899,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 				field = "OnSuccess";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -15208,7 +15209,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 		string sResponse = MMSCURL::httpPostPutString(                                                        
 			ingestionJobKey,                                                                                  
-			_mmsAPIIngestionURL,                                                                                        
+			_mmsWorkflowIngestionURL,                                                                                        
 			"POST", // requestType                                                                            
 			_mmsAPITimeoutInSeconds,                                                                          
 			to_string(userKey),                                                                               
@@ -16015,7 +16016,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 				field = "OnSuccess";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -16324,7 +16326,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 		string sResponse = MMSCURL::httpPostPutString(                                                        
 			ingestionJobKey,                                                                                  
-			_mmsAPIIngestionURL,                                                                                        
+			_mmsWorkflowIngestionURL,                                                                                        
 			"POST", // requestType                                                                            
 			_mmsAPITimeoutInSeconds,                                                                          
 			to_string(userKey),                                                                               
@@ -17807,7 +17809,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 				field = "OnSuccess";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -17976,7 +17979,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 		MMSCURL::httpPostPutString(                                                        
 			ingestionJobKey,                                                                                  
-			_mmsAPIIngestionURL,                                                                                        
+			_mmsWorkflowIngestionURL,                                                                                        
 			"POST", // requestType                                                                            
 			_mmsAPITimeoutInSeconds,                                                                          
 			to_string(userKey),                                                                               
@@ -21240,7 +21243,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			contentType, encodingPriority,
 			encodingProfileKey, encodingProfileDetailsRoot,
 			sourcesToBeEncodedRoot,
-			_mmsAPIIngestionURL, _mmsBinaryIngestionURL);
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL);
     }
     catch(runtime_error e)
     {
