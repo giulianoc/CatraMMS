@@ -3467,7 +3467,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			#endif
 		}
 
-		if (!liveProxyFound)
+		if (!encodingFound && !liveProxyFound)
 		{
 			// see comment 2020-11-30
 			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
@@ -3497,7 +3497,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			#endif
 		}
 
-        if (!liveRecorderFound)
+        if (!encodingFound && !liveProxyFound && !liveRecorderFound)
         {
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 				+ ", " + NoEncodingJobKeyFound().what();
@@ -4148,6 +4148,14 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
+			_logger->info(__FILEREF__ + "downloading source content"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", externalEncoder: " + to_string(externalEncoder)
+				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
+				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
+				+ ", isStreaming: " + to_string(isStreaming)
+			);
+
 			if (isStreaming)
 			{
 				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
@@ -4173,11 +4181,12 @@ void FFMPEGEncoder::encodeContentThread(
 				);
 			}
 
-			_logger->info(__FILEREF__ + "encodeContent"
+			_logger->info(__FILEREF__ + "downloaded source content"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", externalEncoder: " + to_string(externalEncoder)
 				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
 				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
+				+ ", sourceAssetPathName: " + sourceAssetPathName
 				+ ", isStreaming: " + to_string(isStreaming)
 			);
 		}
@@ -4210,7 +4219,7 @@ void FFMPEGEncoder::encodeContentThread(
 			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 		}
 
-        _logger->info(__FILEREF__ + "encodeContent"
+        _logger->info(__FILEREF__ + "encoding content..."
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", sourceAssetPathName: " + sourceAssetPathName
@@ -4234,7 +4243,7 @@ void FFMPEGEncoder::encodeContentThread(
 		);
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "encodeContent finished"
+        _logger->info(__FILEREF__ + "encoded content"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", sourceAssetPathName: " + sourceAssetPathName
