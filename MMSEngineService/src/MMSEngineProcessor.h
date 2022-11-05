@@ -148,12 +148,9 @@ private:
 
     bool                    _localCopyTaskEnabled;
 
-	string					_mmsAPIProtocol;
-	string					_mmsAPIHostname;
-	int						_mmsAPIPort;
-	string					_mmsAPIVersion;
+	string					_mmsAPIIngestionURL;
+	string					_mmsBinaryIngestionURL;
     int						_mmsAPITimeoutInSeconds;
-	string					_mmsAPIIngestionURI;
 	string					_mmsAPIVODDeliveryURI;
 
 	int						_waitingNFSSync_maxMillisecondsToWait;

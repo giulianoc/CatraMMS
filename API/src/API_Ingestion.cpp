@@ -1018,6 +1018,23 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         parametersSectionPresent = true;
     }
     
+	// 2022-11-05: inizialmente internalMMSRoot con userKey e apiKey era aggiunto
+	//	solo per alcuni Task, ora li aggiungo sempre perchè, in caso di external encoder,
+	//	questi parametri servono sempre
+	Json::Value internalMMSRoot;
+	{
+		{
+			string field = "userKey";
+			internalMMSRoot[field] = userKey;
+
+			field = "apiKey";
+			internalMMSRoot[field] = apiKey;
+		}
+
+		string internalMMSField = "internalMMS";
+		parametersRoot[internalMMSField] = internalMMSRoot;
+	}
+
     if (type == "Encode")
     {
 		// we will create a group of tasks and add there the Encode task in two scenarios:
@@ -1291,6 +1308,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// and we will add temporary inside the Parameters section. These events will be managed later
 		// in EncoderVideoAudioProxy.cpp when the workflow for the generated contents will be created
 
+		/*
         Json::Value internalMMSRoot;
 		{
 
@@ -1299,21 +1317,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			field = "apiKey";
 			internalMMSRoot[field] = apiKey;
-
-			/*
-			// 2021-01-17: in case of MonitorHLS, MMS has to build a path to save the live segments.
-			//	We will generated now a 'key' that will be used to build the path where the live segments
-			//	are generated.
-			//	That will guarantee that 2 recordings of the same channels will have two different paths
-			field = "MonitorHLS";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				field = "deliveryKey";
-				internalMMSRoot[field] = now.time_since_epoch().count();
-			}
-			*/
 		}
+		*/
 
 		string onSuccessField = "OnSuccess";
 		string onErrorField = "OnError";
@@ -1352,7 +1357,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 		}
 
-		string internalMMSField = "InternalMMS";
+		string internalMMSField = "internalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
 	}
     else if (type == "Live-Cut" || type == "YouTube-Live-Broadcast")
@@ -1370,6 +1375,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// if present, and we will add temporary inside the Parameters section. These events will be managed later
 		// in MMSEngineProcessor.cpp when the new workflow will be created
 
+		/*
         Json::Value internalMMSRoot;
 		{
 			string field = "userKey";
@@ -1378,6 +1384,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "apiKey";
 			internalMMSRoot[field] = apiKey;
 		}
+		*/
 
 		string onSuccessField = "OnSuccess";
 		string onErrorField = "OnError";
@@ -1416,7 +1423,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 		}
 
-		string internalMMSField = "InternalMMS";
+		string internalMMSField = "internalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
 	}
     else if (type == "Add-Content")
@@ -1424,11 +1431,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// The Add-Content Task can be used also to add just a variant/profile of a content
 		// that it is already present into the MMS Repository.
 		// This content that it is already present can be referenced using
-		// the apposite parameter (VariantOfMediaItemKey) or using the VariantOfReferencedLabel
+		// the apposite parameter (variantOfMediaItemKey) or using the variantOfReferencedLabel
 		// parameter.
-		// In this last case, we have to add the VariantOfIngestionJobKey parameter using VariantOfReferencedLabel
+		// In this last case, we have to add the VariantOfIngestionJobKey parameter using variantOfReferencedLabel
 
-		string field = "VariantOfReferencedLabel";
+		string field = "variantOfReferencedLabel";
     	if (JSONUtils::isMetadataPresent(parametersRoot, field))
     	{
 			string referenceLabel = parametersRoot.get(field, "").asString();
@@ -1603,7 +1610,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     string taskMetadata;
 
-    if (parametersSectionPresent)
+    // if (parametersSectionPresent)
     {
         Json::StreamWriterBuilder wbuilder;
 

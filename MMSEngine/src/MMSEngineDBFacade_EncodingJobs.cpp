@@ -5329,7 +5329,8 @@ void MMSEngineDBFacade::addEncodingJob (
 	EncodingPriority encodingPriority,
 	int64_t encodingProfileKey,
 	Json::Value encodingProfileDetailsRoot,
-	Json::Value sourcesToBeEncodedRoot
+	Json::Value sourcesToBeEncodedRoot,
+	string mmsAPIIngestionURL, string mmsBinaryIngestionURL
 )
 {
 
@@ -5376,6 +5377,12 @@ void MMSEngineDBFacade::addEncodingJob (
 
 			field = "sourcesToBeEncodedRoot";
 			parametersRoot[field] = sourcesToBeEncodedRoot;
+
+			field = "mmsAPIIngestionURL";
+			parametersRoot[field] = mmsAPIIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

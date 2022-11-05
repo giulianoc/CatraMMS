@@ -40,13 +40,13 @@
 		// optional for both the below parameters. It is possible to add/ingest a new variant/profile of a content (mediaItemKey).
 		//	There are two options:
 		//		- the content is already present inside the MMS repository.
-		//			In this case the 'VariantOfMediaItemKey' or 'VariantOfUniqueName' parameter has to be used to specify the mediaItemKey of the content
+		//			In this case the 'variantOfMediaItemKey' or 'variantOfUniqueName' parameter has to be used to specify the mediaItemKey of the content
 		//		- the content is ingested using the same Workflow containing the ingestion of the new variant/profile.
-		//			In this case the mediaITemKey is unknown yet and the 'VariantOfReferencedLabel' parameter has to be used
+		//			In this case the mediaITemKey is unknown yet and the 'variantOfReferencedLabel' parameter has to be used
 		//	The new profile/variant appear as a new profile of the content identified by his Media Item Key
-		"VariantOfMediaItemKey": 1234,
-		"VariantOfUniqueName": "....",
-		"VariantOfReferencedLabel": "...",
+		"variantOfMediaItemKey": 1234,
+		"variantOfUniqueName": "....",
+		"variantOfReferencedLabel": "...",
 
 		// optional: Both the below parameters have to be specified in case this content has to be delivered using an external
 		//	delivery platform (i.e.: Wowza or YouTube).

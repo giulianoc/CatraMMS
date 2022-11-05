@@ -483,7 +483,7 @@ private:
 		string liveRecorderVirtualVODUniqueName,
 		string liveRecorderVirtualVODRetention,
 		int64_t liveRecorderVirtualVODImageMediaItemKey);
-	long liveRecorder_getAddContentIngestionJobKey(
+	long getAddContentIngestionJobKey(
 		int64_t ingestionJobKey,
 		string ingestionResponse);
 
@@ -572,6 +572,26 @@ private:
 		int64_t tvSymbolRate,
 		int64_t tvBandwidthInMhz,
 		string tvModulation
+	);
+	string buildVariantIngestionWorkflow(
+		int64_t ingestionJobKey,
+		int64_t sourceMediaItemKey,
+		int64_t sourcePhysicalPathKey,
+		int64_t encodingProfileKey,
+		string fileFormat
+	);
+	void ingestAVariant(
+		int64_t ingestionJobKey,
+		int64_t sourceMediaItemKey,
+		int64_t sourcePhysicalPathKey,
+		int64_t encodingProfileKey,
+		string fileFormat,
+		string variantPathFileName,
+		int64_t variantFileSizeInBytes,
+		int64_t userKey,
+		string apiKey,
+		string mmsAPIIngestionURL,                                                                                
+		string mmsBinaryIngestionURL
 	);
 };
 

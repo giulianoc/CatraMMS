@@ -4252,21 +4252,120 @@ void FFMPEGEncoder::encodeContentThread(
 
 		if (externalEncoder)
 		{
-			/*
-			buildAndIngestVariantWorkflow(
+			field = "sourceMediaItemKey";
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
+
+			field = "sourcePhysicalPathKey";
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t sourcePhysicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
+
+			field = "encodingProfileKey";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingMedatada["encodingParametersRoot"], field, -1);
+
+			field = "FileFormat";
+			if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
+
+			int64_t userKey;
+			string apiKey;
+			{
+				field = "internalMMS";
+				if (JSONUtils::isMetadataPresent(encodingMedatada["ingestedParametersRoot"], field))
+				{
+					Json::Value internalMMSRoot = encodingMedatada["ingestedParametersRoot"][field];
+
+					field = "userKey";
+					userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+
+					field = "apiKey";
+					apiKey = internalMMSRoot.get(field, "").asString();
+				}
+			}
+
+			field = "mmsAPIIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string mmsAPIIngestionURL = encodingMedatada.get(field, "").asString();
+
+			field = "mmsBinaryIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string mmsBinaryIngestionURL = encodingMedatada.get(field, "").asString();
+
+			// static unsigned long long getDirectorySizeInBytes (string directoryPathName);                             
+
+			bool inCaseOfLinkHasItToBeRead = false;
+			int64_t variantFileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
+				inCaseOfLinkHasItToBeRead);                                                                          
+
+			ingestAVariant(
 				ingestionJobKey,
-				true,	// externalEncoder,
-				"",	// currentRecordedAssetFileName,
-				"",	// stagingContentsPath,
-				addContentTitle,
-				uniqueName,
-				userDataRoot,
+				sourceMediaItemKey,
+				sourcePhysicalPathKey,
+				encodingProfileKey,
 				fileFormat,
-				ingestedParametersRoot,
-				encodingParametersRoot
+				encodedStagingAssetPathName,
+				variantFileSizeInBytes,
+				userKey,
+				apiKey,
+				mmsAPIIngestionURL,                                                                                
+				mmsBinaryIngestionURL
 			);
-			*/
-        
+
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4583,56 +4682,39 @@ void FFMPEGEncoder::encodeContentThread(
     }
 }
 
-/*
-void FFMPEGEncoder::buildAndIngestVariantWorkflow(
+string FFMPEGEncoder::buildVariantIngestionWorkflow(
+	int64_t ingestionJobKey,
+	int64_t sourceMediaItemKey,
+	int64_t sourcePhysicalPathKey,
+	int64_t encodingProfileKey,
+	string fileFormat
 )
 {
 	string workflowMetadata;
 	try
 	{
+		string label = "Add Variant " + to_string(sourceMediaItemKey)
+			+ " - " + to_string(sourcePhysicalPathKey)
+			+ " - " + to_string(encodingProfileKey);
+
 		Json::Value addContentRoot;
 
 		string field = "Label";
-		addContentRoot[field] = "Add Variant " + "...";
+		addContentRoot[field] = label;
 
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		int64_t userKey;
-		string apiKey;
-		{
-			field = "InternalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				// internalMMSRootPresent = true;
-
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
-
-				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
-			}
-		}
-
-		Json::Value addContentParametersRoot = ingestedParametersRoot;
+		Json::Value addContentParametersRoot;
 
 		field = "FileFormat";
 		addContentParametersRoot[field] = fileFormat;
 
-		if (!externalEncoder)
-		{
-			string sourceURL = string("move") + "://" + stagingContentsPath + currentRecordedAssetFileName;
-			field = "SourceURL";
-			addContentParametersRoot[field] = sourceURL;
-		}
-
 		field = "Ingester";
 		addContentParametersRoot[field] = "Encode Task";
 
-		field = "VariantOfMediaItemKey";
-		addContentParametersRoot[field] = variantOfMediaItemKey;
+		field = "variantOfMediaItemKey";
+		addContentParametersRoot[field] = sourceMediaItemKey;
 
 		field = "Parameters";
 		addContentRoot[field] = addContentParametersRoot;
@@ -4641,7 +4723,7 @@ void FFMPEGEncoder::buildAndIngestVariantWorkflow(
 		Json::Value workflowRoot;
 
 		field = "Label";
-		workflowRoot[field] = addContentTitle;
+		workflowRoot[field] = label;
 
 		field = "Type";
 		workflowRoot[field] = "Workflow";
@@ -4654,40 +4736,16 @@ void FFMPEGEncoder::buildAndIngestVariantWorkflow(
        		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
    		}
 
-		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
+		_logger->info(__FILEREF__ + "Variant workflow metadata generated"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", " + addContentTitle + ", "
-				+ currentRecordedAssetFileName
-				+ ", prev: " + to_string(utcPreviousChunkStartTime)
-				+ ", from: " + to_string(utcChunkStartTime)
-				+ ", to: " + to_string(utcChunkEndTime)
+			+ ", workflowMetadata: " + workflowMetadata
 		);
 
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ "/catramms/"
-			+ _mmsAPIVersion
-			+ _mmsAPIIngestionURI
-            ;
-
-		string sResponse = MMSCURL::httpPostPutString(
-			ingestionJobKey,
-			mmsAPIURL,
-			"POST",	// requestType
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			_logger
-		);
+		return workflowMetadata;
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(__FILEREF__ + "buildRecordedMediaWorkflow failed (runtime_error)"
+		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (runtime_error)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -4697,7 +4755,7 @@ void FFMPEGEncoder::buildAndIngestVariantWorkflow(
 	}
 	catch (exception e)
 	{
-		_logger->error(__FILEREF__ + "buildRecordedMediaWorkflow failed (exception)"
+		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (exception)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -4706,7 +4764,121 @@ void FFMPEGEncoder::buildAndIngestVariantWorkflow(
 		throw e;
 	}
 }
-*/
+
+void FFMPEGEncoder::ingestAVariant(
+	int64_t ingestionJobKey,
+	int64_t sourceMediaItemKey,
+	int64_t sourcePhysicalPathKey,
+	int64_t encodingProfileKey,
+	string fileFormat,
+	string variantPathFileName,
+	int64_t variantFileSizeInBytes,
+	int64_t userKey,
+	string apiKey,
+	string mmsAPIIngestionURL,
+	string mmsBinaryIngestionURL
+)
+{
+	string workflowMetadata;
+	int64_t addContentIngestionJobKey = -1;
+	// create the workflow and ingest it
+	try
+	{
+		workflowMetadata = buildVariantIngestionWorkflow(
+			ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey, encodingProfileKey, fileFormat);
+
+		string sResponse = MMSCURL::httpPostPutString(
+			ingestionJobKey,
+			mmsAPIIngestionURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
+		);
+
+		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIIngestionURL: " + mmsAPIIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIIngestionURL: " + mmsAPIIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+
+	if (addContentIngestionJobKey == -1)
+	{
+		string errorMessage =
+			string("Ingested URL failed, addContentIngestionJobKey is not valid")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string mmsBinaryURL;
+	// ingest binary
+	try
+	{
+		mmsBinaryURL =
+			mmsBinaryIngestionURL
+			+ "/" + to_string(addContentIngestionJobKey)
+		;
+
+		string sResponse = MMSCURL::httpPostPutFile(
+			ingestionJobKey,
+			mmsBinaryURL,
+			"POST",	// requestType
+			_mmsBinaryTimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			variantPathFileName,
+			variantFileSizeInBytes,
+			_logger);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+}
+
 
 void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
@@ -8272,7 +8444,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						int64_t userKey;
 						string apiKey;
 						{
-							string field = "InternalMMS";
+							string field = "internalMMS";
 							if (JSONUtils::isMetadataPresent(copiedLiveRecording->_ingestedParametersRoot, field))
 							{
 								// internalMMSRootPresent = true;
@@ -9730,7 +9902,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			_logger
 		);
 
-		addContentIngestionJobKey = liveRecorder_getAddContentIngestionJobKey(ingestionJobKey, sResponse);
+		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
 	catch (runtime_error e)
 	{
@@ -9873,7 +10045,7 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 		int64_t userKey;
 		string apiKey;
 		{
-			field = "InternalMMS";
+			field = "internalMMS";
     		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
 				// internalMMSRootPresent = true;
@@ -9904,7 +10076,7 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 		// if (internalMMSRootPresent)
 		{
 			Json::Value removed;
-			field = "InternalMMS";
+			field = "internalMMS";
 			addContentParametersRoot.removeMember(field, &removed);
 		}
 
@@ -10938,7 +11110,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 		if (externalEncoder)
 		{
-			addContentIngestionJobKey = liveRecorder_getAddContentIngestionJobKey(
+			addContentIngestionJobKey = getAddContentIngestionJobKey(
 				liveRecorderIngestionJobKey, sResponse);
 		}
 	}
@@ -11086,7 +11258,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	return segmentsNumber;
 }
 
-long FFMPEGEncoder::liveRecorder_getAddContentIngestionJobKey(
+long FFMPEGEncoder::getAddContentIngestionJobKey(
 	int64_t ingestionJobKey,
 	string ingestionResponse
 )

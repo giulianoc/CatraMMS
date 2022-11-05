@@ -1692,7 +1692,8 @@ public:
         EncodingPriority encodingPriority,
         int64_t encodingProfileKey,
 		Json::Value encodingProfileDetailsRoot,
-        Json::Value sourcesToBeEncodedRoot
+        Json::Value sourcesToBeEncodedRoot,
+		string mmsAPIIngestionURL, string mmsBinaryIngestionURL
 	);
 
     void addEncoding_OverlayImageOnVideoJob (

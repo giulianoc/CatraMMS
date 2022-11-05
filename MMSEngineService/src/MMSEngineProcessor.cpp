@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "JSONUtils.h"
+#include "MMSCURL.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -206,25 +207,45 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
     );
 
-    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
+    string mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->protocol: " + _mmsAPIProtocol
+        + ", api->protocol: " + mmsAPIProtocol
     );
-    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
+    string mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->hostname: " + _mmsAPIHostname
+        + ", api->hostname: " + mmsAPIHostname
     );
-    _mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
+    int mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->port: " + to_string(_mmsAPIPort)
+        + ", api->port: " + to_string(mmsAPIPort)
     );
-    _mmsAPIVersion = _configuration["api"].get("version", "").asString();
+    string mmsAPIVersion = _configuration["api"].get("version", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->version: " + _mmsAPIVersion
+        + ", api->version: " + mmsAPIVersion
     );
-    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
+    string mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->ingestionURI: " + _mmsAPIIngestionURI
+        + ", api->ingestionURI: " + mmsAPIIngestionURI
+    );
+    string mmsBinaryProtocol = _configuration["api"]["binary"].get("protocol", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->protocol: " + mmsBinaryProtocol
+    );
+    string mmsBinaryHostname = _configuration["api"]["binary"].get("hostname", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->hostname: " + mmsBinaryHostname
+    );
+    int mmsBinaryPort = JSONUtils::asInt(_configuration["api"]["binary"], "port", 0);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->port: " + to_string(mmsBinaryPort)
+    );
+    string mmsBinaryVersion = _configuration["api"]["binary"].get("version", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->version: " + mmsBinaryVersion
+    );
+    string mmsBinaryIngestionURI = _configuration["api"]["binary"].get("ingestionURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI
     );
     _mmsAPIVODDeliveryURI = _configuration["api"].get("vodDeliveryURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -255,6 +276,26 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ ", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: "
 		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
+
+	_mmsAPIIngestionURL =
+		mmsAPIProtocol
+		+ "://"
+		+ mmsAPIHostname + ":"
+		+ to_string(mmsAPIPort)
+		+ "/catramms/"
+		+ mmsAPIVersion
+		+ mmsAPIIngestionURI
+	;
+
+	_mmsBinaryIngestionURL =
+		mmsBinaryProtocol
+		+ "://"
+		+ mmsBinaryHostname + ":"
+		+ to_string(mmsBinaryPort)
+		+ "/catramms/"
+		+ mmsBinaryVersion
+		+ mmsBinaryIngestionURI
+	;
 
     if (_processorIdentifier == 0)
     {
@@ -7781,8 +7822,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		int64_t variantOfMediaItemKey = -1;
 		{
-			string variantOfMediaItemKeyField = "VariantOfMediaItemKey";
-			string variantOfUniqueNameField = "VariantOfUniqueName";
+			string variantOfMediaItemKeyField = "variantOfMediaItemKey";
+			string variantOfUniqueNameField = "variantOfUniqueName";
 			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
 			if (JSONUtils::isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
 			{
@@ -14849,7 +14890,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 		int64_t userKey;
 		string apiKey;
 		{
-			string field = "InternalMMS";
+			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				Json::Value internalMMSRoot = liveCutParametersRoot[field];
@@ -15165,6 +15206,19 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			}
 		}
 
+		string sResponse = MMSCURL::httpPostPutString(                                                        
+			ingestionJobKey,                                                                                  
+			_mmsAPIIngestionURL,                                                                                        
+			"POST", // requestType                                                                            
+			_mmsAPITimeoutInSeconds,                                                                          
+			to_string(userKey),                                                                               
+			apiKey,                                                                                           
+			workflowMetadata,                                                                                 
+			"application/json", // contentType                                                                
+			_logger                                                                                           
+		);                                                                                                    
+
+		/*
 		{
 			string mmsAPIURL =
 				_mmsAPIProtocol
@@ -15198,57 +15252,6 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 			if (_mmsAPIProtocol == "https")
 			{
-				/*
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-				typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-				typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-				typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-				typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-				*/
-
-				/*
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				request.setOpt(sslCert);
-				*/
-
-				/*
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				if(pPassphrase)
-				curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-				*/
-
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -15310,6 +15313,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				throw runtime_error(message);
 			}
 		}
+		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16002,7 +16006,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		int64_t userKey;
 		string apiKey;
 		{
-			string field = "InternalMMS";
+			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				Json::Value internalMMSRoot = liveCutParametersRoot[field];
@@ -16318,6 +16322,19 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			}
 		}
 
+		string sResponse = MMSCURL::httpPostPutString(                                                        
+			ingestionJobKey,                                                                                  
+			_mmsAPIIngestionURL,                                                                                        
+			"POST", // requestType                                                                            
+			_mmsAPITimeoutInSeconds,                                                                          
+			to_string(userKey),                                                                               
+			apiKey,                                                                                           
+			workflowMetadata,                                                                                 
+			"application/json", // contentType                                                                
+			_logger                                                                                           
+		);                                                                                                    
+
+		/*
 		{
 			string mmsAPIURL =
 				_mmsAPIProtocol
@@ -16351,57 +16368,6 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 			if (_mmsAPIProtocol == "https")
 			{
-				/*
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-				typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-				typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-				typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-				typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-				typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-				typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-				*/
-
-				/*
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				request.setOpt(sslCert);
-				*/
-
-				/*
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				if(pPassphrase)
-				curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-				*/
-
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -16463,6 +16429,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				throw runtime_error(message);
 			}
 		}
+		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17831,7 +17798,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		int64_t userKey;
 		string apiKey;
 		{
-			string field = "InternalMMS";
+			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value internalMMSRoot = parametersRoot[field];
@@ -17897,7 +17864,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						Json::Value removed;
-						field = "InternalMMS";
+						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.removeMember(field, &removed);
 					}
@@ -17958,7 +17925,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						Json::Value removed;
-						field = "InternalMMS";
+						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.removeMember(field, &removed);
 					}
@@ -18007,6 +17974,19 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 		}
 
+		MMSCURL::httpPostPutString(                                                        
+			ingestionJobKey,                                                                                  
+			_mmsAPIIngestionURL,                                                                                        
+			"POST", // requestType                                                                            
+			_mmsAPITimeoutInSeconds,                                                                          
+			to_string(userKey),                                                                               
+			apiKey,                                                                                           
+			workflowMetadata,                                                                                 
+			"application/json", // contentType                                                                
+			_logger                                                                                           
+		);                                                                                                    
+
+		/*
 		{
 			string mmsAPIURL =
 				_mmsAPIProtocol
@@ -18146,6 +18126,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				throw runtime_error(message);
 			}
 		}
+		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -21258,7 +21239,8 @@ void MMSEngineProcessor::manageEncodeTask(
 		_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
 			contentType, encodingPriority,
 			encodingProfileKey, encodingProfileDetailsRoot,
-			sourcesToBeEncodedRoot);
+			sourcesToBeEncodedRoot,
+			_mmsAPIIngestionURL, _mmsBinaryIngestionURL);
     }
     catch(runtime_error e)
     {
