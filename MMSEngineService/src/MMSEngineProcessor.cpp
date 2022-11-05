@@ -20964,6 +20964,28 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
 
+					// check if the profile is already present for the source content
+					{
+						try
+						{
+							bool warningIfMissing = true;
+							int64_t localPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+								sourceMediaItemKey, encodingProfileKey, warningIfMissing);
+
+							string errorMessage = __FILEREF__ + "Content profile is already present"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						catch(MediaItemKeyNotFound e)
+						{
+						}
+					}
+
 					int64_t sourceDurationInMilliSecs = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 							sourceMediaItemKey, sourcePhysicalPathKey);
 
@@ -20987,28 +21009,6 @@ void MMSEngineProcessor::manageEncodeTask(
 							_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);
 						tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore, ignore)
 							= physicalPathDetails;
-					}
-
-					// check if the profile is already present for the source content
-					{
-						try
-						{
-							bool warningIfMissing = true;
-							int64_t localPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-								sourceMediaItemKey, encodingProfileKey, warningIfMissing);
-
-							string errorMessage = __FILEREF__ + "Content profile is already present"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-								;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						catch(MediaItemKeyNotFound e)
-						{
-						}
 					}
 
 					// calculate delivery URL in case of an external encoder
@@ -21046,6 +21046,67 @@ void MMSEngineProcessor::manageEncodeTask(
 						);
 
 						tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+					}
+
+					string encodedFileName;
+					{
+						string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
+						string fileFormatLowerCase;
+						fileFormatLowerCase.resize(fileFormat.size());
+						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+							[](unsigned char c){return tolower(c); } );
+
+						encodedFileName =
+							to_string(ingestionJobKey)
+							+ "_"
+							+ to_string(encodingProfileKey);
+
+						if (fileFormatLowerCase == "hls"
+							|| fileFormatLowerCase == "dash")
+							;
+						else
+						{
+							encodedFileName.append(".");
+							encodedFileName.append(fileFormatLowerCase);
+						}
+					}
+    
+					string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
+					string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+					string encodedNFSStagingAssetPathName;
+					{
+						bool removeLinuxPathIfExist = false;
+						bool neededForTranscoder = true;
+						sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+							neededForTranscoder,
+							workspace->_directoryName,	// workspaceDirectoryName
+							to_string(ingestionJobKey),		// directoryNamePrefix
+							"/",							// relativePath,
+							sourceFileName,				// fileName
+							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+							removeLinuxPathIfExist);
+
+						encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+							neededForTranscoder,
+							workspace->_directoryName,	// workspaceDirectoryName
+							to_string(ingestionJobKey),					// directoryNamePrefix
+							"/",										// relativePath,
+							encodedFileName,
+							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+							removeLinuxPathIfExist);
+
+						neededForTranscoder = false;
+						encodedNFSStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+							neededForTranscoder,
+							workspace->_directoryName,	// workspaceDirectoryName
+							to_string(ingestionJobKey),		// directoryNamePrefix
+							"/",							// relativePath,
+							encodedFileName,				// fileName
+							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+							removeLinuxPathIfExist);
 					}
 
 					Json::Value videoTracksRoot(Json::arrayValue);
@@ -21132,29 +21193,6 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
 
-					string encodedFileName;
-					{
-						string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
-						string fileFormatLowerCase;
-						fileFormatLowerCase.resize(fileFormat.size());
-						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-							[](unsigned char c){return tolower(c); } );
-
-						encodedFileName =
-							to_string(ingestionJobKey)
-							+ "_"
-							+ to_string(encodingProfileKey);
-
-						if (fileFormatLowerCase == "hls"
-							|| fileFormatLowerCase == "dash")
-							;
-						else
-						{
-							encodedFileName.append(".");
-							encodedFileName.append(fileFormatLowerCase);
-						}
-					}
-    
 					Json::Value sourceRoot;
 
 					string field = "stopIfReferenceProcessingError";
@@ -21190,8 +21228,14 @@ void MMSEngineProcessor::manageEncodeTask(
 					field = "audioTracks";
 					sourceRoot[field] = audioTracksRoot;
 
-					field = "encodedFileName";
-					sourceRoot[field] = encodedFileName;
+					field = "sourceTranscoderStagingAssetPathName";
+					sourceRoot[field] = sourceTranscoderStagingAssetPathName;
+
+					field = "encodedTranscoderStagingAssetPathName";
+					sourceRoot[field] = encodedTranscoderStagingAssetPathName;
+
+					field = "encodedNFSStagingAssetPathName";
+					sourceRoot[field] = encodedNFSStagingAssetPathName;
 
 					sourcesToBeEncodedRoot.append(sourceRoot);
 				}

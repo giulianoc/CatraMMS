@@ -2248,54 +2248,11 @@ void EncoderVideoAudioProxy::encodeContentVideoAudio()
 
 bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
-	Json::Value sourcesToBeEncodedRoot;
-	Json::Value sourceToBeEncodedRoot;
-	Json::Value encodingProfileDetailsRoot;
-	MMSEngineDBFacade::ContentType contentType;
 	string encodersPool;
-    int64_t sourcePhysicalPathKey;
-    int64_t encodingProfileKey;    
-	string sourceFileName;
-	string encodedFileName;
 	try
     {
-		sourcesToBeEncodedRoot = _encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"];
-		if (sourcesToBeEncodedRoot.size() == 0)
-		{
-			string errorMessage = __FILEREF__ + "No sourceToBeEncoded found"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
-
-
-		encodingProfileDetailsRoot
-			= _encodingItem->_encodingParametersRoot["encodingProfileDetailsRoot"];
-
-		string sContentType
-			= _encodingItem->_encodingParametersRoot.get("contentType", "").asString();
-		contentType = MMSEngineDBFacade::toContentType(sContentType);
-
         string field = "EncodersPool";
         encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, 0);
-
-        field = "sourceFileName";
-        sourceFileName = sourceToBeEncodedRoot.get(field, "").asString();
-
-        field = "encodedFileName";
-        encodedFileName = sourceToBeEncodedRoot.get(field, "").asString();
-
-        field = "encodingProfileKey";
-        encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
-				field, 0);
     }
 	catch (runtime_error e)
 	{
@@ -2320,25 +2277,20 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		throw e;
 	}
 
-	string stagingEncodedAssetPathName;
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegEncodeURI;
-	// ostringstream response;
-	// bool responseInitialized = false;
 	try
 	{
-		bool externalEncoder = false;
-
-		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1)
 		{
 			int64_t encoderKeyToBeSkipped = -1;
-			bool externalEncoderAllowed = false;
+			bool externalEncoderAllowed = true;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
 					encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
-				externalEncoder) = encoderDetails;
+				_currentUsedFFMpegExternalEncoder) = encoderDetails;
 
             _logger->info(__FILEREF__ + "getEncoderHost"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2358,38 +2310,12 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
 					+ ", _directoryName: " + _encodingItem->_workspace->_directoryName
-					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-				);
-
-				// stagingEncodedAssetPathName preparation
-				{
-					bool removeLinuxPathIfExist = true;
-					bool neededForTranscoder = false;
-					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-						neededForTranscoder,
-						_encodingItem->_workspace->_directoryName,
-						to_string(_encodingItem->_encodingJobKey),
-						"/",    // _encodingItem->_relativePath,
-						encodedFileName,
-						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-						removeLinuxPathIfExist);
-				}
-
-				_logger->info(__FILEREF__ + "building body for encoder 2"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodedFileName: " + encodedFileName
-
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 				);
 
                 Json::Value encodingMedatada;
 
-                encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
+                encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
@@ -2473,50 +2399,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 string field = "error";
                 if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                 {
-                    // remove the staging directory created just for this encoding
-					/* 2019-05-24: Commented because the remove is already done in the exception generated
-					 * by this error
-                    {
-                        size_t directoryEndIndex = stagingEncodedAssetPathName.find_last_of("/");
-                        if (directoryEndIndex == string::npos)
-                        {
-                            string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
-                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-                            _logger->error(errorMessage);
+                    string error = encodeContentResponse.get(field, "").asString();
 
-                            // throw runtime_error(errorMessage);
-                        }
-                        else
-                        {
-                            string stagingDirectory = stagingEncodedAssetPathName.substr(0, directoryEndIndex);
-                            
-                            try
-                            {
-                                _logger->info(__FILEREF__ + "removeDirectory"
-                                    + ", stagingDirectory: " + stagingDirectory
-                                );
-                                Boolean_t bRemoveRecursively = true;
-                                FileIO::removeDirectory(stagingDirectory, bRemoveRecursively);
-                            }
-                            catch (runtime_error e)
-                            {
-                                _logger->warn(__FILEREF__ + "FileIO::removeDirectory failed (runtime_error)"
-                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                                    + ", stagingDirectory: " + stagingDirectory
-                                    + ", exception: " + e.what()
-                                    + ", response.str(): " + response.str()
-                                );
-                            }
-                        }
-                    }
-					*/
-                    
-                    string error = encodeContentResponse.get(field, "XXX").asString();
-                    
                     if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
 						string errorMessage = string("No Encodings available")
@@ -2541,34 +2425,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         throw runtime_error(errorMessage);
                     }                        
                 }
-                /*
-                else
-                {
-                    string field = "ffmpegEncoderHost";
-                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
-                    {
-                        _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
-                        
-                        _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                            + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-                                );                                        
-                    }
-                    else
-                    {
-                        string errorMessage = string("Unexpected FFMPEGEncoder response")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                */                        
             }
 		}
 		else
@@ -2583,29 +2439,19 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
 			pair<string, bool> encoderDetails =
 				_mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
-			tie(_currentUsedFFMpegEncoderHost, externalEncoder) = encoderDetails;
+			tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
-			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
 			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_encoderKey	= -1;
 
-			// ffmpegEncoderURL = 
-            //        _ffmpegEncoderProtocol
-            //        + "://"
-            //        + _currentUsedFFMpegEncoderHost + ":"
-            //        + to_string(_ffmpegEncoderPort)
             ffmpegEncoderURL =
 				_currentUsedFFMpegEncoderHost
 				+ ffmpegURI
 				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
-
-		sourceToBeEncodedRoot["out_stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
-		sourcesToBeEncodedRoot[0] = sourceToBeEncodedRoot;
-		_encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"] = sourcesToBeEncodedRoot;
 
 		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
@@ -2621,7 +2467,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, "");	// stagingEncodedAssetPathName);
 
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -2638,7 +2484,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
-               
+
 			try
 			{
 				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
@@ -2878,9 +2724,21 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 {
+	if (_currentUsedFFMpegExternalEncoder)
+	{
+        _logger->info(__FILEREF__ + "The encoder selected is external, processEncodedContentVideoAudio has nothing to do"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+        );
+
+		return;
+	}
+
 	Json::Value sourcesToBeEncodedRoot;
 	Json::Value sourceToBeEncodedRoot;
-	string stagingEncodedAssetPathName;
+	string encodedNFSStagingAssetPathName;
 	Json::Value encodingProfileDetailsRoot;
     int64_t sourceMediaItemKey;
     int64_t encodingProfileKey;    
@@ -2903,15 +2761,15 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 
 
-		stagingEncodedAssetPathName
-			= sourceToBeEncodedRoot.get("out_stagingEncodedAssetPathName", "").asString();
-		if (stagingEncodedAssetPathName == "")
+		encodedNFSStagingAssetPathName
+			= sourceToBeEncodedRoot.get("encodedNFSStagingAssetPathName", "").asString();
+		if (encodedNFSStagingAssetPathName == "")
 		{
-			string errorMessage = __FILEREF__ + "stagingEncodedAssetPathName cannot be empty"
+			string errorMessage = __FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 			;
 			_logger->error(errorMessage);
 
@@ -2990,20 +2848,20 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
         );
 		bool isMMSAssetPathName = true;
         FFMpeg ffmpeg (_configuration, _logger);
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				isMMSAssetPathName, stagingEncodedAssetPathName + "/" + manifestFileName,
+				isMMSAssetPathName, encodedNFSStagingAssetPathName + "/" + manifestFileName,
 				videoTracks, audioTracks);
 		}
 		else
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				isMMSAssetPathName, stagingEncodedAssetPathName,
+				isMMSAssetPathName, encodedNFSStagingAssetPathName,
 				videoTracks, audioTracks);
 		}
 
@@ -3018,21 +2876,21 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
 
-		if (stagingEncodedAssetPathName != "")
+		if (encodedNFSStagingAssetPathName != "")
 		{
 			string directoryPathName;
 			try
 			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				size_t endOfDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
 					directoryPathName =
-						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+						encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -3061,20 +2919,20 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
         );
 
-		if (stagingEncodedAssetPathName != "")
+		if (encodedNFSStagingAssetPathName != "")
 		{
 			string directoryPathName;
 			try
 			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				size_t endOfDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -3104,58 +2962,26 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 	FileIO::DirectoryEntryType_t sourceFileType;
     try
     {
-        size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+        size_t fileNameIndex = encodedNFSStagingAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+				+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName;
             _logger->error(errorMessage);
-
-			/*
-			 * 2019-05-24: commented because the remove directory is already done into the exception
-			 *
-			if (stagingEncodedAssetPathName != "")
-			{
-				string directoryPathName;
-				try
-				{
-					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-						_logger->info(__FILEREF__ + "removeDirectory"
-							+ ", directoryPathName: " + directoryPathName
-						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-					}
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "removeDirectory failed"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-						+ ", exception: " + e.what()
-					);
-				}
-			}
-			*/
 
             throw runtime_error(errorMessage);
         }
 
-		encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+		encodedFileName = encodedNFSStagingAssetPathName.substr(fileNameIndex + 1);
 
         bool deliveryRepositoriesToo = true;
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 			_encodingItem->_ingestionJobKey,
-            stagingEncodedAssetPathName,
+            encodedNFSStagingAssetPathName,
             _encodingItem->_workspace->_directoryName,
             encodedFileName,
             sourceRelativePath,
@@ -3174,21 +3000,21 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
             + ", e.what(): " + e.what()
         );
 
-		if (stagingEncodedAssetPathName != "")
+		if (encodedNFSStagingAssetPathName != "")
 		{
 			string directoryPathName;
 			try
 			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				size_t endOfDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -3217,20 +3043,20 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
         );
 
-		if (stagingEncodedAssetPathName != "")
+		if (encodedNFSStagingAssetPathName != "")
 		{
 			string directoryPathName;
 			try
 			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				size_t endOfDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -3258,10 +3084,10 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		string directoryPathName;
 		try
 		{
-			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			size_t endOfDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 			if (endOfDirectoryIndex != string::npos)
 			{
-				directoryPathName = stagingEncodedAssetPathName.substr(0,
+				directoryPathName = encodedNFSStagingAssetPathName.substr(0,
 						endOfDirectoryIndex);
 
 				_logger->info(__FILEREF__ + "removeDirectory"
@@ -3278,7 +3104,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
-				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 				+ ", directoryPathName: " + directoryPathName
 				+ ", exception: " + e.what()
 			);
@@ -3289,26 +3115,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     {
         unsigned long long mmsAssetSizeInBytes;
         {
-			/*
-            FileIO::DirectoryEntryType_t detSourceFileType = 
-                    FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-                    detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                string errorMessage = __FILEREF__ + "Wrong directory entry type"
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        ;
-
-                _logger->error(errorMessage);
-                throw runtime_error(errorMessage);
-            }
-			*/
-
             if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
@@ -3325,14 +3131,14 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
-			size_t segmentsDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			size_t segmentsDirectoryIndex = encodedNFSStagingAssetPathName.find_last_of("/");
 			if (segmentsDirectoryIndex == string::npos)
 			{
 				string errorMessage = __FILEREF__ + "No segmentsDirectory find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                    + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName;
 				_logger->error(errorMessage);
 
 	            throw runtime_error(errorMessage);
@@ -3340,7 +3146,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
 			// in case of MPEG2_TS next 'stagingEncodedAssetPathName.substr' extract the directory name
 			// containing manifest and ts files. So relativePath has to be extended with this directory
-			newSourceRelativePath += (stagingEncodedAssetPathName.substr(segmentsDirectoryIndex + 1) + "/");
+			newSourceRelativePath += (encodedNFSStagingAssetPathName.substr(segmentsDirectoryIndex + 1) + "/");
 
 			// in case of MPEG2_TS, encodedFileName is the manifestFileName
 			encodedFileName = manifestFileName;
@@ -3392,7 +3198,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 			+ ", e.what(): " + e.what()
         );
 
@@ -3430,7 +3236,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
         );
 
 		// file in case of .3gp content OR directory in case of IPhone content
@@ -3460,6 +3266,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
         throw e;
     }
+
 }
 
 pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()

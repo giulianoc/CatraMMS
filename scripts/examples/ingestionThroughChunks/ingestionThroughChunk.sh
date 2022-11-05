@@ -60,5 +60,9 @@ fi
 #echo "./helper/ingestionBinary.sh $mmsUserKey \"$mmsAPIKey\" $ingestionJobKey \"$binaryFilePathName\""
 ./helper/ingestionBinary.sh $mmsUserKey "$mmsAPIKey" $ingestionJobKey "$binaryFilePathName" $continueFromIndex
 
+if [ $? -ne 0 ]; then
+	exit 1
+fi
+
 rm -f /tmp/$filename.ingestionJobKey
 

@@ -185,15 +185,6 @@ private:
 	string					_keyPairId;
 	string					_privateKeyPEMPathName;
 
-	/*
-    string								_mmsAPIProtocol;
-    string								_mmsAPIHostname;
-    int									_mmsAPIPort;
-    string								_mmsAPIUser;
-    string								_mmsAPIPassword;
-    string								_mmsAPIIngestionURI;
-	*/
-
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
         int*                            _pRunningEncodingsNumber;
@@ -201,6 +192,7 @@ private:
     #else
         string                          _currentUsedFFMpegEncoderHost;
 		int64_t							_currentUsedFFMpegEncoderKey;
+		bool							_currentUsedFFMpegExternalEncoder;
     #endif
 
 	// used only in case of face recognition/identification video generation
