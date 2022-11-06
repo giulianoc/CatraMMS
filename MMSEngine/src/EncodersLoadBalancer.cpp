@@ -91,11 +91,12 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
 */
 
 tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
-	string encodersPoolLabel, shared_ptr<Workspace> workspace,
+	int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace,
 	int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed)
 {
 
     _logger->info(__FILEREF__ + "Received getEncoderURL"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPoolLabel: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -125,6 +126,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
 
         _logger->info(__FILEREF__ + "getEncoderURL"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPoolLabel: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -137,6 +139,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
     catch(EncoderNotFound e)
     {
         _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -148,6 +151,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
@@ -159,6 +163,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
     catch(exception e)
     {
         string errorMessage = string("getRunningEncoderByEncodersPool failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPool: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)

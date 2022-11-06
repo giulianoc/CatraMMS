@@ -46,7 +46,7 @@ public:
 		string encoderToSkip);
     
 	tuple<int64_t, string, bool> getEncoderURL(
-		string encodersPoolLabel, shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace,
 		int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 
 private:

@@ -3003,7 +3003,7 @@ tuple<int64_t, bool, string, string, string, int>
 			}
 			else
 			{
-				string errorMessage = string("Encoder details not found")
+				string errorMessage = __FILEREF__ + "Encoder details not found"
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", encodersPoolKey: " + to_string(encodersPoolKey)
 				;
@@ -3015,7 +3015,7 @@ tuple<int64_t, bool, string, string, string, int>
 
 		if (!encoderFound)
 		{
-			string errorMessage = string("Encoder was not found")
+			string errorMessage = __FILEREF__ + "Encoder was not found"
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodersPoolLabel: " + encodersPoolLabel
 				+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)

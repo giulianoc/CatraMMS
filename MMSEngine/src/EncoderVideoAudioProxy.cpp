@@ -2289,7 +2289,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			bool externalEncoderAllowed = true;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -2691,7 +2691,18 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
 		);
 
 		throw e;
@@ -3342,7 +3353,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -3948,6 +3959,19 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoding not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -4346,7 +4370,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -4902,6 +4926,19 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoding not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -5318,7 +5355,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -5931,6 +5968,19 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -6136,7 +6186,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -6750,6 +6800,19 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -6929,7 +6992,7 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -7483,6 +7546,19 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -7662,7 +7738,7 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -8214,6 +8290,19 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -8472,7 +8561,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -9024,6 +9113,19 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 		throw e;
 	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
 	catch (runtime_error e)
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
@@ -9151,7 +9253,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
-					encodersPool, _encodingItem->_workspace,
+					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 					encoderKeyToBeSkipped, externalEncoderAllowed);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 				_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -9698,6 +9800,19 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 	catch (curlpp::RuntimeError & e) 
 	{
 		_logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		throw e;
+	}
+	catch (EncoderNotFound e)
+	{
+		_logger->error(__FILEREF__ + "Encoder not found"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -11656,7 +11771,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					bool externalEncoderAllowed = true;
 					tuple<int64_t, string, bool> encoderDetails =
 						_encodersLoadBalancer->getEncoderURL(
-							encodersPool, _encodingItem->_workspace,
+							_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 							encoderKeyToBeSkipped, externalEncoderAllowed);
 					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 						_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -13443,7 +13558,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					bool externalEncoderAllowed = true;
 					tuple<int64_t, string, bool> encoderDetails =
 						_encodersLoadBalancer->getEncoderURL(
-							encodersPool, _encodingItem->_workspace,
+							_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 							encoderKeyToBeSkipped, externalEncoderAllowed);
 					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 						_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -14787,6 +14902,65 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
             // throw e;
         }
+        catch (EncoderNotFound e)
+        {
+            _logger->error(__FILEREF__ + "Encoder not found"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated
+				// contiuosly. The task will never exist from this loop because
+				// currentAttemptsNumberInCaseOfErrors always remain to 0 and the main loop
+				// look currentAttemptsNumberInCaseOfErrors.
+				// So added currentAttemptsNumberInCaseOfErrors++
+				currentAttemptsNumberInCaseOfErrors++;
+
+				// encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", currentAttemptsNumberInCaseOfErrors: "
+						+ to_string(currentAttemptsNumberInCaseOfErrors)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					// encodingStatusFailures
+					currentAttemptsNumberInCaseOfErrors
+				);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
+        }
         catch (runtime_error e)
         {
             _logger->error(__FILEREF__ + "Encoding URL failed/runtime_error"
@@ -15558,7 +15732,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 				bool externalEncoderAllowed = true;
 				tuple<int64_t, string, bool> encoderDetails =
 					_encodersLoadBalancer->getEncoderURL(
-						encodersPool, _encodingItem->_workspace,
+						_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
 						encoderKeyToBeSkipped, externalEncoderAllowed);
 				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost,
 						_currentUsedFFMpegExternalEncoder) = encoderDetails;
@@ -16442,6 +16616,49 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
         catch (curlpp::RuntimeError& e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+            // throw e;
+        }
+        catch (EncoderNotFound e)
+        {
+            _logger->error(__FILEREF__ + "Encoder not found"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
