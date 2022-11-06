@@ -7258,11 +7258,6 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
 			"externalEncoder", false);
 
-        liveRecording->_mmsWorkflowIngestionURL =
-			liveRecorderMedatada.get("mmsWorkflowIngestionURL", "").asString();
-        liveRecording->_mmsBinaryIngestionURL =
-			liveRecorderMedatada.get("mmsBinaryIngestionURL", "").asString();
-
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -8228,9 +8223,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds,
-									liveRecording->_mmsWorkflowIngestionURL,
-									liveRecording->_mmsBinaryIngestionURL);
+									liveRecording->_lastRecordedAssetDurationInSeconds);
 							}
 							else // if (liveRecording->_segmenterType == "hlsSegmenter")
 							{
@@ -8248,9 +8241,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds,
-									liveRecording->_mmsWorkflowIngestionURL,
-									liveRecording->_mmsBinaryIngestionURL);
+									liveRecording->_lastRecordedAssetDurationInSeconds);
 							}
 
 							liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
@@ -8475,6 +8466,38 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							}
 						}
 
+						string mmsWorkflowIngestionURL;
+						string mmsBinaryIngestionURL;
+						{
+							string field = "mmsWorkflowIngestionURL";
+							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot,
+								field))
+							{
+								string errorMessage = __FILEREF__ + "Field is not present or it is null"
+									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", Field: " + field;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							mmsWorkflowIngestionURL = copiedLiveRecording->_encodingParametersRoot.get(field, "").asString();
+
+							field = "mmsBinaryIngestionURL";
+							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot,
+								field))
+							{
+								string errorMessage = __FILEREF__ + "Field is not present or it is null"
+									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+									+ ", Field: " + field;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							mmsBinaryIngestionURL = copiedLiveRecording->_encodingParametersRoot.get(field, "").asString();
+						}
+
 						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
 							copiedLiveRecording->_ingestionJobKey,
 							copiedLiveRecording->_encodingJobKey,
@@ -8491,8 +8514,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey,
 							userKey,
 							apiKey,
-							copiedLiveRecording->_mmsWorkflowIngestionURL,
-							copiedLiveRecording->_mmsBinaryIngestionURL);
+							mmsWorkflowIngestionURL,
+							mmsBinaryIngestionURL);
 					}
 					catch(runtime_error e)
 					{
@@ -8577,9 +8600,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds,
-	string mmsWorkflowIngestionURL,
-	string mmsBinaryIngestionURL)
+	double lastRecordedAssetDurationInSeconds)
 {
 
 	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
@@ -8912,15 +8933,14 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
 							transcoderStagingContentsPath, currentRecordedAssetFileName,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-							ingestedParametersRoot, encodingParametersRoot,
-							mmsWorkflowIngestionURL, mmsBinaryIngestionURL);
+							ingestedParametersRoot, encodingParametersRoot);
 					else
 						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 							transcoderStagingContentsPath, currentRecordedAssetFileName,
 							stagingContentsPath,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot,
-							false, mmsWorkflowIngestionURL);
+							false);
 				}
 				catch(runtime_error e)
 				{
@@ -9008,8 +9028,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL)
+	double lastRecordedAssetDurationInSeconds)
 {
 
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
@@ -9359,15 +9378,14 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
 											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-											ingestedParametersRoot, encodingParametersRoot,
-											mmsWorkflowIngestionURL, mmsBinaryIngestionURL);
+											ingestedParametersRoot, encodingParametersRoot);
 									else
 										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 											sharedStagingContentsPath,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 											ingestedParametersRoot, encodingParametersRoot,
-											true, mmsWorkflowIngestionURL);
+											true);
 								}
 								catch(runtime_error e)
 								{
@@ -9490,8 +9508,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	string fileFormat,
 	Json::Value ingestedParametersRoot,
 	Json::Value encodingParametersRoot,
-	bool copy,
-	string mmsWorkflowIngestionURL)
+	bool copy)
 {
 	try
 	{
@@ -9578,6 +9595,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		throw e;
 	}
 
+	string mmsWorkflowIngestionURL;
 	string workflowMetadata;
 	try
 	{
@@ -9609,6 +9627,21 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
 				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
+		}
+
+		{
+			string field = "mmsWorkflowIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
 		}
 
 		string sResponse = MMSCURL::httpPostPutString(
@@ -9655,14 +9688,13 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot,
-	string mmsWorkflowIngestionURL,
-	string mmsBinaryIngestionURL)
+	Json::Value encodingParametersRoot)
 {
 	string workflowMetadata;
 	int64_t userKey;
 	string apiKey;
 	int64_t addContentIngestionJobKey = -1;
+	string mmsWorkflowIngestionURL;
 	// create the workflow and ingest it
 	try
 	{
@@ -9692,6 +9724,21 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
 				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
+		}
+
+		{
+			string field = "mmsWorkflowIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
 		}
 
 		string sResponse = MMSCURL::httpPostPutString(
@@ -9750,6 +9797,22 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t chunkFileSize = FileIO::getFileSizeInBytes(
 			transcoderStagingContentsPath + currentRecordedAssetFileName,
 			inCaseOfLinkHasItToBeRead);
+
+		string mmsBinaryIngestionURL;
+		{
+			string field = "mmsBinaryIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+		}
 
 		mmsBinaryURL =
 			mmsBinaryIngestionURL
