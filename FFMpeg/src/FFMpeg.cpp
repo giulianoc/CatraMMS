@@ -11256,6 +11256,27 @@ void FFMpeg::liveProxy2(
 			}
 			else // if (stoppedBySigQuit)
 			{
+				// in case of IP_PUSH the monitor thread, in case the client does not
+				// reconnect istantaneously, kills the process.
+				// In general, if ffmpeg restart, liveMonitoring has to wait, for this reason
+				// we will set again the liveProxy->_proxyStart variable
+				{
+					if (utcProxyPeriodStart != -1)
+					{
+						if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
+							chrono::system_clock::now())
+							*pProxyStart = chrono::system_clock::now() +
+								chrono::seconds(pushListenTimeout);
+						else
+							*pProxyStart = chrono::system_clock::from_time_t(
+								utcProxyPeriodStart) +
+								chrono::seconds(pushListenTimeout);
+					}
+					else
+						*pProxyStart = chrono::system_clock::now() +
+							chrono::seconds(pushListenTimeout);
+				}
+
 				// 2022-10-21: this is the scenario where the LiveProxy playlist is changed (signal: 3)
 				//	and we need to use the new playlist
 				//	This is the ffmpeg 'client side'.
