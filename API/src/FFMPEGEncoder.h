@@ -100,6 +100,9 @@ struct LiveRecording
 	bool					_monitoringEnabled;
 	bool					_monitoringFrameIncreasingEnabled;
 
+	string					_mmsWorkflowIngestionURL;
+	string					_mmsBinaryIngestionURL;
+
 	int64_t					_ingestionJobKey;
 	bool					_externalEncoder;
 	Json::Value				_encodingParametersRoot;
@@ -131,6 +134,8 @@ struct LiveRecording
 		liveRecording->_monitoringFrameIncreasingEnabled = _monitoringFrameIncreasingEnabled;
 		liveRecording->_encodingJobKey = _encodingJobKey;
 		liveRecording->_externalEncoder = _externalEncoder;
+		liveRecording->_mmsWorkflowIngestionURL = _mmsWorkflowIngestionURL;
+		liveRecording->_mmsBinaryIngestionURL = _mmsBinaryIngestionURL;
 		liveRecording->_ffmpeg = _ffmpeg;
 		liveRecording->_childPid = _childPid;
 		liveRecording->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
@@ -338,18 +343,22 @@ private:
 	int							_monitorCheckInSeconds;
 	bool						_monitorThreadShutdown;
 
+	/*
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
     int									_mmsAPIPort;
     string								_mmsAPIIngestionURI;
     string								_mmsAPIVersion;
+	*/
     int									_mmsAPITimeoutInSeconds;
 
+	/*
 	string						_mmsBinaryProtocol;
 	string						_mmsBinaryHostname;
 	int							_mmsBinaryPort;
 	string						_mmsBinaryIngestionURI;
 	string						_mmsBinaryVersion;
+	*/
 	int							_mmsBinaryTimeoutInSeconds;
 
     void encodeContentThread(
@@ -399,7 +408,9 @@ private:
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
-		double lastRecordedAssetDurationInSeconds);
+		double lastRecordedAssetDurationInSeconds,
+		string mmsWorkflowIngestionURL,
+		string mmsBinaryIngestionURL);
 	pair<string, double> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string streamSourceType, 
@@ -412,7 +423,8 @@ private:
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
-		double lastRecordedAssetDurationInSeconds);
+		double lastRecordedAssetDurationInSeconds,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
 	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string mediaLiveRecorderFileName, int segmentDurationInSeconds, bool isFirstChunk);
 	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
@@ -431,8 +443,9 @@ private:
 		string fileFormat,
 		Json::Value ingestedParametersRoot,
 		Json::Value encodingParametersRoot,
-		bool copy);
-	tuple<int64_t, string, string> liveRecorder_buildChunkIngestionWorkflow(
+		bool copy,
+		string mmsWorkflowIngestionURL);
+	string liveRecorder_buildChunkIngestionWorkflow(
 		int64_t ingestionJobKey,
 		bool externalEncoder,
 		string currentRecordedAssetFileName,
@@ -453,7 +466,9 @@ private:
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot);
+		Json::Value encodingParametersRoot,
+		string mmsWorkflowIngestionURL,                                                                           
+		string mmsBinaryIngestionURL);
 	long liveRecorder_buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,
@@ -469,7 +484,9 @@ private:
 		string liveRecorderVirtualVODRetention,
 		int64_t liveRecorderVirtualVODImageMediaItemKey,
 		int64_t liveRecorderUserKey,
-		string liveRecorderApiKey);
+		string liveRecorderApiKey,
+		string mmsWorkflowIngestionURL,
+		string mmsBinaryIngestionURL);
 	string liveRecorder_buildVirtualVODIngestionWorkflow(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,

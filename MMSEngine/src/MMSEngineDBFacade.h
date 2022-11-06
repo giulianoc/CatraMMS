@@ -1784,7 +1784,8 @@ public:
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
 
-		Json::Value outputsRoot, Json::Value framesToBeDetectedRoot);
+		Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
 
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,

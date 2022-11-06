@@ -7618,7 +7618,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string monitorManifestDirectoryPath,
 	string monitorManifestFileName,
 
-	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot
+	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 )
 {
 
@@ -7784,6 +7785,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "framesToBeDetectedRoot";
 				parametersRoot[field] = framesToBeDetectedRoot;
+
+				field = "mmsWorkflowIngestionURL";
+				parametersRoot[field] = mmsWorkflowIngestionURL;
+
+				field = "mmsBinaryIngestionURL";
+				parametersRoot[field] = mmsBinaryIngestionURL;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

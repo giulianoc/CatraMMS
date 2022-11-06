@@ -12901,7 +12901,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorManifestDirectoryPath,	// used by FFMPEGEncoder.cpp to build virtualVOD
 			monitorManifestFileName,	// used by FFMPEGEncoder.cpp to build virtualVOD
 
-			localOutputsRoot, framesToBeDetectedRoot);
+			localOutputsRoot, framesToBeDetectedRoot,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL);
 	}
     catch(runtime_error e)
     {

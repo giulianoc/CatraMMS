@@ -391,6 +391,7 @@ FFMPEGEncoder::FFMPEGEncoder(
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
     );
 
+	/*
     _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->protocol: " + _mmsAPIProtocol
@@ -411,11 +412,13 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->version: " + _mmsAPIVersion
     );
+	*/
     _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
 
+	/*
     _mmsBinaryProtocol = _configuration["api"]["binary"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->protocol: " + _mmsBinaryProtocol
@@ -436,6 +439,7 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->version: " + _mmsBinaryVersion
     );
+	*/
     _mmsBinaryTimeoutInSeconds = JSONUtils::asInt(_configuration["api"]["binary"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
@@ -7254,6 +7258,11 @@ void FFMPEGEncoder::liveRecorderThread(
         liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
 			"externalEncoder", false);
 
+        liveRecording->_mmsWorkflowIngestionURL =
+			liveRecorderMedatada.get("mmsWorkflowIngestionURL", "").asString();
+        liveRecording->_mmsBinaryIngestionURL =
+			liveRecorderMedatada.get("mmsBinaryIngestionURL", "").asString();
+
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -8219,7 +8228,9 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
+									liveRecording->_lastRecordedAssetDurationInSeconds,
+									liveRecording->_mmsWorkflowIngestionURL,
+									liveRecording->_mmsBinaryIngestionURL);
 							}
 							else // if (liveRecording->_segmenterType == "hlsSegmenter")
 							{
@@ -8237,7 +8248,9 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
+									liveRecording->_lastRecordedAssetDurationInSeconds,
+									liveRecording->_mmsWorkflowIngestionURL,
+									liveRecording->_mmsBinaryIngestionURL);
 							}
 
 							liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
@@ -8477,7 +8490,9 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							_liveRecorderVirtualVODRetention,
 							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey,
 							userKey,
-							apiKey);
+							apiKey,
+							copiedLiveRecording->_mmsWorkflowIngestionURL,
+							copiedLiveRecording->_mmsBinaryIngestionURL);
 					}
 					catch(runtime_error e)
 					{
@@ -8562,7 +8577,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds,
+	string mmsWorkflowIngestionURL,
+	string mmsBinaryIngestionURL)
 {
 
 	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
@@ -8895,14 +8912,15 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
 							transcoderStagingContentsPath, currentRecordedAssetFileName,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
-							ingestedParametersRoot, encodingParametersRoot);
+							ingestedParametersRoot, encodingParametersRoot,
+							mmsWorkflowIngestionURL, mmsBinaryIngestionURL);
 					else
 						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 							transcoderStagingContentsPath, currentRecordedAssetFileName,
 							stagingContentsPath,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot,
-							false);
+							false, mmsWorkflowIngestionURL);
 				}
 				catch(runtime_error e)
 				{
@@ -8990,7 +9008,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL)
 {
 
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
@@ -9340,14 +9359,15 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
 											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-											ingestedParametersRoot, encodingParametersRoot);
+											ingestedParametersRoot, encodingParametersRoot,
+											mmsWorkflowIngestionURL, mmsBinaryIngestionURL);
 									else
 										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 											sharedStagingContentsPath,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 											ingestedParametersRoot, encodingParametersRoot,
-											true);
+											true, mmsWorkflowIngestionURL);
 								}
 								catch(runtime_error e)
 								{
@@ -9470,7 +9490,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	string fileFormat,
 	Json::Value ingestedParametersRoot,
 	Json::Value encodingParametersRoot,
-	bool copy)
+	bool copy,
+	string mmsWorkflowIngestionURL)
 {
 	try
 	{
@@ -9557,12 +9578,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		throw e;
 	}
 
-	string mmsAPIURL;
-	ostringstream response;
 	string workflowMetadata;
 	try
 	{
-		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildChunkIngestionWorkflow(
+		workflowMetadata = liveRecorder_buildChunkIngestionWorkflow(
 			ingestionJobKey,
 			false,	// externalEncoder,
 			currentRecordedAssetFileName,
@@ -9577,242 +9596,24 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 
 		int64_t userKey;
 		string apiKey;
-
-		tie(userKey, apiKey, workflowMetadata) = workflowDetails;
-
-		/*
 		{
-        	"Label": "<workflow label>",
-        	"Type": "Workflow",
-        	"Task": {
-                "Label": "<task label 1>",
-                "Type": "Add-Content"
-                "Parameters": {
-                        "FileFormat": "ts",
-                        "Ingester": "Giuliano",
-                        "SourceURL": "move:///abc...."
-                },
-        	}
-		}
-		*/
-		/*
-		Json::Value mmsDataRoot = userDataRoot["mmsData"];
-		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
-		int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
-		int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
-
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = to_string(utcChunkStartTime);
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		// bool internalMMSRootPresent = false;
-		int64_t userKey;
-		string apiKey;
-		{
-			field = "InternalMMS";
+			string field = "internalMMS";
     		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
-				// internalMMSRootPresent = true;
-
 				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "userKey";
 				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
-				apiKey = internalMMSRoot.get(field, "").asString();
-
-				field = "OnSuccess";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
-
-				field = "OnError";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
-
-				field = "OnComplete";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
 		}
-
-		Json::Value addContentParametersRoot = ingestedParametersRoot;
-		// if (internalMMSRootPresent)
-		{
-			Json::Value removed;
-			field = "InternalMMS";
-			addContentParametersRoot.removeMember(field, &removed);
-		}
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = fileFormat;
-
-		string sourceURL = string("move") + "://" + stagingContentsPath + currentRecordedAssetFileName;
-		field = "SourceURL";
-		addContentParametersRoot[field] = sourceURL;
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Live Recorder Task";
-
-		field = "Title";
-		addContentParametersRoot[field] = addContentTitle;
-
-		field = "UserData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		// if (!highAvailability)
-		{
-			// in case of no high availability, we can set just now the UniqueName for this content
-			// in case of high availability, the unique name will be set only of the selected content
-			//		choosing between main and bqckup
-			field = "UniqueName";
-			addContentParametersRoot[field] = uniqueName;
-		}
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = addContentTitle;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		{
-			Json::Value variablesWorkflowRoot;
-
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = utcChunkStartTime;
-
-				// name of the variable
-				field = "CurrentUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			char	currentUtcChunkStartTime_HHMISS [64];
-			{
-				tm		tmDateTime;
-
-				// from utc to local time
-				localtime_r (&utcChunkStartTime, &tmDateTime);
-
-				sprintf (currentUtcChunkStartTime_HHMISS,
-					"%02d:%02d:%02d",
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-			}
-			// field = "CurrentUtcChunkStartTime_HHMISS";
-			// variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "Value";
-				variableWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
-
-				// name of the variable
-				field = "CurrentUtcChunkStartTime_HHMISS";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			// field = "PreviousUtcChunkStartTime";
-			// variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = utcPreviousChunkStartTime;
-
-				// name of the variable
-				field = "PreviousUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = deliveryCode;
-
-				// name of the variable
-				field = "DeliveryCode";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "Value";
-				variableWorkflowRoot[field] = ingestionJobLabel;
-
-				// name of the variable
-				field = "IngestionJobLabel";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			field = "Variables";
-			workflowRoot[field] = variablesWorkflowRoot;
-		}
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", " + addContentTitle + ", "
-				+ currentRecordedAssetFileName
-				+ ", prev: " + to_string(utcPreviousChunkStartTime)
-				+ ", from: " + to_string(utcChunkStartTime)
-				+ ", to: " + to_string(utcChunkEndTime)
-		);
-		*/
-
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ "/catramms/"
-			+ _mmsAPIVersion
-			+ _mmsAPIIngestionURI
-            ;
 
 		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
-			mmsAPIURL,
+			mmsWorkflowIngestionURL,
 			"POST",	// requestType
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
@@ -9826,10 +9627,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
@@ -9838,10 +9638,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
@@ -9856,10 +9655,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot)
+	Json::Value encodingParametersRoot,
+	string mmsWorkflowIngestionURL,
+	string mmsBinaryIngestionURL)
 {
-	string mmsAPIURL;
-	ostringstream response;
 	string workflowMetadata;
 	int64_t userKey;
 	string apiKey;
@@ -9867,7 +9666,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	// create the workflow and ingest it
 	try
 	{
-		tuple<int64_t, string, string> workflowDetails = liveRecorder_buildChunkIngestionWorkflow(
+		workflowMetadata = liveRecorder_buildChunkIngestionWorkflow(
 			ingestionJobKey,
 			true,	// externalEncoder,
 			"",	// currentRecordedAssetFileName,
@@ -9880,21 +9679,24 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			encodingParametersRoot
 		);
 
-		tie(userKey, apiKey, workflowMetadata) = workflowDetails;
+		{
+			string field = "internalMMS";
+    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			{
+				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ "/catramms/"
-			+ _mmsAPIVersion
-			+ _mmsAPIIngestionURI
-            ;
+				field = "userKey";
+				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+
+				field = "apiKey";
+				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+			}
+		}
 
 		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
-			mmsAPIURL,
+			mmsWorkflowIngestionURL,
 			"POST",	// requestType
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
@@ -9910,10 +9712,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	{
 		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
@@ -9922,10 +9723,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	{
 		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
@@ -9952,13 +9752,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			inCaseOfLinkHasItToBeRead);
 
 		mmsBinaryURL =
-			_mmsBinaryProtocol
-			+ "://"
-			+ _mmsBinaryHostname + ":"
-			+ to_string(_mmsBinaryPort)
-			+ "/catramms/"
-			+ _mmsBinaryVersion
-			+ _mmsBinaryIngestionURI
+			mmsBinaryIngestionURL
 			+ "/" + to_string(addContentIngestionJobKey)
 		;
 
@@ -9980,7 +9774,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			+ ", mmsBinaryURL: " + mmsBinaryURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
@@ -9992,14 +9785,13 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			+ ", mmsBinaryURL: " + mmsBinaryURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
 		);
 
 		throw e;
 	}
 }
 
-tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
+string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 	int64_t ingestionJobKey,
 	bool externalEncoder,
 	string currentRecordedAssetFileName,
@@ -10043,9 +9835,6 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		// bool internalMMSRootPresent = false;
-		int64_t userKey;
-		string apiKey;
 		{
 			field = "internalMMS";
     		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
@@ -10053,13 +9842,6 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 				// internalMMSRootPresent = true;
 
 				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
-
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 				field = "OnSuccess";
     			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -10237,7 +10019,7 @@ tuple<int64_t, string, string> FFMPEGEncoder::liveRecorder_buildChunkIngestionWo
 				+ ", to: " + to_string(utcChunkEndTime)
 		);
 
-		return make_tuple(userKey, apiKey, workflowMetadata);
+		return workflowMetadata;
 	}
 	catch (runtime_error e)
 	{
@@ -10551,7 +10333,9 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	string liveRecorderVirtualVODRetention,
 	int64_t liveRecorderVirtualVODImageMediaItemKey,
 	int64_t liveRecorderUserKey,
-	string liveRecorderApiKey
+	string liveRecorderApiKey,
+	string mmsWorkflowIngestionURL,
+	string mmsBinaryIngestionURL
 )
 {
 
@@ -11084,24 +10868,12 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	}
 
 	// ingest the Live Recorder VOD
-	ostringstream response;
-	string mmsAPIURL;
 	int64_t addContentIngestionJobKey = -1;
 	try
 	{
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ "/catramms/"
-			+ _mmsAPIVersion
-			+ _mmsAPIIngestionURI
-		;
-
 		string sResponse = MMSCURL::httpPostPutString(
 			liveRecorderIngestionJobKey,
-			mmsAPIURL,
+			mmsWorkflowIngestionURL,
 			"POST",	// requestType
 			_mmsAPITimeoutInSeconds,
 			to_string(liveRecorderUserKey),
@@ -11122,10 +10894,9 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		string errorMessage = string("ingest live recorder VOD failed")
 			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", e.what: " + e.what()
-			+ ", response.str(): " + response.str()
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
@@ -11145,9 +10916,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		string errorMessage = string("ingest live recorder VOD failed")
 			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
 			+ ", workflowMetadata: " + workflowMetadata
-			+ ", response.str(): " + response.str()
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
@@ -11186,13 +10956,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				inCaseOfLinkHasItToBeRead);
 
 			mmsBinaryURL =
-				_mmsBinaryProtocol
-				+ "://"
-				+ _mmsBinaryHostname + ":"
-				+ to_string(_mmsBinaryPort)
-				+ "/catramms/"
-				+ _mmsBinaryVersion
-				+ _mmsBinaryIngestionURI
+				mmsBinaryIngestionURL
 				+ "/" + to_string(addContentIngestionJobKey)
 			;
 
@@ -11221,7 +10985,6 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				+ ", mmsBinaryURL: " + mmsBinaryURL
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", exception: " + e.what()
-				+ ", response.str(): " + response.str()
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
@@ -11242,7 +11005,6 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				+ ", mmsBinaryURL: " + mmsBinaryURL
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", exception: " + e.what()
-				+ ", response.str(): " + response.str()
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
