@@ -619,6 +619,75 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
+    catch(EncoderNotFound e)
+    {
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		);
+
+		try
+		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
+			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
+			);
+
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError, 
+                false,	// isIngestionJobFinished: this field is not used by updateEncodingJob
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        // throw e;
+        return;
+    }
 	catch(EncodingKilledByUser e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
