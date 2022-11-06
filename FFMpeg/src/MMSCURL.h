@@ -39,6 +39,7 @@ class MMSCURL {
 public:
 
     struct CurlDownloadData {
+        int64_t		ingestionJobKey;
 		string		loggerName;
         int         currentChunkNumber;
         string      destBinaryPathName;

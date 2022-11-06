@@ -4546,6 +4546,7 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 		}
 
+_logger->info(__FILEREF__ + "test");
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -4555,14 +4556,18 @@ void FFMPEGEncoder::encodeContentThread(
 				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
 				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
 		}
+_logger->info(__FILEREF__ + "test");
 		string eWhat = e.what();
+_logger->info(__FILEREF__ + "test");
         string errorMessage = string(strDateTime) + " API failed (runtime_error)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
+_logger->info(__FILEREF__ + "test");
         _logger->error(__FILEREF__ + errorMessage);
+_logger->info(__FILEREF__ + "test");
 		
 		encoding->_errorMessage = e.what();
 

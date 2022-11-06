@@ -441,6 +441,16 @@ string MMSCURL::httpPostPutFile(
 		CurlUploadData curlUploadData;
 		curlUploadData.loggerName = logger->name();
 		curlUploadData.mediaSourceFileStream.open(pathFileName, ios::binary);
+		if (!curlUploadData.mediaSourceFileStream)
+		{
+			string message = __FILEREF__ + "open file failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", pathFileName: " + pathFileName
+			;
+			logger->error(message);
+
+			throw runtime_error(message);
+		}
 		curlUploadData.lastByteSent = -1;
 		curlUploadData.fileSizeInBytes = fileSizeInBytes;
 
@@ -610,6 +620,16 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 	{
 		(curlDownloadData->mediaSourceFileStream).open(
 			curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::trunc);
+		if (!curlDownloadData->mediaSourceFileStream)
+		{
+			string message = __FILEREF__ + "open file failed"
+				+ ", ingestionJobKey: " + to_string(curlDownloadData->ingestionJobKey) 
+				+ ", destBinaryPathName: " + curlDownloadData->destBinaryPathName
+			;
+			logger->error(message);
+
+			// throw runtime_error(message);
+		}
 		curlDownloadData->currentChunkNumber += 1;
         
 		logger->info(__FILEREF__ + "Opening binary file"
@@ -622,10 +642,21 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 	else if (curlDownloadData->currentTotalSize >= 
 		curlDownloadData->currentChunkNumber * curlDownloadData->maxChunkFileSize)
 	{
-		(curlDownloadData->mediaSourceFileStream).close();
+		if (curlDownloadData->mediaSourceFileStream)
+			(curlDownloadData->mediaSourceFileStream).close();
 
 		// (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
 		(curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
+		if (!curlDownloadData->mediaSourceFileStream)
+		{
+			string message = __FILEREF__ + "open file failed"
+				+ ", ingestionJobKey: " + to_string(curlDownloadData->ingestionJobKey) 
+				+ ", destBinaryPathName: " + curlDownloadData->destBinaryPathName
+			;
+			logger->error(message);
+
+			// throw runtime_error(message);
+		}
 		curlDownloadData->currentChunkNumber += 1;
 
 		logger->info(__FILEREF__ + "Opening binary file"
@@ -636,7 +667,8 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 		);
 	}
 
-	curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
+	if (curlDownloadData->mediaSourceFileStream)
+		curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
 	curlDownloadData->currentTotalSize += (size * nmemb);
 
 
@@ -657,6 +689,7 @@ void MMSCURL::downloadFile(
 
 		CurlDownloadData curlDownloadData;
 		curlDownloadData.loggerName = logger->name();
+		curlDownloadData.ingestionJobKey = ingestionJobKey;
 		curlDownloadData.currentChunkNumber = 0;
 		curlDownloadData.currentTotalSize = 0;
 		curlDownloadData.destBinaryPathName   = destBinaryPathName;
