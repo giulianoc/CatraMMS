@@ -4095,7 +4095,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 		if (externalEncoder)
 		{
-			bool isStreaming = false;
+			bool isSourceStreaming = false;
 			{
 				field = "sourceFileExtension";
 				if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
@@ -4111,7 +4111,7 @@ void FFMPEGEncoder::encodeContentThread(
 				string sourceFileExtension = sourceToBeEncodedRoot.get(field, "").asString();
 
 				if (sourceFileExtension == ".m3u8")
-					isStreaming = true;
+					isSourceStreaming = true;
 			}
 
 			field = "sourceTranscoderStagingAssetPathName";
@@ -4126,6 +4126,26 @@ void FFMPEGEncoder::encodeContentThread(
 				throw runtime_error(errorMessage);
 			}
 			string sourceTranscoderStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+
+			{
+				size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
 
 			field = "sourcePhysicalDeliveryURL";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
@@ -4153,15 +4173,35 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
+			{
+				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = encodedStagingAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
 			_logger->info(__FILEREF__ + "downloading source content"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", externalEncoder: " + to_string(externalEncoder)
 				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
 				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
-				+ ", isStreaming: " + to_string(isStreaming)
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
 			);
 
-			if (isStreaming)
+			if (isSourceStreaming)
 			{
 				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
 				bool regenerateTimestamps = false;
@@ -4192,7 +4232,7 @@ void FFMPEGEncoder::encodeContentThread(
 				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
 				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
 				+ ", sourceAssetPathName: " + sourceAssetPathName
-				+ ", isStreaming: " + to_string(isStreaming)
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
 			);
 		}
 		else
@@ -4384,11 +4424,10 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 
 			{
-				string directoryPathName;
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -4450,11 +4489,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 			if (encodedStagingAssetPathName != "")
 			{
-				string directoryPathName;
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -4531,11 +4569,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 			if (encodedStagingAssetPathName != "")
 			{
-				string directoryPathName;
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
@@ -4619,11 +4656,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 			if (encodedStagingAssetPathName != "")
 			{
-				string directoryPathName;
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
