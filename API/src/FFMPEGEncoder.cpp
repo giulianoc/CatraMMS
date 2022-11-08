@@ -4367,7 +4367,7 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 
 			field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4377,10 +4377,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsWorkflowIngestionURL = encodingMedatada.get(field, "").asString();
+			string mmsWorkflowIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
 
 			field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada, field))
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4390,7 +4390,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsBinaryIngestionURL = encodingMedatada.get(field, "").asString();
+			string mmsBinaryIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
 
 			// static unsigned long long getDirectorySizeInBytes (string directoryPathName);                             
 
