@@ -290,7 +290,7 @@ string MMSCURL::httpPostPutString(
 
 		request.setOpt(new curlpp::options::WriteStream(&response));
 
-		logger->info(__FILEREF__ + "httpPostPutString"
+		logger->info(__FILEREF__ + "httpPostPutString (" + requestType + ")"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", url: " + url
 			+ ", body: " + body
@@ -504,7 +504,7 @@ string MMSCURL::httpPostPutFile(
 
 		request.setOpt(new curlpp::options::WriteStream(&response));
 
-		logger->info(__FILEREF__ + "httpPostPutFile"
+		logger->info(__FILEREF__ + "httpPostPutFile (" + requestType + ")"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", url: " + url
 			+ ", pathFileName: " + pathFileName

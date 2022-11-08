@@ -140,14 +140,14 @@ int APICommon::operator()()
             );
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
-            _logger->info(__FILEREF__ + "APICommon::listen"
+            _logger->debug(__FILEREF__ + "APICommon::listen"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", threadId: " + sThreadId
             );        
 
             returnAcceptCode = FCGX_Accept_r(&request);
         }
-        _logger->info(__FILEREF__ + "FCGX_Accept_r"
+        _logger->debug(__FILEREF__ + "FCGX_Accept_r"
 			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 			+ ", threadId: " + sThreadId
             + ", returnAcceptCode: " + to_string(returnAcceptCode)
@@ -162,7 +162,7 @@ int APICommon::operator()()
             continue;
         }
 
-        _logger->info(__FILEREF__ + "Request to be managed"
+        _logger->debug(__FILEREF__ + "Request to be managed"
             + ", _requestIdentifier: " + to_string(_requestIdentifier)
             + ", threadId: " + sThreadId
         );        

@@ -4758,6 +4758,9 @@ string FFMPEGEncoder::buildVariantIngestionWorkflow(
 		field = "variantOfMediaItemKey";
 		addContentParametersRoot[field] = sourceMediaItemKey;
 
+		field = "variantEncodingProfileKey";
+		addContentParametersRoot[field] = encodingProfileKey;
+
 		field = "Parameters";
 		addContentRoot[field] = addContentParametersRoot;
 
@@ -4821,6 +4824,19 @@ void FFMPEGEncoder::ingestAVariant(
 	string mmsBinaryIngestionURL
 )
 {
+	_logger->info(__FILEREF__ + "Received ingestAVariant"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+		+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+		+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+		+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+		+ ", fileFormat: " + fileFormat
+		+ ", variantPathFileName: " + variantPathFileName
+		+ ", variantFileSizeInBytes: " + to_string(variantFileSizeInBytes)
+		+ ", userKey: " + to_string(userKey)
+		+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+		+ ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
+	);
+
 	string workflowMetadata;
 	int64_t addContentIngestionJobKey = -1;
 	// create the workflow and ingest it

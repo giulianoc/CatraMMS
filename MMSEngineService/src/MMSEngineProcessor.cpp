@@ -7931,6 +7931,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			int64_t liveRecordingIngestionJobKey = -1;
 			int64_t encodingProfileKey = -1;
 
+			{
+				string field = "variantEncodingProfileKey";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
+			}
+
 			string externalDeliveryTechnology;
 			string externalDeliveryURL;
 			{

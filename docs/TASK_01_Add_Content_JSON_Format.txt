@@ -41,12 +41,14 @@
 		//	There are two options:
 		//		- the content is already present inside the MMS repository.
 		//			In this case the 'variantOfMediaItemKey' or 'variantOfUniqueName' parameter has to be used to specify the mediaItemKey of the content
-		//		- the content is ingested using the same Workflow containing the ingestion of the new variant/profile.
-		//			In this case the mediaITemKey is unknown yet and the 'variantOfReferencedLabel' parameter has to be used
+		//		- the content is NOT already present inside the MMS repository.
+		//			In this case the mediaItemKey is unknown yet and the 'variantOfReferencedLabel' parameter has to be used
 		//	The new profile/variant appear as a new profile of the content identified by his Media Item Key
+		//	Only in case the profile is for sure generated using an MMS profile, it is possible to specify it using variantEncodingProfileKey
 		"variantOfMediaItemKey": 1234,
 		"variantOfUniqueName": "....",
 		"variantOfReferencedLabel": "...",
+		"variantEncodingProfileKey": 1234,
 
 		// optional: Both the below parameters have to be specified in case this content has to be delivered using an external
 		//	delivery platform (i.e.: Wowza or YouTube).
