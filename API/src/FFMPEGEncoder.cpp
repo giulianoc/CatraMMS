@@ -14098,7 +14098,7 @@ void FFMPEGEncoder::monitorThread()
 										DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
 											&lTimeZoneDifferenceInHours);
 
-										long maxLastManifestFileUpdateInSeconds = 30;
+										long maxLastManifestFileUpdateInSeconds = 45;
 
 										unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
 										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
