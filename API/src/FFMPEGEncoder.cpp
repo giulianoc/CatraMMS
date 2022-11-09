@@ -4903,7 +4903,7 @@ void FFMPEGEncoder::ingestAVariant(
 	try
 	{
 		string localVariantPathFileName = variantPathFileName;
-		string localVariantFileSizeInBytes = variantFileSizeInBytes;
+		int64_t localVariantFileSizeInBytes = variantFileSizeInBytes;
 		if (fileFormat == "hls")
 		{
 			// variantPathFileName is a dir like
@@ -4996,8 +4996,8 @@ tarGzStagingLiveRecorderVirtualVODPathName
 			_mmsBinaryTimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
-			variantPathFileName,
-			variantFileSizeInBytes,
+			localVariantPathFileName,
+			localVariantFileSizeInBytes,
 			_logger);
 	}
 	catch (runtime_error e)
