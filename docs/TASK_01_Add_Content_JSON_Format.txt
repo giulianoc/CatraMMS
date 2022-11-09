@@ -21,7 +21,8 @@
 		//				the sourceURL will refer a .tar.gz file of a directory having the following constraints:
 		//				1.1 in case of copy:// or move:// sourceURL, the tar.gz file name will be the same name
 		//					of the internal directory
-		//				1.2 in case of other sourceURL, the directory inside the tar.gz downloaded content will be
+		//				1.2 in case of other sourceURL or in case there is a PUSH ingestion,
+		//					the directory inside the tar.gz downloaded content will be
 		//					fixed to "content"
 		//			2. the segmented content is downloaded by the streaming referred by a URL
 		//				in this case the file format has to be "m3u8-streaming" and the sourceURL will refer

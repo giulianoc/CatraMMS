@@ -4842,8 +4842,13 @@ void FFMPEGEncoder::ingestAVariant(
 	// create the workflow and ingest it
 	try
 	{
+		string localFileFormat = fileFormat;
+		if (fileFormat == "hls")
+			localFileFormat = "m3u8-tar.gz";
+
 		workflowMetadata = buildVariantIngestionWorkflow(
-			ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey, encodingProfileKey, fileFormat);
+			ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey,
+			encodingProfileKey, localFileFormat);
 
 		string sResponse = MMSCURL::httpPostPutString(
 			ingestionJobKey,
@@ -4897,6 +4902,88 @@ void FFMPEGEncoder::ingestAVariant(
 	// ingest binary
 	try
 	{
+		string localVariantPathFileName = variantPathFileName;
+		string localVariantFileSizeInBytes = variantFileSizeInBytes;
+		if (fileFormat == "hls")
+		{
+			// variantPathFileName is a dir like
+			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
+			// terminating with 'content' as build in MMSEngineProcessor.cpp
+
+			/*
+			{
+				string executeCommand;
+				try
+				{
+					localVariantPathFileName = variantPathFileName + ".tar.gz";
+
+					size_t endOfPathIndex = localVariantPathFileName.find_last_of("/");
+					if (endOfPathIndex == string::npos)
+					{
+						string errorMessage = string("No stagingLiveRecorderVirtualVODDirectory found")
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+          
+						throw runtime_error(errorMessage);
+					}
+					string localVariantPathDirectory =
+						localVariantPathFileName.substr(0, endOfPathIndex);
+
+tarGzStagingLiveRecorderVirtualVODPathName
+					executeCommand =
+						"tar cfz " + localVariantPathFileName
+						+ " -C " + localVariantPathDirectory
+						+ " " + virtualVODM3u8DirectoryName;
+					_logger->info(__FILEREF__ + "Start tar command "
+						+ ", executeCommand: " + executeCommand
+					);
+					chrono::system_clock::time_point startTar = chrono::system_clock::now();
+					int executeCommandStatus = ProcessUtility::execute(executeCommand);
+					chrono::system_clock::time_point endTar = chrono::system_clock::now();
+					_logger->info(__FILEREF__ + "End tar command "
+						+ ", executeCommand: " + executeCommand
+						+ ", @MMS statistics@ - tarDuration (millisecs): @"
+							+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+					);
+					if (executeCommandStatus != 0)
+					{
+						string errorMessage = string("ProcessUtility::execute failed")
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+							+ ", executeCommand: " + executeCommand 
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+          
+						throw runtime_error(errorMessage);
+					}
+
+					{
+						_logger->info(__FILEREF__ + "Remove directory"
+							+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+						);
+						bool removeRecursively = true;
+						FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("tar command failed")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+						+ ", executeCommand: " + executeCommand 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+         
+					throw runtime_error(errorMessage);
+				}
+			}
+			*/
+		}
+
 		mmsBinaryURL =
 			mmsBinaryIngestionURL
 			+ "/" + to_string(addContentIngestionJobKey)
@@ -10440,6 +10527,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 	string sourceSegmentsDirectoryPathName,
 	string sourceManifestFileName,
+	// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
 	string stagingLiveRecorderVirtualVODPathName,
 
 	int64_t deliveryCode,
@@ -10453,6 +10541,26 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	string mmsBinaryIngestionURL
 )
 {
+
+    _logger->info(__FILEREF__ + "Received liveRecorder_buildAndIngestVirtualVOD"
+		+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+		+ ", externalEncoder: " + to_string(externalEncoder)
+
+        + ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
+        + ", sourceManifestFileName: " + sourceManifestFileName
+        + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+
+		+ ", deliveryCode: " + to_string(deliveryCode)
+        + ", liveRecorderIngestionJobLabel: " + liveRecorderIngestionJobLabel
+        + ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
+        + ", liveRecorderVirtualVODRetention: " + liveRecorderVirtualVODRetention
+		+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
+		+ ", liveRecorderUserKey: " + to_string(liveRecorderUserKey)
+        + ", liveRecorderApiKey: " + liveRecorderApiKey
+        + ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+        + ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
+    );
 
 	long segmentsNumber = 0;
 

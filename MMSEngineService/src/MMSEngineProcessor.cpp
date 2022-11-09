@@ -21054,7 +21054,9 @@ void MMSEngineProcessor::manageEncodeTask(
 
 						if (fileFormatLowerCase == "hls"
 							|| fileFormatLowerCase == "dash")
+						{
 							;
+						}
 						else
 						{
 							encodedFileName.append(".");
@@ -21083,7 +21085,10 @@ void MMSEngineProcessor::manageEncodeTask(
 							workspace->_directoryName,	// workspaceDirectoryName
 							to_string(ingestionJobKey),					// directoryNamePrefix
 							"/",										// relativePath,
-							encodedFileName,
+							// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+							// in case of hls and external encoder (binary is ingested through PUSH),
+							// the directory inside the tar.gz has to be 'content'
+							"content",	// encodedFileName,
 							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 							removeLinuxPathIfExist);
