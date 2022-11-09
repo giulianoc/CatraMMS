@@ -4993,6 +4993,15 @@ void FFMPEGEncoder::ingestAVariant(
 			localVariantPathFileName,
 			localVariantFileSizeInBytes,
 			_logger);
+
+		if (fileFormat == "hls")
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localVariantPathFileName: " + localVariantPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
+		}
 	}
 	catch (runtime_error e)
 	{
@@ -5002,6 +5011,19 @@ void FFMPEGEncoder::ingestAVariant(
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 		);
+
+		if (fileFormat == "hls")
+		{
+			// it is useless to remove the generated tar.gz file because the parent staging directory
+			// will be removed. Also here we should add a bool above to be sure the tar was successful
+			/*
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localVariantPathFileName: " + localVariantPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
+			*/
+		}
 
 		throw e;
 	}
@@ -5013,6 +5035,19 @@ void FFMPEGEncoder::ingestAVariant(
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 		);
+
+		if (fileFormat == "hls")
+		{
+			// it is useless to remove the generated tar.gz file because the parent staging directory
+			// will be removed. Also here we should add a bool above to be sure the tar was successful
+			/*
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localVariantPathFileName: " + localVariantPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
+			*/
+		}
 
 		throw e;
 	}
