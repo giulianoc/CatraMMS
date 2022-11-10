@@ -765,7 +765,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
         Json::Value responseRoot;
         {
 			lastSQLCommand = 
-				string("select title, count(*) from MMS_RequestStatistic ")
+				string("select userId, count(*) from MMS_RequestStatistic ")
 				+ sqlWhere
 				+ "group by userId order by count(*) desc "
 			;
@@ -803,7 +803,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-				string("select title, count(*) as count from MMS_RequestStatistic ")
+				string("select userId, count(*) as count from MMS_RequestStatistic ")
 				+ sqlWhere
 				+ "group by userId order by count(*) desc "
 				+ "limit ? offset ?";
@@ -830,9 +830,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
             {
                 Json::Value statisticRoot;
 
-                field = "title";
+                field = "userId";
                 statisticRoot[field] = static_cast<string>(
-					resultSet->getString("title"));
+					resultSet->getString("userId"));
 
                 field = "count";
                 statisticRoot[field] = resultSet->getInt64("count");
