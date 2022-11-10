@@ -17,7 +17,7 @@ REMARK: HAS TO BE USED THE SOURCE/DESTINATION WORKSPACE KEY
 	mysql -u mms -p... -h db-server-active sourceMms < mms_....sql 
 
 3. load the stored procedure (if not already done)
-	mysql -u mms -pF_-A*kED-34-r*U -h db-server-active mms < ~/copyDBDataWorkspace.sql
+	mysql -u mms -p... -h db-server-active mms < ~/copyDBDataWorkspace.sql
 
 4. start mysql to entern into the 'mms' DB
 	mysql -u mms -p... -h db-server-active mms

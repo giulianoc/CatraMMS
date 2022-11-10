@@ -518,6 +518,26 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+			// workspaceKey and requestTimestamp should be always present
+            lastSQLCommand = 
+				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
 			// isDefault: assume a User has access to two Workspaces, which one is the default for him?
 			//	default means the GUI APP starts with this (default) Workspace
             lastSQLCommand = 
