@@ -1809,7 +1809,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 			);
             if (!resultSet->next())
             {
-				string errorMessage = string("EncodersPool was not found")
+				string errorMessage = __FILEREF__ + "EncodersPool was not found"
 					+ ", encodersPoolKey: " + to_string(encodersPoolKey)
 				;
 				_logger->error(errorMessage);
@@ -2836,7 +2836,7 @@ tuple<int64_t, bool, string, string, string, int>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("encodersPool was not found")
+				string errorMessage = __FILEREF__ + "encodersPool was not found"
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", encodersPoolLabel: " + encodersPoolLabel
 				;

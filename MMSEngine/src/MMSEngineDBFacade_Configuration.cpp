@@ -2857,8 +2857,9 @@ Json::Value MMSEngineDBFacade::getStreamList (
             {
                 Json::Value streamRoot;
 
+				int64_t confKey = resultSet->getInt64("confKey");
                 field = "confKey";
-                streamRoot[field] = resultSet->getInt64("confKey");
+                streamRoot[field] = confKey;
 
                 field = "label";
                 streamRoot[field] = static_cast<string>(
@@ -2890,6 +2891,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 						catch(exception e)
 						{
 							_logger->error(__FILEREF__ + "getEncodersPoolDetails failed"
+								+ ", confKey: " + to_string(confKey)
 								+ ", encodersPoolKey: " + to_string(encodersPoolKey)
 							);
 						}
