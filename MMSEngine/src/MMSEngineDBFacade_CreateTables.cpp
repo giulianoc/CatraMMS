@@ -500,7 +500,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			// workspaceKey and requestTimestamp should be always present
             lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title)";
+				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title, userId)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)
@@ -520,7 +520,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			// workspaceKey and requestTimestamp should be always present
             lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId)";
+				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId, title)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)

@@ -265,13 +265,29 @@ void API::requestStatisticList(
 
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
@@ -389,15 +405,32 @@ void API::requestStatisticPerContentList(
 			userId = curlpp::unescape(firstDecoding);
 		}
 
+		// dates are essential in order to make the indexes working
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot
@@ -518,13 +551,29 @@ void API::requestStatisticPerUserList(
 
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot
@@ -645,13 +694,29 @@ void API::requestStatisticPerMonthList(
 
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot
@@ -772,13 +837,29 @@ void API::requestStatisticPerDayList(
 
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot
@@ -899,13 +980,29 @@ void API::requestStatisticPerHourList(
 
 		string startStatisticDate;
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
-		if (startStatisticDateIt != queryParameters.end())
-			startStatisticDate = startStatisticDateIt->second;
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
 
 		string endStatisticDate;
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
-		if (endStatisticDateIt != queryParameters.end())
-			endStatisticDate = endStatisticDateIt->second;
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
 
         {
 			Json::Value statisticsListRoot
