@@ -2352,6 +2352,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 		requestStatisticPerContentList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "requestStatisticPerUserList")
+    {
+		requestStatisticPerUserList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "requestStatisticPerMonthList")
     {
 		requestStatisticPerMonthList(sThreadId, requestIdentifier, responseBodyCompressed,

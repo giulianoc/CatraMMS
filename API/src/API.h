@@ -706,6 +706,12 @@ private:
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
+	void requestStatisticPerUserList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
 	void requestStatisticPerMonthList(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,                   

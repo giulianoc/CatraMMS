@@ -2332,25 +2332,31 @@ public:
 
 	Json::Value getRequestStatisticPerContentList (
 		int64_t workspaceKey,
-		string title,
+		string title, string userId,
+		string startDate, string endDate,
+		int start, int rows);
+
+	Json::Value getRequestStatisticPerUserList (
+		int64_t workspaceKey,
+		string title, string userId,
 		string startDate, string endDate,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerMonthList (
 		int64_t workspaceKey,
-		string title,
+		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerDayList (
 		int64_t workspaceKey,
-		string title,
+		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerHourList (
 		int64_t workspaceKey,
-		string title,
+		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int start, int rows);
 
