@@ -61,8 +61,8 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		// update upToNextRequestInSeconds
 		{
 			lastSQLCommand = 
-				"select requestStatisticKey as previousRequestStatisticKey, "
-				"DATE_FORMAT(requestTimestamp, '%Y-%m-%d %H:%i:%s') as previousRequestTimestamp "
+				"select requestStatisticKey, "
+				"DATE_FORMAT(requestTimestamp, '%Y-%m-%d %H:%i:%s') as requestTimestamp "
 				"from MMS_RequestStatistic "
 				"where workspaceKey = ? and requestStatisticKey < ? and userId = ? "
 				"order by requestStatisticKey desc limit 1";
@@ -87,8 +87,8 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			);
             if (resultSet->next())
             {
-				int64_t previoudRequestStatisticKey = resultSet->getInt64("previoudRequestStatisticKey");
-				string previousRequestTimestamp = resultSet->getString("previousRequestTimestamp");
+				int64_t previoudRequestStatisticKey = resultSet->getInt64("requestStatisticKey");
+				string previousRequestTimestamp = resultSet->getString("requestTimestamp");
 
 				{
 					lastSQLCommand = 
