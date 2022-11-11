@@ -13472,7 +13472,8 @@ void MMSEngineProcessor::manageVODProxy(
 						"MMS_SignedToken",	// deliveryType,
 
 						false,	// warningIfMissingMediaItemKey,
-						true	// filteredByStatistic
+						true,	// filteredByStatistic
+						""		// userId (it is not needed it filteredByStatistic is true
 					);
 
 					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
@@ -13708,7 +13709,8 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 					"MMS_SignedToken",	// deliveryType,
 
 					false,	// warningIfMissingMediaItemKey,
-					true	// filteredByStatistic
+					true,	// filteredByStatistic
+					""		// userId (it is not needed it filteredByStatistic is true
 				);
 
 				tie(mmsSourceVideoAssetDeliveryURL, ignore) = deliveryAuthorizationDetails;
@@ -21033,7 +21035,8 @@ void MMSEngineProcessor::manageEncodeTask(
 							"MMS_SignedToken",	// deliveryType,
 
 							false,	// warningIfMissingMediaItemKey,
-							true	// filteredByStatistic
+							true,	// filteredByStatistic
+							""		// userId (it is not needed it filteredByStatistic is true
 						);
 
 						tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;

@@ -2536,6 +2536,23 @@ void API::createDeliveryAuthorization(
                 filteredByStatistic = false;
         }
 
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end())
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = curlpp::unescape(firstDecoding);
+		}
+
+
 		try
 		{
 			bool warningIfMissingMediaItemKey = false;
@@ -2561,7 +2578,8 @@ void API::createDeliveryAuthorization(
 				deliveryType,
 
 				warningIfMissingMediaItemKey,
-				filteredByStatistic
+				filteredByStatistic,
+				userId
 			);
 
 			string deliveryURL;
@@ -2777,7 +2795,10 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = mediaItemKeyRoot.get(field, "").asString();
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = mediaItemKeyRoot.get(field, false).asBool();
+					bool filteredByStatistic  = JSONUtils::asBool(mediaItemKeyRoot, field, false);
+
+					field = "userId";
+					string userId = mediaItemKeyRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2804,7 +2825,8 @@ void API::createBulkOfDeliveryAuthorization(
 							save,
 							deliveryType,
 							warningIfMissingMediaItemKey,
-							filteredByStatistic
+							filteredByStatistic,
+							userId
 						);
 					}
 					catch (MediaItemKeyNotFound e)
@@ -2873,7 +2895,10 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = uniqueNameRoot.get(field, "").asString();
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = uniqueNameRoot.get(field, false).asBool();
+					bool filteredByStatistic  = JSONUtils::asBool(uniqueNameRoot, field, false);
+
+					field = "userId";
+					string userId = uniqueNameRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2900,7 +2925,8 @@ void API::createBulkOfDeliveryAuthorization(
 							save,
 							deliveryType,
 							warningIfMissingMediaItemKey,
-							filteredByStatistic
+							filteredByStatistic,
+							userId
 						);
 					}
 					catch (MediaItemKeyNotFound e)
@@ -2968,7 +2994,10 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = liveIngestionJobKeyRoot.get(field, "").asString();
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = liveIngestionJobKeyRoot.get(field, false).asBool();
+					bool filteredByStatistic  = JSONUtils::asBool(liveIngestionJobKeyRoot, field, false);
+
+					field = "userId";
+					string userId = liveIngestionJobKeyRoot.get(field, "").asString();
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2995,7 +3024,8 @@ void API::createBulkOfDeliveryAuthorization(
 							save,
 							deliveryType,
 							warningIfMissingMediaItemKey,
-							filteredByStatistic
+							filteredByStatistic,
+							userId
 						);
 					}
 					catch (MediaItemKeyNotFound e)

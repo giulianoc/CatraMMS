@@ -89,7 +89,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	string deliveryType,
 
 	bool warningIfMissingMediaItemKey,
-	bool filteredByStatistic
+	bool filteredByStatistic,
+	string userId
 	)
 {
 	string deliveryURL;
@@ -293,13 +294,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		}
 		*/
 
-		if (!filteredByStatistic)
+		if (!filteredByStatistic && userId != "")
 		{
 			try
 			{
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey,
-					to_string(userKey),
+					userId,
 					localPhysicalPathKey,
 					-1,	// confStreamKey
 					title
@@ -611,7 +612,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey,
-					to_string(userKey),
+					userId,
 					-1,	// localPhysicalPathKey,
 					streamConfKey,
 					configurationLabel
@@ -887,7 +888,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey,
-					to_string(userKey),
+					userId,
 					-1,	// localPhysicalPathKey,
 					streamConfKey,
 					configurationLabel

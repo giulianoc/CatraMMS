@@ -58,7 +58,8 @@ public:
 		string deliveryType,
 
 		bool warningIfMissingMediaItemKey,
-		bool filteredByStatistic
+		bool filteredByStatistic,
+		string userId
 	);
 
 	string getSignedPath(string contentURI, time_t expirationTime);

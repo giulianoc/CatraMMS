@@ -4991,7 +4991,8 @@ void API::changeLiveProxyPlaylist(
 										"MMS_SignedToken",	// deliveryType,
 
 										false,	// warningIfMissingMediaItemKey,
-										true	// filteredByStatistic
+										true,	// filteredByStatistic
+										""		// userId (it is not needed it filteredByStatistic is true
 									);
 
 									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
@@ -5069,7 +5070,8 @@ void API::changeLiveProxyPlaylist(
 									"MMS_SignedToken",	// deliveryType,
 
 									false,	// warningIfMissingMediaItemKey,
-									true	// filteredByStatistic
+									true,	// filteredByStatistic
+									""		// userId (it is not needed it filteredByStatistic is true
 								);
 
 								tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
@@ -5343,7 +5345,8 @@ void API::changeLiveProxyPlaylist(
 										"MMS_SignedToken",	// deliveryType,
 
 										false,	// warningIfMissingMediaItemKey,
-										true	// filteredByStatistic
+										true,	// filteredByStatistic
+										""		// userId (it is not needed it filteredByStatistic is true
 									);
 
 									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
