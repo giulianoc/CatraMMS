@@ -61,9 +61,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		// update upToNextRequestInSeconds
 		{
 			lastSQLCommand = 
-				"select requestStatisticKey, "
-				"DATE_FORMAT(requestTimestamp, '%Y-%m-%d %H:%i:%s') as requestTimestamp "
-				"from MMS_RequestStatistic "
+				"select requestStatisticKey from MMS_RequestStatistic "
 				"where workspaceKey = ? and requestStatisticKey < ? and userId = ? "
 				"order by requestStatisticKey desc limit 1";
 
@@ -88,24 +86,21 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
             if (resultSet->next())
             {
 				int64_t previoudRequestStatisticKey = resultSet->getInt64("requestStatisticKey");
-				string previousRequestTimestamp = resultSet->getString("requestTimestamp");
 
 				{
 					lastSQLCommand = 
 						"update MMS_RequestStatistic "
-						"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, ?) "
+						"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, NOW()) "
 						"where requestStatisticKey = ?";
 					shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
 							conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
-					preparedStatementUpdateEncoding->setString(queryParameterIndex++, previousRequestTimestamp);
 					preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, previoudRequestStatisticKey);
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", previousRequestTimestamp: " + previousRequestTimestamp
 						+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
@@ -114,7 +109,6 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 					if (rowsUpdated != 1)
 					{
 						string errorMessage = __FILEREF__ + "no update was done"
-							+ ", previousRequestTimestamp: " + previousRequestTimestamp
 							+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
 							+ ", lastSQLCommand: " + lastSQLCommand
