@@ -14,7 +14,7 @@ then
 	echo "" > $debugFile
 fi
 
-cibortvWorkspaceKey=$1
+workspaceKey=$1
 datesTooCloseInSeconds=$2
 startDate=$3
 endDate=$4
@@ -22,7 +22,7 @@ endDate=$4
 #10 minutes
 periodInSeconds=600
 
-rowsBeforeCommand=$(echo "select count(*) from MMS_RequestStatistic where workspaceKey = $cibortvWorkspaceKey and requestTimestamp >= '$startDate' and requestTimestamp < '$endDate';" | mysql -N -u mms -pF_-A*kED-34-r*U -h db-server-active mms 2> /dev/null)
+rowsBeforeCommand=$(echo "select count(*) from MMS_RequestStatistic where workspaceKey = $workspaceKey and requestTimestamp >= '$startDate' and requestTimestamp < '$endDate';" | mysql -N -u mms -pF_-A*kED-34-r*U -h db-server-active mms 2> /dev/null)
 
 startInSeconds=$(date +%s -d "$startDate")
 endInSeconds=$(date +%s -d "$endDate")
@@ -40,8 +40,8 @@ while [ $currentInSeconds -lt $endInSeconds ]; do
 
         endFormatted=$(date -d @$currentInSeconds +"%Y-%m-%d %H:%M:%S")
 
-		#sqlCommand="CREATE TEMPORARY TABLE t SELECT A.requestStatisticKey FROM MMS_RequestStatistic AS A WHERE A.workspaceKey = $cibortvWorkspaceKey AND A.requestTimestamp between '$startFormatted' AND '$endFormatted' AND EXISTS (SELECT B.requestStatisticKey FROM MMS_RequestStatistic AS B WHERE B.workspaceKey = $cibortvWorkspaceKey and A.userId = B.userId AND B.requestTimestamp between '$startFormattedForNestedSelect' AND '$endFormatted' AND B.requestTimestamp <= DATE_ADD(A.requestTimestamp, INTERVAL $datesTooCloseInSeconds SECOND) AND B.requestTimestamp > A.requestTimestamp); SELECT COUNT(*) from t; drop temporary table t;"
-		sqlCommand="CREATE TEMPORARY TABLE t SELECT A.requestStatisticKey FROM MMS_RequestStatistic AS A WHERE A.workspaceKey = $cibortvWorkspaceKey AND A.requestTimestamp between '$startFormatted' AND '$endFormatted' AND EXISTS (SELECT B.requestStatisticKey FROM MMS_RequestStatistic AS B WHERE B.workspaceKey = $cibortvWorkspaceKey and A.userId = B.userId AND B.requestTimestamp between '$startFormattedForNestedSelect' AND '$endFormatted' AND B.requestTimestamp <= DATE_ADD(A.requestTimestamp, INTERVAL $datesTooCloseInSeconds SECOND) AND B.requestTimestamp > A.requestTimestamp); SELECT COUNT(*) from t; delete from MMS_RequestStatistic where requestStatisticKey in (select requestStatisticKey from t); drop temporary table t;"
+		#sqlCommand="CREATE TEMPORARY TABLE t SELECT A.requestStatisticKey FROM MMS_RequestStatistic AS A WHERE A.workspaceKey = $workspaceKey AND A.requestTimestamp between '$startFormatted' AND '$endFormatted' AND EXISTS (SELECT B.requestStatisticKey FROM MMS_RequestStatistic AS B WHERE B.workspaceKey = $workspaceKey and A.userId = B.userId AND B.requestTimestamp between '$startFormattedForNestedSelect' AND '$endFormatted' AND B.requestTimestamp <= DATE_ADD(A.requestTimestamp, INTERVAL $datesTooCloseInSeconds SECOND) AND B.requestTimestamp > A.requestTimestamp); SELECT COUNT(*) from t; drop temporary table t;"
+		sqlCommand="CREATE TEMPORARY TABLE t SELECT A.requestStatisticKey FROM MMS_RequestStatistic AS A WHERE A.workspaceKey = $workspaceKey AND A.requestTimestamp between '$startFormatted' AND '$endFormatted' AND EXISTS (SELECT B.requestStatisticKey FROM MMS_RequestStatistic AS B WHERE B.workspaceKey = $workspaceKey and A.userId = B.userId AND B.requestTimestamp between '$startFormattedForNestedSelect' AND '$endFormatted' AND B.requestTimestamp <= DATE_ADD(A.requestTimestamp, INTERVAL $datesTooCloseInSeconds SECOND) AND B.requestTimestamp > A.requestTimestamp); SELECT COUNT(*) from t; delete from MMS_RequestStatistic where requestStatisticKey in (select requestStatisticKey from t); drop temporary table t;"
 
 		#echo $sqlCommand >> $debugFile
 
@@ -53,8 +53,8 @@ while [ $currentInSeconds -lt $endInSeconds ]; do
 
 done
 
-rowsAfterCommand=$(echo "select count(*) from MMS_RequestStatistic where workspaceKey = $cibortvWorkspaceKey and requestTimestamp >= '$startDate' and requestTimestamp < '$endDate';" | mysql -N -u mms -pF_-A*kED-34-r*U -h db-server-active mms 2> /dev/null)
+rowsAfterCommand=$(echo "select count(*) from MMS_RequestStatistic where workspaceKey = $workspaceKey and requestTimestamp >= '$startDate' and requestTimestamp < '$endDate';" | mysql -N -u mms -pF_-A*kED-34-r*U -h db-server-active mms 2> /dev/null)
 
 endCommand=$(date +%s)
-echo "$startDate   -   $endDate -> $((endCommand-startCommand)) seconds, removed $((rowsAfterCommand-rowsBeforeCommand)) ($rowsAfterCommand-$rowsBeforeCommand) rows" >> $debugFile
+echo "$workspaceKey / $datesTooCloseInSeconds / $startDate / $endDate -> $((endCommand-startCommand)) seconds, removed $((rowsAfterCommand-rowsBeforeCommand)) ($rowsAfterCommand-$rowsBeforeCommand) rows" >> $debugFile
 
