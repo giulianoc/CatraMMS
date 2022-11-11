@@ -471,6 +471,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"confStreamKey				BIGINT UNSIGNED NULL,"
                     "title						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
 					"requestTimestamp			DATETIME NOT NULL,"
+					"upToNextRequestInSeconds	INT UNSIGNED NULL,"
 					"constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey, requestTimestamp))"
                     "ENGINE=InnoDB "
 					"partition by range (to_days(requestTimestamp)) "
@@ -500,7 +501,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			// workspaceKey and requestTimestamp should be always present
             lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title, userId)";
+				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title, userId, upToNextRequestInSeconds)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)
@@ -520,7 +521,27 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			// workspaceKey and requestTimestamp should be always present
             lastSQLCommand = 
-				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId, title)";
+				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId, title, upToNextRequestInSeconds)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+			// workspaceKey and requestTimestamp should be always present
+            lastSQLCommand = 
+				"create index MMS_RequestStatistic_idx3 on MMS_RequestStatistic (workspaceKey, requestTimestamp, upToNextRequestInSeconds)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)

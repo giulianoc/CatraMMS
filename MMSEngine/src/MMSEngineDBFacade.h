@@ -2334,30 +2334,35 @@ public:
 		int64_t workspaceKey,
 		string title, string userId,
 		string startDate, string endDate,
+		int64_t minimalNextRequestDistanceInSeconds,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerUserList (
 		int64_t workspaceKey,
 		string title, string userId,
 		string startDate, string endDate,
+		int64_t minimalNextRequestDistanceInSeconds,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerMonthList (
 		int64_t workspaceKey,
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
+		int64_t minimalNextRequestDistanceInSeconds,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerDayList (
 		int64_t workspaceKey,
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
+		int64_t minimalNextRequestDistanceInSeconds,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerHourList (
 		int64_t workspaceKey,
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
+		int64_t minimalNextRequestDistanceInSeconds,
 		int start, int rows);
 
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,

@@ -432,10 +432,16 @@ void API::requestStatisticPerContentList(
         }
 		endStatisticDate = endStatisticDateIt->second;
 
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerContentList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
+				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;
@@ -575,10 +581,16 @@ void API::requestStatisticPerUserList(
         }
 		endStatisticDate = endStatisticDateIt->second;
 
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerUserList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
+				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;
@@ -718,10 +730,16 @@ void API::requestStatisticPerMonthList(
         }
 		endStatisticDate = endStatisticDateIt->second;
 
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerMonthList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
+				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;
@@ -861,10 +879,16 @@ void API::requestStatisticPerDayList(
         }
 		endStatisticDate = endStatisticDateIt->second;
 
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerDayList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
+				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;
@@ -1004,10 +1028,16 @@ void API::requestStatisticPerHourList(
         }
 		endStatisticDate = endStatisticDateIt->second;
 
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerHourList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
+				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
             Json::StreamWriterBuilder wbuilder;

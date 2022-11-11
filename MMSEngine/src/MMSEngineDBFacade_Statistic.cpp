@@ -50,14 +50,89 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 				+ ", userId: " + userId
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", confStreamKey: " + to_string(confStreamKey)
+				+ ", title: " + title
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
 
+		int64_t requestStatisticKey = getLastInsertId(conn);
+
+		// update upToNextRequestInSeconds
+		{
+			lastSQLCommand = 
+				"select requestStatisticKey as previousRequestStatisticKey, "
+				"DATE_FORMAT(requestTimestamp, '%Y-%m-%d %H:%i:%s') as previousRequestTimestamp "
+				"from MMS_RequestStatistic "
+				"where workspaceKey = ? and requestStatisticKey < ? and userId = ? "
+				"order by requestStatisticKey desc limit 1";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, requestStatisticKey);
+			preparedStatement->setString(queryParameterIndex++, userId);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", requestStatisticKey: " + to_string(requestStatisticKey)
+				+ ", userId: " + userId
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+				int64_t previoudRequestStatisticKey = resultSet->getInt64("previoudRequestStatisticKey");
+				string previousRequestTimestamp = resultSet->getString("previousRequestTimestamp");
+
+				{
+					lastSQLCommand = 
+						"update MMS_RequestStatistic "
+						"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, ?) "
+						"where requestStatisticKey = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatementUpdateEncoding->setString(queryParameterIndex++, previousRequestTimestamp);
+					preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, previoudRequestStatisticKey);
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", previousRequestTimestamp: " + previousRequestTimestamp
+						+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (rowsUpdated != 1)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+							+ ", previousRequestTimestamp: " + previousRequestTimestamp
+							+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
+        }
+
 		Json::Value statisticRoot;
 		{
-			string field = "userId";
+			string field = "requestStatisticKey";
+			statisticRoot[field] = requestStatisticKey;
+
+			field = "userId";
 			statisticRoot[field] = userId;
 
 			field = "physicalPathKey";
@@ -425,6 +500,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds,
 	int start, int rows
 )
 {
@@ -443,6 +519,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             + ", userId: " + userId
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
+            + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );
@@ -485,10 +562,15 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             }
 
 			{
+				field = "minimalNextRequestDistanceInSeconds";
+				requestParametersRoot[field] = minimalNextRequestDistanceInSeconds;
+			}
+
+			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
@@ -507,6 +589,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
 			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (minimalNextRequestDistanceInSeconds > 0)
+			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
         {
@@ -528,6 +612,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -537,6 +623,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -568,6 +655,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -592,6 +681,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -679,6 +769,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds,
 	int start, int rows
 )
 {
@@ -697,6 +788,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
             + ", userId: " + userId
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
+            + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );
@@ -739,6 +831,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
             }
 
 			{
+				field = "minimalNextRequestDistanceInSeconds";
+				requestParametersRoot[field] = minimalNextRequestDistanceInSeconds;
+			}
+
+			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
@@ -761,6 +858,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
 			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (minimalNextRequestDistanceInSeconds > 0)
+			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
         {
@@ -782,6 +881,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -791,6 +892,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -822,6 +924,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -846,6 +950,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -933,6 +1038,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds,
 	int start, int rows
 )
 {
@@ -951,6 +1057,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
             + ", userId: " + userId
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
+            + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );
@@ -993,6 +1100,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
             }
 
 			{
+				field = "minimalNextRequestDistanceInSeconds";
+				requestParametersRoot[field] = minimalNextRequestDistanceInSeconds;
+			}
+
+			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
@@ -1015,6 +1127,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
 			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (minimalNextRequestDistanceInSeconds > 0)
+			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
         {
@@ -1037,6 +1151,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -1046,6 +1162,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1078,6 +1195,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1102,6 +1221,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -1189,6 +1309,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds,
 	int start, int rows
 )
 {
@@ -1207,6 +1328,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
             + ", userId: " + userId
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
+            + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );
@@ -1249,6 +1371,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
             }
 
 			{
+				field = "minimalNextRequestDistanceInSeconds";
+				requestParametersRoot[field] = minimalNextRequestDistanceInSeconds;
+			}
+
+			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
@@ -1271,6 +1398,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
 			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (minimalNextRequestDistanceInSeconds > 0)
+			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
 		{
@@ -1293,6 +1422,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -1302,6 +1433,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1334,6 +1466,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1358,6 +1492,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -1445,6 +1580,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds,
 	int start, int rows
 )
 {
@@ -1463,6 +1599,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
             + ", userId: " + userId
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
+            + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );
@@ -1505,6 +1642,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
             }
 
 			{
+				field = "minimalNextRequestDistanceInSeconds";
+				requestParametersRoot[field] = minimalNextRequestDistanceInSeconds;
+			}
+
+			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
@@ -1527,6 +1669,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 			sqlWhere += ("and requestTimestamp >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (endStatisticDate != "")
 			sqlWhere += ("and requestTimestamp <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (minimalNextRequestDistanceInSeconds > 0)
+			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
 		{
@@ -1549,6 +1693,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -1558,6 +1704,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1590,6 +1737,8 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 				preparedStatement->setString(queryParameterIndex++, startStatisticDate);
 			if (endStatisticDate != "")
 				preparedStatement->setString(queryParameterIndex++, endStatisticDate);
+			if (minimalNextRequestDistanceInSeconds > 0)
+				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1614,6 +1763,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 				+ ", userId: " + userId
 				+ ", startStatisticDate: " + startStatisticDate
 				+ ", endStatisticDate: " + endStatisticDate
+				+ ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
