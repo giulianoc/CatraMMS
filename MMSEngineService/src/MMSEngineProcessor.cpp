@@ -18749,6 +18749,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
+		string sourcePhysicalPathName;
+		string sourceFileName;
         {
 			tuple<int64_t,MMSEngineDBFacade::ContentType,
 				Validator::DependencyType, bool> keyAndDependencyType = dependencies[0];
@@ -18779,8 +18781,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
 						warningIfMissing);
-				tie(sourcePhysicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
+				tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore,
+					sourceFileName, ignore, ignore) = physicalPathDetails;
 
 				sourceMediaItemKey = key;
 			}
@@ -18788,12 +18790,17 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			{
 				sourcePhysicalPathKey = key;
 
+				tuple<string, int, string, string, int64_t, string>                                       
+					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);                       
+				tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)                       
+					= physicalPathDetails;                                                                
+
 				bool warningIfMissing = false;
 				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, sourceFileName, ignore)
 						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
@@ -18818,18 +18825,91 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			mjpeg, imageWidth, imageHeight,
 			durationInMilliSeconds);
 
-		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+		// calculate delivery URL in case of an external encoder
+		string sourcePhysicalDeliveryURL;
+		{
+			int64_t utcNow;
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+			pair<string, string> deliveryAuthorizationDetails =
+				_mmsDeliveryAuthorization->createDeliveryAuthorization(
+				-1,	// userKey,
+				workspace,
+				"",	// clientIPAddress,
+
+				-1,	// mediaItemKey,
+				"",	// uniqueName,
+				-1,	// encodingProfileKey,
+				"",	// encodingProfileLabel,
+
+				sourcePhysicalPathKey,
+
+				-1,	// ingestionJobKey,	(in case of live)
+				-1,	// deliveryCode,
+
+				365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+				999999,	// maxRetries,
+				false,	// save,
+				"MMS_SignedToken",	// deliveryType,
+
+				false,	// warningIfMissingMediaItemKey,
+				true,	// filteredByStatistic
+				""		// userId (it is not needed it filteredByStatistic is true
+			);
+
+			tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+		}
+
+		string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
+		string transcoderStagingImagesDirectory;				// used in case of external encoder
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
+			sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),		// directoryNamePrefix
+				"/",							// relativePath,
+				sourceFileName,				// fileName
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			string directoryNameForFrames = 
+				to_string(ingestionJobKey)
+				// + "_"
+				// + to_string(encodingProfileKey)
+			;
+			transcoderStagingImagesDirectory = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				directoryNameForFrames,
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+		}
+
+		string nfsImagesDirectory = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
 		_mmsEngineDBFacade->addEncoding_GenerateFramesJob (
 			workspace,
 			ingestionJobKey, encodingPriority,
-			workspaceIngestionRepository, 
+			nfsImagesDirectory,
+			transcoderStagingImagesDirectory,		// used in case of external encoder
+			sourcePhysicalDeliveryURL,				// used in case of external encoder
+			sourceTranscoderStagingAssetPathName,	// used in case of external encoder
+			sourcePhysicalPathName,
+			sourcePhysicalPathKey,
+			durationInMilliSeconds,
 			startTimeInSeconds, maxFramesNumber, 
 			videoFilter, periodInSeconds, 
-			mjpeg, imageWidth, imageHeight,
-			sourcePhysicalPathKey,
-			durationInMilliSeconds
+			mjpeg, imageWidth, imageHeight
 		);
 	}
     catch(runtime_error e)

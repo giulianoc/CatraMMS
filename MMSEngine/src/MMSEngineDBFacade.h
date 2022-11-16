@@ -1713,16 +1713,20 @@ public:
 		int64_t sourceDurationInMilliSeconds,                                                
 		string videoFileNameExtension);
 
-    void addEncoding_GenerateFramesJob (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        EncodingPriority encodingPriority,
-        string imageDirectory, 
-        double startTimeInSeconds, int maxFramesNumber, 
-        string videoFilter, int periodInSeconds, 
-        bool mjpeg, int imageWidth, int imageHeight,
-        int64_t sourceVideoPhysicalPathKey,
-        int64_t videoDurationInMilliSeconds);
+	void addEncoding_GenerateFramesJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		EncodingPriority encodingPriority,
+		string nfsImagesDirectory,
+		string transcoderStagingImagesDirectory,
+		string sourcePhysicalDeliveryURL,
+		string sourceTranscoderStagingAssetPathName,
+		string sourcePhysicalPathName,
+		int64_t sourceVideoPhysicalPathKey,
+		int64_t videoDurationInMilliSeconds,
+		double startTimeInSeconds, int maxFramesNumber, 
+		string videoFilter, int periodInSeconds, 
+		bool mjpeg, int imageWidth, int imageHeight);
 
     void addEncoding_SlideShowJob (
         shared_ptr<Workspace> workspace,

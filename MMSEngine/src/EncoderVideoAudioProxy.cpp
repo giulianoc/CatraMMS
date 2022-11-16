@@ -8536,7 +8536,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate(string stagingEncodedAssetP
 }
 
 bool EncoderVideoAudioProxy::generateFrames()
-{    
+{
         bool killedByUser = generateFrames_through_ffmpeg();
 		if (killedByUser)
 		{
@@ -8557,17 +8557,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 {
     
 	string encodersPool;
-	int64_t sourceVideoPhysicalPathKey;
-    string imageDirectory;
-    double startTimeInSeconds;
-    int maxFramesNumber;  
-    string videoFilter;
-    int periodInSeconds;
-    bool mjpeg;
-    int imageWidth;
-    int imageHeight;
-    int64_t ingestionJobKey;
-    int64_t videoDurationInMilliSeconds;
 
 	bool killedByUser = false;
 
@@ -8575,39 +8564,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
     {
         string field = "EncodersPool";
         encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "imageDirectory";
-        imageDirectory = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "startTimeInSeconds";
-        startTimeInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "maxFramesNumber";
-        maxFramesNumber = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "videoFilter";
-        videoFilter = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "periodInSeconds";
-        periodInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "mjpeg";
-        mjpeg = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
-
-        field = "imageWidth";
-        imageWidth = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "imageHeight";
-        imageHeight = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "ingestionJobKey";
-        ingestionJobKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
-
-        field = "videoDurationInMilliSeconds";
-        videoDurationInMilliSeconds = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -8639,6 +8595,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                 + ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+                + ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
             );
             // ffmpegEncoderURL = 
             //         _ffmpegEncoderProtocol
@@ -8652,37 +8609,12 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             ;
             string body;
             {
-				string mmsSourceVideoAssetPathName;
-
-				// stagingEncodedAssetPathName preparation
-				{
-					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-					/*
-					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
-						_encodingItem->_generateFramesData->_mmsVideoPartitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						_encodingItem->_generateFramesData->_videoRelativePath,
-						_encodingItem->_generateFramesData->_videoFileName);
-					*/
-				}
-
                 Json::Value generateFramesMedatada;
-                
-                generateFramesMedatada["imageDirectory"] = imageDirectory;
-                generateFramesMedatada["startTimeInSeconds"] = startTimeInSeconds;
-                generateFramesMedatada["maxFramesNumber"] = maxFramesNumber;
-                generateFramesMedatada["videoFilter"] = videoFilter;
-                generateFramesMedatada["periodInSeconds"] = periodInSeconds;
-                generateFramesMedatada["mjpeg"] = mjpeg;
-                generateFramesMedatada["imageWidth"] = imageWidth;
-                generateFramesMedatada["imageHeight"] = imageHeight;
+
                 generateFramesMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-                generateFramesMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
-                generateFramesMedatada["videoDurationInMilliSeconds"] = (Json::LargestUInt) (videoDurationInMilliSeconds);
+                generateFramesMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
+				generateFramesMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
+				generateFramesMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
                 {
                     Json::StreamWriterBuilder wbuilder;
@@ -8715,58 +8647,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
-                /*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-                 */
-                                                                                                  
-                
-                /*
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                request.setOpt(sslCert);
-                 */
-
-                /*
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                if(pPassphrase)
-                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-                */
-                
                 // disconnect if we can't validate server's cert
                 bool bSslVerifyPeer = false;
                 curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -8776,7 +8656,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 request.setOpt(sslVerifyHost);
                 
                 // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
             }
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
@@ -8840,11 +8719,11 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
+					+ ", sResponse: " + sResponse
+				;
                 _logger->error(__FILEREF__ + errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -12772,7 +12651,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				{
 					_logger->info(__FILEREF__ + "Renew Live Recording"
 						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						);
+					);
 
 					time_t recordingPeriodInSeconds = utcRecordingPeriodEnd - utcRecordingPeriodStart;
 
@@ -12791,9 +12670,9 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 					);
 					_mmsEngineDBFacade->updateIngestionAndEncodingLiveRecordingPeriod(
-							_encodingItem->_ingestionJobKey,
-							_encodingItem->_encodingJobKey,
-							utcRecordingPeriodStart, utcRecordingPeriodEnd);
+						_encodingItem->_ingestionJobKey,
+						_encodingItem->_encodingJobKey,
+						utcRecordingPeriodStart, utcRecordingPeriodEnd);
 
 					/* 2022-11-09: I do not call anymore getEncodingProgress
 					// next update is important because the JSON is used in the getEncodingProgress method 

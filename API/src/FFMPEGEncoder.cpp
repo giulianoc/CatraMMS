@@ -5698,36 +5698,48 @@ void FFMPEGEncoder::generateFramesThread(
 
             throw runtime_error(errorMessage);
         }
-        
-        string imageDirectory = generateFramesMedatada.get("imageDirectory", "XXX").asString();
-        double startTimeInSeconds = JSONUtils::asDouble(generateFramesMedatada, "startTimeInSeconds", 0);
-        int maxFramesNumber = JSONUtils::asInt(generateFramesMedatada, "maxFramesNumber", -1);
-        string videoFilter = generateFramesMedatada.get("videoFilter", "XXX").asString();
-        int periodInSeconds = JSONUtils::asInt(generateFramesMedatada, "periodInSeconds", -1);
-        bool mjpeg = JSONUtils::asBool(generateFramesMedatada, "mjpeg", false);
-        int imageWidth = JSONUtils::asInt(generateFramesMedatada, "imageWidth", -1);
-        int imageHeight = JSONUtils::asInt(generateFramesMedatada, "imageHeight", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(generateFramesMedatada, "ingestionJobKey", -1);
-        string mmsSourceVideoAssetPathName = generateFramesMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(generateFramesMedatada, "videoDurationInMilliSeconds", -1);
 
-        vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
-                ingestionJobKey,
-                encodingJobKey,
-                imageDirectory,
-                to_string(ingestionJobKey),    // imageBaseFileName,
-                startTimeInSeconds,
-                maxFramesNumber,
-                videoFilter,
-                periodInSeconds,
-                mjpeg,
-                imageWidth, 
-                imageHeight,
-                mmsSourceVideoAssetPathName,
-                videoDurationInMilliSeconds,
-				&(encoding->_childPid)
-        );
-        
+        bool externalEncoder = JSONUtils::asBool(generateFramesMedatada, "externalEncoder", false);
+        int64_t ingestionJobKey = JSONUtils::asInt64(generateFramesMedatada, "ingestionJobKey", -1);
+		Json::Value encodingParametersRoot = generateFramesMedatada["encodingParametersRoot"];
+		Json::Value ingestedParametersRoot = generateFramesMedatada["ingestedParametersRoot"];
+
+        string nfsImagesDirectory = encodingParametersRoot.get("nfsImagesDirectory", "").asString();
+
+        double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
+        int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
+        string videoFilter = encodingParametersRoot.get("videoFilter", "").asString();
+        int periodInSeconds = JSONUtils::asInt(encodingParametersRoot, "periodInSeconds", -1);
+        bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
+        int imageWidth = JSONUtils::asInt(encodingParametersRoot, "imageWidth", -1);
+        int imageHeight = JSONUtils::asInt(encodingParametersRoot, "imageHeight", -1);
+        string mmsSourceVideoAssetPathName = encodingParametersRoot.get("sourcePhysicalPathName", "").asString();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
+
+		vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
+			ingestionJobKey,
+			encodingJobKey,
+			nfsImagesDirectory,
+			to_string(ingestionJobKey),    // imageBaseFileName,
+			startTimeInSeconds,
+			maxFramesNumber,
+			videoFilter,
+			periodInSeconds,
+			mjpeg,
+			imageWidth, 
+			imageHeight,
+			mmsSourceVideoAssetPathName,
+			videoDurationInMilliSeconds,
+			&(encoding->_childPid)
+		);
+
+		if (externalEncoder)
+		{
+			for(string generatedFrameFileName: generatedFramesFileNames)
+			{
+			}
+		}
+
         encoding->_running = false;
         encoding->_childPid = 0;
         

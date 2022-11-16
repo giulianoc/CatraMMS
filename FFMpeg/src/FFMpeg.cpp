@@ -6911,31 +6911,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         -s set frame size (WxH or abbreviation)
      */
     // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-#ifdef __EXECUTE__
-    string globalOptions = "-y ";
-    string inputOptions = "";
-    string outputOptions =
-            "-ss " + to_string(startTimeInSeconds) + " "
-            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber)) : "") + " "
-            + videoFilterParameters
-            + (mjpeg ? "-f mjpeg " : "")
-            + "-an -s " + to_string(imageWidth) + "x" + to_string(imageHeight) + " "
-            ;
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + globalOptions
-            + inputOptions
-            + "-i " + mmsAssetPathName + " "
-            + outputOptions
-            + imageDirectory + "/" + localImageFileName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
 
-    #ifdef __APPLE__
-        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-#else
 	vector<string> ffmpegArgumentList;
 	ostringstream ffmpegArgumentListStream;
 
@@ -6963,33 +6939,11 @@ vector<string> FFMpeg::generateFramesToIngest(
 	ffmpegArgumentList.push_back("-s");
 	ffmpegArgumentList.push_back(to_string(imageWidth) + "x" + to_string(imageHeight));
 	ffmpegArgumentList.push_back(imageDirectory + "/" + localImageFileName);
-#endif
 
     try
     {
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-	#ifdef __EXECUTE__
-        _logger->info(__FILEREF__ + "generateFramesToIngest: Executing ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        );
-
-        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "generateFramesToIngest: ffmpeg command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            ;
-            _logger->error(errorMessage);
-
-			// to hide the ffmpeg staff
-            errorMessage = __FILEREF__ + "generateFramesToIngest: command failed"
-            ;
-            throw runtime_error(errorMessage);
-        }
-	#else
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 				ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -7025,35 +6979,19 @@ vector<string> FFMpeg::generateFramesToIngest(
             ;
             throw runtime_error(errorMessage);
         }
-	#endif
 
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
         
-	#ifdef __EXECUTE__
-        _logger->info(__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-        );
-	#else
         _logger->info(__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
-	#endif
     }
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-	#ifdef __EXECUTE__
-        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-        ;
-	#else
 		string errorMessage;
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -7073,7 +7011,6 @@ vector<string> FFMpeg::generateFramesToIngest(
 				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 				+ ", e.what(): " + e.what()
 			;
-	#endif
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"

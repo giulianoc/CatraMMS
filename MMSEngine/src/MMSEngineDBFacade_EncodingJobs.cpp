@@ -6378,13 +6378,17 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
-        
-    string imageDirectory,
+
+    string nfsImagesDirectory,
+	string transcoderStagingImagesDirectory,
+	string sourcePhysicalDeliveryURL,
+	string sourceTranscoderStagingAssetPathName,
+	string sourcePhysicalPathName,
+    int64_t sourceVideoPhysicalPathKey,
+    int64_t videoDurationInMilliSeconds,
     double startTimeInSeconds, int maxFramesNumber, 
     string videoFilter, int periodInSeconds, 
-    bool mjpeg, int imageWidth, int imageHeight,
-    int64_t sourceVideoPhysicalPathKey,
-    int64_t videoDurationInMilliSeconds
+    bool mjpeg, int imageWidth, int imageHeight
 )
 {
 
@@ -6395,6 +6399,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
     try
     {
+		/*
         _logger->info(__FILEREF__ + "addEncoding_GenerateFramesJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingPriority: " + toString(encodingPriority)
@@ -6409,6 +6414,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
             + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
             + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
         );
+		*/
         
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
@@ -6426,23 +6432,60 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
         }
                         
         EncodingType encodingType = EncodingType::GenerateFrames;
-        
-        string parameters = string()
-                + "{ "
-                + "\"imageDirectory\": \"" + imageDirectory + "\""
 
-                + ", \"startTimeInSeconds\": " + to_string(startTimeInSeconds)
-                + ", \"maxFramesNumber\": " + to_string(maxFramesNumber)
-                + ", \"videoFilter\": \"" + videoFilter + "\""
-                + ", \"periodInSeconds\": " + to_string(periodInSeconds)
-                + ", \"mjpeg\": " + (mjpeg ? "true" : "false")
-                + ", \"imageWidth\": " + to_string(imageWidth)
-                + ", \"imageHeight\": " + to_string(imageHeight)
-                + ", \"ingestionJobKey\": " + to_string(ingestionJobKey)
-                + ", \"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
-                + ", \"videoDurationInMilliSeconds\": " + to_string(videoDurationInMilliSeconds)
+        string parameters;
+		{
+			Json::Value parametersRoot;
 
-                + "} ";
+			string field = "ingestionJobKey";
+			parametersRoot[field] = ingestionJobKey;
+
+			field = "nfsImagesDirectory";
+			parametersRoot[field] = nfsImagesDirectory;
+
+			field = "transcoderStagingImagesDirectory";
+			parametersRoot[field] = transcoderStagingImagesDirectory;
+
+			field = "sourcePhysicalDeliveryURL";
+			parametersRoot[field] = sourcePhysicalDeliveryURL;
+
+			field = "sourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = sourceTranscoderStagingAssetPathName;
+
+			field = "sourcePhysicalPathName";
+			parametersRoot[field] = sourcePhysicalPathName;
+
+			field = "sourceVideoPhysicalPathKey";
+			parametersRoot[field] = sourceVideoPhysicalPathKey;
+
+			field = "videoDurationInMilliSeconds";
+			parametersRoot[field] = videoDurationInMilliSeconds;
+
+			field = "startTimeInSeconds";
+			parametersRoot[field] = startTimeInSeconds;
+
+			field = "maxFramesNumber";
+			parametersRoot[field] = maxFramesNumber;
+
+			field = "videoFilter";
+			parametersRoot[field] = videoFilter;
+
+			field = "periodInSeconds";
+			parametersRoot[field] = periodInSeconds;
+
+			field = "mjpeg";
+			parametersRoot[field] = mjpeg;
+
+			field = "imageWidth";
+			parametersRoot[field] = imageWidth;
+
+			field = "imageHeight";
+			parametersRoot[field] = imageHeight;
+
+			Json::StreamWriterBuilder wbuilder;
+			parameters = Json::writeString(wbuilder, parametersRoot);
+		}
+
         {
             int savedEncodingPriority = static_cast<int>(encodingPriority);
             if (savedEncodingPriority > workspace->_maxEncodingPriority)
