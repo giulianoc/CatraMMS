@@ -259,7 +259,7 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$twoDaysInMinutes
+			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
 		commandToBeExecuted="find /var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d -exec rm -rv {} +"
