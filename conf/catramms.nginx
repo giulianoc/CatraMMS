@@ -3,7 +3,6 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 80;
 
-	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 	return 301 https://mms.catrasoft.cloud$request_uri;
 }
 
@@ -18,7 +17,6 @@ server {
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	root /opt/catramms/CatraMMS/www;
-	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 }
 
 #api
@@ -235,7 +233,6 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen mms-gui-1.restream.ovh:80;
 
-	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 	return 301 https://mms-gui-1.catrasoft.cloud$request_uri;
 }
 

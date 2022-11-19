@@ -71,7 +71,7 @@
 			"Task": {
 				"Type": "Email-Notification",
 				"Parameters": {
-					"EmailAddress": "giulianoc@catrasoftware.it",
+					"EmailAddress": "aaa@bbb.it",
 					"Subject": "Task finished",
 					"Message": "Task __INGESTIONJOBKEY__ has finished"
 				}

@@ -1019,13 +1019,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         parametersSectionPresent = true;
     }
     
+    field = "internalMMS";
+    Json::Value internalMMSRoot;
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        internalMMSRoot = parametersRoot[field];
+    
 	// 2022-11-05: inizialmente internalMMSRoot con userKey e apiKey era aggiunto
 	//	solo per alcuni Task, ora li aggiungo sempre perchè, in caso di external encoder,
 	//	questi parametri servono sempre
-	Json::Value internalMMSRoot;
 	{
 		{
-			string field = "userKey";
+			field = "userKey";
 			internalMMSRoot[field] = userKey;
 
 			string apiKeyEncrypted = Encrypt::opensslEncrypt(apiKey);
@@ -1034,8 +1038,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			internalMMSRoot[field] = apiKeyEncrypted;
 		}
 
-		string internalMMSField = "internalMMS";
-		parametersRoot[internalMMSField] = internalMMSRoot;
+		field = "internalMMS";
+		parametersRoot[field] = internalMMSRoot;
 	}
 
     if (type == "Encode")
