@@ -10104,21 +10104,25 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 			field = "internalMMS";
     		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
-				// internalMMSRootPresent = true;
-
 				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
-				field = "OnSuccess";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
+				field = "events";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
 
-				field = "OnError";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
 
-				field = "OnComplete";
-    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
+				}
 			}
 		}
 
