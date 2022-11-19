@@ -68,6 +68,7 @@ echo "git push https://github.com/giulianoc/CatraMMS.git"
 printf "${NC}"
 #git push https://$githubToken@github.com/giulianoc/CatraMMS.git
 git push --tags https://github.com/giulianoc/CatraMMS.git
+git push https://github.com/giulianoc/CatraMMS.git
 
 echo ""
 printf "${RED}"
