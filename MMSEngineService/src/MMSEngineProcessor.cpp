@@ -14904,24 +14904,36 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			{
 				Json::Value internalMMSRoot = liveCutParametersRoot[field];
 
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
-
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-
-				field = "OnSuccess";
+				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnSuccess = internalMMSRoot[field];
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
 
-				field = "OnError";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnError = internalMMSRoot[field];
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
-				field = "OnComplete";
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
+
+				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnComplete = internalMMSRoot[field];
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
+
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnSuccess = eventsRoot[field];
+
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnError = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnComplete = eventsRoot[field];
+				}
 			}
 		}
 
@@ -16021,24 +16033,36 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			{
 				Json::Value internalMMSRoot = liveCutParametersRoot[field];
 
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
-
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-
-				field = "OnSuccess";
+				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnSuccess = internalMMSRoot[field];
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
 
-				field = "OnError";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnError = internalMMSRoot[field];
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
-				field = "OnComplete";
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
+
+				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					liveCutOnComplete = internalMMSRoot[field];
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
+
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnSuccess = eventsRoot[field];
+
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnError = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						liveCutOnComplete = eventsRoot[field];
+				}
 			}
 		}
 
@@ -17814,24 +17838,36 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				Json::Value internalMMSRoot = parametersRoot[field];
 
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
-
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-
-				field = "OnSuccess";
+				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					youTubeLiveBroadcastOnSuccess = internalMMSRoot[field];
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
 
-				field = "OnError";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					youTubeLiveBroadcastOnError = internalMMSRoot[field];
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
-				field = "OnComplete";
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
+
+				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					youTubeLiveBroadcastOnComplete = internalMMSRoot[field];
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
+
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						youTubeLiveBroadcastOnSuccess = eventsRoot[field];
+
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						youTubeLiveBroadcastOnError = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						youTubeLiveBroadcastOnComplete = eventsRoot[field];
+				}
 			}
 		}
 

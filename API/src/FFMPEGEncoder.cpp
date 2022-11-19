@@ -4357,12 +4357,18 @@ void FFMPEGEncoder::encodeContentThread(
 				{
 					Json::Value internalMMSRoot = encodingMedatada["ingestedParametersRoot"][field];
 
-					field = "userKey";
-					userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+					field = "credentials";
+					if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					{
+						Json::Value credentialsRoot = internalMMSRoot[field];
 
-					field = "apiKey";
-					string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+						field = "userKey";
+						userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+						field = "apiKey";
+						string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+						apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+					}
 				}
 			}
 
@@ -8633,16 +8639,20 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							string field = "internalMMS";
 							if (JSONUtils::isMetadataPresent(copiedLiveRecording->_ingestedParametersRoot, field))
 							{
-								// internalMMSRootPresent = true;
-
 								Json::Value internalMMSRoot = copiedLiveRecording->_ingestedParametersRoot[field];
 
-								field = "userKey";
-								userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+								field = "credentials";
+								if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+								{
+									Json::Value credentialsRoot = internalMMSRoot[field];
 
-								field = "apiKey";
-								string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-								apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+									field = "userKey";
+									userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+									field = "apiKey";
+									string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+									apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+								}
 							}
 						}
 
@@ -9800,12 +9810,18 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			{
 				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+				field = "credentials";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
 
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
 			}
 		}
 
@@ -9897,12 +9913,18 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			{
 				Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
-				field = "userKey";
-				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+				field = "credentials";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
 
-				field = "apiKey";
-				string apiKeyEncrypted = internalMMSRoot.get(field, "").asString();
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
 			}
 		}
 

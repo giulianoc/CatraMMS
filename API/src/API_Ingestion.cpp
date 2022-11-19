@@ -1019,6 +1019,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         parametersSectionPresent = true;
     }
     
+	// 2022-11-19: in case of Broadcaster, internalMMS already exist
     field = "internalMMS";
     Json::Value internalMMSRoot;
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -1028,15 +1029,18 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	//	solo per alcuni Task, ora li aggiungo sempre perchè, in caso di external encoder,
 	//	questi parametri servono sempre
 	{
+		Json::Value credentialsRoot;
 		{
 			field = "userKey";
-			internalMMSRoot[field] = userKey;
+			credentialsRoot[field] = userKey;
 
 			string apiKeyEncrypted = Encrypt::opensslEncrypt(apiKey);
 
 			field = "apiKey";
-			internalMMSRoot[field] = apiKeyEncrypted;
+			credentialsRoot[field] = apiKeyEncrypted;
 		}
+		field = "credentials";
+		internalMMSRoot[field] = credentialsRoot;
 
 		field = "internalMMS";
 		parametersRoot[field] = internalMMSRoot;
@@ -1327,42 +1331,47 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		}
 		*/
 
-		string onSuccessField = "OnSuccess";
-		string onErrorField = "OnError";
-		string onCompleteField = "OnComplete";
-    	if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
-			|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
-			|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
-		)
-    	{
-    		if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+        Json::Value eventsRoot;
+		{
+			string onSuccessField = "OnSuccess";
+			string onErrorField = "OnError";
+			string onCompleteField = "OnComplete";
+			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
+			)
 			{
-        		Json::Value onSuccessRoot = taskRoot[onSuccessField];
+				if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+				{
+					Json::Value onSuccessRoot = taskRoot[onSuccessField];
 
-				internalMMSRoot[onSuccessField] = onSuccessRoot;
+					eventsRoot[onSuccessField] = onSuccessRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onSuccessField, &removed);
-			}
-    		if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
-			{
-        		Json::Value onErrorRoot = taskRoot[onErrorField];
+					Json::Value removed;
+					taskRoot.removeMember(onSuccessField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+				{
+					Json::Value onErrorRoot = taskRoot[onErrorField];
 
-				internalMMSRoot[onErrorField] = onErrorRoot;
+					eventsRoot[onErrorField] = onErrorRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onErrorField, &removed);
-			}
-    		if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
-			{
-        		Json::Value onCompleteRoot = taskRoot[onCompleteField];
+					Json::Value removed;
+					taskRoot.removeMember(onErrorField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+				{
+					Json::Value onCompleteRoot = taskRoot[onCompleteField];
 
-				internalMMSRoot[onCompleteField] = onCompleteRoot;
+					eventsRoot[onCompleteField] = onCompleteRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onCompleteField, &removed);
+					Json::Value removed;
+					taskRoot.removeMember(onCompleteField, &removed);
+				}
 			}
 		}
+		field = "events";
+		internalMMSRoot[field] = eventsRoot;
 
 		string internalMMSField = "internalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
@@ -1393,42 +1402,47 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		}
 		*/
 
-		string onSuccessField = "OnSuccess";
-		string onErrorField = "OnError";
-		string onCompleteField = "OnComplete";
-    	if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
-			|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
-			|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
-		)
-    	{
-    		if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+        Json::Value eventsRoot;
+		{
+			string onSuccessField = "OnSuccess";
+			string onErrorField = "OnError";
+			string onCompleteField = "OnComplete";
+			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
+			)
 			{
-        		Json::Value onSuccessRoot = taskRoot[onSuccessField];
+				if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+				{
+					Json::Value onSuccessRoot = taskRoot[onSuccessField];
 
-				internalMMSRoot[onSuccessField] = onSuccessRoot;
+					eventsRoot[onSuccessField] = onSuccessRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onSuccessField, &removed);
-			}
-    		if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
-			{
-        		Json::Value onErrorRoot = taskRoot[onErrorField];
+					Json::Value removed;
+					taskRoot.removeMember(onSuccessField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+				{
+					Json::Value onErrorRoot = taskRoot[onErrorField];
 
-				internalMMSRoot[onErrorField] = onErrorRoot;
+					eventsRoot[onErrorField] = onErrorRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onErrorField, &removed);
-			}
-    		if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
-			{
-        		Json::Value onCompleteRoot = taskRoot[onCompleteField];
+					Json::Value removed;
+					taskRoot.removeMember(onErrorField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+				{
+					Json::Value onCompleteRoot = taskRoot[onCompleteField];
 
-				internalMMSRoot[onCompleteField] = onCompleteRoot;
+					eventsRoot[onCompleteField] = onCompleteRoot;
 
-				Json::Value removed;
-				taskRoot.removeMember(onCompleteField, &removed);
+					Json::Value removed;
+					taskRoot.removeMember(onCompleteField, &removed);
+				}
 			}
 		}
+		field = "events";
+		internalMMSRoot[field] = eventsRoot;
 
 		string internalMMSField = "internalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
