@@ -12674,8 +12674,10 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						_encodingItem->_encodingJobKey,
 						utcRecordingPeriodStart, utcRecordingPeriodEnd);
 
-					/* 2022-11-09: I do not call anymore getEncodingProgress
 					// next update is important because the JSON is used in the getEncodingProgress method 
+					// 2022-11-09: I do not call anymore getEncodingProgress
+					// 2022-11-20: next update is mandatory otherwise we will have the folloging error:
+					//		FFMpeg.cpp:8679: LiveRecorder timing. Too late to start the LiveRecorder
 					{
 						string field = "utcScheduleStart";
 						_encodingItem->_encodingParametersRoot[field] = utcRecordingPeriodStart;
@@ -12683,7 +12685,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						field = "utcScheduleEnd";
 						_encodingItem->_encodingParametersRoot[field] = utcRecordingPeriodEnd;
 					}
-					*/
 				}
 			}
 		}
