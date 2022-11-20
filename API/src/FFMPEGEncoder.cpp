@@ -7499,6 +7499,9 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_ingestedParametersRoot =
 			liveRecorderMedatada["ingestedParametersRoot"];
 
+        bool autoRenew = JSONUtils::asBool(_encodingItem->_encodingParametersRoot,
+			"autoRenew", false);
+
 		liveRecording->_monitoringEnabled = JSONUtils::asBool(
 			liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
 		liveRecording->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
@@ -7827,9 +7830,13 @@ void FFMPEGEncoder::liveRecorderThread(
 				false);
 		}
 
-		// to wait the ingestion of the last chunk
-		this_thread::sleep_for(chrono::seconds(
-			2 * _liveRecorderChunksIngestionCheckInSeconds));
+		if (!autoRenew)
+		{
+			// to wait the ingestion of the last chunk
+			this_thread::sleep_for(chrono::seconds(
+				2 * _liveRecorderChunksIngestionCheckInSeconds));
+			}
+		}
 
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_killedBecauseOfNotWorking = false;
