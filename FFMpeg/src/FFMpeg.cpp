@@ -9915,6 +9915,9 @@ void FFMpeg::liveRecorder(
 
 			endFfmpegCommand = chrono::system_clock::now();
 
+			int64_t realDuration = chrono::duration_cast<chrono::seconds>(
+				endFfmpegCommand - startFfmpegCommand).count();
+
 			if (iReturnedStatus != 0)
 			{
 				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
@@ -9932,6 +9935,8 @@ void FFMpeg::liveRecorder(
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", difference between real and expected duration: "
+							+ to_string(realDuration - streamingDuration)
 					;
 					_logger->error(errorMessage);
 
@@ -9959,6 +9964,8 @@ void FFMpeg::liveRecorder(
 					+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", difference between real and expected duration: "
+						+ to_string(realDuration - streamingDuration)
 				;
 				_logger->error(errorMessage);
 
@@ -9975,7 +9982,8 @@ void FFMpeg::liveRecorder(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 
 		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -9998,6 +10006,8 @@ void FFMpeg::liveRecorder(
 						try
 						{
 							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
 							Boolean_t bRemoveRecursively = true;
@@ -10039,6 +10049,8 @@ void FFMpeg::liveRecorder(
 				try
 				{
 					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", segmentListPath: " + segmentListPath
 					);
 					Boolean_t bRemoveRecursively = true;

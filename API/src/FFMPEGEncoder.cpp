@@ -7809,6 +7809,10 @@ void FFMPEGEncoder::liveRecorderThread(
 			&(liveRecording->_recordingStart)
 		);
 
+		// 2022-11-20: _running to false has to be set soon to avoid monitoring
+        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -7827,9 +7831,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		this_thread::sleep_for(chrono::seconds(
 			2 * _liveRecorderChunksIngestionCheckInSeconds));
 
-        liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_childPid = 0;
         liveRecording->_killedBecauseOfNotWorking = false;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
