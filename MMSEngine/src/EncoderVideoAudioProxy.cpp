@@ -12440,8 +12440,12 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								encodingProgress = 100;
 
 							_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 								+ ", encodingProgress: " + to_string(encodingProgress)
+								+ ", utcNow: " + to_string(utcNow)
+								+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+								+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 							);
 							_mmsEngineDBFacade->updateEncodingJobProgress (
 								_encodingItem->_encodingJobKey, encodingProgress);

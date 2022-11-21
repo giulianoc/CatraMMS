@@ -40,19 +40,29 @@ getFreeDeviceNumber()
 		#-x parameter just tunes and exit
 
 		if [ $debug -eq 1 ]; then
-			echo "getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName" >> $debugFilename
+			echo "$(date): getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName" >> $debugFilename
 		fi
-		dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
+		timeout 120 dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
 		if [ $? -eq 0 ]
 		then
 			selectedDeviceNumber=$deviceNumber
 
 			break
+		elif [ $? -eq 124 ]
+		then
+			if [ $debug -eq 1 ]; then
+				echo "$(date): dvbv5-zap TIMED OUT" >> $debugFilename
+			fi
+		elif [ $? -eq 126 ]
+		then
+			if [ $debug -eq 1 ]; then
+				echo "$(date): dvbv5-zap FAILED (Argument list too long)" >> $debugFilename
+			fi
 		fi
 	done
 
 	if [ $debug -eq 1 ]; then
-		echo "getFreeDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
+		echo "$(date): getFreeDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
 	fi
 
 	return $selectedDeviceNumber
@@ -78,7 +88,7 @@ getActualDeviceNumber()
 	done
 
 	if [ $debug -eq 1 ]; then
-		echo "getActualDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
+		echo "$(date): getActualDeviceNumber. selectedDeviceNumber: $selectedDeviceNumber" >> $debugFilename
 	fi
 
 	return $selectedDeviceNumber
@@ -101,7 +111,9 @@ startOfProcess()
 	deviceNumber=$?
 	if [ $deviceNumber -eq 255 ]
 	then
-		echo "No deviceNumber available"
+		if [ $debug -eq 1 ]; then
+			echo "$(date): No deviceNumber available"
+		fi
 
 		return 1
 	fi
@@ -114,9 +126,9 @@ startOfProcess()
 	logPathName=$tvLogsChannelsDir/$frequency".log"
 	if [ $debug -eq 1 ]; then
 		if [ "$type" == "satellite" ]; then
-			echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
+			echo "$(date): Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
 		else
-			echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -b $bandwidthInMhz $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
+			echo "$(date): Start of the process. nohup dvblast -f $frequency -a $deviceNumber -b $bandwidthInMhz $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &" >> $debugFilename
 		fi
 	fi
 
@@ -153,7 +165,7 @@ isProcessRunningFunc()
 		localIsProcessRunning=0
 	fi
 	if [ $debug -eq 1 ]; then
-		echo "isProcessRunning: $localIsProcessRunning" >> $debugFilename
+		echo "$(date): isProcessRunning: $localIsProcessRunning" >> $debugFilename
 	fi
 
 	return $localIsProcessRunning
@@ -162,7 +174,7 @@ isProcessRunningFunc()
 # MAIN MAIN MAIN
 
 if [ $debug -eq 1 ]; then
-	echo "script started" >> $debugFilename
+	echo "$(date): script started" >> $debugFilename
 fi
 
 configurationFiles=$(ls $tvChannelConfigurationDirectory)
@@ -172,7 +184,7 @@ do
 
 	fileExtension=${configurationFileName##*.}
 	if [ $debug -eq 1 ]; then
-		echo "configurationFileName: $configurationFileName, fileExtension: $fileExtension" >> $debugFilename
+		echo "$(date): configurationFileName: $configurationFileName, fileExtension: $fileExtension" >> $debugFilename
 	fi
 
 	if [ "$fileExtension" == "txt" ]; then
@@ -197,7 +209,7 @@ do
 		localParam=$symbolRate
 	fi
 	if [ $debug -eq 1 ]; then
-		echo "frequency: $frequency, type: $type, symbolRate: $symbolRate, bandwidthInMhz: $bandwidthInMhz, modulation: $modulation" >> $debugFilename
+		echo "$(date): frequency: $frequency, type: $type, symbolRate: $symbolRate, bandwidthInMhz: $bandwidthInMhz, modulation: $modulation" >> $debugFilename
 	fi
 
 
@@ -207,10 +219,14 @@ do
 	isProcessRunning=$?
 
 	if [ "$fileExtension" == "txt" ]; then
-		echo "No changes to $configurationFileName"
+		if [ $debug -eq 1 ]; then
+			echo "$(date): No changes to $configurationFileName" >> $debugFilename
+		fi
 
 		if [ $isProcessRunning -eq 0 ]; then
-			echo "Process is not up and running, start it"
+			if [ $debug -eq 1 ]; then
+				echo "$(date): Process is not up and running, start it" >> $debugFilename
+			fi
 
 			startOfProcess $type $frequency $localParam $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		fi
@@ -224,7 +240,7 @@ do
 		if [ -s $pidProcessPathName ]; then
 
 			if [ $debug -eq 1 ]; then
-				echo "kill. pidProcessPathName: $(cat $pidProcessPathName)" >> $debugFilename
+				echo "$(date): kill. pidProcessPathName: $(cat $pidProcessPathName)" >> $debugFilename
 			fi
 
 			kill -9 $(cat $pidProcessPathName) > /dev/null 2>&1
@@ -232,7 +248,9 @@ do
 
 			sleep 1
 		else
-			echo "ERROR: process is running but there is no PID to kill it"
+			if [ $debug -eq 1 ]; then
+				echo "$(date): ERROR: process is running but there is no PID to kill it" >> $debugFilename
+			fi
 
 			continue
 		fi
@@ -242,13 +260,13 @@ do
 	#15 because we cannot have a conf less than 15 chars
 	if [ $fileSize -lt 15 ]; then
 		if [ $debug -eq 1 ]; then
-			echo "dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName" >> $debugFilename
+			echo "$(date): dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName" >> $debugFilename
 		fi
 
 		#process is alredy killed (see above statements)
 
 		if [ $debug -eq 1 ]; then
-			echo "rm -f $tvChannelConfigurationDirectory/$configurationFileName" >> $debugFilename
+			echo "$(date): rm -f $tvChannelConfigurationDirectory/$configurationFileName" >> $debugFilename
 		fi
 		rm -f $tvChannelConfigurationDirectory/$configurationFileName
 	else
@@ -256,12 +274,12 @@ do
 		processReturn=$?
 		if [ $processReturn -eq 0 ]; then
 			if [ $debug -eq 1 ]; then
-				echo "mv $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.txt" >> $debugFilename
+				echo "$(date): mv $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.changed $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation.txt" >> $debugFilename
 			fi
 			mv $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation".changed" $tvChannelConfigurationDirectory/$frequencySymbolRateBandwidthInMhzModulation".txt"
 		else
 			if [ $debug -eq 1 ]; then
-				echo "Start of the process failed, processReturn: $processReturn" >> $debugFilename
+				echo "$(date): Start of the process failed, processReturn: $processReturn" >> $debugFilename
 			fi
 		fi
 	fi
@@ -269,6 +287,6 @@ do
 done
 
 if [ $debug -eq 1 ]; then
-	echo "script finished" >> $debugFilename
+	echo "$(date): script finished" >> $debugFilename
 fi
 

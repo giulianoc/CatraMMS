@@ -2466,7 +2466,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
 				// throw runtime_exception(errorMessage);
             }
