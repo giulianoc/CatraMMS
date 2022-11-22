@@ -29,6 +29,12 @@ mkdir -p $tvLogsChannelsDir
 threeDaysInMinutes=4320
 find $tvLogsChannelsDir -mmin +$threeDaysInMinutes -type f -delete
 
+filesize=$(stat -c %s $debugFilename)
+if [ $filesize -gt 1000000 ]
+then
+	echo "" > $debugFilename
+fi
+
 getFreeDeviceNumber()
 {
     tvFrequency=$1
@@ -39,10 +45,12 @@ getFreeDeviceNumber()
 	do
 		#-x parameter just tunes and exit
 
+		commandTimeout=30
+
 		if [ $debug -eq 1 ]; then
-			echo "$(date): getFreeDeviceNumber. dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName" >> $debugFilename
+			echo "$(date): getFreeDeviceNumber. timeout $commandTimeout dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName" >> $debugFilename
 		fi
-		timeout 120 dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
+		timeout $commandTimeout dvbv5-zap $tvFrequency -a $deviceNumber -f $frontendToBeUsed -ss -x --all-pids -c $dvbChannelsPathName > /dev/null 2>&1
 		if [ $? -eq 0 ]
 		then
 			selectedDeviceNumber=$deviceNumber
@@ -106,6 +114,17 @@ startOfProcess()
     modulation=$4
     dvblastConfPathName=$5
 	pidProcessPathName=$6
+
+	isProcessRunningFunc $frequency
+	isProcessRunning=$?
+	if [ $isProcessRunning -eq 1 ]
+	then
+		if [ $debug -eq 1 ]; then
+			echo "$(date): dvblast is already running ($frequency)"
+		fi
+
+		return 1
+	fi
 
 	getFreeDeviceNumber $frequency
 	deviceNumber=$?

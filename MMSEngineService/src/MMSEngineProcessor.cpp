@@ -2858,15 +2858,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 									else
 									{
-										thread generateAndIngestFramesThread(
-											&MMSEngineProcessor::generateAndIngestFramesThread,
+										thread generateAndIngestFrameThread(
+											&MMSEngineProcessor::generateAndIngestFrameThread,
 											this, _processorsThreadsNumber, ingestionJobKey, workspace,
 											ingestionType,
 											parametersRoot,
 											// it cannot be passed as reference because it will change soon by the parent thread
 											dependencies
 										);
-										generateAndIngestFramesThread.detach();
+										generateAndIngestFrameThread.detach();
 										/*
 										generateAndIngestFramesTask(
 											ingestionJobKey, 
@@ -11599,7 +11599,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 
 // this is to generate one Frame
-void MMSEngineProcessor::generateAndIngestFramesThread(
+void MMSEngineProcessor::generateAndIngestFrameThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
@@ -11610,14 +11610,14 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
 		_mmsThreadsStatistic,
-		"generateAndIngestFramesThread",
+		"generateAndIngestFrameThread",
 		_processorIdentifier,
 		_processorsThreadsNumber.use_count(),
 		ingestionJobKey);
 
     try
     {
-		_logger->info(__FILEREF__ + "generateAndIngestFramesThread"
+		_logger->info(__FILEREF__ + "generateAndIngestFrameThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -11718,76 +11718,28 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 					mjpeg, imageWidth, imageHeight,
 					durationInMilliSeconds);
         
+				string fileFormat = "jpg";
+				string frameFileName = to_string(ingestionJobKey) + "." + fileFormat;
+				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
+
 				pid_t childPid;
 				FFMpeg ffmpeg (_configuration, _logger);
-				vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
+				ffmpeg.generateFrameToIngest(
 					ingestionJobKey,
-					0,  // encodingJobKey
-					workspaceIngestionRepository,
-					to_string(ingestionJobKey),    // imageBaseFileName,
-					startTimeInSeconds,
-					maxFramesNumber,
-					videoFilter,
-					periodInSeconds,
-					mjpeg,
-					imageWidth, 
-					imageHeight,
 					sourcePhysicalPath,
 					durationInMilliSeconds,
+					startTimeInSeconds,
+					frameAssetPathName,
+					imageWidth, 
+					imageHeight,
 					&childPid
 				);
 
-				_logger->info(__FILEREF__ + "generateFramesToIngest done"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", generatedFramesFileNames.size: " + to_string(generatedFramesFileNames.size())
-				);
-       
-				bool generatedFrameIngestionFailures = false;
-
-				for(string generatedFrameFileName: generatedFramesFileNames) 
 				{
 					_logger->info(__FILEREF__ + "Generated Frame to ingest"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", generatedFrameFileName: " + generatedFrameFileName
-					);
-
-					string fileFormat;
-					size_t extensionIndex = generatedFrameFileName.find_last_of(".");
-					if (extensionIndex == string::npos)
-					{
-						string errorMessage = __FILEREF__
-							+ "No fileFormat (extension of the file) found in generatedFileName"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", generatedFrameFileName: " + generatedFrameFileName
-						;
-						_logger->error(errorMessage);
-
-						generatedFrameIngestionFailures = true;
-
-						{
-							string workspaceIngestionBinaryPathName
-								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
-								+ "/" + generatedFrameFileName;
-
-							_logger->info(__FILEREF__ + "Remove file"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-							);
-							FileIO::remove(workspaceIngestionBinaryPathName);
-						}
-
-						continue;
-					}
-					fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
-
-					_logger->info(__FILEREF__ + "Generated Frame to ingest"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", new generatedFrameFileName: " + generatedFrameFileName
+						+ ", frameAssetPathName: " + frameAssetPathName
 						+ ", fileFormat: " + fileFormat
 					);
 
@@ -11817,14 +11769,13 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 
 						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
 						localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-						localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
+						localAssetIngestionEvent->setIngestionSourceFileName(frameFileName);
 						// localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
-						localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
+						localAssetIngestionEvent->setMMSSourceFileName(frameFileName);
 						localAssetIngestionEvent->setWorkspace(workspace);
 						localAssetIngestionEvent->setIngestionType(
 							MMSEngineDBFacade::IngestionType::AddContent);
-						localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-							/* it + 1 == generatedFramesFileNames.end() ? true : */ false);
+						localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
 
 						localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
@@ -11838,20 +11789,16 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 							+ ", exception: " + e.what()
 						);
 
-						generatedFrameIngestionFailures = true;
-
 						{
-							string workspaceIngestionBinaryPathName
-								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
-								+ "/" + generatedFrameFileName;
-
 							_logger->info(__FILEREF__ + "Remove file"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+								+ ", frameAssetPathName: " + frameAssetPathName
 							);
-							FileIO::remove(workspaceIngestionBinaryPathName);
+							FileIO::remove(frameAssetPathName);
 						}
+
+						throw e;
 					}
 					catch(exception e)
 					{
@@ -11860,33 +11807,17 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 							+ ", exception: " + e.what()
 						);
 
-						generatedFrameIngestionFailures = true;
-
 						{
-							string workspaceIngestionBinaryPathName
-								= _mmsStorage->getWorkspaceIngestionRepository(workspace)
-								+ "/" + generatedFrameFileName;
-
 							_logger->info(__FILEREF__ + "Remove file"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+								+ ", frameAssetPathName: " + frameAssetPathName
 							);
-							FileIO::remove(workspaceIngestionBinaryPathName);
+							FileIO::remove(frameAssetPathName);
 						}
+
+						throw e;
 					}
-				}
-
-				if (generatedFrameIngestionFailures)
-				{
-					string errorMessage = __FILEREF__
-						+ "generateAndIngest frame, we had failures"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
 				}
 			}
 			catch(runtime_error e)
@@ -11930,6 +11861,7 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 			dependencyIndex++;
         }
 
+		/*
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", IngestionStatus: " + "End_TaskSuccess"
@@ -11939,6 +11871,7 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
 			"" // errorMessage
 		);
+		*/
     }
     catch(runtime_error e)
     {
@@ -18942,10 +18875,12 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			sourceTranscoderStagingAssetPathName,	// used in case of external encoder
 			sourcePhysicalPathName,
 			sourcePhysicalPathKey,
+			sourceFileName,
 			durationInMilliSeconds,
 			startTimeInSeconds, maxFramesNumber, 
 			videoFilter, periodInSeconds, 
-			mjpeg, imageWidth, imageHeight
+			mjpeg, imageWidth, imageHeight,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL
 		);
 	}
     catch(runtime_error e)

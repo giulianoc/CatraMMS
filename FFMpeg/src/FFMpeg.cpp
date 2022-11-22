@@ -6782,10 +6782,186 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
     }
 }
 
-vector<string> FFMpeg::generateFramesToIngest(
+void FFMpeg::generateFrameToIngest(
+	int64_t ingestionJobKey,
+	string mmsAssetPathName,
+	int64_t videoDurationInMilliSeconds,
+	double startTimeInSeconds,
+	string frameAssetPathName,
+	int imageWidth,
+	int imageHeight,
+	pid_t* pChildPid)
+{
+	_currentApiName = "generateFrameToIngest";
+
+	setStatus(
+		ingestionJobKey,
+		-1,	// encodingJobKey,
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+	);
+
+    _logger->info(__FILEREF__ + "generateFrameToIngest"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", mmsAssetPathName: " + mmsAssetPathName
+        + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
+        + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+        + ", frameAssetPathName: " + frameAssetPathName
+        + ", imageWidth: " + to_string(imageWidth)
+        + ", imageHeight: " + to_string(imageHeight)
+    );
+
+	if (!FileIO::fileExisting(mmsAssetPathName)
+		&& !FileIO::directoryExisting(mmsAssetPathName)
+	)
+	{
+		string errorMessage = string("Asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", mmsAssetPathName: " + mmsAssetPathName
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	int iReturnedStatus = 0;
+
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(_currentIngestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".generateFrame.log";
+	}
+
+    // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+
+	vector<string> ffmpegArgumentList;
+	ostringstream ffmpegArgumentListStream;
+
+	ffmpegArgumentList.push_back("ffmpeg");
+	// global options
+	ffmpegArgumentList.push_back("-y");
+	// input options
+	ffmpegArgumentList.push_back("-i");
+	ffmpegArgumentList.push_back(mmsAssetPathName);
+	// output options
+	ffmpegArgumentList.push_back("-ss");
+	ffmpegArgumentList.push_back(to_string(startTimeInSeconds));
+	{
+		ffmpegArgumentList.push_back("-vframes");
+		ffmpegArgumentList.push_back(to_string(1));
+	}
+	ffmpegArgumentList.push_back("-an");
+	ffmpegArgumentList.push_back("-s");
+	ffmpegArgumentList.push_back(to_string(imageWidth) + "x" + to_string(imageHeight));
+	ffmpegArgumentList.push_back(frameAssetPathName);
+
+    try
+    {
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+		if (!ffmpegArgumentList.empty())
+			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+				ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+        _logger->info(__FILEREF__ + "generateFramesToIngest: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+        );
+
+		bool redirectionStdOutput = true;
+		bool redirectionStdError = true;
+
+		ProcessUtility::forkAndExec (
+			_ffmpegPath + "/ffmpeg",
+			ffmpegArgumentList,
+			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+			pChildPid, &iReturnedStatus);
+		if (iReturnedStatus != 0)
+        {
+			string errorMessage = __FILEREF__ + "generateFrameToIngest: ffmpeg command failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+            ;
+            _logger->error(errorMessage);
+
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "generateFrameToIngest: command failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            ;
+            throw runtime_error(errorMessage);
+        }
+
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+        
+        _logger->info(__FILEREF__ + "generateFrameToIngest: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(
+				chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+}
+
+void FFMpeg::generateFramesToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string imageDirectory,
+        string imagesDirectory,
         string imageBaseFileName,
         double startTimeInSeconds,
         int framesNumber,
@@ -6811,7 +6987,7 @@ vector<string> FFMpeg::generateFramesToIngest(
     _logger->info(__FILEREF__ + "generateFramesToIngest"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", imageDirectory: " + imageDirectory
+        + ", imagesDirectory: " + imagesDirectory
         + ", imageBaseFileName: " + imageBaseFileName
         + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
         + ", framesNumber: " + to_string(framesNumber)
@@ -6838,15 +7014,27 @@ vector<string> FFMpeg::generateFramesToIngest(
 		throw runtime_error(errorMessage);
 	}
 
+	if (FileIO::directoryExisting(imagesDirectory))
+	{
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", imagesDirectory: " + imagesDirectory);
+		Boolean_t bRemoveRecursively = true;
+		FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+	}
+	{
+		_logger->info(__FILEREF__ + "Create directory"
+               + ", imagesDirectory: " + imagesDirectory
+           );
+		bool noErrorIfExists = true;
+		bool recursive = true;
+		FileIO::createDirectory(imagesDirectory,
+			S_IRUSR | S_IWUSR | S_IXUSR |
+			S_IRGRP | S_IXGRP |
+			S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+	}
+
 	int iReturnedStatus = 0;
 
-    // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-    // _currentMMSSourceAssetPathName      = mmsAssetPathName;
-    // _currentIngestionJobKey             = ingestionJobKey;
-    // _currentEncodingJobKey              = encodingJobKey;
-        
-    vector<string> generatedFramesFileNames;
-    
 	{
 		char	sUtcTimestamp [64];
 		tm		tmUtcTimestamp;
@@ -6869,7 +7057,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 			+ to_string(_currentEncodingJobKey)
 			+ "_"
 			+ sUtcTimestamp
-			+ ".generateFrame.log";
+			+ ".generateFrames.log";
 	}
 
     string localImageFileName;
@@ -6938,7 +7126,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 	ffmpegArgumentList.push_back("-an");
 	ffmpegArgumentList.push_back("-s");
 	ffmpegArgumentList.push_back(to_string(imageWidth) + "x" + to_string(imageHeight));
-	ffmpegArgumentList.push_back(imageDirectory + "/" + localImageFileName);
+	ffmpegArgumentList.push_back(imagesDirectory + "/" + localImageFileName);
 
     try
     {
@@ -7013,6 +7201,14 @@ vector<string> FFMpeg::generateFramesToIngest(
 			;
         _logger->error(errorMessage);
 
+		if (FileIO::directoryExisting(imagesDirectory))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", imagesDirectory: " + imagesDirectory);
+			Boolean_t bRemoveRecursively = true;
+			FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+		}
+
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
@@ -7028,75 +7224,6 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-     
-    if (mjpeg || framesNumber == 1)
-        generatedFramesFileNames.push_back(localImageFileName);
-    else
-    {
-        // get files from file system
-    
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirectory + "/");
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
-        {
-            string directoryEntry;
-            try
-            {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-                
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    continue;
-
-                if (directoryEntry.size() >= imageBaseFileName.size() && 0 == directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName))
-                    generatedFramesFileNames.push_back(directoryEntry);
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-        }
-
-        FileIO::closeDirectory (directory);
-    }
-    
-    /*
-    bool inCaseOfLinkHasItToBeRead = false;
-    unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-        localImagePathName, inCaseOfLinkHasItToBeRead);
-
-    if (ulFileSize == 0)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, image file size is 0"
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    } 
-    */ 
-    
-    return generatedFramesFileNames;
 }
 
 void FFMpeg::concat(int64_t ingestionJobKey,

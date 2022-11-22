@@ -1723,10 +1723,12 @@ public:
 		string sourceTranscoderStagingAssetPathName,
 		string sourcePhysicalPathName,
 		int64_t sourceVideoPhysicalPathKey,
+		string sourceFileName,
 		int64_t videoDurationInMilliSeconds,
 		double startTimeInSeconds, int maxFramesNumber, 
 		string videoFilter, int periodInSeconds, 
-		bool mjpeg, int imageWidth, int imageHeight);
+		bool mjpeg, int imageWidth, int imageHeight,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
 
     void addEncoding_SlideShowJob (
         shared_ptr<Workspace> workspace,

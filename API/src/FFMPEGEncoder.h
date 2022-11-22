@@ -379,6 +379,25 @@ private:
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
+	void generateFrames_ingestFrame(
+		int64_t ingestionJobKey,
+		bool externalEncoder,
+		string imagesDirectory, string generatedFrameFileName,
+		string addContentTitle,
+		Json::Value userDataRoot,
+		string outputFileFormat,
+		Json::Value ingestedParametersRoot,
+		Json::Value encodingParametersRoot);
+	string generateFrames_buildFrameIngestionWorkflow(                                             
+		int64_t ingestionJobKey,
+		bool externalEncoder,
+		string generatedFrameFileName,
+		string imagesDirectory,
+		string addContentTitle,
+		Json::Value userDataRoot,
+		string outputFileFormat,
+		Json::Value ingestedParametersRoot,
+		Json::Value encodingParametersRoot);
 
     void slideShowThread(
         // FCGX_Request& request,

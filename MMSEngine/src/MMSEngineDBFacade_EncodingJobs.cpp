@@ -6385,10 +6385,12 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 	string sourceTranscoderStagingAssetPathName,
 	string sourcePhysicalPathName,
     int64_t sourceVideoPhysicalPathKey,
+	string sourceFileName,
     int64_t videoDurationInMilliSeconds,
     double startTimeInSeconds, int maxFramesNumber, 
     string videoFilter, int periodInSeconds, 
-    bool mjpeg, int imageWidth, int imageHeight
+    bool mjpeg, int imageWidth, int imageHeight,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 )
 {
 
@@ -6458,6 +6460,9 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 			field = "sourceVideoPhysicalPathKey";
 			parametersRoot[field] = sourceVideoPhysicalPathKey;
 
+			field = "sourceFileName";
+			parametersRoot[field] = sourceFileName;
+
 			field = "videoDurationInMilliSeconds";
 			parametersRoot[field] = videoDurationInMilliSeconds;
 
@@ -6481,6 +6486,12 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
 			field = "imageHeight";
 			parametersRoot[field] = imageHeight;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

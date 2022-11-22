@@ -217,7 +217,17 @@ public:
 		vector<tuple<int, string, string, string, int, bool>>& audioTracks
 	);
 
-    vector<string> generateFramesToIngest(
+	void generateFrameToIngest(
+		int64_t ingestionJobKey,
+		string mmsAssetPathName,
+		int64_t videoDurationInMilliSeconds,
+		double startTimeInSeconds,
+		string frameAssetPathName,
+		int imageWidth,
+		int imageHeight,
+		pid_t* pChildPid);
+
+    void generateFramesToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string imageDirectory,

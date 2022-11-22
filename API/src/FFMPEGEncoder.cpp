@@ -517,27 +517,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 FFMPEGEncoder::~FFMPEGEncoder() {
 }
 
-/*
-void FFMPEGEncoder::getBinaryAndResponse(
-        string requestURI,
-        string requestMethod,
-        string xCatraMMSResumeHeader,
-        unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
-        unsigned long contentLength
-)
-{
-    _logger->error(__FILEREF__ + "FFMPEGEncoder application is able to manage ONLY NON-Binary requests");
-    
-    string errorMessage = string("Internal server error");
-    _logger->error(__FILEREF__ + errorMessage);
-
-    sendError(500, errorMessage);
-
-    throw runtime_error(errorMessage);
-}
-*/
-
 // 2020-06-11: FFMPEGEncoder is just one thread, so make sure manageRequestAndResponse is very fast because
 //	the time used by manageRequestAndResponse is time FFMPEGEncoder is not listening
 //	for new connections (encodingStatus, ...)
@@ -5665,6 +5644,8 @@ void FFMPEGEncoder::generateFramesThread(
         + ", requestBody: " + requestBody
     );
 
+	bool externalEncoder = false;
+	string imagesDirectory;
     try
     {
 		encoding->_errorMessage = "";
@@ -5710,8 +5691,6 @@ void FFMPEGEncoder::generateFramesThread(
 		Json::Value encodingParametersRoot = generateFramesMedatada["encodingParametersRoot"];
 		Json::Value ingestedParametersRoot = generateFramesMedatada["ingestedParametersRoot"];
 
-        string nfsImagesDirectory = encodingParametersRoot.get("nfsImagesDirectory", "").asString();
-
         double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
         int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
         string videoFilter = encodingParametersRoot.get("videoFilter", "").asString();
@@ -5719,14 +5698,141 @@ void FFMPEGEncoder::generateFramesThread(
         bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
         int imageWidth = JSONUtils::asInt(encodingParametersRoot, "imageWidth", -1);
         int imageHeight = JSONUtils::asInt(encodingParametersRoot, "imageHeight", -1);
-        string mmsSourceVideoAssetPathName = encodingParametersRoot.get("sourcePhysicalPathName", "").asString();
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
-		vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
+		string sourceAssetPathName;
+
+		if (externalEncoder)
+		{
+			string field = "transcoderStagingImagesDirectory";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			imagesDirectory = encodingParametersRoot.get(field, "").asString();
+
+			bool isSourceStreaming = false;
+			{
+				field = "sourceFileName";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string sourceFileName = encodingParametersRoot.get(field, "").asString();
+
+				string sourceFileExtension;                                                               
+				{                                                                                         
+					size_t extensionIndex = sourceFileName.find_last_of(".");                             
+					if (extensionIndex == string::npos)                                                   
+					{                                                                                     
+						string errorMessage = __FILEREF__ + "No extension find in the asset file name"    
+							+ ", sourceFileName: " + sourceFileName;                
+						_logger->error(errorMessage);                                                     
+
+						throw runtime_error(errorMessage);                                                
+					}                                                                                     
+					sourceFileExtension = sourceFileName.substr(extensionIndex);                          
+				}
+
+				if (sourceFileExtension == ".m3u8")
+					isSourceStreaming = true;
+			}
+
+			string sourcePhysicalDeliveryURL = encodingParametersRoot.
+				get("sourcePhysicalDeliveryURL", "").asString();
+			string sourceTranscoderStagingAssetPathName = encodingParametersRoot.
+				get("sourceTranscoderStagingAssetPathName", "").asString();
+
+			_logger->info(__FILEREF__ + "downloading source content"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", externalEncoder: " + to_string(externalEncoder)
+				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
+				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+			);
+
+			if (isSourceStreaming)
+			{
+				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
+				bool regenerateTimestamps = false;
+
+				sourceAssetPathName = sourceTranscoderStagingAssetPathName + ".mp4";
+
+				encoding->_ffmpeg->streamingToFile(
+					ingestionJobKey,
+					regenerateTimestamps,
+					sourcePhysicalDeliveryURL,
+					sourceAssetPathName);
+			}
+			else
+			{
+				sourceAssetPathName = sourceTranscoderStagingAssetPathName;
+
+				MMSCURL::downloadFile(
+					ingestionJobKey,
+					sourcePhysicalDeliveryURL,
+					sourceAssetPathName,
+					_logger
+				);
+			}
+
+			_logger->info(__FILEREF__ + "downloaded source content"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", externalEncoder: " + to_string(externalEncoder)
+				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
+				+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName
+				+ ", sourceAssetPathName: " + sourceAssetPathName
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+			);
+		}
+		else
+		{
+			string field = "sourcePhysicalPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "nfsImagesDirectory";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			imagesDirectory = encodingParametersRoot.get(field, "").asString();
+		}
+
+		string imageBaseFileName = to_string(ingestionJobKey);
+
+		encoding->_ffmpeg->generateFramesToIngest(
 			ingestionJobKey,
 			encodingJobKey,
-			nfsImagesDirectory,
-			to_string(ingestionJobKey),    // imageBaseFileName,
+			imagesDirectory,
+			imageBaseFileName,
 			startTimeInSeconds,
 			maxFramesNumber,
 			videoFilter,
@@ -5734,27 +5840,185 @@ void FFMPEGEncoder::generateFramesThread(
 			mjpeg,
 			imageWidth, 
 			imageHeight,
-			mmsSourceVideoAssetPathName,
+			sourceAssetPathName,
 			videoDurationInMilliSeconds,
 			&(encoding->_childPid)
 		);
 
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+		bool completedWithError			= false;
 		if (externalEncoder)
 		{
-			for(string generatedFrameFileName: generatedFramesFileNames)
+			FileIO::DirectoryEntryType_t detDirectoryEntryType;
+			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imagesDirectory + "/");
+
+			bool scanDirectoryFinished = false;
+			int generatedFrameIndex = 0;
+			while (!scanDirectoryFinished)
 			{
+				try
+				{
+					string generatedFrameFileName = FileIO::readDirectory (directory, &detDirectoryEntryType);
+
+					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+						continue;
+
+					if (!(generatedFrameFileName.size() >= imageBaseFileName.size()
+						&& 0 == generatedFrameFileName.compare(0, imageBaseFileName.size(), imageBaseFileName)))
+						continue;
+
+					string generateFrameTitle = ingestedParametersRoot.get("Title", "").asString();
+
+					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
+
+					Json::Value userDataRoot;
+					{
+						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
+							userDataRoot = ingestedParametersRoot["UserData"];
+
+						Json::Value mmsDataRoot;
+						mmsDataRoot["dataType"] = "generatedFrame";
+						mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
+						mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
+						mmsDataRoot["generatedFrameIndex"] = generatedFrameIndex;
+
+						userDataRoot["mmsData"] = mmsDataRoot;
+					}
+
+					// Title
+					string addContentTitle = ingestionJobLabel;
+
+					string outputFileFormat;                                                               
+					try
+					{
+						{
+							size_t extensionIndex = generatedFrameFileName.find_last_of(".");                             
+							if (extensionIndex == string::npos)                                                   
+							{                                                                                     
+								string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+									+ ", generatedFrameFileName: " + generatedFrameFileName;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);                                                
+							}                                                                                     
+							outputFileFormat = generatedFrameFileName.substr(extensionIndex + 1);                          
+						}
+
+						_logger->info(__FILEREF__ + "ingest Frame"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", externalEncoder: " + to_string(externalEncoder)
+							+ ", imagesDirectory: " + imagesDirectory
+							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", addContentTitle: " + addContentTitle
+							+ ", outputFileFormat: " + outputFileFormat
+						);
+
+						generateFrames_ingestFrame(ingestionJobKey,
+							externalEncoder,
+							imagesDirectory, generatedFrameFileName,
+							addContentTitle, userDataRoot, outputFileFormat,
+							ingestedParametersRoot, encodingParametersRoot);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", externalEncoder: " + to_string(externalEncoder)
+							+ ", imagesDirectory: " + imagesDirectory
+							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", addContentTitle: " + addContentTitle
+							+ ", outputFileFormat: " + outputFileFormat
+							+ ", e.what(): " + e.what()
+						);
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", externalEncoder: " + to_string(externalEncoder)
+							+ ", imagesDirectory: " + imagesDirectory
+							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", addContentTitle: " + addContentTitle
+							+ ", outputFileFormat: " + outputFileFormat
+							+ ", e.what(): " + e.what()
+						);
+
+						throw e;
+					}
+
+					{
+						_logger->info(__FILEREF__ + "remove"
+							+ ", framePathName: " + imagesDirectory + "/" + generatedFrameFileName
+						);
+						bool exceptionInCaseOfError = false;
+						FileIO::remove(imagesDirectory + "/" + generatedFrameFileName,
+							exceptionInCaseOfError);
+					}
+
+					generatedFrameIndex++;
+				}
+				catch(DirectoryListFinished e)
+				{
+					scanDirectoryFinished = true;
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					scanDirectoryFinished = true;
+
+					completedWithError		= true;
+					encoding->_errorMessage = errorMessage;
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					scanDirectoryFinished = true;
+
+					completedWithError		= true;
+					encoding->_errorMessage = errorMessage;
+
+					// throw e;
+				}
+			}
+
+			FileIO::closeDirectory (directory);
+
+			if (FileIO::directoryExisting(imagesDirectory))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", imagesDirectory: " + imagesDirectory);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
 			}
 		}
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
         _logger->info(__FILEREF__ + "generateFrames finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", completedWithError: " + to_string(completedWithError)
         );
 
-		bool completedWithError			= false;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
@@ -5785,6 +6049,17 @@ void FFMPEGEncoder::generateFramesThread(
 	{
         encoding->_running = false;
         encoding->_childPid = 0;
+
+		if (externalEncoder)
+		{
+			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", imagesDirectory: " + imagesDirectory);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+			}
+		}
 
 		char strDateTime [64];
 		{
@@ -5835,6 +6110,17 @@ void FFMPEGEncoder::generateFramesThread(
     {
         encoding->_running = false;
         encoding->_childPid = 0;
+
+		if (externalEncoder)
+		{
+			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", imagesDirectory: " + imagesDirectory);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+			}
+		}
 
 		char strDateTime [64];
 		{
@@ -5888,6 +6174,17 @@ void FFMPEGEncoder::generateFramesThread(
         encoding->_running = false;
         encoding->_childPid = 0;
 
+		if (externalEncoder)
+		{
+			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", imagesDirectory: " + imagesDirectory);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+			}
+		}
+
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -5934,7 +6231,355 @@ void FFMPEGEncoder::generateFramesThread(
 				);
 		}
 		#endif
-    }
+	}
+}
+
+void FFMPEGEncoder::generateFrames_ingestFrame(
+	int64_t ingestionJobKey,
+	bool externalEncoder,
+	string imagesDirectory, string generatedFrameFileName,
+	string addContentTitle,
+	Json::Value userDataRoot,
+	string outputFileFormat,
+	Json::Value ingestedParametersRoot,
+	Json::Value encodingParametersRoot)
+{
+	string workflowMetadata;
+	int64_t userKey;
+	string apiKey;
+	int64_t addContentIngestionJobKey = -1;
+	string mmsWorkflowIngestionURL;
+	// create the workflow and ingest it
+	try
+	{
+		workflowMetadata = generateFrames_buildFrameIngestionWorkflow(
+			ingestionJobKey,
+			externalEncoder,
+			generatedFrameFileName,
+			imagesDirectory,
+			addContentTitle,
+			userDataRoot,
+			outputFileFormat,
+			ingestedParametersRoot,
+			encodingParametersRoot
+		);
+
+		{
+			string field = "internalMMS";
+    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			{
+				Json::Value internalMMSRoot = ingestedParametersRoot[field];
+
+				field = "credentials";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
+
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+					field = "apiKey";
+					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
+			}
+		}
+
+		{
+			string field = "mmsWorkflowIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+		}
+
+		string sResponse = MMSCURL::httpPostPutString(
+			ingestionJobKey,
+			mmsWorkflowIngestionURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
+		);
+
+		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+
+	if (addContentIngestionJobKey == -1)
+	{
+		string errorMessage =
+			string("Ingested URL failed, addContentIngestionJobKey is not valid")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string mmsBinaryURL;
+	// ingest binary
+	try
+	{
+		bool inCaseOfLinkHasItToBeRead = false;
+		int64_t frameFileSize = FileIO::getFileSizeInBytes(
+			imagesDirectory + "/" + generatedFrameFileName,
+			inCaseOfLinkHasItToBeRead);
+
+		string mmsBinaryIngestionURL;
+		{
+			string field = "mmsBinaryIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+		}
+
+		mmsBinaryURL =
+			mmsBinaryIngestionURL
+			+ "/" + to_string(addContentIngestionJobKey)
+		;
+
+		string sResponse = MMSCURL::httpPostPutFile(
+			ingestionJobKey,
+			mmsBinaryURL,
+			"POST",	// requestType
+			_mmsBinaryTimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			imagesDirectory + "/" + generatedFrameFileName,
+			frameFileSize,
+			_logger);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+}
+
+string FFMPEGEncoder::generateFrames_buildFrameIngestionWorkflow(
+	int64_t ingestionJobKey,
+	bool externalEncoder,
+	string generatedFrameFileName,
+	string imagesDirectory,
+	string addContentTitle,
+	Json::Value userDataRoot,
+	string outputFileFormat,
+	Json::Value ingestedParametersRoot,
+	Json::Value encodingParametersRoot
+)
+{
+	string workflowMetadata;
+	try
+	{
+		/*
+		{
+        	"Label": "<workflow label>",
+        	"Type": "Workflow",
+        	"Task": {
+                "Label": "<task label 1>",
+                "Type": "Add-Content"
+                "Parameters": {
+                        "FileFormat": "ts",
+                        "Ingester": "Giuliano",
+                        "SourceURL": "move:///abc...."
+                },
+        	}
+		}
+		*/
+		// Json::Value mmsDataRoot = userDataRoot["mmsData"];
+		// int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
+		// int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
+		// int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
+
+		Json::Value addContentRoot;
+
+		string field = "Label";
+		addContentRoot[field] = addContentTitle;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		{
+			field = "internalMMS";
+    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			{
+				Json::Value internalMMSRoot = ingestedParametersRoot[field];
+
+				field = "events";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
+
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
+
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						addContentRoot[field] = eventsRoot[field];
+				}
+			}
+		}
+
+		Json::Value addContentParametersRoot = ingestedParametersRoot;
+		// if (internalMMSRootPresent)
+		{
+			Json::Value removed;
+			field = "internalMMS";
+			addContentParametersRoot.removeMember(field, &removed);
+		}
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = outputFileFormat;
+
+		if (!externalEncoder)
+		{
+			string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
+			field = "SourceURL";
+			addContentParametersRoot[field] = sourceURL;
+		}
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Generator Frames Task";
+
+		field = "Title";
+		addContentParametersRoot[field] = addContentTitle;
+
+		field = "UserData";
+		addContentParametersRoot[field] = userDataRoot;
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = addContentTitle;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		/*
+		{
+			Json::Value variablesWorkflowRoot;
+
+			{
+				Json::Value variableWorkflowRoot;
+
+				field = "Type";
+				variableWorkflowRoot[field] = "integer";
+
+				field = "Value";
+				variableWorkflowRoot[field] = utcChunkStartTime;
+
+				// name of the variable
+				field = "CurrentUtcChunkStartTime";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
+
+			field = "Variables";
+			workflowRoot[field] = variablesWorkflowRoot;
+		}
+		*/
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Frame Workflow metadata generated"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", " + addContentTitle + ", "
+				+ generatedFrameFileName
+		);
+
+		return workflowMetadata;
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "generateFrames_buildFrameIngestionWorkflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "generateFrames_buildFrameIngestionWorkflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
 }
 
 void FFMPEGEncoder::slideShowThread(
@@ -13114,6 +13759,7 @@ void FFMPEGEncoder::monitorThread()
 
 	while(!_monitorThreadShutdown)
 	{
+		// proxy
 		try
 		{
 			// this is to have a copy of LiveProxyAndGrid
@@ -13967,6 +14613,7 @@ void FFMPEGEncoder::monitorThread()
 			_logger->error(__FILEREF__ + errorMessage);
 		}
 
+		// recording
 		try
 		{
 			// this is to have a copy of LiveRecording

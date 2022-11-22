@@ -1402,7 +1402,58 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		}
 		*/
 
-        Json::Value eventsRoot;
+		Json::Value eventsRoot;
+		{
+			string onSuccessField = "OnSuccess";
+			string onErrorField = "OnError";
+			string onCompleteField = "OnComplete";
+			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
+				|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
+			)
+			{
+				if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+				{
+					Json::Value onSuccessRoot = taskRoot[onSuccessField];
+
+					eventsRoot[onSuccessField] = onSuccessRoot;
+
+					Json::Value removed;
+					taskRoot.removeMember(onSuccessField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+				{
+					Json::Value onErrorRoot = taskRoot[onErrorField];
+
+					eventsRoot[onErrorField] = onErrorRoot;
+
+					Json::Value removed;
+					taskRoot.removeMember(onErrorField, &removed);
+				}
+				if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+				{
+					Json::Value onCompleteRoot = taskRoot[onCompleteField];
+
+					eventsRoot[onCompleteField] = onCompleteRoot;
+
+					Json::Value removed;
+					taskRoot.removeMember(onCompleteField, &removed);
+				}
+			}
+		}
+		field = "events";
+		internalMMSRoot[field] = eventsRoot;
+
+		string internalMMSField = "internalMMS";
+		parametersRoot[internalMMSField] = internalMMSRoot;
+	}
+    else if (type == "Periodical-Frames"
+		|| type == "I-Frames"
+		|| type == "Motion-JPEG-by-Periodical-Frames"
+		|| type == "Motion-JPEG-by-I-Frames"
+	)
+    {
+		Json::Value eventsRoot;
 		{
 			string onSuccessField = "OnSuccess";
 			string onErrorField = "OnError";
