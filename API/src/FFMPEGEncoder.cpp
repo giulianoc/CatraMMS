@@ -6492,32 +6492,6 @@ string FFMPEGEncoder::generateFrames_buildFrameIngestionWorkflow(
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		{
-			field = "internalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					Json::Value eventsRoot = internalMMSRoot[field];
-
-					field = "OnSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "OnError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "OnComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-				}
-			}
-		}
-
 		Json::Value addContentParametersRoot = ingestedParametersRoot;
 		// if (internalMMSRootPresent)
 		{
