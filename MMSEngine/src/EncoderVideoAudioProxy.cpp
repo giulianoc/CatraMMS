@@ -8583,7 +8583,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					encoderToSkip);
 			*/
 			int64_t encoderKeyToBeSkipped = -1;
-			bool externalEncoderAllowed = false;
+			bool externalEncoderAllowed = true;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
 					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,

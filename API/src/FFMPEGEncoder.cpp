@@ -2570,6 +2570,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
+				// 2022-11-23: ho visto che, in caso di autoRenew, monitoring generates errors and trys to kill
+				//		the process. Moreover the selectedLiveRecording->_errorMessage remain initialized
+				//		with the error (like killed because segment file is not present).
+				//		For this reason, _recordingStart is initialized to make sure monitoring does not perform
+				//		his checks before recorder is not really started.
+				//		_recordingStart will be initialized correctly into the liveRecorderThread method
+				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
 				selectedLiveRecording->_running = true;
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 				selectedLiveRecording->_childPid = 0;
@@ -8019,10 +8026,10 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 }
 
 void FFMPEGEncoder::liveRecorderThread(
-        // FCGX_Request& request,
-        shared_ptr<LiveRecording> liveRecording,
-        int64_t encodingJobKey,
-        string requestBody)
+	// FCGX_Request& request,
+	shared_ptr<LiveRecording> liveRecording,
+	int64_t encodingJobKey,
+	string requestBody)
 {
 	string api = "liveRecorder";
 
