@@ -9104,30 +9104,52 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
 {
-    // here we do not have just a profile to be added into MMS but we have
-    // one or more MediaItemKeys that have to be ingested
-    // One MIK in case of a .mjpeg
-    // One or more MIKs in case of .jpg
+	if (_currentUsedFFMpegExternalEncoder)
+	{
+		// Status will be success if at least one Chunk was generated, otherwise it will be failed
+		{
+			string errorMessage;
+			string processorMMS;
+			MMSEngineDBFacade::IngestionStatus	newIngestionStatus
+				= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);
+			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+				errorMessage);
+		}
+	}
+	else
+	{
+		// here we do not have just a profile to be added into MMS but we have
+		// one or more MediaItemKeys that have to be ingested
+		// One MIK in case of a .mjpeg
+		// One or more MIKs in case of .jpg
     
-    shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-        ->getFreeEvent<MultiLocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
+		shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+			->getFreeEvent<MultiLocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
 
-    multiLocalAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
-    multiLocalAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-    multiLocalAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+		multiLocalAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+		multiLocalAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+		multiLocalAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-    multiLocalAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-    multiLocalAssetIngestionEvent->setEncodingJobKey(_encodingItem->_encodingJobKey);
-    multiLocalAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
-    multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_ingestedParametersRoot);
+		multiLocalAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+		multiLocalAssetIngestionEvent->setEncodingJobKey(_encodingItem->_encodingJobKey);
+		multiLocalAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+		multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_ingestedParametersRoot);
 
-    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
-    _multiEventsSet->addEvent(event);
+		shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
+		_multiEventsSet->addEvent(event);
 
-    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
-        + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-        + ", getEventKey().first: " + to_string(event->getEventKey().first)
-        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+		_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
+			+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+			+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+	}
 }
 
 pair<string, bool> EncoderVideoAudioProxy::slideShow()
