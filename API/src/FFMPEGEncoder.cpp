@@ -5762,6 +5762,35 @@ void FFMPEGEncoder::generateFramesThread(
 			string sourceTranscoderStagingAssetPathName = encodingParametersRoot.
 				get("sourceTranscoderStagingAssetPathName", "").asString();
 
+			{
+				string sourceTranscoderStagingAssetDirectory;
+				{
+					size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");                             
+					if (endOfDirectoryIndex == string::npos)                                                   
+					{                                                                                     
+						string errorMessage = __FILEREF__ + "No directory find in the asset file name"
+							+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);                                                
+					}                                                                                     
+					sourceTranscoderStagingAssetDirectory = sourceTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);                          
+				}
+
+				if (!FileIO::directoryExisting(sourceTranscoderStagingAssetDirectory))
+				{
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", sourceTranscoderStagingAssetDirectory: " + sourceTranscoderStagingAssetDirectory
+					);
+					FileIO::createDirectory(sourceTranscoderStagingAssetDirectory,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
+						noErrorIfExists, recursive);
+				}
+			}
+
 			_logger->info(__FILEREF__ + "downloading source content"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", externalEncoder: " + to_string(externalEncoder)
