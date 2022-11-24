@@ -6003,6 +6003,7 @@ void FFMPEGEncoder::generateFramesThread(
 			if (FileIO::directoryExisting(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", imagesDirectory: " + imagesDirectory);
 				Boolean_t bRemoveRecursively = true;
 				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
@@ -6126,11 +6127,25 @@ void FFMPEGEncoder::generateFramesThread(
 					if (ingestionJobStatus.size() >= prefix.size()
 						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
 					{
+						_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus);
+
 						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
 					}
 					else
 					{
-						this_thread::sleep_for(chrono::seconds(5));
+						int secondsToSleep = 5;
+
+						_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus
+							+ ", secondsToSleep: " + to_string(secondsToSleep)
+						);
+
+						this_thread::sleep_for(chrono::seconds(secondsToSleep));
 					}
 				}
 			}
