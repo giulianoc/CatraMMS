@@ -1728,7 +1728,8 @@ public:
 		double startTimeInSeconds, int maxFramesNumber, 
 		string videoFilter, int periodInSeconds, 
 		bool mjpeg, int imageWidth, int imageHeight,
-		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL,
+		string mmsIngestionURL);
 
     void addEncoding_SlideShowJob (
         shared_ptr<Workspace> workspace,

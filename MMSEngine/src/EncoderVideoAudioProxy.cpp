@@ -245,33 +245,6 @@ void EncoderVideoAudioProxy::init(
 		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
-	/*
-    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->protocol: " + _mmsAPIProtocol
-    );
-    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->hostname: " + _mmsAPIHostname
-    );
-    _mmsAPIPort = _configuration["api"].get("port", "").asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->port: " + to_string(_mmsAPIPort)
-    );
-    _mmsAPIUser = _configuration["api"].get("user", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->user: " + _mmsAPIUser
-    );
-    _mmsAPIPassword = _configuration["api"].get("password", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->password: " + "..."
-    );
-    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->ingestionURI: " + _mmsAPIIngestionURI
-    );
-	*/
-
 	_keyPairId =  _configuration["aws"].get("keyPairId", "").asString();
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->keyPairId: " + _keyPairId

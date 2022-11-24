@@ -6390,7 +6390,8 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     double startTimeInSeconds, int maxFramesNumber, 
     string videoFilter, int periodInSeconds, 
     bool mjpeg, int imageWidth, int imageHeight,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL,
+	string mmsIngestionURL
 )
 {
 
@@ -6492,6 +6493,9 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
 			field = "mmsBinaryIngestionURL";
 			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

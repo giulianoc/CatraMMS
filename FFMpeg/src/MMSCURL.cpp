@@ -233,6 +233,61 @@ string MMSCURL::httpGet(
     }
 }
 
+Json::Value MMSCURL::httpGetJson(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string response = MMSCURL::httpGet(
+		ingestionJobKey,
+		url,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		logger);
+
+	Json::Value jsonRoot;
+	try
+	{
+		Json::CharReaderBuilder builder;
+		Json::CharReader* reader = builder.newCharReader();
+		string errors;
+
+		bool parsingSuccessful = reader->parse(response.c_str(),
+			response.c_str() + response.size(), 
+			&jsonRoot, &errors);
+		delete reader;
+
+		if (!parsingSuccessful)
+		{
+			string errorMessage = __FILEREF__ + "failed to parse the response"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errors: " + errors
+				+ ", response: " + response
+			;
+			logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch(...)
+	{
+		string errorMessage = string("response json is not well format")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", response: " + response
+		;
+		logger->error(__FILEREF__ + errorMessage);
+		
+		throw runtime_error(errorMessage);
+	}
+
+	return jsonRoot;
+}
+
 string MMSCURL::httpPostPutString(
 	int64_t ingestionJobKey,
 	string url,

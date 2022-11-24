@@ -379,7 +379,7 @@ private:
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
-	void generateFrames_ingestFrame(
+	int64_t generateFrames_ingestFrame(
 		int64_t ingestionJobKey,
 		bool externalEncoder,
 		string imagesDirectory, string generatedFrameFileName,

@@ -223,6 +223,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->version: " + mmsAPIVersion
     );
+    string mmsAPIWorkflowURI = _configuration["api"].get("workflowURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->workflowURI: " + mmsAPIWorkflowURI
+    );
     string mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + mmsAPIIngestionURI
@@ -278,6 +282,16 @@ MMSEngineProcessor::MMSEngineProcessor(
 	);
 
 	_mmsWorkflowIngestionURL =
+		mmsAPIProtocol
+		+ "://"
+		+ mmsAPIHostname + ":"
+		+ to_string(mmsAPIPort)
+		+ "/catramms/"
+		+ mmsAPIVersion
+		+ mmsAPIWorkflowURI
+	;
+
+	_mmsIngestionURL =
 		mmsAPIProtocol
 		+ "://"
 		+ mmsAPIHostname + ":"
@@ -18880,7 +18894,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			startTimeInSeconds, maxFramesNumber, 
 			videoFilter, periodInSeconds, 
 			mjpeg, imageWidth, imageHeight,
-			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
 		);
 	}
     catch(runtime_error e)

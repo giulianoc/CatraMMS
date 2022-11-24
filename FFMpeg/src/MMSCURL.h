@@ -15,6 +15,7 @@
 #define CURL_h
 
 #include "spdlog/spdlog.h"
+#include "json/json.h"
 #include <fstream>
 
 using namespace std;
@@ -57,6 +58,15 @@ public:
 	};
 
 	static string httpGet(
+		int64_t ingestionJobKey,
+		string url,
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		shared_ptr<spdlog::logger> logger
+	);
+
+	static Json::Value httpGetJson(
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,

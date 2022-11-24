@@ -391,55 +391,11 @@ FFMPEGEncoder::FFMPEGEncoder(
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
     );
 
-	/*
-    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->protocol: " + _mmsAPIProtocol
-    );
-    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->hostname: " + _mmsAPIHostname
-    );
-    _mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->port: " + to_string(_mmsAPIPort)
-    );
-    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->ingestionURI: " + _mmsAPIIngestionURI
-    );
-    _mmsAPIVersion = _configuration["api"].get("version", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->version: " + _mmsAPIVersion
-    );
-	*/
     _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
 
-	/*
-    _mmsBinaryProtocol = _configuration["api"]["binary"].get("protocol", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->protocol: " + _mmsBinaryProtocol
-    );
-    _mmsBinaryHostname = _configuration["api"]["binary"].get("hostname", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->hostname: " + _mmsBinaryHostname
-    );
-    _mmsBinaryPort = JSONUtils::asInt(_configuration["api"]["binary"], "port", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->port: " + to_string(_mmsBinaryPort)
-    );
-    _mmsBinaryIngestionURI = _configuration["api"]["binary"].get("ingestionURI", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->ingestionURI: " + _mmsBinaryIngestionURI
-    );
-    _mmsBinaryVersion = _configuration["api"]["binary"].get("version", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->version: " + _mmsBinaryVersion
-    );
-	*/
     _mmsBinaryTimeoutInSeconds = JSONUtils::asInt(_configuration["api"]["binary"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
@@ -5890,6 +5846,8 @@ void FFMPEGEncoder::generateFramesThread(
 			FileIO::DirectoryEntryType_t detDirectoryEntryType;
 			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imagesDirectory + "/");
 
+			vector<int64_t> addContentIngestionJobKeys;
+
 			bool scanDirectoryFinished = false;
 			int generatedFrameIndex = 0;
 			while (!scanDirectoryFinished)
@@ -5952,11 +5910,13 @@ void FFMPEGEncoder::generateFramesThread(
 							+ ", outputFileFormat: " + outputFileFormat
 						);
 
-						generateFrames_ingestFrame(ingestionJobKey,
-							externalEncoder,
-							imagesDirectory, generatedFrameFileName,
-							addContentTitle, userDataRoot, outputFileFormat,
-							ingestedParametersRoot, encodingParametersRoot);
+						addContentIngestionJobKeys.push_back(
+							generateFrames_ingestFrame(
+								ingestionJobKey, externalEncoder,
+								imagesDirectory, generatedFrameFileName,
+								addContentTitle, userDataRoot, outputFileFormat,
+								ingestedParametersRoot, encodingParametersRoot)
+						);
 					}
 					catch(runtime_error e)
 					{
@@ -6046,6 +6006,141 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", imagesDirectory: " + imagesDirectory);
 				Boolean_t bRemoveRecursively = true;
 				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+			}
+
+			// wait the addContent to be executed
+			try
+			{
+				string field = "mmsIngestionURL";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						// + ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
+
+				int64_t userKey;
+				string apiKey;
+				{
+					string field = "internalMMS";
+					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+					{
+						Json::Value internalMMSRoot = ingestedParametersRoot[field];
+
+						field = "credentials";
+						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+						{
+							Json::Value credentialsRoot = internalMMSRoot[field];
+
+							field = "userKey";
+							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+							field = "apiKey";
+							string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+						}
+					}
+				}
+
+				chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+				long maxSecondsWaiting = 2 * 60;
+
+				while (addContentIngestionJobKeys.size() > 0
+					&& chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
+				{
+					int64_t addContentIngestionJobKey = *(addContentIngestionJobKeys.begin());
+
+					string mmsIngestionJobURL =
+						mmsIngestionURL
+						+ "/" + to_string(addContentIngestionJobKey)
+						+ "?ingestionJobOutputs=false"
+					;
+
+					Json::Value ingestionRoot = MMSCURL::httpGetJson(
+						ingestionJobKey,
+						mmsIngestionJobURL,
+						_mmsAPITimeoutInSeconds,
+						to_string(userKey),
+						apiKey,
+						_logger);
+
+					string field = "response";
+					if (JSONUtils::isMetadataPresent(ingestionRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value responseRoot = ingestionRoot[field];
+
+					field = "ingestionJobs";
+					if (JSONUtils::isMetadataPresent(responseRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value ingestionJobsRoot = responseRoot[field];
+
+					if (ingestionJobsRoot.size() != 1)
+					{
+						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
+
+					field = "status";
+					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
+
+					string prefix = "End_";
+					if (ingestionJobStatus.size() >= prefix.size()
+						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
+					{
+						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
+					}
+					else
+					{
+						this_thread::sleep_for(chrono::seconds(5));
+					}
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
 			}
 		}
 
@@ -6270,7 +6365,7 @@ void FFMPEGEncoder::generateFramesThread(
 	}
 }
 
-void FFMPEGEncoder::generateFrames_ingestFrame(
+int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 	int64_t ingestionJobKey,
 	bool externalEncoder,
 	string imagesDirectory, string generatedFrameFileName,
@@ -6447,6 +6542,8 @@ void FFMPEGEncoder::generateFrames_ingestFrame(
 
 		throw e;
 	}
+
+	return addContentIngestionJobKey;
 }
 
 string FFMPEGEncoder::generateFrames_buildFrameIngestionWorkflow(
