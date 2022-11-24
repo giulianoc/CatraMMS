@@ -6156,6 +6156,9 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", addContentToBeWaited: " + to_string(addContentToBeWaited)
 					+ ", addContentFinished: " + to_string(addContentFinished)
+					+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
+					+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startWaiting).count())
 				);
 			}
 			catch(runtime_error e)
