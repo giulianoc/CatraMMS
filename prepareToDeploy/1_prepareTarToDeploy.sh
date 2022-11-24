@@ -41,6 +41,11 @@ printf "${RED}"
 read -n 1 -s -r -p "new tagname: $tagName, press any key to continue"
 printf "${NC}"
 
+echo ""
+printf "${RED}"
+echo "git pull --tags -f"
+printf "${NC}"
+git pull --tags -f
 
 echo ""
 printf "${RED}"
