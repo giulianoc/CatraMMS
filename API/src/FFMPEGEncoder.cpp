@@ -6072,7 +6072,7 @@ void FFMPEGEncoder::generateFramesThread(
 						_logger);
 
 					string field = "response";
-					if (JSONUtils::isMetadataPresent(ingestionRoot, field))
+					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6085,7 +6085,7 @@ void FFMPEGEncoder::generateFramesThread(
 					Json::Value responseRoot = ingestionRoot[field];
 
 					field = "ingestionJobs";
-					if (JSONUtils::isMetadataPresent(responseRoot, field))
+					if (!JSONUtils::isMetadataPresent(responseRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6111,7 +6111,7 @@ void FFMPEGEncoder::generateFramesThread(
 					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
 
 					field = "status";
-					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
