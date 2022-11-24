@@ -6155,7 +6155,7 @@ void FFMPEGEncoder::generateFramesThread(
 				_logger->info(__FILEREF__ + "Waiting result..."
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", addContentToBeWaited: " + to_string(addContentToBeWaited)
-					+ ", addContentFinished: " + addContentFinished
+					+ ", addContentFinished: " + to_string(addContentFinished)
 				);
 			}
 			catch(runtime_error e)
