@@ -6049,7 +6049,9 @@ void FFMPEGEncoder::generateFramesThread(
 				}
 
 				chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
-				long maxSecondsWaiting = 2 * 60;
+				long maxSecondsWaiting = 5 * 60;
+				long addContentFinished = 0;
+				long addContentToBeWaited = addContentIngestionJobKeys.size();
 
 				while (addContentIngestionJobKeys.size() > 0
 					&& chrono::duration_cast<chrono::seconds>(
@@ -6133,6 +6135,7 @@ void FFMPEGEncoder::generateFramesThread(
 							+ ", ingestionJobStatus: " + ingestionJobStatus);
 
 						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
+						addContentFinished++;
 					}
 					else
 					{
@@ -6148,6 +6151,12 @@ void FFMPEGEncoder::generateFramesThread(
 						this_thread::sleep_for(chrono::seconds(secondsToSleep));
 					}
 				}
+
+				_logger->info(__FILEREF__ + "Waiting result..."
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", addContentToBeWaited: " + to_string(addContentToBeWaited)
+					+ ", addContentFinished: " + addContentFinished
+				);
 			}
 			catch(runtime_error e)
 			{
