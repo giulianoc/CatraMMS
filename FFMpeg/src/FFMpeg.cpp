@@ -3571,17 +3571,21 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 				}
 			}
 
-			ffmpegText = regex_replace(localText, regex(":"), "\\:");
+			string escape = "\\";
+			if (textFilePathName != "")
+				escape = "";	// in case of file, there is no need of escape
+
+			ffmpegText = regex_replace(localText, regex(":"), escape + ":");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
+				regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("hours_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/3600),24))\\:d\\:2}");
+				regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("mins_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/60),60))\\:d\\:2}");
+				regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("secs_counter"), "%{eif\\:trunc(mod(countDownDurationInSecs-t\\,60))\\:d\\:2}");
+				regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}");
 			ffmpegText = regex_replace(ffmpegText,
-				regex("cents_counter"), "%{eif\\:(mod(countDownDurationInSecs-t\\,1)*pow(10,2))\\:d\\:2}");
+				regex("cents_counter"), "%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}");
 			if (streamingDurationInSeconds != -1)
 			{
 				ffmpegText = regex_replace(ffmpegText,
@@ -12655,8 +12659,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			field = "reloadAtFrameInterval";
 			if (isMetadataPresent(drawTextDetailsRoot, field))
 				reloadAtFrameInterval = asInt(drawTextDetailsRoot, field, -1);
-			// TO BE REMOVED
-			reloadAtFrameInterval = 10;
+			reloadAtFrameInterval = 1;
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
