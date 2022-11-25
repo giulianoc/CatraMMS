@@ -9066,8 +9066,10 @@ void FFMpeg::liveRecorder(
 			}
 		}
 
+		int streamingDurationIndex;
 		{
 			ffmpegArgumentList.push_back("-t");
+			streamingDurationIndex = ffmpegArgumentList.size();
 			ffmpegArgumentList.push_back(to_string(streamingDuration));
 		}
 
@@ -10013,14 +10015,14 @@ void FFMpeg::liveRecorder(
 			}
 		}
 
-		if (!ffmpegArgumentList.empty())
-			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
-				ostream_iterator<string>(ffmpegArgumentListStream, " "));
-
 		bool sigQuitReceived = true;
 		while(sigQuitReceived)
 		{
 			sigQuitReceived = false;
+
+			if (!ffmpegArgumentList.empty())
+				copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+					ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
 			_logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10082,7 +10084,41 @@ void FFMpeg::liveRecorder(
 								chrono::seconds(localPushListenTimeout);
 					}
 
-					continue;
+					{
+						chrono::system_clock::time_point now = chrono::system_clock::now();
+						utcNow = chrono::system_clock::to_time_t(now);
+
+						if (utcNow < utcRecordingPeriodEnd)
+						{
+							time_t localStreamingDuration = utcRecordingPeriodEnd - utcNow;
+							ffmpegArgumentList[streamingDurationIndex] = to_string(localStreamingDuration);
+
+							_logger->info(__FILEREF__
+								+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT, recalculate streaming duration"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+								+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+								+ ", localStreamingDuration: " + to_string(localStreamingDuration)
+							);
+						}
+						else
+						{
+							// exit from loop even if SIGQUIT because time period expired
+							sigQuitReceived = false;
+
+							_logger->info(__FILEREF__
+								+ "liveRecorder: ffmpeg execution command should be called again because received SIGQUIT but utcRecordingPeriod expired"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+								+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+								+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							);
+						}
+
+						continue;
+					}
 				}
 
 				string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg: ffmpeg execution command failed"
