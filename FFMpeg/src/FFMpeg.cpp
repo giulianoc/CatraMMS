@@ -12659,7 +12659,6 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			field = "reloadAtFrameInterval";
 			if (isMetadataPresent(drawTextDetailsRoot, field))
 				reloadAtFrameInterval = asInt(drawTextDetailsRoot, field, -1);
-			reloadAtFrameInterval = 1;
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
