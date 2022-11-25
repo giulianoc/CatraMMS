@@ -10475,33 +10475,9 @@ void FFMpeg::liveProxy2(
 	int64_t encodingJobKey,
 	bool externalEncoder,
 
-	// only one between streamInput and vodInput has to be present
-	// array of: "inputRoot": {
-	//	"streamInput": { },
-	//	"vodInput": { },
-	//	"timePeriod": false, "utcScheduleEnd": -1, "utcScheduleStart": -1 
-	// }
 	mutex* inputsRootMutex,
 	Json::Value* inputsRoot,
 
-	// array, each element is an output containing the following fields
-	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
-	//  #in case of HLS or DASH
-	//		string otherOutputOptions
-	//		string audioVolumeChange
-	//      Json::Value encodingProfileDetailsRoot,
-	//      string encodingProfileContentType
-	//      int segmentDurationInSeconds,
-	//      int playlistEntriesNumber,
-	//      string manifestDirectoryPath,
-	//      string manifestFileName,
-	//  #in case of RTMP_Stream
-	//		string otherOutputOptions
-	//		string audioVolumeChange
-	//      Json::Value encodingProfileDetailsRoot,
-	//      string encodingProfileContentType
-	//      string rtmpUrl,
-	//
 	Json::Value outputsRoot,
 
 	pid_t* pChildPid,
@@ -11056,6 +11032,29 @@ void FFMpeg::liveProxy2(
 						}
 					}
 				}
+
+				if (isMetadataPresent(outputRoot, "drawTextDetails"))
+				{
+					string textTemporaryFileName;
+					{
+						textTemporaryFileName =
+							_ffmpegTempDir + "/"
+							+ to_string(ingestionJobKey)
+							+ "_"
+							+ to_string(encodingJobKey)
+							+ "_"
+							+ to_string(outputIndex)
+							+ ".overlayText";
+					}
+
+					if (FileIO::fileExisting(textTemporaryFileName))
+					{
+						_logger->info(__FILEREF__ + "Remove"
+							+ ", textTemporaryFileName: " + textTemporaryFileName);
+						bool exceptionInCaseOfError = false;
+						FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+					}
+				}
 			}
 
 			if (streamingDurationInSeconds != -1 &&
@@ -11251,6 +11250,29 @@ void FFMpeg::liveProxy2(
 								// throw e;
 							}
 						}
+					}
+				}
+
+				if (isMetadataPresent(outputRoot, "drawTextDetails"))
+				{
+					string textTemporaryFileName;
+					{
+						textTemporaryFileName =
+							_ffmpegTempDir + "/"
+							+ to_string(ingestionJobKey)
+							+ "_"
+							+ to_string(encodingJobKey)
+							+ "_"
+							+ to_string(outputIndex)
+							+ ".overlayText";
+					}
+
+					if (FileIO::fileExisting(textTemporaryFileName))
+					{
+						_logger->info(__FILEREF__ + "Remove"
+							+ ", textTemporaryFileName: " + textTemporaryFileName);
+						bool exceptionInCaseOfError = false;
+						FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
 					}
 				}
 			}
@@ -12558,6 +12580,21 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			}
 			string text = drawTextDetailsRoot.get(field, "").asString();
 
+			string textTemporaryFileName;
+			{
+				textTemporaryFileName =
+					_ffmpegTempDir + "/"
+					+ to_string(ingestionJobKey)
+					+ "_"
+					+ to_string(encodingJobKey)
+					+ "_"
+					+ to_string(outputIndex)
+					+ ".overlayText";
+				ofstream of(textTemporaryFileName, ofstream::trunc);
+				of << text;
+				of.flush();
+			}
+
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
 			if (isMetadataPresent(drawTextDetailsRoot, field))
@@ -12614,7 +12651,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				boxPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
 
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowx, shadowy,
 				boxEnable, boxColor, boxPercentageOpacity,
 				streamingDurationInSeconds);
