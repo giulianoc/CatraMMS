@@ -123,6 +123,7 @@ public:
         int64_t videoDurationInMilliSeconds,
 
         string text,
+		int reloadAtFrameInterval,
         string textPosition_X_InPixel,
         string textPosition_Y_InPixel,
         string fontType,
@@ -548,8 +549,10 @@ private:
 
 
 	string getDrawTextVideoFilterDescription(
+		int64_t ingestionJobKey,
 		string text,
 		string textFilePathName,
+		int reloadAtFrameInterval,
 		string textPosition_X_InPixel,
 		string textPosition_Y_InPixel,
 		string fontType,

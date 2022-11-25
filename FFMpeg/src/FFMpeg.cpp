@@ -3130,6 +3130,7 @@ void FFMpeg::overlayTextOnVideo(
         int64_t videoDurationInMilliSeconds,
 
         string text,
+		int reloadAtFrameInterval,
         string textPosition_X_InPixel,
         string textPosition_Y_InPixel,
         string fontType,
@@ -3224,15 +3225,15 @@ void FFMpeg::overlayTextOnVideo(
 			}
 
 			_logger->info(__FILEREF__ + "overlayTextOnVideo: added text into a temporary file"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", textTemporaryFileName: " + textTemporaryFileName
 				+ ", text: " + text
 			);
 
-			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel,
-				fontType, fontSize,
+			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
+				"", textTemporaryFileName, reloadAtFrameInterval,
+				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowX, shadowY,
 				boxEnable, boxColor, boxPercentageOpacity, -1);
 
@@ -3500,8 +3501,10 @@ void FFMpeg::overlayTextOnVideo(
 }
 
 string FFMpeg::getDrawTextVideoFilterDescription(
+	int64_t ingestionJobKey,
 	string text,				// text or textFilePathName has to be filled
 	string textFilePathName,
+	int reloadAtFrameInterval,
 	string textPosition_X_InPixel,
 	string textPosition_Y_InPixel,
 	string fontType,
@@ -3532,7 +3535,43 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
 			//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
 			//
-			ffmpegText = regex_replace(text, regex(":"), "\\:");
+
+			string localText = text;
+			if (textFilePathName != "")
+			{
+				ifstream ifPathFileName(textFilePathName);
+				if (ifPathFileName)
+				{
+					// get size/length of file:
+					ifPathFileName.seekg (0, ifPathFileName.end);
+					int fileSize = ifPathFileName.tellg();
+					ifPathFileName.seekg (0, ifPathFileName.beg);
+
+					char* buffer = new char [fileSize];
+					ifPathFileName.read (buffer, fileSize);
+					if (ifPathFileName)
+					{
+						// all characters read successfully
+						localText.assign(buffer, fileSize);                                                 
+					}
+					else
+					{
+						// error: only is.gcount() could be read";
+						localText.assign(buffer, ifPathFileName.gcount());
+					}
+					ifPathFileName.close();
+					delete[] buffer;
+				}
+				else
+				{
+					_logger->error(__FILEREF__ + "ffmpeg: drawtext file cannot be read"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", textFilePathName: " + textFilePathName
+					);
+				}
+			}
+
+			ffmpegText = regex_replace(localText, regex(":"), "\\:");
 			ffmpegText = regex_replace(ffmpegText,
 				regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
 			ffmpegText = regex_replace(ffmpegText,
@@ -3547,6 +3586,13 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			{
 				ffmpegText = regex_replace(ffmpegText,
 					regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+			}
+
+			if (textFilePathName != "")
+			{
+				ofstream of(textFilePathName, ofstream::trunc);
+				of << ffmpegText;
+				of.flush();
 			}
 		}
 
@@ -3579,7 +3625,11 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
 		if (textFilePathName != "")
+		{
 			ffmpegDrawTextFilter = string("drawtext=textfile='") + textFilePathName + "'";
+			if (reloadAtFrameInterval > 0)
+				ffmpegDrawTextFilter += (":reload=" + to_string(reloadAtFrameInterval));
+		}
 		else
 			ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
 		if (textPosition_X_InPixel != "")
@@ -3624,6 +3674,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 	}
 
 	_logger->info(__FILEREF__ + "getDrawTextVideoFilterDescription"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", text: " + text
 		+ ", textPosition_X_InPixel: " + textPosition_X_InPixel
 		+ ", textPosition_Y_InPixel: " + textPosition_Y_InPixel
@@ -12478,6 +12529,11 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			}
 			string text = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
+			int reloadAtFrameInterval = -1;
+			field = "reloadAtFrameInterval";
+			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				reloadAtFrameInterval = asInt(broadcastDrawTextDetailsRoot, field, -1);
+
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
 			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
@@ -12533,9 +12589,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				boxPercentageOpacity = asInt(broadcastDrawTextDetailsRoot, field, -1);
 
-			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				text, "", textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				fontColor, textPercentageOpacity, shadowx, shadowy,
+			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
+				text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
+				fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
 				boxEnable, boxColor, boxPercentageOpacity,
 				streamingDurationInSeconds);
 		}
@@ -12595,6 +12651,13 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				of.flush();
 			}
 
+			int reloadAtFrameInterval = -1;
+			field = "reloadAtFrameInterval";
+			if (isMetadataPresent(drawTextDetailsRoot, field))
+				reloadAtFrameInterval = asInt(drawTextDetailsRoot, field, -1);
+			// TO BE REMOVED
+			reloadAtFrameInterval = 10;
+
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
 			if (isMetadataPresent(drawTextDetailsRoot, field))
@@ -12650,8 +12713,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			if (isMetadataPresent(drawTextDetailsRoot, field))
 				boxPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
 
-			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
-				"", textTemporaryFileName, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
+				"", textTemporaryFileName, reloadAtFrameInterval,
+				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowx, shadowy,
 				boxEnable, boxColor, boxPercentageOpacity,
 				streamingDurationInSeconds);

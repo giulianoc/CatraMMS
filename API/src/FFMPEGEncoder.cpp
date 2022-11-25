@@ -5349,6 +5349,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 		Json::Value drawTextDetailsRoot = overlayTextMedatada["ingestedParametersRoot"]["drawTextDetails"];
 		string text = drawTextDetailsRoot.get("text", "").asString();
+        int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
 		string textPosition_X_InPixel = drawTextDetailsRoot.get("textPosition_X_InPixel", "").asString();
 		string textPosition_Y_InPixel = drawTextDetailsRoot.get("textPosition_Y_InPixel", "").asString();
 		string fontType = drawTextDetailsRoot.get("fontType", "").asString();
@@ -5373,6 +5374,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			videoDurationInMilliSeconds,
 
 			text,
+			reloadAtFrameInterval,
 			textPosition_X_InPixel,
 			textPosition_Y_InPixel,
 			fontType,
