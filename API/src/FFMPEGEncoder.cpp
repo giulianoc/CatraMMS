@@ -4229,6 +4229,8 @@ void FFMPEGEncoder::encodeContentThread(
 			&(encoding->_childPid)
 		);
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+        encoding->_running = false;
+        encoding->_childPid = 0;
 
         _logger->info(__FILEREF__ + "encoded content"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4390,9 +4392,6 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 		}
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
 		bool completedWithError			= false;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
@@ -5063,36 +5062,222 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         string imagePosition_X_InPixel = ingestedParametersRoot.get("imagePosition_X_InPixel", "0").asString();
         string imagePosition_Y_InPixel = ingestedParametersRoot.get("imagePosition_Y_InPixel", "0").asString();
 
-        string mmsSourceVideoAssetPathName = encodingParametersRoot.get(
-			"mmsSourceVideoAssetPathName", "").asString();
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"videoDurationInMilliSeconds", -1);
-        string mmsSourceImageAssetPathName = encodingParametersRoot.get(
-			"mmsSourceImageAssetPathName", "").asString();
 
-        string stagingEncodedAssetPathName = encodingParametersRoot.get(
-			"encodedNFSStagingAssetPathName", "").asString();
+
+		string sourceVideoAssetPathName;
+		string encodedStagingAssetPathName;
+        string mmsSourceImageAssetPathName;
+
+		if (externalEncoder)
+		{
+			string field;
+
+			bool isSourceStreaming = false;
+			{
+				field = "sourceVideoFileExtension";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string sourceVideoFileExtension = encodingParametersRoot.get(field, "").asString();
+
+				if (sourceVideoFileExtension == ".m3u8")
+					isSourceStreaming = true;
+			}
+
+			field = "sourceVideoTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceVideoAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			{
+				size_t endOfDirectoryIndex = sourceVideoAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = sourceVideoAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
+			field = "encodedTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			{
+				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = encodedStagingAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
+			field = "sourceImagePhysicalDeliveryURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsSourceImageAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "sourceVideoPhysicalDeliveryURL";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string sourceVideoPhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+
+			_logger->info(__FILEREF__ + "downloading source content"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", externalEncoder: " + to_string(externalEncoder)
+				+ ", sourceVideoPhysicalDeliveryURL: " + sourceVideoPhysicalDeliveryURL
+				+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+			);
+
+			if (isSourceStreaming)
+			{
+				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
+				bool regenerateTimestamps = false;
+
+				sourceVideoAssetPathName = sourceVideoAssetPathName + ".mp4";
+
+				encoding->_ffmpeg->streamingToFile(
+					ingestionJobKey,
+					regenerateTimestamps,
+					sourceVideoPhysicalDeliveryURL,
+					sourceVideoAssetPathName);
+			}
+			else
+			{
+				MMSCURL::downloadFile(
+					ingestionJobKey,
+					sourceVideoPhysicalDeliveryURL,
+					sourceVideoAssetPathName,
+					_logger
+				);
+			}
+
+			_logger->info(__FILEREF__ + "downloaded source content"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", externalEncoder: " + to_string(externalEncoder)
+				+ ", sourceVideoPhysicalDeliveryURL: " + sourceVideoPhysicalDeliveryURL
+				+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+			);
+		}
+		else
+		{
+			string field = "mmsSourceVideoAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceVideoAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "encodedNFSStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "mmsSourceImageAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mmsSourceImageAssetPathName = encodingParametersRoot.get(field, "").asString();
+		}
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->overlayImageOnVideo(
-            mmsSourceVideoAssetPathName,
+			sourceVideoAssetPathName,
             videoDurationInMilliSeconds,
             mmsSourceImageAssetPathName,
             imagePosition_X_InPixel,
             imagePosition_Y_InPixel,
-            // encodedFileName,
-            stagingEncodedAssetPathName,
+            encodedStagingAssetPathName,
             encodingJobKey,
             ingestionJobKey,
 			&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-
-//        string responseBody = string("{ ")
-//                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-//                + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-//                + "}";
-
-        // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
         encoding->_childPid = 0;
@@ -5100,8 +5285,165 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+            + ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
+
+		/*
+		if (externalEncoder)
+		{
+			field = "sourceMediaItemKey";
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
+
+			field = "sourcePhysicalPathKey";
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t sourcePhysicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
+
+			field = "encodingProfileKey";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingMedatada["encodingParametersRoot"], field, -1);
+
+			field = "FileFormat";
+			if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
+
+			int64_t userKey;
+			string apiKey;
+			{
+				field = "internalMMS";
+				if (JSONUtils::isMetadataPresent(encodingMedatada["ingestedParametersRoot"], field))
+				{
+					Json::Value internalMMSRoot = encodingMedatada["ingestedParametersRoot"][field];
+
+					field = "credentials";
+					if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					{
+						Json::Value credentialsRoot = internalMMSRoot[field];
+
+						field = "userKey";
+						userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+						field = "apiKey";
+						string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+						apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+					}
+				}
+			}
+
+			field = "mmsWorkflowIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string mmsWorkflowIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+
+			field = "mmsBinaryIngestionURL";
+			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string mmsBinaryIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+
+			// static unsigned long long getDirectorySizeInBytes (string directoryPathName);                             
+
+			int64_t variantFileSizeInBytes = 0;
+			if (fileFormat != "hls")
+			{
+				bool inCaseOfLinkHasItToBeRead = false;
+				int64_t variantFileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
+					inCaseOfLinkHasItToBeRead);                                                                          
+			}
+
+			ingestAVariant(
+				ingestionJobKey,
+				sourceMediaItemKey,
+				sourcePhysicalPathKey,
+				encodingProfileKey,
+				fileFormat,
+				encodedStagingAssetPathName,
+				variantFileSizeInBytes,
+				userKey,
+				apiKey,
+				mmsWorkflowIngestionURL,                                                                                
+				mmsBinaryIngestionURL
+			);
+
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sourceAssetPathName: " + sourceAssetPathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+			}
+
+			{
+				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+		}
+		*/
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;

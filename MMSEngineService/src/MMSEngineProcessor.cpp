@@ -22279,7 +22279,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			throw runtime_error(errorMessage);
 		}
 
-		string sourceFileName;
+		string sourceVideoFileName;
+		string sourceVideoFileExtension;
 		string encodedFileName;
 		{
 			size_t extensionIndex = mmsSourceVideoAssetPathName.find_last_of(".");
@@ -22292,6 +22293,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
 				throw runtime_error(errorMessage);
 			}
+			sourceVideoFileExtension = mmsSourceVideoAssetPathName.substr(extensionIndex);
 
 			encodedFileName = to_string(ingestionJobKey)
 				+ "_overlayedimage"                                                                   
@@ -22308,7 +22310,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				throw runtime_error(errorMessage);
 			}
 
-			sourceFileName = mmsSourceVideoAssetPathName.substr(sourceFileNameIndex + 1);
+			sourceVideoFileName = mmsSourceVideoAssetPathName.substr(sourceFileNameIndex + 1);
 		}
 
 		string sourceVideoTranscoderStagingAssetPathName;	// used in case of external encoder
@@ -22322,7 +22324,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				workspace->_directoryName,	// workspaceDirectoryName
 				to_string(ingestionJobKey),		// directoryNamePrefix
 				"/",							// relativePath,
-				sourceFileName,				// fileName
+				sourceVideoFileName,				// fileName
 				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 				removeLinuxPathIfExist);
@@ -22349,7 +22351,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
 			sourceVideoMediaItemKey, sourceVideoPhysicalPathKey, videoDurationInMilliSeconds,
-			mmsSourceVideoAssetPathName, sourceVideoPhysicalDeliveryURL,
+			mmsSourceVideoAssetPathName, sourceVideoPhysicalDeliveryURL, sourceVideoFileExtension,
 			sourceImageMediaItemKey, sourceImagePhysicalPathKey,
 			mmsSourceImageAssetPathName, sourceImagePhysicalDeliveryURL,
 			sourceVideoTranscoderStagingAssetPathName,

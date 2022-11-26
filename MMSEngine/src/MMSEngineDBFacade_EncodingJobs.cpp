@@ -5640,6 +5640,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     int64_t ingestionJobKey,
     int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
 	string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
+	string sourceVideoFileExtension,
 	int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
 	string mmsSourceImageAssetPathName, string sourceImagePhysicalDeliveryURL,
 	string sourceVideoTranscoderStagingAssetPathName,                                                 
@@ -5691,6 +5692,9 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			field = "sourceVideoPhysicalDeliveryURL";
 			parametersRoot[field] = sourceVideoPhysicalDeliveryURL;
+
+			field = "sourceVideoFileExtension";
+			parametersRoot[field] = sourceVideoFileExtension;
 
 			field = "sourceImageMediaItemKey";
 			parametersRoot[field] = sourceImageMediaItemKey;

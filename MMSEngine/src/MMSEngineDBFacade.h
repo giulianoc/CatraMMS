@@ -1701,6 +1701,7 @@ public:
 		int64_t ingestionJobKey,
 		int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
 		string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
+		string sourceVideoFileExtension,
 		int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
 		string mmsSourceImageAssetPathName, string sourceImagePhysicalDeliveryURL,
 		string sourceVideoTranscoderStagingAssetPathName,                                                 
