@@ -4005,9 +4005,9 @@ void FFMPEGEncoder::encodeContentThread(
             throw runtime_error(errorMessage);
         }
 
-        ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
+		ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 
-        externalEncoder = JSONUtils::asBool(encodingMedatada, "externalEncoder", false);
+		externalEncoder = JSONUtils::asBool(encodingMedatada, "externalEncoder", false);
 
         int videoTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"],
 			"VideoTrackIndex", -1);
@@ -5054,17 +5054,24 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
             throw runtime_error(errorMessage);
         }
-        
-        string mmsSourceVideoAssetPathName = overlayMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(overlayMedatada, "videoDurationInMilliSeconds", -1);
-        string mmsSourceImageAssetPathName = overlayMedatada.get("mmsSourceImageAssetPathName", "XXX").asString();
-        string imagePosition_X_InPixel = overlayMedatada.get("imagePosition_X_InPixel", "XXX").asString();
-        string imagePosition_Y_InPixel = overlayMedatada.get("imagePosition_Y_InPixel", "XXX").asString();
 
-        // string encodedFileName = overlayMedatada.get("encodedFileName", "XXX").asString();
-        string stagingEncodedAssetPathName = overlayMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = JSONUtils::asInt64(overlayMedatada, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(overlayMedatada, "ingestionJobKey", -1);
+		int64_t ingestionJobKey = JSONUtils::asInt64(overlayMedatada, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::asBool(overlayMedatada, "externalEncoder", false);
+		Json::Value ingestedParametersRoot = overlayMedatada["ingestedParametersRoot"];
+		Json::Value encodingParametersRoot = overlayMedatada["encodingParametersRoot"];
+
+        string imagePosition_X_InPixel = ingestedParametersRoot.get("imagePosition_X_InPixel", "0").asString();
+        string imagePosition_Y_InPixel = ingestedParametersRoot.get("imagePosition_Y_InPixel", "0").asString();
+
+        string mmsSourceVideoAssetPathName = encodingParametersRoot.get(
+			"mmsSourceVideoAssetPathName", "").asString();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
+			"videoDurationInMilliSeconds", -1);
+        string mmsSourceImageAssetPathName = encodingParametersRoot.get(
+			"mmsSourceImageAssetPathName", "").asString();
+
+        string stagingEncodedAssetPathName = encodingParametersRoot.get(
+			"encodedNFSStagingAssetPathName", "").asString();
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->overlayImageOnVideo(

@@ -22039,142 +22039,323 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-        string imagePosition_X_InPixel;
-        field = "ImagePosition_X_InPixel";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-			/*
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
+		int64_t sourceMediaItemKey_1;
+		int64_t sourcePhysicalPathKey_1;
+		MMSEngineDBFacade::ContentType referenceContentType_1;
+		string mmsSourceAssetPathName_1;
+		string sourcePhysicalDeliveryURL_1;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType_1 = dependencies[0];
 
-            throw runtime_error(errorMessage);
-			*/
-			imagePosition_X_InPixel = "0";
-        }
-		else
-			imagePosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
+			int64_t key_1;
+			Validator::DependencyType dependencyType_1;
+			bool stopIfReferenceProcessingError_1;
 
-        string imagePosition_Y_InPixel;
-        field = "ImagePosition_Y_InPixel";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-			/*
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
+			tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+				= keyAndDependencyType_1;
 
-            throw runtime_error(errorMessage);
-			*/
+			if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
+			{
+				sourceMediaItemKey_1 = key_1;
 
-			imagePosition_Y_InPixel = "0";
-        }
-		else
-			imagePosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
-
-        int64_t sourceMediaItemKey_1;
-        int64_t sourcePhysicalPathKey_1;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType_1 = dependencies[0];
-
-        int64_t key_1;
-        MMSEngineDBFacade::ContentType referenceContentType_1;
-        Validator::DependencyType dependencyType_1;
-		bool stopIfReferenceProcessingError_1;
-
-        tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
-			= keyAndDependencyType_1;
-
-        if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
-        {
-            sourceMediaItemKey_1 = key_1;
-
-            sourcePhysicalPathKey_1 = -1;
-        }
-        else if (dependencyType_1 == Validator::DependencyType::PhysicalPathKey)
-        {
-            sourcePhysicalPathKey_1 = key_1;
+				bool warningIfMissing = true;
+				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey_1, warningIfMissing);
+				tie(sourcePhysicalPathKey_1, ignore, ignore, ignore,
+					ignore, ignore) = sourcePhysicalPathDetails;
+			}
+			else if (dependencyType_1 == Validator::DependencyType::PhysicalPathKey)
+			{
+				sourcePhysicalPathKey_1 = key_1;
             
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    workspace->_workspaceKey, sourcePhysicalPathKey_1, warningIfMissing);
+				bool warningIfMissing = false;
+				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
+					string,int64_t, string, string> mediaItemDetails =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey_1, warningIfMissing);
 
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-            string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey_1,localContentType, localTitle, userData, ingestionDate,
-					localIngestionJobKey, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-        }
-		else
-        {
-            string errorMessage = __FILEREF__ + "Wrong dependencyType"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1));
-            _logger->error(errorMessage);
+				tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore) = mediaItemDetails;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong dependencyType"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1));
+				_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+				throw runtime_error(errorMessage);
+			}
 
-        int64_t sourceMediaItemKey_2;
-        int64_t sourcePhysicalPathKey_2;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-			keyAndDependencyType_2 = dependencies[1];
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey_1);
+				tie(mmsSourceAssetPathName_1, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
 
-        int64_t key_2;
-        MMSEngineDBFacade::ContentType referenceContentType_2;
-        Validator::DependencyType dependencyType_2;
-		bool stopIfReferenceProcessingError_2;
+			// calculate delivery URL in case of an external encoder
+			{
+				int64_t utcNow;
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
 
-        tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
-			= keyAndDependencyType_2;
+				pair<string, string> deliveryAuthorizationDetails =
+					_mmsDeliveryAuthorization->createDeliveryAuthorization(
+					-1,	// userKey,
+					workspace,
+					"",	// clientIPAddress,
 
-        if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
-        {
-            sourceMediaItemKey_2 = key_2;
+					-1,	// mediaItemKey,
+					"",	// uniqueName,
+					-1,	// encodingProfileKey,
+					"",	// encodingProfileLabel,
 
-            sourcePhysicalPathKey_2 = -1;
-        }
-        else if (dependencyType_2 == Validator::DependencyType::PhysicalPathKey)
-        {
-            sourcePhysicalPathKey_2 = key_2;
+					sourcePhysicalPathKey_1,
+
+					-1,	// ingestionJobKey,	(in case of live)
+					-1,	// deliveryCode,
+
+					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+					999999,	// maxRetries,
+					false,	// save,
+					"MMS_SignedToken",	// deliveryType,
+
+					false,	// warningIfMissingMediaItemKey,
+					true,	// filteredByStatistic
+					""		// userId (it is not needed it filteredByStatistic is true
+				);
+
+				tie(sourcePhysicalDeliveryURL_1, ignore) = deliveryAuthorizationDetails;
+			}
+		}
+
+		int64_t sourceMediaItemKey_2;
+		int64_t sourcePhysicalPathKey_2;
+		MMSEngineDBFacade::ContentType referenceContentType_2;
+		string mmsSourceAssetPathName_2;
+		string sourcePhysicalDeliveryURL_2;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType_2 = dependencies[1];
+
+			int64_t key_2;
+			Validator::DependencyType dependencyType_2;
+			bool stopIfReferenceProcessingError_2;
+
+			tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+				= keyAndDependencyType_2;
+
+			if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
+			{
+				sourceMediaItemKey_2 = key_2;
+
+				bool warningIfMissing = true;
+				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey_2, warningIfMissing);
+				tie(sourcePhysicalPathKey_2, ignore, ignore, ignore,
+					ignore, ignore) = sourcePhysicalPathDetails;
+			}
+			else if (dependencyType_2 == Validator::DependencyType::PhysicalPathKey)
+			{
+				sourcePhysicalPathKey_2 = key_2;
             
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    workspace->_workspaceKey, sourcePhysicalPathKey_2, warningIfMissing);
+				bool warningIfMissing = false;
+				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
+					string,int64_t, string, string> mediaItemDetails =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey_2, warningIfMissing);
 
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-            string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey_2,localContentType, localTitle, userData, ingestionDate,
-					localIngestionJobKey, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-        }
+				tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore) = mediaItemDetails;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong dependencyType"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2));
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey_2);
+				tie(mmsSourceAssetPathName_2, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
+
+			// calculate delivery URL in case of an external encoder
+			{
+				int64_t utcNow;
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+
+				pair<string, string> deliveryAuthorizationDetails =
+					_mmsDeliveryAuthorization->createDeliveryAuthorization(
+					-1,	// userKey,
+					workspace,
+					"",	// clientIPAddress,
+
+					-1,	// mediaItemKey,
+					"",	// uniqueName,
+					-1,	// encodingProfileKey,
+					"",	// encodingProfileLabel,
+
+					sourcePhysicalPathKey_2,
+
+					-1,	// ingestionJobKey,	(in case of live)
+					-1,	// deliveryCode,
+
+					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+					999999,	// maxRetries,
+					false,	// save,
+					"MMS_SignedToken",	// deliveryType,
+
+					false,	// warningIfMissingMediaItemKey,
+					true,	// filteredByStatistic
+					""		// userId (it is not needed it filteredByStatistic is true
+				);
+
+				tie(sourcePhysicalDeliveryURL_2, ignore) = deliveryAuthorizationDetails;
+			}
+		}
+
+		int64_t sourceVideoMediaItemKey;
+		int64_t sourceVideoPhysicalPathKey;
+		string mmsSourceVideoAssetPathName;
+		string sourceVideoPhysicalDeliveryURL;
+
+		int64_t sourceImageMediaItemKey;
+		int64_t sourceImagePhysicalPathKey;
+		string mmsSourceImageAssetPathName;
+		string sourceImagePhysicalDeliveryURL;
+
+		if (referenceContentType_1 == MMSEngineDBFacade::ContentType::Video
+			&& referenceContentType_2 == MMSEngineDBFacade::ContentType::Image)
+		{
+			sourceVideoMediaItemKey = sourceMediaItemKey_1;
+			sourceVideoPhysicalPathKey = sourcePhysicalPathKey_1;
+			mmsSourceVideoAssetPathName = mmsSourceAssetPathName_1;
+			sourceVideoPhysicalDeliveryURL = sourcePhysicalDeliveryURL_1;
+
+			sourceImageMediaItemKey = sourceMediaItemKey_2;
+			sourceImagePhysicalPathKey = sourcePhysicalPathKey_2;
+			mmsSourceImageAssetPathName = mmsSourceAssetPathName_2;
+			sourceImagePhysicalDeliveryURL = sourcePhysicalDeliveryURL_2;
+		}
+		else if (referenceContentType_1 == MMSEngineDBFacade::ContentType::Image
+			&& referenceContentType_2 == MMSEngineDBFacade::ContentType::Video)
+		{
+			sourceVideoMediaItemKey = sourceMediaItemKey_2;
+			sourceVideoPhysicalPathKey = sourcePhysicalPathKey_2;
+			mmsSourceVideoAssetPathName = mmsSourceAssetPathName_2;
+			sourceVideoPhysicalDeliveryURL = sourcePhysicalDeliveryURL_2;
+
+			sourceImageMediaItemKey = sourceMediaItemKey_1;
+			sourceImagePhysicalPathKey = sourcePhysicalPathKey_1;
+			mmsSourceImageAssetPathName = mmsSourceAssetPathName_1;
+			sourceImagePhysicalDeliveryURL = sourcePhysicalDeliveryURL_1;
+		}
 		else
-        {
-            string errorMessage = __FILEREF__ + "Wrong dependencyType"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2));
-            _logger->error(errorMessage);
+		{
+			string errorMessage = __FILEREF__ + "OverlayImageOnVideo is not receiving one Video and one Image"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1)
+				+ ", sourceMediaItemKey_1: " + to_string(sourceMediaItemKey_1)
+				+ ", sourcePhysicalPathKey_1: " + to_string(sourcePhysicalPathKey_1)
+				+ ", contentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2)
+				+ ", sourceMediaItemKey_2: " + to_string(sourceMediaItemKey_2)
+				+ ", sourcePhysicalPathKey_2: " + to_string(sourcePhysicalPathKey_2)
+			;
+			_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
+
+		string sourceFileName;
+		string encodedFileName;
+		{
+			size_t extensionIndex = mmsSourceVideoAssetPathName.find_last_of(".");
+			if (extensionIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			encodedFileName = to_string(ingestionJobKey)
+				+ "_overlayedimage"                                                                   
+				+  mmsSourceVideoAssetPathName.substr(extensionIndex);     
+
+			size_t sourceFileNameIndex = mmsSourceVideoAssetPathName.find_last_of("/");
+			if (sourceFileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No sourceFileNameIndex find in the asset file name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			sourceFileName = mmsSourceVideoAssetPathName.substr(sourceFileNameIndex + 1);
+		}
+
+		string sourceVideoTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
+			sourceVideoTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),		// directoryNamePrefix
+				"/",							// relativePath,
+				sourceFileName,				// fileName
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+				// in case of hls and external encoder (binary is ingested through PUSH),
+				// the directory inside the tar.gz has to be 'content'
+				"content",	// encodedFileName,
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+			encodedNFSStagingAssetPathName = workspaceIngestionRepository + "/" + encodedFileName;
+		}
+
+		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+			sourceVideoMediaItemKey, sourceVideoPhysicalPathKey);
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
-                sourceMediaItemKey_1, sourcePhysicalPathKey_1,
-                sourceMediaItemKey_2, sourcePhysicalPathKey_2,
-                imagePosition_X_InPixel, imagePosition_Y_InPixel,
-                encodingPriority);
+			sourceVideoMediaItemKey, sourceVideoPhysicalPathKey, videoDurationInMilliSeconds,
+			mmsSourceVideoAssetPathName, sourceVideoPhysicalDeliveryURL,
+			sourceImageMediaItemKey, sourceImagePhysicalPathKey,
+			mmsSourceImageAssetPathName, sourceImagePhysicalDeliveryURL,
+			sourceVideoTranscoderStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName,
+			encodedNFSStagingAssetPathName,
+			encodingPriority);
     }
     catch(runtime_error e)
     {

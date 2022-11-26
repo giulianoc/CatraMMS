@@ -2770,7 +2770,6 @@ void FFMpeg::overlayImageOnVideo(
         string mmsSourceImageAssetPathName,
         string imagePosition_X_InPixel,
         string imagePosition_Y_InPixel,
-        // string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -2815,13 +2814,6 @@ void FFMpeg::overlayImageOnVideo(
 
 			throw runtime_error(errorMessage);
 		}
-
-        // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-        // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
-        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        // _currentIngestionJobKey             = ingestionJobKey;
-        // _currentEncodingJobKey              = encodingJobKey;
-        
 
 		{
 			char	sUtcTimestamp [64];

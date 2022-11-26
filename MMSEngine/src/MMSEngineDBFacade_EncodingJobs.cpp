@@ -5638,9 +5638,13 @@ void MMSEngineDBFacade::addEncodingJob (
 void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-    int64_t mediaItemKey_1, int64_t physicalPathKey_1,
-    int64_t mediaItemKey_2, int64_t physicalPathKey_2,
-    string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
+    int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
+	string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
+	int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
+	string mmsSourceImageAssetPathName, string sourceImagePhysicalDeliveryURL,
+	string sourceVideoTranscoderStagingAssetPathName,                                                 
+	string encodedTranscoderStagingAssetPathName,                                                     
+	string encodedNFSStagingAssetPathName,
     EncodingPriority encodingPriority
 )
 {
@@ -5666,179 +5670,53 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
-        
-        ContentType contentType_1;
-        {
-            lastSQLCommand =
-                "select workspaceKey, contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_1);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                contentType_1 = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "mediaItemKey not found"
-                        + ", mediaItemKey_1: " + to_string(mediaItemKey_1)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-        ContentType contentType_2;
-        {
-            lastSQLCommand =
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_2);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                contentType_2 = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "mediaItemKey not found"
-                        + ", mediaItemKey_2: " + to_string(mediaItemKey_2)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        
-        int64_t localSourcePhysicalPathKey_1 = physicalPathKey_1;
-        if (physicalPathKey_1 == -1)
-        {
-            lastSQLCommand =
-                "select physicalPathKey from MMS_PhysicalPath "
-                "where mediaItemKey = ? and encodingProfileKey is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_1);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                localSourcePhysicalPathKey_1 = resultSet->getInt64("physicalPathKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", mediaItemKey_1: " + to_string(mediaItemKey_1)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        
-        int64_t localSourcePhysicalPathKey_2 = physicalPathKey_2;
-        if (physicalPathKey_2 == -1)
-        {
-            lastSQLCommand =
-                "select physicalPathKey from MMS_PhysicalPath "
-                "where mediaItemKey = ? and encodingProfileKey is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_2);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                localSourcePhysicalPathKey_2 = resultSet->getInt64("physicalPathKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", mediaItemKey_2: " + to_string(mediaItemKey_2)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-        int64_t sourceVideoPhysicalPathKey;
-        int64_t sourceImagePhysicalPathKey;
-        if (contentType_1 == ContentType::Video && contentType_2 == ContentType::Image)
-        {
-            sourceVideoPhysicalPathKey = localSourcePhysicalPathKey_1;
-            sourceImagePhysicalPathKey = localSourcePhysicalPathKey_2;
-        }
-        else if (contentType_1 == ContentType::Image && contentType_2 == ContentType::Video)
-        {
-            sourceVideoPhysicalPathKey = localSourcePhysicalPathKey_2;
-            sourceImagePhysicalPathKey = localSourcePhysicalPathKey_1;
-        }
-        else
-        {
-            string errorMessage = __FILEREF__ + "addOverlayImageOnVideoJob is not receiving one Video and one Image"
-                    + ", contentType_1: " + toString(contentType_1)
-					+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
-					+ ", physicalPathKey_1: " + to_string(physicalPathKey_1)
-                    + ", contentType_2: " + toString(contentType_2)
-					+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
-					+ ", physicalPathKey_2: " + to_string(physicalPathKey_2)
-            ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);                    
-        }
-        
         EncodingType encodingType = EncodingType::OverlayImageOnVideo;
-        
-        string parameters = string()
-                + "{ "
-                + "\"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
-                + ", \"sourceImagePhysicalPathKey\": " + to_string(sourceImagePhysicalPathKey)
-                + ", \"imagePosition_X_InPixel\": \"" + imagePosition_X_InPixel + "\""
-                + ", \"imagePosition_Y_InPixel\": \"" + imagePosition_Y_InPixel + "\""
-                + "} ";
+
+        string parameters;
+		{
+			Json::Value parametersRoot;
+
+			string field = "sourceVideoMediaItemKey";
+			parametersRoot[field] = sourceVideoMediaItemKey;
+
+			field = "sourceVideoPhysicalPathKey";
+			parametersRoot[field] = sourceVideoPhysicalPathKey;
+
+			field = "videoDurationInMilliSeconds";
+			parametersRoot[field] = videoDurationInMilliSeconds;
+
+			field = "mmsSourceVideoAssetPathName";
+			parametersRoot[field] = mmsSourceVideoAssetPathName;
+
+			field = "sourceVideoPhysicalDeliveryURL";
+			parametersRoot[field] = sourceVideoPhysicalDeliveryURL;
+
+			field = "sourceImageMediaItemKey";
+			parametersRoot[field] = sourceImageMediaItemKey;
+
+			field = "sourceImagePhysicalPathKey";
+			parametersRoot[field] = sourceImagePhysicalPathKey;
+
+			field = "mmsSourceImageAssetPathName";
+			parametersRoot[field] = mmsSourceImageAssetPathName;
+
+			field = "sourceImagePhysicalDeliveryURL";
+			parametersRoot[field] = sourceImagePhysicalDeliveryURL;
+
+			field = "sourceVideoTranscoderStagingAssetPathName";
+			parametersRoot[field] = sourceVideoTranscoderStagingAssetPathName;
+
+			field = "encodedTranscoderStagingAssetPathName";
+			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
+
+			field = "encodedNFSStagingAssetPathName";
+			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			Json::StreamWriterBuilder wbuilder;
+			parameters = Json::writeString(wbuilder, parametersRoot);
+		}
+
         {
             int savedEncodingPriority = static_cast<int>(encodingPriority);
             if (savedEncodingPriority > workspace->_maxEncodingPriority)

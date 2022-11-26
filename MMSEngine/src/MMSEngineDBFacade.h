@@ -1696,13 +1696,17 @@ public:
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 	);
 
-    void addEncoding_OverlayImageOnVideoJob (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        int64_t mediaItemKey_1, int64_t physicalPathKey_1,
-        int64_t mediaItemKey_2, int64_t physicalPathKey_2,
-        string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
-        EncodingPriority encodingPriority);
+	void addEncoding_OverlayImageOnVideoJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
+		string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
+		int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
+		string mmsSourceImageAssetPathName, string sourceImagePhysicalDeliveryURL,
+		string sourceVideoTranscoderStagingAssetPathName,                                                 
+		string encodedTranscoderStagingAssetPathName,                                                     
+		string encodedNFSStagingAssetPathName,
+		EncodingPriority encodingPriority);
 
     void addEncoding_OverlayTextOnVideoJob (
         shared_ptr<Workspace> workspace,

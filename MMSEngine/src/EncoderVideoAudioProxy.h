@@ -220,9 +220,9 @@ private:
     bool encodeContent_VideoAudio_through_ffmpeg();
     void processEncodedContentVideoAudio();    
 
-    pair<string, bool> overlayImageOnVideo();
-    pair<string, bool> overlayImageOnVideo_through_ffmpeg();
-    void processOverlayedImageOnVideo(string stagingEncodedAssetPathName, bool killedByUser);    
+    bool overlayImageOnVideo();
+    bool overlayImageOnVideo_through_ffmpeg();
+    void processOverlayedImageOnVideo(bool killedByUser);    
 
     pair<string, bool> overlayTextOnVideo();
     pair<string, bool> overlayTextOnVideo_through_ffmpeg();
