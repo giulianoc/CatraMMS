@@ -626,6 +626,7 @@ public:
 
         shared_ptr<Workspace>                   _workspace;
 
+		/*
         struct OverlayImageOnVideoData {
             string                                  _videoFileName;
             string                                  _videoRelativePath;
@@ -645,6 +646,7 @@ public:
             // Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
 			// MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
 		};
+		*/
 
         struct VideoSpeedData {
             string                                  _videoFileName;
@@ -667,9 +669,9 @@ public:
             Json::Value								_encodingProfileDetailsRoot;
 		};
 
-        shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
-        shared_ptr<GenerateFramesData>              _generateFramesData;
-		shared_ptr<LiveRecorderData>				_liveRecorderData;
+        // shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
+        // shared_ptr<GenerateFramesData>              _generateFramesData;
+		// shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveGridData>					_liveGridData;
@@ -1699,6 +1701,7 @@ public:
 	void addEncoding_OverlayImageOnVideoJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 		int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
 		string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
 		string sourceVideoFileExtension,

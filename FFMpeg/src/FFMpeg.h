@@ -114,6 +114,7 @@ public:
         string imagePosition_Y_InPixel,
         // string encodedFileName,
         string stagingEncodedAssetPathName,
+		Json::Value encodingProfileDetailsRoot,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
 		pid_t* pChildPid);

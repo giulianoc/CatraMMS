@@ -491,6 +491,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					+ ", encodingType: " + encodingType
 				);
 
+				/*
                 if (encodingItem->_encodingType == EncodingType::OverlayImageOnVideo)
                 {
                     encodingItem->_overlayImageOnVideoData =
@@ -735,7 +736,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
-                else if (encodingItem->_encodingType == EncodingType::VideoSpeed)
+                else */ if (encodingItem->_encodingType == EncodingType::VideoSpeed)
                 {
                     encodingItem->_videoSpeedData = make_shared<EncodingItem::VideoSpeedData>();
                     
@@ -5638,6 +5639,7 @@ void MMSEngineDBFacade::addEncodingJob (
 void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
+	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
     int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
 	string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
 	string sourceVideoFileExtension,
@@ -5716,6 +5718,12 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "encodingProfileKey";
+			parametersRoot[field] = encodingProfileKey;
+
+			field = "encodingProfileDetails";
+			parametersRoot[field] = encodingProfileDetailsRoot;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

@@ -5065,6 +5065,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"videoDurationInMilliSeconds", -1);
 
+        Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string sourceVideoAssetPathName;
 		string encodedStagingAssetPathName;
@@ -5274,6 +5275,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
             imagePosition_X_InPixel,
             imagePosition_Y_InPixel,
             encodedStagingAssetPathName,
+			encodingProfileDetailsRoot,
             encodingJobKey,
             ingestionJobKey,
 			&(encoding->_childPid));
