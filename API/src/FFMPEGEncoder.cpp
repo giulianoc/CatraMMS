@@ -8578,6 +8578,12 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
+        liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
+        liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -8591,13 +8597,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
-
-        liveRecording->_running = false;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
-		liveRecording->_channelLabel		= "";
-		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -8674,6 +8673,13 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLForbidden e)
     {
+        liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
+        liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -8687,14 +8693,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
-
-        liveRecording->_running = false;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
-		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -8762,6 +8760,13 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLNotFound e)
     {
+        liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
+        liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -8775,14 +8780,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
-
-        liveRecording->_running = false;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
-		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -8850,6 +8847,13 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(runtime_error e)
     {
+        liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
+        liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -8863,14 +8867,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
-
-        liveRecording->_running = false;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
-		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
@@ -8938,6 +8934,13 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(exception e)
     {
+        liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
+        liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
+
 		if (liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
 		)
@@ -8951,14 +8954,6 @@ void FFMPEGEncoder::liveRecorderThread(
 				tvModulation, tvVideoPid, tvAudioItalianPid,
 				false);
 		}
-
-        liveRecording->_running = false;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
-		// liveRecording->_liveRecorderOutputRoots.clear();
 
 		char strDateTime [64];
 		{
