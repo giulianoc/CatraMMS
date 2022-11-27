@@ -388,16 +388,6 @@ private:
 		string outputFileFormat,
 		Json::Value ingestedParametersRoot,
 		Json::Value encodingParametersRoot);
-	string generateFrames_buildFrameIngestionWorkflow(                                             
-		int64_t ingestionJobKey,
-		bool externalEncoder,
-		string generatedFrameFileName,
-		string imagesDirectory,
-		string addContentTitle,
-		Json::Value userDataRoot,
-		string outputFileFormat,
-		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot);
 
     void slideShowThread(
         // FCGX_Request& request,
@@ -598,26 +588,33 @@ private:
 		int64_t tvBandwidthInMhz,
 		string tvModulation
 	);
-	string buildVariantIngestionWorkflow(
+
+	string buildAddContentIngestionWorkflow(
 		int64_t ingestionJobKey,
-		int64_t sourceMediaItemKey,
-		int64_t sourcePhysicalPathKey,
-		int64_t encodingProfileKey,
-		string fileFormat
-	);
-	void ingestAVariant(
-		int64_t ingestionJobKey,
-		int64_t sourceMediaItemKey,
-		int64_t sourcePhysicalPathKey,
-		int64_t encodingProfileKey,
+		string label,
 		string fileFormat,
-		string variantPathFileName,
-		int64_t variantFileSizeInBytes,
+		string ingester,
+
+		// in case of a new content
+		string sourceURL,	// if empty it means binary is ingested later (PUSH)
+		string title,
+		Json::Value userDataRoot,
+		Json::Value ingestedParametersRoot,	// it could be also nullValue
+
+		// in case of a Variant
+		int64_t variantOfMediaItemKey = -1,
+		int64_t variantEncodingProfileKey = -1);
+
+	void ingestContentByPushingBinary(
+		int64_t ingestionJobKey,
+		string workflowMetadata,
+		string fileFormat,
+		string binaryPathFileName,
+		int64_t binaryFileSizeInBytes,
 		int64_t userKey,
 		string apiKey,
-		string mmsWorkflowIngestionURL,                                                                                
-		string mmsBinaryIngestionURL
-	);
+		string mmsWorkflowIngestionURL,
+		string mmsBinaryIngestionURL);
 };
 
 #endif

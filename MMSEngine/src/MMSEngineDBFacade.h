@@ -1710,7 +1710,8 @@ public:
 		string sourceVideoTranscoderStagingAssetPathName,                                                 
 		string encodedTranscoderStagingAssetPathName,                                                     
 		string encodedNFSStagingAssetPathName,
-		EncodingPriority encodingPriority);
+		EncodingPriority encodingPriority,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
 
     void addEncoding_OverlayTextOnVideoJob (
         shared_ptr<Workspace> workspace,

@@ -4348,15 +4348,51 @@ void FFMPEGEncoder::encodeContentThread(
 			if (fileFormat != "hls")
 			{
 				bool inCaseOfLinkHasItToBeRead = false;
-				int64_t variantFileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
+				variantFileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
 					inCaseOfLinkHasItToBeRead);                                                                          
 			}
 
-			ingestAVariant(
+			string workflowMetadata;
+			try
+			{
+				string localFileFormat = fileFormat;
+				if (fileFormat == "hls")
+					localFileFormat = "m3u8-tar.gz";
+
+				string label = "Add Variant " + to_string(sourceMediaItemKey)
+					+ " - " + to_string(sourcePhysicalPathKey)
+					+ " - " + to_string(encodingProfileKey);
+				workflowMetadata = buildAddContentIngestionWorkflow(
+					ingestionJobKey, label, localFileFormat, "Transcoder -> Encode",
+					"", "", Json::nullValue, Json::nullValue,
+					sourceMediaItemKey, encodingProfileKey);
+			}
+			catch (runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (runtime_error)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", exception: " + e.what()
+				);
+
+				throw e;
+			}
+			catch (exception e)
+			{
+				_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (exception)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", exception: " + e.what()
+				);
+
+				throw e;
+			}
+
+			ingestContentByPushingBinary(
 				ingestionJobKey,
-				sourceMediaItemKey,
-				sourcePhysicalPathKey,
-				encodingProfileKey,
+				workflowMetadata,
 				fileFormat,
 				encodedStagingAssetPathName,
 				variantFileSizeInBytes,
@@ -4675,331 +4711,6 @@ void FFMPEGEncoder::encodeContentThread(
     }
 }
 
-string FFMPEGEncoder::buildVariantIngestionWorkflow(
-	int64_t ingestionJobKey,
-	int64_t sourceMediaItemKey,
-	int64_t sourcePhysicalPathKey,
-	int64_t encodingProfileKey,
-	string fileFormat
-)
-{
-	string workflowMetadata;
-	try
-	{
-		string label = "Add Variant " + to_string(sourceMediaItemKey)
-			+ " - " + to_string(sourcePhysicalPathKey)
-			+ " - " + to_string(encodingProfileKey);
-
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = label;
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		Json::Value addContentParametersRoot;
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = fileFormat;
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Encode Task";
-
-		field = "variantOfMediaItemKey";
-		addContentParametersRoot[field] = sourceMediaItemKey;
-
-		field = "variantEncodingProfileKey";
-		addContentParametersRoot[field] = encodingProfileKey;
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = label;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Variant workflow metadata generated"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-
-		return workflowMetadata;
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-}
-
-void FFMPEGEncoder::ingestAVariant(
-	int64_t ingestionJobKey,
-	int64_t sourceMediaItemKey,
-	int64_t sourcePhysicalPathKey,
-	int64_t encodingProfileKey,
-	string fileFormat,
-	string variantPathFileName,
-	int64_t variantFileSizeInBytes,
-	int64_t userKey,
-	string apiKey,
-	string mmsWorkflowIngestionURL,
-	string mmsBinaryIngestionURL
-)
-{
-	_logger->info(__FILEREF__ + "Received ingestAVariant"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-		+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-		+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-		+ ", fileFormat: " + fileFormat
-		+ ", variantPathFileName: " + variantPathFileName
-		+ ", variantFileSizeInBytes: " + to_string(variantFileSizeInBytes)
-		+ ", userKey: " + to_string(userKey)
-		+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-		+ ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
-	);
-
-	string workflowMetadata;
-	int64_t addContentIngestionJobKey = -1;
-	// create the workflow and ingest it
-	try
-	{
-		string localFileFormat = fileFormat;
-		if (fileFormat == "hls")
-			localFileFormat = "m3u8-tar.gz";
-
-		workflowMetadata = buildVariantIngestionWorkflow(
-			ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey,
-			encodingProfileKey, localFileFormat);
-
-		string sResponse = MMSCURL::httpPostPutString(
-			ingestionJobKey,
-			mmsWorkflowIngestionURL,
-			"POST",	// requestType
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			_logger
-		);
-
-		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-
-	if (addContentIngestionJobKey == -1)
-	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	string mmsBinaryURL;
-	// ingest binary
-	try
-	{
-		string localVariantPathFileName = variantPathFileName;
-		int64_t localVariantFileSizeInBytes = variantFileSizeInBytes;
-		if (fileFormat == "hls")
-		{
-			// variantPathFileName is a dir like
-			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
-			// terminating with 'content' as built in MMSEngineProcessor.cpp
-
-			{
-				string executeCommand;
-				try
-				{
-					localVariantPathFileName = variantPathFileName + ".tar.gz";
-
-					size_t endOfPathIndex = localVariantPathFileName.find_last_of("/");
-					if (endOfPathIndex == string::npos)
-					{
-						string errorMessage = string("No localVariantPathDirectory found")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-							+ ", localVariantPathFileName: " + localVariantPathFileName 
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-          
-						throw runtime_error(errorMessage);
-					}
-					string localVariantPathDirectory =
-						localVariantPathFileName.substr(0, endOfPathIndex);
-
-					executeCommand =
-						"tar cfz " + localVariantPathFileName
-						+ " -C " + localVariantPathDirectory
-						+ " " + "content";
-					_logger->info(__FILEREF__ + "Start tar command "
-						+ ", executeCommand: " + executeCommand
-					);
-					chrono::system_clock::time_point startTar = chrono::system_clock::now();
-					int executeCommandStatus = ProcessUtility::execute(executeCommand);
-					chrono::system_clock::time_point endTar = chrono::system_clock::now();
-					_logger->info(__FILEREF__ + "End tar command "
-						+ ", executeCommand: " + executeCommand
-						+ ", @MMS statistics@ - tarDuration (millisecs): @"
-							+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
-					);
-					if (executeCommandStatus != 0)
-					{
-						string errorMessage = string("ProcessUtility::execute failed")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
-							+ ", executeCommand: " + executeCommand 
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-          
-						throw runtime_error(errorMessage);
-					}
-
-					bool inCaseOfLinkHasItToBeRead = false;
-					localVariantFileSizeInBytes = FileIO::getFileSizeInBytes (localVariantPathFileName,
-						inCaseOfLinkHasItToBeRead);                                                                          
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("tar command failed")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-						+ ", executeCommand: " + executeCommand 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-         
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-
-		mmsBinaryURL =
-			mmsBinaryIngestionURL
-			+ "/" + to_string(addContentIngestionJobKey)
-		;
-
-		string sResponse = MMSCURL::httpPostPutFile(
-			ingestionJobKey,
-			mmsBinaryURL,
-			"POST",	// requestType
-			_mmsBinaryTimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			localVariantPathFileName,
-			localVariantFileSizeInBytes,
-			_logger);
-
-		if (fileFormat == "hls")
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localVariantPathFileName: " + localVariantPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
-		}
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		if (fileFormat == "hls")
-		{
-			// it is useless to remove the generated tar.gz file because the parent staging directory
-			// will be removed. Also here we should add a bool above to be sure the tar was successful
-			/*
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localVariantPathFileName: " + localVariantPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
-			*/
-		}
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		if (fileFormat == "hls")
-		{
-			// it is useless to remove the generated tar.gz file because the parent staging directory
-			// will be removed. Also here we should add a bool above to be sure the tar was successful
-			/*
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localVariantPathFileName: " + localVariantPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localVariantPathFileName, exceptionInCaseOfError);
-			*/
-		}
-
-		throw e;
-	}
-}
-
 
 void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
@@ -5067,34 +4778,33 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
         Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
+		string sourceVideoFileExtension;
+		{
+			string field = "sourceVideoFileExtension";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceVideoFileExtension = encodingParametersRoot.get(field, "").asString();
+		}
+
 		string sourceVideoAssetPathName;
 		string encodedStagingAssetPathName;
         string mmsSourceImageAssetPathName;
 
 		if (externalEncoder)
 		{
-			string field;
-
 			bool isSourceStreaming = false;
-			{
-				field = "sourceVideoFileExtension";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
+			if (sourceVideoFileExtension == ".m3u8")
+				isSourceStreaming = true;
 
-					throw runtime_error(errorMessage);
-				}
-				string sourceVideoFileExtension = encodingParametersRoot.get(field, "").asString();
-
-				if (sourceVideoFileExtension == ".m3u8")
-					isSourceStreaming = true;
-			}
-
-			field = "sourceVideoTranscoderStagingAssetPathName";
+			string field = "sourceVideoTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -5284,7 +4994,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         encoding->_running = false;
         encoding->_childPid = 0;
         
-        _logger->info(__FILEREF__ + "Encode content finished"
+        _logger->info(__FILEREF__ + "overlayImageOnVideo finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
@@ -5292,68 +5002,41 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
 
-		/*
 		if (externalEncoder)
 		{
-			field = "sourceMediaItemKey";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			string field;
+
+			string fileFormat;
+			if (encodingProfileDetailsRoot != Json::nullValue)
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
+				field = "FileFormat";
+				if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
+					throw runtime_error(errorMessage);
+				}
+				fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
 			}
-			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
-
-			field = "sourcePhysicalPathKey";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			else
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			int64_t sourcePhysicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
-
-			field = "encodingProfileKey";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingMedatada["encodingParametersRoot"], field, -1);
-
-			field = "FileFormat";
-			if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
+				if (sourceVideoFileExtension == ".m3u8")
+					fileFormat = "hls";
+				else
+					fileFormat = sourceVideoFileExtension;
+			}	
 
 			int64_t userKey;
 			string apiKey;
 			{
 				field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(encodingMedatada["ingestedParametersRoot"], field))
+				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 				{
-					Json::Value internalMMSRoot = encodingMedatada["ingestedParametersRoot"][field];
+					Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
 					field = "credentials";
 					if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -5371,7 +5054,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 			}
 
 			field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -5381,10 +5064,10 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsWorkflowIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+			string mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
 
 			field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -5394,26 +5077,38 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsBinaryIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+			string mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
 
-			// static unsigned long long getDirectorySizeInBytes (string directoryPathName);                             
-
-			int64_t variantFileSizeInBytes = 0;
+			int64_t fileSizeInBytes = 0;
 			if (fileFormat != "hls")
 			{
 				bool inCaseOfLinkHasItToBeRead = false;
-				int64_t variantFileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
+				fileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
 					inCaseOfLinkHasItToBeRead);                                                                          
 			}
 
-			ingestAVariant(
+			string workflowMetadata;
+			{
+				string localFileFormat = fileFormat;
+				if (fileFormat == "hls")
+					localFileFormat = "m3u8-tar.gz";
+
+				string label = "Add overlayImageOnVideo ";
+				workflowMetadata = buildAddContentIngestionWorkflow(
+					ingestionJobKey, label, localFileFormat, "Transcoder -> OverlayImage",
+					"",	// sourceURL
+					"",	// title
+					Json::nullValue, // userDataRoot
+					ingestedParametersRoot
+				);
+			}
+
+			ingestContentByPushingBinary(
 				ingestionJobKey,
-				sourceMediaItemKey,
-				sourcePhysicalPathKey,
-				encodingProfileKey,
+				workflowMetadata,
 				fileFormat,
 				encodedStagingAssetPathName,
-				variantFileSizeInBytes,
+				fileSizeInBytes,
 				userKey,
 				apiKey,
 				mmsWorkflowIngestionURL,                                                                                
@@ -5424,11 +5119,11 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
+					+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
 				);
 
 				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+				FileIO::remove(sourceVideoAssetPathName, exceptionInCaseOfError);
 			}
 
 			{
@@ -5445,7 +5140,6 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				}
 			}
 		}
-		*/
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;
@@ -6763,16 +6457,15 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 	// create the workflow and ingest it
 	try
 	{
-		workflowMetadata = generateFrames_buildFrameIngestionWorkflow(
-			ingestionJobKey,
-			externalEncoder,
-			generatedFrameFileName,
-			imagesDirectory,
+		string sourceURL = "move://" + imagesDirectory + "/" + generatedFrameFileName;
+		workflowMetadata = buildAddContentIngestionWorkflow(
+			ingestionJobKey, addContentTitle,
+			outputFileFormat,
+			"Transcoder -> Generateor Frames",
+			sourceURL,
 			addContentTitle,
 			userDataRoot,
-			outputFileFormat,
-			ingestedParametersRoot,
-			encodingParametersRoot
+			ingestedParametersRoot
 		);
 
 		{
@@ -6924,149 +6617,6 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 	}
 
 	return addContentIngestionJobKey;
-}
-
-string FFMPEGEncoder::generateFrames_buildFrameIngestionWorkflow(
-	int64_t ingestionJobKey,
-	bool externalEncoder,
-	string generatedFrameFileName,
-	string imagesDirectory,
-	string addContentTitle,
-	Json::Value userDataRoot,
-	string outputFileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot
-)
-{
-	string workflowMetadata;
-	try
-	{
-		/*
-		{
-        	"Label": "<workflow label>",
-        	"Type": "Workflow",
-        	"Task": {
-                "Label": "<task label 1>",
-                "Type": "Add-Content"
-                "Parameters": {
-                        "FileFormat": "ts",
-                        "Ingester": "Giuliano",
-                        "SourceURL": "move:///abc...."
-                },
-        	}
-		}
-		*/
-		// Json::Value mmsDataRoot = userDataRoot["mmsData"];
-		// int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
-		// int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
-		// int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
-
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = addContentTitle;
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		Json::Value addContentParametersRoot = ingestedParametersRoot;
-		// if (internalMMSRootPresent)
-		{
-			Json::Value removed;
-			field = "internalMMS";
-			addContentParametersRoot.removeMember(field, &removed);
-		}
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = outputFileFormat;
-
-		if (!externalEncoder)
-		{
-			string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
-			field = "SourceURL";
-			addContentParametersRoot[field] = sourceURL;
-		}
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Generator Frames Task";
-
-		field = "Title";
-		addContentParametersRoot[field] = addContentTitle;
-
-		field = "UserData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = addContentTitle;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		/*
-		{
-			Json::Value variablesWorkflowRoot;
-
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = utcChunkStartTime;
-
-				// name of the variable
-				field = "CurrentUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			field = "Variables";
-			workflowRoot[field] = variablesWorkflowRoot;
-		}
-		*/
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Frame Workflow metadata generated"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", " + addContentTitle + ", "
-				+ generatedFrameFileName
-		);
-
-		return workflowMetadata;
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "generateFrames_buildFrameIngestionWorkflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "generateFrames_buildFrameIngestionWorkflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
 }
 
 void FFMPEGEncoder::slideShowThread(
@@ -16655,4 +16205,453 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	return maxLiveRecordingsCapability;
 	*/
 }
+
+string FFMPEGEncoder::buildAddContentIngestionWorkflow(
+	int64_t ingestionJobKey,
+	string label,
+	string fileFormat,
+	string ingester,
+
+	// in case of a new content
+	string sourceURL,	// if empty it means binary is ingested later (PUSH)
+	string title,
+	Json::Value userDataRoot,
+	Json::Value ingestedParametersRoot,	// it could be also nullValue
+
+	// in case of a Variant
+	int64_t variantOfMediaItemKey,		// in case of a variant, otherwise -1
+	int64_t variantEncodingProfileKey	// in case of a variant, otherwise -1
+)
+{
+	string workflowMetadata;
+	try
+	{
+		Json::Value addContentRoot;
+
+		string field = "Label";
+		addContentRoot[field] = label;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		Json::Value addContentParametersRoot;
+
+		if (variantOfMediaItemKey != -1)
+		{
+			// it is a Variant
+
+			field = "FileFormat";
+			addContentParametersRoot[field] = fileFormat;
+
+			field = "Ingester";
+			addContentParametersRoot[field] = ingester;
+
+			field = "variantOfMediaItemKey";
+			addContentParametersRoot[field] = variantOfMediaItemKey;
+
+			field = "variantEncodingProfileKey";
+			addContentParametersRoot[field] = variantEncodingProfileKey;
+		}
+		else
+		{
+			// it is a new content
+
+			if (ingestedParametersRoot != Json::nullValue)
+			{
+				addContentParametersRoot = ingestedParametersRoot;
+
+				field = "internalMMS";
+				if (JSONUtils::isMetadataPresent(addContentParametersRoot, field))
+				{
+					Json::Value removed;
+					addContentParametersRoot.removeMember(field, &removed);
+				}
+			}
+
+			field = "FileFormat";
+			addContentParametersRoot[field] = fileFormat;
+
+			field = "Ingester";
+			addContentParametersRoot[field] = ingester;
+
+			if (sourceURL != "")
+			{
+				// string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
+				field = "SourceURL";
+				addContentParametersRoot[field] = sourceURL;
+			}
+
+			if (title != "")
+			{
+				field = "Title";
+				addContentParametersRoot[field] = title;
+			}
+
+			if (userDataRoot != Json::nullValue)
+			{
+				field = "UserData";
+				addContentParametersRoot[field] = userDataRoot;
+			}
+		}
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = title;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "buildAddContentIngestionWorkflow"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+
+		return workflowMetadata;
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+}
+
+void FFMPEGEncoder::ingestContentByPushingBinary(
+	int64_t ingestionJobKey,
+	string workflowMetadata,
+	string fileFormat,
+	string binaryPathFileName,
+	int64_t binaryFileSizeInBytes,
+	int64_t userKey,
+	string apiKey,
+	string mmsWorkflowIngestionURL,
+	string mmsBinaryIngestionURL
+)
+{
+	_logger->info(__FILEREF__ + "Received ingestContentByPushingBinary"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+		+ ", fileFormat: " + fileFormat
+		+ ", binaryPathFileName: " + binaryPathFileName
+		+ ", binaryFileSizeInBytes: " + to_string(binaryFileSizeInBytes)
+		+ ", userKey: " + to_string(userKey)
+		+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+		+ ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
+	);
+
+	int64_t addContentIngestionJobKey = -1;
+	try
+	{
+		string sResponse = MMSCURL::httpPostPutString(
+			ingestionJobKey,
+			mmsWorkflowIngestionURL,
+			"POST",	// requestType
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json",	// contentType
+			_logger
+		);
+
+		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+
+	if (addContentIngestionJobKey == -1)
+	{
+		string errorMessage =
+			string("Ingested URL failed, addContentIngestionJobKey is not valid")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string mmsBinaryURL;
+	// ingest binary
+	try
+	{
+		string localBinaryPathFileName = binaryPathFileName;
+		int64_t localBinaryFileSizeInBytes = binaryFileSizeInBytes;
+		if (fileFormat == "hls")
+		{
+			// binaryPathFileName is a dir like
+			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
+			// terminating with 'content' as built in MMSEngineProcessor.cpp
+
+			{
+				string executeCommand;
+				try
+				{
+					localBinaryPathFileName = binaryPathFileName + ".tar.gz";
+
+					size_t endOfPathIndex = localBinaryPathFileName.find_last_of("/");
+					if (endOfPathIndex == string::npos)
+					{
+						string errorMessage = string("No localVariantPathDirectory found")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localBinaryPathFileName: " + localBinaryPathFileName 
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+          
+						throw runtime_error(errorMessage);
+					}
+					string localVariantPathDirectory =
+						localBinaryPathFileName.substr(0, endOfPathIndex);
+
+					executeCommand =
+						"tar cfz " + localBinaryPathFileName
+						+ " -C " + localVariantPathDirectory
+						+ " " + "content";
+					_logger->info(__FILEREF__ + "Start tar command "
+						+ ", executeCommand: " + executeCommand
+					);
+					chrono::system_clock::time_point startTar = chrono::system_clock::now();
+					int executeCommandStatus = ProcessUtility::execute(executeCommand);
+					chrono::system_clock::time_point endTar = chrono::system_clock::now();
+					_logger->info(__FILEREF__ + "End tar command "
+						+ ", executeCommand: " + executeCommand
+						+ ", @MMS statistics@ - tarDuration (millisecs): @"
+							+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+					);
+					if (executeCommandStatus != 0)
+					{
+						string errorMessage = string("ProcessUtility::execute failed")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+							+ ", executeCommand: " + executeCommand 
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+          
+						throw runtime_error(errorMessage);
+					}
+
+					bool inCaseOfLinkHasItToBeRead = false;
+					localBinaryFileSizeInBytes = FileIO::getFileSizeInBytes (localBinaryPathFileName,
+						inCaseOfLinkHasItToBeRead);                                                                          
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("tar command failed")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+						+ ", executeCommand: " + executeCommand 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+         
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+
+		mmsBinaryURL =
+			mmsBinaryIngestionURL
+			+ "/" + to_string(addContentIngestionJobKey)
+		;
+
+		string sResponse = MMSCURL::httpPostPutFile(
+			ingestionJobKey,
+			mmsBinaryURL,
+			"POST",	// requestType
+			_mmsBinaryTimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			localBinaryPathFileName,
+			localBinaryFileSizeInBytes,
+			_logger);
+
+		if (fileFormat == "hls")
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localBinaryPathFileName: " + localBinaryPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+		}
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		if (fileFormat == "hls")
+		{
+			// it is useless to remove the generated tar.gz file because the parent staging directory
+			// will be removed. Also here we should add a bool above to be sure the tar was successful
+			/*
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localBinaryPathFileName: " + localBinaryPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+			*/
+		}
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingestion binary failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsBinaryURL: " + mmsBinaryURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		if (fileFormat == "hls")
+		{
+			// it is useless to remove the generated tar.gz file because the parent staging directory
+			// will be removed. Also here we should add a bool above to be sure the tar was successful
+			/*
+			_logger->info(__FILEREF__ + "remove"
+				+ ", localBinaryPathFileName: " + localBinaryPathFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+			*/
+		}
+
+		throw e;
+	}
+}
+
+/*
+string FFMPEGEncoder::buildVariantIngestionWorkflow(
+	int64_t ingestionJobKey,
+	int64_t sourceMediaItemKey,
+	int64_t sourcePhysicalPathKey,
+	int64_t encodingProfileKey,
+	string fileFormat
+)
+{
+	string workflowMetadata;
+	try
+	{
+		string label = "Add Variant " + to_string(sourceMediaItemKey)
+			+ " - " + to_string(sourcePhysicalPathKey)
+			+ " - " + to_string(encodingProfileKey);
+
+		Json::Value addContentRoot;
+
+		string field = "Label";
+		addContentRoot[field] = label;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		Json::Value addContentParametersRoot;
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = fileFormat;
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Encode Task";
+
+		field = "variantOfMediaItemKey";
+		addContentParametersRoot[field] = sourceMediaItemKey;
+
+		field = "variantEncodingProfileKey";
+		addContentParametersRoot[field] = encodingProfileKey;
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = label;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Variant workflow metadata generated"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+
+		return workflowMetadata;
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "buildVariantIngestionWorkflow failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+}
+*/
 

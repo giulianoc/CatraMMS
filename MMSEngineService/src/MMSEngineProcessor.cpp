@@ -22410,7 +22410,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			sourceVideoTranscoderStagingAssetPathName,
 			encodedTranscoderStagingAssetPathName,
 			encodedNFSStagingAssetPathName,
-			encodingPriority);
+			encodingPriority,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL);
     }
     catch(runtime_error e)
     {

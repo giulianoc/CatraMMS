@@ -5648,7 +5648,8 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 	string sourceVideoTranscoderStagingAssetPathName,                                                 
 	string encodedTranscoderStagingAssetPathName,                                                     
 	string encodedNFSStagingAssetPathName,
-    EncodingPriority encodingPriority
+    EncodingPriority encodingPriority,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 )
 {
 
@@ -5724,6 +5725,12 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);
