@@ -16393,15 +16393,11 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 	bool responseInitialized = false;
     try
     {
-        // ffmpegEncoderURL = 
-        //         _ffmpegEncoderProtocol
-        //         + "://"                
-        //         + _currentUsedFFMpegEncoderHost + ":"
-        //         + to_string(_ffmpegEncoderPort)
-        ffmpegEncoderURL =
+		ffmpegEncoderURL =
 			_currentUsedFFMpegEncoderHost
-            + _ffmpegEncoderStatusURI
-            + "/" + to_string(_encodingItem->_encodingJobKey)
+			+ _ffmpegEncoderStatusURI
+			+ "/" + to_string(_encodingItem->_ingestionJobKey)
+			+ "/" + to_string(_encodingItem->_encodingJobKey)
         ;
 
         list<string> header;

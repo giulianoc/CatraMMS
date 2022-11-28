@@ -2863,6 +2863,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodingStatus")
 	{
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2874,7 +2886,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
+
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
 		bool                    encodingFound = false;
@@ -3039,6 +3051,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		chrono::system_clock::time_point endLookingForEncodingStatus = chrono::system_clock::now();
 
 		_logger->info(__FILEREF__ + "encodingStatus"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", encodingFound: " + to_string(encodingFound)
 			+ ", liveProxyFound: " + to_string(liveProxyFound)
@@ -3057,6 +3070,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         {
 			// it should never happen
             responseBody = string("{ ")
+                + "\"ingestionJobKey\": " + to_string(ingestionJobKey)
                 + "\"encodingJobKey\": " + to_string(encodingJobKey)
                 + ", \"pid\": 0"
 				+ ", \"killedByUser\": false"
@@ -3083,7 +3097,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				Json::Value responseBodyRoot;
 
-				string field = "encodingJobKey";
+				string field = "ingestionJobKey";
+				responseBodyRoot[field] = ingestionJobKey;
+
+				field = "encodingJobKey";
 				responseBodyRoot[field] = selectedEncodingCompleted->_encodingJobKey;
 
 				field = "pid";
@@ -3131,6 +3148,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				catch(FFMpegEncodingStatusNotAvailable e)
 				{
 					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
 					;
@@ -3144,6 +3162,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				catch(exception e)
 				{
 					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", e.what(): " + e.what()
                     ;
@@ -3157,7 +3176,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				Json::Value responseBodyRoot;
 
-				string field = "encodingJobKey";
+				string field = "ingestionJobKey";
+				responseBodyRoot[field] = ingestionJobKey;
+
+				field = "encodingJobKey";
 				responseBodyRoot[field] = selectedEncoding->_encodingJobKey;
 
 				field = "pid";
@@ -3191,7 +3213,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				Json::Value responseBodyRoot;
 
-				string field = "encodingJobKey";
+				string field = "ingestionJobKey";
+				responseBodyRoot[field] = selectedLiveProxy->_ingestionJobKey;
+
+				field = "encodingJobKey";
 				responseBodyRoot[field] = selectedLiveProxy->_encodingJobKey;
 
 				field = "pid";
@@ -3232,6 +3257,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						if (liveProxyLiveTimeInMinutes > 10)
 						{
 							_logger->error(__FILEREF__ + "encodingStatus, force encodingFinished to true"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
 								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
@@ -3242,6 +3268,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						else
 						{
 							_logger->warn(__FILEREF__ + "encodingStatus, encoding running but pid is <= 0!!!"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
 								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
@@ -3265,7 +3292,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				Json::Value responseBodyRoot;
 
-				string field = "encodingJobKey";
+				string field = "ingestionJobKey";
+				responseBodyRoot[field] = selectedLiveRecording->_ingestionJobKey;
+
+				field = "encodingJobKey";
 				responseBodyRoot[field] = selectedLiveRecording->_encodingJobKey;
 
 				field = "pid";
@@ -3299,6 +3329,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
 
 		_logger->info(__FILEREF__ + "encodingStatus"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", encodingFound: " + to_string(encodingFound)
 			+ ", liveProxyFound: " + to_string(liveProxyFound)

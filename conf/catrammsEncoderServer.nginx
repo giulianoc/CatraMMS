@@ -55,7 +55,7 @@
 			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/?$ /encoder?version=$1&method=encodingStatus&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=encodingStatus&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /encoder?version=$1&method=killEncodingJob&encodingJobKey=$2 last;
