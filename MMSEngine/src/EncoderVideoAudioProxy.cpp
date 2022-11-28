@@ -1024,7 +1024,10 @@ void EncoderVideoAudioProxy::operator()()
         {
             processOverlayedImageOnVideo(killedByUser);
 
-			isIngestionJobCompleted = false;	// file has still to be ingested
+			if (_currentUsedFFMpegExternalEncoder)
+				isIngestionJobCompleted = true;
+			else
+				isIngestionJobCompleted = false;	// file has still to be ingested
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
