@@ -3598,27 +3598,30 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw e;
         }
 
-		/*
-		string responseBody = string("{ ")
-			+ "\"ingestionJobKey\": " + to_string(ingestionJobKey)
-			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
-			+ ", \"pid\": " + to_string(pidToBeKilled)
-			+ "}";
-		*/
+		string responseBody;
+		{
+			/*
+			string responseBody = string("{ ")
+				+ "\"ingestionJobKey\": " + to_string(ingestionJobKey)
+				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+				+ ", \"pid\": " + to_string(pidToBeKilled)
+				+ "}";
+			*/
 
-		Json::Value responseBodyRoot;
+			Json::Value responseBodyRoot;
 
-		string field = "ingestionJobKey";
-		responseBodyRoot[field] = ingestionJobKey;
+			string field = "ingestionJobKey";
+			responseBodyRoot[field] = ingestionJobKey;
 
-		field = "encodingJobKey";
-		responseBodyRoot[field] = encodingJobKey;
+			field = "encodingJobKey";
+			responseBodyRoot[field] = encodingJobKey;
 
-		field = "pid";
-		responseBodyRoot[field] = pidToBeKilled;
+			field = "pid";
+			responseBodyRoot[field] = pidToBeKilled;
 
-		Json::StreamWriterBuilder wbuilder;
-		responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			Json::StreamWriterBuilder wbuilder;
+			responseBody = Json::writeString(wbuilder, responseBodyRoot);
+		}
 
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, requestURI, requestMethod, 200, responseBody);
