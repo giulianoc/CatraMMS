@@ -474,9 +474,10 @@ void API::killOrCancelEncodingJob(
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
 								+ ", encoderKey: " + to_string(encoderKey)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
-							killEncodingJob(encoderKey, encodingJobKey, lightKill);
+							killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
 
 							// to make sure EncoderVideoProxyThread resources are released,
 							// the isKilled flag is also set
@@ -486,6 +487,7 @@ void API::killOrCancelEncodingJob(
 								bool isKilled = true;
 
 								_logger->info(__FILEREF__ + "Setting isKilled flag"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(encodingJobKey)
 									+ ", isKilled: " + to_string(isKilled)
 								);
@@ -501,6 +503,7 @@ void API::killOrCancelEncodingJob(
 								bool isKilled = true;
 
 								_logger->info(__FILEREF__ + "Setting isKilled flag"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(encodingJobKey)
 									+ ", isKilled: " + to_string(isKilled)
 								);
@@ -550,9 +553,10 @@ void API::killOrCancelEncodingJob(
 					{
 						_logger->info(__FILEREF__ + "killEncodingJob"
 							+ ", encoderKey: " + to_string(encoderKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
-						killEncodingJob(encoderKey, encodingJobKey, lightKill);
+						killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
 
 						// to make sure EncoderVideoProxyThread resources are released,
 						// the isKilled flag is also set
@@ -562,6 +566,7 @@ void API::killOrCancelEncodingJob(
 							bool isKilled = true;
 
 							_logger->info(__FILEREF__ + "Setting isKilled flag"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", isKilled: " + to_string(isKilled)
 							);
@@ -577,6 +582,7 @@ void API::killOrCancelEncodingJob(
 							bool isKilled = true;
 
 							_logger->info(__FILEREF__ + "Setting isKilled flag"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", isKilled: " + to_string(isKilled)
 							);
@@ -604,9 +610,10 @@ void API::killOrCancelEncodingJob(
 				{
 					_logger->info(__FILEREF__ + "killEncodingJob"
 						+ ", encoderKey: " + to_string(encoderKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					);
-					killEncodingJob(encoderKey, encodingJobKey, lightKill);
+					killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
@@ -1365,7 +1372,8 @@ void API::removeEncodingProfilesSet(
     }
 }
 
-void API::killEncodingJob(int64_t encoderKey, int64_t ingestionJobKey, int64_t encodingJobKey, bool lightKill)
+void API::killEncodingJob(int64_t encoderKey,
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool lightKill)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;

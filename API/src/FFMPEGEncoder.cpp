@@ -3359,6 +3359,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         */
 
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -3377,6 +3389,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			lightKill = lightKillIt->second == "true" ? true : false;
 
 		_logger->info(__FILEREF__ + "Received killEncodingJob"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", lightKill: " + to_string(lightKill)
 		);
@@ -3477,7 +3490,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound && !liveProxyFound && !liveRecorderFound)
         {
-            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+            string errorMessage =
+				"ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", " + NoEncodingJobKeyFound().what();
             
             _logger->error(__FILEREF__ + errorMessage);
@@ -3489,6 +3504,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 
 		_logger->info(__FILEREF__ + "ProcessUtility::killProcess. Found Encoding to kill"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 			+ ", lightKill: " + to_string(lightKill)
@@ -3498,6 +3514,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			_logger->error(__FILEREF__
 				+ "The EncodingJob seems not running (see pidToBeKilled)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 			);
@@ -3519,6 +3536,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liverecording e liveProxy
 				_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 				);
@@ -3527,6 +3545,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			else
 			{
 				_logger->info(__FILEREF__ + "ProcessUtility::killProcess"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 				);
@@ -3543,6 +3562,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(runtime_error e)
         {
             string errorMessage = string("ProcessUtility::killProcess failed")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
                 + ", e.what(): " + e.what()
@@ -3555,6 +3575,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 
 		string responseBody = string("{ ")
+			+ "\"ingestionJobKey\": " + to_string(ingestionJobKey)
 			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
 			+ ", \"pid\": " + to_string(pidToBeKilled)
 			+ "}";
