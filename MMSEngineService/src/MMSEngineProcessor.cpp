@@ -22006,11 +22006,11 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 }
 
 void MMSEngineProcessor::manageOverlayImageOnVideoTask(
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
-			dependencies
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies
 )
 {
     try
@@ -22279,6 +22279,58 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			throw runtime_error(errorMessage);
 		}
 
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		{
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, videoContentType, encodingProfileLabel);
+			}
+
+			if (encodingProfileKey != -1)
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+					workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+						&encodingProfileDetailsRoot,
+						&errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+
 		string sourceVideoFileName;
 		string sourceVideoFileExtension;
 		string encodedFileName;
@@ -22337,7 +22389,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
 				// in case of hls and external encoder (binary is ingested through PUSH),
 				// the directory inside the tar.gz has to be 'content'
-				"content",	// encodedFileName,
+				encodedFileName,	// content
 				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 				removeLinuxPathIfExist);
@@ -22348,58 +22400,6 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
 		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 			sourceVideoMediaItemKey, sourceVideoPhysicalPathKey);
-
-		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
-		{
-			string keyField = "encodingProfileKey";
-			string labelField = "encodingProfileLabel";
-			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
-			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
-			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
-			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
-
-				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
-				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					workspace->_workspaceKey, videoContentType, encodingProfileLabel);
-			}
-
-			if (encodingProfileKey != -1)
-			{
-				string jsonEncodingProfile;
-
-				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-					workspace->_workspaceKey, encodingProfileKey);
-				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
-
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-			}
-		}
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
 			encodingProfileKey, encodingProfileDetailsRoot,
