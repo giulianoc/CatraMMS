@@ -2765,16 +2765,17 @@ void FFMpeg::encodeContent(
 }
 
 void FFMpeg::overlayImageOnVideo(
-        string mmsSourceVideoAssetPathName,
-        int64_t videoDurationInMilliSeconds,
-        string mmsSourceImageAssetPathName,
-        string imagePosition_X_InPixel,
-        string imagePosition_Y_InPixel,
-        string stagingEncodedAssetPathName,
-		Json::Value encodingProfileDetailsRoot,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid)
+	bool externalEncoder,
+	string mmsSourceVideoAssetPathName,
+	int64_t videoDurationInMilliSeconds,
+	string mmsSourceImageAssetPathName,
+	string imagePosition_X_InPixel,
+	string imagePosition_Y_InPixel,
+	string stagingEncodedAssetPathName,
+	Json::Value encodingProfileDetailsRoot,
+	int64_t encodingJobKey,
+	int64_t ingestionJobKey,
+	pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
 
@@ -2804,16 +2805,19 @@ void FFMpeg::overlayImageOnVideo(
 			throw runtime_error(errorMessage);
 		}
 
-		if (!FileIO::fileExisting(mmsSourceImageAssetPathName))
+		if (!externalEncoder)
 		{
-			string errorMessage = string("Source image asset path name not existing")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
-			;
-			_logger->error(__FILEREF__ + errorMessage);
+			if (!FileIO::fileExisting(mmsSourceImageAssetPathName))
+			{
+				string errorMessage = string("Source image asset path name not existing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		vector<string> ffmpegEncodingProfileArgumentList;

@@ -107,6 +107,7 @@ public:
 		pid_t* pChildPid);
     
     void overlayImageOnVideo(
+		bool externalEncoder,
         string mmsSourceVideoAssetPathName,
         int64_t videoDurationInMilliSeconds,
         string mmsSourceImageAssetPathName,

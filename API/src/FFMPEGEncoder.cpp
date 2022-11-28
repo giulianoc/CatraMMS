@@ -4979,6 +4979,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->overlayImageOnVideo(
+			externalEncoder,
 			sourceVideoAssetPathName,
             videoDurationInMilliSeconds,
             mmsSourceImageAssetPathName,
