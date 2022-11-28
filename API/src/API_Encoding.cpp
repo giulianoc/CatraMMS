@@ -1365,7 +1365,7 @@ void API::removeEncodingProfilesSet(
     }
 }
 
-void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey, bool lightKill)
+void API::killEncodingJob(int64_t encoderKey, int64_t ingestionJobKey, int64_t encodingJobKey, bool lightKill)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;
@@ -1382,6 +1382,7 @@ void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey, bool light
 		ffmpegEncoderURL = 
 			transcoderHost
 			+ _ffmpegEncoderKillEncodingURI
+			+ "/" + to_string(ingestionJobKey)
 			+ "/" + to_string(encodingJobKey)
 			+ "?lightKill=" + (lightKill ? "true" : "false")
 		;
