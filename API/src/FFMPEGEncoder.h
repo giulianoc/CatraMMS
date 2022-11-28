@@ -605,7 +605,7 @@ private:
 		int64_t variantOfMediaItemKey = -1,
 		int64_t variantEncodingProfileKey = -1);
 
-	void ingestContentByPushingBinary(
+	int64_t ingestContentByPushingBinary(
 		int64_t ingestionJobKey,
 		string workflowMetadata,
 		string fileFormat,

@@ -5104,7 +5104,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				);
 			}
 
-			ingestContentByPushingBinary(
+			int64_t addContentIngestionJobKey = ingestContentByPushingBinary(
 				ingestionJobKey,
 				workflowMetadata,
 				fileFormat,
@@ -5139,6 +5139,162 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 					Boolean_t bRemoveRecursively = true;
 					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 				}
+			}
+
+			// wait the addContent to be executed
+			try
+			{
+				string field = "mmsIngestionURL";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						// + ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
+
+				int64_t userKey;
+				string apiKey;
+				{
+					string field = "internalMMS";
+					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+					{
+						Json::Value internalMMSRoot = ingestedParametersRoot[field];
+
+						field = "credentials";
+						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+						{
+							Json::Value credentialsRoot = internalMMSRoot[field];
+
+							field = "userKey";
+							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+							field = "apiKey";
+							string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+						}
+					}
+				}
+
+				chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+				long maxSecondsWaiting = 5 * 60;
+				long addContentFinished = 0;
+
+				while ( addContentFinished == 0
+					&& chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
+				{
+					string mmsIngestionJobURL =
+						mmsIngestionURL
+						+ "/" + to_string(addContentIngestionJobKey)
+						+ "?ingestionJobOutputs=false"
+					;
+
+					Json::Value ingestionRoot = MMSCURL::httpGetJson(
+						ingestionJobKey,
+						mmsIngestionJobURL,
+						_mmsAPITimeoutInSeconds,
+						to_string(userKey),
+						apiKey,
+						_logger);
+
+					string field = "response";
+					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value responseRoot = ingestionRoot[field];
+
+					field = "ingestionJobs";
+					if (!JSONUtils::isMetadataPresent(responseRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value ingestionJobsRoot = responseRoot[field];
+
+					if (ingestionJobsRoot.size() != 1)
+					{
+						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
+
+					field = "status";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							// + ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
+
+					string prefix = "End_";
+					if (ingestionJobStatus.size() >= prefix.size()
+						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
+					{
+						_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus);
+
+						addContentFinished++;
+					}
+					else
+					{
+						int secondsToSleep = 5;
+
+						_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+							+ ", ingestionJobStatus: " + ingestionJobStatus
+							+ ", secondsToSleep: " + to_string(secondsToSleep)
+						);
+
+						this_thread::sleep_for(chrono::seconds(secondsToSleep));
+					}
+				}
+
+				_logger->info(__FILEREF__ + "Waiting result..."
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", addContentFinished: " + to_string(addContentFinished)
+					+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
+					+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startWaiting).count())
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
 			}
 		}
 
@@ -16339,7 +16495,7 @@ string FFMPEGEncoder::buildAddContentIngestionWorkflow(
 	}
 }
 
-void FFMPEGEncoder::ingestContentByPushingBinary(
+int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 	int64_t ingestionJobKey,
 	string workflowMetadata,
 	string fileFormat,
@@ -16561,6 +16717,8 @@ void FFMPEGEncoder::ingestContentByPushingBinary(
 
 		throw e;
 	}
+
+	return addContentIngestionJobKey;
 }
 
 /*
