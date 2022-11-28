@@ -3069,6 +3069,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         if (!encodingFound && !liveProxyFound && !liveRecordingFound && !encodingCompleted)
         {
 			// it should never happen
+			/*
             responseBody = string("{ ")
                 + "\"ingestionJobKey\": " + to_string(ingestionJobKey)
                 + "\"encodingJobKey\": " + to_string(encodingJobKey)
@@ -3077,6 +3078,29 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", \"encodingFinished\": true "
                 + ", \"encodingProgress\": 100 "
                 + "}";
+			*/
+			Json::Value responseBodyRoot;
+
+			string field = "ingestionJobKey";
+			responseBodyRoot[field] = ingestionJobKey;
+
+			field = "encodingJobKey";
+			responseBodyRoot[field] = encodingJobKey;
+
+			field = "pid";
+			responseBodyRoot[field] = 0;
+
+			field = "killedByUser";
+			responseBodyRoot[field] = false;
+
+			field = "encodingFinished";
+			responseBodyRoot[field] = true;
+
+			field = "encodingProgress";
+			responseBodyRoot[field] = 100;
+
+			Json::StreamWriterBuilder wbuilder;
+			responseBody = Json::writeString(wbuilder, responseBodyRoot);
         }
         else
         {
@@ -3574,11 +3598,27 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw e;
         }
 
+		/*
 		string responseBody = string("{ ")
 			+ "\"ingestionJobKey\": " + to_string(ingestionJobKey)
 			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
 			+ ", \"pid\": " + to_string(pidToBeKilled)
 			+ "}";
+		*/
+
+		Json::Value responseBodyRoot;
+
+		string field = "ingestionJobKey";
+		responseBodyRoot[field] = ingestionJobKey;
+
+		field = "encodingJobKey";
+		responseBodyRoot[field] = encodingJobKey;
+
+		field = "pid";
+		responseBodyRoot[field] = pidToBeKilled;
+
+		Json::StreamWriterBuilder wbuilder;
+		responseBody = Json::writeString(wbuilder, responseBodyRoot);
 
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, requestURI, requestMethod, 200, responseBody);
