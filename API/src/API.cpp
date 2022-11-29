@@ -4437,38 +4437,19 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		}
 		else if (contentURIToBeVerified.size() >= tsSuffix.size()
 			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix)
-			&& contentURI.find("360p") != string::npos
 		)
 		{
+			// 2022-11-29: ci sono 3 casi per il download di un .ts:
+			//	1. download NON dall'interno di un m3u8
+			//	2. download dall'interno di un m3u8 single bitrate
+			//	3. download dall'interno di un m3u8 multi bitrate
+
 			{
-				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
-				if (endPathIndex != string::npos)
-					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
-			}
+				// check caso 1.
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+					expirationTime);
 
-			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
-
-			_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
-				+ ", contentURI: " + contentURI
-				+ ", contentURIToBeVerified: " + contentURIToBeVerified
-				+ ", expirationTime: " + to_string(expirationTime)
-				+ ", tokenSigned: " + tokenSigned
-				+ ", md5Base64: " + md5Base64
-			);
-
-			if (md5Base64 != tokenSigned)
-			{
-				// we still try removing again the last directory to manage
-				// the scenario of multi bitrate encoding
-				{
-					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
-					if (endPathIndex != string::npos)
-						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
-				}
-
-				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
-
-				_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
+				_logger->info(__FILEREF__ + "Authorization through path"
 					+ ", contentURI: " + contentURI
 					+ ", contentURIToBeVerified: " + contentURIToBeVerified
 					+ ", expirationTime: " + to_string(expirationTime)
@@ -4478,13 +4459,63 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 				if (md5Base64 != tokenSigned)
 				{
-					string errorMessage = string("Wrong token (ts)")
-						+ ", md5Base64: " + md5Base64
-						+ ", tokenSigned: " + tokenSigned
-					;
-					_logger->warn(__FILEREF__ + errorMessage);
+					// potremmo essere nel caso 2 o caso 3
 
-					throw runtime_error(errorMessage);
+					{
+						size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+						if (endPathIndex != string::npos)
+							contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+					}
+
+					// check caso 2.
+					md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+						expirationTime);
+
+					_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
+						+ ", contentURI: " + contentURI
+						+ ", contentURIToBeVerified: " + contentURIToBeVerified
+						+ ", expirationTime: " + to_string(expirationTime)
+						+ ", tokenSigned: " + tokenSigned
+						+ ", md5Base64: " + md5Base64
+					);
+
+					if (md5Base64 != tokenSigned)
+					{
+						// dovremmo essere nel caso 3
+
+						// we still try removing again the last directory to manage
+						// the scenario of multi bitrate encoding
+						{
+							size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+							if (endPathIndex != string::npos)
+								contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+						}
+
+						// check caso 3.
+						string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+							expirationTime);
+
+						_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
+							+ ", contentURI: " + contentURI
+							+ ", contentURIToBeVerified: " + contentURIToBeVerified
+							+ ", expirationTime: " + to_string(expirationTime)
+							+ ", tokenSigned: " + tokenSigned
+							+ ", md5Base64: " + md5Base64
+						);
+
+						if (md5Base64 != tokenSigned)
+						{
+							// non siamo in nessuno dei 3 casi
+
+							string errorMessage = string("Wrong token (ts)")
+								+ ", md5Base64: " + md5Base64
+								+ ", tokenSigned: " + tokenSigned
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
 				}
 			}
 		}
