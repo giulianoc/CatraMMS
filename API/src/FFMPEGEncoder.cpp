@@ -3222,7 +3222,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = selectedEncoding->_errorMessage;
 
 				field = "encodingFinished";
-				responseBodyRoot[field] = !selectedEncoding->_running;
+				responseBodyRoot[field] = encodingCompleted;	// !selectedEncoding->_running;
 
 				field = "encodingProgress";
 				if (encodingProgress == -2)
@@ -3258,6 +3258,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "errorMessage";
 				responseBodyRoot[field] = selectedLiveProxy->_errorMessage;
 
+				/*
 				// 2022-07-20: if we do not have a correct pid after 10 minutes
 				//	we will force encodingFinished to true
 				{
@@ -3304,6 +3305,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					else
 						responseBodyRoot[field] = !selectedLiveProxy->_running;
 				}
+				*/
+				field = "encodingFinished";
+				responseBodyRoot[field] = encodingCompleted;
 
 				// 2020-06-11: it's a live, it does not have sense the encoding progress
 				field = "encodingProgress";
@@ -3338,7 +3342,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = selectedLiveRecording->_errorMessage;
 
 				field = "encodingFinished";
-				responseBodyRoot[field] = !selectedLiveRecording->_running;
+				responseBodyRoot[field] = encodingCompleted;	// !selectedLiveRecording->_running;
 
 				// 2020-10-13: we do not have here the information to calculate the encoding progress,
 				//	it is calculated in EncoderVideoAudioProxy.cpp
