@@ -4788,9 +4788,10 @@ void API::createDeliveryCDN77Authorization(
 				MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
 				md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
 
-				unsigned char *md5_digest;
-				unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
 				{
+					unsigned char *md5_digest;
+					unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
 					EVP_MD_CTX *mdctx;
 
 					// MD5_Init
