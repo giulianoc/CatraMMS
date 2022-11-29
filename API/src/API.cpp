@@ -30,6 +30,7 @@
 #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
 #include <openssl/md5.h>
+#include <openssl/evp.h>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -4786,6 +4787,41 @@ void API::createDeliveryCDN77Authorization(
 				unsigned char digest[MD5_DIGEST_LENGTH];
 				MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
 				md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+
+				unsigned char *md5_digest;
+				unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+				{
+					EVP_MD_CTX *mdctx;
+
+					// MD5_Init
+					mdctx = EVP_MD_CTX_new();
+					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+					// MD5_Update
+					EVP_DigestUpdate(mdctx, (unsigned char*) hashStr.c_str(), hashStr.size());
+
+					// MD5_Final
+					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+
+					string newMd5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
+					if (newMd5Base64 == md5Base64)
+					{
+						_logger->info(__FILEREF__ + "ABCDEF: =="
+							+ ", md5Base64: " + md5Base64
+							+ ", newMd5Base64: " + newMd5Base64
+						);
+					}
+					else
+					{
+						_logger->info(__FILEREF__ + "ABCDEF: !="
+							+ ", md5Base64: " + md5Base64
+							+ ", newMd5Base64: " + newMd5Base64
+						);
+					}
+
+					EVP_MD_CTX_free(mdctx);
+				}
 
 				// $invalidChars = ['+','/'];
 				// $validChars = ['-','_'];
