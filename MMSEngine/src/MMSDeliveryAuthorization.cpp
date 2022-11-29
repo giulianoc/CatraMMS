@@ -16,7 +16,7 @@
 #include "AWSSigner.h"
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
-#include <openssl/md5.h>
+// #include <openssl/md5.h>
 #include <openssl/evp.h>
 
 
@@ -1010,9 +1010,9 @@ string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirat
 	string token = to_string(expirationTime) + contentURI;
 	string md5Base64;
 	{
-		unsigned char digest[MD5_DIGEST_LENGTH];
-		MD5((unsigned char*) token.c_str(), token.size(), digest);
-		md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+		// unsigned char digest[MD5_DIGEST_LENGTH];
+		// MD5((unsigned char*) token.c_str(), token.size(), digest);
+		// md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
 		{
 			unsigned char *md5_digest;
 			unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
@@ -1030,27 +1030,12 @@ string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirat
 			md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
 			EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
 
-			string newMd5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
-			if (newMd5Base64 == md5Base64)
-			{
-				_logger->info(__FILEREF__ + "ABCDEF: =="
-					+ ", token: " + token
-					+ ", md5Base64: " + md5Base64
-					+ ", newMd5Base64: " + newMd5Base64
-				);
-			}
-			else
-			{
-				_logger->info(__FILEREF__ + "ABCDEF: !="
-					+ ", token: " + token
-					+ ", md5Base64: " + md5Base64
-					+ ", newMd5Base64: " + newMd5Base64
-				);
-			}
+			md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
+
+			OPENSSL_free(md5_digest);
 
 			EVP_MD_CTX_free(mdctx);
 		}
-
 
 		transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
 			[](unsigned char c){

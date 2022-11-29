@@ -29,7 +29,7 @@
 #include "Validator.h"
 #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
-#include <openssl/md5.h>
+// #include <openssl/md5.h>
 #include <openssl/evp.h>
 
 #include <libxml/tree.h>
@@ -4784,9 +4784,9 @@ void API::createDeliveryCDN77Authorization(
 			// 	$expiryTimestamp . $filePath;
 			string md5Base64;
 			{
-				unsigned char digest[MD5_DIGEST_LENGTH];
-				MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
-				md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+				// unsigned char digest[MD5_DIGEST_LENGTH];
+				// MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
+				// md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
 
 				{
 					unsigned char *md5_digest;
@@ -4805,23 +4805,9 @@ void API::createDeliveryCDN77Authorization(
 					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
 					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
 
-					string newMd5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
-					if (newMd5Base64 == md5Base64)
-					{
-						_logger->info(__FILEREF__ + "ABCDEF: =="
-							+ ", hashStr: " + hashStr
-							+ ", md5Base64: " + md5Base64
-							+ ", newMd5Base64: " + newMd5Base64
-						);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "ABCDEF: !="
-							+ ", hashStr: " + hashStr
-							+ ", md5Base64: " + md5Base64
-							+ ", newMd5Base64: " + newMd5Base64
-						);
-					}
+					md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
+
+					OPENSSL_free(md5_digest);
 
 					EVP_MD_CTX_free(mdctx);
 				}
