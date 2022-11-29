@@ -3222,11 +3222,27 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = selectedEncoding->_errorMessage;
 
 				field = "encodingFinished";
+				// 2022-11-29: spesso tra _running false e encodingCompleted true passa del tempo
+				//	soprattutto in caso di attività su externalEncoder perche, dopo che running è false
+				//	serve del tempo affinchè l'output generato viene ingestato nell'MMS. Solo infatti
+				//	successivamente all'ingestion terminato, encodingCompleted è true
+				//	E' importante che viene indicato encodingFinished true solamente quando
+				//	encodingCompleted è true, altrimenti se indichiamo che encodingFinished è true
+				//	ma ancora l'ingestion dell'output non è terminato, il Task successivo
+				//	si ritrova senza input
 				responseBodyRoot[field] = encodingCompleted;	// !selectedEncoding->_running;
 
 				field = "encodingProgress";
 				if (encodingProgress == -2)
-					responseBodyRoot[field] = Json::nullValue;
+				{
+					// vedi commento sopra del 2022-11-29. Se _running è false e encodingCompleted false
+					// siamo nello scenario in cui l'output è stato generato e si sta aspettando che
+					// l'ingestion sia terminato. In questo caso indichiamo progress al 100%
+					if (!selectedEncoding->_running && !encodingCompleted)
+						responseBodyRoot[field] = 100;
+					else
+						responseBodyRoot[field] = Json::nullValue;
+				}
 				else
 					responseBodyRoot[field] = encodingProgress;
 
