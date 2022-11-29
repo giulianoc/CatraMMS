@@ -4436,7 +4436,9 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 			}
 		}
 		else if (contentURIToBeVerified.size() >= tsSuffix.size()
-			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
+			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix)
+			&& contentURI.find("360p") != string::npos
+		)
 		{
 			{
 				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
