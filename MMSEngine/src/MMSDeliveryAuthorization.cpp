@@ -1034,6 +1034,7 @@ string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirat
 			if (newMd5Base64 == md5Base64)
 			{
 				_logger->info(__FILEREF__ + "ABCDEF: =="
+					+ ", token: " + token
 					+ ", md5Base64: " + md5Base64
 					+ ", newMd5Base64: " + newMd5Base64
 				);
@@ -1041,6 +1042,7 @@ string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirat
 			else
 			{
 				_logger->info(__FILEREF__ + "ABCDEF: !="
+					+ ", token: " + token
 					+ ", md5Base64: " + md5Base64
 					+ ", newMd5Base64: " + newMd5Base64
 				);

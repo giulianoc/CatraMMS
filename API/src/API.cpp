@@ -4809,6 +4809,7 @@ void API::createDeliveryCDN77Authorization(
 					if (newMd5Base64 == md5Base64)
 					{
 						_logger->info(__FILEREF__ + "ABCDEF: =="
+							+ ", hashStr: " + hashStr
 							+ ", md5Base64: " + md5Base64
 							+ ", newMd5Base64: " + newMd5Base64
 						);
@@ -4816,6 +4817,7 @@ void API::createDeliveryCDN77Authorization(
 					else
 					{
 						_logger->info(__FILEREF__ + "ABCDEF: !="
+							+ ", hashStr: " + hashStr
 							+ ", md5Base64: " + md5Base64
 							+ ", newMd5Base64: " + newMd5Base64
 						);
