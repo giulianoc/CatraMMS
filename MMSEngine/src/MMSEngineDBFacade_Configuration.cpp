@@ -1518,8 +1518,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			string sUserData;
 			if (userData != Json::nullValue)
 			{
-				Json::StreamWriterBuilder wbuilder;
-				sUserData = Json::writeString(wbuilder, userData);
+				sUserData = JSONUtils::toString(userData);
 			}
 
             lastSQLCommand = 
@@ -2049,8 +2048,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
 				if (userData != Json::nullValue)
 				{
-					Json::StreamWriterBuilder wbuilder;
-					sUserData = Json::writeString(wbuilder, userData);
+					sUserData = JSONUtils::toString(userData);
 				}
 			}
 

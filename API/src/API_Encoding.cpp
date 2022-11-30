@@ -271,8 +271,7 @@ void API::encodingJobsStatus(
                     asc, status, types
                     );
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, encodingStatusRoot);
+            string responseBody = JSONUtils::toString(encodingStatusRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -702,8 +701,7 @@ void API::encodingProfilesSetsList(
                     workspace->_workspaceKey, encodingProfilesSetKey,
                     contentTypePresent, contentType);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, encodingProfilesSetListRoot);
+            string responseBody = JSONUtils::toString(encodingProfilesSetListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -790,8 +788,7 @@ void API::encodingProfilesList(
                     workspace->_workspaceKey, encodingProfileKey,
                     contentTypePresent, contentType, label);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, encodingProfileListRoot);
+            string responseBody = JSONUtils::toString(encodingProfileListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -1054,9 +1051,7 @@ void API::addEncodingProfile(
 
             string jsonEncodingProfile;
             {
-                Json::StreamWriterBuilder wbuilder;
-
-                jsonEncodingProfile = Json::writeString(wbuilder, encodingProfileRoot);
+                jsonEncodingProfile = JSONUtils::toString(encodingProfileRoot);
             }
             
             int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(

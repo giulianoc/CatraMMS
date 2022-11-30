@@ -156,8 +156,7 @@ void API::addYouTubeConf(
 			Json::Value youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(
 				workspace->_workspaceKey, label, tokenType, refreshToken, accessToken);
 
-			Json::StreamWriterBuilder wbuilder;
-			sResponse = Json::writeString(wbuilder, youTubeRoot);
+			sResponse = JSONUtils::toString(youTubeRoot);
         }
         catch(runtime_error e)
         {
@@ -345,8 +344,7 @@ void API::modifyYouTubeConf(
 				accessToken, accessTokenModified
 			);
 
-			Json::StreamWriterBuilder wbuilder;
-			sResponse = Json::writeString(wbuilder, youTubeRoot);
+			sResponse = JSONUtils::toString(youTubeRoot);
 		}
         catch(runtime_error e)
         {
@@ -505,8 +503,7 @@ void API::youTubeConfList(
 			Json::Value youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(
 				workspace->_workspaceKey);
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
+			string responseBody = JSONUtils::toString(youTubeConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -919,8 +916,7 @@ void API::facebookConfList(
             Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
                     workspace->_workspaceKey);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
+            string responseBody = JSONUtils::toString(facebookConfListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -1174,8 +1170,7 @@ void API::addStream(
 				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				userData);
 
-            Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, streamRoot);
+            sResponse = JSONUtils::toString(streamRoot);
         }
         catch(runtime_error e)
         {
@@ -1592,8 +1587,7 @@ void API::modifyStream(
 				positionToBeModified, position,
 				userDataToBeModified, userData);
 
-            Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, streamRoot);
+            sResponse = JSONUtils::toString(streamRoot);
         }
         catch(runtime_error e)
         {
@@ -1924,8 +1918,7 @@ void API::streamList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, labelLike,
 					url, sourceType, type, name, region, country, labelOrder);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, streamListRoot);
+            string responseBody = JSONUtils::toString(streamListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -2149,8 +2142,7 @@ void API::addSourceTVStream(
 				country, deliverySystem
 			);
 
-            Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceTVStreamRoot);
+            sResponse = JSONUtils::toString(sourceTVStreamRoot);
 		}
         catch(runtime_error e)
         {
@@ -2457,8 +2449,7 @@ void API::modifySourceTVStream(
 				deliverySystemToBeModified, deliverySystem
 			);
 
-            Json::StreamWriterBuilder wbuilder;
-            sResponse = Json::writeString(wbuilder, sourceTVStreamRoot);
+            sResponse = JSONUtils::toString(sourceTVStreamRoot);
         }
         catch(runtime_error e)
         {
@@ -2738,8 +2729,7 @@ void API::sourceTVStreamList(
 				confKey, start, rows,
 				type, serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, sourceTVStreamRoot);
+            string responseBody = JSONUtils::toString(sourceTVStreamRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -3226,8 +3216,7 @@ void API::awsChannelConfList(
             Json::Value awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(
                     workspace->_workspaceKey);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, awsChannelConfListRoot);
+            string responseBody = JSONUtils::toString(awsChannelConfListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -3739,8 +3728,7 @@ void API::ftpConfList(
             Json::Value ftpConfListRoot = _mmsEngineDBFacade->getFTPConfList(
                     workspace->_workspaceKey);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, ftpConfListRoot);
+            string responseBody = JSONUtils::toString(ftpConfListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -4202,8 +4190,7 @@ void API::emailConfList(
             Json::Value emailConfListRoot = _mmsEngineDBFacade->getEMailConfList(
                     workspace->_workspaceKey);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, emailConfListRoot);
+            string responseBody = JSONUtils::toString(emailConfListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

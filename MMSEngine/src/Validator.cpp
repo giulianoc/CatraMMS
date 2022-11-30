@@ -41,8 +41,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     string field = "Type";
     if (!JSONUtils::isMetadataPresent(root, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sRoot = Json::writeString(wbuilder, root);
+        string sRoot = JSONUtils::toString(root);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + 
@@ -65,8 +64,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     field = "Task";
     if (!JSONUtils::isMetadataPresent(root, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sRoot = Json::writeString(wbuilder, root);
+        string sRoot = JSONUtils::toString(root);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -80,8 +78,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     field = "Type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sRoot = Json::writeString(wbuilder, root);
+        string sRoot = JSONUtils::toString(root);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -112,8 +109,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     string field = "Parameters";
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+        string sGroupOfTasksRoot = JSONUtils::toString(groupOfTasksRoot);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -129,8 +125,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     field = "Tasks";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+        string sParametersRoot = JSONUtils::toString(parametersRoot);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -159,8 +154,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field
@@ -190,8 +184,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     string field = "ExecutionType";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+        string sParametersRoot = JSONUtils::toString(parametersRoot);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -224,8 +217,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -239,8 +231,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -269,8 +260,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -284,8 +274,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -314,8 +303,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -329,8 +317,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -363,8 +350,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     string field = "Type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+        string sTaskRoot = JSONUtils::toString(taskRoot);
 
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -387,8 +373,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -408,8 +393,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -430,8 +414,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -452,8 +435,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -474,8 +456,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -496,8 +477,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -518,8 +498,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -540,8 +519,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -562,8 +540,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -584,8 +561,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -606,8 +582,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -628,8 +603,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -650,8 +624,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -672,8 +645,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -694,8 +666,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -715,8 +686,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -737,8 +707,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -759,8 +728,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -781,8 +749,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -803,8 +770,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -825,8 +791,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -847,8 +812,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -869,8 +833,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -891,8 +854,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -913,8 +875,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -935,8 +896,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -957,8 +917,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -979,8 +938,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1001,8 +959,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1023,8 +980,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1045,8 +1001,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1067,8 +1022,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1089,8 +1043,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1111,8 +1064,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1133,8 +1085,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1155,8 +1106,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         field = "Parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            string sTaskRoot = JSONUtils::toString(taskRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -1391,8 +1341,7 @@ void Validator::validateAddContentMetadata(
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -1718,8 +1667,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2073,8 +2021,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     string field = "StartTimeInSeconds";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        Json::StreamWriterBuilder wbuilder;
-        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+        string sParametersRoot = JSONUtils::toString(parametersRoot);
                         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
@@ -2306,8 +2253,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2330,8 +2276,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 		{
 			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, drawTextDetailsRoot);
+				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2537,8 +2482,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2591,8 +2535,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                     field = "ReferenceLabel";
                     if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                        string sParametersRoot = JSONUtils::toString(parametersRoot);
 
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                                 + ", Field: " + "Reference..."
@@ -2652,8 +2595,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2677,8 +2619,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2701,8 +2642,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2717,8 +2657,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 	}
 	else
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither channel nor streamingUrl"
 			+ ", inputType: " + inputType
@@ -2834,8 +2773,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -2908,8 +2846,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3032,8 +2969,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3118,8 +3054,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3151,8 +3086,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
         field = "TrackType";
         if (!JSONUtils::isMetadataPresent(trackRoot, field))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sTrackRoot = Json::writeString(wbuilder, trackRoot);
+            string sTrackRoot = JSONUtils::toString(trackRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
@@ -3274,8 +3208,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3370,8 +3303,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3487,8 +3419,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3629,8 +3560,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3770,8 +3700,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -3789,8 +3718,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even or slower than 10)"
 			+ ", Field: " + field
@@ -3806,8 +3734,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "UniqueName";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field cannot be present in this Task"
 			+ ", Field: " + field
@@ -3824,8 +3751,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "start";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -3843,8 +3769,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "end";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -3861,8 +3786,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 	if (utcRecordingPeriodStart >= utcRecordingPeriodEnd)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__
 			+ "RecordingPeriodStart cannot be bigger than RecordingPeriodEnd"
@@ -3934,8 +3858,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	string field = "ConfigurationLabel";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
           
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -3957,8 +3880,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	{
 		if (timePeriod)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
          
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field
@@ -3994,8 +3916,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
 			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__
 				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
@@ -4013,8 +3934,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	field = "Outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4029,8 +3949,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 	if (outputsRoot.size() == 0)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4114,8 +4033,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		field = "ConfigurationLabel";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
           
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field
@@ -4196,8 +4114,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
     field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
         
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4232,8 +4149,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
 			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__
 				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
@@ -4322,8 +4238,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	{
 		if (timePeriod)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
          
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", Field: " + field
@@ -4359,8 +4274,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
 			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__
 				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
@@ -4378,8 +4292,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	field = "Outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4394,8 +4307,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
 	if (outputsRoot.size() == 0)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4419,8 +4331,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 			if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
 				&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+				string sParametersRoot = JSONUtils::toString(outputRoot);
        
 				string errorMessage = __FILEREF__
 					+ "In case of Image, the EncodingProfile is mandatory"
@@ -4514,8 +4425,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
     field = "schedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
         
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4549,8 +4459,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
 			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__
 				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
@@ -4568,8 +4477,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 	field = "Outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4584,8 +4492,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
 	if (outputsRoot.size() == 0)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -4634,8 +4541,7 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -4691,8 +4597,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -4827,8 +4732,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5172,8 +5076,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5231,8 +5134,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5343,8 +5245,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5366,8 +5267,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5411,8 +5311,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     {
         if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -5428,8 +5327,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 	string field = "DeliveryCode";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -5444,8 +5342,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     field = "CutPeriod";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -5460,8 +5357,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     field = "Start";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -5479,8 +5375,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     field = "End";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
             
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -5497,8 +5392,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 
 	if (utcCutPeriodStart >= utcCutPeriodEnd)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__
 			+ "CutPeriodStart cannot be bigger than CutPeriodEnd"
@@ -5568,8 +5462,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                         field = "ReferenceLabel";
                         if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
-                            Json::StreamWriterBuilder wbuilder;
-                            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                            string sParametersRoot = JSONUtils::toString(parametersRoot);
 
                             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                                     + ", Field: " + "Reference..."
@@ -5666,8 +5559,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
                 if (mediaItemsDetails.size() == 0)
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    string sParametersRoot = JSONUtils::toString(parametersRoot);
 
                     string errorMessage = __FILEREF__ + "No media items found"
                             + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
@@ -5937,8 +5829,7 @@ void Validator::fillReferencesOutput(
     string field = "ReferencesOutput";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 		string errorMessage = __FILEREF__ + "Field is not present or it is null"
 			+ ", Field: " + field
@@ -5971,8 +5862,7 @@ void Validator::fillReferencesOutput(
                     field = "ReferenceUniqueName";
                     if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
                     {
-						Json::StreamWriterBuilder wbuilder;
-						string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+						string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
 							+ ", Field: " + "Reference..."
@@ -6062,8 +5952,7 @@ void Validator::fillReferencesOutput(
 
                 if (mediaItemsDetails.size() == 0)
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    string sParametersRoot = JSONUtils::toString(parametersRoot);
 
                     string errorMessage = __FILEREF__ + "No media items found"
                             + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
@@ -6117,8 +6006,7 @@ void Validator::fillReferencesOutput(
         }
         catch(runtime_error e)
         {
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
             string errorMessage = __FILEREF__ + "fillReferencesOutput failed"
                     + ", sParametersRoot: " + sParametersRoot
@@ -6130,8 +6018,7 @@ void Validator::fillReferencesOutput(
         }
         catch(exception e)
         {
-			Json::StreamWriterBuilder wbuilder;
-			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
             string errorMessage = __FILEREF__ + "fillReferencesOutput failed"
                     + ", sParametersRoot: " + sParametersRoot
@@ -6467,8 +6354,7 @@ void Validator::validateCrossReference(
 		{
 			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                    + ", Field: " + mandatoryField
@@ -6490,8 +6376,7 @@ void Validator::validateCrossReference(
 		{
 			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                    + ", Field: " + mandatoryField
@@ -6514,8 +6399,7 @@ void Validator::validateCrossReference(
 	}
 	catch(exception e)
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+		string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            
 		string errorMessage = __FILEREF__ + "Field 'CrossReferenceType' is wrong"
 			+ ", CrossReferenceType: " + sCrossReferenceType
@@ -6533,8 +6417,7 @@ void Validator::validateCrossReference(
 		field = "Parameters";
 		if (!JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+			string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            
 			string errorMessage = __FILEREF__ + "Field 'CrossReference->Parameters' is missing"
 				+ ", label: " + label
@@ -6554,8 +6437,7 @@ void Validator::validateCrossReference(
 		{
 			if (!JSONUtils::isMetadataPresent(crossReferenceParameters, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + mandatoryField
@@ -6582,8 +6464,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     {
         if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
         {
-            Json::StreamWriterBuilder wbuilder;
-            string sEncodingProfilesSetRoot = Json::writeString(wbuilder, encodingProfilesSetRoot);
+            string sEncodingProfilesSetRoot = JSONUtils::toString(encodingProfilesSetRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
@@ -6637,8 +6518,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6678,8 +6558,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6697,8 +6576,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
 		if (videoBitRatesRoot.size() == 0)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No video bit rates are present"
 				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
@@ -6720,8 +6598,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField
@@ -6747,8 +6624,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 		{
 			if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                        + ", Field: " + mandatoryField
@@ -6766,8 +6642,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
 		if (audioBitRatesRoot.size() == 0)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present"
 				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
@@ -6787,8 +6662,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6815,8 +6689,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6855,8 +6728,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6874,8 +6746,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 
 		if (audioBitRatesRoot.size() == 0)
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present"
 				+ ", sEncodingProfileRoot: " + sEncodingProfileRoot;
@@ -6895,8 +6766,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6923,8 +6793,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -6964,8 +6833,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
         {
             if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, mandatoryField))
             {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
                 
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + mandatoryField
@@ -7009,8 +6877,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+				string sParametersRoot = JSONUtils::toString(outputRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + mandatoryField
@@ -7032,8 +6899,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+				string sParametersRoot = JSONUtils::toString(outputRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + mandatoryField
@@ -7058,8 +6924,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+				string sParametersRoot = JSONUtils::toString(outputRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + mandatoryField
@@ -7084,8 +6949,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		{
 			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, drawTextDetailsRoot);
+				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
            
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + mandatoryField

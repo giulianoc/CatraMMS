@@ -137,8 +137,7 @@ void API::updateMediaItem(
                 + ", mediaItemKey: " + to_string(mediaItemKey)
             );
             
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, mediaItemRoot);
+            string responseBody = JSONUtils::toString(mediaItemRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -298,8 +297,7 @@ void API::updatePhysicalPath(
                 + ", physicalPathKey: " + to_string(physicalPathKey)
             );
             
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, mediaItemRoot);
+            string responseBody = JSONUtils::toString(mediaItemRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -681,8 +679,7 @@ void API::mediaItemsList(
 				tagsIn, tagsNotIn, orderBy, jsonOrderBy,
 				responseFields, admin);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            string responseBody = JSONUtils::toString(ingestionStatusRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -807,8 +804,7 @@ void API::tagsList(
                     workspace->_workspaceKey, start, rows,
                     liveRecordingChunk, contentTypePresent, contentType, tagNameFilter);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, tagsRoot);
+            string responseBody = JSONUtils::toString(tagsRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

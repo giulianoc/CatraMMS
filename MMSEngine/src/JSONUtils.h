@@ -35,6 +35,8 @@ public:
 	static bool asBool(Json::Value root, string field, bool defaultValue);
 
 	static Json::Value toJson(int64_t ingestionJobKey, int64_t encodingJobKey, string json);
+
+	static string toString(Json::Value joValueRoot);
 };
 
 #endif

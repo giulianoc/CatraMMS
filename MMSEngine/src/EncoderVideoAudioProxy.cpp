@@ -2360,9 +2360,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, encodingMedatada);
+                    body = JSONUtils::toString(encodingMedatada);
                 }
             }
 
@@ -3341,9 +3339,7 @@ bool EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 				overlayMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, overlayMedatada);
+                    body = JSONUtils::toString(overlayMedatada);
                 }
             }
             
@@ -3942,9 +3938,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, overlayTextMedatada);
+                    body = JSONUtils::toString(overlayTextMedatada);
                 }
             }
             
@@ -4649,9 +4643,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 videoSpeedMetadata["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, videoSpeedMetadata);
+                    body = JSONUtils::toString(videoSpeedMetadata);
                 }
             }
             
@@ -5452,9 +5444,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                 pictureInPictureMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, pictureInPictureMedatada);
+                    body = JSONUtils::toString(pictureInPictureMedatada);
                 }
             }
             
@@ -6149,9 +6139,7 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
                 introOutroOverlayMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, introOutroOverlayMedatada);
+                    body = JSONUtils::toString(introOutroOverlayMedatada);
                 }
             }
             
@@ -6844,9 +6832,7 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
                 cutFrameAccurateMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
                 cutFrameAccurateMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, cutFrameAccurateMedatada);
+                    body = JSONUtils::toString(cutFrameAccurateMedatada);
                 }
             }
             
@@ -7550,9 +7536,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				generateFramesMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, generateFramesMedatada);
+                    body = JSONUtils::toString(generateFramesMedatada);
                 }
             }
             
@@ -8165,9 +8149,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 slideShowMedatada["shortestAudioDurationInSeconds"] = shortestAudioDurationInSeconds;
 
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, slideShowMedatada);
+                    body = JSONUtils::toString(slideShowMedatada);
                 }
             }
             
@@ -10296,8 +10278,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						try
 						{
-							// Json::StreamWriterBuilder wbuilder;
-							// string encodingParameters = Json::writeString(wbuilder,
+							// string encodingParameters = JSONUtils::toString(
 							// 	_encodingItem->_encodingParametersRoot);
 
 							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
@@ -10966,9 +10947,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{
-						Json::StreamWriterBuilder wbuilder;
-
-						body = Json::writeString(wbuilder, liveRecorderMedatada);
+						body = JSONUtils::toString(liveRecorderMedatada);
 					}
 				}
             
@@ -11912,8 +11891,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 						try
 						{
-							// Json::StreamWriterBuilder wbuilder;
-							// string encodingParameters = Json::writeString(wbuilder,
+							// string encodingParameters = JSONUtils::toString(
 							// 	_encodingItem->_encodingParametersRoot);
 
 							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
@@ -12540,9 +12518,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					liveProxyMetadata["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
 					{
-						Json::StreamWriterBuilder wbuilder;
-
-						body = Json::writeString(wbuilder, liveProxyMetadata);
+						body = JSONUtils::toString(liveProxyMetadata);
 					}
 				}
 
@@ -14553,9 +14529,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					*/
 
 					{
-						Json::StreamWriterBuilder wbuilder;
-
-						body = Json::writeString(wbuilder, liveGridMetadata);
+						body = JSONUtils::toString(liveGridMetadata);
 					}
 				}
 
@@ -15734,8 +15708,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 
     string mediaMetadata;
     {
-        Json::StreamWriterBuilder wbuilder;
-        mediaMetadata = Json::writeString(wbuilder, parametersRoot);
+        mediaMetadata = JSONUtils::toString(parametersRoot);
     }
 
     _logger->info(__FILEREF__ + "Media metadata generated"

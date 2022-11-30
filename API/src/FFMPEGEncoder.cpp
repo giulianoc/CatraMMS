@@ -513,8 +513,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			Json::Value responseBodyRoot;
 			responseBodyRoot["status"] = "Encoder up and running";
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -553,8 +552,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			infoRoot["status"] = "Encoder up and running";
 			infoRoot["cpuUsage"] = lastBiggerCpuUsage;
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, infoRoot);
+			string responseBody = JSONUtils::toString(infoRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -755,8 +753,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -958,8 +955,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -1160,8 +1156,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -1362,8 +1357,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -1564,8 +1558,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -1766,8 +1759,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -1968,8 +1960,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -2170,8 +2161,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -2372,8 +2362,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -2584,8 +2573,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -2838,8 +2826,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			string responseBody = JSONUtils::toString(responseBodyRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
@@ -3099,8 +3086,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			field = "encodingProgress";
 			responseBodyRoot[field] = 100;
 
-			Json::StreamWriterBuilder wbuilder;
-			responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			responseBody = JSONUtils::toString(responseBodyRoot);
         }
         else
         {
@@ -3151,8 +3137,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingProgress";
 				responseBodyRoot[field] = 100;
 
-				Json::StreamWriterBuilder wbuilder;
-				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 			else if (encodingFound)
 			{
@@ -3246,8 +3231,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				else
 					responseBodyRoot[field] = encodingProgress;
 
-				Json::StreamWriterBuilder wbuilder;
-				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 			else if (liveProxyFound)
 			{
@@ -3329,8 +3313,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingProgress";
 				responseBodyRoot[field] = Json::nullValue;
 
-				Json::StreamWriterBuilder wbuilder;
-				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 			else // if (liveRecording)
 			{
@@ -3365,8 +3348,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingProgress";
 				responseBodyRoot[field] = Json::nullValue;
 
-				Json::StreamWriterBuilder wbuilder;
-				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
         }
 
@@ -3639,8 +3621,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			field = "pid";
 			responseBodyRoot[field] = pidToBeKilled;
 
-			Json::StreamWriterBuilder wbuilder;
-			responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
@@ -3788,8 +3769,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			string field = "encodingJobKey";
 			responseBodyRoot[field] = encodingJobKey;
 
-			Json::StreamWriterBuilder wbuilder;
-			responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
@@ -11393,8 +11373,7 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 		workflowRoot[field] = addContentRoot;
 
    		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+       		workflowMetadata = JSONUtils::toString(workflowRoot);
    		}
 
 		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
@@ -12738,8 +12717,7 @@ string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
 		workflowRoot[field] = addContentRoot;
 
    		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+       		workflowMetadata = JSONUtils::toString(workflowRoot);
    		}
 
 		_logger->info(__FILEREF__ + "Live Recorder VOD Workflow metadata generated"
@@ -16650,8 +16628,7 @@ string FFMPEGEncoder::buildAddContentIngestionWorkflow(
 		workflowRoot[field] = addContentRoot;
 
    		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+       		workflowMetadata = JSONUtils::toString(workflowRoot);
    		}
 
 		_logger->info(__FILEREF__ + "buildAddContentIngestionWorkflow"
@@ -16963,8 +16940,7 @@ string FFMPEGEncoder::buildVariantIngestionWorkflow(
 		workflowRoot[field] = addContentRoot;
 
    		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+       		workflowMetadata = JSONUtils::toString(workflowRoot);
    		}
 
 		_logger->info(__FILEREF__ + "Variant workflow metadata generated"

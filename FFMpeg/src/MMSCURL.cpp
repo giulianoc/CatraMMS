@@ -860,3 +860,10 @@ Json::Value MMSCURL::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, str
 	return joValue;
 }
 
+string MMSCURL::toString(Json::Value joValueRoot)
+{
+	Json::StreamWriterBuilder wbuilder;                                                               
+
+	return Json::writeString(wbuilder, joValueRoot);
+}
+

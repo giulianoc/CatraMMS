@@ -9477,8 +9477,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                     field = "TrackType";
                     if (!JSONUtils::isMetadataPresent(trackRoot, field))
                     {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sTrackRoot = Json::writeString(wbuilder, trackRoot);
+                        string sTrackRoot = JSONUtils::toString(trackRoot);
 
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                                 + ", Field: " + field
@@ -10194,9 +10193,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					string data;
 					if (callbackMedatada != Json::nullValue)
 					{
-						Json::StreamWriterBuilder wbuilder;
-
-						data = Json::writeString(wbuilder, callbackMedatada);
+						data = JSONUtils::toString(callbackMedatada);
 					}
 
 					userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
@@ -14947,10 +14944,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
-			{
-				Json::StreamWriterBuilder wbuilder;
-				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-			}
+			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
 		string sResponse = MMSCURL::httpPostPutString(                                                        
@@ -15979,10 +15973,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
-			{
-				Json::StreamWriterBuilder wbuilder;
-				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-			}
+			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
 		string sResponse = MMSCURL::httpPostPutString(                                                        
@@ -16476,11 +16467,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					bodyRoot[field] = statusRoot;
 				}
 
-				{
-					Json::StreamWriterBuilder wbuilder;
-                   
-					body = Json::writeString(wbuilder, bodyRoot);
-				}
+				body = JSONUtils::toString(bodyRoot);
 			}
 
 			list<string> headerList;
@@ -16821,11 +16808,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					bodyRoot[field] = contentDetailsRoot;
 				}
 
-				{
-					Json::StreamWriterBuilder wbuilder;
-                   
-					body = Json::writeString(wbuilder, bodyRoot);
-				}
+				body = JSONUtils::toString(bodyRoot);
 			}
 
 			list<string> headerList;
@@ -17572,10 +17555,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				workflowRoot[field] = proxyRoot;
 			}
 
-			{
-				Json::StreamWriterBuilder wbuilder;
-				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-			}
+			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
 		MMSCURL::httpPostPutString(                                                        
@@ -19239,8 +19219,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 				/*
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string json = Json::writeString(wbuilder, parametersRoot);
+					string json = JSONUtils::toString(parametersRoot);
 
 					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19273,8 +19252,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 				/*
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string json = Json::writeString(wbuilder, destMmsDataRoot);
+					string json = JSONUtils::toString(destMmsDataRoot);
 
 					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19283,8 +19261,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					);
 				}
 				{
-					Json::StreamWriterBuilder wbuilder;
-					string json = Json::writeString(wbuilder, parametersRoot);
+					string json = JSONUtils::toString(parametersRoot);
 
 					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22142,11 +22119,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 	try
 	{
-		string sParameters;
-		{
-			Json::StreamWriterBuilder wbuilder;
-			sParameters = Json::writeString(wbuilder, parametersRoot);
-		}
+		string sParameters = JSONUtils::toString(parametersRoot);
 
 		_logger->info(__FILEREF__ + "emailNotificationThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23254,11 +23227,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     // we will leave there even because we know they will not be used by the
     // Add-Content task
     
-    string mediaMetadata;
-    {
-        Json::StreamWriterBuilder wbuilder;
-        mediaMetadata = Json::writeString(wbuilder, parametersRoot);
-    }
+    string mediaMetadata = JSONUtils::toString(parametersRoot);
                         
     _logger->info(__FILEREF__ + "Media metadata generated"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26118,11 +26087,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 field = "status";
                 bodyRoot[field] = statusRoot;
 
-                {
-                    Json::StreamWriterBuilder wbuilder;
-                    
-                    body = Json::writeString(wbuilder, bodyRoot);
-                }
+				body = JSONUtils::toString(bodyRoot);
             }
 
             list<string> headerList;
@@ -26958,9 +26923,7 @@ void MMSEngineProcessor::userHttpCallback(
 			string data;
 			if (callbackMedatada != Json::nullValue)
 			{
-				Json::StreamWriterBuilder wbuilder;
-
-				data = Json::writeString(wbuilder, callbackMedatada);
+				data = JSONUtils::toString(callbackMedatada);
 			}
 			*/
 

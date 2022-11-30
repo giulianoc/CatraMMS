@@ -16151,8 +16151,7 @@ void FFMpeg::settingFfmpegParameters(
     string field;
 
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string sEncodingProfileDetailsRoot = Json::writeString(wbuilder, encodingProfileDetailsRoot);
+		string sEncodingProfileDetailsRoot = MMSCURL::toString(encodingProfileDetailsRoot);
 
 		_logger->info(__FILEREF__ + "settingFfmpegParameters"
 			", sEncodingProfileDetailsRoot: " + sEncodingProfileDetailsRoot

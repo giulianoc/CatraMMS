@@ -367,8 +367,7 @@ void API::registerUser(
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, registrationRoot);
+            string responseBody = JSONUtils::toString(registrationRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
@@ -609,8 +608,7 @@ void API::createWorkspace(
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, registrationRoot);
+            string responseBody = JSONUtils::toString(registrationRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
@@ -994,8 +992,7 @@ void API::shareWorkspace_(
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, registrationRoot);
+            string responseBody = JSONUtils::toString(registrationRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
@@ -1123,8 +1120,7 @@ void API::workspaceList(
         {
 			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, workspaceListRoot);
+            string responseBody = JSONUtils::toString(workspaceListRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -1193,8 +1189,7 @@ void API::confirmRegistration(
 			Json::Value registrationRoot;
 			registrationRoot["apiKey"] = apiKey;
 
-			Json::StreamWriterBuilder wbuilder;
-			string responseBody = Json::writeString(wbuilder, registrationRoot);
+			string responseBody = JSONUtils::toString(registrationRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
@@ -1987,8 +1982,7 @@ void API::login(
             string field = "workspace";
             loginDetailsRoot[field] = loginWorkspaceRoot;
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
+            string responseBody = JSONUtils::toString(loginDetailsRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -2171,8 +2165,7 @@ void API::updateUser(
                 + ", email: " + email
             );
             
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
+            string responseBody = JSONUtils::toString(loginDetailsRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -2767,8 +2760,7 @@ void API::updateWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
             
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, workspaceDetailRoot);
+            string responseBody = JSONUtils::toString(workspaceDetailRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -3098,8 +3090,7 @@ void API::workspaceUsage (
         field = "response";
         workspaceUsageRoot[field] = responseRoot;
 
-		Json::StreamWriterBuilder wbuilder;
-		string responseBody = Json::writeString(wbuilder, workspaceUsageRoot);
+		string responseBody = JSONUtils::toString(workspaceUsageRoot);
             
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);            

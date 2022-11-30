@@ -5212,9 +5212,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 				else
 				{
-					Json::StreamWriterBuilder wbuilder;
-
-					userData = Json::writeString(wbuilder, parametersRoot[field]);
+					userData = JSONUtils::toString(parametersRoot[field]);
 
 					// _logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
 					// 	+ ", userData: " + userData
@@ -6952,8 +6950,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				field = "externalDeliveryURL";
 				deliveryInfoRoot[field] = externalDeliveryURL;
 
-                Json::StreamWriterBuilder wbuilder;
-                deliveryInfo = Json::writeString(wbuilder, deliveryInfoRoot);                        
+                deliveryInfo = JSONUtils::toString(deliveryInfoRoot);                        
 			}
 		}
 
@@ -7761,8 +7758,7 @@ void MMSEngineDBFacade::addCrossReference (
     {
 		string crossReferenceParameters;
 		{
-			Json::StreamWriterBuilder wbuilder;
-            crossReferenceParameters = Json::writeString(wbuilder, crossReferenceParametersRoot);
+            crossReferenceParameters = JSONUtils::toString(crossReferenceParametersRoot);
 		}
 
         {

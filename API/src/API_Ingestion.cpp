@@ -151,8 +151,7 @@ void API::ingestion(
 
 			string processedMetadataContent;
 			{
-				Json::StreamWriterBuilder wbuilder;
-				processedMetadataContent = Json::writeString(wbuilder, requestBodyRoot);
+				processedMetadataContent = JSONUtils::toString(requestBodyRoot);
 			}
 
 			bool commit = true;
@@ -222,8 +221,7 @@ void API::ingestion(
             throw e;
         }
 
-		Json::StreamWriterBuilder wbuilder;
-		string responseBody = Json::writeString(wbuilder, responseBodyRoot);
+		string responseBody = JSONUtils::toString(responseBodyRoot);
 
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, responseBody);
@@ -299,8 +297,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		}
 		else
 		{
-			Json::StreamWriterBuilder wbuilder;
-			string sVariablesValuesToBeUsedRoot = Json::writeString(wbuilder, variablesValuesToBeUsedRoot);
+			string sVariablesValuesToBeUsedRoot = JSONUtils::toString(variablesValuesToBeUsedRoot);
 
 			_logger->info(__FILEREF__ + "manageWorkflowVariables"
 				+ ", sVariablesValuesToBeUsedRoot: " + sVariablesValuesToBeUsedRoot
@@ -360,8 +357,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 				{
 					Json::Value key = it.key();
 
-					Json::StreamWriterBuilder wbuilder;
-					string sKey = Json::writeString(wbuilder, key);
+					string sKey = JSONUtils::toString(key);
 					if (sKey.length() > 2)
 						sKey = sKey.substr(1, sKey.length() - 2);
 
@@ -448,8 +444,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 									sValue = "null";
 								else
 								{
-									Json::StreamWriterBuilder wbuilder;
-									sValue = Json::writeString(wbuilder, variableDetails[field]);
+									sValue = JSONUtils::toString(variableDetails[field]);
 								}
 							}
 							else if (variableType == "jsonArray")
@@ -458,8 +453,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 									sValue = "null";
 								else
 								{
-									Json::StreamWriterBuilder wbuilder;
-									sValue = Json::writeString(wbuilder, variableDetails[field]);
+									sValue = JSONUtils::toString(variableDetails[field]);
 								}
 							}
 							else
@@ -510,8 +504,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 									sValue = "null";
 								else
 								{
-									Json::StreamWriterBuilder wbuilder;
-									sValue = Json::writeString(wbuilder, variablesValuesToBeUsedRoot[sKey]);
+									sValue = JSONUtils::toString(variablesValuesToBeUsedRoot[sKey]);
 								}
 							}
 							else if (variableType == "jsonArray")
@@ -520,8 +513,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 									sValue = "null";
 								else
 								{
-									Json::StreamWriterBuilder wbuilder;
-									sValue = Json::writeString(wbuilder, variablesValuesToBeUsedRoot[sKey]);
+									sValue = JSONUtils::toString(variablesValuesToBeUsedRoot[sKey]);
 								}
 							}
 							else
@@ -781,9 +773,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         if (referencesChanged)
         {
             {
-                Json::StreamWriterBuilder wbuilder;
-
-                taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+                taskMetadata = JSONUtils::toString(parametersRoot);        
             }
 
             // commented because already logged in mmsEngineDBFacade
@@ -904,9 +894,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         }
 
         //{
-        //    Json::StreamWriterBuilder wbuilder;
-
-        //    taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+        //    taskMetadata = JSONUtils::toString(parametersRoot);        
         //}
         
         // commented because already logged in mmsEngineDBFacade
@@ -919,8 +907,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
     }
 	if (taskOrGroupOfTasksLabel == "Check Streaming OnError")
 	{
-		Json::StreamWriterBuilder wbuilder;
-		string taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+		string taskMetadata = JSONUtils::toString(parametersRoot);        
 
 		_logger->info(__FILEREF__ + "testttttttt"
 			+ ", taskMetadata: " + taskMetadata
@@ -1566,13 +1553,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	// just log initial parameters
 	/*
     {
-        Json::StreamWriterBuilder wbuilder;
-
 		_logger->info(__FILEREF__ + "IngestionJob to be added"
 			+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 			+ ", type: " + type
 			+ ", taskLabel: " + taskLabel
-			+ ", taskMetadata before: " + Json::writeString(wbuilder, parametersRoot)
+			+ ", taskMetadata before: " + JSONUtils::toString(parametersRoot)
 		);
     }
 	*/
@@ -1588,9 +1573,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     // if (parametersSectionPresent)
     {
-        Json::StreamWriterBuilder wbuilder;
-
-        taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+        taskMetadata = JSONUtils::toString(parametersRoot);        
     }
     
 	vector<int64_t> waitForGlobalIngestionJobKeys;
@@ -2097,9 +2080,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 	string taskMetadata;
 	{
-		Json::StreamWriterBuilder wbuilder;
-
-		taskMetadata = Json::writeString(wbuilder, parametersRoot);
+		taskMetadata = JSONUtils::toString(parametersRoot);
 	}
 
 	_logger->info(__FILEREF__ + "add IngestionJob (Group of Tasks)"
@@ -3795,8 +3776,7 @@ void API::ingestionRootsStatus(
                     label, status, asc, dependencyInfo, ingestionJobOutputs
                     );
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            string responseBody = JSONUtils::toString(ingestionStatusRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -4173,8 +4153,7 @@ void API::ingestionJobsStatus(
 				dependencyInfo, ingestionJobOutputs
 			);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            string responseBody = JSONUtils::toString(ingestionStatusRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -4528,8 +4507,7 @@ void API::updateIngestionJob(
 			Json::Value responseRoot;
 			responseRoot["status"] = string("success");
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, responseRoot);
+            string responseBody = JSONUtils::toString(responseRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
@@ -5698,8 +5676,7 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 
-			Json::StreamWriterBuilder wbuilder;
-			string newPlaylist = Json::writeString(wbuilder, newPlaylistRoot);
+			string newPlaylist = JSONUtils::toString(newPlaylistRoot);
 
 			string broadcastParameters;
 			int64_t broadcastEncodingJobKey = -1;
@@ -5730,9 +5707,7 @@ void API::changeLiveProxyPlaylist(
 				string field = "inputsRoot";
 				broadcastParametersRoot[field] = newPlaylistRoot;
 
-				Json::StreamWriterBuilder wbuilder;
-				string newBroadcastParameters = Json::writeString(wbuilder,
-					broadcastParametersRoot);
+				string newBroadcastParameters = JSONUtils::toString(broadcastParametersRoot);
 
 				_mmsEngineDBFacade->updateEncodingJobParameters(
 					broadcastEncodingJobKey, newBroadcastParameters);
@@ -5868,8 +5843,7 @@ void API::changeLiveProxyPlaylist(
 				field = "internalMMS";
 				metadataContentRoot[field] = mmsInternalRoot;
 
-				Json::StreamWriterBuilder wbuilder;
-				string newMetadataContentRoot = Json::writeString(wbuilder, metadataContentRoot);
+				string newMetadataContentRoot = JSONUtils::toString(metadataContentRoot);
 
 				_mmsEngineDBFacade->updateIngestionJobMetadataContent(
 					broadcastIngestionJobKey, newMetadataContentRoot);

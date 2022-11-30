@@ -159,3 +159,10 @@ Json::Value JSONUtils::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, s
 	return joValue;
 }
 
+string JSONUtils::toString(Json::Value joValueRoot)
+{
+	Json::StreamWriterBuilder wbuilder;                                                               
+
+	return Json::writeString(wbuilder, joValueRoot);
+}
+

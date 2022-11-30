@@ -5087,8 +5087,7 @@ void MMSEngineDBFacade::addEncodingJob (
 			field = "mmsBinaryIngestionURL";
 			parametersRoot[field] = mmsBinaryIngestionURL;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
         {
@@ -5437,8 +5436,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 			field = "mmsIngestionURL";
 			parametersRoot[field] = mmsIngestionURL;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
         {
@@ -5765,8 +5763,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 			field = "mmsIngestionURL";
 			parametersRoot[field] = mmsIngestionURL;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
         {
             int savedEncodingPriority = static_cast<int>(encodingPriority);
@@ -6133,8 +6130,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 			field = "mmsIngestionURL";
 			parametersRoot[field] = mmsIngestionURL;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
         {
@@ -6448,8 +6444,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 			field = "shortestAudioDurationInSeconds";
 			parametersRoot[field] = shortestAudioDurationInSeconds;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
         _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -7486,8 +7481,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "mmsBinaryIngestionURL";
 				parametersRoot[field] = mmsBinaryIngestionURL;
 
-				Json::StreamWriterBuilder wbuilder;
-				parameters = Json::writeString(wbuilder, parametersRoot);
+				parameters = JSONUtils::toString(parametersRoot);
 			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -7820,8 +7814,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
 
-				Json::StreamWriterBuilder wbuilder;
-				parameters = Json::writeString(wbuilder, parametersRoot);
+				parameters = JSONUtils::toString(parametersRoot);
 			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -8127,8 +8120,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				Json::StreamWriterBuilder wbuilder;
-				parameters = Json::writeString(wbuilder, parametersRoot);
+				parameters = JSONUtils::toString(parametersRoot);
 			}
 
 			// 2019-11-06: we will force the encoding priority to high to be sure this EncodingJob
@@ -8429,8 +8421,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				Json::StreamWriterBuilder wbuilder;
-				parameters = Json::writeString(wbuilder, parametersRoot);
+				parameters = JSONUtils::toString(parametersRoot);
 			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -8789,8 +8780,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				Json::StreamWriterBuilder wbuilder;
-				parameters = Json::writeString(wbuilder, parametersRoot);
+				parameters = JSONUtils::toString(parametersRoot);
 			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -9825,8 +9815,8 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 
 			field = "outroVideoDurationInMilliSeconds";
 			parametersRoot[field] = outroVideoDurationInMilliSeconds;
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
 		_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
@@ -10149,8 +10139,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 			field = "newUtcEndTimeInMilliSecs";
 			parametersRoot[field] = newUtcEndTimeInMilliSecs;
 
-			Json::StreamWriterBuilder wbuilder;
-			parameters = Json::writeString(wbuilder, parametersRoot);
+			parameters = JSONUtils::toString(parametersRoot);
 		}
 
 		_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"

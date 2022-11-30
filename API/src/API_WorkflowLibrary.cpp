@@ -40,8 +40,7 @@ void API::workflowsAsLibraryList(
 		Json::Value workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(
 			workspace->_workspaceKey);
 
-		Json::StreamWriterBuilder wbuilder;
-		string responseBody = Json::writeString(wbuilder, workflowListRoot);
+		string responseBody = JSONUtils::toString(workflowListRoot);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);

@@ -112,8 +112,7 @@ void API::addRequestStatistic(
 			Json::Value statisticRoot = _mmsEngineDBFacade->addRequestStatistic(
 				workspace->_workspaceKey, userId, physicalPathKey, confStreamKey, title);
 
-			Json::StreamWriterBuilder wbuilder;
-			sResponse = Json::writeString(wbuilder, statisticRoot);
+			sResponse = JSONUtils::toString(statisticRoot);
 		}
 		catch(runtime_error e)
 		{
@@ -272,8 +271,7 @@ void API::requestStatisticList(
 				workspace->_workspaceKey, userId, title, startStatisticDate, endStatisticDate,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -422,8 +420,7 @@ void API::requestStatisticPerContentList(
 				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -571,8 +568,7 @@ void API::requestStatisticPerUserList(
 				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -720,8 +716,7 @@ void API::requestStatisticPerMonthList(
 				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -869,8 +864,7 @@ void API::requestStatisticPerDayList(
 				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -1018,8 +1012,7 @@ void API::requestStatisticPerHourList(
 				minimalNextRequestDistanceInSeconds,
 				start, rows); 
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, statisticsListRoot);
+            string responseBody = JSONUtils::toString(statisticsListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

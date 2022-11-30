@@ -627,8 +627,7 @@ void API::encoderList(
 					allEncoders, workspaceKey, runningInfo,
 					encoderKey, label, serverName, port, labelOrder);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, encoderListRoot);
+            string responseBody = JSONUtils::toString(encoderListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
@@ -746,8 +745,7 @@ void API::encodersPoolList(
 					workspace->_workspaceKey,
 					encodersPoolKey, label, labelOrder);
 
-            Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, encodersPoolListRoot);
+            string responseBody = JSONUtils::toString(encodersPoolListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

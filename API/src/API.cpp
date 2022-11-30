@@ -584,8 +584,7 @@ void API::manageRequestAndResponse(
 			statusRoot["status"] = "API server up and running";
 			statusRoot["version-api"] = version;
 
-			Json::StreamWriterBuilder wbuilder;
-			string sJson = Json::writeString(wbuilder, statusRoot);
+			string sJson = JSONUtils::toString(statusRoot);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, sJson);
@@ -2608,8 +2607,7 @@ void API::createDeliveryAuthorization(
 				field = "maxRetries";
 				responseRoot[field] = maxRetries;
 
-				Json::StreamWriterBuilder wbuilder;                                                               
-				string responseBody = Json::writeString(wbuilder, responseRoot);
+				string responseBody = JSONUtils::toString(responseRoot);
 
 				/*
 				string responseBody = string("{ ")
@@ -3053,9 +3051,7 @@ void API::createBulkOfDeliveryAuthorization(
 			}
 
 			{
-				Json::StreamWriterBuilder wbuilder;
-				string responseBody = Json::writeString(wbuilder,
-					deliveryAutorizationDetailsRoot);
+				string responseBody = JSONUtils::toString(deliveryAutorizationDetailsRoot);
 
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 					request, "", api, 201, responseBody);
@@ -3848,9 +3844,7 @@ void API::createDeliveryCDN77Authorization(
 			responseBodyRoot[field] = newDeliveryURL;
 
 			{
-				Json::StreamWriterBuilder wbuilder;
-
-				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 		}
 
