@@ -323,6 +323,7 @@ private:
 
 	string getAWSSignedURL(string playURL, int expirationInMinutes);
 
+	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
 };
 
 #endif

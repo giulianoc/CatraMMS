@@ -3951,66 +3951,6 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				_logger
 			);
 
-			/*
-            list<string> header;
-
-            header.push_back("Content-Type: application/json");
-            {
-                string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
-                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-                header.push_back(basicAuthorization);
-            }
-            
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
-
-            // Setting the URL to retrive.
-            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-
-			// timeout consistent with nginx configuration (fastcgi_read_timeout)
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
-
-            // if (_ffmpegEncoderProtocol == "https")
-			string httpsPrefix("https");
-			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-            {
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
-                
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
-                
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-            }
-            request.setOpt(new curlpp::options::HttpHeader(header));
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            _logger->info(__FILEREF__ + "OverlayText media file"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", body: " + body
-            );
-			responseInitialized = true;
-            request.perform();
-
-            string sResponse = response.str();
-            // LF and CR create problems to the json parser...
-            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-                sResponse.pop_back();
-
-            Json::Value overlayTextContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
-				_encodingItem->_encodingJobKey, sResponse);
-			*/
-
             {
                 string field = "error";
                 if (JSONUtils::isMetadataPresent(overlayTextContentResponse, field))
@@ -4086,6 +4026,10 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
 			_currentUsedFFMpegEncoderKey, "");	// stagingEncodedAssetPathName);
 
+		int maxConsecutiveEncodingStatusFailures = 1;
+		bool killedByUser = waitingEncoding(maxConsecutiveEncodingStatusFailures);
+
+		/*
 		bool killedByUser = false;
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -4105,7 +4049,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			try
 			{
 				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
-					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					getEncodingStatus();
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 					urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
@@ -4260,6 +4204,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				}
 			}
 		}
+		*/
             
 		/*
 		// here we do not know if the encoding was successful or not
@@ -4370,6 +4315,182 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
 		throw e;
 	}
+}
+
+bool EncoderVideoAudioProxy::waitingEncoding(
+	int maxConsecutiveEncodingStatusFailures)
+{
+	bool killedByUser = false;
+
+	bool encodingFinished = false;
+	int encodingStatusFailures = 0;
+	int lastEncodingPid = 0;
+	while(!(encodingFinished || encodingStatusFailures >= maxConsecutiveEncodingStatusFailures))
+	{
+		this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+               
+		try
+		{
+			bool completedWithError = false;
+			string encodingErrorMessage;
+			bool urlForbidden = false;
+			bool urlNotFound = false;
+			int encodingProgress = 0;
+			int encodingPid;
+
+			tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
+				getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
+				urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
+
+			if (encodingErrorMessage != "")
+			{
+				try
+				{
+					string firstLineOfEncodingErrorMessage;
+					{
+						string firstLine;
+						stringstream ss(encodingErrorMessage);
+						if (getline(ss, firstLine))
+							firstLineOfEncodingErrorMessage = firstLine;
+						else
+							firstLineOfEncodingErrorMessage = encodingErrorMessage;
+					}
+
+					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+						_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+				}
+			}
+
+			if (completedWithError)
+			{
+				string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+					+ ", encodingErrorMessage: " + encodingErrorMessage
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			// encodingProgress/encodingPid
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingProgress: " + to_string(encodingProgress)
+					);
+					_mmsEngineDBFacade->updateEncodingJobProgress (
+						_encodingItem->_encodingJobKey, encodingProgress);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+				}
+
+				if (lastEncodingPid != encodingPid)
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingPid"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingPid: " + to_string(encodingPid)
+						);
+						_mmsEngineDBFacade->updateEncodingPid (
+						_encodingItem->_encodingJobKey, encodingPid);
+
+						lastEncodingPid = encodingPid;
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingPid failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _encodingPid: " + to_string(encodingPid)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingPid failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _encodingPid: " + to_string(encodingPid)
+						);
+					}
+				}
+			}
+
+			// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+			//	Scenario:
+			//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+			//			returns 'timeout'.
+			//			Really the encoder was working fine, ffmpeg was also running fine,
+			//			just FastCGIAccept was not getting the request
+			//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+			//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+			//		This scenario creates problems and non-consistency between engine and encoder.
+			//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+			encodingStatusFailures = 0;
+		}
+		catch(...)
+		{
+			encodingStatusFailures++;
+                   
+			_logger->error(__FILEREF__ + "getEncodingStatus failed"
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				+ ", maxConsecutiveEncodingStatusFailures: " + to_string(maxConsecutiveEncodingStatusFailures)
+			);
+
+			if(encodingStatusFailures >= maxConsecutiveEncodingStatusFailures)
+			{
+				string errorMessage = string("getEncodingStatus too many failures")
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingFinished: " + to_string(encodingFinished)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+					+ ", maxConsecutiveEncodingStatusFailures: " + to_string(maxConsecutiveEncodingStatusFailures)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+
+	return killedByUser;
 }
 
 void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
