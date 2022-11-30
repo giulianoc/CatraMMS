@@ -87,7 +87,31 @@ public:
 		shared_ptr<spdlog::logger> logger
 	);
 
+	static Json::Value httpPostPutFileAndGetJson(
+		int64_t ingestionJobKey,
+		string url,
+		string requestType,	// POST or PUT
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		shared_ptr<spdlog::logger> logger
+	);
+
 	static string httpPostPutString(
+		int64_t ingestionJobKey,
+		string url,
+		string requestType,	// POST or PUT
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		string body,
+		string contentType,	// i.e.: application/json
+		shared_ptr<spdlog::logger> logger
+	);
+
+	static Json::Value httpPostPutStringAndGetJson(
 		int64_t ingestionJobKey,
 		string url,
 		string requestType,	// POST or PUT

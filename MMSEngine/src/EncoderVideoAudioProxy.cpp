@@ -3936,12 +3936,22 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				overlayTextMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 				overlayTextMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 
-
-                {
-                    body = JSONUtils::toString(overlayTextMedatada);
-                }
+				body = JSONUtils::toString(overlayTextMedatada);
             }
-            
+
+			Json::Value overlayTextContentResponse = MMSCURL::httpPostPutStringAndGetJson(
+				_encodingItem->_ingestionJobKey,
+				ffmpegEncoderURL,
+				"POST", // requestType
+				_ffmpegEncoderTimeoutInSeconds,
+				_ffmpegEncoderUser,
+				_ffmpegEncoderPassword,
+				body,
+				"application/json", // contentType
+				_logger
+			);
+
+			/*
             list<string> header;
 
             header.push_back("Content-Type: application/json");
@@ -3999,6 +4009,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
             Json::Value overlayTextContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
 				_encodingItem->_encodingJobKey, sResponse);
+			*/
 
             {
                 string field = "error";
@@ -4011,7 +4022,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                                + ", sResponse: " + sResponse
+                                // + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
 
@@ -4023,7 +4034,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                + ", sResponse: " + sResponse
+							// + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
