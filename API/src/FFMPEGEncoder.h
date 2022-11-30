@@ -615,6 +615,25 @@ private:
 		string apiKey,
 		string mmsWorkflowIngestionURL,
 		string mmsBinaryIngestionURL);
+
+	string downloadMediaFromMMS(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		shared_ptr<FFMpeg> ffmpeg,
+		string sourceFileExtension,
+		string sourcePhysicalDeliveryURL,
+		string destAssetPathName);
+
+	void uploadLocalMediaToMMS(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		Json::Value ingestedParametersRoot,
+		Json::Value encodingProfileDetailsRoot,
+		Json::Value encodingParametersRoot,
+		string sourceFileExtension,
+		string encodedStagingAssetPathName,
+		string workflowLabel,
+		string ingester);
 };
 
 #endif

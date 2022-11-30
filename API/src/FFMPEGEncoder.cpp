@@ -5659,10 +5659,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 		if (externalEncoder)
 		{
-			bool isSourceStreaming = false;
-			if (sourceFileExtension == ".m3u8")
-				isSourceStreaming = true;
-
 			string field = "sourceTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
@@ -5742,44 +5738,13 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			}
 			string sourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
 
-			_logger->info(__FILEREF__ + "downloading source content"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", externalEncoder: " + to_string(externalEncoder)
-				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
-				+ ", sourceAssetPathName: " + sourceAssetPathName
-				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
-			);
-
-			if (isSourceStreaming)
-			{
-				// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
-				bool regenerateTimestamps = false;
-
-				sourceAssetPathName = sourceAssetPathName + ".mp4";
-
-				encoding->_ffmpeg->streamingToFile(
-					ingestionJobKey,
-					regenerateTimestamps,
-					sourcePhysicalDeliveryURL,
-					sourceAssetPathName);
-			}
-			else
-			{
-				MMSCURL::downloadFile(
-					ingestionJobKey,
-					sourcePhysicalDeliveryURL,
-					sourceAssetPathName,
-					_logger
-				);
-			}
-
-			_logger->info(__FILEREF__ + "downloaded source content"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", externalEncoder: " + to_string(externalEncoder)
-				+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
-				+ ", sourceAssetPathName: " + sourceAssetPathName
-				+ ", isSourceStreaming: " + to_string(isSourceStreaming)
-			);
+			sourceAssetPathName = downloadMediaFromMMS(
+				ingestionJobKey,
+				encodingJobKey,
+				encoding->_ffmpeg,
+				sourceFileExtension,
+				sourcePhysicalDeliveryURL,
+				sourceAssetPathName);
 		}
 		else
 		{
@@ -5862,117 +5827,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 		if (externalEncoder)
 		{
-			string field;
-
-			int64_t userKey;
-			string apiKey;
-			{
-				field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-				{
-					Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-					field = "credentials";
-					if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-					{
-						Json::Value credentialsRoot = internalMMSRoot[field];
-
-						field = "userKey";
-						userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-						field = "apiKey";
-						string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
-						apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-					}
-				}
-			}
-
-			string fileFormat;
-			if (encodingProfileDetailsRoot != Json::nullValue)
-			{
-				field = "FileFormat";
-				if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
-			}
-			else
-			{
-				if (sourceFileExtension == ".m3u8")
-					fileFormat = "hls";
-				else
-					fileFormat = sourceFileExtension;
-			}	
-
-			field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
-
-			field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
-
-			int64_t fileSizeInBytes = 0;
-			if (fileFormat != "hls")
-			{
-				bool inCaseOfLinkHasItToBeRead = false;
-				fileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
-					inCaseOfLinkHasItToBeRead);                                                                          
-			}
-
-			string workflowMetadata;
-			{
-				string localFileFormat = fileFormat;
-				if (fileFormat == "hls")
-					localFileFormat = "m3u8-tar.gz";
-
-				string label = "Add overlayTextOnVideo ";
-				workflowMetadata = buildAddContentIngestionWorkflow(
-					ingestionJobKey, label, localFileFormat, "Transcoder -> OverlayText",
-					"",	// sourceURL
-					"",	// title
-					Json::nullValue, // userDataRoot
-					ingestedParametersRoot
-				);
-			}
-
-			int64_t addContentIngestionJobKey = ingestContentByPushingBinary(
-				ingestionJobKey,
-				workflowMetadata,
-				fileFormat,
-				encodedStagingAssetPathName,
-				fileSizeInBytes,
-				userKey,
-				apiKey,
-				mmsWorkflowIngestionURL,                                                                                
-				mmsBinaryIngestionURL
-			);
-
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -5984,152 +5838,17 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-
-			// wait the addContent to be executed
-			try
-			{
-				string field = "mmsIngestionURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						// + ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
-
-				chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
-				long maxSecondsWaiting = 5 * 60;
-				long addContentFinished = 0;
-
-				while ( addContentFinished == 0
-					&& chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
-				{
-					string mmsIngestionJobURL =
-						mmsIngestionURL
-						+ "/" + to_string(addContentIngestionJobKey)
-						+ "?ingestionJobOutputs=false"
-					;
-
-					Json::Value ingestionRoot = MMSCURL::httpGetJson(
-						ingestionJobKey,
-						mmsIngestionJobURL,
-						_mmsAPITimeoutInSeconds,
-						to_string(userKey),
-						apiKey,
-						_logger);
-
-					string field = "response";
-					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					Json::Value responseRoot = ingestionRoot[field];
-
-					field = "ingestionJobs";
-					if (!JSONUtils::isMetadataPresent(responseRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					Json::Value ingestionJobsRoot = responseRoot[field];
-
-					if (ingestionJobsRoot.size() != 1)
-					{
-						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
-
-					field = "status";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
-
-					string prefix = "End_";
-					if (ingestionJobStatus.size() >= prefix.size()
-						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
-					{
-						_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-							+ ", ingestionJobStatus: " + ingestionJobStatus);
-
-						addContentFinished++;
-					}
-					else
-					{
-						int secondsToSleep = 5;
-
-						_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-							+ ", ingestionJobStatus: " + ingestionJobStatus
-							+ ", secondsToSleep: " + to_string(secondsToSleep)
-						);
-
-						this_thread::sleep_for(chrono::seconds(secondsToSleep));
-					}
-				}
-
-				_logger->info(__FILEREF__ + "Waiting result..."
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", addContentFinished: " + to_string(addContentFinished)
-					+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
-					+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startWaiting).count())
-				);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-				;
-				_logger->error(errorMessage);
-			}
+			uploadLocalMediaToMMS(
+				ingestionJobKey,
+				encodingJobKey,
+				ingestedParametersRoot,
+				encodingProfileDetailsRoot,
+				encodingParametersRoot,
+				sourceFileExtension,
+				encodedStagingAssetPathName,
+				"Add overlayTextOnVideo",	// workflowLabel
+				"Transcoder -> OverlayText"	// ingester
+			);
 		}
 
 		bool completedWithError			= false;
@@ -6323,6 +6042,347 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
+}
+
+string FFMPEGEncoder::downloadMediaFromMMS(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	shared_ptr<FFMpeg> ffmpeg,
+	string sourceFileExtension,
+	string sourcePhysicalDeliveryURL,
+	string destAssetPathName
+)
+{
+	string localDestAssetPathName = destAssetPathName;
+
+
+	bool isSourceStreaming = false;
+	if (sourceFileExtension == ".m3u8")
+		isSourceStreaming = true;
+
+	_logger->info(__FILEREF__ + "downloading source content"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
+		+ ", localDestAssetPathName: " + localDestAssetPathName
+		+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+	);
+
+	if (isSourceStreaming)
+	{
+		// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
+		bool regenerateTimestamps = false;
+
+		localDestAssetPathName = localDestAssetPathName + ".mp4";
+
+		ffmpeg->streamingToFile(
+			ingestionJobKey,
+			regenerateTimestamps,
+			sourcePhysicalDeliveryURL,
+			localDestAssetPathName);
+	}
+	else
+	{
+		MMSCURL::downloadFile(
+			ingestionJobKey,
+			sourcePhysicalDeliveryURL,
+			localDestAssetPathName,
+			_logger
+		);
+	}
+
+	_logger->info(__FILEREF__ + "downloaded source content"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
+		+ ", localDestAssetPathName: " + localDestAssetPathName
+		+ ", isSourceStreaming: " + to_string(isSourceStreaming)
+	);
+
+	return localDestAssetPathName;
+}
+
+void FFMPEGEncoder::uploadLocalMediaToMMS(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	Json::Value ingestedParametersRoot,
+	Json::Value encodingProfileDetailsRoot,
+	Json::Value encodingParametersRoot,
+	string sourceFileExtension,
+	string encodedStagingAssetPathName,
+	string workflowLabel,
+	string ingester
+)
+{
+	string field;
+
+	int64_t userKey;
+	string apiKey;
+	{
+		field = "internalMMS";
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+		{
+			Json::Value internalMMSRoot = ingestedParametersRoot[field];
+
+			field = "credentials";
+			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+			{
+				Json::Value credentialsRoot = internalMMSRoot[field];
+
+				field = "userKey";
+				userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+				field = "apiKey";
+				string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+			}
+		}
+	}
+
+	string fileFormat;
+	if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		field = "FileFormat";
+		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+		{
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
+	}
+	else
+	{
+		if (sourceFileExtension == ".m3u8")
+			fileFormat = "hls";
+		else
+			fileFormat = sourceFileExtension;
+	}	
+
+	field = "mmsWorkflowIngestionURL";
+	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+	{
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", Field: " + field;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	string mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+
+	field = "mmsBinaryIngestionURL";
+	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+	{
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", Field: " + field;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	string mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+
+	int64_t fileSizeInBytes = 0;
+	if (fileFormat != "hls")
+	{
+		bool inCaseOfLinkHasItToBeRead = false;
+		fileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
+			inCaseOfLinkHasItToBeRead);                                                                          
+	}
+
+	string workflowMetadata;
+	{
+		string localFileFormat = fileFormat;
+		if (fileFormat == "hls")
+			localFileFormat = "m3u8-tar.gz";
+
+		workflowMetadata = buildAddContentIngestionWorkflow(
+			ingestionJobKey, workflowLabel, localFileFormat, ingester,
+			"",	// sourceURL
+			"",	// title
+			Json::nullValue, // userDataRoot
+			ingestedParametersRoot
+		);
+	}
+
+	int64_t addContentIngestionJobKey = ingestContentByPushingBinary(
+		ingestionJobKey,
+		workflowMetadata,
+		fileFormat,
+		encodedStagingAssetPathName,
+		fileSizeInBytes,
+		userKey,
+		apiKey,
+		mmsWorkflowIngestionURL,
+		mmsBinaryIngestionURL
+	);
+
+	/*
+	{
+		_logger->info(__FILEREF__ + "Remove file"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", sourceAssetPathName: " + sourceAssetPathName
+		);
+
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+	}
+	*/
+
+	{
+		size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+		if (endOfDirectoryIndex != string::npos)
+		{
+			string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+
+			_logger->info(__FILEREF__ + "removeDirectory"
+				+ ", directoryPathName: " + directoryPathName
+			);
+			Boolean_t bRemoveRecursively = true;
+			FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+		}
+	}
+
+	// wait the addContent to be executed
+	try
+	{
+		string field = "mmsIngestionURL";
+		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+		{
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				// + ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
+
+		chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+		long maxSecondsWaiting = 5 * 60;
+		long addContentFinished = 0;
+
+		while ( addContentFinished == 0
+			&& chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
+		{
+			string mmsIngestionJobURL =
+				mmsIngestionURL
+				+ "/" + to_string(addContentIngestionJobKey)
+				+ "?ingestionJobOutputs=false"
+			;
+
+			Json::Value ingestionRoot = MMSCURL::httpGetJson(
+				ingestionJobKey,
+				mmsIngestionJobURL,
+				_mmsAPITimeoutInSeconds,
+				to_string(userKey),
+				apiKey,
+				_logger);
+
+			string field = "response";
+			if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value responseRoot = ingestionRoot[field];
+
+			field = "ingestionJobs";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value ingestionJobsRoot = responseRoot[field];
+
+			if (ingestionJobsRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			Json::Value ingestionJobRoot = ingestionJobsRoot[0];
+
+			field = "status";
+			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
+
+			string prefix = "End_";
+			if (ingestionJobStatus.size() >= prefix.size()
+				&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
+			{
+				_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+					+ ", ingestionJobStatus: " + ingestionJobStatus);
+
+				addContentFinished++;
+			}
+			else
+			{
+				int secondsToSleep = 5;
+
+				_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
+					+ ", ingestionJobStatus: " + ingestionJobStatus
+					+ ", secondsToSleep: " + to_string(secondsToSleep)
+				);
+
+				this_thread::sleep_for(chrono::seconds(secondsToSleep));
+			}
+		}
+
+		_logger->info(__FILEREF__ + "Waiting result..."
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", addContentFinished: " + to_string(addContentFinished)
+			+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
+			+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startWaiting).count())
+		);
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			// + ", encodingJobKey: " + to_string(encodingJobKey)
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void FFMPEGEncoder::generateFramesThread(
