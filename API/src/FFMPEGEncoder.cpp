@@ -3691,39 +3691,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		Json::Value newInputsRoot;
 		try
 		{
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(requestBody.c_str(),
-				requestBody.c_str() + requestBody.size(), 
-				&newInputsRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", errors: " + errors
-					+ ", requestBody: " + requestBody
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			newInputsRoot = JSONUtils::toJson(
+				-1, encodingJobKey, requestBody);
 		}
-		catch(...)
+		catch(runtime_error e)
 		{
-			string errorMessage = string("Parsing new LiveProxy playlist failed")
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", requestBody: " + requestBody
-			;
-			_logger->error(__FILEREF__ + errorMessage);
+			_logger->error(__FILEREF__ + e.what());
 
-			sendError(request, 500, errorMessage);
+			sendError(request, 500, e.what());
 
 			return;
-			// throw runtime_error(errorMessage);
 		}
 
 		{
@@ -4085,61 +4062,29 @@ void FFMPEGEncoder::encodeContentThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value encodingMedatada;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-				requestBody.c_str() + requestBody.size(), 
-				&encodingMedatada, &errors);
-            delete reader;
+		ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
+		externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
-
-		externalEncoder = JSONUtils::asBool(encodingMedatada, "externalEncoder", false);
-
-        int videoTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"],
+        int videoTrackIndexToBeUsed = JSONUtils::asInt(metadataRoot["ingestedParametersRoot"],
 			"VideoTrackIndex", -1);
-        int audioTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"],
+        int audioTrackIndexToBeUsed = JSONUtils::asInt(metadataRoot["ingestedParametersRoot"],
 			"AudioTrackIndex", -1);
 
-		Json::Value sourcesToBeEncodedRoot = encodingMedatada["encodingParametersRoot"]["sourcesToBeEncodedRoot"];
+		Json::Value sourcesToBeEncodedRoot = metadataRoot["encodingParametersRoot"]["sourcesToBeEncodedRoot"];
 		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 
         int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
 				"sourceDurationInMilliSecs", -1);
-		Json::Value encodingProfileDetailsRoot = encodingMedatada["encodingParametersRoot"]
+		Json::Value encodingProfileDetailsRoot = metadataRoot["encodingParametersRoot"]
 			["encodingProfileDetailsRoot"];
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
-				encodingMedatada["encodingParametersRoot"].get("contentType", "").asString());
+				metadataRoot["encodingParametersRoot"].get("contentType", "").asString());
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
-        // int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
+        // int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
 
 		Json::Value videoTracksRoot;
 		string field = "videoTracks";
@@ -4383,7 +4328,7 @@ void FFMPEGEncoder::encodeContentThread(
 			int64_t sourcePhysicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
 
 			field = "encodingProfileKey";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			if (!JSONUtils::isMetadataPresent(metadataRoot["encodingParametersRoot"], field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4393,7 +4338,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingMedatada["encodingParametersRoot"], field, -1);
+			int64_t encodingProfileKey = JSONUtils::asInt64(metadataRoot["encodingParametersRoot"], field, -1);
 
 			field = "FileFormat";
 			if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
@@ -4412,9 +4357,9 @@ void FFMPEGEncoder::encodeContentThread(
 			string apiKey;
 			{
 				field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(encodingMedatada["ingestedParametersRoot"], field))
+				if (JSONUtils::isMetadataPresent(metadataRoot["ingestedParametersRoot"], field))
 				{
-					Json::Value internalMMSRoot = encodingMedatada["ingestedParametersRoot"][field];
+					Json::Value internalMMSRoot = metadataRoot["ingestedParametersRoot"][field];
 
 					field = "credentials";
 					if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -4432,7 +4377,7 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 
 			field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			if (!JSONUtils::isMetadataPresent(metadataRoot["encodingParametersRoot"], field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4442,10 +4387,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsWorkflowIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+			string mmsWorkflowIngestionURL = metadataRoot["encodingParametersRoot"].get(field, "").asString();
 
 			field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingMedatada["encodingParametersRoot"], field))
+			if (!JSONUtils::isMetadataPresent(metadataRoot["encodingParametersRoot"], field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4455,7 +4400,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string mmsBinaryIngestionURL = encodingMedatada["encodingParametersRoot"].get(field, "").asString();
+			string mmsBinaryIngestionURL = metadataRoot["encodingParametersRoot"].get(field, "").asString();
 
 			// static unsigned long long getDirectorySizeInBytes (string directoryPathName);                             
 
@@ -4845,45 +4790,13 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value overlayMedatada;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &overlayMedatada, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(overlayMedatada, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(overlayMedatada, "externalEncoder", false);
-		Json::Value ingestedParametersRoot = overlayMedatada["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = overlayMedatada["encodingParametersRoot"];
+		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
         string imagePosition_X_InPixel = ingestedParametersRoot.get("imagePosition_X_InPixel", "0").asString();
         string imagePosition_Y_InPixel = ingestedParametersRoot.get("imagePosition_Y_InPixel", "0").asString();
@@ -6405,45 +6318,13 @@ void FFMPEGEncoder::generateFramesThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value generateFramesMedatada;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &generateFramesMedatada, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        bool externalEncoder = JSONUtils::asBool(generateFramesMedatada, "externalEncoder", false);
-        int64_t ingestionJobKey = JSONUtils::asInt64(generateFramesMedatada, "ingestionJobKey", -1);
-		Json::Value encodingParametersRoot = generateFramesMedatada["encodingParametersRoot"];
-		Json::Value ingestedParametersRoot = generateFramesMedatada["ingestedParametersRoot"];
+        bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
         double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
         int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
@@ -7381,50 +7262,18 @@ void FFMPEGEncoder::slideShowThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value slideShowMedatada;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &slideShowMedatada, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        int64_t ingestionJobKey = JSONUtils::asInt64(slideShowMedatada, "ingestionJobKey", -1);
-        string videoSyncMethod = slideShowMedatada.get("videoSyncMethod", "vfr").asString();
-        int outputFrameRate = JSONUtils::asInt(slideShowMedatada, "outputFrameRate", -1);
-        string slideShowMediaPathName = slideShowMedatada.get("slideShowMediaPathName", "XXX").asString();
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+        string videoSyncMethod = metadataRoot.get("videoSyncMethod", "vfr").asString();
+        int outputFrameRate = JSONUtils::asInt(metadataRoot, "outputFrameRate", -1);
+        string slideShowMediaPathName = metadataRoot.get("slideShowMediaPathName", "XXX").asString();
 
         vector<string> imagesSourcePhysicalPaths;
 		{
 			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-			sourcePhysicalPathsRoot = slideShowMedatada["imagesSourcePhysicalPaths"];
+			sourcePhysicalPathsRoot = metadataRoot["imagesSourcePhysicalPaths"];
 			for (int sourcePhysicalPathIndex = 0;
 				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
 				++sourcePhysicalPathIndex)
@@ -7435,13 +7284,13 @@ void FFMPEGEncoder::slideShowThread(
 				imagesSourcePhysicalPaths.push_back(sourcePhysicalPathName);
 			}
 		}
-        double durationOfEachSlideInSeconds = JSONUtils::asDouble(slideShowMedatada,
+        double durationOfEachSlideInSeconds = JSONUtils::asDouble(metadataRoot,
 			"durationOfEachSlideInSeconds", 0);
 
         vector<string> audiosSourcePhysicalPaths;
 		{
 			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-			sourcePhysicalPathsRoot = slideShowMedatada["audiosSourcePhysicalPaths"];
+			sourcePhysicalPathsRoot = metadataRoot["audiosSourcePhysicalPaths"];
 			for (int sourcePhysicalPathIndex = 0;
 				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
 				++sourcePhysicalPathIndex)
@@ -7452,7 +7301,7 @@ void FFMPEGEncoder::slideShowThread(
 				audiosSourcePhysicalPaths.push_back(sourcePhysicalPathName);
 			}
 		}
-        double shortestAudioDurationInSeconds = JSONUtils::asDouble(slideShowMedatada,
+        double shortestAudioDurationInSeconds = JSONUtils::asDouble(metadataRoot,
 			"shortestAudioDurationInSeconds", 0);
 
         encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
@@ -7670,50 +7519,18 @@ void FFMPEGEncoder::videoSpeedThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value videoSpeedMetadata;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &videoSpeedMetadata, &errors);
-            delete reader;
+        string mmsSourceVideoAssetPathName = metadataRoot.get("mmsSourceVideoAssetPathName", "XXX").asString();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(metadataRoot, "videoDurationInMilliSeconds", -1);
 
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        string videoSpeedType = metadataRoot.get("videoSpeedType", "XXX").asString();
+        int videoSpeedSize = JSONUtils::asInt(metadataRoot, "videoSpeedSize", 3);
         
-        string mmsSourceVideoAssetPathName = videoSpeedMetadata.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(videoSpeedMetadata, "videoDurationInMilliSeconds", -1);
-
-        string videoSpeedType = videoSpeedMetadata.get("videoSpeedType", "XXX").asString();
-        int videoSpeedSize = JSONUtils::asInt(videoSpeedMetadata, "videoSpeedSize", 3);
-        
-        string stagingEncodedAssetPathName = videoSpeedMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = JSONUtils::asInt64(videoSpeedMetadata, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(videoSpeedMetadata, "ingestionJobKey", -1);
+        string stagingEncodedAssetPathName = metadataRoot.get("stagingEncodedAssetPathName", "XXX").asString();
+        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->videoSpeed(
@@ -7957,57 +7774,25 @@ void FFMPEGEncoder::pictureInPictureThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value pictureInPictureMetadata;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &pictureInPictureMetadata, &errors);
-            delete reader;
+        string mmsMainVideoAssetPathName = metadataRoot.get("mmsMainVideoAssetPathName", "XXX").asString();
+        int64_t mainVideoDurationInMilliSeconds = JSONUtils::asInt64(metadataRoot, "mainVideoDurationInMilliSeconds", -1);
 
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
+        string mmsOverlayVideoAssetPathName = metadataRoot.get("mmsOverlayVideoAssetPathName", "XXX").asString();
+        int64_t overlayVideoDurationInMilliSeconds = JSONUtils::asInt64(metadataRoot, "overlayVideoDurationInMilliSeconds", -1);
 
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+        bool soundOfMain = JSONUtils::asBool(metadataRoot, "soundOfMain", false);
 
-            throw runtime_error(errorMessage);
-        }
+        string overlayPosition_X_InPixel = metadataRoot.get("overlayPosition_X_InPixel", "XXX").asString();
+        string overlayPosition_Y_InPixel = metadataRoot.get("overlayPosition_Y_InPixel", "XXX").asString();
+        string overlay_Width_InPixel = metadataRoot.get("overlay_Width_InPixel", "XXX").asString();
+        string overlay_Height_InPixel = metadataRoot.get("overlay_Height_InPixel", "XXX").asString();
         
-        string mmsMainVideoAssetPathName = pictureInPictureMetadata.get("mmsMainVideoAssetPathName", "XXX").asString();
-        int64_t mainVideoDurationInMilliSeconds = JSONUtils::asInt64(pictureInPictureMetadata, "mainVideoDurationInMilliSeconds", -1);
-
-        string mmsOverlayVideoAssetPathName = pictureInPictureMetadata.get("mmsOverlayVideoAssetPathName", "XXX").asString();
-        int64_t overlayVideoDurationInMilliSeconds = JSONUtils::asInt64(pictureInPictureMetadata, "overlayVideoDurationInMilliSeconds", -1);
-
-        bool soundOfMain = JSONUtils::asBool(pictureInPictureMetadata, "soundOfMain", false);
-
-        string overlayPosition_X_InPixel = pictureInPictureMetadata.get("overlayPosition_X_InPixel", "XXX").asString();
-        string overlayPosition_Y_InPixel = pictureInPictureMetadata.get("overlayPosition_Y_InPixel", "XXX").asString();
-        string overlay_Width_InPixel = pictureInPictureMetadata.get("overlay_Width_InPixel", "XXX").asString();
-        string overlay_Height_InPixel = pictureInPictureMetadata.get("overlay_Height_InPixel", "XXX").asString();
-        
-        string stagingEncodedAssetPathName = pictureInPictureMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = JSONUtils::asInt64(pictureInPictureMetadata, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(pictureInPictureMetadata, "ingestionJobKey", -1);
+        string stagingEncodedAssetPathName = metadataRoot.get("stagingEncodedAssetPathName", "XXX").asString();
+        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->pictureInPicture(
@@ -8258,63 +8043,31 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value introOutroOverlayMetadata;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &introOutroOverlayMetadata, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
 		string stagingEncodedAssetPathName =
-			introOutroOverlayMetadata.get("stagingEncodedAssetPathName", "").asString();
+			metadataRoot.get("stagingEncodedAssetPathName", "").asString();
 
-        int64_t encodingJobKey = JSONUtils::asInt64(introOutroOverlayMetadata, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(introOutroOverlayMetadata, "ingestionJobKey", -1);
+        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 		encoding->_ffmpeg->introOutroOverlay(
-			introOutroOverlayMetadata["encodingParametersRoot"].get("introVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "introVideoDurationInMilliSeconds", -1),
-			introOutroOverlayMetadata["encodingParametersRoot"].get("mainVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "mainVideoDurationInMilliSeconds", -1),
-			introOutroOverlayMetadata["encodingParametersRoot"].get("outroVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "outroVideoDurationInMilliSeconds", -1),
+			metadataRoot["encodingParametersRoot"].get("introVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(metadataRoot["encodingParametersRoot"], "introVideoDurationInMilliSeconds", -1),
+			metadataRoot["encodingParametersRoot"].get("mainVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(metadataRoot["encodingParametersRoot"], "mainVideoDurationInMilliSeconds", -1),
+			metadataRoot["encodingParametersRoot"].get("outroVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(metadataRoot["encodingParametersRoot"], "outroVideoDurationInMilliSeconds", -1),
 
-			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "IntroOverlayDurationInSeconds", -1),
-			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "OutroOverlayDurationInSeconds", -1),
+			JSONUtils::asInt64(metadataRoot["ingestedParametersRoot"], "IntroOverlayDurationInSeconds", -1),
+			JSONUtils::asInt64(metadataRoot["ingestedParametersRoot"], "OutroOverlayDurationInSeconds", -1),
 
-			JSONUtils::asBool(introOutroOverlayMetadata["ingestedParametersRoot"], "MuteIntroOverlay", true),
-			JSONUtils::asBool(introOutroOverlayMetadata["ingestedParametersRoot"], "MuteOutroOverlay", true),
+			JSONUtils::asBool(metadataRoot["ingestedParametersRoot"], "MuteIntroOverlay", true),
+			JSONUtils::asBool(metadataRoot["ingestedParametersRoot"], "MuteOutroOverlay", true),
 
-			introOutroOverlayMetadata["encodingParametersRoot"]["encodingProfileDetailsRoot"],
+			metadataRoot["encodingParametersRoot"]["encodingProfileDetailsRoot"],
 
 			stagingEncodedAssetPathName,
 
@@ -8543,55 +8296,23 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-		Json::Value cutMetadata;
-		try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &cutMetadata, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
 		string stagingEncodedAssetPathName =
-			cutMetadata.get("stagingEncodedAssetPathName", "").asString();
+			metadataRoot.get("stagingEncodedAssetPathName", "").asString();
 
-        int64_t encodingJobKey = JSONUtils::asInt64(cutMetadata, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(cutMetadata, "ingestionJobKey", -1);
+        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			ingestionJobKey,
-			cutMetadata["encodingParametersRoot"].get("sourceVideoAssetPathName", "").asString(),
+			metadataRoot["encodingParametersRoot"].get("sourceVideoAssetPathName", "").asString(),
 			encodingJobKey,
-			cutMetadata["encodingParametersRoot"]["encodingProfileDetailsRoot"],
-			JSONUtils::asDouble(cutMetadata["ingestedParametersRoot"], "StartTimeInSeconds", 0.0),
-			JSONUtils::asDouble(cutMetadata["encodingParametersRoot"], "endTimeInSeconds", 0.0),
-			JSONUtils::asInt(cutMetadata["ingestedParametersRoot"], "FramesNumber", -1),
+			metadataRoot["encodingParametersRoot"]["encodingProfileDetailsRoot"],
+			JSONUtils::asDouble(metadataRoot["ingestedParametersRoot"], "StartTimeInSeconds", 0.0),
+			JSONUtils::asDouble(metadataRoot["encodingParametersRoot"], "endTimeInSeconds", 0.0),
+			JSONUtils::asInt(metadataRoot["ingestedParametersRoot"], "FramesNumber", -1),
 			stagingEncodedAssetPathName,
 
 			&(encoding->_childPid));
@@ -8829,58 +8550,26 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value liveRecorderMedatada;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &liveRecorderMedatada, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        liveRecording->_ingestionJobKey = JSONUtils::asInt64(liveRecorderMedatada,
+        liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot,
 			"ingestionJobKey", -1);
 
-        liveRecording->_externalEncoder = JSONUtils::asBool(liveRecorderMedatada,
+        liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot,
 			"externalEncoder", false);
 
 		// _transcoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
         liveRecording->_transcoderStagingContentsPath =
-			liveRecorderMedatada.get("transcoderStagingContentsPath", "").asString();
-        string userAgent = liveRecorderMedatada.get("userAgent", "").asString();
+			metadataRoot.get("transcoderStagingContentsPath", "").asString();
+        string userAgent = metadataRoot.get("userAgent", "").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp
         liveRecording->_stagingContentsPath =
-			liveRecorderMedatada.get("stagingContentsPath", "").asString();
+			metadataRoot.get("stagingContentsPath", "").asString();
 		// 2022-08-09: the stagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
 		// 		into the shared working area.
 		// 		In case of an external encoder, the external working area does not have this directory
@@ -8904,26 +8593,26 @@ void FFMPEGEncoder::liveRecorderThread(
 		*/
 
         liveRecording->_segmentListFileName =
-			liveRecorderMedatada.get("segmentListFileName", "").asString();
+			metadataRoot.get("segmentListFileName", "").asString();
         liveRecording->_recordedFileNamePrefix =
-			liveRecorderMedatada.get("recordedFileNamePrefix", "").asString();
+			metadataRoot.get("recordedFileNamePrefix", "").asString();
 		// see the comments in EncoderVideoAudioProxy.cpp
 		if (liveRecording->_externalEncoder)
 			liveRecording->_virtualVODStagingContentsPath =
-				liveRecorderMedatada.get("virtualVODTranscoderStagingContentsPath", "").asString();
+				metadataRoot.get("virtualVODTranscoderStagingContentsPath", "").asString();
 		else
 			liveRecording->_virtualVODStagingContentsPath =
-				liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
+				metadataRoot.get("virtualVODStagingContentsPath", "").asString();
         liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
-			JSONUtils::asInt64(liveRecorderMedatada,
+			JSONUtils::asInt64(metadataRoot,
 				"liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
 		liveRecording->_encodingParametersRoot =
-			liveRecorderMedatada["encodingParametersRoot"];
+			metadataRoot["encodingParametersRoot"];
 		liveRecording->_ingestedParametersRoot =
-			liveRecorderMedatada["ingestedParametersRoot"];
+			metadataRoot["ingestedParametersRoot"];
 
         bool autoRenew = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 			"autoRenew", false);
@@ -8939,13 +8628,13 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_lastRecordedAssetFileName			= "";
 		liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
 
-        liveRecording->_streamSourceType = liveRecorderMedatada["encodingParametersRoot"].get(
+        liveRecording->_streamSourceType = metadataRoot["encodingParametersRoot"].get(
 			"streamSourceType", "IP_PULL").asString();
 		int ipMMSAsServer_listenTimeoutInSeconds =
-			liveRecorderMedatada["encodingParametersRoot"]
+			metadataRoot["encodingParametersRoot"]
 			.get("ActAsServerListenTimeout", 300).asInt();
 		int pushListenTimeout = JSONUtils::asInt(
-			liveRecorderMedatada["encodingParametersRoot"], "pushListenTimeout", -1);
+			metadataRoot["encodingParametersRoot"], "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
@@ -8957,22 +8646,22 @@ void FFMPEGEncoder::liveRecorderThread(
 		if (liveRecording->_streamSourceType == "CaptureLive")
 		{
 			captureLive_videoDeviceNumber = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"captureVideoDeviceNumber", -1);
 			captureLive_videoInputFormat =
-				liveRecorderMedatada["encodingParametersRoot"].
+				metadataRoot["encodingParametersRoot"].
 				get("captureVideoInputFormat", "").asString();
 			captureLive_frameRate = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"], "captureFrameRate", -1);
+				metadataRoot["encodingParametersRoot"], "captureFrameRate", -1);
 			captureLive_width = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"], "captureWidth", -1);
+				metadataRoot["encodingParametersRoot"], "captureWidth", -1);
 			captureLive_height = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"], "captureHeight", -1);
+				metadataRoot["encodingParametersRoot"], "captureHeight", -1);
 			captureLive_audioDeviceNumber = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"captureAudioDeviceNumber", -1);
 			captureLive_channelsNumber = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"captureChannelsNumber", -1);
 		}
 
@@ -8980,26 +8669,26 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		if (liveRecording->_streamSourceType == "TV")
 		{
-			tvType = liveRecorderMedatada["encodingParametersRoot"].
+			tvType = metadataRoot["encodingParametersRoot"].
 				get("tvType", "").asString();
 			tvServiceId = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"tvServiceId", -1);
 			tvFrequency = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"tvFrequency", -1);
 			tvSymbolRate = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"tvSymbolRate", -1);
 			tvBandwidthInHz = JSONUtils::asInt64(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"tvBandwidthInHz", -1);
-			tvModulation = liveRecorderMedatada["encodingParametersRoot"].
+			tvModulation = metadataRoot["encodingParametersRoot"].
 				get("tvModulation", "").asString();
 			tvVideoPid = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"], "tvVideoPid", -1);
+				metadataRoot["encodingParametersRoot"], "tvVideoPid", -1);
 			tvAudioItalianPid = JSONUtils::asInt(
-				liveRecorderMedatada["encodingParametersRoot"],
+				metadataRoot["encodingParametersRoot"],
 				"tvAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
@@ -9050,7 +8739,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			// in case of actAsServer
 			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
 			//	false: it comes from the LiveRecorder json ingested
-			liveURL = liveRecorderMedatada.get("liveURL", "").asString();
+			liveURL = metadataRoot.get("liveURL", "").asString();
 		}
 
         time_t utcRecordingPeriodStart = JSONUtils::asInt64(
@@ -12774,29 +12463,8 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 			}
 		}
 		*/
-		Json::Value ingestionResponseRoot;
-
-		Json::CharReaderBuilder builder;
-		Json::CharReader* reader = builder.newCharReader();
-		string errors;
-
-		bool parsingSuccessful = reader->parse(ingestionResponse.c_str(),
-			ingestionResponse.c_str() + ingestionResponse.size(), 
-			&ingestionResponseRoot, &errors);
-		delete reader;
-
-		if (!parsingSuccessful)
-		{
-			string errorMessage = __FILEREF__
-				+ "ingestion workflow. Failed to parse the response body"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errors: " + errors
-				+ ", ingestionResponse: " + ingestionResponse
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+        Json::Value ingestionResponseRoot = JSONUtils::toJson(
+			ingestionJobKey, -1, ingestionResponse);
 
 		string field = "tasks";
 		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
@@ -12804,7 +12472,6 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 			string errorMessage = __FILEREF__
 				"ingestion workflow. Response Body json is not well format"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errors: " + errors
 				+ ", ingestionResponse: " + ingestionResponse
 			;
 			_logger->error(errorMessage);
@@ -12823,7 +12490,6 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 				string errorMessage = __FILEREF__
 					"ingestion workflow. Response Body json is not well format"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", errors: " + errors
 					+ ", ingestionResponse: " + ingestionResponse
 				;
 				_logger->error(errorMessage);
@@ -12840,7 +12506,6 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 					string errorMessage = __FILEREF__
 						"ingestion workflow. Response Body json is not well format"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
 						+ ", ingestionResponse: " + ingestionResponse
 					;
 					_logger->error(errorMessage);
@@ -13138,45 +12803,13 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value liveProxyMetadata;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &liveProxyMetadata, &errors);
-            delete reader;
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(liveProxyMetadata, "externalEncoder", false);
-
-		liveProxy->_outputsRoot = liveProxyMetadata["encodingParametersRoot"]["outputsRoot"];
+		liveProxy->_outputsRoot = metadataRoot["encodingParametersRoot"]["outputsRoot"];
 		// liveProxy->_liveProxyOutputRoots.clear();
 		{
 			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size(); outputIndex++)
@@ -13229,15 +12862,15 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-		liveProxy->_ingestedParametersRoot = liveProxyMetadata["ingestedParametersRoot"];
+		liveProxy->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		// non serve
 		// liveProxy->_channelLabel = "";
 
-		// liveProxy->_streamSourceType = liveProxyMetadata["encodingParametersRoot"].
+		// liveProxy->_streamSourceType = metadataRoot["encodingParametersRoot"].
 		// 	get("streamSourceType", "IP_PULL").asString();
 
-		liveProxy->_inputsRoot = liveProxyMetadata["encodingParametersRoot"]["inputsRoot"];
+		liveProxy->_inputsRoot = metadataRoot["encodingParametersRoot"]["inputsRoot"];
 
 		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
 		{
@@ -14019,52 +13652,20 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value liveGridMetadata;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value metadataRoot = JSONUtils::toJson(
+			-1, encodingJobKey, requestBody);
 
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &liveGridMetadata, &errors);
-            delete reader;
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", errors: " + errors
-                        + ", requestBody: " + requestBody
-                        ;
-                _logger->error(errorMessage);
+		Json::Value inputChannelsRoot = metadataRoot["inputChannels"];
 
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveGridMetadata, "ingestionJobKey", -1);
-
-		Json::Value inputChannelsRoot = liveGridMetadata["inputChannels"];
-
-		Json::Value encodingParametersRoot = liveGridMetadata["encodingParametersRoot"];
-        Json::Value ingestedParametersRoot = liveGridMetadata["ingestedParametersRoot"];
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+        Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		string userAgent;
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserAgent"))
             userAgent = ingestedParametersRoot.get("UserAgent", "").asString();
-		Json::Value encodingProfileDetailsRoot = liveGridMetadata["encodingProfileDetails"];
+		Json::Value encodingProfileDetailsRoot = metadataRoot["encodingProfileDetails"];
 
 		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
 		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
