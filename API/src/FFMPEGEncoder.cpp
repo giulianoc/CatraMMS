@@ -5702,7 +5702,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			boxColor,
 			boxPercentageOpacity,
 
-			// encodedFileName,
+			encodingProfileDetailsRoot,
+
 			encodedStagingAssetPathName,
 			encodingJobKey,
 			ingestionJobKey,
