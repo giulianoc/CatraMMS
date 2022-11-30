@@ -626,28 +626,6 @@ public:
 
         shared_ptr<Workspace>                   _workspace;
 
-		/*
-        struct OverlayImageOnVideoData {
-            string                                  _videoFileName;
-            string                                  _videoRelativePath;
-            int64_t                                 _videoDurationInMilliSeconds;
-
-            string                                  _imageFileName;
-            string                                  _imageRelativePath;
-        };
-        
-        struct GenerateFramesData {
-            string                                  _videoFileName;
-            string                                  _videoRelativePath;
-            int64_t                                 _videoDurationInMilliSeconds;
-        };
-
-		struct LiveRecorderData {
-            // Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
-			// MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
-		};
-		*/
-
         struct VideoSpeedData {
             string                                  _videoFileName;
             string                                  _videoRelativePath;
@@ -669,9 +647,6 @@ public:
             Json::Value								_encodingProfileDetailsRoot;
 		};
 
-        // shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
-        // shared_ptr<GenerateFramesData>              _generateFramesData;
-		// shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveGridData>					_liveGridData;
@@ -1713,14 +1688,21 @@ public:
 		EncodingPriority encodingPriority,
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL);
 
-    void addEncoding_OverlayTextOnVideoJob (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        EncodingPriority encodingPriority,
+	void addEncoding_OverlayTextOnVideoJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		EncodingPriority encodingPriority,
+
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 
 		string sourceAssetPathName,
-		int64_t sourceDurationInMilliSeconds,                                                
-		string videoFileNameExtension);
+		int64_t sourceDurationInMilliSeconds,
+		string sourcePhysicalDeliveryURL,
+		string sourceFileExtension,
+
+		string sourceTranscoderStagingAssetPathName, string encodedTranscoderStagingAssetPathName,
+		string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL);
 
 	void addEncoding_GenerateFramesJob (
 		shared_ptr<Workspace> workspace,

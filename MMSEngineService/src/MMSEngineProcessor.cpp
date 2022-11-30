@@ -22448,7 +22448,6 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 {
     try
     {
-
         if (dependencies.size() != 1)
         {
             string errorMessage = __FILEREF__ + "Wrong number of dependencies"
@@ -22473,9 +22472,9 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-		string videoFileNameExtension;
 		int64_t sourceDurationInMilliSeconds;
 		string sourceAssetPathName;
+		string sourcePhysicalDeliveryURL;
 		{
 			int64_t sourceMediaItemKey;
 			int64_t sourcePhysicalPathKey;
@@ -22525,22 +22524,164 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 					= physicalPathDetails;
 			}
 
+			// calculate delivery URL in case of an external encoder
+			{
+				int64_t utcNow;
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+
+				pair<string, string> deliveryAuthorizationDetails =
+					_mmsDeliveryAuthorization->createDeliveryAuthorization(
+					-1,	// userKey,
+					workspace,
+					"",	// clientIPAddress,
+
+					-1,	// mediaItemKey,
+					"",	// uniqueName,
+					-1,	// encodingProfileKey,
+					"",	// encodingProfileLabel,
+
+					sourcePhysicalPathKey,
+
+					-1,	// ingestionJobKey,	(in case of live)
+					-1,	// deliveryCode,
+
+					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+					999999,	// maxRetries,
+					false,	// save,
+					"MMS_SignedToken",	// deliveryType,
+
+					false,	// warningIfMissingMediaItemKey,
+					true,	// filteredByStatistic
+					""		// userId (it is not needed it filteredByStatistic is true
+				);
+
+				tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+			}
+
 			sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 				sourceMediaItemKey, sourcePhysicalPathKey);
+		}
 
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		{
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 			{
-				size_t extensionIndex = sourceFileName.find_last_of(".");
-				if (extensionIndex == string::npos)
-				{
-					string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", sourceFileName: " + sourceFileName;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				videoFileNameExtension = sourceFileName.substr(extensionIndex);
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
 			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, videoContentType, encodingProfileLabel);
+			}
+
+			if (encodingProfileKey != -1)
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+					workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+						&encodingProfileDetailsRoot,
+						&errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+
+		string sourceFileName;
+		string sourceFileExtension;
+		string encodedFileName;
+		{
+			size_t extensionIndex = sourceAssetPathName.find_last_of(".");
+			if (extensionIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceAssetPathName: " + sourceAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceFileExtension = sourceAssetPathName.substr(extensionIndex);
+
+			encodedFileName = to_string(ingestionJobKey)
+				+ "_overlayedText"                                                                   
+				+  sourceFileExtension;     
+
+			size_t sourceFileNameIndex = sourceAssetPathName.find_last_of("/");
+			if (sourceFileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No sourceFileNameIndex find in the asset file name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceAssetPathName: " + sourceAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			sourceFileName = sourceAssetPathName.substr(sourceFileNameIndex + 1);
+		}
+
+		string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
+			sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),		// directoryNamePrefix
+				"/",							// relativePath,
+				sourceFileName,				// fileName
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+				// in case of hls and external encoder (binary is ingested through PUSH),
+				// the directory inside the tar.gz has to be 'content'
+				encodedFileName,	// content
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+			encodedNFSStagingAssetPathName = workspaceIngestionRepository + "/" + encodedFileName;
 		}
 
 		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
@@ -22550,9 +22691,14 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
 			workspace, ingestionJobKey, encodingPriority,
 
-			sourceAssetPathName, sourceDurationInMilliSeconds,
-			videoFileNameExtension
-		);
+			encodingProfileKey, encodingProfileDetailsRoot,
+
+			sourceAssetPathName, sourceDurationInMilliSeconds, sourcePhysicalDeliveryURL,
+			sourceFileExtension,
+
+			sourceTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName,	
+			encodedNFSStagingAssetPathName,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
     catch(runtime_error e)
     {

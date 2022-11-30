@@ -224,9 +224,9 @@ private:
     bool overlayImageOnVideo_through_ffmpeg();
     void processOverlayedImageOnVideo(bool killedByUser);    
 
-    pair<string, bool> overlayTextOnVideo();
-    pair<string, bool> overlayTextOnVideo_through_ffmpeg();
-    void processOverlayedTextOnVideo(string stagingEncodedAssetPathName, bool killedByUser);    
+    bool overlayTextOnVideo();
+    bool overlayTextOnVideo_through_ffmpeg();
+    void processOverlayedTextOnVideo(bool killedByUser);    
     
     bool generateFrames();
     bool generateFrames_through_ffmpeg();
