@@ -55,38 +55,15 @@ void API::updateMediaItem(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(runtime_error e)
         {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            _logger->error(__FILEREF__ + e.what());
 
-            sendError(request, 400, errorMessage);
+            sendError(request, 400, e.what());
 
-            throw runtime_error(errorMessage);
+            throw runtime_error(e.what());
         }
 
 		bool titleModified = false;
@@ -268,38 +245,15 @@ void API::updatePhysicalPath(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(runtime_error e)
         {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            _logger->error(__FILEREF__ + e.what());
 
-            sendError(request, 400, errorMessage);
+            sendError(request, 400, e.what());
 
-            throw runtime_error(errorMessage);
+            throw runtime_error(e.what());
         }
 
         {
@@ -601,40 +555,7 @@ void API::mediaItemsList(
 		Json::Value responseFields = Json::nullValue;
 		if (requestBody != "")
 		{
-			Json::Value otherInputsRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(requestBody.c_str(),
-						requestBody.c_str() + requestBody.size(), 
-						&otherInputsRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = string("Json tags failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(exception e)
-			{
-				string errorMessage = string("Json tags failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			Json::Value otherInputsRoot = JSONUtils::toJson(-1, -1, requestBody);
 
 			string field = "tagsIn";
             if (JSONUtils::isMetadataPresent(otherInputsRoot, field))

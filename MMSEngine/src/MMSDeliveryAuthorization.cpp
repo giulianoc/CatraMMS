@@ -350,39 +350,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			throw runtime_error(errorMessage);
 		}
 
-		Json::Value ingestionJobRoot;
-		string errors;
-		try
-		{
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-
-			bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
-				metaDataContent.c_str() + metaDataContent.size(), 
-				&ingestionJobRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = string("metadata ingestionJob parsing failed")
-					+ ", errors: " + errors
-					+ ", json metaDataContent: " + metaDataContent
-                      ;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-		catch(exception e)
-		{
-			string errorMessage = string("metadata ingestionJob parsing failed")
-				+ ", errors: " + errors
-				+ ", json metaDataContent: " + metaDataContent
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		Json::Value ingestionJobRoot = JSONUtils::toJson(-1, -1, metaDataContent);
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy
 			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy

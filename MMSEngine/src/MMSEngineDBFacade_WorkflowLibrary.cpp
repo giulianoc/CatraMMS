@@ -539,32 +539,11 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
                     Json::Value workflowRoot;
                     try
                     {
-                        Json::CharReaderBuilder builder;
-                        Json::CharReader* reader = builder.newCharReader();
-                        string errors;
-
-                        bool parsingSuccessful = reader->parse(jsonWorkflow.c_str(),
-                                jsonWorkflow.c_str() + jsonWorkflow.size(), 
-                                &workflowRoot, &errors);
-                        delete reader;
-
-                        if (!parsingSuccessful)
-                        {
-                            string errorMessage = string("Json metadata failed during the parsing")
-                                    + ", errors: " + errors
-                                    + ", json data: " + jsonWorkflow
-                                    ;
-                            _logger->error(__FILEREF__ + errorMessage);
-
-                            continue;
-                        }
+						workflowRoot = JSONUtils::toJson(-1, -1, jsonWorkflow);
                     }
-                    catch(exception e)
+                    catch(runtime_error e)
                     {
-                        string errorMessage = string("Json metadata failed during the parsing"
-                                ", json data: " + jsonWorkflow
-                                );
-                        _logger->error(__FILEREF__ + errorMessage);
+                        _logger->error(__FILEREF__ + e.what());
 
                         continue;
                     }

@@ -1643,53 +1643,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 										resultSetCrossReferences->getString("parameters");
 									if (crossReferenceParameters != "")
 									{
-										Json::Value crossReferenceParametersRoot;
-										try
-										{
-											Json::CharReaderBuilder builder;
-											Json::CharReader* reader = builder.newCharReader();
-											string errors;
-
-											bool parsingSuccessful = reader->parse(
-												crossReferenceParameters.c_str(),
-												crossReferenceParameters.c_str()
-													+ crossReferenceParameters.size(), 
-												&crossReferenceParametersRoot, &errors);
-											delete reader;
-
-											if (!parsingSuccessful)
-											{
-												string errorMessage = __FILEREF__
-													+ "failed to parse the crossReferenceParameters"
-													+ ", errors: " + errors
-													+ ", crossReferenceParameters: "
-														+ crossReferenceParameters
-												;
-												_logger->error(errorMessage);
-
-												throw runtime_error(errors);
-											}
-										}
-										catch(runtime_error e)
-										{
-											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: "
-													+ crossReferenceParameters
-												+ ", e.what(): " + e.what()
-											;
-											_logger->error(__FILEREF__ + errorMessage);
-
-											throw runtime_error(errorMessage);
-										}
-										catch(exception e)
-										{
-											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: " + crossReferenceParameters
-											;
-											_logger->error(__FILEREF__ + errorMessage);
-
-											throw runtime_error(errorMessage);
-										}
+										Json::Value crossReferenceParametersRoot
+											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -1743,53 +1698,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 										resultSetCrossReferences->getString("parameters");
 									if (crossReferenceParameters != "")
 									{
-										Json::Value crossReferenceParametersRoot;
-										try
-										{
-											Json::CharReaderBuilder builder;
-											Json::CharReader* reader = builder.newCharReader();
-											string errors;
-
-											bool parsingSuccessful = reader->parse(
-												crossReferenceParameters.c_str(),
-												crossReferenceParameters.c_str()
-													+ crossReferenceParameters.size(), 
-												&crossReferenceParametersRoot, &errors);
-											delete reader;
-
-											if (!parsingSuccessful)
-											{
-												string errorMessage = __FILEREF__ + "failed to parse the crossReferenceParameters"
-													+ ", errors: " + errors
-													+ ", crossReferenceParameters: "
-														+ crossReferenceParameters
-												;
-												_logger->error(errorMessage);
-
-												throw runtime_error(errors);
-											}
-										}
-										catch(runtime_error e)
-										{
-											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: "
-													+ crossReferenceParameters
-												+ ", e.what(): " + e.what()
-											;
-											_logger->error(__FILEREF__ + errorMessage);
-
-											throw runtime_error(errorMessage);
-										}
-										catch(exception e)
-										{
-											string errorMessage = string("crossReferenceParameters json is not well format")
-												+ ", crossReferenceParameters: "
-													+ crossReferenceParameters
-											;
-											_logger->error(__FILEREF__ + errorMessage);
-
-											throw runtime_error(errorMessage);
-										}
+										Json::Value crossReferenceParametersRoot
+											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -6496,48 +6406,7 @@ void MMSEngineDBFacade::addTags(
 		//	2021-08-29: we added the jsonArray type, so we do not expect anymore a string
 		Json::Value localTagsRoot;
 
-		/*
-		if (tagsRoot.type() == Json::stringValue)
-		{
-			string sTags = tagsRoot.asString();
-			if (sTags == "")
-				return;
-
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(sTags.c_str(),
-					sTags.c_str() + sTags.size(),                          
-					&localTagsRoot, &errors);                                       
-				delete reader;                                                             
-
-				if (!parsingSuccessful)                                                    
-				{                                                                          
-					string errorMessage = __FILEREF__ + "failed to parse the tags"  
-						+ ", errors: " + errors                                        
-						+ ", sTags: " + sTags                              
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(...)
-			{
-				string errorMessage = string("requestBody json is not well format")
-					+ ", sTags: " + sTags                              
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-		else
-		*/
-			localTagsRoot = tagsRoot;
+		localTagsRoot = tagsRoot;
 
 		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
 		{

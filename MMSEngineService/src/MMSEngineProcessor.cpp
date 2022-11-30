@@ -1151,32 +1151,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 else    // Start_TaskQueued
                 {
-                    Json::Value parametersRoot;
-                    try
-                    {
-                        Json::CharReaderBuilder builder;
-                        Json::CharReader* reader = builder.newCharReader();
-                        string errors;
-
-                        bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
-                                metaDataContent.c_str() + metaDataContent.size(), 
-                                &parametersRoot, &errors);
-                        delete reader;
-
-                        if (!parsingSuccessful)
-                        {
-                            string errorMessage = __FILEREF__ + "failed to parse the metadata"
-                                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", errors: " + errors
-                                    + ", metaDataContent: " + metaDataContent
-                                    ;
-                            _logger->error(errorMessage);
-
-                            throw runtime_error(errorMessage);
-                        }
-                    }
-                    catch(...)
+					Json::Value parametersRoot;
+					try
+					{
+						parametersRoot = JSONUtils::toJson(ingestionJobKey, -1, metaDataContent);
+					}
+                    catch(runtime_error e)
                     {
                         string errorMessage = string("metadata json is not well format")
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5770,10 +5750,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     Json::Value parametersRoot;
     try
     {
-        Json::CharReaderBuilder builder;
-        Json::CharReader* reader = builder.newCharReader();
-        string errors;
-
         string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
         
         // LF and CR create problems to the json parser...
@@ -5781,23 +5757,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			&& (sMetadataContent.back() == 10 || sMetadataContent.back() == 13))
             sMetadataContent.pop_back();
         
-        bool parsingSuccessful = reader->parse(sMetadataContent.c_str(),
-                sMetadataContent.c_str() + sMetadataContent.size(), 
-                &parametersRoot, &errors);
-        delete reader;
-
-        if (!parsingSuccessful)
-        {
-			string errorMessage = __FILEREF__ + "failed to parse the metadata"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-				+ ", errors: " + errors
-				+ ", metaDataContent: " + sMetadataContent
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-        }
+		parametersRoot = JSONUtils::toJson(
+			localAssetIngestionEvent.getIngestionJobKey(), -1, sMetadataContent);
     }
     catch(runtime_error e)
     {
@@ -10121,28 +10082,7 @@ void MMSEngineProcessor::httpCallbackThread(
 									callbackMedatada["userData"] = Json::nullValue;
 								else
 								{
-									Json::Value userDataRoot;
-									{
-										Json::CharReaderBuilder builder;
-										Json::CharReader* reader = builder.newCharReader();
-										string errors;
-
-										bool parsingSuccessful = reader->parse(userData.c_str(),
-											userData.c_str() + userData.size(), 
-											&userDataRoot, &errors);
-										delete reader;
-
-										if (!parsingSuccessful)
-										{
-											string errorMessage = __FILEREF__ + "failed to parse the userData"
-												+ ", errors: " + errors
-												+ ", userData: " + userData
-												;
-											_logger->error(errorMessage);
-
-											throw runtime_error(errors);
-										}
-									}
+									Json::Value userDataRoot = JSONUtils::toJson(-1, -1, userData);
 
 									callbackMedatada["userData"] = userDataRoot;
 								}
@@ -10193,28 +10133,7 @@ void MMSEngineProcessor::httpCallbackThread(
 									callbackMedatada["userData"] = Json::nullValue;
 								else
 								{
-									Json::Value userDataRoot;
-									{
-										Json::CharReaderBuilder builder;
-										Json::CharReader* reader = builder.newCharReader();
-										string errors;
-
-										bool parsingSuccessful = reader->parse(userData.c_str(),
-											userData.c_str() + userData.size(), 
-											&userDataRoot, &errors);
-										delete reader;
-
-										if (!parsingSuccessful)
-										{
-											string errorMessage = __FILEREF__ + "failed to parse the userData"
-												+ ", errors: " + errors
-												+ ", userData: " + userData
-												;
-											_logger->error(errorMessage);
-
-											throw runtime_error(errors);
-										}
-									}
+									Json::Value userDataRoot = JSONUtils::toJson(-1, -1, userData);
 
 									callbackMedatada["userData"] = userDataRoot;
 								}
@@ -12696,28 +12615,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) =
 					encodingProfileDetails;
 
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 
 			{
@@ -13974,28 +13872,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile)
 				= encodingProfileDetails;
 
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-					jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-					&encodingProfileDetailsRoot,
-					&errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
+			encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 		}
 		else
 		{
@@ -14572,57 +14449,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						try
-						{
-							Json::CharReaderBuilder builder;                                  
-							Json::CharReader* reader = builder.newCharReader();               
-							string errors;                                                    
-
-							bool parsingSuccessful = reader->parse(                           
-								userData.c_str(),                             
-								userData.c_str() + userData.size(),
-								&userDataRoot, &errors);                      
-							delete reader;
-
-							if (!parsingSuccessful)                                           
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the userData"
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", mediaItemKey: " + to_string(mediaItemKey)
-									+ ", errors: " + errors
-									+ ", userData: " + userData
-								;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errors);
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("userData json is not well format")
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", userData: " + userData
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("userData json is not well format")
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", userData: " + userData
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
+						userDataRoot = JSONUtils::toJson(ingestionJobKey, -1, userData);
 					}
 
 					field = "mmsData";
@@ -15016,56 +14843,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 							string sUserData = liveCutParametersRoot.get(field, "").asString();
 
 							if (sUserData != "")
-							{
-								try
-								{
-									Json::CharReaderBuilder builder;                                  
-									Json::CharReader* reader = builder.newCharReader();               
-									string errors;                                                    
-
-									bool parsingSuccessful = reader->parse(                           
-										sUserData.c_str(),                             
-										sUserData.c_str() + sUserData.size(),
-										&userDataRoot, &errors);                      
-									delete reader;
-
-									if (!parsingSuccessful)                                           
-									{
-										string errorMessage = __FILEREF__ + "failed to parse the userData"
-											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-											+ ", errors: " + errors
-											+ ", sUserData: " + sUserData
-										;
-										_logger->error(errorMessage);
-
-										throw runtime_error(errors);
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string("userData json is not well format")
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", sUserData: " + sUserData
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string("userData json is not well format")
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", sUserData: " + sUserData
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-							}
+								userDataRoot = JSONUtils::toJson(ingestionJobKey, -1, sUserData);
 						}
 						else // if (valueType == Json::ValueType::objectValue)
 						{
@@ -15672,57 +15450,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						try
-						{
-							Json::CharReaderBuilder builder;                                  
-							Json::CharReader* reader = builder.newCharReader();               
-							string errors;                                                    
-
-							bool parsingSuccessful = reader->parse(                           
-								userData.c_str(),                             
-								userData.c_str() + userData.size(),
-								&userDataRoot, &errors);                      
-							delete reader;
-
-							if (!parsingSuccessful)                                           
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the userData"
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", mediaItemKey: " + to_string(mediaItemKey)
-									+ ", errors: " + errors
-									+ ", userData: " + userData
-								;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errors);
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("userData json is not well format")
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", userData: " + userData
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("userData json is not well format")
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", userData: " + userData
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
+						userDataRoot = JSONUtils::toJson(ingestionJobKey, -1, userData);
 					}
 
 					field = "mmsData";
@@ -16146,54 +15874,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 							if (sUserData != "")
 							{
-								try
-								{
-									Json::CharReaderBuilder builder;                                  
-									Json::CharReader* reader = builder.newCharReader();               
-									string errors;                                                    
-
-									bool parsingSuccessful = reader->parse(                           
-										sUserData.c_str(),                             
-										sUserData.c_str() + sUserData.size(),
-										&userDataRoot, &errors);                      
-									delete reader;
-
-									if (!parsingSuccessful)                                           
-									{
-										string errorMessage = __FILEREF__ + "failed to parse the userData"
-											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-											+ ", errors: " + errors
-											+ ", sUserData: " + sUserData
-										;
-										_logger->error(errorMessage);
-
-										throw runtime_error(errors);
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string("userData json is not well format")
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", sUserData: " + sUserData
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string("userData json is not well format")
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", sUserData: " + sUserData
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
+								userDataRoot = JSONUtils::toJson(ingestionJobKey, -1, sUserData);
 							}
 						}
 						else // if (valueType == Json::ValueType::objectValue)
@@ -17023,31 +16704,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			*/
 
-			Json::Value responseRoot;
-			{
-				Json::CharReaderBuilder builder;                                  
-				Json::CharReader* reader = builder.newCharReader();               
-				string errors;                                                    
-
-				bool parsingSuccessful = reader->parse(                           
-					sResponse.c_str(),                             
-					sResponse.c_str() + sResponse.size(),
-					&responseRoot, &errors);                      
-				delete reader;
-
-				if (!parsingSuccessful)                                           
-				{
-					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-						+ ", sResponse: " + sResponse
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errors);
-				}
-			}
+			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
 			string field = "id";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -17368,31 +17025,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			*/
 
-			Json::Value responseRoot;
-			{
-				Json::CharReaderBuilder builder;                                  
-				Json::CharReader* reader = builder.newCharReader();               
-				string errors;                                                    
-
-				bool parsingSuccessful = reader->parse(                           
-					sResponse.c_str(),                             
-					sResponse.c_str() + sResponse.size(),
-					&responseRoot, &errors);                      
-				delete reader;
-
-				if (!parsingSuccessful)                                           
-				{
-					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-						+ ", sResponse: " + sResponse
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errors);
-				}
-			}
+			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
 			string field = "id";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -17717,31 +17350,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			*/
 
-			Json::Value responseRoot;
-			{
-				Json::CharReaderBuilder builder;                                  
-				Json::CharReader* reader = builder.newCharReader();               
-				string errors;                                                    
-
-				bool parsingSuccessful = reader->parse(                           
-					sResponse.c_str(),                             
-					sResponse.c_str() + sResponse.size(),
-					&responseRoot, &errors);                      
-				delete reader;
-
-				if (!parsingSuccessful)                                           
-				{
-					string errorMessage = __FILEREF__ + "failed to parse the YouTube response"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-						+ ", sResponse: " + sResponse
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errors);
-				}
-			}
+			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 		}
 		catch(runtime_error e)
 		{
@@ -19499,42 +19108,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				if (lastUserData != "")
 				{
 					// try to retrieve time codes
-					Json::Value sourceUserDataRoot;
-					try
-					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(lastUserData.c_str(),
-							lastUserData.c_str() + lastUserData.size(), 
-							&sourceUserDataRoot, &errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "failed to parse userData"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", errors: " + errors
-								+ ", lastUserData: " + lastUserData
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-					catch(...)
-					{
-						string errorMessage = string("userData json is not well format")
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", lastUserData: " + lastUserData
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
+					Json::Value sourceUserDataRoot = JSONUtils::toJson(ingestionJobKey, -1, lastUserData);
 
 					string field = "mmsData";
 					if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
@@ -19637,42 +19211,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			if (lastUserData != "")
 			{
 				// try to retrieve time codes
-				Json::Value sourceUserDataRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(lastUserData.c_str(),
-						lastUserData.c_str() + lastUserData.size(), 
-						&sourceUserDataRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse userData"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-							+ ", lastUserData: " + lastUserData
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(...)
-				{
-					string errorMessage = string("userData json is not well format")
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", lastUserData: " + lastUserData
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value sourceUserDataRoot = JSONUtils::toJson(ingestionJobKey, -1, lastUserData);
 
 				string field = "mmsData";
 				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
@@ -20331,42 +19870,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			if (framesNumber == -1 && userData != "")
 			{
 				// try to retrieve time codes
-				Json::Value sourceUserDataRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(userData.c_str(),
-						userData.c_str() + userData.size(), 
-						&sourceUserDataRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse userData"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-							+ ", userData: " + userData
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(...)
-				{
-					string errorMessage = string("userData json is not well format")
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", userData: " + userData
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value sourceUserDataRoot = JSONUtils::toJson(ingestionJobKey, -1, userData);
 
 				int64_t utcStartTimeInMilliSecs = -1;
 				int64_t utcEndTimeInMilliSecs = -1;
@@ -20698,28 +20202,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						workspace->_workspaceKey, encodingProfileKey);
 					tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-					{
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-							&encodingProfileDetailsRoot,
-							&errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", errors: " + errors
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
+					encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 				}
 			}
 
@@ -20903,28 +20386,7 @@ void MMSEngineProcessor::manageEncodeTask(
 							workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 		}
 
@@ -21939,28 +21401,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 					workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 		}
 
@@ -22306,28 +21747,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 					workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 		}
 
@@ -22592,28 +22012,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 					workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
-						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-						&encodingProfileDetailsRoot,
-						&errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 		}
 
@@ -22899,32 +22298,7 @@ void MMSEngineProcessor::emailNotificationThread(
 							if (ingestionType ==
 								MMSEngineDBFacade::IngestionType::CheckStreaming)
 							{
-								Json::Value parametersRoot;
-								{
-									Json::CharReaderBuilder builder;
-									Json::CharReader* reader = builder.newCharReader();
-									string errors;
-
-									bool parsingSuccessful = reader->parse(parameters.c_str(),
-										parameters.c_str() + parameters.size(), 
-										&parametersRoot, &errors);
-									delete reader;
-
-									if (!parsingSuccessful)
-									{
-										string errorMessage = __FILEREF__
-											+ "failed to parse the parameters"
-											+ ", _processorIdentifier: "
-												+ to_string(_processorIdentifier)
-											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-											+ ", errors: " + errors
-											+ ", parameters: " + parameters
-										;
-										_logger->error(errorMessage);
-
-										throw runtime_error(errorMessage);
-									}
-								}
+								Json::Value parametersRoot = JSONUtils::toJson(ingestionJobKey, -1, parameters);
 
 								string inputType;
 								field = "inputType";
@@ -26123,42 +25497,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
                     + ", sResponse: " + sResponse
             );
             
-            Json::Value facebookResponseRoot;
-            try
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &facebookResponseRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the facebook response"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            catch(...)
-            {
-                string errorMessage = string("facebook json response is not well format")
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
             
             string field = "upload_session_id";
             if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -26383,42 +25722,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
                         + ", sResponse: " + sResponse
                 );
 
-                Json::Value facebookResponseRoot;
-                try
-                {
-                    Json::CharReaderBuilder builder;
-                    Json::CharReader* reader = builder.newCharReader();
-                    string errors;
-
-                    bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                            sResponse.c_str() + sResponse.size(), 
-                            &facebookResponseRoot, &errors);
-                    delete reader;
-
-                    if (!parsingSuccessful)
-                    {
-                        string errorMessage = __FILEREF__ + "failed to parse the facebook response"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", errors: " + errors
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                catch(...)
-                {
-                    string errorMessage = string("facebook json response is not well format")
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
+                Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
                 string field = "start_offset";
                 if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -26583,43 +25887,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
                     + ", sResponse: " + sResponse
             );
             
-            Json::Value facebookResponseRoot;
-            try
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
+            Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &facebookResponseRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the facebook response"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            catch(...)
-            {
-                string errorMessage = string("facebook json response is not well format")
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            
             string field = "success";
             if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
@@ -27590,40 +26859,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
             throw runtime_error(errorMessage);
         }
 
-        Json::Value youTubeResponseRoot;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                    sResponse.c_str() + sResponse.size(),
-                    &youTubeResponseRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the youTube response"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", errors: " + errors
-                    + ", sResponse: " + sResponse
-                 ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("youTube json response is not well format")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", sResponse: " + sResponse
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value youTubeResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
         /*
             {

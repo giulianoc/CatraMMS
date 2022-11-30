@@ -3668,7 +3668,8 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 
 	{
 		// management of the text, many processing is in case of a countdown
-		string ffmpegText;
+		string ffmpegText = text;
+		if (streamingDurationInSeconds != -1)
 		{
 			// see https://ffmpeg.org/ffmpeg-filters.html
 			// see https://ffmpeg.org/ffmpeg-utils.html
@@ -3680,7 +3681,6 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
 			//
 
-			string localText = text;
 			if (textFilePathName != "")
 			{
 				ifstream ifPathFileName(textFilePathName);
@@ -3696,12 +3696,12 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 					if (ifPathFileName)
 					{
 						// all characters read successfully
-						localText.assign(buffer, fileSize);                                                 
+						ffmpegText.assign(buffer, fileSize);                                                 
 					}
 					else
 					{
 						// error: only is.gcount() could be read";
-						localText.assign(buffer, ifPathFileName.gcount());
+						ffmpegText.assign(buffer, ifPathFileName.gcount());
 					}
 					ifPathFileName.close();
 					delete[] buffer;
@@ -3719,19 +3719,18 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			if (textFilePathName != "")
 				escape = "";	// in case of file, there is no need of escape
 
-			ffmpegText = regex_replace(localText, regex(":"), escape + ":");
-			ffmpegText = regex_replace(ffmpegText,
-				regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
-			ffmpegText = regex_replace(ffmpegText,
-				regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}");
-			ffmpegText = regex_replace(ffmpegText,
-				regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}");
-			ffmpegText = regex_replace(ffmpegText,
-				regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}");
-			ffmpegText = regex_replace(ffmpegText,
-				regex("cents_counter"), "%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}");
-			if (streamingDurationInSeconds != -1)
 			{
+				ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
+				ffmpegText = regex_replace(ffmpegText,
+					regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
+				ffmpegText = regex_replace(ffmpegText,
+					regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}");
+				ffmpegText = regex_replace(ffmpegText,
+					regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}");
+				ffmpegText = regex_replace(ffmpegText,
+					regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}");
+				ffmpegText = regex_replace(ffmpegText,
+					regex("cents_counter"), "%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}");
 				ffmpegText = regex_replace(ffmpegText,
 					regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
 			}
@@ -5676,50 +5675,8 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
-        Json::Value detailsRoot;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
+        Json::Value detailsRoot = MMSCURL::toJson(ingestionJobKey, -1, mediaDetails);
 
-            bool parsingSuccessful = reader->parse(mediaDetails.c_str(),
-                    mediaDetails.c_str() + mediaDetails.size(), 
-                    &detailsRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the media details"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", mediaSource: " + mediaSource
-					+ ", errors: " + errors
-					+ ", mediaDetails: " + mediaDetails
-				;
-                _logger->error(errorMessage);
-
-				// to hide the ffmpeg staff
-                errorMessage = __FILEREF__ + "failed to parse the media details"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", mediaSource: " + mediaSource
-					+ ", errors: " + errors
-					+ ", mediaDetails: " + mediaDetails
-				;
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("media json is not well format")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", mediaSource: " + mediaSource
-				+ ", mediaDetails: " + mediaDetails
-			;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-                
         string field = "streams";
         if (!isMetadataPresent(detailsRoot, field))
         {

@@ -855,50 +855,7 @@ void API::addEncodingProfilesSet(
         MMSEngineDBFacade::ContentType contentType = 
                 MMSEngineDBFacade::toContentType(sContentTypeIt->second);
         
-        Json::Value encodingProfilesSetRoot;
-        try
-        {
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &encodingProfilesSetRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value encodingProfilesSetRoot = JSONUtils::toJson(-1, -1, requestBody);
 
         string responseBody;    
         shared_ptr<MySQLConnection> conn;
@@ -1043,50 +1000,7 @@ void API::addEncodingProfile(
         MMSEngineDBFacade::ContentType contentType = 
                 MMSEngineDBFacade::toContentType(sContentTypeIt->second);
         
-        Json::Value encodingProfileRoot;
-        try
-        {
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &encodingProfileRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value encodingProfileRoot = JSONUtils::toJson(-1, -1, requestBody);
 
         string responseBody;    
 

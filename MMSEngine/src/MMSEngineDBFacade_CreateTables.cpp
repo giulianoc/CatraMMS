@@ -1,6 +1,7 @@
 
 #include <fstream>
 #include <sstream>
+#include "JSONUtils.h"
 #include "catralibraries/FileIO.h"
 #include "MMSEngineDBFacade.h"
 
@@ -913,38 +914,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             );                            
                         }
 
-						Json::Value encodingMedatada;
-						try
-						{
-							Json::CharReaderBuilder builder;
-							Json::CharReader* reader = builder.newCharReader();
-							string errors;
-
-							bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
-								jsonProfile.c_str() + jsonProfile.size(), 
-								&encodingMedatada, &errors);
-							delete reader;
-
-							if (!parsingSuccessful)
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the jsonProfile"
-									+ ", errors: " + errors
-									+ ", jsonProfile: " + jsonProfile
-								;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-						}
-						catch(...)
-						{
-							string errorMessage = string("jsonProfile json is not well format")
-								+ ", jsonProfile: " + jsonProfile
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
+						Json::Value encodingMedatada = JSONUtils::toJson(-1, -1, jsonProfile);
 
 						string label = encodingMedatada.get("Label", "XXX").asString();
 						string fileFormat = encodingMedatada.get("FileFormat", "XXX").asString();
@@ -1775,38 +1745,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             );
                         }
 
-						Json::Value workflowRoot;
-						try
-						{
-							Json::CharReaderBuilder builder;
-							Json::CharReader* reader = builder.newCharReader();
-							string errors;
-
-							bool parsingSuccessful = reader->parse(jsonWorkflow.c_str(),
-								jsonWorkflow.c_str() + jsonWorkflow.size(), 
-								&workflowRoot, &errors);
-							delete reader;
-
-							if (!parsingSuccessful)
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the jsonWorkflow"
-									+ ", errors: " + errors
-									+ ", jsonWorkflow: " + jsonWorkflow
-								;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-						}
-						catch(...)
-						{
-							string errorMessage = string("jsonWorkflow json is not well format")
-								+ ", jsonWorkflow: " + jsonWorkflow
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
+						Json::Value workflowRoot = JSONUtils::toJson(-1, -1, jsonWorkflow);
 
 						string label = workflowRoot.get("Label", "XXX").asString();
 

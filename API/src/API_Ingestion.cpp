@@ -307,27 +307,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 			);
 		}
 
-		{
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(requestBody.c_str(),
-				requestBody.c_str() + requestBody.size(), 
-				&requestBodyRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-					+ ", errors: " + errors
-					+ ", requestBody: " + requestBody
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errors);
-			}
-		}
+		requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
 		/*
 		 * Definition of the Variables into the Workflow:
@@ -587,28 +567,8 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 				_logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
 					+ ", localRequestBody: " + localRequestBody
 				);
-                    
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
 
-					bool parsingSuccessful = reader->parse(localRequestBody.c_str(),
-						localRequestBody.c_str() + localRequestBody.size(), 
-						&requestBodyRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse the localRequestBody"
-							+ ", errors: " + errors
-							+ ", localRequestBody: " + localRequestBody
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				requestBodyRoot = JSONUtils::toJson(-1, -1, localRequestBody);
 			}
 		}
 	}
@@ -2633,29 +2593,7 @@ void API::uploadedBinary(
 			string parameters;
 			tie(ignore, ignore, ignore, parameters, ignore) = ingestionJobDetails;
 
-			Json::Value parametersRoot;
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(parameters.c_str(),
-						parameters.c_str() + parameters.size(),
-						&parametersRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
-						+ ", parameters: " + parameters
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
+			Json::Value parametersRoot = JSONUtils::toJson(ingestionJobKey, -1, parameters);
 
 			string field = "FileFormat";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -3398,27 +3336,7 @@ void API::fileUploadProgressCheck()
 
                 try
                 {
-                    Json::Value uploadProgressResponse;
-
-                    Json::CharReaderBuilder builder;
-                    Json::CharReader* reader = builder.newCharReader();
-                    string errors;
-                    
-                    bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                            sResponse.c_str() + sResponse.size(), 
-                            &uploadProgressResponse, &errors);
-                    delete reader;
-
-                    if (!parsingSuccessful)
-                    {
-                        string errorMessage = __FILEREF__ + "failed to parse the response body"
-                                + ", errors: " + errors
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
+                    Json::Value uploadProgressResponse = JSONUtils::toJson(-1, -1, sResponse);
 
                     // { "state" : "uploading", "received" : 731195032, "size" : 745871360 }
                     // At the end: { "state" : "done" }
@@ -4495,38 +4413,7 @@ void API::updateIngestionJob(
 				throw runtime_error(errorMessage);
 			}
 
-			Json::Value metadataRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(requestBody.c_str(),
-					requestBody.c_str() + requestBody.size(), 
-					&metadataRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", errors: " + errors
-						+ ", json data: " + requestBody
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(exception e)
-			{
-				string errorMessage = string("Json metadata failed during the parsing"
-					", json data: " + requestBody
-				);
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			Json::Value metadataRoot = JSONUtils::toJson(ingestionJobKey, -1, requestBody);
 
 			string field = "IngestionType";
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -4798,40 +4685,7 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 
-			Json::Value metadataContentRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
-					metaDataContent.c_str() + metaDataContent.size(), 
-					&metadataContentRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
-						+ ", errors: " + errors
-						+ ", json data: " + metaDataContent
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(exception e)
-			{
-				string errorMessage = string("Json metadata failed during the parsing")
-					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
-					+ ", json data: " + metaDataContent
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			Json::Value metadataContentRoot = JSONUtils::toJson(broadcasterIngestionJobKey, -1, metaDataContent);
 
 			string field = "internalMMS";
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
@@ -5215,38 +5069,7 @@ void API::changeLiveProxyPlaylist(
 		Json::Value newPlaylistRoot(Json::arrayValue);
         try
         {
-			Json::Value newReceivedPlaylistRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(requestBody.c_str(),
-					requestBody.c_str() + requestBody.size(), 
-					&newReceivedPlaylistRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
-				{
-					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", errors: " + errors
-						+ ", json data: " + requestBody
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			catch(exception e)
-			{
-				string errorMessage = string("Json metadata failed during the parsing"
-					", json data: " + requestBody
-				);
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			Json::Value newReceivedPlaylistRoot = JSONUtils::toJson(-1, -1, requestBody);
 
 			// check the received playlist
 			// in case of vodInput/countdownInput, the physicalPathKey is received but we need to set
@@ -5901,41 +5724,7 @@ void API::changeLiveProxyPlaylist(
 			// because will be executed in the future
 			if (broadcastEncodingJobKey != -1)
 			{
-				Json::Value broadcastParametersRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(broadcastParameters.c_str(),
-						broadcastParameters.c_str() + broadcastParameters.size(), 
-						&broadcastParametersRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = string("Json metadata failed during the parsing")
-							+ ", broadcastEncodingJobKey: "
-								+ to_string(broadcastEncodingJobKey)
-							+ ", errors: " + errors
-							+ ", json data: " + broadcastParameters
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(exception e)
-				{
-					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
-						+ ", json data: " + broadcastParameters
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value broadcastParametersRoot = JSONUtils::toJson(broadcastEncodingJobKey, -1, broadcastParameters);
 
 				// update of the parameters
 				string field = "inputsRoot";
@@ -6056,40 +5845,7 @@ void API::changeLiveProxyPlaylist(
 					+ ", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
 				);
 
-				Json::Value metadataContentRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
-						metaDataContent.c_str() + metaDataContent.size(), 
-						&metadataContentRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = string("Json metadata failed during the parsing")
-							+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
-							+ ", errors: " + errors
-							+ ", json data: " + metaDataContent
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(exception e)
-				{
-					string errorMessage = string("Json metadata failed during the parsing")
-						+ ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
-						+ ", json data: " + metaDataContent
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value metadataContentRoot = JSONUtils::toJson(broadcastIngestionJobKey, -1, metaDataContent);
 
 				// update of the parameters
 				Json::Value mmsInternalRoot;

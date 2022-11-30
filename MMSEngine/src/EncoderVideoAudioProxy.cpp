@@ -2378,60 +2378,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 				_logger
 			);
 
-            Json::Value encodeContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &encodeContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-						+ ", errors: " + errors
-						+ ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-					+ ", sResponse: " + sResponse
-					+ ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-					+ ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			Json::Value encodeContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -3451,57 +3399,8 @@ bool EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value overlayContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &overlayContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value overlayContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -4104,57 +4003,8 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value overlayTextContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &overlayTextContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value overlayTextContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -4912,58 +4762,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value videoSpeedContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &videoSpeedContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value videoSpeedContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -5765,57 +5565,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value pictureInPictureContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &pictureInPictureContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value pictureInPictureContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -6511,57 +6262,8 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value introOutroOverlayContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &introOutroOverlayContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value introOutroOverlayContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -7255,57 +6957,8 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value cutFrameAccurateContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &cutFrameAccurateContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value cutFrameAccurateContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -7957,57 +7610,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value generateFramesContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &generateFramesContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", sResponse: " + sResponse
-				;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value generateFramesContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -8674,57 +8278,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
-            Json::Value slideShowContentResponse;
-            try
-            {                
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &slideShowContentResponse, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value slideShowContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey, sResponse);
 
             {
                 string field = "error";
@@ -11472,57 +11027,8 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
-				Json::Value liveRecorderContentResponse;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &liveRecorderContentResponse, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}               
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw e;
-				}
-				catch(...)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value liveRecorderContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+					_encodingItem->_encodingJobKey, sResponse);
 
 				{
 					string field = "error";
@@ -12994,33 +12500,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							tie(ignore, ignore, ignore, ignore, encodingParameters)
 								= encodingJobDetails;
 
-							{
-								Json::CharReaderBuilder builder;
-								Json::CharReader* reader = builder.newCharReader();
-								string errors;
-
-								bool parsingSuccessful = reader->parse(
-									encodingParameters.c_str(),
-									encodingParameters.c_str() + encodingParameters.size(), 
-									&(_encodingItem->_encodingParametersRoot), &errors);
-								delete reader;
-
-								if (!parsingSuccessful)
-								{
-									string errorMessage = __FILEREF__
-										+ "failed to parse 'parameters'"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", encodingItem->_encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", errors: " + errors
-										+ ", encodingParameters: " + encodingParameters
-									;
-									_logger->error(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-							}
+							_encodingItem->_encodingParametersRoot = JSONUtils::toJson(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+								encodingParameters);
 						}
 						catch(runtime_error e)
 						{
@@ -13174,62 +12656,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					(sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
-				Json::Value liveProxyContentResponse;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &liveProxyContentResponse, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__
-							+ "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: "
-								+ to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: "
-								+ to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: "
-							+ to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw e;
-				}
-				catch(...)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: "
-							+ to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value liveProxyContentResponse = JSONUtils::toJson(_encodingItem->_ingestionJobKey,
+					_encodingItem->_encodingJobKey, sResponse);
 
 				{
 					string field = "error";
@@ -14404,42 +13832,7 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot;
-		try
-		{
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(channelData.c_str(),
-				channelData.c_str() + channelData.size(),
-				&channelDataRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__ + "failed to parse channelData"
-					+ ", ingestionKey: " + to_string(ingestionKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", channelData: " + channelData
-					+ ", errors: " + errors
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-		catch(...)
-		{
-			string errorMessage = string("channelData json is not well format")
-				+ ", ingestionKey: " + to_string(ingestionKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", channelData: " + channelData
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		Json::Value channelDataRoot = JSONUtils::toJson(ingestionKey, encodingJobKey, channelData);
 
 
 		string field;
@@ -14594,42 +13987,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot;
-		try
-		{
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(channelData.c_str(),
-				channelData.c_str() + channelData.size(),
-				&channelDataRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__ + "failed to parse channelData"
-					+ ", ingestionKey: " + to_string(ingestionKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", channelData: " + channelData
-					+ ", errors: " + errors
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-		catch(...)
-		{
-			string errorMessage = string("channelData json is not well format")
-				+ ", ingestionKey: " + to_string(ingestionKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", channelData: " + channelData
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		Json::Value channelDataRoot = JSONUtils::toJson(ingestionKey, encodingJobKey, channelData);
 
 		// add streamingYouTubeLiveURL info to the channelData
 		{
@@ -15307,57 +14665,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
-				Json::Value liveGridResponseRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                        sResponse.c_str() + sResponse.size(), 
-                        &liveGridResponseRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                            + ", errors: " + errors
-                            + ", sResponse: " + sResponse
-                            ;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}               
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw e;
-				}
-				catch(...)
-				{
-					string errorMessage = string("response Body json is not well format")
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", sResponse: " + sResponse
-                        ;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
+				Json::Value liveGridResponseRoot = JSONUtils::toJson(
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sResponse);
 
 				{
 					string field = "error";
@@ -16215,28 +15524,7 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 
         try
         {
-            Json::Value encodeStatusResponse;
-
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                    sResponse.c_str() + sResponse.size(), 
-                    &encodeStatusResponse, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "getEncodingStatus. Failed to parse the response body"
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", errors: " + errors
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 			string field = "completedWithError";
 			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
@@ -16469,36 +15757,6 @@ void EncoderVideoAudioProxy::readingImageProfile(
 )
 {
     string field;
-	/*
-    try
-    {
-        Json::CharReaderBuilder builder;
-        Json::CharReader* reader = builder.newCharReader();
-        string errors;
-
-        bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
-                jsonProfile.c_str() + jsonProfile.size(), 
-                &encodingProfileRoot, &errors);
-        delete reader;
-
-        if (!parsingSuccessful)
-        {
-            string errorMessage = __FILEREF__ + "failed to parse the encoder details"
-                    + ", errors: " + errors
-                    + ", jsonProfile: " + jsonProfile
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(...)
-    {
-        throw runtime_error(string("wrong encoding profile json format")
-                + ", jsonProfile: " + jsonProfile
-                );
-    }
-	*/
 
     // FileFormat
     {

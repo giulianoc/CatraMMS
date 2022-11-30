@@ -44,29 +44,7 @@ void API::addRequestStatistic(
         
         try
         {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
             string field = "userId";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

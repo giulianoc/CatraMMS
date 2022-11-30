@@ -1,5 +1,6 @@
 
 #include "MMSEngineDBFacade.h"
+#include "JSONUtils.h"
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -950,25 +951,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                             Json::Value profileRoot;
                             try
                             {
-                                Json::CharReaderBuilder builder;
-                                Json::CharReader* reader = builder.newCharReader();
-                                string errors;
-
-                                bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
-                                        jsonProfile.c_str() + jsonProfile.size(), 
-                                        &profileRoot, &errors);
-                                delete reader;
-
-                                if (!parsingSuccessful)
-                                {
-                                    string errorMessage = string("Json metadata failed during the parsing")
-                                            + ", errors: " + errors
-                                            + ", json data: " + jsonProfile
-                                            ;
-                                    _logger->error(__FILEREF__ + errorMessage);
-
-                                    continue;
-                                }
+								profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
                             }
                             catch(exception e)
                             {
@@ -979,7 +962,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 
                                 continue;
                             }
-                            
+
                             field = "profile";
                             encodingProfileRoot[field] = profileRoot;
                         }
@@ -1228,25 +1211,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                     Json::Value profileRoot;
                     try
                     {
-                        Json::CharReaderBuilder builder;
-                        Json::CharReader* reader = builder.newCharReader();
-                        string errors;
-
-                        bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
-                                jsonProfile.c_str() + jsonProfile.size(), 
-                                &profileRoot, &errors);
-                        delete reader;
-
-                        if (!parsingSuccessful)
-                        {
-                            string errorMessage = string("Json metadata failed during the parsing")
-                                    + ", errors: " + errors
-                                    + ", json data: " + jsonProfile
-                                    ;
-                            _logger->error(__FILEREF__ + errorMessage);
-
-                            continue;
-                        }
+						profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
                     }
                     catch(exception e)
                     {

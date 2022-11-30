@@ -105,6 +105,8 @@ public:
 		string destBinaryPathName,
 		shared_ptr<spdlog::logger> logger
 	);
+
+	static Json::Value toJson(int64_t ingestionJobKey, int64_t encodingJobKey, string json);
 };
 
 #endif

@@ -250,40 +250,7 @@ Json::Value MMSCURL::httpGetJson(
 		basicAuthenticationPassword,
 		logger);
 
-	Json::Value jsonRoot;
-	try
-	{
-		Json::CharReaderBuilder builder;
-		Json::CharReader* reader = builder.newCharReader();
-		string errors;
-
-		bool parsingSuccessful = reader->parse(response.c_str(),
-			response.c_str() + response.size(), 
-			&jsonRoot, &errors);
-		delete reader;
-
-		if (!parsingSuccessful)
-		{
-			string errorMessage = __FILEREF__ + "failed to parse the response"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errors: " + errors
-				+ ", response: " + response
-			;
-			logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	catch(...)
-	{
-		string errorMessage = string("response json is not well format")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", response: " + response
-		;
-		logger->error(__FILEREF__ + errorMessage);
-		
-		throw runtime_error(errorMessage);
-	}
+	Json::Value jsonRoot = toJson(ingestionJobKey, -1, response);
 
 	return jsonRoot;
 }
@@ -850,5 +817,46 @@ void MMSCURL::downloadFile(
 
 		throw e;
 	}
+}
+
+Json::Value MMSCURL::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, string json)
+{
+	Json::Value joValue;
+
+	try
+	{
+		Json::CharReaderBuilder builder;
+		Json::CharReader* reader = builder.newCharReader();
+		string errors;
+
+		bool parsingSuccessful = reader->parse(json.c_str(),
+			json.c_str() + json.size(), 
+			&joValue, &errors);
+		delete reader;
+
+		if (!parsingSuccessful)
+		{
+			string errorMessage = string("failed to parse the json")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", json: " + json
+				+ ", errors: " + errors
+			;
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch(...)
+	{
+		string errorMessage = string("json is not well format")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", json: " + json
+		;
+
+		throw runtime_error(errorMessage);
+	}
+
+	return joValue;
 }
 

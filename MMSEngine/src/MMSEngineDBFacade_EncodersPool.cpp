@@ -1672,28 +1672,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
 
 		try
 		{
-			Json::Value infoResponseRoot;
-
-			Json::CharReaderBuilder builder;
-			Json::CharReader* reader = builder.newCharReader();
-			string errors;
-
-			bool parsingSuccessful = reader->parse(sResponse.c_str(),
-				sResponse.c_str() + sResponse.size(), 
-				&infoResponseRoot, &errors);
-			delete reader;
-
-			if (!parsingSuccessful)
-			{
-				string errorMessage = __FILEREF__
-					+ "isEncoderRunning. Failed to parse the response body"
-					+ ", errors: " + errors
-					+ ", sResponse: " + sResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			Json::Value infoResponseRoot = JSONUtils::toJson(-1, -1, sResponse);
 
 			string field = "cpuUsage";
 			if (JSONUtils::isMetadataPresent(infoResponseRoot, field))

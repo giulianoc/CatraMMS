@@ -1,5 +1,6 @@
 
 #include "PersistenceLock.h"
+#include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
@@ -5292,28 +5293,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
                     Json::Value parametersRoot;
                     if (parameters != "")
-                    {
-                        Json::CharReaderBuilder builder;
-                        Json::CharReader* reader = builder.newCharReader();
-                        string errors;
-
-                        bool parsingSuccessful = reader->parse(parameters.c_str(),
-                                parameters.c_str() + parameters.size(), 
-                                &parametersRoot, &errors);
-                        delete reader;
-
-                        if (!parsingSuccessful)
-                        {
-                            string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-                                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                                    + ", errors: " + errors
-                                    + ", parameters: " + parameters
-                                    ;
-                            _logger->error(errorMessage);
-
-                            throw runtime_error(errorMessage);
-                        }
-                    }
+						parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
 
                     field = "parameters";
                     encodingJobRoot[field] = parametersRoot;

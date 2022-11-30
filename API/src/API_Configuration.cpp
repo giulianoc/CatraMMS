@@ -46,29 +46,7 @@ void API::addYouTubeConf(
         
         try
         {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -260,30 +238,8 @@ void API::modifyYouTubeConf(
         
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -607,30 +563,8 @@ void API::addFacebookConf(
         
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -758,30 +692,8 @@ void API::modifyFacebookConf(
         
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -1092,30 +1004,8 @@ void API::addStream(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-				bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -1414,30 +1304,8 @@ void API::modifyStream(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
 			labelToBeModified = false;
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2132,30 +2000,8 @@ void API::addSourceTVStream(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
 			string field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
@@ -2416,30 +2262,8 @@ void API::modifySourceTVStream(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -2975,30 +2799,8 @@ void API::addAWSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -3163,30 +2965,8 @@ void API::modifyAWSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -3509,30 +3289,8 @@ void API::addFTPConf(
         
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -3709,30 +3467,8 @@ void API::modifyFTPConf(
         
         try
         {
-            Json::Value requestBodyRoot;
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -4063,29 +3799,7 @@ void API::addEMailConf(
         
         try
         {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4238,29 +3952,7 @@ void API::modifyEMailConf(
         
         try
         {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
             string field = "Label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

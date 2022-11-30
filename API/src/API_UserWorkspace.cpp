@@ -62,27 +62,7 @@ void API::registerUser(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
@@ -908,27 +888,7 @@ void API::shareWorkspace_(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
@@ -1321,27 +1281,7 @@ void API::login(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
@@ -1781,27 +1721,7 @@ void API::login(
 
 					try
 					{
-						Json::Value geoServiceResponse;
-
-						Json::CharReaderBuilder builder;
-						Json::CharReader* reader = builder.newCharReader();
-						string errors;
-
-						bool parsingSuccessful = reader->parse(sResponse.c_str(),
-							sResponse.c_str() + sResponse.size(), 
-							&geoServiceResponse, &errors);
-						delete reader;
-
-						if (!parsingSuccessful)
-						{
-							string errorMessage = __FILEREF__ + "geoService. Failed to parse the response body"
-								+ ", errors: " + errors
-								+ ", sResponse: " + sResponse
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
+						Json::Value geoServiceResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 						bool geoSuccess;
 						string field = "success";
@@ -2157,27 +2077,7 @@ void API::updateUser(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
@@ -2506,27 +2406,7 @@ void API::resetPassword(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
@@ -2713,27 +2593,7 @@ void API::updateWorkspace(
         Json::Value metadataRoot;
         try
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
         catch(exception e)
         {
