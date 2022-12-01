@@ -633,7 +633,10 @@ private:
 		string sourceFileExtension,
 		string encodedStagingAssetPathName,
 		string workflowLabel,
-		string ingester);
+		string ingester,
+		// in case of a Variant
+		int64_t variantOfMediaItemKey = -1,
+		int64_t variantEncodingProfileKey = -1);
 };
 
 #endif
