@@ -4756,7 +4756,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
                 + "SlowDown, or SpeedUp"
                 + ")"
                 + ", Field: " + field
-                + ", speed:Type " + speedType
+                + ", speedType " + speedType
                 + ", label: " + label
                 ;
 			_logger->error(__FILEREF__ + errorMessage);
@@ -6313,13 +6313,10 @@ bool Validator::isVideoSpeedTypeValid(string speedType)
         "SpeedUp"
     };
 
-    string lowerCaseFileFormat;
-    lowerCaseFileFormat.resize(speedType.size());
-    transform(speedType.begin(), speedType.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
     for (string suffix: suffixes)
     {
-        if (lowerCaseFileFormat == suffix) 
-            return true;
+		if (speedType == suffix) 
+			return true;
     }
     
     return false;
