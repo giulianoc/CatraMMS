@@ -255,6 +255,57 @@ Json::Value MMSCURL::httpGetJson(
 	return jsonRoot;
 }
 
+string MMSCURL::httpPostString(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string body,
+	string contentType,	// i.e.: application/json
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string requestType = "POST";
+
+	return MMSCURL::httpPostPutString(
+		ingestionJobKey,
+		url,
+		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		body,
+		contentType,	// i.e.: application/json
+		logger);
+}
+
+string MMSCURL::httpPutString(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string body,
+	string contentType,	// i.e.: application/json
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string requestType = "PUT";
+
+	return MMSCURL::httpPostPutString(
+		ingestionJobKey,
+		url,
+		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		body,
+		contentType,	// i.e.: application/json
+		logger);
+}
+
+
 string MMSCURL::httpPostPutString(
 	int64_t ingestionJobKey,
 	string url,
@@ -414,10 +465,9 @@ string MMSCURL::httpPostPutString(
 	}
 }
 
-Json::Value MMSCURL::httpPostPutStringAndGetJson(
+Json::Value MMSCURL::httpPostStringAndGetJson(
 	int64_t ingestionJobKey,
 	string url,
-	string requestType,	// POST or PUT
 	long timeoutInSeconds,
 	string basicAuthenticationUser,
 	string basicAuthenticationPassword,
@@ -426,10 +476,35 @@ Json::Value MMSCURL::httpPostPutStringAndGetJson(
 	shared_ptr<spdlog::logger> logger
 )
 {
-	string response = MMSCURL::httpPostPutString(
+	string response = MMSCURL::httpPostString(
 		ingestionJobKey,
 		url,
-		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		body,
+		contentType,
+		logger);
+
+	Json::Value jsonRoot = toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
+Json::Value MMSCURL::httpPutStringAndGetJson(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string body,
+	string contentType,	// i.e.: application/json
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string response = MMSCURL::httpPutString(
+		ingestionJobKey,
+		url,
 		timeoutInSeconds,
 		basicAuthenticationUser,
 		basicAuthenticationPassword,
@@ -469,6 +544,56 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     
     return charsRead;        
 };
+
+string MMSCURL::httpPostFile(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string requestType = "POST";
+
+	return MMSCURL::httpPostPutFile(
+		ingestionJobKey,
+		url,
+		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		pathFileName,
+		fileSizeInBytes,
+		logger);
+}
+
+string MMSCURL::httpPutFile(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string requestType = "PUT";
+
+	return MMSCURL::httpPostPutFile(
+		ingestionJobKey,
+		url,
+		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		pathFileName,
+		fileSizeInBytes,
+		logger);
+}
 
 string MMSCURL::httpPostPutFile(
 	int64_t ingestionJobKey,
@@ -659,10 +784,9 @@ string MMSCURL::httpPostPutFile(
 	}
 }
 
-Json::Value MMSCURL::httpPostPutFileAndGetJson(
+Json::Value MMSCURL::httpPostFileAndGetJson(
 	int64_t ingestionJobKey,
 	string url,
-	string requestType,	// POST or PUT
 	long timeoutInSeconds,
 	string basicAuthenticationUser,
 	string basicAuthenticationPassword,
@@ -671,10 +795,35 @@ Json::Value MMSCURL::httpPostPutFileAndGetJson(
 	shared_ptr<spdlog::logger> logger
 )
 {
-	string response = MMSCURL::httpPostPutFile(
+	string response = MMSCURL::httpPostFile(
 		ingestionJobKey,
 		url,
-		requestType,
+		timeoutInSeconds,
+		basicAuthenticationUser,
+		basicAuthenticationPassword,
+		pathFileName,
+		fileSizeInBytes,
+		logger);
+
+	Json::Value jsonRoot = toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
+Json::Value MMSCURL::httpPutFileAndGetJson(
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	shared_ptr<spdlog::logger> logger
+)
+{
+	string response = MMSCURL::httpPutFile(
+		ingestionJobKey,
+		url,
 		timeoutInSeconds,
 		basicAuthenticationUser,
 		basicAuthenticationPassword,

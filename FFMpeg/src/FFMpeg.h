@@ -152,7 +152,8 @@ public:
         string videoSpeedType,
         int videoSpeedSize,
 
-        // string encodedFileName,
+		Json::Value encodingProfileDetailsRoot,
+
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,

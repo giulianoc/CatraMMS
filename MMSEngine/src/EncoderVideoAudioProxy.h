@@ -289,9 +289,9 @@ private:
 	bool liveGrid_through_ffmpeg();
     void processLiveGrid(bool killedByUser);
 
-    pair<string, bool> videoSpeed();
-    pair<string, bool> videoSpeed_through_ffmpeg();
-    void processVideoSpeed(string stagingEncodedAssetPathName, bool killedByUser);    
+    bool videoSpeed();
+    bool videoSpeed_through_ffmpeg();
+    void processVideoSpeed(bool killedByUser);    
 
     pair<string, bool> pictureInPicture();
     pair<string, bool> pictureInPicture_through_ffmpeg();

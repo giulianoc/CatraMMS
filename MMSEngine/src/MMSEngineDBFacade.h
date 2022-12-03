@@ -617,20 +617,12 @@ public:
 		int64_t									_encoderKey;
 		string									_stagingEncodedAssetPathName;
 
-        // MMS_IngestionJob -> metadata:
 		Json::Value								_ingestedParametersRoot;
 
-        // MMS_EncodingJob -> parameters:
         string                                  _encodingParameters;
         Json::Value                             _encodingParametersRoot;
 
         shared_ptr<Workspace>                   _workspace;
-
-        struct VideoSpeedData {
-            string                                  _videoFileName;
-            string                                  _videoRelativePath;
-            int64_t                                 _videoDurationInMilliSeconds;
-        };
 
         struct PictureInPictureData {
             string                                  _mainVideoFileName;
@@ -647,7 +639,6 @@ public:
             Json::Value								_encodingProfileDetailsRoot;
 		};
 
-		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
@@ -1712,8 +1703,9 @@ public:
 		string transcoderStagingImagesDirectory,
 		string sourcePhysicalDeliveryURL,
 		string sourceTranscoderStagingAssetPathName,
-		string sourcePhysicalPathName,
+		string sourceAssetPathName,
 		int64_t sourceVideoPhysicalPathKey,
+		string sourceFileExtension,
 		string sourceFileName,
 		int64_t videoDurationInMilliSeconds,
 		double startTimeInSeconds, int maxFramesNumber, 
@@ -1821,12 +1813,16 @@ public:
 		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
-    void addEncoding_VideoSpeed (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        int64_t mediaItemKey, int64_t physicalPathKey,
-        VideoSpeedType videoSpeedType, int videoSpeedSize,
-        EncodingPriority encodingPriority);
+	void addEncoding_VideoSpeed (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,                                                        
+		string sourceAssetPathName, string sourceFileExtension,                                                         
+		string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
+		Json::Value encodingProfileDetailsRoot,
+		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
+		EncodingPriority encodingPriority);
 
 	void addEncoding_PictureInPictureJob (
 		shared_ptr<Workspace> workspace,

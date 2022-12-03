@@ -3985,7 +3985,8 @@ void FFMpeg::videoSpeed(
         string videoSpeedType,
         int videoSpeedSize,
 
-        // string encodedFileName,
+		Json::Value encodingProfileDetailsRoot,
+
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -4019,11 +4020,144 @@ void FFMpeg::videoSpeed(
 			throw runtime_error(errorMessage);
 		}
 
-        // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-        // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
-        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        // _currentIngestionJobKey             = ingestionJobKey;
-        // _currentEncodingJobKey              = encodingJobKey;
+		vector<string> ffmpegEncodingProfileArgumentList;
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			try
+			{
+				string httpStreamingFileFormat;    
+				string ffmpegHttpStreamingParameter = "";
+				bool encodingProfileIsVideo = true;
+
+				string ffmpegFileFormatParameter = "";
+
+				string ffmpegVideoCodecParameter = "";
+				string ffmpegVideoProfileParameter = "";
+				string ffmpegVideoResolutionParameter = "";
+				int videoBitRateInKbps = -1;
+				string ffmpegVideoBitRateParameter = "";
+				string ffmpegVideoOtherParameters = "";
+				string ffmpegVideoMaxRateParameter = "";
+				string ffmpegVideoBufSizeParameter = "";
+				string ffmpegVideoFrameRateParameter = "";
+				string ffmpegVideoKeyFramesRateParameter = "";
+				bool twoPasses;
+				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+				string ffmpegAudioCodecParameter = "";
+				string ffmpegAudioBitRateParameter = "";
+				string ffmpegAudioOtherParameters = "";
+				string ffmpegAudioChannelsParameter = "";
+				string ffmpegAudioSampleRateParameter = "";
+				vector<string> audioBitRatesInfo;
+
+
+				settingFfmpegParameters(
+					encodingProfileDetailsRoot,
+					encodingProfileIsVideo,
+
+					httpStreamingFileFormat,
+					ffmpegHttpStreamingParameter,
+
+					ffmpegFileFormatParameter,
+
+					ffmpegVideoCodecParameter,
+					ffmpegVideoProfileParameter,
+					ffmpegVideoOtherParameters,
+					twoPasses,
+					ffmpegVideoFrameRateParameter,
+					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
+
+					ffmpegAudioCodecParameter,
+					ffmpegAudioOtherParameters,
+					ffmpegAudioChannelsParameter,
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
+				);
+
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+
+				/*
+				if (httpStreamingFileFormat != "")
+				{
+					string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				else */
+				if (twoPasses)
+				{
+					// siamo sicuri che non sia possibile?
+					/*
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
+				}
+
+				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				// we cannot have two video filters parameters (-vf), one is for the overlay.
+				// If it is needed we have to combine both using the same -vf parameter and using the
+				// comma (,) as separator. For now we will just comment it and the resolution will be the one
+				// coming from the video (no changes)
+				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				ffmpegEncodingProfileArgumentList.push_back("-threads");
+				ffmpegEncodingProfileArgumentList.push_back("0");
+				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				throw e;
+			}
+		}
 
 		{
 			char	sUtcTimestamp [64];
@@ -4201,15 +4335,10 @@ void FFMpeg::videoSpeed(
 			string complexFilter = "-filter_complex [0:v]setpts=" + videoPTS + "*PTS[v];[0:a]atempo=" + audioTempo + "[a]";
 			string videoMap = "-map [v]";
 			string audioMap = "-map [a]";
-		#ifdef __EXECUTE__
-            string ffmpegExecuteCommand;
-		#else
+
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
-		#endif
             {
-			#ifdef __EXECUTE__
-			#else
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -4220,39 +4349,20 @@ void FFMpeg::videoSpeed(
 				addToArguments(complexFilter, ffmpegArgumentList);
 				addToArguments(videoMap, ffmpegArgumentList);
 				addToArguments(audioMap, ffmpegArgumentList);
+
+				// encoding parameters
+				if (encodingProfileDetailsRoot != Json::nullValue)
+				{
+					for (string parameter: ffmpegEncodingProfileArgumentList)
+						addToArguments(parameter, ffmpegArgumentList);
+				}
+
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "videoSpeed: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "videoSpeed: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;
-                        _logger->error(errorMessage);
-
-						// to hide the ffmpeg staff
-                        errorMessage = __FILEREF__ + "videoSpeed command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        ;
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -4288,39 +4398,20 @@ void FFMpeg::videoSpeed(
                         ;
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "videoSpeed: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-                    );
-				#else
                     _logger->info(__FILEREF__ + "videoSpeed: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -4340,7 +4431,6 @@ void FFMpeg::videoSpeed(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
@@ -4372,19 +4462,11 @@ void FFMpeg::videoSpeed(
 
             if (ulFileSize == 0)
             {
-			#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-			#else
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-			#endif
 
                 _logger->error(errorMessage);
 

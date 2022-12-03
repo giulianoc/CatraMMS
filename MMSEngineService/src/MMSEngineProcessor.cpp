@@ -8400,131 +8400,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     }
 }
 
-/*
-void MMSEngineProcessor::exploidTarGzContentFile(
-	string tarGzBinaryPathName,
-	string workspaceIngestionBinaryPathName,
-	int64_t ingestionJobKey)
-{
-	// string binaryPathName;
-
-	try
-	{
-		string tarGzSuffix(".tar.gz");
-		if (tarGzBinaryPathName.size() >= tarGzSuffix.size() && 0 == tarGzBinaryPathName.compare(
-			tarGzBinaryPathName.size()-tarGzSuffix.size(), tarGzSuffix.size(), tarGzSuffix))
-		{
-			size_t binaryPathNameIndex = tarGzBinaryPathName.find_last_of(".tar.gz");
-			if (binaryPathNameIndex == string::npos)
-			{
-				// error
-			}
-
-			binaryPathName = tarGzBinaryPathName.substr(0, binaryPathNameIndex);
-		}
-		else
-		{
-			// error
-		}
-
-
-		string m3u8FileName;
-		{
-			try
-			{
-				FileIO::DirectoryEntryType_t detDirectoryEntryType;
-				shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-					binaryPathName + "/");
-				bool scanDirectoryFinished = false;
-				while (!scanDirectoryFinished)
-				{
-					string directoryEntry;
-					try
-					{
-						string directoryEntry = FileIO::readDirectory (directory,
-							&detDirectoryEntryType);
-
-						if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-							continue;
-
-						string m3u8Suffix(".m3u8");
-						if (directoryEntry.size() >= m3u8Suffix.size()
-								&& 0 == directoryEntry.compare(
-									directoryEntry.size()-m3u8Suffix.size(),
-									m3u8Suffix.size(), m3u8Suffix))
-						{
-							m3u8FileName = directoryEntry;
-
-							scanDirectoryFinished = true;
-						}
-					}
-					catch(DirectoryListFinished e)
-					{
-						scanDirectoryFinished = true;
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = __FILEREF__ + "listing directory failed"
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						throw e;
-					}
-					catch(exception e)
-					{
-						string errorMessage = __FILEREF__ + "listing directory failed"
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						throw e;
-					}
-				}
-
-				FileIO::closeDirectory (directory);
-			}
-			catch(runtime_error e)
-			{
-				// error
-			}
-			catch(exception e)
-			{
-				// error
-			}
-		}
-
-		if (m3u8FileName == "")
-		{
-			// error
-		}
-
-		binaryPathName += ("/" + m3u8FileName);
-	}
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "exploidTarGzContentFile failed"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "exploidTarGzContentFile failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-
-        throw e;
-    }
-
-	// return binaryPathName;
-}
-*/
-
 void MMSEngineProcessor::manageGroupOfTasks(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -14949,17 +14824,16 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		string sResponse = MMSCURL::httpPostPutString(                                                        
-			ingestionJobKey,                                                                                  
-			_mmsWorkflowIngestionURL,                                                                                        
-			"POST", // requestType                                                                            
-			_mmsAPITimeoutInSeconds,                                                                          
-			to_string(userKey),                                                                               
-			apiKey,                                                                                           
-			workflowMetadata,                                                                                 
-			"application/json", // contentType                                                                
-			_logger                                                                                           
-		);                                                                                                    
+		string sResponse = MMSCURL::httpPostString(
+			ingestionJobKey,
+			_mmsWorkflowIngestionURL,
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json", // contentType
+			_logger
+		);
 
 		/*
 		{
@@ -15978,17 +15852,16 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		string sResponse = MMSCURL::httpPostPutString(                                                        
-			ingestionJobKey,                                                                                  
-			_mmsWorkflowIngestionURL,                                                                                        
-			"POST", // requestType                                                                            
-			_mmsAPITimeoutInSeconds,                                                                          
-			to_string(userKey),                                                                               
-			apiKey,                                                                                           
-			workflowMetadata,                                                                                 
-			"application/json", // contentType                                                                
-			_logger                                                                                           
-		);                                                                                                    
+		string sResponse = MMSCURL::httpPostString(
+			ingestionJobKey,
+			_mmsWorkflowIngestionURL,
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json", // contentType
+			_logger
+		);
 
 		/*
 		{
@@ -17560,17 +17433,16 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		MMSCURL::httpPostPutString(                                                        
-			ingestionJobKey,                                                                                  
-			_mmsWorkflowIngestionURL,                                                                                        
-			"POST", // requestType                                                                            
-			_mmsAPITimeoutInSeconds,                                                                          
-			to_string(userKey),                                                                               
-			apiKey,                                                                                           
-			workflowMetadata,                                                                                 
-			"application/json", // contentType                                                                
-			_logger                                                                                           
-		);                                                                                                    
+		MMSCURL::httpPostString(
+			ingestionJobKey,
+			_mmsWorkflowIngestionURL,
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json", // contentType
+			_logger
+		);
 
 		/*
 		{
@@ -18323,60 +18195,33 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
-		string sourcePhysicalPathName;
+		MMSEngineDBFacade::ContentType referenceContentType;
+		string sourceAssetPathName;
+		string sourceRelativePath;
 		string sourceFileName;
-        {
-			tuple<int64_t,MMSEngineDBFacade::ContentType,
-				Validator::DependencyType, bool> keyAndDependencyType = dependencies[0];
+		string sourceFileExtension;
+		int64_t sourceDurationInMilliSecs;
+		string sourcePhysicalDeliveryURL;
+		string sourceTranscoderStagingAssetPathName;
+		bool stopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+			sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+			sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+			sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
 
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
+		if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+		{
+			string errorMessage = __FILEREF__ + "ContentTpe is not a Video"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			;
+			_logger->error(errorMessage);
 
-			if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
-			{
-				string errorMessage = __FILEREF__ + "ContentTpe is not a Video"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
-			{
-				int64_t encodingProfileKey = -1;
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-						warningIfMissing);
-				tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore,
-					sourceFileName, ignore, ignore) = physicalPathDetails;
-
-				sourceMediaItemKey = key;
-			}
-			else
-			{
-				sourcePhysicalPathKey = key;
-
-				tuple<string, int, string, string, int64_t, string>                                       
-					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);                       
-				tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)                       
-					= physicalPathDetails;                                                                
-
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, sourceFileName, ignore, ignore)
-						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-			}
+			throw runtime_error(errorMessage);
 		}
 
         int periodInSeconds;
@@ -18399,58 +18244,10 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			mjpeg, imageWidth, imageHeight,
 			durationInMilliSeconds);
 
-		// calculate delivery URL in case of an external encoder
-		string sourcePhysicalDeliveryURL;
-		{
-			int64_t utcNow;
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
-			}
-
-			pair<string, string> deliveryAuthorizationDetails =
-				_mmsDeliveryAuthorization->createDeliveryAuthorization(
-				-1,	// userKey,
-				workspace,
-				"",	// clientIPAddress,
-
-				-1,	// mediaItemKey,
-				"",	// uniqueName,
-				-1,	// encodingProfileKey,
-				"",	// encodingProfileLabel,
-
-				sourcePhysicalPathKey,
-
-				-1,	// ingestionJobKey,	(in case of live)
-				-1,	// deliveryCode,
-
-				365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
-				999999,	// maxRetries,
-				false,	// save,
-				"MMS_SignedToken",	// deliveryType,
-
-				false,	// warningIfMissingMediaItemKey,
-				true,	// filteredByStatistic
-				""		// userId (it is not needed it filteredByStatistic is true
-			);
-
-			tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
-		}
-
-		string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
 		string transcoderStagingImagesDirectory;				// used in case of external encoder
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
-			sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
-				neededForTranscoder,
-				workspace->_directoryName,	// workspaceDirectoryName
-				to_string(ingestionJobKey),		// directoryNamePrefix
-				"/",							// relativePath,
-				sourceFileName,				// fileName
-				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-				removeLinuxPathIfExist);
 
 			string directoryNameForFrames = 
 				to_string(ingestionJobKey)
@@ -18478,8 +18275,9 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			transcoderStagingImagesDirectory,		// used in case of external encoder
 			sourcePhysicalDeliveryURL,				// used in case of external encoder
 			sourceTranscoderStagingAssetPathName,	// used in case of external encoder
-			sourcePhysicalPathName,
+			sourceAssetPathName,
 			sourcePhysicalPathKey,
+			sourceFileExtension,
 			sourceFileName,
 			durationInMilliSeconds,
 			startTimeInSeconds, maxFramesNumber, 
@@ -20719,37 +20517,78 @@ void MMSEngineProcessor::manageVideoSpeedTask(
             throw runtime_error(errorMessage);
         }
 
-        MMSEngineDBFacade::VideoSpeedType videoSpeedType;
-        string field = "speedType";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            videoSpeedType = MMSEngineDBFacade::VideoSpeedType::SlowDown;
-        }
-        else
-        {
-            videoSpeedType = MMSEngineDBFacade::toVideoSpeedType(
-					parametersRoot.get(field, "SlowDown").asString());
-        }
-
-		int videoSpeedSize = 3;
-        field = "speedSize";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            videoSpeedSize = JSONUtils::asInt(parametersRoot, field, 3);
-        }
-
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        field = "EncodingPriority";
+        string field = "EncodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
             encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
 				workspace->_maxEncodingPriority);
-        }
         else
-        {
             encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-					parametersRoot.get(field, "XXX").asString());
-        }
+					parametersRoot.get(field, "").asString());
+
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+		MMSEngineDBFacade::ContentType referenceContentType;
+		string sourceAssetPathName;
+		string sourceRelativePath;
+		string sourceFileName;
+		string sourceFileExtension;
+		int64_t sourceDurationInMilliSecs;
+		string sourcePhysicalDeliveryURL;
+		string sourceTranscoderStagingAssetPathName;
+		bool stopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+			sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+			sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+			sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
+
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot;
+		{
+			// This task shall contain EncodingProfileKey or EncodingProfileLabel.
+			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+			//  having just EncodingProfileKey        
+
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, referenceContentType, encodingProfileLabel);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + keyField
+						+ ", Field: " + labelField
+						;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology,
+					string> encodingProfileDetails
+						= _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+							workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+			}
+		}
 
 		// Since it was a copy and past, next commant has to be checked.
 		// It is not possible to manage more than one encode because:
@@ -20759,44 +20598,33 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		//		the status in case of more than one encoding?
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 		// 		keyAndDependencyType: dependencies)
-        MMSEngineDBFacade::ContentType referenceContentType;
-		int64_t sourceMediaItemKey;
-		int64_t sourcePhysicalPathKey;
-        {
-            int64_t key;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-            
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType	= dependencies[0];
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
 
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
-			{
-				sourceMediaItemKey = key;
+		string encodedFileName = to_string(ingestionJobKey)
+			+ "_videoSpeed"                                                                   
+			+  sourceFileExtension;     
 
-				sourcePhysicalPathKey = -1;
-			}
-			else
-			{
-				sourcePhysicalPathKey = key;
-            
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
 
-				MMSEngineDBFacade::ContentType localContentType;
-				string localTitle;
-				string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
-						localIngestionJobKey, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-			}
+			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+				// in case of hls and external encoder (binary is ingested through PUSH),
+				// the directory inside the tar.gz has to be 'content'
+				encodedFileName,	// content
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			encodedNFSStagingAssetPathName =
+				_mmsStorage->getWorkspaceIngestionRepository(workspace)
+				+ "/" + encodedFileName;
 		}
 
 // 2021-08-26: si dovrebbe cambiare l'implementazione:
@@ -20804,7 +20632,12 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 //	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
 		_mmsEngineDBFacade->addEncoding_VideoSpeed (workspace, ingestionJobKey,
 			sourceMediaItemKey, sourcePhysicalPathKey,
-			videoSpeedType, videoSpeedSize, encodingPriority);
+			sourceAssetPathName, sourceFileExtension,
+			sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
+			encodingProfileDetailsRoot,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
+			encodingPriority);
     }
     catch(runtime_error e)
     {
