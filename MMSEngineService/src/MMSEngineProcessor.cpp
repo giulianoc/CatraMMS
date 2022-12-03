@@ -20552,8 +20552,8 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
 			//  having just EncodingProfileKey        
 
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 			{
 				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
@@ -20566,13 +20566,13 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 					workspace->_workspaceKey, referenceContentType, encodingProfileLabel);
 			}
 
+			if (encodingProfileKey != -1)
 			{
 				string jsonEncodingProfile;
 
 				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology,
-					string> encodingProfileDetails
-						= _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-							workspace->_workspaceKey, encodingProfileKey);
+					string> encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+						workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
 				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
