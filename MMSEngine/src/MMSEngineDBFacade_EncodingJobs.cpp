@@ -8953,7 +8953,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,                                                        
-	string sourceAssetPathName, string sourceFileExtension,                                                         
+	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,                                                         
 	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
 	Json::Value encodingProfileDetailsRoot,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
@@ -8999,6 +8999,9 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 			field = "sourceAssetPathName";
 			parametersRoot[field] = sourceAssetPathName;
+
+			field = "sourceDurationInMilliSeconds";
+			parametersRoot[field] = sourceDurationInMilliSeconds;
 
 			field = "sourceFileExtension";
 			parametersRoot[field] = sourceFileExtension;

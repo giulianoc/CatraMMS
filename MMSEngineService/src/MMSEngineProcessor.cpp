@@ -20533,7 +20533,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		string sourceRelativePath;
 		string sourceFileName;
 		string sourceFileExtension;
-		int64_t sourceDurationInMilliSecs;
+		int64_t sourceDurationInMilliSeconds;
 		string sourcePhysicalDeliveryURL;
 		string sourceTranscoderStagingAssetPathName;
 		bool stopIfReferenceProcessingError;
@@ -20542,7 +20542,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
 		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
 			sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
-			sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+			sourceDurationInMilliSeconds, sourcePhysicalDeliveryURL,
 			sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
 
 		int64_t encodingProfileKey = -1;
@@ -20621,7 +20621,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 //	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
 		_mmsEngineDBFacade->addEncoding_VideoSpeed (workspace, ingestionJobKey,
 			sourceMediaItemKey, sourcePhysicalPathKey,
-			sourceAssetPathName, sourceFileExtension,
+			sourceAssetPathName, sourceDurationInMilliSeconds, sourceFileExtension,
 			sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
 			encodingProfileDetailsRoot,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
