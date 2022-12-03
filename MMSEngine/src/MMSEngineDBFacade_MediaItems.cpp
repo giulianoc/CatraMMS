@@ -3024,9 +3024,9 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         }
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(referenceMediaItemKey, warningIfMissing);
-			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
+			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
 		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -3314,7 +3314,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourcePhysicalPath(
+tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
@@ -3334,9 +3334,11 @@ tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourceP
         string relativePath;
         string fileName;
         int64_t sizeInBytes;
+        int64_t durationInMilliSeconds = 0;
         {
 			lastSQLCommand = string("") +
-				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, externalReadOnlyStorage "
+				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, "
+				"externalReadOnlyStorage, durationInMilliSeconds "
 				"from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3396,6 +3398,8 @@ tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourceP
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
                 sizeInBytes = resultSet->getInt64("sizeInBytes");
+                if (!resultSet->isNull("durationInMilliSeconds"))
+					durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
 
 				maxSizeInBytes = localSizeInBytes;
 				selectedFileFormat = localFileFormat;
@@ -3422,8 +3426,8 @@ tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourceP
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(physicalPathKey, mmsPartitionNumber,
-				relativePath, fileName, sizeInBytes, externalReadOnlyStorage);
+		return make_tuple(physicalPathKey, mmsPartitionNumber, relativePath, fileName,
+			sizeInBytes, externalReadOnlyStorage, durationInMilliSeconds);
     }
     catch(sql::SQLException se)
     {
@@ -3679,7 +3683,7 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 }
 
 tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
-	string, string>
+	string, string, int64_t>
 	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
 	int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing)
 {
@@ -3688,7 +3692,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
     shared_ptr<MySQLConnection> conn = nullptr;
     
     tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
-		string, string> mediaItemDetails;
+		string, string, int64_t> mediaItemDetails;
 
     try
     {
@@ -3700,7 +3704,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
         {
             lastSQLCommand = 
                 "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
-				"mi.ingestionJobKey, p.fileName, p.relativePath, "
+				"mi.ingestionJobKey, p.fileName, p.relativePath, p.durationInMilliSeconds, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), "
 					"'%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
@@ -3745,9 +3749,13 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
                     ingestionDate = resultSet->getString("ingestionDate");
 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				int64_t durationInMilliSeconds = 0;
+				if (!resultSet->isNull("durationInMilliSeconds"))
+					durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
 
                 mediaItemDetails = make_tuple(mediaItemKey, contentType, title,
-					userData, ingestionDate, ingestionJobKey, fileName, relativePath);
+					userData, ingestionDate, ingestionJobKey, fileName, relativePath,
+					durationInMilliSeconds);
             }
             else
             {

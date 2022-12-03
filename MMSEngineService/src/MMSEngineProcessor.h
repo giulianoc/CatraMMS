@@ -523,6 +523,11 @@ private:
 	string getYouTubeAccessTokenByConfigurationLabel(
 		int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
+
+	tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
+		string, int64_t, string, string, bool> processDependencyInfo(
+		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType);
 } ;
 
 #endif

@@ -1302,10 +1302,10 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         }
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(mediaItemKey, warningIfMissing);
 			tie(physicalPathKey, mmsPartitionNumber, relativePath,
-					fileName, sizeInBytes, externalReadOnlyStorage) = sourcePhysicalPathDetails;
+					fileName, sizeInBytes, externalReadOnlyStorage, ignore) = sourcePhysicalPathDetails;
 
             lastSQLCommand = string("") +
                 "select workspaceKey, contentType, title, deliveryFileName "

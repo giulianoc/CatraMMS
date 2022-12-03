@@ -8770,7 +8770,7 @@ void MMSEngineProcessor::removeContentThread(
 					{
 						bool warningIfMissing = false;
 						tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
-							string, string> mediaItemDetails =
+							string, string, int64_t> mediaItemDetails =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 								workspace->_workspaceKey, key, warningIfMissing);
 
@@ -8781,7 +8781,7 @@ void MMSEngineProcessor::removeContentThread(
 						string localIngestionDate;
 						int64_t localIngestionJobKey;
 						tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate,
-							localIngestionJobKey, ignore, ignore) = mediaItemDetails;
+							localIngestionJobKey, ignore, ignore, ignore) = mediaItemDetails;
 
 						int ingestionDependenciesNumber = 
 						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
@@ -9045,11 +9045,12 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 
 					{
 						bool warningIfMissing = false;
-						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+							string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 								workspace->_workspaceKey, physicalPathKey, warningIfMissing);            
-						tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+						tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 					}
 
@@ -9959,13 +9960,13 @@ void MMSEngineProcessor::httpCallbackThread(
 						{
 							bool warningIfMissing = false;
 							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-								string,int64_t, string, string>
+								string,int64_t, string, string, int64_t>
 								mediaItemDetails =
 								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 									workspace->_workspaceKey, key, warningIfMissing);
 
 							tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore,
-								ignore, ignore) = mediaItemDetails;
+								ignore, ignore, ignore) = mediaItemDetails;
 						}
 					}
 
@@ -10115,14 +10116,15 @@ void MMSEngineProcessor::httpCallbackThread(
 
 							{
 								bool warningIfMissing = false;
-								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+									string, string, int64_t>
 									mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 										workspace->_workspaceKey, physicalPathKey, warningIfMissing);
 
 								string localTitle;
 								string userData;
-								tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore)
+								tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore, ignore, ignore)
 									= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 								callbackMedatada["mediaItemKey"] = mediaItemKey;
@@ -10444,12 +10446,12 @@ void MMSEngineProcessor::postOnFacebookThread(
                 
 					{
 						bool warningIfMissing = false;
-						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 								workspace->_workspaceKey, key, warningIfMissing);
 
-						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 					}
 				}
@@ -10722,12 +10724,12 @@ void MMSEngineProcessor::postOnYouTubeThread(
                 
 					{
 						bool warningIfMissing = false;
-						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 								workspace->_workspaceKey, key, warningIfMissing);
 
-						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 								= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 					}
 				}
@@ -10969,10 +10971,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					bool warningIfMissing = false;
 					tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string,
-						int64_t, string, string> mediaItemDetails =
+						int64_t, string, string, int64_t> mediaItemDetails =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 							workspace->_workspaceKey, physicalPathKey, warningIfMissing);
-					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 						= mediaItemDetails;
 				}
 
@@ -11615,11 +11617,11 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					sourcePhysicalPathKey = key;
 
 					bool warningIfMissing = false;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 							= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
@@ -12018,12 +12020,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+                    tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
@@ -12169,12 +12171,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore)
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
@@ -13271,12 +13273,12 @@ void MMSEngineProcessor::manageVODProxy(
 
 					bool warningIfMissing = false;
 					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
-						string, string> mediaItemKeyDetails =
+						string, string, int64_t> mediaItemKeyDetails =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
 
 					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
-						ignore, ignore) = mediaItemKeyDetails;
+						ignore, ignore, ignore) = mediaItemKeyDetails;
 				}
 
 				// int64_t durationInMilliSeconds =
@@ -13506,7 +13508,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				sourcePhysicalPathKey = key;
 
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
@@ -13517,7 +13519,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
                 string ingestionDate;
 				int64_t localIngestionJobKey;
 				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
-						localIngestionJobKey, ignore, ignore)
+						localIngestionJobKey, ignore, ignore, ignore)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 
@@ -18368,11 +18370,11 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 					= physicalPathDetails;                                                                
 
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, sourceFileName, ignore)
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, sourceFileName, ignore, ignore)
 						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
@@ -18840,11 +18842,11 @@ void MMSEngineProcessor::manageSlideShowTask(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
 
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 					= mediaItemDetails;
             }
 
@@ -19053,19 +19055,19 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
 
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 				mediaItemKeyDetails
 				= _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
@@ -19077,7 +19079,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 string ingestionDate;
 				int64_t localIngestionJobKey;
                 tie(localMediaItemKey, contentType, localTitle, lastUserData, ingestionDate,
-						localIngestionJobKey, ignore, ignore)
+						localIngestionJobKey, ignore, ignore, ignore)
 					= mediaItemKeyDetails;
             }
 
@@ -19659,10 +19661,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				sourcePhysicalPathKey = key;
 
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 					= mediaItemDetails;
 			}
 		}
@@ -20409,16 +20411,27 @@ void MMSEngineProcessor::manageEncodeTask(
 			for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
 				keyAndDependencyType: dependencies)
 			{
+				int64_t sourceMediaItemKey;
 				MMSEngineDBFacade::ContentType referenceContentType;
-				int64_t key;
-				Validator::DependencyType dependencyType;
 				bool stopIfReferenceProcessingError;
-
-				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-					= keyAndDependencyType;
-
 				try
 				{
+					int64_t sourcePhysicalPathKey;
+					string mmsSourceAssetPathName;
+					string sourceRelativePath;
+					string sourceFileName;
+					string sourceFileExtension;
+					int64_t sourceDurationInMilliSecs;
+					string sourcePhysicalDeliveryURL;
+					string sourceTranscoderStagingAssetPathName;
+					tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+						string, string, int64_t, string, string, bool> dependencyInfo =
+						processDependencyInfo(workspace, ingestionJobKey, keyAndDependencyType);
+					tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+						mmsSourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+						sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+						sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
+
 					if (contentType != referenceContentType)
 					{
 						string errorMessage = __FILEREF__ + "Wrong content type"
@@ -20429,36 +20442,6 @@ void MMSEngineProcessor::manageEncodeTask(
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
-					}
-
-					int64_t sourceMediaItemKey;
-					int64_t sourcePhysicalPathKey;
-					string sourceFileName;
-					string sourceRelativePath;
-					{
-						if (dependencyType == Validator::DependencyType::MediaItemKey)
-						{
-							sourceMediaItemKey = key;
-
-							bool warningIfMissing = true;
-							tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
-								_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey, warningIfMissing);
-							tie(sourcePhysicalPathKey, ignore, sourceRelativePath, sourceFileName,
-									ignore, ignore) = sourcePhysicalPathDetails;
-						}
-						else
-						{
-							sourcePhysicalPathKey = key;
-
-							bool warningIfMissing = false;
-							tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string, int64_t,
-								string, string> mediaItemDetails =
-								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-									workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-							tie(sourceMediaItemKey,ignore, ignore, ignore, ignore,
-								ignore, sourceFileName, sourceRelativePath) = mediaItemDetails;
-						}
 					}
 
 					// check if the profile is already present for the source content
@@ -20481,69 +20464,6 @@ void MMSEngineProcessor::manageEncodeTask(
 						catch(MediaItemKeyNotFound e)
 						{
 						}
-					}
-
-					int64_t sourceDurationInMilliSecs = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-							sourceMediaItemKey, sourcePhysicalPathKey);
-
-					string sourceFileExtension;
-					{
-						size_t extensionIndex = sourceFileName.find_last_of(".");
-						if (extensionIndex == string::npos)
-						{
-							string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-								+ ", encodingItem->_encodeData->_fileName: " + sourceFileName;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						sourceFileExtension = sourceFileName.substr(extensionIndex);
-					}
-
-					string mmsSourceAssetPathName;
-					{
-						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);
-						tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore, ignore)
-							= physicalPathDetails;
-					}
-
-					// calculate delivery URL in case of an external encoder
-					string sourcePhysicalDeliveryURL;
-					{
-						int64_t utcNow;
-						{
-							chrono::system_clock::time_point now = chrono::system_clock::now();
-							utcNow = chrono::system_clock::to_time_t(now);
-						}
-
-						pair<string, string> deliveryAuthorizationDetails =
-							_mmsDeliveryAuthorization->createDeliveryAuthorization(
-							-1,	// userKey,
-							workspace,
-							"",	// clientIPAddress,
-
-							-1,	// mediaItemKey,
-							"",	// uniqueName,
-							-1,	// encodingProfileKey,
-							"",	// encodingProfileLabel,
-
-							sourcePhysicalPathKey,
-
-							-1,	// ingestionJobKey,	(in case of live)
-							-1,	// deliveryCode,
-
-							365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
-							999999,	// maxRetries,
-							false,	// save,
-							"MMS_SignedToken",	// deliveryType,
-
-							false,	// warningIfMissingMediaItemKey,
-							true,	// filteredByStatistic
-							""		// userId (it is not needed it filteredByStatistic is true
-						);
-
-						tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 					}
 
 					string encodedFileName;
@@ -20571,22 +20491,11 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
     
-					string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
 					string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
 					string encodedNFSStagingAssetPathName;
 					{
 						bool removeLinuxPathIfExist = false;
 						bool neededForTranscoder = true;
-						sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
-							neededForTranscoder,
-							workspace->_directoryName,	// workspaceDirectoryName
-							to_string(ingestionJobKey),		// directoryNamePrefix
-							"/",							// relativePath,
-							sourceFileName,				// fileName
-							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-							removeLinuxPathIfExist);
-
 						encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
 							neededForTranscoder,
 							workspace->_directoryName,	// workspaceDirectoryName
@@ -20749,7 +20658,7 @@ void MMSEngineProcessor::manageEncodeTask(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", referenceContentType: "
 							+ MMSEngineDBFacade::toString(referenceContentType)
-						+ ", key: " + to_string(key)
+						+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 					);
 
 					if (stopIfReferenceProcessingError)
@@ -20811,7 +20720,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         }
 
         MMSEngineDBFacade::VideoSpeedType videoSpeedType;
-        string field = "SpeedType";
+        string field = "speedType";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             videoSpeedType = MMSEngineDBFacade::VideoSpeedType::SlowDown;
@@ -20823,7 +20732,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         }
 
 		int videoSpeedSize = 3;
-        field = "SpeedSize";
+        field = "speedSize";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             videoSpeedSize = JSONUtils::asInt(parametersRoot, field, 3);
@@ -20842,7 +20751,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 					parametersRoot.get(field, "XXX").asString());
         }
 
-		// Since it was a copy anc past, next commant has to be checked.
+		// Since it was a copy and past, next commant has to be checked.
 		// It is not possible to manage more than one encode because:
 		// 1. inside _mmsEngineDBFacade->addEncodingJob, the ingestionJob is updated to encodingQueue
 		//		and the second call will fail (because the update of the ingestion was already done
@@ -20874,7 +20783,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 				sourcePhysicalPathKey = key;
             
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
@@ -20885,7 +20794,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
                 string ingestionDate;
 				int64_t localIngestionJobKey;
 				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
-						localIngestionJobKey, ignore, ignore)
+						localIngestionJobKey, ignore, ignore, ignore)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
@@ -21034,12 +20943,12 @@ void MMSEngineProcessor::managePictureInPictureTask(
             sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
 				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     workspace->_workspaceKey, sourcePhysicalPathKey_1, warningIfMissing);
 
-            tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+            tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 				= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
@@ -21076,12 +20985,12 @@ void MMSEngineProcessor::managePictureInPictureTask(
             sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string>
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
 				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     workspace->_workspaceKey, sourcePhysicalPathKey_2, warningIfMissing);
 
-            tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+            tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 				= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
@@ -21461,194 +21370,44 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		int64_t sourcePhysicalPathKey_1;
 		MMSEngineDBFacade::ContentType referenceContentType_1;
 		string mmsSourceAssetPathName_1;
+		string sourceFileName_1;
+		string sourceFileExtension_1;
+		int64_t sourceDurationInMilliSecs_1;
 		string sourcePhysicalDeliveryURL_1;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType_1 = dependencies[0];
-
-			int64_t key_1;
-			Validator::DependencyType dependencyType_1;
-			bool stopIfReferenceProcessingError_1;
-
-			tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
-				= keyAndDependencyType_1;
-
-			if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
-			{
-				sourceMediaItemKey_1 = key_1;
-
-				bool warningIfMissing = true;
-				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
-					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey_1, warningIfMissing);
-				tie(sourcePhysicalPathKey_1, ignore, ignore, ignore,
-					ignore, ignore) = sourcePhysicalPathDetails;
-			}
-			else if (dependencyType_1 == Validator::DependencyType::PhysicalPathKey)
-			{
-				sourcePhysicalPathKey_1 = key_1;
-            
-				bool warningIfMissing = false;
-				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
-					string,int64_t, string, string> mediaItemDetails =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, sourcePhysicalPathKey_1, warningIfMissing);
-
-				tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore,
-					ignore, ignore, ignore) = mediaItemDetails;
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Wrong dependencyType"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1));
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey_1);
-				tie(mmsSourceAssetPathName_1, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			// calculate delivery URL in case of an external encoder
-			{
-				int64_t utcNow;
-				{
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-					utcNow = chrono::system_clock::to_time_t(now);
-				}
-
-				pair<string, string> deliveryAuthorizationDetails =
-					_mmsDeliveryAuthorization->createDeliveryAuthorization(
-					-1,	// userKey,
-					workspace,
-					"",	// clientIPAddress,
-
-					-1,	// mediaItemKey,
-					"",	// uniqueName,
-					-1,	// encodingProfileKey,
-					"",	// encodingProfileLabel,
-
-					sourcePhysicalPathKey_1,
-
-					-1,	// ingestionJobKey,	(in case of live)
-					-1,	// deliveryCode,
-
-					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
-					999999,	// maxRetries,
-					false,	// save,
-					"MMS_SignedToken",	// deliveryType,
-
-					false,	// warningIfMissingMediaItemKey,
-					true,	// filteredByStatistic
-					""		// userId (it is not needed it filteredByStatistic is true
-				);
-
-				tie(sourcePhysicalDeliveryURL_1, ignore) = deliveryAuthorizationDetails;
-			}
-		}
+		string sourceTranscoderStagingAssetPathName_1;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo_1 =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(sourceMediaItemKey_1, sourcePhysicalPathKey_1, referenceContentType_1,
+			mmsSourceAssetPathName_1, ignore, sourceFileName_1, sourceFileExtension_1,
+			sourceDurationInMilliSecs_1, sourcePhysicalDeliveryURL_1,
+			sourceTranscoderStagingAssetPathName_1, ignore) = dependencyInfo_1;
 
 		int64_t sourceMediaItemKey_2;
 		int64_t sourcePhysicalPathKey_2;
 		MMSEngineDBFacade::ContentType referenceContentType_2;
 		string mmsSourceAssetPathName_2;
+		string sourceFileName_2;
+		string sourceFileExtension_2;
+		int64_t sourceDurationInMilliSecs_2;
 		string sourcePhysicalDeliveryURL_2;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType_2 = dependencies[1];
-
-			int64_t key_2;
-			Validator::DependencyType dependencyType_2;
-			bool stopIfReferenceProcessingError_2;
-
-			tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
-				= keyAndDependencyType_2;
-
-			if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
-			{
-				sourceMediaItemKey_2 = key_2;
-
-				bool warningIfMissing = true;
-				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
-					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey_2, warningIfMissing);
-				tie(sourcePhysicalPathKey_2, ignore, ignore, ignore,
-					ignore, ignore) = sourcePhysicalPathDetails;
-			}
-			else if (dependencyType_2 == Validator::DependencyType::PhysicalPathKey)
-			{
-				sourcePhysicalPathKey_2 = key_2;
-            
-				bool warningIfMissing = false;
-				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string,
-					string,int64_t, string, string> mediaItemDetails =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, sourcePhysicalPathKey_2, warningIfMissing);
-
-				tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore,
-					ignore, ignore, ignore) = mediaItemDetails;
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Wrong dependencyType"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2));
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey_2);
-				tie(mmsSourceAssetPathName_2, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			// calculate delivery URL in case of an external encoder
-			{
-				int64_t utcNow;
-				{
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-					utcNow = chrono::system_clock::to_time_t(now);
-				}
-
-				pair<string, string> deliveryAuthorizationDetails =
-					_mmsDeliveryAuthorization->createDeliveryAuthorization(
-					-1,	// userKey,
-					workspace,
-					"",	// clientIPAddress,
-
-					-1,	// mediaItemKey,
-					"",	// uniqueName,
-					-1,	// encodingProfileKey,
-					"",	// encodingProfileLabel,
-
-					sourcePhysicalPathKey_2,
-
-					-1,	// ingestionJobKey,	(in case of live)
-					-1,	// deliveryCode,
-
-					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
-					999999,	// maxRetries,
-					false,	// save,
-					"MMS_SignedToken",	// deliveryType,
-
-					false,	// warningIfMissingMediaItemKey,
-					true,	// filteredByStatistic
-					""		// userId (it is not needed it filteredByStatistic is true
-				);
-
-				tie(sourcePhysicalDeliveryURL_2, ignore) = deliveryAuthorizationDetails;
-			}
-		}
+		string sourceTranscoderStagingAssetPathName_2;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo_2 =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[1]);
+		tie(sourceMediaItemKey_2, sourcePhysicalPathKey_2, referenceContentType_2,
+			mmsSourceAssetPathName_2, ignore, sourceFileName_2, sourceFileExtension_2,
+			sourceDurationInMilliSecs_2, sourcePhysicalDeliveryURL_2,
+			sourceTranscoderStagingAssetPathName_2, ignore) = dependencyInfo_2;
 
 		int64_t sourceVideoMediaItemKey;
 		int64_t sourceVideoPhysicalPathKey;
 		string mmsSourceVideoAssetPathName;
 		string sourceVideoPhysicalDeliveryURL;
+		string sourceVideoFileName;
+		string sourceVideoFileExtension;
+		string sourceVideoTranscoderStagingAssetPathName;	// used in case of external encoder
+		int64_t videoDurationInMilliSeconds;
 
 		int64_t sourceImageMediaItemKey;
 		int64_t sourceImagePhysicalPathKey;
@@ -21662,6 +21421,10 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			sourceVideoPhysicalPathKey = sourcePhysicalPathKey_1;
 			mmsSourceVideoAssetPathName = mmsSourceAssetPathName_1;
 			sourceVideoPhysicalDeliveryURL = sourcePhysicalDeliveryURL_1;
+			sourceVideoFileName = sourceFileName_1;
+			sourceVideoFileExtension = sourceFileExtension_1;
+			sourceVideoTranscoderStagingAssetPathName = sourceTranscoderStagingAssetPathName_1;
+			videoDurationInMilliSeconds = sourceDurationInMilliSecs_1;
 
 			sourceImageMediaItemKey = sourceMediaItemKey_2;
 			sourceImagePhysicalPathKey = sourcePhysicalPathKey_2;
@@ -21675,6 +21438,10 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			sourceVideoPhysicalPathKey = sourcePhysicalPathKey_2;
 			mmsSourceVideoAssetPathName = mmsSourceAssetPathName_2;
 			sourceVideoPhysicalDeliveryURL = sourcePhysicalDeliveryURL_2;
+			sourceVideoFileName = sourceFileName_2;
+			sourceVideoFileExtension = sourceFileExtension_2;
+			sourceVideoTranscoderStagingAssetPathName = sourceTranscoderStagingAssetPathName_2;
+			videoDurationInMilliSeconds = sourceDurationInMilliSecs_2;
 
 			sourceImageMediaItemKey = sourceMediaItemKey_1;
 			sourceImagePhysicalPathKey = sourcePhysicalPathKey_1;
@@ -21728,55 +21495,15 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			}
 		}
 
-		string sourceVideoFileName;
-		string sourceVideoFileExtension;
-		string encodedFileName;
-		{
-			size_t extensionIndex = mmsSourceVideoAssetPathName.find_last_of(".");
-			if (extensionIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
-				_logger->error(errorMessage);
+		string encodedFileName = to_string(ingestionJobKey)
+			+ "_overlayedimage"
+			+  sourceVideoFileExtension;
 
-				throw runtime_error(errorMessage);
-			}
-			sourceVideoFileExtension = mmsSourceVideoAssetPathName.substr(extensionIndex);
-
-			encodedFileName = to_string(ingestionJobKey)
-				+ "_overlayedimage"                                                                   
-				+  mmsSourceVideoAssetPathName.substr(extensionIndex);     
-
-			size_t sourceFileNameIndex = mmsSourceVideoAssetPathName.find_last_of("/");
-			if (sourceFileNameIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No sourceFileNameIndex find in the asset file name"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			sourceVideoFileName = mmsSourceVideoAssetPathName.substr(sourceFileNameIndex + 1);
-		}
-
-		string sourceVideoTranscoderStagingAssetPathName;	// used in case of external encoder
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
 		string encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
-			sourceVideoTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
-				neededForTranscoder,
-				workspace->_directoryName,	// workspaceDirectoryName
-				to_string(ingestionJobKey),		// directoryNamePrefix
-				"/",							// relativePath,
-				sourceVideoFileName,				// fileName
-				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-				removeLinuxPathIfExist);
 
 			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
 				neededForTranscoder,
@@ -21794,9 +21521,6 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
 			encodedNFSStagingAssetPathName = workspaceIngestionRepository + "/" + encodedFileName;
 		}
-
-		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-			sourceVideoMediaItemKey, sourceVideoPhysicalPathKey);
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
 			encodingProfileKey, encodingProfileDetailsRoot,
@@ -21869,98 +21593,23 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-		int64_t sourceDurationInMilliSeconds;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+		MMSEngineDBFacade::ContentType referenceContentType;
 		string sourceAssetPathName;
+		string sourceRelativePath;
+		string sourceFileName;
+		string sourceFileExtension;
+		int64_t sourceDurationInMilliSecs;
 		string sourcePhysicalDeliveryURL;
-		{
-			int64_t sourceMediaItemKey;
-			int64_t sourcePhysicalPathKey;
-			string sourceRelativePath;
-			string sourceFileName;
-
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[0];
-
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
-			{
-				sourceMediaItemKey = key;
-
-				bool warningIfMissing = true;
-				tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
-					_mmsEngineDBFacade->getSourcePhysicalPath(sourceMediaItemKey, warningIfMissing);
-				tie(sourcePhysicalPathKey, ignore, sourceRelativePath, sourceFileName,
-					ignore, ignore) = sourcePhysicalPathDetails;
-			}
-			else
-			{
-				sourcePhysicalPathKey = key;
-
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
-					sourceFileName, sourceRelativePath)
-					= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);
-				tie(sourceAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			// calculate delivery URL in case of an external encoder
-			{
-				int64_t utcNow;
-				{
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-					utcNow = chrono::system_clock::to_time_t(now);
-				}
-
-				pair<string, string> deliveryAuthorizationDetails =
-					_mmsDeliveryAuthorization->createDeliveryAuthorization(
-					-1,	// userKey,
-					workspace,
-					"",	// clientIPAddress,
-
-					-1,	// mediaItemKey,
-					"",	// uniqueName,
-					-1,	// encodingProfileKey,
-					"",	// encodingProfileLabel,
-
-					sourcePhysicalPathKey,
-
-					-1,	// ingestionJobKey,	(in case of live)
-					-1,	// deliveryCode,
-
-					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
-					999999,	// maxRetries,
-					false,	// save,
-					"MMS_SignedToken",	// deliveryType,
-
-					false,	// warningIfMissingMediaItemKey,
-					true,	// filteredByStatistic
-					""		// userId (it is not needed it filteredByStatistic is true
-				);
-
-				tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
-			}
-
-			sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-				sourceMediaItemKey, sourcePhysicalPathKey);
-		}
+		string sourceTranscoderStagingAssetPathName;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+			sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+			sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+			sourceTranscoderStagingAssetPathName, ignore) = dependencyInfo;
 
 		int64_t encodingProfileKey = -1;
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
@@ -21993,55 +21642,15 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			}
 		}
 
-		string sourceFileName;
-		string sourceFileExtension;
-		string encodedFileName;
-		{
-			size_t extensionIndex = sourceAssetPathName.find_last_of(".");
-			if (extensionIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName;
-				_logger->error(errorMessage);
+		string encodedFileName = to_string(ingestionJobKey)
+			+ "_overlayedText"                                                                   
+			+  sourceFileExtension;     
 
-				throw runtime_error(errorMessage);
-			}
-			sourceFileExtension = sourceAssetPathName.substr(extensionIndex);
-
-			encodedFileName = to_string(ingestionJobKey)
-				+ "_overlayedText"                                                                   
-				+  sourceFileExtension;     
-
-			size_t sourceFileNameIndex = sourceAssetPathName.find_last_of("/");
-			if (sourceFileNameIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No sourceFileNameIndex find in the asset file name"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			sourceFileName = sourceAssetPathName.substr(sourceFileNameIndex + 1);
-		}
-
-		string sourceTranscoderStagingAssetPathName;	// used in case of external encoder
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
 		string encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
-			sourceTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
-				neededForTranscoder,
-				workspace->_directoryName,	// workspaceDirectoryName
-				to_string(ingestionJobKey),		// directoryNamePrefix
-				"/",							// relativePath,
-				sourceFileName,				// fileName
-				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-				removeLinuxPathIfExist);
 
 			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
 				neededForTranscoder,
@@ -22056,8 +21665,9 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 				removeLinuxPathIfExist);
 
-			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-			encodedNFSStagingAssetPathName = workspaceIngestionRepository + "/" + encodedFileName;
+			encodedNFSStagingAssetPathName =
+				_mmsStorage->getWorkspaceIngestionRepository(workspace)
+				+ "/" + encodedFileName;
 		}
 
 		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
@@ -22069,7 +21679,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
 			encodingProfileKey, encodingProfileDetailsRoot,
 
-			sourceAssetPathName, sourceDurationInMilliSeconds, sourcePhysicalDeliveryURL,
+			sourceAssetPathName, sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
 			sourceFileExtension,
 
 			sourceTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName,	
@@ -22170,7 +21780,7 @@ void MMSEngineProcessor::emailNotificationThread(
 					else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
 					{
 						bool warningIfMissing = false;
-						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 								workspace->_workspaceKey, key, warningIfMissing);
 
@@ -22181,7 +21791,7 @@ void MMSEngineProcessor::emailNotificationThread(
 						string ingestionDate;
 						int64_t localIngestionJobKey;
 						tie(mediaItemKey, localContentType, title, userData, ingestionDate,
-							localIngestionJobKey, ignore, ignore) = mediaItemDetails;
+							localIngestionJobKey, ignore, ignore, ignore) = mediaItemDetails;
 
 						sDependencies += string("PhysicalPathKey")
 							+ ", physicalPathKey: " + to_string(key)
@@ -22817,12 +22427,12 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 int64_t physicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, physicalPathKey, warningIfMissing);
 
-                tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+                tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 		}
@@ -22849,12 +22459,12 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 int64_t physicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, physicalPathKey, warningIfMissing);
 
-                tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+                tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 		}
@@ -27760,5 +27370,127 @@ int MMSEngineProcessor::progressUploadCallback(
     }
         
     return 0;
+}
+
+tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
+	string, int64_t, string, string, bool> MMSEngineProcessor::processDependencyInfo(
+	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+	tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType)
+{
+	int64_t mediaItemKey;
+	int64_t physicalPathKey;
+	string relativePath;
+	string fileName;
+	int64_t durationInMilliSecs;
+	MMSEngineDBFacade::ContentType contentType;
+	bool stopIfReferenceProcessingError;
+	{
+		int64_t key;
+		Validator::DependencyType dependencyType;
+
+		tie(key, contentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
+
+		if (dependencyType == Validator::DependencyType::MediaItemKey)
+		{
+			mediaItemKey = key;
+
+			bool warningIfMissing = true;
+			tuple<int64_t, int, string, string, int64_t, bool, int64_t> physicalPathDetails =
+				_mmsEngineDBFacade->getSourcePhysicalPath(mediaItemKey, warningIfMissing);
+			tie(physicalPathKey, ignore, relativePath, fileName, ignore, ignore,
+				durationInMilliSecs) = physicalPathDetails;
+		}
+		else
+		{
+			physicalPathKey = key;
+
+			bool warningIfMissing = false;
+			tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string, int64_t,
+				string, string, int64_t> mediaItemDetails =
+				_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+			tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore,
+				fileName, relativePath, durationInMilliSecs) = mediaItemDetails;
+		}
+	}
+
+	string assetPathName;
+	{
+		tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+			_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+		tie(assetPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+	}
+
+	string fileExtension;
+	{
+		size_t extensionIndex = fileName.find_last_of(".");
+		if (extensionIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+				+ ", fileName: " + fileName;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		fileExtension = fileName.substr(extensionIndex);
+	}
+
+	// calculate delivery URL in case of an external encoder
+	string physicalDeliveryURL;
+	{
+		int64_t utcNow;
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		pair<string, string> deliveryAuthorizationDetails =
+			_mmsDeliveryAuthorization->createDeliveryAuthorization(
+			-1,	// userKey,
+			workspace,
+			"",	// clientIPAddress,
+
+			-1,	// mediaItemKey,
+			"",	// uniqueName,
+			-1,	// encodingProfileKey,
+			"",	// encodingProfileLabel,
+
+			physicalPathKey,
+
+			-1,	// ingestionJobKey,	(in case of live)
+			-1,	// deliveryCode,
+
+			365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+			999999,	// maxRetries,
+			false,	// save,
+			"MMS_SignedToken",	// deliveryType,
+
+			false,	// warningIfMissingMediaItemKey,
+			true,	// filteredByStatistic
+			""		// userId (it is not needed it filteredByStatistic is true
+		);
+
+		tie(physicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+	}
+
+	string transcoderStagingAssetPathName;	// used in case of external encoder
+	{
+		bool removeLinuxPathIfExist = false;
+		bool neededForTranscoder = true;
+		transcoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+			neededForTranscoder,
+			workspace->_directoryName,	// workspaceDirectoryName
+			to_string(ingestionJobKey),		// directoryNamePrefix
+			"/",							// relativePath,
+			fileName,
+			-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+			-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+			removeLinuxPathIfExist);
+	}
+
+	return make_tuple(mediaItemKey, physicalPathKey, contentType,
+		assetPathName, relativePath, fileName, fileExtension,
+		durationInMilliSecs, physicalDeliveryURL, transcoderStagingAssetPathName,
+		stopIfReferenceProcessingError);
 }
 

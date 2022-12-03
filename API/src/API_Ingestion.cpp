@@ -4791,14 +4791,14 @@ void API::changeLiveProxyPlaylist(
 
 									bool warningIfMissing = false;
 									tuple<int64_t, MMSEngineDBFacade::ContentType, string,
-										string, string, int64_t, string, string>
+										string, string, int64_t, string, string, int64_t>
 										mediaItemKeyDetails =
 										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											workspace->_workspaceKey,
 											broadcastDefaultPhysicalPathKey,
 											warningIfMissing);
 									tie(ignore, vodContentType, ignore, ignore, ignore,
-										ignore, ignore, ignore) = mediaItemKeyDetails;
+										ignore, ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
 
 								// int64_t durationInMilliSeconds =
@@ -5117,13 +5117,13 @@ void API::changeLiveProxyPlaylist(
 
 									bool warningIfMissing = false;
 									tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-										string,int64_t, string, string> mediaItemKeyDetails =
+										string,int64_t, string, string, int64_t> mediaItemKeyDetails =
 										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											workspace->_workspaceKey, physicalPathKey,
 											warningIfMissing);
 
 									tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
-										ignore, ignore) = mediaItemKeyDetails;
+										ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
 								field = "sourcePhysicalPathName";
 								sourceRoot[field] = sourcePhysicalPathName;
@@ -5209,15 +5209,15 @@ void API::changeLiveProxyPlaylist(
 
 								bool warningIfMissing = false;
 								tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,
-									string,int64_t, string, string> mediaItemKeyDetails =
+									string,int64_t, string, string, int64_t> mediaItemKeyDetails =
 									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 										workspace->_workspaceKey, physicalPathKey,
 										warningIfMissing);
 								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
-									ignore, ignore) = mediaItemKeyDetails;
+									ignore, ignore, videoDurationInMilliSeconds) = mediaItemKeyDetails;
 
-								videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(             
-									-1, physicalPathKey);                                                       
+								// videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(             
+								// 	-1, physicalPathKey);                                                       
 							}
 
 							field = "mmsSourceVideoAssetPathName";

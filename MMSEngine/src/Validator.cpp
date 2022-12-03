@@ -5539,13 +5539,13 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             }
             else if (referencePhysicalPathKey != -1)
             {
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-					mediaItemKeyDetails = 
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+					string, string, int64_t> mediaItemKeyDetails = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
                 tie(referenceMediaItemKey, referenceContentType, ignore, ignore, ignore, ignore,
-					ignore, ignore) = mediaItemKeyDetails;
+					ignore, ignore, ignore) = mediaItemKeyDetails;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -5920,13 +5920,14 @@ void Validator::fillReferencesOutput(
 				try
 				{
 					bool warningIfMissing = true;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
+						string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
 					int64_t localMediaItemKey;
-					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 					referencesOutput.push_back(make_pair(localMediaItemKey, referencePhysicalPathKey));

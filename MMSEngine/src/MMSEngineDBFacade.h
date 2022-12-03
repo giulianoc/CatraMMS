@@ -1565,14 +1565,14 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel, bool warningIfMissing);
 
-	tuple<int64_t, int, string, string, int64_t, bool> getSourcePhysicalPath(
+	tuple<int64_t, int, string, string, int64_t, bool, int64_t> getSourcePhysicalPath(
 		int64_t mediaItemKey, bool warningIfMissing);
 
     tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> getMediaItemKeyDetails(
         int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
-		getMediaItemKeyDetailsByPhysicalPathKey(
+    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
+		string, string, int64_t> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(
