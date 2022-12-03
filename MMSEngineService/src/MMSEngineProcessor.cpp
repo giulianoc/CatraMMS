@@ -20546,7 +20546,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
 		{
 			// This task shall contain EncodingProfileKey or EncodingProfileLabel.
 			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
@@ -20564,17 +20564,6 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, referenceContentType, encodingProfileLabel);
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + keyField
-						+ ", Field: " + labelField
-						;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
 			}
 
 			{

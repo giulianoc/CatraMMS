@@ -4746,7 +4746,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     }
 	*/
 
-    string field = "SpeedType";
+    string field = "speedType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string speedType = parametersRoot.get(field, "").asString();
@@ -4765,7 +4765,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    field = "SpeedSize";
+    field = "speedSize";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		int speedSize = JSONUtils::asInt(parametersRoot, field, 3);
