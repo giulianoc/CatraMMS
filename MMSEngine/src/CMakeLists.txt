@@ -65,6 +65,10 @@ SET (HEADERS
 	ThreadsStatistic.h
 )
 
+add_compile_definitions(MAGICKCORE_HDRI_ENABLE=0)
+add_compile_definitions(MAGICKCORE_QUANTUM_DEPTH=16)
+
+
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT

@@ -3870,7 +3870,7 @@ bool EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		if (_encodingItem->_encoderKey == -1)
 		{
 			int64_t encoderKeyToBeSkipped = -1;
-			bool externalEncoderAllowed = false;
+			bool externalEncoderAllowed = true;
 			tuple<int64_t, string, bool> encoderDetails =
 				_encodersLoadBalancer->getEncoderURL(
 					_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
