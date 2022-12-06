@@ -6301,13 +6301,10 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-    vector<string>& imagesSourcePhysicalPaths,
-    double durationOfEachSlideInSeconds,
-    vector<string>& audiosSourcePhysicalPaths,
-    double shortestAudioDurationInSeconds,
-	string videoSyncMethod,
-    int outputFrameRate,
-    EncodingPriority encodingPriority
+	Json::Value encodingProfileDetailsRoot,
+	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
+	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+    int outputFrameRate, EncodingPriority encodingPriority
 )
 {
 
@@ -6339,33 +6336,26 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 		{
 			Json::Value parametersRoot;
 
-			string field = "videoSyncMethod";
-			parametersRoot[field] = videoSyncMethod;
+			string field = "encodingProfileDetailsRoot";
+			parametersRoot[field] = encodingProfileDetailsRoot;
 
-			field = "outputFrameRate";
-			parametersRoot[field] = outputFrameRate;
+			field = "imagesRoot";
+			parametersRoot[field] = imagesRoot;
 
-			{
-				Json::Value imagesSourcePhysicalPathsRoot(Json::arrayValue);
-				for (string imageSourcePhysicalPath: imagesSourcePhysicalPaths)
-					imagesSourcePhysicalPathsRoot.append(imageSourcePhysicalPath);
-				field = "imagesSourcePhysicalPaths";
-				parametersRoot[field] = imagesSourcePhysicalPathsRoot;
-			}
-
-			field = "durationOfEachSlideInSeconds";
-			parametersRoot[field] = durationOfEachSlideInSeconds;
-
-			{
-				Json::Value audiosSourcePhysicalPathsRoot(Json::arrayValue);
-				for (string audioSourcePhysicalPath: audiosSourcePhysicalPaths)
-					audiosSourcePhysicalPathsRoot.append(audioSourcePhysicalPath);
-				field = "audiosSourcePhysicalPaths";
-				parametersRoot[field] = audiosSourcePhysicalPathsRoot;
-			}
+			field = "audiosRoot";
+			parametersRoot[field] = audiosRoot;
 
 			field = "shortestAudioDurationInSeconds";
 			parametersRoot[field] = shortestAudioDurationInSeconds;
+
+			field = "encodedTranscoderStagingAssetPathName";
+			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
+
+			field = "encodedNFSStagingAssetPathName";
+			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "outputFrameRate";
+			parametersRoot[field] = outputFrameRate;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}

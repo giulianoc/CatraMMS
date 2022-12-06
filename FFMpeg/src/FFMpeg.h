@@ -254,16 +254,17 @@ public:
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
 
-    void generateSlideshowMediaToIngest(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-        vector<string>& imagesSourcePhysicalPaths,
-        double durationOfEachSlideInSeconds, 
-        vector<string>& audiosSourcePhysicalPaths,
-		double shortestAudioDurationInSeconds,
+	void slideShow(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		float durationOfEachSlideInSeconds, 
 		string videoSyncMethod,
-        int outputFrameRate,
-        string slideshowMediaPathName,
+		int outputFrameRate,
+		Json::Value encodingParametersRoot,
+		vector<string>& imagesSourcePhysicalPaths,
+		vector<string>& audiosSourcePhysicalPaths,
+		float shortestAudioDurationInSeconds,	// the shortest duration among the audios
+		string encodedStagingAssetPathName,
 		pid_t* pChildPid);
 
 	void cutWithoutEncoding(

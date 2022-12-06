@@ -7621,10 +7621,10 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 	);
 
     string concatenationListPathName =
-        _ffmpegTempDir + "/"
-        + to_string(ingestionJobKey)
-        + ".concatList.txt"
-        ;
+		_ffmpegTempDir + "/"
+		+ to_string(ingestionJobKey)
+		+ ".concatList.txt"
+	;
         
     ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
     for (string sourcePhysicalPath: sourcePhysicalPaths)
@@ -8496,19 +8496,20 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	}
 }
 
-void FFMpeg::generateSlideshowMediaToIngest(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-        vector<string>& imagesSourcePhysicalPaths,
-        double durationOfEachSlideInSeconds, 
-        vector<string>& audiosSourcePhysicalPaths,
-        double shortestAudioDurationInSeconds,	// the shortest duration among the audios
-		string videoSyncMethod,
-        int outputFrameRate,
-        string slideshowMediaPathName,
-		pid_t* pChildPid)
+void FFMpeg::slideShow(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	float durationOfEachSlideInSeconds, 
+	string videoSyncMethod,
+	int outputFrameRate,
+	Json::Value encodingParametersRoot,
+	vector<string>& imagesSourcePhysicalPaths,
+	vector<string>& audiosSourcePhysicalPaths,
+	float shortestAudioDurationInSeconds,	// the shortest duration among the audios
+	string encodedStagingAssetPathName,
+	pid_t* pChildPid)
 {
-	_currentApiName = "generateSlideshowMediaToIngest";
+	_currentApiName = "slideShow";
 
 	setStatus(
 		ingestionJobKey,
@@ -8520,12 +8521,12 @@ void FFMpeg::generateSlideshowMediaToIngest(
 		*/
 	);
 
-	_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+	_logger->info(__FILEREF__ + "Received " + _currentApiName
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", videoSyncMethod: " + videoSyncMethod
 		+ ", outputFrameRate: " + to_string(outputFrameRate)
-		+ ", slideshowMediaPathName: " + slideshowMediaPathName
+		+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
 		+ ", shortestAudioDurationInSeconds: " + to_string(shortestAudioDurationInSeconds)
 		);
@@ -8603,13 +8604,13 @@ void FFMpeg::generateSlideshowMediaToIngest(
 				slideDurationInSeconds = durationOfEachSlideInSeconds;
         
 			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-			_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+			_logger->info(__FILEREF__ + "slideShow"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", line: " + ("file '" + sourcePhysicalPath + "'")
 			);
 			slideshowListFile << "duration " << slideDurationInSeconds << endl;
-			_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+			_logger->info(__FILEREF__ + "slideShow"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", line: " + ("duration " + to_string(slideDurationInSeconds))
@@ -8618,7 +8619,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 			lastSourcePhysicalPath = sourcePhysicalPath;
 		}
 		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
-		_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+		_logger->info(__FILEREF__ + "slideShow"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", line: " + ("file '" + lastSourcePhysicalPath + "'")
@@ -8726,7 +8727,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 	ffmpegArgumentList.push_back("yuv420p");
 	if (audiosSourcePhysicalPaths.size() > 0)
 		ffmpegArgumentList.push_back("-shortest");
-	ffmpegArgumentList.push_back(slideshowMediaPathName);
+	ffmpegArgumentList.push_back(encodedStagingAssetPathName);
 
     try
     {
@@ -8736,7 +8737,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 				ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "slideShow: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
         );
@@ -8751,7 +8752,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 			pChildPid, &iReturnedStatus);
 		if (iReturnedStatus != 0)
         {
-			string errorMessage = __FILEREF__ + "generateSlideshowMediaToIngest: ffmpeg command failed"
+			string errorMessage = __FILEREF__ + "slideShow: ffmpeg command failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", iReturnedStatus: " + to_string(iReturnedStatus)
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
@@ -8759,7 +8760,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
             _logger->error(errorMessage);
 
 			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "generateSlideshowMediaToIngest: command failed"
+			errorMessage = __FILEREF__ + "slideShow: command failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
             ;
             throw runtime_error(errorMessage);
@@ -8767,7 +8768,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "slideShow: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
@@ -12573,7 +12574,8 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			}
 			else // if (sources.size() > 1)
 			{
-				// build the endless recursive playlist file like (i.e:
+				// ffmpeg concat demuxer supports nested scripts with the header "ffconcat version 1.0".
+				// Build the endless recursive playlist file like (i.e:
 				//	ffconcat version 1.0
 				//	file 'storage/MMSRepository/MMS_0003/1/000/004/016/2030954_97080_24.mp4'
 				//	file 'storage/MMSRepository/MMS_0003/1/000/004/235/2143253_99028_24.mp4'

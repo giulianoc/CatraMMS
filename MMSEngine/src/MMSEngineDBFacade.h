@@ -1714,16 +1714,13 @@ public:
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL,
 		string mmsIngestionURL);
 
-    void addEncoding_SlideShowJob (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        vector<string>& imagesSourcePhysicalPaths,
-        double durationOfEachSlideInSeconds,
-        vector<string>& audiosSourcePhysicalPaths,
-        double shortestAudioDurationInSeconds,
-		string videoSyncMethod,
-        int outputFrameRate,
-        EncodingPriority encodingPriority);
+	void addEncoding_SlideShowJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		Json::Value encodingProfileDetailsRoot,
+		Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
+		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		int outputFrameRate, EncodingPriority encodingPriority);
 
     void addEncoding_FaceRecognitionJob (
         shared_ptr<Workspace> workspace,

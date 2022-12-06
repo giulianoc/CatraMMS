@@ -39,14 +39,19 @@
 		//		based on frame-rate.
 		// auto (-1): Chooses between 1 and 2 depending on muxer capabilities. This is the default method.
 		// default is "vfr"
-		"VideoSyncMethod": "vfr",
+		"videoSyncMethod": "vfr",
 
 		// optional. It may be a decimal number (i.e.: 0.5). Default is 2 
-		"DurationOfEachSlideInSeconds": 5,
+		"durationOfEachSlideInSeconds": 5,
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
 		"EncodersPool": "",
+
+		// optional: in case this parameter is not present a 'default' encoding will be used
+		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.
+		"encodingProfileKey": 1,
+		"encodingProfileLabel": "Profile sport",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

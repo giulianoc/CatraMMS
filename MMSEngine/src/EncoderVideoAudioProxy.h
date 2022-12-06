@@ -232,9 +232,9 @@ private:
     bool generateFrames_through_ffmpeg();
     void processGeneratedFrames(bool killedByUser);
 
-    pair<string, bool> slideShow();
-    pair<string, bool> slideShow_through_ffmpeg();
-    void processSlideShow(string stagingEncodedAssetPathName, bool killedByUser);    
+    bool slideShow();
+    bool slideShow_through_ffmpeg();
+    void processSlideShow(bool killedByUser);    
 
     string faceRecognition();
     void processFaceRecognition(string stagingEncodedAssetPathName);    

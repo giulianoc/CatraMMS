@@ -18596,69 +18596,93 @@ void MMSEngineProcessor::manageSlideShowTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-        // MMSEngineDBFacade::ContentType slideshowContentType;
-        // bool slideshowContentTypeInitialized = false;
-        vector<string> imagesSourcePhysicalPaths;
-        vector<string> audiosSourcePhysicalPaths;
-		double shortestAudioDurationInSeconds = -1;
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot;
+		{
+			// This task shall contain EncodingProfileKey or EncodingProfileLabel.
+			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+			//  having just EncodingProfileKey        
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video,
+					encodingProfileLabel);
+			}
+
+			if (encodingProfileKey != -1)
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology,
+					string> encodingProfileDetails
+						= _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+							workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+			}
+		}
+
+		Json::Value imagesRoot(Json::arrayValue);
+		Json::Value audiosRoot(Json::arrayValue);
+		float shortestAudioDurationInSeconds = -1.0;
+
+		for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 			keyAndDependencyType: dependencies)
-        {
-            // int64_t encodingProfileKey = -1;
-            // string sourcePhysicalPath = _mmsStorage->getPhysicalPathDetails(keyAndDependencyType.first, encodingProfileKey);
-
-            int64_t sourceMediaItemKey;
-            int64_t sourcePhysicalPathKey;
-            string sourcePhysicalPath;
-
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
+		{
+			MMSEngineDBFacade::ContentType referenceContentType;
+			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
+			string sourceAssetPathName;
+			string sourceRelativePath;
+			string sourceFileName;
+			string sourceFileExtension;
+			int64_t sourceDurationInMilliSecs;
+			string sourcePhysicalDeliveryURL;
+			string sourceTranscoderStagingAssetPathName;
 			bool stopIfReferenceProcessingError;
-
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-        
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-				int64_t encodingProfileKey = -1;
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
-					physicalPathDetails;
-
-                sourceMediaItemKey = key;
-            }
-            else
-            {
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
-
-                sourcePhysicalPathKey = key;
-
-                bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
-					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-					= mediaItemDetails;
-            }
+			tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+				string, string, int64_t, string, string, bool> dependencyInfo =
+				processDependencyInfo(workspace, ingestionJobKey, keyAndDependencyType);
+			tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+				sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+				sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+				sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
-				imagesSourcePhysicalPaths.push_back(sourcePhysicalPath);
+			{
+				Json::Value imageRoot;
+
+				imageRoot["sourceAssetPathName"] = sourceAssetPathName;
+				imageRoot["sourceFileExtension"] = sourceFileExtension;
+				imageRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+				imageRoot["sourceTranscoderStagingAssetPathName"] = sourceTranscoderStagingAssetPathName;
+
+				imagesRoot.append(imageRoot);
+			}
 			else if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
-				audiosSourcePhysicalPaths.push_back(sourcePhysicalPath);
-				double mediaDurationInMilliseconds =
-					(double) _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-					sourceMediaItemKey, sourcePhysicalPathKey);
-				if (shortestAudioDurationInSeconds == -1
-						|| shortestAudioDurationInSeconds > mediaDurationInMilliseconds / 1000)
-					shortestAudioDurationInSeconds = mediaDurationInMilliseconds / 1000;
+				Json::Value audioRoot;
+
+				audioRoot["sourceAssetPathName"] = sourceAssetPathName;
+				audioRoot["sourceFileExtension"] = sourceFileExtension;
+				audioRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+				audioRoot["sourceTranscoderStagingAssetPathName"] = sourceTranscoderStagingAssetPathName;
+
+				audiosRoot.append(audioRoot);
+
+				if (shortestAudioDurationInSeconds == -1.0
+						|| shortestAudioDurationInSeconds > sourceDurationInMilliSecs / 1000)
+					shortestAudioDurationInSeconds = sourceDurationInMilliSecs / 1000;
 			}
 			else
 			{
@@ -18671,73 +18695,45 @@ void MMSEngineProcessor::manageSlideShowTask(
 
 				throw runtime_error(errorMessage);
 			}
-            
-			/*
-            bool warningIfMissing = false;
-            
-            tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
-				contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey 
-                    = _mmsEngineDBFacade->getMediaItemKeyDetails(
-					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
-           
-            MMSEngineDBFacade::ContentType contentType;
-            string localTitle;
-            string userData;
-            string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
-				= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-            
-            if (!slideshowContentTypeInitialized)
-            {
-                slideshowContentType = contentType;
-                if (slideshowContentType != MMSEngineDBFacade::ContentType::Image)
-                {
-                    string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            else
-            {
-                if (slideshowContentType != contentType)
-                {
-                    string errorMessage = __FILEREF__ + "Not all the References have the same ContentType"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-			*/
         }
 
-        double durationOfEachSlideInSeconds = 2;
-        field = "DurationOfEachSlideInSeconds";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            durationOfEachSlideInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
+		string fileFormat = ".mp4";
+		string encodedFileName = to_string(ingestionJobKey)
+			+ "_slideShow"
+			+  fileFormat;
 
-        string videoSyncMethod = "vfr";
-        field = "VideoSyncMethod";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            videoSyncMethod = parametersRoot.get(field, "vfr").asString();
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
 
-        int outputFrameRate = 25;
-        
+			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+				// in case of hls and external encoder (binary is ingested through PUSH),
+				// the directory inside the tar.gz has to be 'content'
+				encodedFileName,	// content
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			encodedNFSStagingAssetPathName =
+				_mmsStorage->getWorkspaceIngestionRepository(workspace)
+				+ "/" + encodedFileName;
+		}
+
+		int outputFrameRate = 25;
+
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-			imagesSourcePhysicalPaths, durationOfEachSlideInSeconds,
-			audiosSourcePhysicalPaths, shortestAudioDurationInSeconds,
-			videoSyncMethod,
-			outputFrameRate, encodingPriority);
+			encodingProfileDetailsRoot,
+			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			outputFrameRate,
+			encodingPriority);
     }
     catch(runtime_error e)
     {

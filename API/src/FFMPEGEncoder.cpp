@@ -6353,10 +6353,9 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 }
 
 void FFMPEGEncoder::slideShowThread(
-        // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
-        int64_t encodingJobKey,
-        string requestBody)
+	shared_ptr<Encoding> encoding,
+	int64_t encodingJobKey,
+	string requestBody)
 {
     string api = "slideShow";
 
@@ -6373,52 +6372,257 @@ void FFMPEGEncoder::slideShowThread(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, encodingJobKey, requestBody);
 
-        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-        string videoSyncMethod = metadataRoot.get("videoSyncMethod", "vfr").asString();
-        int outputFrameRate = JSONUtils::asInt(metadataRoot, "outputFrameRate", -1);
-        string slideShowMediaPathName = metadataRoot.get("slideShowMediaPathName", "XXX").asString();
+		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
+		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-        vector<string> imagesSourcePhysicalPaths;
+		float durationOfEachSlideInSeconds = 2.0;
+		string field = "durationOfEachSlideInSeconds";
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			durationOfEachSlideInSeconds = JSONUtils::asDouble(ingestedParametersRoot, field, 2.0);
+
+		float shortestAudioDurationInSeconds = -1.0;
+		field = "shortestAudioDurationInSeconds";
+		if (JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			shortestAudioDurationInSeconds = JSONUtils::asDouble(encodingParametersRoot, field, -1.0);
+
+		string videoSyncMethod = "vfr";
+		field = "videoSyncMethod";
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			videoSyncMethod = ingestedParametersRoot.get(field, "vfr").asString();
+
+		int outputFrameRate;
+		field = "outputFrameRate";
+		outputFrameRate = JSONUtils::asInt(encodingParametersRoot, field, 25);
+
+		vector<string> imagesPathNames;
 		{
-			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-			sourcePhysicalPathsRoot = metadataRoot["imagesSourcePhysicalPaths"];
-			for (int sourcePhysicalPathIndex = 0;
-				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
-				++sourcePhysicalPathIndex)
+			Json::Value imagesRoot = encodingParametersRoot["imagesRoot"];
+			for(int index = 0; index < imagesRoot.size(); index++)
 			{
-				string sourcePhysicalPathName =
-					sourcePhysicalPathsRoot.get(sourcePhysicalPathIndex, "").asString();
+				Json::Value imageRoot = imagesRoot[index];
 
-				imagesSourcePhysicalPaths.push_back(sourcePhysicalPathName);
+				if (externalEncoder)
+				{
+					field = "sourceFileExtension";
+					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourceFileExtension = imageRoot.get(field, "").asString();
+
+					field = "sourcePhysicalDeliveryURL";
+					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourcePhysicalDeliveryURL = imageRoot.get(field, "").asString();
+
+					field = "sourceTranscoderStagingAssetPathName";
+					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourceTranscoderStagingAssetPathName = imageRoot.get(field, "").asString();
+
+					{
+						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
+						if (endOfDirectoryIndex != string::npos)
+						{
+							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
+								0, endOfDirectoryIndex);
+
+							bool noErrorIfExists = true;
+							bool recursive = true;
+							_logger->info(__FILEREF__ + "Creating directory"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", directoryPathName: " + directoryPathName
+							);
+							FileIO::createDirectory(directoryPathName,
+								S_IRUSR | S_IWUSR | S_IXUSR |
+								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+						}
+					}
+
+					imagesPathNames.push_back(
+						downloadMediaFromMMS(
+							ingestionJobKey,
+							encodingJobKey,
+							encoding->_ffmpeg,
+							sourceFileExtension,
+							sourcePhysicalDeliveryURL,
+							sourceTranscoderStagingAssetPathName));
+				}
+				else
+				{
+					imagesPathNames.push_back(imageRoot.get("sourceAssetPathName", "").asString());
+				}
 			}
 		}
-        double durationOfEachSlideInSeconds = JSONUtils::asDouble(metadataRoot,
-			"durationOfEachSlideInSeconds", 0);
 
-        vector<string> audiosSourcePhysicalPaths;
+		vector<string> audiosPathNames;
 		{
-			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-			sourcePhysicalPathsRoot = metadataRoot["audiosSourcePhysicalPaths"];
-			for (int sourcePhysicalPathIndex = 0;
-				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
-				++sourcePhysicalPathIndex)
+			Json::Value audiosRoot = encodingParametersRoot["audiosRoot"];
+			for(int index = 0; index < audiosRoot.size(); index++)
 			{
-				string sourcePhysicalPathName =
-					sourcePhysicalPathsRoot.get(sourcePhysicalPathIndex, "").asString();
+				Json::Value audioRoot = audiosRoot[index];
 
-				audiosSourcePhysicalPaths.push_back(sourcePhysicalPathName);
+				if (externalEncoder)
+				{
+					field = "sourceFileExtension";
+					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourceFileExtension = audioRoot.get(field, "").asString();
+
+					field = "sourcePhysicalDeliveryURL";
+					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourcePhysicalDeliveryURL = audioRoot.get(field, "").asString();
+
+					field = "sourceTranscoderStagingAssetPathName";
+					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourceTranscoderStagingAssetPathName = audioRoot.get(field, "").asString();
+
+					{
+						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
+						if (endOfDirectoryIndex != string::npos)
+						{
+							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
+								0, endOfDirectoryIndex);
+
+							bool noErrorIfExists = true;
+							bool recursive = true;
+							_logger->info(__FILEREF__ + "Creating directory"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", directoryPathName: " + directoryPathName
+							);
+							FileIO::createDirectory(directoryPathName,
+								S_IRUSR | S_IWUSR | S_IXUSR |
+								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+						}
+					}
+
+					audiosPathNames.push_back(
+						downloadMediaFromMMS(
+							ingestionJobKey,
+							encodingJobKey,
+							encoding->_ffmpeg,
+							sourceFileExtension,
+							sourcePhysicalDeliveryURL,
+							sourceTranscoderStagingAssetPathName));
+				}
+				else
+				{
+					audiosPathNames.push_back(audioRoot.get("sourceAssetPathName", "").asString());
+				}
 			}
 		}
-        double shortestAudioDurationInSeconds = JSONUtils::asDouble(metadataRoot,
-			"shortestAudioDurationInSeconds", 0);
 
-        encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
-                imagesSourcePhysicalPaths, durationOfEachSlideInSeconds,
-				audiosSourcePhysicalPaths, shortestAudioDurationInSeconds,
-				videoSyncMethod, outputFrameRate, slideShowMediaPathName,
-				&(encoding->_childPid));
+		string encodedStagingAssetPathName;
+		if (externalEncoder)
+		{
+			field = "encodedTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
 
-        encoding->_running = false;
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			{
+				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = encodedStagingAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+		}
+		else
+		{
+			field = "encodedNFSStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+		}
+
+		encoding->_ffmpeg->slideShow(ingestionJobKey, encodingJobKey,
+			durationOfEachSlideInSeconds, videoSyncMethod, outputFrameRate,
+			encodingParametersRoot,
+			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
+			encodedStagingAssetPathName, &(encoding->_childPid));
+
+		encoding->_running = false;
         encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "slideShow finished"
