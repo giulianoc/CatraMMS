@@ -18730,6 +18730,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 			encodingProfileDetailsRoot, targetFileFormat,
 			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
     catch(runtime_error e)

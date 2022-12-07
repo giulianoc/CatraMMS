@@ -8714,7 +8714,7 @@ void FFMpeg::slideShow(
 				if (imageIndex + 1 >= imagesSourcePhysicalPaths.size() &&
 					durationOfEachSlideInSeconds * (imageIndex + 1) < shortestAudioDurationInSeconds)
 				{
-					// we are writing the last image and the duretion of all the slides
+					// we are writing the last image and the duration of all the slides
 					// is less than the shortest audio duration (2)
 					slideDurationInSeconds = shortestAudioDurationInSeconds
 						- (durationOfEachSlideInSeconds * imageIndex);

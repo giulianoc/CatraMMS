@@ -6304,6 +6304,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 	Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
     EncodingPriority encodingPriority
 )
 {
@@ -6356,6 +6357,15 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}

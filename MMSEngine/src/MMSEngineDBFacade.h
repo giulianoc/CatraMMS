@@ -1720,6 +1720,7 @@ public:
 		Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 		Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 		EncodingPriority encodingPriority);
 
     void addEncoding_FaceRecognitionJob (
