@@ -6392,10 +6392,6 @@ void FFMPEGEncoder::slideShowThread(
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			videoSyncMethod = ingestedParametersRoot.get(field, "vfr").asString();
 
-		int outputFrameRate;
-		field = "outputFrameRate";
-		outputFrameRate = JSONUtils::asInt(encodingParametersRoot, field, 25);
-
 		vector<string> imagesPathNames;
 		{
 			Json::Value imagesRoot = encodingParametersRoot["imagesRoot"];
@@ -6617,7 +6613,7 @@ void FFMPEGEncoder::slideShowThread(
 		}
 
 		encoding->_ffmpeg->slideShow(ingestionJobKey, encodingJobKey,
-			durationOfEachSlideInSeconds, videoSyncMethod, outputFrameRate,
+			durationOfEachSlideInSeconds, videoSyncMethod,
 			encodingParametersRoot,
 			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
 			encodedStagingAssetPathName, &(encoding->_childPid));

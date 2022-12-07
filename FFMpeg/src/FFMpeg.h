@@ -259,8 +259,7 @@ public:
 		int64_t encodingJobKey,
 		float durationOfEachSlideInSeconds, 
 		string videoSyncMethod,
-		int outputFrameRate,
-		Json::Value encodingParametersRoot,
+		Json::Value encodingProfileDetailsRoot,
 		vector<string>& imagesSourcePhysicalPaths,
 		vector<string>& audiosSourcePhysicalPaths,
 		float shortestAudioDurationInSeconds,	// the shortest duration among the audios

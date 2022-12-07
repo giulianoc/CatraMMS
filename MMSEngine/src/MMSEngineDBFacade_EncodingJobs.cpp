@@ -6304,7 +6304,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 	Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
-    int outputFrameRate, EncodingPriority encodingPriority
+    EncodingPriority encodingPriority
 )
 {
 
@@ -6356,9 +6356,6 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
-
-			field = "outputFrameRate";
-			parametersRoot[field] = outputFrameRate;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}

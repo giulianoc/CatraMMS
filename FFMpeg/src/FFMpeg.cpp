@@ -8501,8 +8501,7 @@ void FFMpeg::slideShow(
 	int64_t encodingJobKey,
 	float durationOfEachSlideInSeconds, 
 	string videoSyncMethod,
-	int outputFrameRate,
-	Json::Value encodingParametersRoot,
+	Json::Value encodingProfileDetailsRoot,
 	vector<string>& imagesSourcePhysicalPaths,
 	vector<string>& audiosSourcePhysicalPaths,
 	float shortestAudioDurationInSeconds,	// the shortest duration among the audios
@@ -8525,7 +8524,6 @@ void FFMpeg::slideShow(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", videoSyncMethod: " + videoSyncMethod
-		+ ", outputFrameRate: " + to_string(outputFrameRate)
 		+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
 		+ ", shortestAudioDurationInSeconds: " + to_string(shortestAudioDurationInSeconds)
@@ -8534,10 +8532,149 @@ void FFMpeg::slideShow(
 	int iReturnedStatus = 0;
 
     string slideshowListImagesPathName =
-        _ffmpegTempDir + "/"
-        + to_string(ingestionJobKey)
-        + ".slideshowListImages.txt"
-        ;
+		_ffmpegTempDir + "/"
+		+ to_string(ingestionJobKey)
+		+ ".slideshowListImages.txt"
+	;
+
+	vector<string> ffmpegEncodingProfileArgumentList;
+	if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		try
+		{
+			string httpStreamingFileFormat;    
+			string ffmpegHttpStreamingParameter = "";
+			bool encodingProfileIsVideo = true;
+
+			string ffmpegFileFormatParameter = "";
+
+			string ffmpegVideoCodecParameter = "";
+			string ffmpegVideoProfileParameter = "";
+			string ffmpegVideoResolutionParameter = "";
+			int videoBitRateInKbps = -1;
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoOtherParameters = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegVideoFrameRateParameter = "";
+			string ffmpegVideoKeyFramesRateParameter = "";
+			bool twoPasses;
+			vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+			string ffmpegAudioCodecParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+			string ffmpegAudioOtherParameters = "";
+			string ffmpegAudioChannelsParameter = "";
+			string ffmpegAudioSampleRateParameter = "";
+			vector<string> audioBitRatesInfo;
+
+
+			settingFfmpegParameters(
+				encodingProfileDetailsRoot,
+				encodingProfileIsVideo,
+
+				httpStreamingFileFormat,
+				ffmpegHttpStreamingParameter,
+
+				ffmpegFileFormatParameter,
+
+				ffmpegVideoCodecParameter,
+				ffmpegVideoProfileParameter,
+				ffmpegVideoOtherParameters,
+				twoPasses,
+				ffmpegVideoFrameRateParameter,
+				ffmpegVideoKeyFramesRateParameter,
+				videoBitRatesInfo,
+
+				ffmpegAudioCodecParameter,
+				ffmpegAudioOtherParameters,
+				ffmpegAudioChannelsParameter,
+				ffmpegAudioSampleRateParameter,
+				audioBitRatesInfo
+			);
+
+			tuple<string, int, int, int, string, string, string> videoBitRateInfo
+				= videoBitRatesInfo[0];
+			tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+				ffmpegVideoBitRateParameter,
+				ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+			ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+
+			/*
+			if (httpStreamingFileFormat != "")
+			{
+				string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else */
+			if (twoPasses)
+			{
+				// siamo sicuri che non sia possibile?
+				/*
+				string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", twoPasses: " + to_string(twoPasses)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+				*/
+				twoPasses = false;
+
+				string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", twoPasses: " + to_string(twoPasses)
+				;
+				_logger->warn(errorMessage);
+			}
+
+			addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+			// we cannot have two video filters parameters (-vf), one is for the overlay.
+			// If it is needed we have to combine both using the same -vf parameter and using the
+			// comma (,) as separator. For now we will just comment it and the resolution will be the one
+			// coming from the video (no changes)
+			// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+			ffmpegEncodingProfileArgumentList.push_back("-threads");
+			ffmpegEncodingProfileArgumentList.push_back("0");
+			addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			// to hide the ffmpeg staff
+			errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			throw e;
+		}
+	}
 
 	// IN CASE WE HAVE AUDIO
 	//	We will stop the video at the shortest between
@@ -8716,10 +8853,21 @@ void FFMpeg::slideShow(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(slideshowListAudiosPathName);
 	}
-	ffmpegArgumentList.push_back("-c:v");
-	ffmpegArgumentList.push_back("libx264");
-	ffmpegArgumentList.push_back("-r");
-	ffmpegArgumentList.push_back(to_string(outputFrameRate));
+
+	// encoding parameters
+	if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		for (string parameter: ffmpegEncodingProfileArgumentList)
+			addToArguments(parameter, ffmpegArgumentList);
+	}
+	else
+	{
+		ffmpegArgumentList.push_back("-c:v");
+		ffmpegArgumentList.push_back("libx264");
+		ffmpegArgumentList.push_back("-r");
+		ffmpegArgumentList.push_back("25");
+	}
+
 	ffmpegArgumentList.push_back("-vsync");
 	ffmpegArgumentList.push_back(videoSyncMethod);
 	ffmpegArgumentList.push_back("-pix_fmt");

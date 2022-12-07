@@ -18726,13 +18726,10 @@ void MMSEngineProcessor::manageSlideShowTask(
 				+ "/" + encodedFileName;
 		}
 
-		int outputFrameRate = 25;
-
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
 			encodingProfileDetailsRoot, targetFileFormat,
 			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
-			outputFrameRate,
 			encodingPriority);
     }
     catch(runtime_error e)
