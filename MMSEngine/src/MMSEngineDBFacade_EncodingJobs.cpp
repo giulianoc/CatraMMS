@@ -6301,7 +6301,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-	Json::Value encodingProfileDetailsRoot,
+	Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
     int outputFrameRate, EncodingPriority encodingPriority
@@ -6338,6 +6338,9 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 			string field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "targetFileFormat";
+			parametersRoot[field] = targetFileFormat;
 
 			field = "imagesRoot";
 			parametersRoot[field] = imagesRoot;

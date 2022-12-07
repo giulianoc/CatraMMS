@@ -216,8 +216,8 @@ private:
 	void encodingImageFormatValidation(string newFormat);
 	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
-    void encodeContentVideoAudio();
-    bool encodeContent_VideoAudio_through_ffmpeg();
+    void encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
+    bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
     void processEncodedContentVideoAudio();    
 
     bool overlayImageOnVideo();
@@ -232,9 +232,9 @@ private:
     bool generateFrames_through_ffmpeg();
     void processGeneratedFrames(bool killedByUser);
 
-    bool slideShow();
-    bool slideShow_through_ffmpeg();
-    void processSlideShow(bool killedByUser);    
+    // bool slideShow();
+    // bool slideShow_through_ffmpeg();
+    void processSlideShow();    
 
     string faceRecognition();
     void processFaceRecognition(string stagingEncodedAssetPathName);    

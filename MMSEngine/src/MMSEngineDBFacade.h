@@ -1717,7 +1717,7 @@ public:
 	void addEncoding_SlideShowJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		Json::Value encodingProfileDetailsRoot,
+		Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 		Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 		int outputFrameRate, EncodingPriority encodingPriority);

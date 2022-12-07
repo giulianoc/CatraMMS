@@ -6361,7 +6361,7 @@ void FFMPEGEncoder::slideShowThread(
 
     _logger->info(__FILEREF__ + "Received " + api
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
+		// + ", requestBody: " + requestBody already logged
     );
 
     try
@@ -6629,6 +6629,60 @@ void FFMPEGEncoder::slideShowThread(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
+
+		if (externalEncoder)
+		{
+			for (string imagePathName: imagesPathNames)
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", imagePathName: " + imagePathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(imagePathName, exceptionInCaseOfError);
+			}
+
+			for (string audioPathName: audiosPathNames)
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", audioPathName: " + audioPathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(audioPathName, exceptionInCaseOfError);
+			}
+
+			field = "targetFileFormat";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string targetFileFormat = encodingParametersRoot.get(field, "").asString();
+
+			Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
+
+			uploadLocalMediaToMMS(
+				ingestionJobKey,
+				encodingJobKey,
+				ingestedParametersRoot,
+				encodingProfileDetailsRoot,
+				encodingParametersRoot,
+				targetFileFormat,	// sourceFileExtension,
+				encodedStagingAssetPathName,
+				"Add slideShow",	// workflowLabel
+				"Transcoder -> SlideShow"	// ingester
+			);
+		}
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;
@@ -7267,7 +7321,7 @@ void FFMPEGEncoder::pictureInPictureThread(
         string overlay_Height_InPixel = metadataRoot.get("overlay_Height_InPixel", "XXX").asString();
         
         string stagingEncodedAssetPathName = metadataRoot.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        // int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -7525,7 +7579,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		string stagingEncodedAssetPathName =
 			metadataRoot.get("stagingEncodedAssetPathName", "").asString();
 
-        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        // int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -7778,7 +7832,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		string stagingEncodedAssetPathName =
 			metadataRoot.get("stagingEncodedAssetPathName", "").asString();
 
-        int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
+        // int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		encoding->_ffmpeg->cutFrameAccurateWithEncoding(

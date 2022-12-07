@@ -18697,10 +18697,10 @@ void MMSEngineProcessor::manageSlideShowTask(
 			}
         }
 
-		string fileFormat = ".mp4";
+		string targetFileFormat = ".mp4";
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_slideShow"
-			+  fileFormat;
+			+  targetFileFormat;
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
 		string encodedNFSStagingAssetPathName;
@@ -18729,7 +18729,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 		int outputFrameRate = 25;
 
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-			encodingProfileDetailsRoot,
+			encodingProfileDetailsRoot, targetFileFormat,
 			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
 			outputFrameRate,

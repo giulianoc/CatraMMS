@@ -291,7 +291,6 @@ void EncoderVideoAudioProxy::operator()()
 
     string stagingEncodedAssetPathName;
 	bool killedByUser;
-	// bool main = true;
     try
     {
         if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
@@ -300,7 +299,8 @@ void EncoderVideoAudioProxy::operator()()
         }
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
         {
-			encodeContentVideoAudio();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegEncodeURI, maxConsecutiveEncodingStatusFailures);
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
         {
@@ -316,7 +316,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
         {
-			killedByUser = slideShow();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegSlideShowURI, maxConsecutiveEncodingStatusFailures);
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
@@ -1013,8 +1014,10 @@ void EncoderVideoAudioProxy::operator()()
         {
 			processEncodedContentVideoAudio();
 
-			// it means it was just added a new profile, the ingestion job is completed
-			// (isIngestionJobCompleted false means it was created a new file and it has to be still ingested)
+			// isIngestionJobCompleted is true because ingestionJob has to be updated
+			//		because the content was ingested.
+			// It would be false in case LocalAssetIngestionEvent was used
+			//		but this is not the case for EncodeVideoAudio
 			isIngestionJobCompleted = true;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
@@ -1043,8 +1046,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
         {
-            processSlideShow(killedByUser);
-            
+            processSlideShow();
+
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
 			else
@@ -1366,15 +1369,11 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 		);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
         _mmsEngineDBFacade->updateEncodingJob (
             _encodingItem->_encodingJobKey, 
             MMSEngineDBFacade::EncodingError::NoError,
 			isIngestionJobCompleted,
 			_encodingItem->_ingestionJobKey);
-           // main ? _encodingItem->_ingestionJobKey : -1);
     }
     catch(exception e)
     {
@@ -2261,17 +2260,19 @@ void EncoderVideoAudioProxy::processEncodedImage()
 	}
 }
 
-void EncoderVideoAudioProxy::encodeContentVideoAudio()
+void EncoderVideoAudioProxy::encodeContentVideoAudio(
+	string ffmpegURI,
+	int maxConsecutiveEncodingStatusFailures)
 {
 	_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
 		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-		// + ", _encodeData->_deliveryTechnology: "
-		// 	+ MMSEngineDBFacade::toString(_encodingItem->_encodeData->_deliveryTechnology)
+		+ ", ffmpegURI: " + ffmpegURI
 		+ ", _mp4Encoder: " + _mp4Encoder
 	);
 
 	{
-		bool killedByUser = encodeContent_VideoAudio_through_ffmpeg();
+		bool killedByUser = encodeContent_VideoAudio_through_ffmpeg(ffmpegURI,
+			maxConsecutiveEncodingStatusFailures);
 		if (killedByUser)
 		{
 			string errorMessage = __FILEREF__ + "Encoding killed by the User"
@@ -2283,42 +2284,18 @@ void EncoderVideoAudioProxy::encodeContentVideoAudio()
        
 			throw EncodingKilledByUser();
 		}
-    }
+	}
 }
 
-bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
+bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
+	string ffmpegURI,
+	int maxConsecutiveEncodingStatusFailures)
 {
-	string encodersPool;
-	try
-    {
-        string field = "EncodersPool";
-        encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
-    }
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Initialization encoding variables error"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Initialization encoding variables error"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
+	string field = "EncodersPool";
+	string encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
 
 	string ffmpegEncoderURL;
-	string ffmpegURI = _ffmpegEncodeURI;
+	// string ffmpegURI = _ffmpegEncodeURI;
 	try
 	{
 		_currentUsedFFMpegExternalEncoder = false;
@@ -2358,7 +2335,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 Json::Value encodingMedatada;
 
                 encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
-                encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
+                // encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
@@ -2378,7 +2355,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			);
 
             {
-                string field = "error";
+                field = "error";
                 if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                 {
                     string error = encodeContentResponse.get(field, "").asString();
@@ -2449,7 +2426,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
 			_currentUsedFFMpegEncoderKey, "");	// stagingEncodedAssetPathName);
 
-		int maxConsecutiveEncodingStatusFailures = 1;
+		// int maxConsecutiveEncodingStatusFailures = 1;
 		bool killedByUser = waitingEncoding(maxConsecutiveEncodingStatusFailures);
             
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
@@ -2469,35 +2446,9 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
-	catch (curlpp::LogicError & e) 
-	{
-		_logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-			+ ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() : "")
-		);
-
-		throw e;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{
-		_logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-			+ ", exception: " + e.what()
-		);
 
 		throw e;
 	}
@@ -2521,7 +2472,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -2534,7 +2484,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6709,6 +6658,7 @@ void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
 	}
 }
 
+/*
 bool EncoderVideoAudioProxy::slideShow()
 {
 	bool killedByUser;
@@ -6955,8 +6905,9 @@ bool EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
-void EncoderVideoAudioProxy::processSlideShow(bool killedByUser)
+void EncoderVideoAudioProxy::processSlideShow()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
