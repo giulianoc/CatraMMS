@@ -8510,11 +8510,31 @@ void FFMpeg::slideShow(
 {
 	_currentApiName = "slideShow";
 
+	// IN CASE WE HAVE AUDIO
+	//	We will stop the video at the shortest between
+	//		- the duration of the slide show (sum of the duration of the images)
+	//		- shortest audio
+	//
+	//	So, if the duration of the picture is longest than the duration of the shortest audio
+	//			we have to reduce the duration of the pictures (1)
+	//	    if the duration of the shortest audio is longest than the duration of the pictures
+	//			we have to increase the duration of the last pictures (2)
+	int64_t videoDurationInSeconds;
+	if (audiosSourcePhysicalPaths.size() > 0)
+	{
+		if (durationOfEachSlideInSeconds * imagesSourcePhysicalPaths.size() < shortestAudioDurationInSeconds)
+			videoDurationInSeconds = durationOfEachSlideInSeconds * imagesSourcePhysicalPaths.size();
+		else
+			videoDurationInSeconds = shortestAudioDurationInSeconds;
+	}
+	else
+		videoDurationInSeconds = durationOfEachSlideInSeconds * imagesSourcePhysicalPaths.size();
+	
 	setStatus(
 		ingestionJobKey,
-		encodingJobKey
+		encodingJobKey,
+		videoDurationInSeconds * 1000
 		/*
-		videoDurationInMilliSeconds,
 		mmsAssetPathName
 		stagingEncodedAssetPathName
 		*/
@@ -8527,7 +8547,8 @@ void FFMpeg::slideShow(
 		+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
 		+ ", shortestAudioDurationInSeconds: " + to_string(shortestAudioDurationInSeconds)
-		);
+		+ ", videoDurationInSeconds: " + to_string(videoDurationInSeconds)
+	);
 
 	int iReturnedStatus = 0;
 
@@ -8536,6 +8557,118 @@ void FFMpeg::slideShow(
 		+ to_string(ingestionJobKey)
 		+ ".slideshowListImages.txt"
 	;
+
+	{
+		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
+		string lastSourcePhysicalPath;
+		for (int imageIndex = 0; imageIndex < imagesSourcePhysicalPaths.size(); imageIndex++)
+		{
+			string sourcePhysicalPath = imagesSourcePhysicalPaths[imageIndex];
+			double slideDurationInSeconds;
+
+			if (!FileIO::fileExisting(sourcePhysicalPath)        
+				&& !FileIO::directoryExisting(sourcePhysicalPath)
+			)
+			{
+				string errorMessage = string("Source asset path name not existing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (audiosSourcePhysicalPaths.size() > 0)
+			{
+				if (imageIndex + 1 >= imagesSourcePhysicalPaths.size() &&
+					durationOfEachSlideInSeconds * (imageIndex + 1) < shortestAudioDurationInSeconds)
+				{
+					// we are writing the last image and the duration of all the slides
+					// is less than the shortest audio duration (2)
+					slideDurationInSeconds = shortestAudioDurationInSeconds
+						- (durationOfEachSlideInSeconds * imageIndex);
+				}
+				else
+				{
+					// check case (1)
+
+					if (durationOfEachSlideInSeconds * (imageIndex + 1) <= shortestAudioDurationInSeconds)
+						slideDurationInSeconds = durationOfEachSlideInSeconds;
+					else if (durationOfEachSlideInSeconds * (imageIndex + 1) > shortestAudioDurationInSeconds)
+					{
+						// if we are behind shortestAudioDurationInSeconds, we have to add
+						// the remaining secondsand we have to terminate (next 'if' checks if before
+						// we were behind just break)
+						if (durationOfEachSlideInSeconds * imageIndex >= shortestAudioDurationInSeconds)
+							break;
+						else
+							slideDurationInSeconds = (durationOfEachSlideInSeconds * (imageIndex + 1))
+								- shortestAudioDurationInSeconds;
+					}
+				}
+			}
+			else
+				slideDurationInSeconds = durationOfEachSlideInSeconds;
+        
+			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
+			_logger->info(__FILEREF__ + "slideShow"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", line: " + ("file '" + sourcePhysicalPath + "'")
+			);
+			slideshowListFile << "duration " << slideDurationInSeconds << endl;
+			_logger->info(__FILEREF__ + "slideShow"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", line: " + ("duration " + to_string(slideDurationInSeconds))
+			);
+
+			lastSourcePhysicalPath = sourcePhysicalPath;
+		}
+		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
+		_logger->info(__FILEREF__ + "slideShow"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", line: " + ("file '" + lastSourcePhysicalPath + "'")
+			);
+		slideshowListFile.close();
+	}
+
+	string slideshowListAudiosPathName =
+		_ffmpegTempDir + "/"
+		+ to_string(ingestionJobKey)
+		+ ".slideshowListAudios.txt"
+	;
+
+	if (audiosSourcePhysicalPaths.size() > 1)
+	{
+		ofstream slideshowListFile(slideshowListAudiosPathName.c_str(), ofstream::trunc);
+		string lastSourcePhysicalPath;
+		for (string sourcePhysicalPath: audiosSourcePhysicalPaths)
+		{
+			if (!FileIO::fileExisting(sourcePhysicalPath)        
+				&& !FileIO::directoryExisting(sourcePhysicalPath)
+			)
+			{
+				string errorMessage = string("Source asset path name not existing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
+        
+			lastSourcePhysicalPath = sourcePhysicalPath;
+		}
+		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
+		slideshowListFile.close();
+	}
 
 	vector<string> ffmpegEncodingProfileArgumentList;
 	if (encodingProfileDetailsRoot != Json::nullValue)
@@ -8675,128 +8808,6 @@ void FFMpeg::slideShow(
 			;
 			throw e;
 		}
-	}
-
-	// IN CASE WE HAVE AUDIO
-	//	We will stop the video at the shortest between
-	//		- the duration of the slide show (sum of the duration of the images)
-	//		- shortest audio
-	//
-	//	So, if the duration of the picture is longest than the duration of the shortest audio
-	//			we have to reduce the duration of the pictures (1)
-	//	    if the duration of the shortest audio is longest than the duration of the pictures
-	//			we have to increase the duration of the last pictures (2)
-
-	{
-		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
-		string lastSourcePhysicalPath;
-		for (int imageIndex = 0; imageIndex < imagesSourcePhysicalPaths.size(); imageIndex++)
-		{
-			string sourcePhysicalPath = imagesSourcePhysicalPaths[imageIndex];
-			double slideDurationInSeconds;
-
-			if (!FileIO::fileExisting(sourcePhysicalPath)        
-				&& !FileIO::directoryExisting(sourcePhysicalPath)
-			)
-			{
-				string errorMessage = string("Source asset path name not existing")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourcePhysicalPath: " + sourcePhysicalPath
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			if (audiosSourcePhysicalPaths.size() > 0)
-			{
-				if (imageIndex + 1 >= imagesSourcePhysicalPaths.size() &&
-					durationOfEachSlideInSeconds * (imageIndex + 1) < shortestAudioDurationInSeconds)
-				{
-					// we are writing the last image and the duration of all the slides
-					// is less than the shortest audio duration (2)
-					slideDurationInSeconds = shortestAudioDurationInSeconds
-						- (durationOfEachSlideInSeconds * imageIndex);
-				}
-				else
-				{
-					// check case (1)
-
-					if (durationOfEachSlideInSeconds * (imageIndex + 1) <= shortestAudioDurationInSeconds)
-						slideDurationInSeconds = durationOfEachSlideInSeconds;
-					else if (durationOfEachSlideInSeconds * (imageIndex + 1) > shortestAudioDurationInSeconds)
-					{
-						// if we are behind shortestAudioDurationInSeconds, we have to add
-						// the remaining secondsand we have to terminate (next 'if' checks if before
-						// we were behind just break)
-						if (durationOfEachSlideInSeconds * imageIndex >= shortestAudioDurationInSeconds)
-							break;
-						else
-							slideDurationInSeconds = (durationOfEachSlideInSeconds * (imageIndex + 1))
-								- shortestAudioDurationInSeconds;
-					}
-				}
-			}
-			else
-				slideDurationInSeconds = durationOfEachSlideInSeconds;
-        
-			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-			_logger->info(__FILEREF__ + "slideShow"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", line: " + ("file '" + sourcePhysicalPath + "'")
-			);
-			slideshowListFile << "duration " << slideDurationInSeconds << endl;
-			_logger->info(__FILEREF__ + "slideShow"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", line: " + ("duration " + to_string(slideDurationInSeconds))
-			);
-
-			lastSourcePhysicalPath = sourcePhysicalPath;
-		}
-		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
-		_logger->info(__FILEREF__ + "slideShow"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", line: " + ("file '" + lastSourcePhysicalPath + "'")
-			);
-		slideshowListFile.close();
-	}
-
-	string slideshowListAudiosPathName =
-		_ffmpegTempDir + "/"
-		+ to_string(ingestionJobKey)
-		+ ".slideshowListAudios.txt"
-	;
-
-	if (audiosSourcePhysicalPaths.size() > 1)
-	{
-		ofstream slideshowListFile(slideshowListAudiosPathName.c_str(), ofstream::trunc);
-		string lastSourcePhysicalPath;
-		for (string sourcePhysicalPath: audiosSourcePhysicalPaths)
-		{
-			if (!FileIO::fileExisting(sourcePhysicalPath)        
-				&& !FileIO::directoryExisting(sourcePhysicalPath)
-			)
-			{
-				string errorMessage = string("Source asset path name not existing")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourcePhysicalPath: " + sourcePhysicalPath
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-        
-			lastSourcePhysicalPath = sourcePhysicalPath;
-		}
-		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
-		slideshowListFile.close();
 	}
 
 	{
