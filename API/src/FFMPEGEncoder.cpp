@@ -6612,9 +6612,11 @@ void FFMPEGEncoder::slideShowThread(
 			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
 		}
 
+		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
+
 		encoding->_ffmpeg->slideShow(ingestionJobKey, encodingJobKey,
 			durationOfEachSlideInSeconds, videoSyncMethod,
-			encodingParametersRoot,
+			encodingProfileDetailsRoot,
 			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
 			encodedStagingAssetPathName, &(encoding->_childPid));
 
@@ -6664,8 +6666,6 @@ void FFMPEGEncoder::slideShowThread(
 				throw runtime_error(errorMessage);
 			}
 			string targetFileFormat = encodingParametersRoot.get(field, "").asString();
-
-			Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
 
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
