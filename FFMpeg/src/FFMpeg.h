@@ -643,6 +643,8 @@ private:
 
 	bool asBool(Json::Value root, string field, bool defaultValue);
 
+	string toString(Json::Value joValueRoot);
+
     void removeHavingPrefixFileName(string directoryName, string prefixFileName);
 
 	long getFrameByOutputLog(string ffmpegEncodingStatus);

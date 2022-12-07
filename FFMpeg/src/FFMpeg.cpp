@@ -8663,6 +8663,7 @@ void FFMpeg::slideShow(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
+				+ ", encodingProfileDetailsRoot: " + toString(encodingProfileDetailsRoot)
 			;
 			_logger->error(errorMessage);
 
@@ -17815,6 +17816,13 @@ bool FFMpeg::asBool(Json::Value root, string field, bool defaultValue)
 		else
 			return root.get(field, defaultValue).asBool();
 	}
+}
+
+string FFMpeg::toString(Json::Value joValueRoot)
+{
+	Json::StreamWriterBuilder wbuilder;
+
+	return Json::writeString(wbuilder, joValueRoot);
 }
 
 void FFMpeg::setStatus(
