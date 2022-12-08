@@ -12444,7 +12444,11 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 						else
 							listenTimeoutInMicroSeconds = pushListenTimeout;
 						listenTimeoutInMicroSeconds *= 1000000;
-						url += "?timeout=" + to_string(listenTimeoutInMicroSeconds);
+
+						if (url.find("?") == string::npos)
+							url += ("?timeout=" + to_string(listenTimeoutInMicroSeconds));
+						else
+							url += ("&timeout=" + to_string(listenTimeoutInMicroSeconds));
 					}
 
 					// In case of udp:
@@ -12468,8 +12472,25 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
 			}
-			else if (streamSourceType == "IP_PULL" || streamSourceType == "TV")
+			else if (streamSourceType == "IP_PULL")
 			{
+				ffmpegInputArgumentList.push_back("-i");
+				ffmpegInputArgumentList.push_back(url);
+			}
+			else if (streamSourceType == "TV")
+			{
+				if (url.find("udp://") != string::npos)
+				{
+					// In case of udp:
+					// overrun_nonfatal=1 prevents ffmpeg from exiting,
+					//		it can recover in most circumstances.
+					// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
+					if (url.find("?") == string::npos)
+						url += "?overrun_nonfatal=1&fifo_size=50000000";
+					else
+						url += "&overrun_nonfatal=1&fifo_size=50000000";
+				}
+
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
 			}
