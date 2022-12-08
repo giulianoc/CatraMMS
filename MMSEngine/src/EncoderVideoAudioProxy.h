@@ -220,16 +220,16 @@ private:
     bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
     void processEncodedContentVideoAudio();    
 
-    bool overlayImageOnVideo();
-    bool overlayImageOnVideo_through_ffmpeg();
+    // bool overlayImageOnVideo();
+    // bool overlayImageOnVideo_through_ffmpeg();
     void processOverlayedImageOnVideo(bool killedByUser);    
 
-    bool overlayTextOnVideo();
-    bool overlayTextOnVideo_through_ffmpeg();
+    // bool overlayTextOnVideo();
+    // bool overlayTextOnVideo_through_ffmpeg();
     void processOverlayedTextOnVideo(bool killedByUser);    
     
-    bool generateFrames();
-    bool generateFrames_through_ffmpeg();
+    // bool generateFrames();
+    // bool generateFrames_through_ffmpeg();
     void processGeneratedFrames(bool killedByUser);
 
     // bool slideShow();
@@ -289,13 +289,13 @@ private:
 	bool liveGrid_through_ffmpeg();
     void processLiveGrid(bool killedByUser);
 
-    bool videoSpeed();
-    bool videoSpeed_through_ffmpeg();
+    // bool videoSpeed();
+    // bool videoSpeed_through_ffmpeg();
     void processVideoSpeed(bool killedByUser);    
 
-    pair<string, bool> pictureInPicture();
-    pair<string, bool> pictureInPicture_through_ffmpeg();
-    void processPictureInPicture(string stagingEncodedAssetPathName, bool killedByUser);    
+    // pair<string, bool> pictureInPicture();
+    // pair<string, bool> pictureInPicture_through_ffmpeg();
+    void processPictureInPicture(bool killedByUser);    
 
     pair<string, bool> introOutroOverlay();
     pair<string, bool> introOutroOverlay_through_ffmpeg();

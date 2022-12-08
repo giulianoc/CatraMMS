@@ -623,24 +623,6 @@ public:
         Json::Value                             _encodingParametersRoot;
 
         shared_ptr<Workspace>                   _workspace;
-
-        struct PictureInPictureData {
-            string                                  _mainVideoFileName;
-            string                                  _mainVideoRelativePath;
-            int64_t                                 _mainVideoDurationInMilliSeconds;
-
-            string                                  _overlayVideoFileName;
-            string                                  _overlayVideoRelativePath;
-            int64_t                                 _overlayVideoDurationInMilliSeconds;
-        };
-
-		struct LiveGridData {
-			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
-            Json::Value								_encodingProfileDetailsRoot;
-		};
-
-		shared_ptr<PictureInPictureData>			_pictureInPictureData;
-		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
     enum class WorkspaceType {
@@ -1824,12 +1806,18 @@ public:
 
 	void addEncoding_PictureInPictureJob (
 		shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-		int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,
-		int64_t overlayMediaItemKey, int64_t overlayPhysicalPathKey,
-        string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
-		string overlay_Width_InPixel, string overlay_Height_InPixel,
-		bool soundOfMain, EncodingPriority encodingPriority);
+		int64_t ingestionJobKey,
+		int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey, string mainSourceAssetPathName,                       
+		int64_t mainSourceDurationInMilliSeconds, string mainSourceFileExtension,                                                                          
+		string mainSourcePhysicalDeliveryURL, string mainSourceTranscoderStagingAssetPathName,                          
+		int64_t overlaySourceMediaItemKey, int64_t overlaySourcePhysicalPathKey, string overlaySourceAssetPathName,              
+		int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
+		string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName,                    
+		bool soundOfMain,
+		Json::Value encodingProfileDetailsRoot,
+		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
+		EncodingPriority encodingPriority);
 
 	void addEncoding_IntroOutroOverlayJob (
 		shared_ptr<Workspace> workspace,

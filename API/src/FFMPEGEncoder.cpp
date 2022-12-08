@@ -6889,11 +6889,10 @@ void FFMPEGEncoder::videoSpeedThread(
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
+		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"sourceDurationInMilliSeconds", -1);
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string videoSpeedType;
 		if (!JSONUtils::isMetadataPresent(ingestedParametersRoot, "speedType"))
@@ -7303,60 +7302,316 @@ void FFMPEGEncoder::pictureInPictureThread(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, encodingJobKey, requestBody);
 
-        string mmsMainVideoAssetPathName = metadataRoot.get("mmsMainVideoAssetPathName", "XXX").asString();
-        int64_t mainVideoDurationInMilliSeconds = JSONUtils::asInt64(metadataRoot, "mainVideoDurationInMilliSeconds", -1);
+		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
+		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-        string mmsOverlayVideoAssetPathName = metadataRoot.get("mmsOverlayVideoAssetPathName", "XXX").asString();
-        int64_t overlayVideoDurationInMilliSeconds = JSONUtils::asInt64(metadataRoot, "overlayVideoDurationInMilliSeconds", -1);
+		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
-        bool soundOfMain = JSONUtils::asBool(metadataRoot, "soundOfMain", false);
+		string mainSourceFileExtension;
+		{
+			string field = "mainSourceFileExtension";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
 
-        string overlayPosition_X_InPixel = metadataRoot.get("overlayPosition_X_InPixel", "XXX").asString();
-        string overlayPosition_Y_InPixel = metadataRoot.get("overlayPosition_Y_InPixel", "XXX").asString();
-        string overlay_Width_InPixel = metadataRoot.get("overlay_Width_InPixel", "XXX").asString();
-        string overlay_Height_InPixel = metadataRoot.get("overlay_Height_InPixel", "XXX").asString();
-        
-        string stagingEncodedAssetPathName = metadataRoot.get("stagingEncodedAssetPathName", "XXX").asString();
-        // int64_t encodingJobKey = JSONUtils::asInt64(metadataRoot, "encodingJobKey", -1);
-        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+				throw runtime_error(errorMessage);
+			}
+			mainSourceFileExtension = encodingParametersRoot.get(field, "").asString();
+		}
 
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        encoding->_ffmpeg->pictureInPicture(
-                mmsMainVideoAssetPathName,
-                mainVideoDurationInMilliSeconds,
+		string overlaySourceFileExtension;
+		{
+			string field = "overlaySourceFileExtension";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
 
-                mmsOverlayVideoAssetPathName,
-                overlayVideoDurationInMilliSeconds,
+				throw runtime_error(errorMessage);
+			}
+			overlaySourceFileExtension = encodingParametersRoot.get(field, "").asString();
+		}
 
-                soundOfMain,
+		string mainSourceAssetPathName;
+		string overlaySourceAssetPathName;
+		string encodedStagingAssetPathName;
 
-                overlayPosition_X_InPixel,
-                overlayPosition_Y_InPixel,
-				overlay_Width_InPixel,
-				overlay_Height_InPixel,
+		if (externalEncoder)
+		{
+			{
+				string field = "mainSourceTranscoderStagingAssetPathName";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
 
-                // encodedFileName,
-                stagingEncodedAssetPathName,
-                encodingJobKey,
-                ingestionJobKey,
-				&(encoding->_childPid));
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+					throw runtime_error(errorMessage);
+				}
+				mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
 
-//        string responseBody = string("{ ")
-//                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-//                + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-//                + "}";
+				{
+					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						string directoryPathName = mainSourceAssetPathName.substr(
+							0, endOfDirectoryIndex);
 
-        // sendSuccess(request, 200, responseBody);
-        
+						bool noErrorIfExists = true;
+						bool recursive = true;
+						_logger->info(__FILEREF__ + "Creating directory"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", directoryPathName: " + directoryPathName
+						);
+						FileIO::createDirectory(directoryPathName,
+							S_IRUSR | S_IWUSR | S_IXUSR |
+							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					}
+				}
+
+				field = "mainSourcePhysicalDeliveryURL";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string mainSourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+
+				mainSourceAssetPathName = downloadMediaFromMMS(
+					ingestionJobKey,
+					encodingJobKey,
+					encoding->_ffmpeg,
+					mainSourceFileExtension,
+					mainSourcePhysicalDeliveryURL,
+					mainSourceAssetPathName);
+			}
+
+			{
+				string field = "overlaySourceTranscoderStagingAssetPathName";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				overlaySourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+				{
+					size_t endOfDirectoryIndex = overlaySourceAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						string directoryPathName = overlaySourceAssetPathName.substr(
+							0, endOfDirectoryIndex);
+
+						bool noErrorIfExists = true;
+						bool recursive = true;
+						_logger->info(__FILEREF__ + "Creating directory"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", directoryPathName: " + directoryPathName
+						);
+						FileIO::createDirectory(directoryPathName,
+							S_IRUSR | S_IWUSR | S_IXUSR |
+							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					}
+				}
+
+				field = "overlaySourcePhysicalDeliveryURL";
+				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string overlaySourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+
+				overlaySourceAssetPathName = downloadMediaFromMMS(
+					ingestionJobKey,
+					encodingJobKey,
+					encoding->_ffmpeg,
+					overlaySourceFileExtension,
+					overlaySourcePhysicalDeliveryURL,
+					overlaySourceAssetPathName);
+			}
+
+			string field = "encodedTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			{
+				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					string directoryPathName = encodedStagingAssetPathName.substr(
+						0, endOfDirectoryIndex);
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", directoryPathName: " + directoryPathName
+					);
+					FileIO::createDirectory(directoryPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+		}
+		else
+		{
+			string field = "mainSourceAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "overlaySourceAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			overlaySourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+
+			field = "encodedNFSStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+		}
+
+		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
+			"mainSourceDurationInMilliSeconds", 0);
+		int64_t overlaySourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
+			"overlaySourceDurationInMilliSeconds", 0);
+		bool soundOfMain = JSONUtils::asBool(encodingParametersRoot, "soundOfMain", false);
+        string overlayPosition_X_InPixel = ingestedParametersRoot.get(
+			"overlayPosition_X_InPixel", "0").asString();
+        string overlayPosition_Y_InPixel = ingestedParametersRoot.get(
+			"overlayPosition_Y_InPixel", "0").asString();
+        string overlay_Width_InPixel = ingestedParametersRoot.get(
+			"overlay_Width_InPixel", "100").asString();
+        string overlay_Height_InPixel = ingestedParametersRoot.get(
+			"overlay_Height_InPixel", "100").asString();
+
+		encoding->_ffmpeg->pictureInPicture(
+			mainSourceAssetPathName,
+			mainSourceDurationInMilliSeconds,
+
+			overlaySourceAssetPathName,
+			overlaySourceDurationInMilliSeconds,
+
+			soundOfMain,
+
+			overlayPosition_X_InPixel,
+			overlayPosition_Y_InPixel,
+			overlay_Width_InPixel,
+			overlay_Height_InPixel,
+
+			encodedStagingAssetPathName,
+			encodingJobKey,
+			ingestionJobKey,
+			&(encoding->_childPid));
+
         encoding->_running = false;
         encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "PictureInPicture encoding content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
+
+		if (externalEncoder)
+		{
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", mainSourceAssetPathName: " + mainSourceAssetPathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(mainSourceAssetPathName, exceptionInCaseOfError);
+			}
+
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", overlaySourceAssetPathName: " + overlaySourceAssetPathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(overlaySourceAssetPathName, exceptionInCaseOfError);
+			}
+
+			uploadLocalMediaToMMS(
+				ingestionJobKey,
+				encodingJobKey,
+				ingestedParametersRoot,
+				encodingProfileDetailsRoot,
+				encodingParametersRoot,
+				mainSourceFileExtension,
+				encodedStagingAssetPathName,
+				"Add pictureInPicture",	// workflowLabel
+				"Transcoder -> PictureInPicture"	// ingester
+			);
+		}
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;

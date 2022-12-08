@@ -465,311 +465,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				_logger->info(__FILEREF__ + "getEncodingJobs (after ingestedParameters)"
+				_logger->info(__FILEREF__ + "getEncodingJobs"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", encodingType: " + encodingType
 				);
 
-                if (encodingItem->_encodingType == EncodingType::PictureInPicture)
-                {
-                    encodingItem->_pictureInPictureData = make_shared<EncodingItem::PictureInPictureData>();
-                    
-                    int64_t mainVideoPhysicalPathKey;
-                    int64_t overlayVideoPhysicalPathKey;    
-
-                    {
-                        string field = "mainVideoPhysicalPathKey";
-                        mainVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
-
-                        field = "overlayVideoPhysicalPathKey";
-                        overlayVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
-                    }
-
-					{
-						int64_t mainVideoMediaItemKey;
-						{
-							lastSQLCommand = 
-								"select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
-								"from MMS_PhysicalPath where physicalPathKey = ?";
-							shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
-									conn->_sqlConnection->prepareStatement(lastSQLCommand));
-							int queryParameterIndex = 1;
-							preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
-									mainVideoPhysicalPathKey);
-
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							shared_ptr<sql::ResultSet> physicalPathResultSet (
-									preparedStatementPhysicalPath->executeQuery());
-							_logger->info(__FILEREF__ + "@SQL statistics@"
-								+ ", lastSQLCommand: " + lastSQLCommand
-								+ ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
-								+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-									chrono::system_clock::now() - startSql).count()) + "@"
-							);
-							if (physicalPathResultSet->next())
-							{
-								// encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber
-								// 	= physicalPathResultSet->getInt("partitionNumber");
-								encodingItem->_pictureInPictureData->_mainVideoFileName
-									= physicalPathResultSet->getString("fileName");
-								encodingItem->_pictureInPictureData->_mainVideoRelativePath
-									= physicalPathResultSet->getString("relativePath");
-								if (physicalPathResultSet->isNull("durationInMilliSeconds"))
-									encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds = -1;
-								else
-									encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds =
-										physicalPathResultSet->getInt64("durationInMilliSeconds");
-                            
-								mainVideoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
-							}
-							else
-							{
-								string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-								;
-								_logger->error(errorMessage);
-
-								// in case an encoding job row generate an error, we have to make it to Failed
-								// otherwise we will indefinitely get this error
-								{
-									_logger->info(__FILEREF__ + "EncodingJob update"
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-										);
-									lastSQLCommand = 
-										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-									int queryParameterIndex = 1;
-									preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-									preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-									chrono::system_clock::time_point startSql = chrono::system_clock::now();
-									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-									_logger->info(__FILEREF__ + "@SQL statistics@"
-										+ ", lastSQLCommand: " + lastSQLCommand
-										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", rowsUpdated: " + to_string(rowsUpdated)
-										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-											chrono::system_clock::now() - startSql).count()) + "@"
-									);
-								}
-
-								continue;
-								// throw runtime_error(errorMessage);
-							}
-						}
-					}
-
-					{
-						int64_t overlayVideoMediaItemKey;
-						{
-							lastSQLCommand = 
-								"select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
-								"from MMS_PhysicalPath where physicalPathKey = ?";
-							shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
-									conn->_sqlConnection->prepareStatement(lastSQLCommand));
-							int queryParameterIndex = 1;
-							preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
-									overlayVideoPhysicalPathKey);
-
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							shared_ptr<sql::ResultSet> physicalPathResultSet (
-									preparedStatementPhysicalPath->executeQuery());
-							_logger->info(__FILEREF__ + "@SQL statistics@"
-								+ ", lastSQLCommand: " + lastSQLCommand
-								+ ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
-								+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
-								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-									chrono::system_clock::now() - startSql).count()) + "@"
-							);
-							if (physicalPathResultSet->next())
-							{
-								// encodingItem->_pictureInPictureData->_mmsOverlayVideoPartitionNumber
-								// 	= physicalPathResultSet->getInt("partitionNumber");
-								encodingItem->_pictureInPictureData->_overlayVideoFileName
-									= physicalPathResultSet->getString("fileName");
-								encodingItem->_pictureInPictureData->_overlayVideoRelativePath
-									= physicalPathResultSet->getString("relativePath");
-								if (physicalPathResultSet->isNull("durationInMilliSeconds"))
-									encodingItem->_pictureInPictureData->_overlayVideoDurationInMilliSeconds = -1;
-								else
-									encodingItem->_pictureInPictureData->_overlayVideoDurationInMilliSeconds =
-										physicalPathResultSet->getInt64("durationInMilliSeconds");
-                            
-								overlayVideoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
-							}
-							else
-							{
-								string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-								;
-								_logger->error(errorMessage);
-
-								// in case an encoding job row generate an error, we have to make it to Failed
-								// otherwise we will indefinitely get this error
-								{
-									_logger->info(__FILEREF__ + "EncodingJob update"
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-										);
-									lastSQLCommand = 
-										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-									int queryParameterIndex = 1;
-									preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-									preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-									chrono::system_clock::time_point startSql = chrono::system_clock::now();
-									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-									_logger->info(__FILEREF__ + "@SQL statistics@"
-										+ ", lastSQLCommand: " + lastSQLCommand
-										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", rowsUpdated: " + to_string(rowsUpdated)
-										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-											chrono::system_clock::now() - startSql).count()) + "@"
-									);
-								}
-
-								continue;
-								// throw runtime_error(errorMessage);
-							}
-						}
-					}
-                }
-				else if (encodingItem->_encodingType == EncodingType::LiveGrid)
-				{
-					encodingItem->_liveGridData = make_shared<EncodingItem::LiveGridData>();
-
-					string field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot,
-						field, 0);
-
-					{
-						lastSQLCommand = 
-							"select deliveryTechnology, jsonProfile from MMS_EncodingProfile "
-							"where encodingProfileKey = ?";
-						shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
-							conn->_sqlConnection->prepareStatement(lastSQLCommand));
-						int queryParameterIndex = 1;
-						preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
-
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						shared_ptr<sql::ResultSet> encodingProfilesResultSet (
-							preparedStatementEncodingProfile->executeQuery());
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", lastSQLCommand: " + lastSQLCommand
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-						if (encodingProfilesResultSet->next())
-						{
-							encodingItem->_liveGridData->_deliveryTechnology =
-								toDeliveryTechnology(encodingProfilesResultSet->getString("deliveryTechnology"));
-							string jsonEncodingProfile =
-								encodingProfilesResultSet->getString("jsonProfile");
-
-							try
-							{
-								encodingItem->_liveGridData->_encodingProfileDetailsRoot =
-									JSONUtils::toJson(-1, encodingItem->_encodingJobKey, jsonEncodingProfile);
-							}
-							catch(runtime_error e)
-							{
-								_logger->error(e.what());
-
-								// in case an encoding job row generate an error, we have to make it to Failed
-								// otherwise we will indefinitely get this error
-								{
-									_logger->info(__FILEREF__ + "EncodingJob update"
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-									lastSQLCommand = 
-										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-											conn->_sqlConnection->prepareStatement(lastSQLCommand));
-									int queryParameterIndex = 1;
-									preparedStatementUpdate->setString(queryParameterIndex++,
-											MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-									preparedStatementUpdate->setInt64(queryParameterIndex++,
-											encodingItem->_encodingJobKey);
-
-									chrono::system_clock::time_point startSql = chrono::system_clock::now();
-									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-									_logger->info(__FILEREF__ + "@SQL statistics@"
-										+ ", lastSQLCommand: " + lastSQLCommand
-										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", rowsUpdated: " + to_string(rowsUpdated)
-										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-											chrono::system_clock::now() - startSql).count()) + "@"
-									);
-								}
-
-								continue;
-								// throw runtime_error(errorMessage);
-							}
-						}
-						else
-						{
-							string errorMessage = __FILEREF__ + "select failed"
-								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-								+ ", lastSQLCommand: " + lastSQLCommand
-							;
-							_logger->error(errorMessage);
-
-							// in case an encoding job row generate an error, we have to make it to Failed
-							// otherwise we will indefinitely get this error
-							{
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-								);
-								lastSQLCommand = 
-									"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-									conn->_sqlConnection->prepareStatement(lastSQLCommand));
-								int queryParameterIndex = 1;
-								preparedStatementUpdate->setString(queryParameterIndex++,
-									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-								preparedStatementUpdate->setInt64(queryParameterIndex++,
-									encodingItem->_encodingJobKey);
-
-								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "@SQL statistics@"
-									+ ", lastSQLCommand: " + lastSQLCommand
-									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", rowsUpdated: " + to_string(rowsUpdated)
-									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-										chrono::system_clock::now() - startSql).count()) + "@"
-								);
-							}
-
-							continue;
-							// throw runtime_error(errorMessage);
-						}
-					}
-                }
-				_logger->info(__FILEREF__ + "getEncodingJobs (after encodingType processing)"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", encodingType: " + encodingType
-				);
-                
                 encodingItems.push_back(encodingItem);
 				othersToBeEncoded++;
 
@@ -9279,11 +8979,17 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,
-	int64_t overlayMediaItemKey, int64_t overlayPhysicalPathKey,
-	string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
-	string overlay_Width_InPixel, string overlay_Height_InPixel,
-	bool soundOfMain, EncodingPriority encodingPriority)
+	int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey, string mainSourceAssetPathName,                       
+	int64_t mainSourceDurationInMilliSeconds, string mainSourceFileExtension,                                                                          
+	string mainSourcePhysicalDeliveryURL, string mainSourceTranscoderStagingAssetPathName,                          
+	int64_t overlaySourceMediaItemKey, int64_t overlaySourcePhysicalPathKey, string overlaySourceAssetPathName,              
+	int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
+	string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName,                    
+	bool soundOfMain,
+	Json::Value encodingProfileDetailsRoot,
+	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
+	EncodingPriority encodingPriority)
 {
 
     string      lastSQLCommand;
@@ -9307,89 +9013,81 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
-        
-        int64_t localMainPhysicalPathKey = mainPhysicalPathKey;
-        if (mainPhysicalPathKey == -1)
-        {
-            lastSQLCommand =
-                "select physicalPathKey from MMS_PhysicalPath "
-                "where mediaItemKey = ? and encodingProfileKey is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mainMediaItemKey);
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", mainMediaItemKey: " + to_string(mainMediaItemKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                localMainPhysicalPathKey = resultSet->getInt64("physicalPathKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", mainMediaItemKey: " + to_string(mainMediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        
-        int64_t localOverlayPhysicalPathKey = overlayPhysicalPathKey;
-        if (overlayPhysicalPathKey == -1)
-        {
-            lastSQLCommand =
-                "select physicalPathKey from MMS_PhysicalPath "
-                "where mediaItemKey = ? and encodingProfileKey is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, overlayMediaItemKey);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", overlayMediaItemKey: " + to_string(overlayMediaItemKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (resultSet->next())
-            {
-                localOverlayPhysicalPathKey = resultSet->getInt64("physicalPathKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", overlayMediaItemKey: " + to_string(overlayMediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        
         EncodingType encodingType = EncodingType::PictureInPicture;
 
-        string parameters = string()
-                + "{ "
-                + "\"mainVideoPhysicalPathKey\": " + to_string(localMainPhysicalPathKey)
-                + ", \"overlayVideoPhysicalPathKey\": " + to_string(localOverlayPhysicalPathKey)
-                + ", \"overlayPosition_X_InPixel\": \"" + overlayPosition_X_InPixel + "\""
-                + ", \"overlayPosition_Y_InPixel\": \"" + overlayPosition_Y_InPixel + "\""
-                + ", \"overlay_Width_InPixel\": \"" + overlay_Width_InPixel + "\""
-                + ", \"overlay_Height_InPixel\": \"" + overlay_Height_InPixel + "\""
-                + ", \"soundOfMain\": " + to_string(soundOfMain)
-                + "} ";
+		string parameters;
+		{
+			Json::Value parametersRoot;
+
+			string field;
+
+			field = "mainSourceMediaItemKey";
+			parametersRoot[field] = mainSourceMediaItemKey;
+
+			field = "mainSourcePhysicalPathKey";
+			parametersRoot[field] = mainSourcePhysicalPathKey;
+
+			field = "mainSourceAssetPathName";
+			parametersRoot[field] = mainSourceAssetPathName;
+
+			field = "mainSourceDurationInMilliSeconds";
+			parametersRoot[field] = mainSourceDurationInMilliSeconds;
+
+			field = "mainSourceFileExtension";
+			parametersRoot[field] = mainSourceFileExtension;
+
+			field = "mainSourcePhysicalDeliveryURL";
+			parametersRoot[field] = mainSourcePhysicalDeliveryURL;
+
+			field = "mainSourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = mainSourceTranscoderStagingAssetPathName;
+
+			field = "overlaySourceMediaItemKey";
+			parametersRoot[field] = overlaySourceMediaItemKey;
+
+			field = "overlaySourcePhysicalPathKey";
+			parametersRoot[field] = overlaySourcePhysicalPathKey;
+
+			field = "overlaySourceAssetPathName";
+			parametersRoot[field] = overlaySourceAssetPathName;
+
+			field = "overlaySourceDurationInMilliSeconds";
+			parametersRoot[field] = overlaySourceDurationInMilliSeconds;
+
+			field = "overlaySourceFileExtension";
+			parametersRoot[field] = overlaySourceFileExtension;
+
+			field = "overlaySourcePhysicalDeliveryURL";
+			parametersRoot[field] = overlaySourcePhysicalDeliveryURL;
+
+			field = "overlaySourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = overlaySourceTranscoderStagingAssetPathName;
+
+			field = "soundOfMain";
+			parametersRoot[field] = soundOfMain;
+
+			field = "encodingProfileDetails";
+			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "encodedTranscoderStagingAssetPathName";
+			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
+
+			field = "encodedNFSStagingAssetPathName";
+			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
+
+			parameters = JSONUtils::toString(parametersRoot);
+		}
+
         {
             int savedEncodingPriority = static_cast<int>(encodingPriority);
             if (savedEncodingPriority > workspace->_maxEncodingPriority)

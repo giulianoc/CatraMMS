@@ -5752,7 +5752,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 //          will call manageIngestionJobStatusUpdate
                 //  2. this ingestion will generate multiple files (i.e. Periodical-Frames task)
                 IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
-            
+
                 string errorMessage;
                 string processorMMS;
                 _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5788,7 +5788,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
     {
         string exceptionMessage(se.what());
         
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "SQL (deadlock) exception"
             + ", lastSQLCommand: " + lastSQLCommand
 			+ ", exceptionMessage: " + exceptionMessage
 			+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -6887,20 +6887,6 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
-		/*
-        int64_t durationInMilliSeconds,
-        long bitRate,
-        string videoCodecName,
-        string videoProfile,
-        int videoWidth,
-        int videoHeight,
-        string videoAvgFrameRate,
-        long videoBitRate,
-        string audioCodecName,
-        long audioSampleRate,
-        int audioChannels,
-        long audioBitRate,
-		*/
 
         // image
         int imageWidth,

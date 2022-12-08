@@ -2039,187 +2039,117 @@ void MMSEngineDBFacade::updateIngestionJob (
         string processorMMS
 )
 {
-	bool updateToBeTriedAgain = true;
-	int retriesNumber = 0;
-	int maxRetriesNumber = 3;
-	int secondsBetweenRetries = 5;
-	while(updateToBeTriedAgain && retriesNumber < maxRetriesNumber)
+	string      lastSQLCommand;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
+
+	try
 	{
-		retriesNumber++;
+		/*
+		int milliSecondsToSleepWaitingLock = 500;
 
-		string      lastSQLCommand;
+		PersistenceLock persistenceLock(this,
+			MMSEngineDBFacade::LockType::Ingestion,
+			_maxSecondsToWaitUpdateIngestionJobLock,
+			processorMMS, "UpdateIngestionJob",
+			milliSecondsToSleepWaitingLock, _logger);
+		*/
 
-		shared_ptr<MySQLConnection> conn = nullptr;
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
 
-		try
+		updateIngestionJob (conn, ingestionJobKey, newIngestionStatus,
+			errorMessage, processorMMS);
+
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		_connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch(sql::SQLException se)
+	{
+		string exceptionMessage(se.what());
+
+		_logger->error(__FILEREF__ + "SQL exception"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", exceptionMessage: " + exceptionMessage
+			+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+		);
+
+		if (conn != nullptr)
 		{
-			/*
-			int milliSecondsToSleepWaitingLock = 500;
-
-			PersistenceLock persistenceLock(this,
-				MMSEngineDBFacade::LockType::Ingestion,
-				_maxSecondsToWaitUpdateIngestionJobLock,
-				processorMMS, "UpdateIngestionJob",
-				milliSecondsToSleepWaitingLock, _logger);
-			*/
-
-			conn = _connectionPool->borrow();	
-			_logger->debug(__FILEREF__ + "DB connection borrow"
-				+ ", getConnectionId: " + to_string(conn->getConnectionId())
-			);
-
-			updateIngestionJob (conn, ingestionJobKey, newIngestionStatus,
-				errorMessage, processorMMS);
-
-			updateToBeTriedAgain = false;
-
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
 			_connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-		catch(sql::SQLException se)
-		{
-			string exceptionMessage(se.what());
 
-			if (exceptionMessage.find("Deadlock") != string::npos
-				&& retriesNumber < maxRetriesNumber)
-			{
-				_logger->warn(__FILEREF__ + "SQL exception"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", exceptionMessage: " + exceptionMessage
-					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-				);
-
-				if (conn != nullptr)
-				{
-					_logger->debug(__FILEREF__ + "DB connection unborrow"
-						+ ", getConnectionId: " + to_string(conn->getConnectionId())
-					);
-					_connectionPool->unborrow(conn);
-					conn = nullptr;
-				}
-
-				_logger->info(__FILEREF__ + "updateIngestionJob failed, waiting before to try again"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", retriesNumber: " + to_string(retriesNumber)
-					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
-					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
-				);
-				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
-			}
-			else
-			{
-				_logger->error(__FILEREF__ + "SQL exception"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", exceptionMessage: " + exceptionMessage
-					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-				);
-
-				if (conn != nullptr)
-				{
-					_logger->debug(__FILEREF__ + "DB connection unborrow"
-						+ ", getConnectionId: " + to_string(conn->getConnectionId())
-					);
-					_connectionPool->unborrow(conn);
-					conn = nullptr;
-				}
-
-				throw se;
-			}
-		}
-		catch(AlreadyLocked e)
-		{
-			if (retriesNumber < maxRetriesNumber)
-			{
-				_logger->warn(__FILEREF__ + "SQL exception"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", e.what(): " + e.what()
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-				);
-
-				if (conn != nullptr)
-				{
-					_logger->debug(__FILEREF__ + "DB connection unborrow"
-						+ ", getConnectionId: " + to_string(conn->getConnectionId())
-					);
-					_connectionPool->unborrow(conn);
-					conn = nullptr;
-				}
-
-				_logger->info(__FILEREF__ + "updateIngestionJob failed, waiting before to try again"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", retriesNumber: " + to_string(retriesNumber)
-					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
-					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
-				);
-				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
-			}
-			else
-			{
-				_logger->error(__FILEREF__ + "SQL exception"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", e.what(): " + e.what()
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-				);
-
-				if (conn != nullptr)
-				{
-					_logger->debug(__FILEREF__ + "DB connection unborrow"
-						+ ", getConnectionId: " + to_string(conn->getConnectionId())
-					);
-					_connectionPool->unborrow(conn);
-					conn = nullptr;
-				}
-
-				throw e;
-			}
-		}
-		catch(runtime_error e)
-		{        
-			_logger->error(__FILEREF__ + "SQL exception"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", e.what(): " + e.what()
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-			);
-
-			if (conn != nullptr)
-			{
-				_logger->debug(__FILEREF__ + "DB connection unborrow"
-					+ ", getConnectionId: " + to_string(conn->getConnectionId())
-				);
-				_connectionPool->unborrow(conn);
-				conn = nullptr;
-			}
-
-			throw e;
-		}    
-		catch(exception e)
-		{        
-			_logger->error(__FILEREF__ + "SQL exception"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-			);
-
-			if (conn != nullptr)
-			{
-				_logger->debug(__FILEREF__ + "DB connection unborrow"
-					+ ", getConnectionId: " + to_string(conn->getConnectionId())
-				);
-				_connectionPool->unborrow(conn);
-				conn = nullptr;
-			}
-
-			throw e;
-		}    
+		throw se;
 	}
+	catch(AlreadyLocked e)
+	{
+		_logger->error(__FILEREF__ + "SQL exception"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", e.what(): " + e.what()
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+		);
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch(runtime_error e)
+	{        
+		_logger->error(__FILEREF__ + "SQL exception"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", e.what(): " + e.what()
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+		);
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}    
+	catch(exception e)
+	{        
+		_logger->error(__FILEREF__ + "SQL exception"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+		);
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}    
 }
 
 void MMSEngineDBFacade::updateIngestionJob (
@@ -2230,180 +2160,216 @@ void MMSEngineDBFacade::updateIngestionJob (
         string processorMMS
 )
 {
-    string      lastSQLCommand;
+	string errorMessageForSQL;
+	if (errorMessage.length() >= 1024)
+		errorMessageForSQL = errorMessage.substr(0, 1024);
+	else
+		errorMessageForSQL = errorMessage;
+	{
+		string strToBeReplaced = "FFMpeg";
+		string strToReplace = "XXX";
+		if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
+			errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced),
+				strToBeReplaced.length(), strToReplace);
+	}
 
-    try
-    {
-        string errorMessageForSQL;
-        if (errorMessage.length() >= 1024)
-            errorMessageForSQL = errorMessage.substr(0, 1024);
-        else
-            errorMessageForSQL = errorMessage;
+	// 2022-12-08: in case of deadlock we will retry.
+	//	Penso che il Deadlock sia causato dal fatto che, insieme a questo update dell'IngestionJob,
+	//	abbiamo anche getIngestionsToBeManaged in esecuzione con un'altra MySQLConnection.
+	//	Questo retry risolve il problema perchè, lo sleep qui permette a getIngestionsToBeManaged di terminare,
+	//	e quindi, non avremmo piu il Deadlock.
+	//	Inizialmente il retry era fatto sul metodo updateIngestionJob, come questo ma senza MySQLConnection,
+	//	poi è stato spostato qui perchè tanti scenari chiamano direttamente questo metodo con MySQLConnection
+	//	e serviva anche qui il retry.
+	bool updateToBeTriedAgain = true;
+	int retriesNumber = 0;
+	int maxRetriesNumber = 3;
+	int secondsBetweenRetries = 5;
+	while(updateToBeTriedAgain && retriesNumber < maxRetriesNumber)
+	{
+		retriesNumber++;
+
+		string      lastSQLCommand;
+
+		try
 		{
-			string strToBeReplaced = "FFMpeg";
-			string strToReplace = "XXX";
-			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
-				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced),
-					strToBeReplaced.length(), strToReplace);
-		}
-
-        if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
-        {
-			if (processorMMS != "noToBeUpdated")
-				lastSQLCommand = 
-					string("update MMS_IngestionJob set status = ?, ")
-					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
-					+ "endProcessing = NOW(), processorMMS = ? "
-					+ "where ingestionJobKey = ?";
-			else
-				lastSQLCommand = 
-					string("update MMS_IngestionJob set status = ?, ")
-					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
-					+ "endProcessing = NOW() "
-					+ "where ingestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++,
-				MMSEngineDBFacade::toString(newIngestionStatus));
-            if (errorMessageForSQL != "")
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
-			if (processorMMS != "noToBeUpdated")
+			if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
 			{
-				if (processorMMS == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				if (processorMMS != "noToBeUpdated")
+					lastSQLCommand = 
+						string("update MMS_IngestionJob set status = ?, ")
+						+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+						+ "endProcessing = NOW(), processorMMS = ? "
+						+ "where ingestionJobKey = ?";
 				else
-					preparedStatement->setString(queryParameterIndex++, processorMMS);
-			}
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+					lastSQLCommand = 
+						string("update MMS_IngestionJob set status = ?, ")
+						+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+						+ "endProcessing = NOW() "
+						+ "where ingestionJobKey = ?";
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-				+ ", errorMessageForSQL: " + errorMessageForSQL
-				+ ", processorMMS: " + processorMMS
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(newIngestionStatus));
+				if (errorMessageForSQL != "")
+					preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+				if (processorMMS != "noToBeUpdated")
+				{
+					if (processorMMS == "")
+						preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					else
+						preparedStatement->setString(queryParameterIndex++, processorMMS);
+				}
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+					+ ", errorMessageForSQL: " + errorMessageForSQL
+					+ ", processorMMS: " + processorMMS
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", processorMMS: " + processorMMS
                         + ", errorMessageForSQL: " + errorMessageForSQL
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-				// it is not so important to block the continuation of this method
-				// Also the exception caused a crash of the process
-                // throw runtime_error(errorMessage);                    
-            }            
-        }
-        else
-        {
-			if (processorMMS != "noToBeUpdated")
-				lastSQLCommand = 
-					string("update MMS_IngestionJob set status = ?, ")
-					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
-					+ "processorMMS = ? "
-					+ "where ingestionJobKey = ?";
-			else
-				lastSQLCommand = 
-					string("update MMS_IngestionJob set status = ? ")
-					+ (errorMessageForSQL == "" ? "" : ", errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20) ")
-					+ "where ingestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            if (errorMessageForSQL != "")
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
-			if (processorMMS != "noToBeUpdated")
-			{
-				if (processorMMS == "")
-					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-				else
-					preparedStatement->setString(queryParameterIndex++, processorMMS);
+					// it is not so important to block the continuation of this method
+					// Also the exception caused a crash of the process
+					// throw runtime_error(errorMessage);                    
+				}            
 			}
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			else
+			{
+				if (processorMMS != "noToBeUpdated")
+					lastSQLCommand = 
+						string("update MMS_IngestionJob set status = ?, ")
+						+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+						+ "processorMMS = ? "
+						+ "where ingestionJobKey = ?";
+				else
+					lastSQLCommand = 
+						string("update MMS_IngestionJob set status = ? ")
+						+ (errorMessageForSQL == "" ? "" : ", errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20) ")
+						+ "where ingestionJobKey = ?";
 
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-				+ ", errorMessageForSQL: " + errorMessageForSQL
-				+ ", processorMMS: " + processorMMS
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+				if (errorMessageForSQL != "")
+					preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+				if (processorMMS != "noToBeUpdated")
+				{
+					if (processorMMS == "")
+						preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					else
+						preparedStatement->setString(queryParameterIndex++, processorMMS);
+				}
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+					+ ", errorMessageForSQL: " + errorMessageForSQL
+					+ ", processorMMS: " + processorMMS
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
                         + ", processorMMS: " + processorMMS
                         + ", errorMessageForSQL: " + errorMessageForSQL
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-				// it is not so important to block the continuation of this method
-				// Also the exception caused a crash of the process
-                // throw runtime_error(errorMessage);                    
-            }
-        }
+					// it is not so important to block the continuation of this method
+					// Also the exception caused a crash of the process
+					// throw runtime_error(errorMessage);                    
+				}
+			}
             
-		bool updateIngestionRootStatus = true;
-		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus,
-			conn);
+			bool updateIngestionRootStatus = true;
+			manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus,
+				conn);
 
-        _logger->info(__FILEREF__ + "IngestionJob updated successful"
-            + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", processorMMS: " + processorMMS
-		);
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
+			_logger->info(__FILEREF__ + "IngestionJob updated successful"
+				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", processorMMS: " + processorMMS
+			);
+
+			updateToBeTriedAgain = false;
+		}
+		catch(sql::SQLException se)
+		{
+			string exceptionMessage(se.what());
         
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
+			if (exceptionMessage.find("Deadlock") != string::npos
+				&& retriesNumber < maxRetriesNumber)
+			{
+				_logger->warn(__FILEREF__ + "SQL exception (Deadlock), waiting before to try again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+					+ ", retriesNumber: " + to_string(retriesNumber)
+					+ ", maxRetriesNumber: " + to_string(maxRetriesNumber)
+					+ ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				);
 
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
+				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+			}
+			else
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", exceptionMessage: " + exceptionMessage
+				);
 
-        throw e;
-    }    
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
+				throw se;
+			}
+		}    
+		catch(runtime_error e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", e.what(): " + e.what()
+				+ ", lastSQLCommand: " + lastSQLCommand
+			);
 
-        throw e;
-    }    
+			throw e;
+		}    
+		catch(exception e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", lastSQLCommand: " + lastSQLCommand
+			);
+
+			throw e;
+		}    
+	}
 }
 
 void MMSEngineDBFacade::appendIngestionJobErrorMessage (

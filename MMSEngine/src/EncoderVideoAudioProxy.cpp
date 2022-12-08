@@ -304,15 +304,21 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
         {
-			killedByUser = overlayImageOnVideo();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegOverlayImageOnVideoURI, maxConsecutiveEncodingStatusFailures);
+			// killedByUser = overlayImageOnVideo();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
-			killedByUser = overlayTextOnVideo();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegOverlayTextOnVideoURI, maxConsecutiveEncodingStatusFailures);
+			// killedByUser = overlayTextOnVideo();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
         {
-            killedByUser = generateFrames();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegGenerateFramesURI, maxConsecutiveEncodingStatusFailures);
+            // killedByUser = generateFrames();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
         {
@@ -355,12 +361,16 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed)
         {
-			killedByUser = videoSpeed();
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegVideoSpeedURI, maxConsecutiveEncodingStatusFailures);
+			// killedByUser = videoSpeed();
         }
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture)
 		{
-			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = pictureInPicture();
-			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegPictureInPictureURI, maxConsecutiveEncodingStatusFailures);
+			// pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = pictureInPicture();
+			// tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay)
 		{
@@ -1108,9 +1118,12 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture)
         {
-            processPictureInPicture(stagingEncodedAssetPathName, killedByUser);
+			processPictureInPicture(killedByUser);
             
-			isIngestionJobCompleted = false;	// file has still to be ingested
+			if (_currentUsedFFMpegExternalEncoder)
+				isIngestionJobCompleted = true;
+			else
+				isIngestionJobCompleted = false;	// file has still to be ingested
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay)
         {
@@ -3037,6 +3050,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
 }
 
+/*
 bool EncoderVideoAudioProxy::overlayImageOnVideo()
 {
 	bool killedByUser = overlayImageOnVideo_through_ffmpeg();
@@ -3284,6 +3298,7 @@ bool EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
 void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
 {
@@ -3408,6 +3423,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
     }
 }
 
+/*
 bool EncoderVideoAudioProxy::overlayTextOnVideo()
 {
     bool killedByUser;
@@ -3656,6 +3672,7 @@ bool EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
 void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
 {
@@ -3780,6 +3797,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
     }
 }
 
+/*
 bool EncoderVideoAudioProxy::videoSpeed()
 {
     bool killedByUser;
@@ -4027,6 +4045,7 @@ bool EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
 void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
 {
@@ -4150,6 +4169,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
     }
 }
 
+/*
 pair<string, bool> EncoderVideoAudioProxy::pictureInPicture()
 {
     pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
@@ -4221,12 +4241,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
-			/*
-			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					encodersPool, _encodingItem->_workspace,
-					encoderToSkip);
-			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
@@ -4270,20 +4284,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 					tie(mmsOverlayVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay;
 
-					/*
-					mmsMainVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
-						_encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						_encodingItem->_pictureInPictureData->_mainVideoRelativePath,
-						_encodingItem->_pictureInPictureData->_mainVideoFileName);
-
-					mmsOverlayVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
-						_encodingItem->_pictureInPictureData->_mmsOverlayVideoPartitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						_encodingItem->_pictureInPictureData->_overlayVideoRelativePath,
-						_encodingItem->_pictureInPictureData->_overlayVideoFileName);
-					*/
-
 					size_t extensionIndex = _encodingItem->_pictureInPictureData->_mainVideoFileName.find_last_of(".");
 					if (extensionIndex == string::npos)
 					{
@@ -4297,15 +4297,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 						throw runtime_error(errorMessage);
 					}
 
-					/*
-					encodedFileName =
-					to_string(_encodingItem->_ingestionJobKey)
-					+ "_"
-					+ to_string(_encodingItem->_encodingJobKey)
-					+ _encodingItem->_overlayImageOnVideoData->_videoFileName.substr(extensionIndex)
-					;
-					*/
-
 					string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
 						_encodingItem->_workspace);
 					stagingEncodedAssetPathName = 
@@ -4314,16 +4305,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 						+ "_pictureInPicture"
 						+ _encodingItem->_pictureInPictureData->_mainVideoFileName.substr(extensionIndex)
 					;
-					/*
-					bool removeLinuxPathIfExist = true;
-					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-					_encodingItem->_workspace->_directoryName,
-					"/",    // _encodingItem->_relativePath,
-					encodedFileName,
-					-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-					-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-					removeLinuxPathIfExist);        
-					*/
 				}
 
                 Json::Value pictureInPictureMedatada;
@@ -4376,58 +4357,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
-                /*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-                 */
-                                                                                                  
-                
-                /*
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                request.setOpt(sslCert);
-                 */
-
-                /*
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                if(pPassphrase)
-                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-                */
-                
                 // disconnect if we can't validate server's cert
                 bool bSslVerifyPeer = false;
                 curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -4492,34 +4421,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                         throw runtime_error(errorMessage);
                     }
                 }
-                /*
-                else
-                {
-                    string field = "ffmpegEncoderHost";
-                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
-                    {
-                        _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
-                        
-                        _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                            + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-                                );                                        
-                    }
-                    else
-                    {
-                        string errorMessage = string("Unexpected FFMPEGEncoder response")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                */                        
             }
 		}
 		else
@@ -4588,7 +4489,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			try
 			{
 				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
-					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					getEncodingStatus();
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
@@ -4834,12 +4735,40 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
-void EncoderVideoAudioProxy::processPictureInPicture(string stagingEncodedAssetPathName,
-		bool killedByUser)
+void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
 {
-    try
+	if (_currentUsedFFMpegExternalEncoder)
+	{
+        _logger->info(__FILEREF__ + "The encoder selected is external, processPictureInPicture has nothing to do"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+        );
+
+		return;
+	}
+
+	string stagingEncodedAssetPathName;
+	try
     {
+		stagingEncodedAssetPathName = (_encodingItem->_encodingParametersRoot).get(
+			"encodedNFSStagingAssetPathName", "").asString();
+		if (stagingEncodedAssetPathName == "")
+		{
+			string errorMessage = __FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
         if (extensionIndex == string::npos)
         {
@@ -6358,6 +6287,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate(string stagingEncodedAssetP
     }
 }
 
+/*
 bool EncoderVideoAudioProxy::generateFrames()
 {
         bool killedByUser = generateFrames_through_ffmpeg();
@@ -6607,6 +6537,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
 void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
 {
@@ -12805,8 +12736,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					liveGridMetadata["inputChannels"] = inputChannelsRoot;
 					liveGridMetadata["ingestedParametersRoot"] =
 						_encodingItem->_ingestedParametersRoot;
-					liveGridMetadata["encodingProfileDetails"] =
-						_encodingItem->_liveGridData->_encodingProfileDetailsRoot;
+// liveGridMetadata["encodingProfileDetails"] =
+// 	_encodingItem->_liveGridData->_encodingProfileDetailsRoot;
 					liveGridMetadata["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
 
