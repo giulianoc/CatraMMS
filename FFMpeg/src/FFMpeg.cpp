@@ -8985,7 +8985,6 @@ void FFMpeg::slideShow(
 			throw e;
     }
 
-/*
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
@@ -9003,7 +9002,6 @@ void FFMpeg::slideShow(
 			+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
 		FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
 	}
-*/
 }
 
 void FFMpeg::extractTrackMediaToIngest(
