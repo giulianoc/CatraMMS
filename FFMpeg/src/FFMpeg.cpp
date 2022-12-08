@@ -8519,6 +8519,8 @@ void FFMpeg::slideShow(
 	//			we have to reduce the duration of the pictures (1)
 	//	    if the duration of the shortest audio is longest than the duration of the pictures
 	//			we have to increase the duration of the last pictures (2)
+
+	// CAPIRE COME MAI LA PERCENTUALE E' SEMPRE ZERO. Eliminare videoDurationInSeconds se non serve
 	int64_t videoDurationInSeconds;
 	if (audiosSourcePhysicalPaths.size() > 0)
 	{
@@ -8983,6 +8985,7 @@ void FFMpeg::slideShow(
 			throw e;
     }
 
+/*
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
@@ -9000,6 +9003,7 @@ void FFMpeg::slideShow(
 			+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
 		FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
 	}
+*/
 }
 
 void FFMpeg::extractTrackMediaToIngest(
