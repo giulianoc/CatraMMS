@@ -12701,7 +12701,8 @@ void FFMPEGEncoder::liveProxyThread(
 				// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
 				string newURL = string("udp://@") + tvMulticastIP
 					+ ":" + tvMulticastPort
-					+ "?overrun_nonfatal=1&fifo_size=50000000"
+					// 2022-12-08: the below parameters are added inside the liveProxy2 method
+					// + "?overrun_nonfatal=1&fifo_size=50000000"
 				;
 
 				streamInputRoot["url"] = newURL;

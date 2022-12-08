@@ -7611,12 +7611,6 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		{
 			liveURL = pushProtocol + "://" + pushServerName
 				+ ":" + to_string(pushServerPort) + pushUri;
-			// In case of udp:
-			// overrun_nonfatal=1 prevents ffmpeg from exiting,
-			//		it can recover in most circumstances.
-			// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
-			if (pushProtocol == "udp")
-				liveURL += "?overrun_nonfatal=1&fifo_size=50000000";
 		}
 		else if (streamSourceType == "TV")
 		{
