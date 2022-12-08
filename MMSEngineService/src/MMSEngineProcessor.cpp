@@ -12683,31 +12683,13 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		string configurationLabel;
 
-		int64_t confKey = -1;
 		string streamSourceType;
 		bool defaultBroadcast = false;
-		string encodersPoolLabel;
-		string pullUrl;
 		int maxWidth = -1;
 		string userAgent;
 		string otherInputOptions;
-		string pushProtocol;
-		int64_t pushEncoderKey = -1;
-		string pushServerName;
-		int pushServerPort = -1;
-		string pushUri;
-		int pushListenTimeout = -1;
-		int captureVideoDeviceNumber = -1;
-		string captureVideoInputFormat;
-		int captureFrameRate = -1;
-		int captureWidth = -1;
-		int captureHeight = -1;
-		int captureAudioDeviceNumber = -1;
-		int captureChannelsNumber = -1;
-		int64_t tvSourceTVConfKey = -1;
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
-		// long maxAttemptsNumberInCaseOfErrors;
 		Json::Value outputsRoot;
 		bool timePeriod;
 		int64_t utcProxyPeriodStart = -1;
@@ -12732,16 +12714,10 @@ void MMSEngineProcessor::manageLiveProxy(
 						int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(
 						workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(confKey, streamSourceType,
-						encodersPoolLabel,
-						pullUrl,
-						pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri,
-						pushListenTimeout,
-						captureVideoDeviceNumber,
-						captureVideoInputFormat,
-						captureFrameRate, captureWidth, captureHeight,
-						captureAudioDeviceNumber, captureChannelsNumber,
-						tvSourceTVConfKey) = channelConfDetails;
+					tie(ignore, streamSourceType, ignore, ignore,
+						ignore, ignore, ignore, ignore, ignore,
+						ignore, ignore, ignore, ignore, ignore,
+						ignore, ignore, ignore, ignore) = channelConfDetails;
 
 					// default is IP_PULL
 					if (streamSourceType == "")
@@ -12750,11 +12726,11 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-            string field = "EncodersPool";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				encodersPoolLabel = parametersRoot.get(field, "").asString();
+            // string field = "EncodersPool";
+            // if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			// 	encodersPoolLabel = parametersRoot.get(field, "").asString();
 
-			field = "defaultBroadcast";
+			string field = "defaultBroadcast";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
@@ -12865,6 +12841,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		// string tvModulation;
 		// int tvVideoPid = -1;
 		// int tvAudioItalianPid = -1;
+		/*
 		string liveURL;
 
 		if (streamSourceType == "IP_PULL")
@@ -12876,21 +12853,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else if (streamSourceType == "TV")
 		{
-			/*
-			bool warningIfMissing = false;
-			tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
-				tvChannelConfDetails =
-				_mmsEngineDBFacade->getSourceTVStreamDetails(
-				tvSourceTVConfKey, warningIfMissing);
-
-			int64_t tvBandwidthInHz;
-			tie(tvType, tvServiceId, tvFrequency,
-				tvSymbolRate, tvBandwidthInHz, tvModulation,
-				tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
-			if (tvBandwidthInHz > 0)
-				tvBandwidthInMhz = tvBandwidthInHz / 1000000;
-			*/
 		}
+		*/
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
 			workspace, ingestionJobKey, false);
