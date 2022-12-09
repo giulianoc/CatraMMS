@@ -4657,6 +4657,8 @@ void FFMpeg::pictureInPicture(
 			throw runtime_error(errorMessage);
 		}
 
+		/*
+		mainVideoDurationInMilliSeconds: 600024, overlayVideoDurationInMilliSeconds: 600029
 		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds)
 		{
 			string errorMessage = __FILEREF__ + "pictureInPicture: overlay video duration cannot be bigger than main video diration"
@@ -4669,6 +4671,7 @@ void FFMpeg::pictureInPicture(
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		vector<string> ffmpegEncodingProfileArgumentList;
 		if (encodingProfileDetailsRoot != Json::nullValue)
