@@ -16799,8 +16799,13 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 		if (sourceFileExtension == ".m3u8")
 			fileFormat = "hls";
 		else
-			fileFormat = sourceFileExtension;
-	}	
+		{
+			if (sourceFileExtension.front() == '.')
+				fileFormat = sourceFileExtension.substr(1);
+			else
+				fileFormat = sourceFileExtension;
+		}
+	}
 
 	field = "mmsWorkflowIngestionURL";
 	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
