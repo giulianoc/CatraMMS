@@ -7307,7 +7307,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
+		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string mainSourceFileExtension;
 		{

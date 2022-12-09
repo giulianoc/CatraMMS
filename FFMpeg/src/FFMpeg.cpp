@@ -4658,8 +4658,9 @@ void FFMpeg::pictureInPicture(
 		}
 
 		/*
-		mainVideoDurationInMilliSeconds: 600024, overlayVideoDurationInMilliSeconds: 600029
-		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds)
+			2022-12-09: in case of mainVideoDurationInMilliSeconds: 600024 and overlayVideoDurationInMilliSeconds: 600029
+				there is no error
+		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds - 1000)
 		{
 			string errorMessage = __FILEREF__ + "pictureInPicture: overlay video duration cannot be bigger than main video diration"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
