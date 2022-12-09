@@ -20223,20 +20223,16 @@ void MMSEngineProcessor::manageEncodeTask(
 					}
 
 					string encodedFileName;
+					string fileFormat;
 					{
-						string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
-						string fileFormatLowerCase;
-						fileFormatLowerCase.resize(fileFormat.size());
-						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-							[](unsigned char c){return tolower(c); } );
+						fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
 
 						encodedFileName =
 							to_string(ingestionJobKey)
 							+ "_"
 							+ to_string(encodingProfileKey);
 
-						if (fileFormatLowerCase == "hls"
-							|| fileFormatLowerCase == "dash")
+						if (fileFormat == "hls" || fileFormat == "dash")
 						{
 							;
 						}
@@ -20258,9 +20254,8 @@ void MMSEngineProcessor::manageEncodeTask(
 							to_string(ingestionJobKey),					// directoryNamePrefix
 							"/",										// relativePath,
 							// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
-							// in case of hls and external encoder (binary is ingested through PUSH),
-							// the directory inside the tar.gz has to be 'content'
-							"content",	// encodedFileName,
+							// in case of hls the directory inside the tar.gz has to be 'content'
+							(fileFormat == "hls" || fileFormat == "dash") ? "content" : encodedFileName,
 							-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
 							-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 							removeLinuxPathIfExist);
