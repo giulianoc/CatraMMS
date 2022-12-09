@@ -4598,19 +4598,22 @@ void FFMpeg::videoSpeed(
 }
 
 void FFMpeg::pictureInPicture(
-        string mmsMainVideoAssetPathName,
-        int64_t mainVideoDurationInMilliSeconds,
-        string mmsOverlayVideoAssetPathName,
-        int64_t overlayVideoDurationInMilliSeconds,
-        bool soundOfMain,
-        string overlayPosition_X_InPixel,
-        string overlayPosition_Y_InPixel,
-        string overlay_Width_InPixel,
-        string overlay_Height_InPixel,
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid)
+	string mmsMainVideoAssetPathName,
+	int64_t mainVideoDurationInMilliSeconds,
+	string mmsOverlayVideoAssetPathName,
+	int64_t overlayVideoDurationInMilliSeconds,
+	bool soundOfMain,
+	string overlayPosition_X_InPixel,
+	string overlayPosition_Y_InPixel,
+	string overlay_Width_InPixel,
+	string overlay_Height_InPixel,
+
+	Json::Value encodingProfileDetailsRoot,
+
+	string stagingEncodedAssetPathName,
+	int64_t encodingJobKey,
+	int64_t ingestionJobKey,
+	pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
 
@@ -4667,12 +4670,145 @@ void FFMpeg::pictureInPicture(
 			throw runtime_error(errorMessage);
 		}
 
-        // _currentDurationInMilliSeconds      = mainVideoDurationInMilliSeconds;
-        // _currentMMSSourceAssetPathName      = mmsMainVideoAssetPathName;
-        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        // _currentIngestionJobKey             = ingestionJobKey;
-        // _currentEncodingJobKey              = encodingJobKey;
-        
+		vector<string> ffmpegEncodingProfileArgumentList;
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			try
+			{
+				string httpStreamingFileFormat;    
+				string ffmpegHttpStreamingParameter = "";
+				bool encodingProfileIsVideo = true;
+
+				string ffmpegFileFormatParameter = "";
+
+				string ffmpegVideoCodecParameter = "";
+				string ffmpegVideoProfileParameter = "";
+				string ffmpegVideoResolutionParameter = "";
+				int videoBitRateInKbps = -1;
+				string ffmpegVideoBitRateParameter = "";
+				string ffmpegVideoOtherParameters = "";
+				string ffmpegVideoMaxRateParameter = "";
+				string ffmpegVideoBufSizeParameter = "";
+				string ffmpegVideoFrameRateParameter = "";
+				string ffmpegVideoKeyFramesRateParameter = "";
+				bool twoPasses;
+				vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+				string ffmpegAudioCodecParameter = "";
+				string ffmpegAudioBitRateParameter = "";
+				string ffmpegAudioOtherParameters = "";
+				string ffmpegAudioChannelsParameter = "";
+				string ffmpegAudioSampleRateParameter = "";
+				vector<string> audioBitRatesInfo;
+
+
+				settingFfmpegParameters(
+					encodingProfileDetailsRoot,
+					encodingProfileIsVideo,
+
+					httpStreamingFileFormat,
+					ffmpegHttpStreamingParameter,
+
+					ffmpegFileFormatParameter,
+
+					ffmpegVideoCodecParameter,
+					ffmpegVideoProfileParameter,
+					ffmpegVideoOtherParameters,
+					twoPasses,
+					ffmpegVideoFrameRateParameter,
+					ffmpegVideoKeyFramesRateParameter,
+					videoBitRatesInfo,
+
+					ffmpegAudioCodecParameter,
+					ffmpegAudioOtherParameters,
+					ffmpegAudioChannelsParameter,
+					ffmpegAudioSampleRateParameter,
+					audioBitRatesInfo
+				);
+
+				tuple<string, int, int, int, string, string, string> videoBitRateInfo
+					= videoBitRatesInfo[0];
+				tie(ffmpegVideoResolutionParameter, videoBitRateInKbps, ignore, ignore,
+					ffmpegVideoBitRateParameter,
+					ffmpegVideoMaxRateParameter, ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
+
+				/*
+				if (httpStreamingFileFormat != "")
+				{
+					string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				else */
+				if (twoPasses)
+				{
+					// siamo sicuri che non sia possibile?
+					/*
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
+				}
+
+				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				// we cannot have two video filters parameters (-vf), one is for the overlay.
+				// If it is needed we have to combine both using the same -vf parameter and using the
+				// comma (,) as separator. For now we will just comment it and the resolution will be the one
+				// coming from the video (no changes)
+				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				ffmpegEncodingProfileArgumentList.push_back("-threads");
+				ffmpegEncodingProfileArgumentList.push_back("0");
+				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				throw e;
+			}
+		}
+
 		{
 			char	sUtcTimestamp [64];
 			tm		tmUtcTimestamp;
@@ -4766,6 +4902,14 @@ void FFMpeg::pictureInPicture(
 				}
 				// output options
 				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+
+				// encoding parameters
+				if (encodingProfileDetailsRoot != Json::nullValue)
+				{
+					for (string parameter: ffmpegEncodingProfileArgumentList)
+						addToArguments(parameter, ffmpegArgumentList);
+				}
+
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 
                 try
@@ -4814,7 +4958,8 @@ void FFMpeg::pictureInPicture(
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(
+							chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
                 catch(runtime_error e)

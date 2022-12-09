@@ -7562,6 +7562,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 			overlay_Width_InPixel,
 			overlay_Height_InPixel,
 
+			encodingProfileDetailsRoot,
+
 			encodedStagingAssetPathName,
 			encodingJobKey,
 			ingestionJobKey,
