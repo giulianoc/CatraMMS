@@ -7307,7 +7307,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
 
 		string mainSourceFileExtension;
 		{
@@ -7539,6 +7539,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 		int64_t overlaySourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"overlaySourceDurationInMilliSeconds", 0);
 		bool soundOfMain = JSONUtils::asBool(encodingParametersRoot, "soundOfMain", false);
+
         string overlayPosition_X_InPixel = ingestedParametersRoot.get(
 			"overlayPosition_X_InPixel", "0").asString();
         string overlayPosition_Y_InPixel = ingestedParametersRoot.get(

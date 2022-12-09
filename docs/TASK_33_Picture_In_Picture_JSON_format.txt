@@ -48,8 +48,8 @@
 		//        mainVideo_height: height in pixel of the video
 		//        overlayVideo_width: width in pixel of the image
 		//        overlayVideo_height: height in pixel of the image
-		"OverlayPosition_X_InPixel": "mainVideo_width-overlayVideo_width-10",                                  
-		"OverlayPosition_Y_InPixel": "mainVideo_height-overlayVideo_height-10",                                
+		"overlayPosition_X_InPixel": "mainVideo_width-overlayVideo_width-10",                                  
+		"overlayPosition_Y_InPixel": "mainVideo_height-overlayVideo_height-10",                                
 
 		// mandatory: the below parameters specify the X and Y in pixel where the video
 		//    has to be overlayed on the other video.
@@ -58,8 +58,8 @@
 		//        mainVideo_height: height in pixel of the video
 		//        overlayVideo_width: width in pixel of the image
 		//        overlayVideo_height: height in pixel of the image
-		"Overlay_Width_InPixel": "overlayVideo_width/5",                                  
-		"Overlay_Height_InPixel": "overlayVideo_height/5",                                
+		"overlay_Width_InPixel": "overlayVideo_width/5",                                  
+		"overlay_Height_InPixel": "overlayVideo_height/5",                                
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
