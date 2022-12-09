@@ -20422,7 +20422,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			contentType, encodingPriority,
 			encodingProfileKey, encodingProfileDetailsRoot,
 			sourcesToBeEncodedRoot,
-			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL);
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
     catch(runtime_error e)
     {

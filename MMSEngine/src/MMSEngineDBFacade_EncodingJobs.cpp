@@ -4652,7 +4652,7 @@ void MMSEngineDBFacade::addEncodingJob (
 	int64_t encodingProfileKey,
 	Json::Value encodingProfileDetailsRoot,
 	Json::Value sourcesToBeEncodedRoot,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
 )
 {
 
@@ -4705,6 +4705,9 @@ void MMSEngineDBFacade::addEncodingJob (
 
 			field = "mmsBinaryIngestionURL";
 			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "_mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
