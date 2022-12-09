@@ -20239,7 +20239,7 @@ void MMSEngineProcessor::manageEncodeTask(
 						else
 						{
 							encodedFileName.append(".");
-							encodedFileName.append(fileFormatLowerCase);
+							encodedFileName.append(fileFormat);
 						}
 					}
     
