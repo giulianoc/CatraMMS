@@ -1850,8 +1850,11 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 			encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
         {
+			int picturesNumber = 0;
+			int audiosNumber = 0;
+
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-					keyAndDependencyType: dependencies)
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
@@ -1861,20 +1864,34 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
                 tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
 					= keyAndDependencyType;
 
-                if (referenceContentType != MMSEngineDBFacade::ContentType::Image
-						&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
-                {
-                    string errorMessage = __FILEREF__ + "Reference... does not refer an image-audio content"
-                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-                        + ", referenceMediaItemKey: " + to_string(key)
-                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                        + ", label: " + label
-                            ;
-                    _logger->error(errorMessage);
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+					picturesNumber++;
+				else if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
+					audiosNumber++;
+				else
+				{
+					string errorMessage = __FILEREF__ + "Reference... does not refer an image-audio content"
+						+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+						+ ", referenceMediaItemKey: " + to_string(key)
+						+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+						+ ", label: " + label
+					;
+					_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }
+					throw runtime_error(errorMessage);
+				}
             }
+
+			if (picturesNumber == 0)
+			{
+				string errorMessage = __FILEREF__ + "Reference does not refer an image content"
+					+ ", picturesNumber: " + to_string(picturesNumber)
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
     }
 
