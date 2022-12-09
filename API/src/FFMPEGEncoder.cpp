@@ -4102,13 +4102,13 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourceTranscoderStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
 			{
-				size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
+				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
+					string directoryPathName = sourceAssetPathName.substr(
 						0, endOfDirectoryIndex);
 
 					bool noErrorIfExists = true;
