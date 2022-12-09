@@ -7460,7 +7460,7 @@ void FFMpeg::generateFramesToIngest(
         if (mjpeg)
             videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' ";
         else
-            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -vsync vfr ";
+            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -fps_mode vfr ";
     }
     
     /*
@@ -8500,7 +8500,7 @@ void FFMpeg::slideShow(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	float durationOfEachSlideInSeconds, 
-	string videoSyncMethod,
+	string frameRateMode,
 	Json::Value encodingProfileDetailsRoot,
 	vector<string>& imagesSourcePhysicalPaths,
 	vector<string>& audiosSourcePhysicalPaths,
@@ -8545,7 +8545,7 @@ void FFMpeg::slideShow(
 	_logger->info(__FILEREF__ + "Received " + _currentApiName
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", videoSyncMethod: " + videoSyncMethod
+		+ ", frameRateMode: " + frameRateMode
 		+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
 		+ ", shortestAudioDurationInSeconds: " + to_string(shortestAudioDurationInSeconds)
@@ -8882,8 +8882,8 @@ void FFMpeg::slideShow(
 		ffmpegArgumentList.push_back("25");
 	}
 
-	ffmpegArgumentList.push_back("-vsync");
-	ffmpegArgumentList.push_back(videoSyncMethod);
+	ffmpegArgumentList.push_back("-fps_mode");
+	ffmpegArgumentList.push_back(frameRateMode);
 	ffmpegArgumentList.push_back("-pix_fmt");
 	// yuv420p: the only option for broad compatibility
 	ffmpegArgumentList.push_back("yuv420p");

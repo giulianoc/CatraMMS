@@ -258,7 +258,7 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		float durationOfEachSlideInSeconds, 
-		string videoSyncMethod,
+		string frameRateMode,
 		Json::Value encodingProfileDetailsRoot,
 		vector<string>& imagesSourcePhysicalPaths,
 		vector<string>& audiosSourcePhysicalPaths,

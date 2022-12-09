@@ -39,7 +39,7 @@
 		//		based on frame-rate.
 		// auto (-1): Chooses between 1 and 2 depending on muxer capabilities. This is the default method.
 		// default is "vfr"
-		"videoSyncMethod": "vfr",
+		"frameRateMode": "vfr",
 
 		// optional. It may be a decimal number (i.e.: 0.5). Default is 2 
 		"durationOfEachSlideInSeconds": 5,
