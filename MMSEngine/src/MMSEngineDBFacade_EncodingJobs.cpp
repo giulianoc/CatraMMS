@@ -4706,7 +4706,7 @@ void MMSEngineDBFacade::addEncodingJob (
 			field = "mmsBinaryIngestionURL";
 			parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "_mmsIngestionURL";
+			field = "mmsIngestionURL";
 			parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
