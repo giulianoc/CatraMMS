@@ -20914,7 +20914,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		bool mainStopIfReferenceProcessingError;
 		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
 			string, string, int64_t, string, string, bool> mainDependencyInfo =
-			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[1]);
 		tie(mainSourceMediaItemKey, mainSourcePhysicalPathKey, mainReferenceContentType,
 			mainSourceAssetPathName, mainSourceRelativePath, mainSourceFileName, mainSourceFileExtension,
 			mainSourceDurationInMilliSeconds, mainSourcePhysicalDeliveryURL,
@@ -20933,7 +20933,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		bool outroStopIfReferenceProcessingError;
 		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
 			string, string, int64_t, string, string, bool> outroDependencyInfo =
-			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[2]);
 		tie(outroSourceMediaItemKey, outroSourcePhysicalPathKey, outroReferenceContentType,
 			outroSourceAssetPathName, outroSourceRelativePath, outroSourceFileName, outroSourceFileExtension,
 			outroSourceDurationInMilliSeconds, outroSourcePhysicalDeliveryURL,
