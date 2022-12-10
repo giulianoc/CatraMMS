@@ -5071,8 +5071,8 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
         }
     }
 
-	string keyField = "EncodingProfileKey";
-	string labelField = "EncodingProfileLabel";
+	string keyField = "encodingProfileKey";
+	string labelField = "encodingProfileLabel";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, keyField)
 		&& !JSONUtils::isMetadataPresent(parametersRoot, labelField))
 	{
@@ -5086,8 +5086,8 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 	}
 
 	vector<string> mandatoryFields = {
-		"IntroOverlayDurationInSeconds",
-		"OutroOverlayDurationInSeconds"
+		"introOverlayDurationInSeconds",
+		"outroOverlayDurationInSeconds"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -5106,7 +5106,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
         }
     }
 
-    field = "IntroOverlayDurationInSeconds";
+    field = "introOverlayDurationInSeconds";
 	int introOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
 	if (introOverlayDurationInSeconds <= 0)
 	{
@@ -5120,7 +5120,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 		throw runtime_error(errorMessage);
 	}
 
-    field = "OutroOverlayDurationInSeconds";
+    field = "outroOverlayDurationInSeconds";
 	int outroOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
 	if (outroOverlayDurationInSeconds <= 0)
 	{
