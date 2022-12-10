@@ -4057,27 +4057,27 @@ void FFMPEGEncoder::encodeContentThread(
         int audioTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot,
 			"AudioTrackIndex", -1);
 
-		// Json::Value sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
-		// Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
+		Json::Value sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
+		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
-        int64_t durationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
+        int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
 				"sourceDurationInMilliSecs", -1);
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
-				encodingParametersRoot.get("contentType", "").asString());
-        int64_t physicalPathKey = JSONUtils::asInt64(encodingParametersRoot, "sourcePhysicalPathKey", -1);
+				sourceToBeEncodedRoot.get("contentType", "").asString());
+        int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
 
 		Json::Value videoTracksRoot;
 		string field = "videoTracks";
-        if (JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			videoTracksRoot = encodingParametersRoot[field];
+        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			videoTracksRoot = sourceToBeEncodedRoot[field];
 		Json::Value audioTracksRoot;
 		field = "audioTracks";
-        if (JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			audioTracksRoot = encodingParametersRoot[field];
+        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			audioTracksRoot = sourceToBeEncodedRoot[field];
 
 		field = "sourceFileExtension";
-		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+		if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4087,12 +4087,12 @@ void FFMPEGEncoder::encodeContentThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string sourceFileExtension = encodingParametersRoot.get(field, "").asString();
+		string sourceFileExtension = sourceToBeEncodedRoot.get(field, "").asString();
 
 		if (externalEncoder)
 		{
 			field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4102,7 +4102,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -4125,7 +4125,7 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 
 			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4135,10 +4135,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+			string sourcePhysicalDeliveryURL = sourceToBeEncodedRoot.get(field, "").asString();
 
 			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4148,7 +4148,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -4181,7 +4181,7 @@ void FFMPEGEncoder::encodeContentThread(
 		else
 		{
 			field = "mmsSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4191,10 +4191,10 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4204,7 +4204,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
 		}
 
         _logger->info(__FILEREF__ + "encoding content..."
@@ -4254,7 +4254,7 @@ void FFMPEGEncoder::encodeContentThread(
 			}
 
 			field = "sourceMediaItemKey";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4264,7 +4264,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			int64_t sourceMediaItemKey = JSONUtils::asInt64(encodingParametersRoot, field, -1);
+			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
 
 			field = "encodingProfileKey";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))

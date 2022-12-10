@@ -4652,20 +4652,7 @@ void MMSEngineDBFacade::addEncodingJob (
 	int64_t encodingProfileKey,
 	Json::Value encodingProfileDetailsRoot,
 
-	bool stopIfReferenceProcessingError,
-	int64_t sourceMediaItemKey,
-	int64_t sourcePhysicalPathKey,
-	string mmsSourceAssetPathName,
-	string sourcePhysicalDeliveryURL,
-	int64_t sourceDurationInMilliSecs,
-	string sourceFileName,
-	string sourceRelativePath,
-	string sourceFileExtension,
-	Json::Value videoTracksRoot,
-	Json::Value audioTracksRoot,
-	string sourceTranscoderStagingAssetPathName,
-	string encodedTranscoderStagingAssetPathName,
-	string encodedNFSStagingAssetPathName,
+	Json::Value sourcesToBeEncodedRoot,
 
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
 )
@@ -4712,47 +4699,8 @@ void MMSEngineDBFacade::addEncodingJob (
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
 
-			field = "stopIfReferenceProcessingError";
-			parametersRoot[field] = stopIfReferenceProcessingError;
-
-			field = "sourceMediaItemKey";
-			parametersRoot[field] = sourceMediaItemKey;
-
-			field = "sourcePhysicalPathKey";
-			parametersRoot[field] = sourcePhysicalPathKey;
-
-			field = "mmsSourceAssetPathName";
-			parametersRoot[field] = mmsSourceAssetPathName;
-
-			field = "sourcePhysicalDeliveryURL";
-			parametersRoot[field] = sourcePhysicalDeliveryURL;
-
-			field = "sourceDurationInMilliSecs";
-			parametersRoot[field] = sourceDurationInMilliSecs;
-
-			field = "sourceFileName";
-			parametersRoot[field] = sourceFileName;
-
-			field = "sourceRelativePath";
-			parametersRoot[field] = sourceRelativePath;
-
-			field = "sourceFileExtension";
-			parametersRoot[field] = sourceFileExtension;
-
-			field = "videoTracks";
-			parametersRoot[field] = videoTracksRoot;
-
-			field = "audioTracks";
-			parametersRoot[field] = audioTracksRoot;
-
-			field = "sourceTranscoderStagingAssetPathName";
-			parametersRoot[field] = sourceTranscoderStagingAssetPathName;
-
-			field = "encodedTranscoderStagingAssetPathName";
-			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
-
-			field = "encodedNFSStagingAssetPathName";
-			parametersRoot[field] = encodedNFSStagingAssetPathName;
+			field = "sourcesToBeEncoded";
+			parametersRoot[field] = sourcesToBeEncodedRoot;
 
 			field = "mmsWorkflowIngestionURL";
 			parametersRoot[field] = mmsWorkflowIngestionURL;

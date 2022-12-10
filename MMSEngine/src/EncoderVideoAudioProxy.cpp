@@ -2351,7 +2351,6 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
                 Json::Value encodingMedatada;
 
                 encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
-                // encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
