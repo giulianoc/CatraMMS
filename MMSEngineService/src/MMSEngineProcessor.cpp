@@ -20882,161 +20882,69 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-		int64_t introVideoPhysicalPathKey;
-		string introVideoAssetPathName;
-		int64_t introVideoDurationInMilliSeconds;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[0];
+		int64_t introSourceMediaItemKey;
+		int64_t introSourcePhysicalPathKey;
+		MMSEngineDBFacade::ContentType introReferenceContentType;
+		string introSourceAssetPathName;
+		string introSourceRelativePath;
+		string introSourceFileName;
+		string introSourceFileExtension;
+		int64_t introSourceDurationInMilliSeconds;
+		string introSourcePhysicalDeliveryURL;
+		string introSourceTranscoderStagingAssetPathName;
+		bool introStopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> introDependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(introSourceMediaItemKey, introSourcePhysicalPathKey, introReferenceContentType,
+			introSourceAssetPathName, introSourceRelativePath, introSourceFileName, introSourceFileExtension,
+			introSourceDurationInMilliSeconds, introSourcePhysicalDeliveryURL,
+			introSourceTranscoderStagingAssetPathName, introStopIfReferenceProcessingError) = introDependencyInfo;
 
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
+		int64_t mainSourceMediaItemKey;
+		int64_t mainSourcePhysicalPathKey;
+		MMSEngineDBFacade::ContentType mainReferenceContentType;
+		string mainSourceAssetPathName;
+		string mainSourceRelativePath;
+		string mainSourceFileName;
+		string mainSourceFileExtension;
+		int64_t mainSourceDurationInMilliSeconds;
+		string mainSourcePhysicalDeliveryURL;
+		string mainSourceTranscoderStagingAssetPathName;
+		bool mainStopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> mainDependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(mainSourceMediaItemKey, mainSourcePhysicalPathKey, mainReferenceContentType,
+			mainSourceAssetPathName, mainSourceRelativePath, mainSourceFileName, mainSourceFileExtension,
+			mainSourceDurationInMilliSeconds, mainSourcePhysicalDeliveryURL,
+			mainSourceTranscoderStagingAssetPathName, mainStopIfReferenceProcessingError) = mainDependencyInfo;
 
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
+		int64_t outroSourceMediaItemKey;
+		int64_t outroSourcePhysicalPathKey;
+		MMSEngineDBFacade::ContentType outroReferenceContentType;
+		string outroSourceAssetPathName;
+		string outroSourceRelativePath;
+		string outroSourceFileName;
+		string outroSourceFileExtension;
+		int64_t outroSourceDurationInMilliSeconds;
+		string outroSourcePhysicalDeliveryURL;
+		string outroSourceTranscoderStagingAssetPathName;
+		bool outroStopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> outroDependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(outroSourceMediaItemKey, outroSourcePhysicalPathKey, outroReferenceContentType,
+			outroSourceAssetPathName, outroSourceRelativePath, outroSourceFileName, outroSourceFileExtension,
+			outroSourceDurationInMilliSeconds, outroSourcePhysicalDeliveryURL,
+			outroSourceTranscoderStagingAssetPathName, outroStopIfReferenceProcessingError) = outroDependencyInfo;
 
-			if (dependencyType== Validator::DependencyType::MediaItemKey)
-			{
-				int64_t sourceMediaItemKey = key;
-
-				bool warningIfMissing = false;
-				introVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-					sourceMediaItemKey,
-					-1,	// encodingProfileKey
-					warningIfMissing);
-			}
-			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
-			{
-				introVideoPhysicalPathKey = key;
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Wrong dependencyType"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(introVideoPhysicalPathKey);
-				tie(introVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			introVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-				-1, introVideoPhysicalPathKey);
-		}
-
-		int64_t mainVideoPhysicalPathKey;
-		string mainVideoAssetPathName;
-		int64_t mainVideoDurationInMilliSeconds;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[1];
-
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			if (dependencyType== Validator::DependencyType::MediaItemKey)
-			{
-				int64_t sourceMediaItemKey = key;
-
-				bool warningIfMissing = false;
-				mainVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-					sourceMediaItemKey,
-					-1,	// encodingProfileKey
-					warningIfMissing);
-			}
-			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
-			{
-				mainVideoPhysicalPathKey = key;
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Wrong dependencyType"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(mainVideoPhysicalPathKey);
-				tie(mainVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			mainVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-				-1, mainVideoPhysicalPathKey);
-		}
-
-		int64_t outroVideoPhysicalPathKey;
-		string outroVideoAssetPathName;
-		int64_t outroVideoDurationInMilliSeconds;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[2];
-
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			if (dependencyType== Validator::DependencyType::MediaItemKey)
-			{
-				int64_t sourceMediaItemKey = key;
-
-				bool warningIfMissing = false;
-				outroVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-					sourceMediaItemKey,
-					-1,	// encodingProfileKey
-					warningIfMissing);
-			}
-			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
-			{
-				outroVideoPhysicalPathKey = key;
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Wrong dependencyType"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(outroVideoPhysicalPathKey);
-				tie(outroVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathDetails;
-			}
-
-			outroVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-				-1, outroVideoPhysicalPathKey);
-		}
 
 		int64_t encodingProfileKey;
 		Json::Value encodingProfileDetailsRoot;
 		{
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 			{
 				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
@@ -21073,22 +20981,55 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			}
 		}
 
+		string encodedFileName = to_string(ingestionJobKey)
+			+ "_introOutroOverlay"                                                                   
+			+  mainSourceFileExtension;     
+
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
+		{
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = true;
+
+			encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+				workspace->_directoryName,	// workspaceDirectoryName
+				to_string(ingestionJobKey),					// directoryNamePrefix
+				"/",										// relativePath,
+				// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+				// in case of hls and external encoder (binary is ingested through PUSH),
+				// the directory inside the tar.gz has to be 'content'
+				encodedFileName,	// content
+				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+				removeLinuxPathIfExist);
+
+			encodedNFSStagingAssetPathName =
+				_mmsStorage->getWorkspaceIngestionRepository(workspace)
+				+ "/" + encodedFileName;
+		}
+
 		_mmsEngineDBFacade->addEncoding_IntroOutroOverlayJob (workspace, ingestionJobKey,
 			encodingProfileKey,
 			encodingProfileDetailsRoot,
 
-			introVideoPhysicalPathKey,
-			introVideoAssetPathName,
-			introVideoDurationInMilliSeconds,
-			mainVideoPhysicalPathKey,
-			mainVideoAssetPathName,
-			mainVideoDurationInMilliSeconds,
-			outroVideoPhysicalPathKey,
-			outroVideoAssetPathName,
-			outroVideoDurationInMilliSeconds,
+			introSourcePhysicalPathKey, introSourceAssetPathName,
+			introSourceFileExtension, introSourceDurationInMilliSeconds,
+			introSourcePhysicalDeliveryURL, introSourceTranscoderStagingAssetPathName,
+
+			mainSourcePhysicalPathKey, mainSourceAssetPathName,
+			mainSourceFileExtension, mainSourceDurationInMilliSeconds,
+			mainSourcePhysicalDeliveryURL, mainSourceTranscoderStagingAssetPathName,
+
+			outroSourcePhysicalPathKey, outroSourceAssetPathName,
+			outroSourceFileExtension, outroSourceDurationInMilliSeconds,
+			outroSourcePhysicalDeliveryURL, outroSourceTranscoderStagingAssetPathName,
+
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 
 			encodingPriority);
-    }
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"

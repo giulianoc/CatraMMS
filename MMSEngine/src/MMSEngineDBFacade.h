@@ -1826,17 +1826,20 @@ public:
 		int64_t encodingProfileKey,
 		Json::Value encodingProfileDetailsRoot,
 
-		int64_t introVideoPhysicalPathKey,
-		string introVideoAssetPathName,
-		int64_t introVideoDurationInMilliSeconds,
+		int64_t introSourcePhysicalPathKey, string introSourceAssetPathName,
+		string introSourceFileExtension, int64_t introSourceDurationInMilliSeconds,
+		string introSourcePhysicalDeliveryURL, string introSourceTranscoderStagingAssetPathName,
 
-		int64_t mainVideoPhysicalPathKey,
-		string mainVideoAssetPathName,
-		int64_t mainVideoDurationInMilliSeconds,
+		int64_t mainSourcePhysicalPathKey, string mainSourceAssetPathName,
+		string mainSourceFileExtension, int64_t mainSourceDurationInMilliSeconds,
+		string mainSourcePhysicalDeliveryURL, string mainSourceTranscoderStagingAssetPathName,
 
-		int64_t outroVideoPhysicalPathKey,
-		string outroVideoAssetPathName,
-		int64_t outroVideoDurationInMilliSeconds,
+		int64_t outroSourcePhysicalPathKey, string outroSourceAssetPathName,
+		string outroSourceFileExtension, int64_t outroSourceDurationInMilliSeconds,
+		string outroSourcePhysicalDeliveryURL, string outroSourceTranscoderStagingAssetPathName,
+
+		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 
 		EncodingPriority encodingPriority);
 

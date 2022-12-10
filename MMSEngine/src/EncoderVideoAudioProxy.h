@@ -297,9 +297,9 @@ private:
     // pair<string, bool> pictureInPicture_through_ffmpeg();
     void processPictureInPicture(bool killedByUser);    
 
-    pair<string, bool> introOutroOverlay();
-    pair<string, bool> introOutroOverlay_through_ffmpeg();
-    void processIntroOutroOverlay(string stagingEncodedAssetPathName, bool killedByUser);    
+    // pair<string, bool> introOutroOverlay();
+    // pair<string, bool> introOutroOverlay_through_ffmpeg();
+    void processIntroOutroOverlay();    
 
     pair<string, bool> cutFrameAccurate();
     pair<string, bool> cutFrameAccurate_through_ffmpeg();

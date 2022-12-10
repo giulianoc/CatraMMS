@@ -33,17 +33,17 @@
 
 		// mandatory: it specifies the duration in seconds of the overlay
 		//	of the last part of the intro video with the initial part of the main video
-		"IntroOverlayDurationInSeconds": 4,
+		"introOverlayDurationInSeconds": 4,
 
 		// mandatory: it specifies the duration in seconds of the overlay
 		//	of the initial part of the outro video with the last part of the main video
-		"OutroOverlayDurationInSeconds": 2,
+		"outroOverlayDurationInSeconds": 2,
 
 		// optional: default is true
-		"MuteIntroOverlay": true,
+		"muteIntroOverlay": true,
 
 		// optional: default is true
-		"MuteOutroOverlay": true,
+		"muteOutroOverlay": true,
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
@@ -58,8 +58,8 @@
 		// mandatory: this is the encoding profile to be used for the creation
 		//	of the overlayed video.
 		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.
-		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "Profile sport",
+		"encodingProfileKey": 1,
+		"encodingProfileLabel": "Profile sport",
 
 		// optional: If present, it specifies when the Task has to be executed.
 		//		The processing of the task can be delayed respect to the specified date

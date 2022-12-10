@@ -15,7 +15,6 @@
 #include "MMSCURL.h"                                                                                          
 #include "AWSSigner.h"
 #include <fstream>
-// #include <sstream>
 #ifdef __LOCALENCODER__
 #else
     #include <curlpp/cURLpp.hpp>
@@ -374,8 +373,9 @@ void EncoderVideoAudioProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay)
 		{
-			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = introOutroOverlay();
-			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegIntroOutroOverlayURI, maxConsecutiveEncodingStatusFailures);
+			// tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::CutFrameAccurate)
 		{
@@ -1127,9 +1127,12 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay)
         {
-            processIntroOutroOverlay(stagingEncodedAssetPathName, killedByUser);
-            
-			isIngestionJobCompleted = false;	// file has still to be ingested
+            processIntroOutroOverlay();
+
+			if (_currentUsedFFMpegExternalEncoder)
+				isIngestionJobCompleted = true;
+			else
+				isIngestionJobCompleted = false;	// file has still to be ingested
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::CutFrameAccurate)
         {
@@ -4860,12 +4863,11 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
     }
 }
 
-pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay()
+/*
+void EncoderVideoAudioProxy::introOutroOverlay()
 {
-	pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
-
-	stagingEncodedAssetPathNameAndKilledByUser = introOutroOverlay_through_ffmpeg();
-	if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+	bool killedByUser = introOutroOverlay_through_ffmpeg();
+	if (killedByUser)
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4876,11 +4878,9 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay()
         
 		throw EncodingKilledByUser();
 	}
-
-	return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
+bool EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 {
 
 	string mainVideoAssetPathName;
@@ -4905,12 +4905,6 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 
 		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
-			/*
-			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					encodersPool, _encodingItem->_workspace,
-					encoderToSkip);
-			*/
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = false;
 			tuple<int64_t, string, bool> encoderDetails =
@@ -5000,58 +4994,6 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
-                /*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-                 */
-                                                                                                  
-                
-                /*
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                request.setOpt(sslCert);
-                 */
-
-                /*
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                if(pPassphrase)
-                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-                */
-                
                 // disconnect if we can't validate server's cert
                 bool bSslVerifyPeer = false;
                 curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -5116,34 +5058,6 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
                         throw runtime_error(errorMessage);
                     }
                 }
-                /*
-                else
-                {
-                    string field = "ffmpegEncoderHost";
-                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
-                    {
-                        _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
-                        
-                        _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                            + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-                                );                                        
-                    }
-                    else
-                    {
-                        string errorMessage = string("Unexpected FFMPEGEncoder response")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                */                        
             }
 		}
 		else
@@ -5212,7 +5126,7 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 			try
 			{
 				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
-					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					getEncodingStatus();
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
@@ -5458,12 +5372,40 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
 		throw e;
 	}
 }
+*/
 
-void EncoderVideoAudioProxy::processIntroOutroOverlay(string stagingEncodedAssetPathName,
-		bool killedByUser)
+void EncoderVideoAudioProxy::processIntroOutroOverlay()
 {
-    try
+	if (_currentUsedFFMpegExternalEncoder)
+	{
+        _logger->info(__FILEREF__ + "The encoder selected is external, processIntroOutroOverlay has nothing to do"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+        );
+
+		return;
+	}
+
+	string stagingEncodedAssetPathName;
+	try
     {
+		stagingEncodedAssetPathName = (_encodingItem->_encodingParametersRoot).get(
+			"encodedNFSStagingAssetPathName", "").asString();
+		if (stagingEncodedAssetPathName == "")
+		{
+			string errorMessage = __FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
         if (extensionIndex == string::npos)
         {

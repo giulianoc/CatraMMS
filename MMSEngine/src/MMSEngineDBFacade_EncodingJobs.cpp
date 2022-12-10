@@ -9341,17 +9341,20 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 	int64_t encodingProfileKey,
 	Json::Value encodingProfileDetailsRoot,
 
-	int64_t introVideoPhysicalPathKey,
-	string introVideoAssetPathName,
-	int64_t introVideoDurationInMilliSeconds,
+	int64_t introSourcePhysicalPathKey, string introSourceAssetPathName,
+	string introSourceFileExtension, int64_t introSourceDurationInMilliSeconds,
+	string introSourcePhysicalDeliveryURL, string introSourceTranscoderStagingAssetPathName,
 
-	int64_t mainVideoPhysicalPathKey,
-	string mainVideoAssetPathName,
-	int64_t mainVideoDurationInMilliSeconds,
+	int64_t mainSourcePhysicalPathKey, string mainSourceAssetPathName,
+	string mainSourceFileExtension, int64_t mainSourceDurationInMilliSeconds,
+	string mainSourcePhysicalDeliveryURL, string mainSourceTranscoderStagingAssetPathName,
 
-	int64_t outroVideoPhysicalPathKey,
-	string outroVideoAssetPathName,
-	int64_t outroVideoDurationInMilliSeconds,
+	int64_t outroSourcePhysicalPathKey, string outroSourceAssetPathName,
+	string outroSourceFileExtension, int64_t outroSourceDurationInMilliSeconds,
+	string outroSourcePhysicalDeliveryURL, string outroSourceTranscoderStagingAssetPathName,
+
+	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 
 	EncodingPriority encodingPriority)
 {
@@ -9389,32 +9392,74 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 			field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
 
-			field = "introVideoPhysicalPathKey";
-			parametersRoot[field] = introVideoPhysicalPathKey;
+			field = "introSourcePhysicalPathKey";
+			parametersRoot[field] = introSourcePhysicalPathKey;
 
-			field = "introVideoAssetPathName";
-			parametersRoot[field] = introVideoAssetPathName;
+			field = "introSourceAssetPathName";
+			parametersRoot[field] = introSourceAssetPathName;
 
-			field = "introVideoDurationInMilliSeconds";
-			parametersRoot[field] = introVideoDurationInMilliSeconds;
+			field = "introSourceFileExtension";
+			parametersRoot[field] = introSourceFileExtension;
 
-			field = "mainVideoPhysicalPathKey";
-			parametersRoot[field] = mainVideoPhysicalPathKey;
+			field = "introSourceDurationInMilliSeconds";
+			parametersRoot[field] = introSourceDurationInMilliSeconds;
 
-			field = "mainVideoAssetPathName";
-			parametersRoot[field] = mainVideoAssetPathName;
+			field = "introSourcePhysicalDeliveryURL";
+			parametersRoot[field] = introSourcePhysicalDeliveryURL;
 
-			field = "mainVideoDurationInMilliSeconds";
-			parametersRoot[field] = mainVideoDurationInMilliSeconds;
+			field = "introSourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = introSourceTranscoderStagingAssetPathName;
 
-			field = "outroVideoPhysicalPathKey";
-			parametersRoot[field] = outroVideoPhysicalPathKey;
+			field = "mainSourcePhysicalPathKey";
+			parametersRoot[field] = mainSourcePhysicalPathKey;
 
-			field = "outroVideoAssetPathName";
-			parametersRoot[field] = outroVideoAssetPathName;
+			field = "mainSourceAssetPathName";
+			parametersRoot[field] = mainSourceAssetPathName;
 
-			field = "outroVideoDurationInMilliSeconds";
-			parametersRoot[field] = outroVideoDurationInMilliSeconds;
+			field = "mainSourceFileExtension";
+			parametersRoot[field] = mainSourceFileExtension;
+
+			field = "mainSourceDurationInMilliSeconds";
+			parametersRoot[field] = mainSourceDurationInMilliSeconds;
+
+			field = "mainSourcePhysicalDeliveryURL";
+			parametersRoot[field] = mainSourcePhysicalDeliveryURL;
+
+			field = "mainSourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = mainSourceTranscoderStagingAssetPathName;
+
+			field = "outroSourcePhysicalPathKey";
+			parametersRoot[field] = outroSourcePhysicalPathKey;
+
+			field = "outroSourceAssetPathName";
+			parametersRoot[field] = outroSourceAssetPathName;
+
+			field = "outroSourceFileExtension";
+			parametersRoot[field] = outroSourceFileExtension;
+
+			field = "outroSourceDurationInMilliSeconds";
+			parametersRoot[field] = outroSourceDurationInMilliSeconds;
+
+			field = "outroSourcePhysicalDeliveryURL";
+			parametersRoot[field] = outroSourcePhysicalDeliveryURL;
+
+			field = "outroSourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = outroSourceTranscoderStagingAssetPathName;
+
+			field = "encodedTranscoderStagingAssetPathName";
+			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
+
+			field = "encodedNFSStagingAssetPathName";
+			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
