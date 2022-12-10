@@ -2559,8 +2559,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 			throw runtime_error(errorMessage);
 		}
 
-		encodingProfileDetailsRoot
-			= _encodingItem->_encodingParametersRoot["encodingProfileDetailsRoot"];
+		encodingProfileDetailsRoot = _encodingItem->_encodingParametersRoot["encodingProfileDetails"];
 
         string field = "sourceRelativePath";
         sourceRelativePath = sourceToBeEncodedRoot.get(field, "").asString();
@@ -2631,6 +2630,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", fileFormatLowerCase: " + fileFormatLowerCase
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
         );
 		bool isMMSAssetPathName = true;

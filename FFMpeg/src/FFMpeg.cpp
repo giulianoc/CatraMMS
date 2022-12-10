@@ -6031,7 +6031,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         ifstream detailsFile(detailsPathFileName);
         stringstream buffer;
         buffer << detailsFile.rdbuf();
-        
+
         _logger->info(__FILEREF__ + "Details found"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mediaSource: " + mediaSource
