@@ -20188,7 +20188,7 @@ void MMSEngineProcessor::manageEncodeTask(
 				{
 					tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
 						string, string, int64_t, string, string, bool> dependencyInfo =
-						processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+						processDependencyInfo(workspace, ingestionJobKey, keyAndDependencyType);
 					tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
 						mmsSourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
 						sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
