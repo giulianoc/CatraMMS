@@ -1460,7 +1460,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 			string mmsSourceAssetPathName
 				= sourceToBeEncodedRoot.get("mmsSourceAssetPathName", "").asString();
 			Json::Value encodingProfileDetailsRoot
-				= _encodingItem->_encodingParametersRoot["encodingProfileDetailsRoot"];
+				= _encodingItem->_encodingParametersRoot["encodingProfileDetails"];
 
 			string encodedFileName;
 			{
