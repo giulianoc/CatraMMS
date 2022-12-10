@@ -1438,7 +1438,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 		"encodingProfileKey", 0);
 
 	Json::Value sourcesToBeEncodedRoot
-		= _encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"];
+		= _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 
 	for(int sourceIndex = 0; sourceIndex < sourcesToBeEncodedRoot.size(); sourceIndex++)
 	{
@@ -1601,7 +1601,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 
 			sourceToBeEncodedRoot["out_stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
 			sourcesToBeEncodedRoot[sourceIndex] = sourceToBeEncodedRoot;
-			_encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"] = sourcesToBeEncodedRoot;
+			_encodingItem->_encodingParametersRoot["sourcesToBeEncoded"] = sourcesToBeEncodedRoot;
 		}
 		catch (Magick::Error &e)
 		{
@@ -1714,7 +1714,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 	}
 
 	Json::Value sourcesToBeEncodedRoot
-		= _encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"];
+		= _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 
 	for(int sourceIndex = 0; sourceIndex < sourcesToBeEncodedRoot.size(); sourceIndex++)
 	{
@@ -2208,7 +2208,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
         
 				sourceToBeEncodedRoot["out_encodedPhysicalPathKey"] = encodedPhysicalPathKey;
 				sourcesToBeEncodedRoot[sourceIndex] = sourceToBeEncodedRoot;
-				_encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"] = sourcesToBeEncodedRoot;
+				_encodingItem->_encodingParametersRoot["sourcesToBeEncoded"] = sourcesToBeEncodedRoot;
 
 				_logger->info(__FILEREF__ + "Saved the Encoded content"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -2529,7 +2529,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 	int64_t physicalItemRetentionInMinutes = -1;
 	try
     {
-		sourcesToBeEncodedRoot = _encodingItem->_encodingParametersRoot["sourcesToBeEncodedRoot"];
+		sourcesToBeEncodedRoot = _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 		if (sourcesToBeEncodedRoot.size() == 0)
 		{
 			string errorMessage = __FILEREF__ + "No sourceToBeEncoded found"
