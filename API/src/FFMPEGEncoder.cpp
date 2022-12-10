@@ -4064,7 +4064,7 @@ void FFMPEGEncoder::encodeContentThread(
         int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
 				"sourceDurationInMilliSecs", -1);
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
-				sourceToBeEncodedRoot.get("contentType", "").asString());
+				encodingParametersRoot.get("contentType", "").asString());
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
 
 		Json::Value videoTracksRoot;
