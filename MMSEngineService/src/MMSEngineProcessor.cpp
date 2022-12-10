@@ -20162,27 +20162,31 @@ void MMSEngineProcessor::manageEncodeTask(
 		//	in case the task has in his queue a list of encodings to do!!!
 		//	We should save into DB also the specific encoding it is doing?!?!??!
 		//	Also che encoding progress would not have sense in the "sequential/queue" scenario
-		Json::Value sourcesToBeEncodedRoot(Json::arrayValue);
+		// Json::Value sourcesToBeEncodedRoot(Json::arrayValue);
+		bool stopIfReferenceProcessingError;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+		string mmsSourceAssetPathName;
+		string sourcePhysicalDeliveryURL;
+		string sourceFileName;
+		int64_t sourceDurationInMilliSecs;
+		string sourceRelativePath;
+		string sourceFileExtension;
+		Json::Value videoTracksRoot(Json::arrayValue);
+		Json::Value audioTracksRoot(Json::arrayValue);
+		string sourceTranscoderStagingAssetPathName;
+		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+		string encodedNFSStagingAssetPathName;
 		{
-			for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
-				keyAndDependencyType: dependencies)
+			// for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
+			// 	keyAndDependencyType: dependencies)
 			{
-				int64_t sourceMediaItemKey;
 				MMSEngineDBFacade::ContentType referenceContentType;
-				bool stopIfReferenceProcessingError;
 				try
 				{
-					int64_t sourcePhysicalPathKey;
-					string mmsSourceAssetPathName;
-					string sourceRelativePath;
-					string sourceFileName;
-					string sourceFileExtension;
-					int64_t sourceDurationInMilliSecs;
-					string sourcePhysicalDeliveryURL;
-					string sourceTranscoderStagingAssetPathName;
 					tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
 						string, string, int64_t, string, string, bool> dependencyInfo =
-						processDependencyInfo(workspace, ingestionJobKey, keyAndDependencyType);
+						processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
 					tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
 						mmsSourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
 						sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
@@ -20243,8 +20247,6 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
     
-					string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-					string encodedNFSStagingAssetPathName;
 					{
 						bool removeLinuxPathIfExist = false;
 						bool neededForTranscoder = true;
@@ -20272,8 +20274,6 @@ void MMSEngineProcessor::manageEncodeTask(
 							removeLinuxPathIfExist);
 					}
 
-					Json::Value videoTracksRoot(Json::arrayValue);
-					Json::Value audioTracksRoot(Json::arrayValue);
 					{
 						if (contentType == MMSEngineDBFacade::ContentType::Video)
 						{
@@ -20356,6 +20356,7 @@ void MMSEngineProcessor::manageEncodeTask(
 						}
 					}
 
+					/*
 					Json::Value sourceRoot;
 
 					string field = "stopIfReferenceProcessingError";
@@ -20401,6 +20402,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					sourceRoot[field] = encodedNFSStagingAssetPathName;
 
 					sourcesToBeEncodedRoot.append(sourceRoot);
+					*/
 				}
 				catch(runtime_error e)
 				{
@@ -20421,7 +20423,22 @@ void MMSEngineProcessor::manageEncodeTask(
 		_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
 			contentType, encodingPriority,
 			encodingProfileKey, encodingProfileDetailsRoot,
-			sourcesToBeEncodedRoot,
+
+			stopIfReferenceProcessingError,
+			sourceMediaItemKey,
+			sourcePhysicalPathKey,
+			mmsSourceAssetPathName,
+			sourcePhysicalDeliveryURL,
+			sourceDurationInMilliSecs,
+			sourceFileName,
+			sourceRelativePath,
+			sourceFileExtension,
+			videoTracksRoot,
+			audioTracksRoot,
+			sourceTranscoderStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName,
+			encodedNFSStagingAssetPathName,
+
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
     catch(runtime_error e)

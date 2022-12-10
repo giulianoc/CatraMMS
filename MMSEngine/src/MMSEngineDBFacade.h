@@ -1642,7 +1642,22 @@ public:
         EncodingPriority encodingPriority,
         int64_t encodingProfileKey,
 		Json::Value encodingProfileDetailsRoot,
-        Json::Value sourcesToBeEncodedRoot,
+
+		bool stopIfReferenceProcessingError,
+		int64_t sourceMediaItemKey,
+		int64_t sourcePhysicalPathKey,
+		string mmsSourceAssetPathName,
+		string sourcePhysicalDeliveryURL,
+		int64_t sourceDurationInMilliSecs,
+		string sourceFileName,
+		string sourceRelativePath,
+		string sourceFileExtension,
+		Json::Value videoTracksRoot,
+		Json::Value audioTracksRoot,
+		string sourceTranscoderStagingAssetPathName,
+		string encodedTranscoderStagingAssetPathName,
+		string encodedNFSStagingAssetPathName,
+
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
 	);
 
