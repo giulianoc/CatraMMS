@@ -9389,7 +9389,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 			string field = "encodingProfileKey";
 			parametersRoot[field] = encodingProfileKey;
 
-			field = "encodingProfileDetailsRoot";
+			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
 
 			field = "introSourcePhysicalPathKey";
