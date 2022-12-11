@@ -20103,10 +20103,11 @@ void MMSEngineProcessor::manageEncodeTask(
 			else
 			{
 				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + keyField
-						+ ", Field: " + labelField
-						;
+					+ ", Field: " + keyField
+					+ ", Field: " + labelField
+				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -20197,10 +20198,11 @@ void MMSEngineProcessor::manageEncodeTask(
 					if (contentType != referenceContentType)
 					{
 						string errorMessage = __FILEREF__ + "Wrong content type"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 							+ ", referenceContentType: "
 								+ MMSEngineDBFacade::toString(referenceContentType)
-							;
+						;
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -20216,6 +20218,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 							string errorMessage = __FILEREF__ + "Content profile is already present"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 								;
@@ -20430,27 +20433,27 @@ void MMSEngineProcessor::manageEncodeTask(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "manageEncodeTask failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-        
-        // Update IngestionJob done in the calling method
+		_logger->error(__FILEREF__ + "manageEncodeTask failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", e.what(): " + e.what()
+		);
 
-        throw e;
-    }
+		// Update IngestionJob done in the calling method
+
+		throw e;
+	}
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "manageEncodeTask failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-        
-        // Update IngestionJob done in the calling method
+		_logger->error(__FILEREF__ + "manageEncodeTask failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
 
-        throw e;
-    }
+		// Update IngestionJob done in the calling method
+
+		throw e;
+	}
 }
 
 void MMSEngineProcessor::manageVideoSpeedTask(
