@@ -67,6 +67,7 @@ add_executable(sendEmail ${SOURCES} ${HEADERS})
 
 target_link_libraries (sendEmail MMSEngine)
 target_link_libraries (sendEmail FFMpeg)
+target_link_libraries (sendEmail MMSUtility)
 target_link_libraries (sendEmail curl)
 target_link_libraries (sendEmail curlpp)
 target_link_libraries (sendEmail mysqlcppconn)

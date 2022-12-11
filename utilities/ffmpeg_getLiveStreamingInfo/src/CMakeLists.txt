@@ -72,6 +72,7 @@ add_executable(ffmpeg_getLiveStreamingInfo ${SOURCES} ${HEADERS})
 
 target_link_libraries (ffmpeg_getLiveStreamingInfo MMSEngine)
 target_link_libraries (ffmpeg_getLiveStreamingInfo FFMpeg)
+target_link_libraries (ffmpeg_getLiveStreamingInfo MMSUtility)
 target_link_libraries (ffmpeg_getLiveStreamingInfo curl)
 target_link_libraries (ffmpeg_getLiveStreamingInfo curlpp)
 target_link_libraries (ffmpeg_getLiveStreamingInfo mysqlcppconn)

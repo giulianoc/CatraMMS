@@ -503,16 +503,6 @@ public:
 		string sourceReferenceURL,
 		string destinationPathName);
 
-	static void encodingFileFormatValidation(string fileFormat,
-		shared_ptr<spdlog::logger> logger);
-
-    static void encodingAudioCodecValidation(string codec,
-        shared_ptr<spdlog::logger> logger);
-
-    static void encodingVideoProfileValidation(
-        string codec, string profile,
-        shared_ptr<spdlog::logger> logger);
-
     static void encodingVideoCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger);
 
@@ -606,48 +596,9 @@ private:
 		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);
 
-    void settingFfmpegParameters(
-        Json::Value encodingProfileDetailsRoot,
-        bool isVideo,   // if false it means is audio
-        
-		string& httpStreamingFileFormat,
-		string& ffmpegHttpStreamingParameter,
-
-        string& ffmpegFileFormatParameter,
-
-        string& ffmpegVideoCodecParameter,
-        string& ffmpegVideoProfileParameter,
-        string& ffmpegVideoOtherParameters,
-        bool& twoPasses,
-        string& ffmpegVideoFrameRateParameter,
-        string& ffmpegVideoKeyFramesRateParameter,
-		vector<tuple<string, int, int, int, string, string, string>>& videoBitRatesInfo,
-
-        string& ffmpegAudioCodecParameter,
-        string& ffmpegAudioOtherParameters,
-        string& ffmpegAudioChannelsParameter,
-        string& ffmpegAudioSampleRateParameter,
-		vector<string>& audioBitRatesInfo
-    );
-	void addToArguments(string parameter, vector<string>& argumentList);
-    
     string getLastPartOfFile(
         string pathFileName, int lastCharsToBeRead);
     
-    bool isMetadataPresent(Json::Value root, string field);
-
-	int asInt(Json::Value root, string field = "", int defaultValue = 0);
-
-	int64_t asInt64(Json::Value root, string field = "", int64_t defaultValue = 0);
-
-	double asDouble(Json::Value root, string field = "", double defaultValue = 0.0);
-
-	bool asBool(Json::Value root, string field, bool defaultValue);
-
-	string toString(Json::Value joValueRoot);
-
-    void removeHavingPrefixFileName(string directoryName, string prefixFileName);
-
 	long getFrameByOutputLog(string ffmpegEncodingStatus);
 
 	void addToIncrontab(

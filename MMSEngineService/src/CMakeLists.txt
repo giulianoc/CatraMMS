@@ -47,6 +47,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
@@ -88,6 +89,7 @@ endif()
 add_executable(mmsEngineService ${SOURCES} ${HEADERS})
 
 target_link_libraries (mmsEngineService MultiEventsSet)
+target_link_libraries (mmsEngineService MMSUtility)
 target_link_libraries (mmsEngineService MMSEngine)
 target_link_libraries (mmsEngineService FFMpeg)
 target_link_libraries (mmsEngineService mysqlcppconn)

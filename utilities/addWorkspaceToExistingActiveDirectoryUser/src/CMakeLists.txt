@@ -71,6 +71,7 @@ add_executable(addWorkspaceToExistingActiveDirectoryUser ${SOURCES} ${HEADERS})
 
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser MMSEngine)
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser FFMpeg)
+target_link_libraries (addWorkspaceToExistingActiveDirectoryUser MMSUtility)
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser curl)
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser curlpp)
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser mysqlcppconn)

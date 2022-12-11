@@ -56,6 +56,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
@@ -91,6 +92,7 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
 #API
     add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (api.fcgi MMSUtility)
     target_link_libraries (api.fcgi MMSEngine)
     target_link_libraries (api.fcgi FFMpeg)
     target_link_libraries (api.fcgi mysqlcppconn)
@@ -178,6 +180,7 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
 #FFMPEGEncoder
     add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (ffmpegEncoder.fcgi MMSUtility)
     target_link_libraries (ffmpegEncoder.fcgi MMSEngine)
     target_link_libraries (ffmpegEncoder.fcgi FFMpeg)
     target_link_libraries (ffmpegEncoder.fcgi mysqlcppconn)

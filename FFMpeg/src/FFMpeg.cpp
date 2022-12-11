@@ -13,7 +13,9 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include "JSONUtils.h"
 #include "MMSCURL.h"
+#include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/StringUtils.h"
@@ -39,7 +41,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
         + ", youTubeDl->pythonPathName: " + _pythonPathName
     );
 
-    _waitingNFSSync_maxMillisecondsToWait = asInt(configuration["storage"],
+    _waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
 		"waitingNFSSync_maxMillisecondsToWait", 60000);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
@@ -47,7 +49,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
 		+ to_string(_waitingNFSSync_attemptNumber)
     );
 	*/
-    _waitingNFSSync_milliSecondsWaitingBetweenChecks = asInt(configuration["storage"],
+    _waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
 		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
@@ -56,7 +58,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
     );
 	*/
 
-    _startCheckingFrameInfoInMinutes = asInt(configuration["ffmpeg"],
+    _startCheckingFrameInfoInMinutes = JSONUtils::asInt(configuration["ffmpeg"],
 		"startCheckingFrameInfoInMinutes", 5);
 
     _charsToBeReadFromFfmpegErrorOutput     = 1024 * 3;
@@ -82,6 +84,7 @@ FFMpeg::~FFMpeg()
     
 }
 
+/*
 void FFMpeg::encodeContent(
 	string mmsSourceAssetPathName,
 	int64_t durationInMilliSeconds,
@@ -246,29 +249,26 @@ void FFMpeg::encodeContent(
 			&& videoTracksRoot.size() == 1
 		)
 		{
-			/*
-			 * The command will be like this:
+			// The command will be like this:
 
-			ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/ws2/000/228/001/1247989_source.mp4
+			// ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/ws2/000/228/001/1247989_source.mp4
 
-				-map 0:1 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/ita/1247992_384637_%04d.ts -f hls /home/mms/tmp/ita/1247992_384637.m3u8
+			// 	-map 0:1 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/ita/1247992_384637_%04d.ts -f hls /home/mms/tmp/ita/1247992_384637.m3u8
 
-				-map 0:2 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/eng/1247992_384637_%04d.ts -f hls /home/mms/tmp/eng/1247992_384637.m3u8
+			// 	-map 0:2 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/eng/1247992_384637_%04d.ts -f hls /home/mms/tmp/eng/1247992_384637.m3u8
 
-				-map 0:0 -codec:v libx264 -profile:v high422 -b:v 800k -preset veryfast -level 4.0 -crf 22 -r 25 -vf scale=640:360 -threads 0 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/low/1247992_384637_%04d.ts -f hls /home/mms/tmp/low/1247992_384637.m3u8
+			// 	-map 0:0 -codec:v libx264 -profile:v high422 -b:v 800k -preset veryfast -level 4.0 -crf 22 -r 25 -vf scale=640:360 -threads 0 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/low/1247992_384637_%04d.ts -f hls /home/mms/tmp/low/1247992_384637.m3u8
 
-			Manifest will be like:
-			#EXTM3U
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
-			#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
-			0/8896718_1509416.m3u8
+			// Manifest will be like:
+			// #EXTM3U
+			// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
+			// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
+			// #EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
+			// 0/8896718_1509416.m3u8
 
 
-			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
-			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
-
-			*/
+			// https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
+			// https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
 
 			string ffmpegVideoResolutionParameter = "";
 			int videoBitRateInKbps = -1;
@@ -377,7 +377,7 @@ void FFMpeg::encodeContent(
 					ffmpegArgumentList.push_back(
 						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
 
-					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
 					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
 					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
 					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
@@ -525,7 +525,7 @@ void FFMpeg::encodeContent(
 					_logger->error(errorMessage);
 
 					bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -732,7 +732,7 @@ void FFMpeg::encodeContent(
 					_logger->error(errorMessage);
 
 					bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -745,7 +745,7 @@ void FFMpeg::encodeContent(
 				}
 
 				bool exceptionInCaseOfError = false;
-				removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+				removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -1461,7 +1461,7 @@ void FFMpeg::encodeContent(
 					_logger->error(errorMessage);
 
 					bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -1482,18 +1482,16 @@ void FFMpeg::encodeContent(
 
 				// create the master playlist
 				{
-					/*
-						#EXTM3U
-						#EXT-X-VERSION:3
-						#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
-						360p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
-						480p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
-						720p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
-						1080p.m3u8
-					 */
+						// #EXTM3U
+						// #EXT-X-VERSION:3
+						// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
+						// 360p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
+						// 480p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+						// 720p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+						// 1080p.m3u8
 					string endLine = "\n";
 					string masterManifest =
 						"#EXTM3U" + endLine
@@ -1762,18 +1760,16 @@ void FFMpeg::encodeContent(
 
 				// create the master playlist
 				{
-					/*
-						#EXTM3U
-						#EXT-X-VERSION:3
-						#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
-						360p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
-						480p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
-						720p.m3u8
-						#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
-						1080p.m3u8
-					 */
+						// #EXTM3U
+						// #EXT-X-VERSION:3
+						// #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
+						// 360p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480
+						// 480p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+						// 720p.m3u8
+						// #EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+						// 1080p.m3u8
 					string endLine = "\n";
 					string masterManifest =
 						"#EXTM3U" + endLine
@@ -1861,11 +1857,10 @@ void FFMpeg::encodeContent(
         }
         else
         {
-			/* 2021-09-10: In case videoBitRatesInfo has more than one bitrates,
-			 *	it has to be created one file for each bit rate and than
-			 *	merge all in the last file with a copy command, i.e.:
-			 *		- ffmpeg -i ./1.mp4 -i ./2.mp4 -c copy -map 0 -map 1 ./3.mp4
-			*/
+			// 2021-09-10: In case videoBitRatesInfo has more than one bitrates,
+			//	it has to be created one file for each bit rate and than
+			//	merge all in the last file with a copy command, i.e.:
+			//		- ffmpeg -i ./1.mp4 -i ./2.mp4 -c copy -map 0 -map 1 ./3.mp4
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
@@ -2048,7 +2043,7 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
@@ -2241,7 +2236,7 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir, passlogFileName);
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
@@ -2442,16 +2437,14 @@ void FFMpeg::encodeContent(
 						addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
 						addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-						/*
-						if (videoBitRatesInfo.size() > 1)
-						{
-							string newStagingEncodedAssetPathName =
-								regex_replace(stagingTemplateEncodedAssetPathName,
-									regex(templateVariable), to_string(videoHeight));
-							ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
-						}
-						else
-						*/
+						// if (videoBitRatesInfo.size() > 1)
+						// {
+						// 	string newStagingEncodedAssetPathName =
+						// 		regex_replace(stagingTemplateEncodedAssetPathName,
+						// 			regex(templateVariable), to_string(videoHeight));
+						// 	ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+						// }
+						// else
 							ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 					}
 				}
@@ -2763,6 +2756,1535 @@ void FFMpeg::encodeContent(
         throw e;
     }
 }
+*/
+void FFMpeg::encodeContent(
+	string mmsSourceAssetPathName,
+	int64_t durationInMilliSeconds,
+	string encodedStagingAssetPathName,
+	Json::Value encodingProfileDetailsRoot,
+	bool isVideo,   // if false it means is audio
+	Json::Value videoTracksRoot,
+	Json::Value audioTracksRoot,
+	int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
+	int64_t physicalPathKey,
+	int64_t encodingJobKey,
+	int64_t ingestionJobKey,
+	pid_t* pChildPid)
+{
+	int iReturnedStatus = 0;
+
+	_currentApiName = "encodeContent";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		durationInMilliSeconds,
+		mmsSourceAssetPathName,
+		encodedStagingAssetPathName
+	);
+
+    try
+    {
+		_logger->info(__FILEREF__ + "Received " + _currentApiName
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", isVideo: " + to_string(isVideo)
+			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+			+ ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
+			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
+			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)
+			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
+		);
+
+		if (!FileIO::fileExisting(mmsSourceAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceAssetPathName)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		/*
+        string httpStreamingFileFormat;    
+		string ffmpegHttpStreamingParameter = "";
+
+        string ffmpegFileFormatParameter = "";
+
+        string ffmpegVideoCodecParameter = "";
+        string ffmpegVideoProfileParameter = "";
+        string ffmpegVideoOtherParameters = "";
+        string ffmpegVideoFrameRateParameter = "";
+        string ffmpegVideoKeyFramesRateParameter = "";
+		vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
+
+        string ffmpegAudioCodecParameter = "";
+        string ffmpegAudioOtherParameters = "";
+        string ffmpegAudioChannelsParameter = "";
+        string ffmpegAudioSampleRateParameter = "";
+		vector<string> audioBitRatesInfo;
+		*/
+
+
+        // _currentDurationInMilliSeconds      = durationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
+        
+        _currentlyAtSecondPass = false;
+
+        // we will set by default _twoPasses to false otherwise, since the ffmpeg class is reused
+        // it could remain set to true from a previous call
+        _twoPasses = false;
+        
+		FFMpegEncodingParameters ffmpegEncodingParameters (
+			ingestionJobKey,
+			encodingJobKey,
+			encodedStagingAssetPathName,
+			encodingProfileDetailsRoot,
+			isVideo,   // if false it means is audio
+			videoTracksRoot,
+			audioTracksRoot,
+			videoTrackIndexToBeUsed,
+			audioTrackIndexToBeUsed,
+
+			_twoPasses,	// out
+
+			_ffmpegTempDir,
+			_logger) ;
+
+		{
+			char	sUtcTimestamp [64];
+			tm		tmUtcTimestamp;
+			time_t	utcTimestamp = chrono::system_clock::to_time_t(
+				chrono::system_clock::now());
+
+			localtime_r (&utcTimestamp, &tmUtcTimestamp);
+			sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+				tmUtcTimestamp.tm_year + 1900,
+				tmUtcTimestamp.tm_mon + 1,
+				tmUtcTimestamp.tm_mday,
+				tmUtcTimestamp.tm_hour,
+				tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec);
+
+			_outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + "_"
+				+ sUtcTimestamp
+                + ".ffmpegoutput.log";
+		}
+
+		// special case:
+		//	- input is mp4 or ts
+		//	- output is hls
+		//	- more than 1 audio track
+		//	- one video track
+		// In this case we will create:
+		//  - one m3u8 for each track (video and audio)
+		//  - one main m3u8 having a group for AUDIO
+		string mp4Suffix = ".mp4";
+		string tsSuffix = ".ts";
+		if (
+			// input is mp4
+			(
+			(mmsSourceAssetPathName.size() >= mp4Suffix.size()
+			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-mp4Suffix.size(), mp4Suffix.size(), mp4Suffix))
+			||
+			// input is ts
+			(mmsSourceAssetPathName.size() >= tsSuffix.size()
+			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
+			)
+
+			// output is hls
+			&& ffmpegEncodingParameters._httpStreamingFileFormat == "hls"
+
+			// more than 1 audio track
+			&& audioTracksRoot.size() > 1
+
+			// one video track
+			&& videoTracksRoot.size() == 1
+		)
+		{
+			/*
+			 * The command will be like this:
+
+			ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/ws2/000/228/001/1247989_source.mp4
+
+				-map 0:1 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/ita/1247992_384637_%04d.ts -f hls /home/mms/tmp/ita/1247992_384637.m3u8
+
+				-map 0:2 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/eng/1247992_384637_%04d.ts -f hls /home/mms/tmp/eng/1247992_384637.m3u8
+
+				-map 0:0 -codec:v libx264 -profile:v high422 -b:v 800k -preset veryfast -level 4.0 -crf 22 -r 25 -vf scale=640:360 -threads 0 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/low/1247992_384637_%04d.ts -f hls /home/mms/tmp/low/1247992_384637.m3u8
+
+			Manifest will be like:
+			#EXTM3U
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
+			#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
+			0/8896718_1509416.m3u8
+
+
+			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
+			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
+
+			*/
+
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+
+			{
+				bool noErrorIfExists = true;
+				bool recursive = true;
+				_logger->info(__FILEREF__ + "Creating directory (if needed)"
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				);
+				FileIO::createDirectory(encodedStagingAssetPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					string audioPathName = encodedStagingAssetPathName + "/"
+						+ audioTrackDirectoryName;
+
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", audioPathName: " + audioPathName
+					);
+					FileIO::createDirectory(audioPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				{
+					string videoTrackDirectoryName;
+					{
+						Json::Value videoTrack = videoTracksRoot[0];
+
+						videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+					}
+
+					string videoPathName = encodedStagingAssetPathName + "/"
+						+ videoTrackDirectoryName;
+
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", videoPathName: " + videoPathName
+					);
+					FileIO::createDirectory(videoPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
+            if (_twoPasses)
+            {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding_audioGroup(
+					0,	// YES two passes, first step
+					ffmpegArgumentList);
+
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				ffmpegArgumentList.clear();
+				ffmpegArgumentListStream.clear();
+
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding_audioGroup(
+					1,	// YES two passes, second step
+					ffmpegArgumentList);
+
+                _currentlyAtSecondPass = true;
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;            
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+                    ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			}
+			else
+            {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding_audioGroup(
+					-1,	// NO two passes
+					ffmpegArgumentList);
+
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			}
+
+			long long llDirSize = -1;
+			// if (FileIO::fileExisting(encodedStagingAssetPathName))
+			{
+				llDirSize = FileIO::getDirectorySizeInBytes (
+					encodedStagingAssetPathName);
+			}
+
+            _logger->info(__FILEREF__ + "Encoded file generated"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				+ ", llDirSize: " + to_string(llDirSize)
+				+ ", _twoPasses: " + to_string(_twoPasses)
+            );
+
+            if (llDirSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded dir size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                ;
+                _logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded dir size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
+                throw runtime_error(errorMessage);
+            }
+
+			ffmpegEncodingParameters.createManifestFile_audioGroup();
+        }
+		else if (ffmpegEncodingParameters._httpStreamingFileFormat != "")
+        {
+			// hls or dash output
+
+			vector<string> ffmpegArgumentList;
+
+			{
+				bool noErrorIfExists = true;
+				bool recursive = true;
+				_logger->info(__FILEREF__ + "Creating directory (if needed)"
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				);
+				FileIO::createDirectory(encodedStagingAssetPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			}
+
+            if (_twoPasses)
+            {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					0,	// 0: YES two passes, first step
+					ffmpegArgumentList	// out
+				);
+
+				ostringstream ffmpegArgumentListStreamFirstStep;
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStreamFirstStep, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
+						;
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				ffmpegArgumentList.clear();
+
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					1,	// 1: YES two passes, second step
+					ffmpegArgumentList	// out
+				);
+
+				ostringstream ffmpegArgumentListStreamSecondStep;
+                _currentlyAtSecondPass = true;
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStreamSecondStep, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
+						;
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				ffmpegEncodingParameters.createManifestFile();
+			}
+			else
+            {
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					-1,	// -1: NO two passes
+					ffmpegArgumentList	// out
+				);
+
+				ostringstream ffmpegArgumentListStream;
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;
+						_logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+						errorMessage = __FILEREF__ + "encodeContent command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				ffmpegEncodingParameters.createManifestFile();
+			}
+
+			long long llDirSize = -1;
+			// if (FileIO::fileExisting(encodedStagingAssetPathName))
+			{
+				llDirSize = FileIO::getDirectorySizeInBytes (
+					encodedStagingAssetPathName);
+			}
+
+            _logger->info(__FILEREF__ + "Encoded file generated"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				+ ", llDirSize: " + to_string(llDirSize)
+				+ ", _twoPasses: " + to_string(_twoPasses)
+            );
+
+            if (llDirSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded dir size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
+                _logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded dir size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
+                throw runtime_error(errorMessage);
+            }
+
+            // changes to be done to the manifest, see EncoderThread.cpp
+        }
+        else
+        {
+			/* 2021-09-10: In case videoBitRatesInfo has more than one bitrates,
+			 *	it has to be created one file for each bit rate and than
+			 *	merge all in the last file with a copy command, i.e.:
+			 *		- ffmpeg -i ./1.mp4 -i ./2.mp4 -c copy -map 0 -map 1 ./3.mp4
+			*/
+
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+
+            if (_twoPasses)
+            {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					0,	// 1: YES two passes, first step
+					ffmpegArgumentList	// out
+				);
+
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+                    
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;
+                        _logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
+                        throw runtime_error(errorMessage);
+                    }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                    );
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+                    _logger->error(errorMessage);
+
+                    bool exceptionInCaseOfError = false;
+					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+				ffmpegArgumentList.clear();
+				ffmpegArgumentListStream.clear();
+
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					1,	// 1: YES two passes, second step
+					ffmpegArgumentList	// out
+				);
+
+                _currentlyAtSecondPass = true;
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed (second step)"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;
+                        _logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed (second step)"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
+                        throw runtime_error(errorMessage);
+                    }
+                    
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                    );
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+                    _logger->error(errorMessage);
+
+                    bool exceptionInCaseOfError = false;
+					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+                bool exceptionInCaseOfError = false;
+				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
+
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				vector<string> sourcesPathName;
+				if (ffmpegEncodingParameters.getMultiTrackPathNames(sourcesPathName))
+				{
+					// all the tracks generated in different files have to be copied
+					// into the encodedStagingAssetPathName file
+					// The command willl be:
+					//		ffmpeg -i ... -i ... -c copy -map 0 -map 1 ... <dest file>
+
+					try
+					{
+						muxAllFiles(ingestionJobKey, sourcesPathName,
+							encodedStagingAssetPathName);
+
+						ffmpegEncodingParameters.removeMultiTrackPathNames();
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "muxAllFiles failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						ffmpegEncodingParameters.removeMultiTrackPathNames();
+
+						throw e;
+					}
+				}
+            }
+            else
+            {
+				// used in case of multiple bitrate
+
+				ffmpegArgumentList.clear();
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+
+				ffmpegEncodingParameters.applyEncoding(
+					-1,	// -1: NO two passes
+					ffmpegArgumentList	// out
+				);
+
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;
+                        _logger->error(errorMessage);
+
+						// to hide the ffmpeg staff
+                        errorMessage = __FILEREF__ + "encodeContent command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        ;
+                        throw runtime_error(errorMessage);
+                    }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                    );
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+                    _logger->error(errorMessage);
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    bool exceptionInCaseOfError = false;
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                bool exceptionInCaseOfError = false;
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				vector<string> sourcesPathName;
+				if (ffmpegEncodingParameters.getMultiTrackPathNames(sourcesPathName))
+				{
+					// all the tracks generated in different files have to be copied
+					// into the encodedStagingAssetPathName file
+					// The command willl be:
+					//		ffmpeg -i ... -i ... -c copy -map 0 -map 1 ... <dest file>
+
+					try
+					{
+						muxAllFiles(ingestionJobKey, sourcesPathName,
+							encodedStagingAssetPathName);
+
+						ffmpegEncodingParameters.removeMultiTrackPathNames();
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "muxAllFiles failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						ffmpegEncodingParameters.removeMultiTrackPathNames();
+
+						throw e;
+					}
+				}
+            }
+
+			long long llFileSize = -1;
+			// if (FileIO::fileExisting(encodedStagingAssetPathName))
+			{
+				bool inCaseOfLinkHasItToBeRead = false;
+				llFileSize = FileIO::getFileSizeInBytes (
+					encodedStagingAssetPathName, inCaseOfLinkHasItToBeRead);
+			}
+
+            _logger->info(__FILEREF__ + "Encoded file generated"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				+ ", llFileSize: " + to_string(llFileSize)
+				+ ", _twoPasses: " + to_string(_twoPasses)
+            );
+
+            if (llFileSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                ;
+                _logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "command failed, encoded file size is 0"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                ;
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(encodedStagingAssetPathName)
+			|| FileIO::directoryExisting(encodedStagingAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                FileIO::remove(encodedStagingAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(encodedStagingAssetPathName)
+                || FileIO::directoryExisting(encodedStagingAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                FileIO::remove(encodedStagingAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+        );
+
+        if (FileIO::fileExisting(encodedStagingAssetPathName)
+                || FileIO::directoryExisting(encodedStagingAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+                FileIO::remove(encodedStagingAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+}
+
 
 void FFMpeg::overlayImageOnVideo(
 	bool externalEncoder,
@@ -2852,7 +4374,8 @@ void FFMpeg::overlayImageOnVideo(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -2919,26 +4442,26 @@ void FFMpeg::overlayImageOnVideo(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
 				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -3018,13 +4541,13 @@ void FFMpeg::overlayImageOnVideo(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceImageAssetPathName);
 				// output options
-				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 
 				// encoding parameters
 				if (encodingProfileDetailsRoot != Json::nullValue)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 				}
 
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
@@ -3354,7 +4877,8 @@ void FFMpeg::overlayTextOnVideo(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -3421,14 +4945,14 @@ void FFMpeg::overlayTextOnVideo(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
@@ -3436,11 +4960,11 @@ void FFMpeg::overlayTextOnVideo(
 				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -3522,7 +5046,7 @@ void FFMpeg::overlayTextOnVideo(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
 				// output options
-				// addToArguments(ffmpegDrawTextFilter, ffmpegArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegDrawTextFilter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-vf");
 				ffmpegArgumentList.push_back(ffmpegDrawTextFilter);
 
@@ -3530,7 +5054,7 @@ void FFMpeg::overlayTextOnVideo(
 				if (encodingProfileDetailsRoot != Json::nullValue)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 				}
 
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
@@ -4052,7 +5576,8 @@ void FFMpeg::videoSpeed(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -4119,26 +5644,26 @@ void FFMpeg::videoSpeed(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
 				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -4346,15 +5871,15 @@ void FFMpeg::videoSpeed(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
 				// output options
-				addToArguments(complexFilter, ffmpegArgumentList);
-				addToArguments(videoMap, ffmpegArgumentList);
-				addToArguments(audioMap, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(complexFilter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(videoMap, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(audioMap, ffmpegArgumentList);
 
 				// encoding parameters
 				if (encodingProfileDetailsRoot != Json::nullValue)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 				}
 
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
@@ -4704,7 +6229,8 @@ void FFMpeg::pictureInPicture(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -4771,26 +6297,26 @@ void FFMpeg::pictureInPicture(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
 				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -4903,13 +6429,13 @@ void FFMpeg::pictureInPicture(
 					ffmpegArgumentList.push_back(mmsMainVideoAssetPathName);
 				}
 				// output options
-				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 
 				// encoding parameters
 				if (encodingProfileDetailsRoot != Json::nullValue)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 				}
 
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
@@ -5284,7 +6810,8 @@ void FFMpeg::introOutroOverlay(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -5351,26 +6878,26 @@ void FFMpeg::introOutroOverlay(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
 				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -5501,7 +7028,7 @@ ffmpeg \
 				ffmpegArgumentList.push_back(outroVideoAssetPathName);
 
 				// output options
-				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[final_video]");
@@ -5510,7 +7037,7 @@ ffmpeg \
 
 				// encoding parameters
 				for (string parameter: ffmpegEncodingProfileArgumentList)
-					addToArguments(parameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 
 				ffmpegArgumentList.push_back("-pix_fmt");
 				// yuv420p: the only option for broad compatibility
@@ -6043,10 +7570,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
-        Json::Value detailsRoot = MMSCURL::toJson(ingestionJobKey, -1, mediaDetails);
+        Json::Value detailsRoot = JSONUtils::toJson(ingestionJobKey, -1, mediaDetails);
 
         string field = "streams";
-        if (!isMetadataPresent(detailsRoot, field))
+        if (!JSONUtils::isMetadataPresent(detailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6070,7 +7597,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             Json::Value streamRoot = streamsRoot[streamIndex];
             
             field = "codec_type";
-            if (!isMetadataPresent(streamRoot, field))
+            if (!JSONUtils::isMetadataPresent(streamRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6101,7 +7628,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				long videoBitRate = -1;
 
                 field = "index";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6116,13 +7643,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                trackIndex = asInt(streamRoot, field, 0);
+                trackIndex = JSONUtils::asInt(streamRoot, field, 0);
 
                 field = "codec_name";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
 					field = "codec_tag_string";
-					if (!isMetadataPresent(streamRoot, field))
+					if (!JSONUtils::isMetadataPresent(streamRoot, field))
 					{
 						string errorMessage = __FILEREF__
 							+ "ffmpeg: Field is not present or it is null"
@@ -6146,7 +7673,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 					firstVideoCodecName = videoCodecName;
 
                 field = "profile";
-                if (isMetadataPresent(streamRoot, field))
+                if (JSONUtils::isMetadataPresent(streamRoot, field))
                     videoProfile = streamRoot.get(field, "XXX").asString();
                 else
                 {
@@ -6164,7 +7691,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 }
 
                 field = "width";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6179,10 +7706,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                videoWidth = asInt(streamRoot, field, 0);
+                videoWidth = JSONUtils::asInt(streamRoot, field, 0);
 
                 field = "height";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6197,10 +7724,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                videoHeight = asInt(streamRoot, field, 0);
+                videoHeight = JSONUtils::asInt(streamRoot, field, 0);
                 
                 field = "avg_frame_rate";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6218,7 +7745,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 videoAvgFrameRate = streamRoot.get(field, "XXX").asString();
 
                 field = "bit_rate";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     if (videoCodecName != "mjpeg")
                     {
@@ -6237,7 +7764,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     videoBitRate = stol(streamRoot.get(field, "").asString());
 
 				field = "duration";
-				if (!isMetadataPresent(streamRoot, field))
+				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
 					// I didn't find it in a .avi file generated using OpenCV::VideoWriter
 					// let's log it as a warning
@@ -6279,7 +7806,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				long audioBitRate = -1;
 
                 field = "index";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6294,10 +7821,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                trackIndex = asInt(streamRoot, field, 0);
+                trackIndex = JSONUtils::asInt(streamRoot, field, 0);
 
                 field = "codec_name";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6315,7 +7842,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 audioCodecName = streamRoot.get(field, "XXX").asString();
 
                 field = "sample_rate";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6333,7 +7860,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                 audioSampleRate = stol(streamRoot.get(field, "XXX").asString());
 
                 field = "channels";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6348,10 +7875,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                audioChannels = asInt(streamRoot, field, 0);
+                audioChannels = JSONUtils::asInt(streamRoot, field, 0);
                 
                 field = "bit_rate";
-                if (!isMetadataPresent(streamRoot, field))
+                if (!JSONUtils::isMetadataPresent(streamRoot, field))
                 {
                     // I didn't find bit_rate in a webm file, let's set it as a warning
 
@@ -6367,7 +7894,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 					audioBitRate = stol(streamRoot.get(field, "XXX").asString());
 
 				field = "duration";
-				if (isMetadataPresent(streamRoot, field))
+				if (JSONUtils::isMetadataPresent(streamRoot, field))
 				{
 					string duration = streamRoot.get(field, "0").asString();
 
@@ -6380,10 +7907,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
 				string language;
                 string tagsField = "tags";
-                if (isMetadataPresent(streamRoot, tagsField))
+                if (JSONUtils::isMetadataPresent(streamRoot, tagsField))
                 {
 					field = "language";
-					if (isMetadataPresent(streamRoot[tagsField], field))
+					if (JSONUtils::isMetadataPresent(streamRoot[tagsField], field))
 					{
 						language = streamRoot[tagsField].get(field, "").asString();
 					}
@@ -6395,7 +7922,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         }
 
         field = "format";
-        if (!isMetadataPresent(detailsRoot, field))
+        if (!JSONUtils::isMetadataPresent(detailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6413,7 +7940,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         Json::Value formatRoot = detailsRoot[field];
 
         field = "duration";
-        if (!isMetadataPresent(formatRoot, field))
+        if (!JSONUtils::isMetadataPresent(formatRoot, field))
         {
 			// I didn't find it in a .avi file generated using OpenCV::VideoWriter
 			// let's log it as a warning
@@ -6440,7 +7967,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         }
 
         field = "bit_rate";
-        if (!isMetadataPresent(formatRoot, field))
+        if (!JSONUtils::isMetadataPresent(formatRoot, field))
         {
             if (firstVideoCodecName != "" && firstVideoCodecName != "mjpeg")
             {
@@ -7641,7 +9168,7 @@ void FFMpeg::generateFramesToIngest(
 		ffmpegArgumentList.push_back("-vframes");
 		ffmpegArgumentList.push_back(to_string(framesNumber));
 	}
-	addToArguments(videoFilterParameters, ffmpegArgumentList);
+	FFMpegEncodingParameters::addToArguments(videoFilterParameters, ffmpegArgumentList);
 	if (mjpeg)
 	{
 		ffmpegArgumentList.push_back("-f");
@@ -8301,7 +9828,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				vector<string> audioBitRatesInfo;
 
 
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					encodingProfileIsVideo,
 
@@ -8369,26 +9897,26 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					_logger->warn(errorMessage);
 				}
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 				// we cannot have two video filters parameters (-vf), one is for the overlay.
 				// If it is needed we have to combine both using the same -vf parameter and using the
 				// comma (,) as separator. For now we will just comment it and the resolution will be the one
 				// coming from the video (no changes)
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 				ffmpegEncodingProfileArgumentList.push_back("-threads");
 				ffmpegEncodingProfileArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
 			catch(runtime_error e)
 			{
@@ -8428,7 +9956,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			// ffmpegArgumentList.push_back(to_string(1));
 
 			for (string parameter: ffmpegEncodingProfileArgumentList)
-				addToArguments(parameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 
 			ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 
@@ -8851,7 +10379,8 @@ void FFMpeg::slideShow(
 			vector<string> audioBitRatesInfo;
 
 
-			settingFfmpegParameters(
+			FFMpegEncodingParameters::settingFfmpegParameters(
+				_logger,
 				encodingProfileDetailsRoot,
 				encodingProfileIsVideo,
 
@@ -8918,26 +10447,26 @@ void FFMpeg::slideShow(
 				_logger->warn(errorMessage);
 			}
 
-			addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
 			// we cannot have two video filters parameters (-vf), one is for the overlay.
 			// If it is needed we have to combine both using the same -vf parameter and using the
 			// comma (,) as separator. For now we will just comment it and the resolution will be the one
 			// coming from the video (no changes)
-			// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+			// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
 			ffmpegEncodingProfileArgumentList.push_back("-threads");
 			ffmpegEncodingProfileArgumentList.push_back("0");
-			addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-			addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 		}
 		catch(runtime_error e)
 		{
@@ -8945,7 +10474,7 @@ void FFMpeg::slideShow(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
-				+ ", encodingProfileDetailsRoot: " + toString(encodingProfileDetailsRoot)
+				+ ", encodingProfileDetailsRoot: " + JSONUtils::toString(encodingProfileDetailsRoot)
 			;
 			_logger->error(errorMessage);
 
@@ -9019,7 +10548,7 @@ void FFMpeg::slideShow(
 	if (encodingProfileDetailsRoot != Json::nullValue)
 	{
 		for (string parameter: ffmpegEncodingProfileArgumentList)
-			addToArguments(parameter, ffmpegArgumentList);
+			FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 	}
 	else
 	{
@@ -9606,7 +11135,7 @@ void FFMpeg::liveRecorder(
 		}
 
 		ffmpegArgumentList.push_back("ffmpeg");
-		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
+		// FFMpegEncodingParameters::addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
 		if (userAgentToBeUsed)
 		{
 			ffmpegArgumentList.push_back("-user_agent");
@@ -9615,7 +11144,7 @@ void FFMpeg::liveRecorder(
 
 		if (otherInputOptions != "")
 		{
-			addToArguments(otherInputOptions, ffmpegArgumentList);
+			FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegArgumentList);
 		}
 
 		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
@@ -9736,7 +11265,7 @@ void FFMpeg::liveRecorder(
 			{
 				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
-				if (isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
+				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
 					string picturePathName = frameToBeDetectedRoot.get("picturePathName", "").
 						asString();
@@ -9840,7 +11369,7 @@ void FFMpeg::liveRecorder(
 			string outputType = outputRoot.get("outputType", "").asString();
 
 			Json::Value filtersRoot = Json::nullValue;
-			if (isMetadataPresent(outputRoot, "filters"))
+			if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
 				filtersRoot = outputRoot["filters"];
 
 			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
@@ -9850,8 +11379,8 @@ void FFMpeg::liveRecorder(
 			bool isVideo = encodingProfileContentType == "Video" ? true : false;
 			string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 
-			int videoTrackIndexToBeUsed = asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
-			int audioTrackIndexToBeUsed = asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
+			int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
+			int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
@@ -9872,9 +11401,9 @@ void FFMpeg::liveRecorder(
 				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
 					asString();
 				string manifestFileName = outputRoot.get("manifestFileName", "").asString();
-				int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
+				int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
 				int localSegmentDurationInSeconds =
-					asInt(outputRoot, "segmentDurationInSeconds", 10);
+					JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
 
 				// filter to be managed with the others
 				string ffmpegVideoResolutionParameter;
@@ -9910,7 +11439,8 @@ void FFMpeg::liveRecorder(
 						vector<string> audioBitRatesInfo;
 
 
-						settingFfmpegParameters(
+						FFMpegEncodingParameters::settingFfmpegParameters(
+							_logger,
 							encodingProfileDetailsRoot,
 							isVideo,
 
@@ -9955,35 +11485,35 @@ void FFMpeg::liveRecorder(
 							_logger->warn(errorMessage);
 						}
 
-						addToArguments(ffmpegVideoCodecParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoProfileParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBitRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoOtherParameters,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoMaxRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBufSizeParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoFrameRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoKeyFramesRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						// addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						// FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 						// 	ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
-						addToArguments(ffmpegAudioCodecParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioBitRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioOtherParameters,
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioChannelsParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioSampleRateParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter,
 							ffmpegEncodingProfileArgumentList);
 					}
 					catch(runtime_error e)
@@ -10012,7 +11542,7 @@ void FFMpeg::liveRecorder(
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 
 					if (videoFilters != "")
 					{
@@ -10138,7 +11668,7 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
 					}
 
-					addToArguments(otherOutputOptions, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
 					ffmpegArgumentList.push_back(manifestFilePathName);
 				}
@@ -10218,7 +11748,8 @@ void FFMpeg::liveRecorder(
 						vector<string> audioBitRatesInfo;
 
 	
-						settingFfmpegParameters(
+						FFMpegEncodingParameters::settingFfmpegParameters(
+							_logger,
 							encodingProfileDetailsRoot,
 							isVideo,
 
@@ -10282,23 +11813,23 @@ void FFMpeg::liveRecorder(
 							_logger->warn(errorMessage);
 						}
 
-						addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-						// addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+						// FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 						// 	ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
-						addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 					}
 					catch(runtime_error e)
 					{
@@ -10326,7 +11857,7 @@ void FFMpeg::liveRecorder(
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 
 					if (videoFilters != "")
 					{
@@ -10366,7 +11897,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				addToArguments(otherOutputOptions, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
 				ffmpegArgumentList.push_back("-bsf:a");
 				ffmpegArgumentList.push_back("aac_adtstoasc");
@@ -10444,7 +11975,8 @@ void FFMpeg::liveRecorder(
 						vector<string> audioBitRatesInfo;
 
 	
-						settingFfmpegParameters(
+						FFMpegEncodingParameters::settingFfmpegParameters(
+							_logger,
 							encodingProfileDetailsRoot,
 							isVideo,
 
@@ -10508,23 +12040,23 @@ void FFMpeg::liveRecorder(
 							_logger->warn(errorMessage);
 						}
 
-						addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
-						// addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+						// FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 						// 	ffmpegEncodingProfileArgumentList);
 						ffmpegEncodingProfileArgumentList.push_back("-threads");
 						ffmpegEncodingProfileArgumentList.push_back("0");
-						addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 					}
 					catch(runtime_error e)
 					{
@@ -10552,7 +12084,7 @@ void FFMpeg::liveRecorder(
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
-						addToArguments(parameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
 
 					if (videoFilters != "")
 					{
@@ -10592,7 +12124,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				addToArguments(otherOutputOptions, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
 				// ffmpegArgumentList.push_back("-bsf:a");
 				// ffmpegArgumentList.push_back("aac_adtstoasc");
@@ -10652,24 +12184,24 @@ void FFMpeg::liveRecorder(
 			{
 				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
-				if (isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
+				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
-					bool videoFrameToBeCropped = asBool(frameToBeDetectedRoot,
+					bool videoFrameToBeCropped = JSONUtils::asBool(frameToBeDetectedRoot,
 						"videoFrameToBeCropped", false);
 
 					ffmpegArgumentList.push_back("-filter_complex");
 
-					int amount = asInt(frameToBeDetectedRoot, "amount", 99);
-					int threshold = asInt(frameToBeDetectedRoot, "threshold", 32);
+					int amount = JSONUtils::asInt(frameToBeDetectedRoot, "amount", 99);
+					int threshold = JSONUtils::asInt(frameToBeDetectedRoot, "threshold", 32);
 
 					string filter;
 
 					if (videoFrameToBeCropped)
 					{
-						int width = asInt(frameToBeDetectedRoot, "width", -1);
-						int height = asInt(frameToBeDetectedRoot, "height", -1);
-						int videoCrop_X = asInt(frameToBeDetectedRoot, "videoCrop_X", -1);
-						int videoCrop_Y = asInt(frameToBeDetectedRoot, "videoCrop_Y", -1);
+						int width = JSONUtils::asInt(frameToBeDetectedRoot, "width", -1);
+						int height = JSONUtils::asInt(frameToBeDetectedRoot, "height", -1);
+						int videoCrop_X = JSONUtils::asInt(frameToBeDetectedRoot, "videoCrop_X", -1);
+						int videoCrop_Y = JSONUtils::asInt(frameToBeDetectedRoot, "videoCrop_Y", -1);
 
 						filter =
 							"[0:v]crop=w=" + to_string(width) + ":h=" + to_string(height)
@@ -11229,29 +12761,29 @@ void FFMpeg::liveProxy2(
 
 			bool timePeriod = false;
 			string field = "timePeriod";
-			if (isMetadataPresent(inputRoot, field))
-				timePeriod = asBool(inputRoot, field, false);
+			if (JSONUtils::isMetadataPresent(inputRoot, field))
+				timePeriod = JSONUtils::asBool(inputRoot, field, false);
 
 			int64_t utcProxyPeriodStart = -1;
 			field = "utcScheduleStart";
-			if (isMetadataPresent(inputRoot, field))
-				utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(inputRoot, field))
+				utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 			// else
 			// {
 			// 	field = "utcProxyPeriodStart";
-			// 	if (isMetadataPresent(inputRoot, field))
-			// 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			// 	if (JSONUtils::isMetadataPresent(inputRoot, field))
+			// 		utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 			// }
 
 			int64_t utcProxyPeriodEnd = -1;
 			field = "utcScheduleEnd";
-			if (isMetadataPresent(inputRoot, field))
-				utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(inputRoot, field))
+				utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// else
 			// {
 			// 	field = "utcProxyPeriodEnd";
-			// 	if (isMetadataPresent(inputRoot, field))
-			// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			// 	if (JSONUtils::isMetadataPresent(inputRoot, field))
+			// 		utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// }
 
 			if (!timePeriod || utcProxyPeriodStart == -1 || utcProxyPeriodEnd == -1)
@@ -11281,21 +12813,21 @@ void FFMpeg::liveProxy2(
 				Json::Value inputRoot = (*inputsRoot)[inputIndex];
 
 				string field = "utcScheduleStart";
-				int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 				// if (utcProxyPeriodStart == -1)
 				// {
 				// 	field = "utcProxyPeriodStart";
-				// 	utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 				// }
 				if (utcFirstProxyPeriodStart == -1)
 					utcFirstProxyPeriodStart = utcProxyPeriodStart;
 
 				field = "utcScheduleEnd";
-				utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
+				utcLastProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 				// if (utcLastProxyPeriodEnd == -1)
 				// {
 				// 	field = "utcProxyPeriodEnd";
-				// 	utcLastProxyPeriodEnd = asInt64(inputRoot, field, -1);
+				// 	utcLastProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 				// }
 			}
 		}
@@ -11720,7 +13252,7 @@ void FFMpeg::liveProxy2(
 					}
 				}
 
-				if (isMetadataPresent(outputRoot, "drawTextDetails"))
+				if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 				{
 					string textTemporaryFileName;
 					{
@@ -11940,7 +13472,7 @@ void FFMpeg::liveProxy2(
 					}
 				}
 
-				if (isMetadataPresent(outputRoot, "drawTextDetails"))
+				if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 				{
 					string textTemporaryFileName;
 					{
@@ -12160,19 +13692,19 @@ int FFMpeg::getNextLiveProxyInput(
 			Json::Value inputRoot = (*inputsRoot)[inputIndex];
 
 			string field = "utcScheduleStart";
-			int64_t utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 			// if (utcProxyPeriodStart == -1)
 			// {
 			// 	field = "utcProxyPeriodStart";
-			// 	utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+			// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 			// }
 
 			field = "utcScheduleEnd";
-			int64_t utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			int64_t utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// if (utcProxyPeriodEnd == -1)
 			// {
 			// 	field = "utcProxyPeriodEnd";
-			// 	utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+			// 	utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// }
 
 			_logger->info(__FILEREF__ + "getNextLiveProxyInput"
@@ -12233,39 +13765,39 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	// }
 	bool timePeriod = false;
 	string field = "timePeriod";
-	if (isMetadataPresent(inputRoot, field))
-		timePeriod = asBool(inputRoot, field, false);
+	if (JSONUtils::isMetadataPresent(inputRoot, field))
+		timePeriod = JSONUtils::asBool(inputRoot, field, false);
 
 	// int64_t utcProxyPeriodStart = -1;
 	field = "utcScheduleStart";
-	if (isMetadataPresent(inputRoot, field))
-		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+	if (JSONUtils::isMetadataPresent(inputRoot, field))
+		utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 	// else
 	// {
 	// 	field = "utcProxyPeriodStart";
-	// 	if (isMetadataPresent(inputRoot, field))
-	// 		utcProxyPeriodStart = asInt64(inputRoot, field, -1);
+	// 	if (JSONUtils::isMetadataPresent(inputRoot, field))
+	// 		utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 	// }
 
 	int64_t utcProxyPeriodEnd = -1;
 	field = "utcScheduleEnd";
-	if (isMetadataPresent(inputRoot, field))
-		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+	if (JSONUtils::isMetadataPresent(inputRoot, field))
+		utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 	// else
 	// {
 	// 	field = "utcProxyPeriodEnd";
-	// 	if (isMetadataPresent(inputRoot, field))
-	// 		utcProxyPeriodEnd = asInt64(inputRoot, field, -1);
+	// 	if (JSONUtils::isMetadataPresent(inputRoot, field))
+	// 		utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 	// }
 
 	//	"streamInput": { "captureAudioDeviceNumber": -1, "captureChannelsNumber": -1, "captureFrameRate": -1, "captureHeight": -1, "captureVideoDeviceNumber": -1, "captureVideoInputFormat": "", "captureWidth": -1, "confKey": 2464, "configurationLabel": "Italia-nazionali-Diretta canale satellitare della Camera dei deputati", "streamSourceType": "IP_PULL", "pushListenTimeout": -1, "tvAudioItalianPid": -1, "tvFrequency": -1, "tvModulation": "", "tvServiceId": -1, "tvSymbolRate": -1, "tvVideoPid": -1, "url": "https://www.youtube.com/watch?v=Cnjs83yowUM", "maxWidth": -1, "userAgent": "", "otherInputOptions": "" },
-	if (isMetadataPresent(inputRoot, "streamInput"))
+	if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 	{
 		field = "streamInput";
 		Json::Value streamInputRoot = inputRoot[field];
 
 		field = "streamSourceType";
-		if (!isMetadataPresent(streamInputRoot, field))
+		if (!JSONUtils::isMetadataPresent(streamInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12279,63 +13811,63 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 		int maxWidth = -1;
 		field = "maxWidth";
-		if (isMetadataPresent(streamInputRoot, field))
-			maxWidth = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			maxWidth = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		string url;
 		field = "url";
-		if (isMetadataPresent(streamInputRoot, field))
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
 			url = streamInputRoot.get(field, "").asString();
 
 		string userAgent;
 		field = "userAgent";
-		if (isMetadataPresent(streamInputRoot, field))
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
 			userAgent = streamInputRoot.get(field, "").asString();
 
 		// int pushListenTimeout = -1;
 		field = "pushListenTimeout";
-		if (isMetadataPresent(streamInputRoot, field))
-			pushListenTimeout = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			pushListenTimeout = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		string otherInputOptions;
 		field = "otherInputOptions";
-		if (isMetadataPresent(streamInputRoot, field))
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
 			otherInputOptions = streamInputRoot.get(field, "").asString();
 
 		string captureLive_videoInputFormat;
 		field = "captureVideoInputFormat";
-		if (isMetadataPresent(streamInputRoot, field))
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
 			captureLive_videoInputFormat = streamInputRoot.get(field, "").asString();
 
 		int captureLive_frameRate = -1;
 		field = "captureFrameRate";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_frameRate = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_frameRate = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_width = -1;
 		field = "captureWidth";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_width = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_width = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_height = -1;
 		field = "captureHeight";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_height = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_height = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		field = "captureVideoDeviceNumber";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_videoDeviceNumber = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_videoDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_channelsNumber = -1;
 		field = "captureChannelsNumber";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_channelsNumber = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_channelsNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_audioDeviceNumber = -1;
 		field = "captureAudioDeviceNumber";
-		if (isMetadataPresent(streamInputRoot, field))
-			captureLive_audioDeviceNumber = asInt(streamInputRoot, field, -1);
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
+			captureLive_audioDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12544,7 +14076,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(userAgent);
 			}
 			ffmpegInputArgumentList.push_back("-re");
-			addToArguments(otherInputOptions, ffmpegInputArgumentList);
+			FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegInputArgumentList);
 			if (streamSourceType == "IP_PUSH")
 			{
 				// listen/timeout depend on the protocol (https://ffmpeg.org/ffmpeg-protocols.html)
@@ -12704,14 +14236,14 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		}
 	}
 	//	"directURLInput": { "url": "" },
-	else if (isMetadataPresent(inputRoot, "directURLInput"))
+	else if (JSONUtils::isMetadataPresent(inputRoot, "directURLInput"))
 	{
 		field = "directURLInput";
 		Json::Value streamInputRoot = inputRoot[field];
 
 		string url;
 		field = "url";
-		if (isMetadataPresent(streamInputRoot, field))
+		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
 			url = streamInputRoot.get(field, "").asString();
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
@@ -12775,13 +14307,13 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	}
 	//	"vodInput": { "vodContentType": "", "sources": [{"sourcePhysicalPathName": "..."}],
 	//		"otherInputOptions": "" },
-	else if (isMetadataPresent(inputRoot, "vodInput"))
+	else if (JSONUtils::isMetadataPresent(inputRoot, "vodInput"))
 	{
 		string field = "vodInput";
 		Json::Value vodInputRoot = inputRoot[field];
 
 		field = "vodContentType";
-		if (!isMetadataPresent(vodInputRoot, field))
+		if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12797,7 +14329,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		// int64_t durationOfInputsInMilliSeconds = 0;
 		{
 			field = "sources";
-			if (!isMetadataPresent(vodInputRoot, field))
+			if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12817,7 +14349,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 					field = "sourcePhysicalDeliveryURL";
 				else
 					field = "sourcePhysicalPathName";
-				if (!isMetadataPresent(sourceRoot, field))
+				if (!JSONUtils::isMetadataPresent(sourceRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12831,14 +14363,14 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				sources.push_back(sourcePhysicalReference);
 
 				// field = "durationInMilliSeconds";
-				// if (isMetadataPresent(sourceRoot, field))
-				// 	durationOfInputsInMilliSeconds += asInt64(sourceRoot, field, 0);
+				// if (JSONUtils::isMetadataPresent(sourceRoot, field))
+				// 	durationOfInputsInMilliSeconds += JSONUtils::asInt64(sourceRoot, field, 0);
 			}
 		}
 
 		string otherInputOptions;
 		field = "otherInputOptions";
-		if (isMetadataPresent(vodInputRoot, field))
+		if (JSONUtils::isMetadataPresent(vodInputRoot, field))
 			otherInputOptions = vodInputRoot.get(field, "").asString();
 
 
@@ -12881,7 +14413,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			ffmpegInputArgumentList.push_back("-nostdin");
 
 			ffmpegInputArgumentList.push_back("-re");
-			addToArguments(otherInputOptions, ffmpegInputArgumentList);
+			FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegInputArgumentList);
 
 			if (vodContentType == "Image")
 			{
@@ -13033,7 +14565,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		}
 	}
 	//	"countdownInput": { "mmsSourceVideoAssetPathName": "", "videoDurationInMilliSeconds": 123, "text": "", "textPosition_X_InPixel": "", "textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor": "", "boxPercentageOpacity": 20 },
-	else if (isMetadataPresent(inputRoot, "countdownInput"))
+	else if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
 	{
 		string field = "countdownInput";
 		Json::Value countdownInputRoot = inputRoot[field];
@@ -13042,7 +14574,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			field = "mmsSourceVideoAssetDeliveryURL";
 		else
 			field = "mmsSourceVideoAssetPathName";
-		if (!isMetadataPresent(countdownInputRoot, field))
+		if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13055,7 +14587,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string mmsSourceVideoAssetPathName = countdownInputRoot.get(field, "").asString();
 
 		field = "videoDurationInMilliSeconds";
-		if (!isMetadataPresent(countdownInputRoot, field))
+		if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13065,7 +14597,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		int64_t videoDurationInMilliSeconds = asInt64(countdownInputRoot, field, -1);
+		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(countdownInputRoot, field, -1);
 
 		if (!externalEncoder
 			&& !FileIO::fileExisting(mmsSourceVideoAssetPathName)        
@@ -13177,16 +14709,16 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	//			1. vngono aggiunti questi parametri in forma eccezionale per il Broadcast
 	//			2. questi parametri saranno gestiti qui
 	string ffmpegDrawTextFilter;
-	if (isMetadataPresent(inputRoot, "countdownInput"))
+	if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
 	{
 		Json::Value countdownInputRoot = inputRoot["countdownInput"];
 
-		if (isMetadataPresent(countdownInputRoot, "broadcastDrawTextDetails"))
+		if (JSONUtils::isMetadataPresent(countdownInputRoot, "broadcastDrawTextDetails"))
 		{
 			Json::Value broadcastDrawTextDetailsRoot = countdownInputRoot["broadcastDrawTextDetails"];
 
 			string field = "text";
-			if (!isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (!JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -13198,63 +14730,63 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 			int reloadAtFrameInterval = -1;
 			field = "reloadAtFrameInterval";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				reloadAtFrameInterval = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				reloadAtFrameInterval = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				textPosition_X_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				textPosition_Y_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
 			string fontType = "";
 			field = "fontType";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				fontType = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
 			int fontSize = -1;
 			field = "fontSize";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontSize = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				fontSize = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			string fontColor = "";
 			field = "fontColor";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				fontColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPercentageOpacity = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				textPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			int shadowx = 0;
 			field = "shadowx";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				shadowx = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				shadowx = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			int shadowy = 0;
 			field = "shadowy";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				shadowy = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				shadowy = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			bool boxEnable = false;
 			field = "boxEnable";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxEnable = asBool(broadcastDrawTextDetailsRoot, field, false);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				boxEnable = JSONUtils::asBool(broadcastDrawTextDetailsRoot, field, false);
 
 			string boxColor = "";
 			field = "boxColor";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
 				boxColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
-			if (isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxPercentageOpacity = asInt(broadcastDrawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
+				boxPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
@@ -13271,29 +14803,29 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		string outputType = outputRoot.get("outputType", "").asString();
 
 		Json::Value filtersRoot = Json::nullValue;
-		if (isMetadataPresent(outputRoot, "filters"))
+		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
 			filtersRoot = outputRoot["filters"];
 
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
-		if (isMetadataPresent(outputRoot, "encodingProfileDetails"))
+		if (JSONUtils::isMetadataPresent(outputRoot, "encodingProfileDetails"))
 			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
 		string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
 
-		int videoTrackIndexToBeUsed = asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
-		int audioTrackIndexToBeUsed = asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
+		int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
+		int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
 		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
 			.asString();
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
 
-		if (ffmpegDrawTextFilter == "" && isMetadataPresent(outputRoot, "drawTextDetails"))
+		if (ffmpegDrawTextFilter == "" && JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 		{
 			string field = "drawTextDetails";
 			Json::Value drawTextDetailsRoot = outputRoot[field];
 
 			field = "text";
-			if (!isMetadataPresent(drawTextDetailsRoot, field))
+			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -13320,63 +14852,63 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 			int reloadAtFrameInterval = -1;
 			field = "reloadAtFrameInterval";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				reloadAtFrameInterval = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 				textPosition_X_InPixel = drawTextDetailsRoot.get(field, "").asString();
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 				textPosition_Y_InPixel = drawTextDetailsRoot.get(field, "").asString();
 
 			string fontType = "";
 			field = "fontType";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 				fontType = drawTextDetailsRoot.get(field, "").asString();
 
 			int fontSize = -1;
 			field = "fontSize";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				fontSize = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				fontSize = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			string fontColor = "";
 			field = "fontColor";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 				fontColor = drawTextDetailsRoot.get(field, "").asString();
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				textPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			int shadowx = 0;
 			field = "shadowx";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				shadowx = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				shadowx = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			int shadowy = 0;
 			field = "shadowy";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				shadowy = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				shadowy = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			bool boxEnable = false;
 			field = "boxEnable";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				boxEnable = asBool(drawTextDetailsRoot, field, false);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, false);
 
 			string boxColor = "";
 			field = "boxColor";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 				boxColor = drawTextDetailsRoot.get(field, "").asString();
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
-			if (isMetadataPresent(drawTextDetailsRoot, field))
-				boxPercentageOpacity = asInt(drawTextDetailsRoot, field, -1);
+			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+				boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				"", textTemporaryFileName, reloadAtFrameInterval,
@@ -13387,7 +14919,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 
 		/*
-		int fadeDuration = asInt(outputRoot, "fadeDuration", -1);
+		int fadeDuration = JSONUtils::asInt(outputRoot, "fadeDuration", -1);
 		string ffmpegFadeFilter;
 		if (fadeDuration > 0 && streamingDurationInSeconds >= fadeDuration)
 		{
@@ -13428,7 +14960,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		{
 			try
 			{
-				settingFfmpegParameters(
+				FFMpegEncodingParameters::settingFfmpegParameters(
+					_logger,
 					encodingProfileDetailsRoot,
 					isVideo,
 
@@ -13509,33 +15042,33 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		// map output
 		if (otherOutputOptions.find("-map") == string::npos
 			&& otherOutputOptionsBecauseOfMaxWidth != "")
-			addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+			FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
 				ffmpegOutputArgumentList);
 		else
-			addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 
 		string ffmpegVideoFilter;
 
 		if (encodingProfileDetailsRoot != Json::nullValue)
 		{
-			addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoOtherParameters, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoMaxRateParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoBufSizeParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
 			// ffmpegVideoResolutionParameter is -vf scale=w=1280:h=720
 			// Since we cannot have more than one -vf (otherwise ffmpeg will use
 			// only the last one), in case we have ffmpegDrawTextFilter,
 			// we will append it here
 
-			addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
-			addToArguments(ffmpegAudioChannelsParameter, ffmpegOutputArgumentList);
-			addToArguments(ffmpegAudioSampleRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegOutputArgumentList);
+			FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegOutputArgumentList);
 
 			ffmpegOutputArgumentList.push_back("-threads");
 			ffmpegOutputArgumentList.push_back("0");
@@ -13604,9 +15137,9 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
 				.asString();
 			string manifestFileName = outputRoot.get("manifestFileName", "").asString();
-			int segmentDurationInSeconds = asInt(outputRoot,
+			int segmentDurationInSeconds = JSONUtils::asInt(outputRoot,
 				"segmentDurationInSeconds", 10);
-			int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
+			int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
 
 			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
@@ -13934,7 +15467,7 @@ void FFMpeg::vodProxy(
 		ffmpegArgumentList.push_back("-nostdin");
 
 		ffmpegArgumentList.push_back("-re");
-		addToArguments(otherInputOptions, ffmpegArgumentList);
+		FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegArgumentList);
 
 		if (vodContentType == "Image")
 		{
@@ -14078,9 +15611,9 @@ void FFMpeg::vodProxy(
 
 					if (vodContentType == "Video" || vodContentType == "Image")
 					{
-						addToArguments(ffmpegVideoCodecParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter,
 							ffmpegEncodingProfileArgumentList);
-						addToArguments(ffmpegVideoProfileParameter,
+						FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter,
 							ffmpegEncodingProfileArgumentList);
 						addToArguments(ffmpegVideoBitRateParameter,
 							ffmpegEncodingProfileArgumentList);
@@ -15226,7 +16759,8 @@ void FFMpeg::liveGrid(
 			// it could remain set to true from a previous call
 			_twoPasses = false;
 
-			settingFfmpegParameters(
+			FFMpegEncodingParameters::settingFfmpegParameters(
+				_logger,
 				encodingProfileDetailsRoot,
 				true,	// isVideo,
 
@@ -15263,15 +16797,15 @@ void FFMpeg::liveGrid(
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[outVideo]");
 
-				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				// addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				// FFMpegEncodingParameters::addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-threads");
 				ffmpegArgumentList.push_back("0");
 
@@ -15344,11 +16878,11 @@ void FFMpeg::liveGrid(
 					ffmpegArgumentList.push_back(
 						to_string(inputChannelIndex) + ":a");
 
-					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
 					if (outputTypeLowerCase == "hls")
 					{
@@ -16036,72 +17570,6 @@ void FFMpeg::streamingToFile(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
-{
-    try
-    {
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (directoryName + "/");
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
-        {
-            string directoryEntry;
-            try
-            {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    continue;
-
-                if (directoryEntry.size() >= prefixFileName.size() && directoryEntry.compare(0, prefixFileName.size(), prefixFileName) == 0) 
-                {
-                    bool exceptionInCaseOfError = false;
-                    string pathFileName = directoryName + "/" + directoryEntry;
-                    _logger->info(__FILEREF__ + "Remove"
-                        + ", pathFileName: " + pathFileName);
-                    FileIO::remove(pathFileName, exceptionInCaseOfError);
-                }
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-        }
-
-        FileIO::closeDirectory (directory);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
-            + ", e.what(): " + e.what()
-        );
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed");
-    }
-}
-
 int FFMpeg::getEncodingProgress()
 {
     int encodingPercentage = 0;
@@ -16686,637 +18154,6 @@ long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 	return stol(ffmpegEncodingStatus);
 }
 
-void FFMpeg::settingFfmpegParameters(
-        Json::Value encodingProfileDetailsRoot,
-        bool isVideo,   // if false it means is audio
-        
-        string& httpStreamingFileFormat,
-        string& ffmpegHttpStreamingParameter,
-
-        string& ffmpegFileFormatParameter,
-
-        string& ffmpegVideoCodecParameter,
-        string& ffmpegVideoProfileParameter,
-        string& ffmpegVideoOtherParameters,
-        bool& twoPasses,
-        string& ffmpegVideoFrameRateParameter,
-        string& ffmpegVideoKeyFramesRateParameter,
-		vector<tuple<string, int, int, int, string, string, string>>& videoBitRatesInfo,
-
-        string& ffmpegAudioCodecParameter,
-        string& ffmpegAudioOtherParameters,
-        string& ffmpegAudioChannelsParameter,
-        string& ffmpegAudioSampleRateParameter,
-		vector<string>& audioBitRatesInfo
-)
-{
-    string field;
-
-	{
-		string sEncodingProfileDetailsRoot = MMSCURL::toString(encodingProfileDetailsRoot);
-
-		_logger->info(__FILEREF__ + "settingFfmpegParameters"
-			", sEncodingProfileDetailsRoot: " + sEncodingProfileDetailsRoot
-		);
-	}
-
-    // fileFormat
-    string fileFormat;
-	string fileFormatLowerCase;
-    {
-		field = "FileFormat";
-		if (!isMetadataPresent(encodingProfileDetailsRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-				+ ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        fileFormat = encodingProfileDetailsRoot.get(field, "XXX").asString();
-		fileFormatLowerCase.resize(fileFormat.size());
-		transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-			[](unsigned char c){return tolower(c); } );
-
-        FFMpeg::encodingFileFormatValidation(fileFormat, _logger);
-
-        if (fileFormatLowerCase == "hls")
-        {
-			httpStreamingFileFormat = "hls";
-
-            ffmpegFileFormatParameter = 
-				+ "-f hls "
-			;
-
-			long segmentDurationInSeconds = 10;
-
-			field = "HLS";
-			if (isMetadataPresent(encodingProfileDetailsRoot, field))
-			{
-				Json::Value hlsRoot = encodingProfileDetailsRoot[field]; 
-
-				field = "SegmentDuration";
-				if (isMetadataPresent(hlsRoot, field))
-					segmentDurationInSeconds = asInt(hlsRoot, field, 10);
-			}
-
-            ffmpegHttpStreamingParameter = 
-				"-hls_time " + to_string(segmentDurationInSeconds) + " ";
-
-			// hls_list_size: set the maximum number of playlist entries. If set to 0 the list file
-			//	will contain all the segments. Default value is 5.
-            ffmpegHttpStreamingParameter += "-hls_list_size 0 ";
-		}
-		else if (fileFormatLowerCase == "dash")
-        {
-			httpStreamingFileFormat = "dash";
-
-            ffmpegFileFormatParameter = 
-				+ "-f dash "
-			;
-
-			long segmentDurationInSeconds = 10;
-
-			field = "DASH";
-			if (isMetadataPresent(encodingProfileDetailsRoot, field))
-			{
-				Json::Value dashRoot = encodingProfileDetailsRoot[field]; 
-
-				field = "SegmentDuration";
-				if (isMetadataPresent(dashRoot, field))
-					segmentDurationInSeconds = asInt(dashRoot, field, 10);
-			}
-
-            ffmpegHttpStreamingParameter =
-				"-seg_duration " + to_string(segmentDurationInSeconds) + " ";
-
-			// hls_list_size: set the maximum number of playlist entries. If set to 0 the list file
-			//	will contain all the segments. Default value is 5.
-            // ffmpegHttpStreamingParameter += "-hls_list_size 0 ";
-
-			// it is important to specify -init_seg_name because those files
-			// will not be removed in EncoderVideoAudioProxy.cpp
-            ffmpegHttpStreamingParameter +=
-				"-init_seg_name init-stream$RepresentationID$.$ext$ ";
-
-			// the only difference with the ffmpeg default is that default is $Number%05d$
-			// We had to change it to $Number%01d$ because otherwise the generated file containing
-			// 00001 00002 ... but the videojs player generates file name like 1 2 ...
-			// and the streaming was not working
-            ffmpegHttpStreamingParameter +=
-				"-media_seg_name chunk-stream$RepresentationID$-$Number%01d$.$ext$ ";
-		}
-        else
-        {
-            httpStreamingFileFormat = "";
-
-			if (fileFormatLowerCase == "ts" || fileFormatLowerCase == "mts")
-			{
-				// if "-f ts filename.ts" is added the following error happens:
-				//		...Requested output format 'ts' is not a suitable output format
-				// Without "-f ts", just filename.ts works fine
-				// Same for mts
-				ffmpegFileFormatParameter = "";
-			}
-			else
-			{
-				ffmpegFileFormatParameter =
-					" -f " + fileFormatLowerCase + " "
-				;
-			}
-        }
-    }
-
-    if (isVideo)
-    {
-        field = "Video";
-        if (!isMetadataPresent(encodingProfileDetailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value videoRoot = encodingProfileDetailsRoot[field]; 
-
-        // codec
-        string codec;
-        {
-            field = "Codec";
-            if (!isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            codec = videoRoot.get(field, "XXX").asString();
-
-			// 2020-03-27: commented just to avoid to add the check every time a new codec is added
-			//		In case the codec is wrong, ffmpeg will generate the error later
-            // FFMpeg::encodingVideoCodecValidation(codec, _logger);
-
-            ffmpegVideoCodecParameter   =
-                    "-codec:v " + codec + " "
-            ;
-        }
-
-        // profile
-        {
-            field = "Profile";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                string profile = videoRoot.get(field, "").asString();
-
-                if (codec == "libx264" || codec == "libvpx")
-				{
-					FFMpeg::encodingVideoProfileValidation(codec, profile, _logger);
-					if (codec == "libx264")
-					{
-						ffmpegVideoProfileParameter =
-                            "-profile:v " + profile + " "
-						;
-					}
-					else if (codec == "libvpx")
-					{
-						ffmpegVideoProfileParameter =
-                            "-quality " + profile + " "
-						;
-					}
-				}
-                else if (profile != "")
-                {
-					ffmpegVideoProfileParameter =
-						"-profile:v " + profile + " "
-					;
-					/*
-                    string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
-                            + ", codec: " + codec;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-					*/
-                }
-            }
-        }
-
-        // resolution
-		/*
-        {
-            field = "Width";
-            if (!isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            int width = asInt(videoRoot, field, 0);
-            if (width == -1 && codec == "libx264")
-                width   = -2;     // h264 requires always a even width/height
-        
-            field = "Height";
-            if (!isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            int height = asInt(videoRoot, field, 0);
-            if (height == -1 && codec == "libx264")
-                height   = -2;     // h264 requires always a even width/height
-
-            ffmpegVideoResolutionParameter =
-                    "-vf scale=" + to_string(width) + ":" + to_string(height) + " "
-            ;
-        }
-		*/
-
-        // bitRate
-		/*
-		videoBitRateInKbps = -1;
-        {
-            field = "KBitRate";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                videoBitRateInKbps = asInt(videoRoot, field, 0);
-
-                ffmpegVideoBitRateParameter =
-                        "-b:v " + to_string(videoBitRateInKbps) + "k "
-                ;
-            }
-        }
-		*/
-
-        // OtherOutputParameters
-        {
-            field = "OtherOutputParameters";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                string otherOutputParameters = videoRoot.get(field, "XXX").asString();
-
-                ffmpegVideoOtherParameters =
-                        otherOutputParameters + " "
-                ;
-            }
-        }
-
-        // twoPasses
-        {
-            field = "TwoPasses";
-            if (!isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			twoPasses = asBool(videoRoot, field, false);
-        }
-
-        // maxRate
-		/*
-        {
-            field = "MaxRate";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                int maxRate = asInt(videoRoot, field, 0);
-
-                ffmpegVideoMaxRateParameter =
-                        "-maxrate " + to_string(maxRate) + "k "
-                ;
-            }
-        }
-		*/
-
-        // bufSize
-		/*
-        {
-            field = "BufSize";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                int bufSize = asInt(videoRoot, field, 0);
-
-                ffmpegVideoBufSizeParameter =
-                        "-bufsize " + to_string(bufSize) + "k "
-                ;
-            }
-        }
-		*/
-
-        // frameRate
-        {
-            field = "FrameRate";
-            if (isMetadataPresent(videoRoot, field))
-            {
-                int frameRate = asInt(videoRoot, field, 0);
-
-				if (frameRate != 0)
-				{
-					ffmpegVideoFrameRateParameter =
-                        "-r " + to_string(frameRate) + " "
-					;
-
-					// keyFrameIntervalInSeconds
-					{
-						field = "KeyFrameIntervalInSeconds";
-						if (isMetadataPresent(videoRoot, field))
-						{
-							int keyFrameIntervalInSeconds = asInt(videoRoot, field, 0);
-
-							// -g specifies the number of frames in a GOP
-							ffmpegVideoKeyFramesRateParameter =
-                                "-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
-							;
-						}
-					}
-				}
-            }
-        }
-
-		field = "BitRates";
-		if (!isMetadataPresent(videoRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value bitRatesRoot = videoRoot[field];
-
-		videoBitRatesInfo.clear();
-		{
-			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
-			{
-				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
-
-				// resolution
-				string ffmpegVideoResolution;
-				int videoWidth;
-				int videoHeight;
-				{
-					field = "Width";
-					if (!isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					videoWidth = asInt(bitRateInfo, field, 0);
-					if (videoWidth == -1 && codec == "libx264")
-						videoWidth   = -2;     // h264 requires always a even width/height
-
-					field = "Height";
-					if (!isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					videoHeight = asInt(bitRateInfo, field, 0);
-					if (videoHeight == -1 && codec == "libx264")
-						videoHeight   = -2;     // h264 requires always a even width/height
-
-					string forceOriginalAspectRatio;
-					field = "ForceOriginalAspectRatio";
-					if (isMetadataPresent(bitRateInfo, field))
-						forceOriginalAspectRatio = bitRateInfo.get(field, "").asString();
-
-					bool pad = false;
-					if (forceOriginalAspectRatio != "")
-					{
-						field = "Pad";
-						if (isMetadataPresent(bitRateInfo, field))
-							pad = asBool(bitRateInfo, field, false);
-					}
-
-					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
-
-					// ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
-					ffmpegVideoResolution = "scale=w=" + to_string(videoWidth)
-						+ ":h=" + to_string(videoHeight);
-					if (forceOriginalAspectRatio != "")
-					{
-						ffmpegVideoResolution += (":force_original_aspect_ratio=" + forceOriginalAspectRatio);
-						if (pad)
-							ffmpegVideoResolution += (",pad=" + to_string(videoWidth)
-								+ ":" + to_string(videoHeight)
-								+ ":(ow-iw)/2:(oh-ih)/2");
-					}
-
-					// ffmpegVideoResolution += " ";
-				}
-
-				string ffmpegVideoBitRate;
-				int kBitRate;
-				{
-					field = "KBitRate";
-					if (!isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					kBitRate = asInt(bitRateInfo, field, 0);
-
-					ffmpegVideoBitRate = "-b:v " + to_string(kBitRate) + "k ";
-				}
-
-				// maxRate
-				string ffmpegVideoMaxRate;
-				{
-					field = "KMaxRate";
-					if (isMetadataPresent(bitRateInfo, field))
-					{
-						int maxRate = asInt(bitRateInfo, field, 0);
-
-						ffmpegVideoMaxRate = "-maxrate " + to_string(maxRate) + "k ";
-					}
-				}
-
-				// bufSize
-				string ffmpegVideoBufSize;
-				{
-					field = "KBufferSize";
-					if (isMetadataPresent(bitRateInfo, field))
-					{
-						int bufferSize = asInt(bitRateInfo, field, 0);
-
-						ffmpegVideoBufSize = "-bufsize " + to_string(bufferSize) + "k ";
-					}
-				}
-
-				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate,
-					videoWidth, videoHeight, ffmpegVideoBitRate,
-					ffmpegVideoMaxRate, ffmpegVideoBufSize));
-			}
-		}
-    }
-    
-    // if (contentType == "video" || contentType == "audio")
-    {
-        field = "Audio";
-        if (!isMetadataPresent(encodingProfileDetailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value audioRoot = encodingProfileDetailsRoot[field]; 
-
-        // codec
-        {
-            field = "Codec";
-            if (!isMetadataPresent(audioRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string codec = audioRoot.get(field, "XXX").asString();
-
-            FFMpeg::encodingAudioCodecValidation(codec, _logger);
-
-            ffmpegAudioCodecParameter   =
-                    "-acodec " + codec + " "
-            ;
-        }
-
-        // kBitRate
-		/*
-        {
-            field = "KBitRate";
-            if (isMetadataPresent(audioRoot, field))
-            {
-                int bitRate = asInt(audioRoot, field, 0);
-
-                ffmpegAudioBitRateParameter =
-                        "-b:a " + to_string(bitRate) + "k "
-                ;
-            }
-        }
-		*/
-        
-        // OtherOutputParameters
-        {
-            field = "OtherOutputParameters";
-            if (isMetadataPresent(audioRoot, field))
-            {
-                string otherOutputParameters = audioRoot.get(field, "XXX").asString();
-
-                ffmpegAudioOtherParameters =
-                        otherOutputParameters + " "
-                ;
-            }
-        }
-
-        // channelsNumber
-        {
-            field = "ChannelsNumber";
-            if (isMetadataPresent(audioRoot, field))
-            {
-                int channelsNumber = asInt(audioRoot, field, 0);
-
-                ffmpegAudioChannelsParameter =
-                        "-ac " + to_string(channelsNumber) + " "
-                ;
-            }
-        }
-
-        // sample rate
-        {
-            field = "SampleRate";
-            if (isMetadataPresent(audioRoot, field))
-            {
-                int sampleRate = asInt(audioRoot, field, 0);
-
-                ffmpegAudioSampleRateParameter =
-                        "-ar " + to_string(sampleRate) + " "
-                ;
-            }
-        }
-
-		field = "BitRates";
-		if (!isMetadataPresent(audioRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value bitRatesRoot = audioRoot[field];
-
-		audioBitRatesInfo.clear();
-		{
-			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
-			{
-				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
-
-				string ffmpegAudioBitRate;
-				{
-					field = "KBitRate";
-					if (!isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					int kBitRate = asInt(bitRateInfo, field, 0);
-
-					ffmpegAudioBitRate = "-b:a " + to_string(kBitRate) + "k ";
-				}
-
-				audioBitRatesInfo.push_back(ffmpegAudioBitRate);
-			}
-		}
-    }
-}
-
-void FFMpeg::addToArguments(string parameter, vector<string>& argumentList)
-{
-	_logger->info(__FILEREF__ + "addToArguments"
-			+ ", parameter: " + parameter
-	);
-
-	if (parameter != "")
-	{
-		string item;
-		stringstream parameterStream(parameter);
-
-		while(getline(parameterStream, item, ' '))
-		{
-			if (item != "")
-				argumentList.push_back(item);
-		}
-	}
-}
-
 string FFMpeg::getLastPartOfFile(
     string pathFileName, int lastCharsToBeRead)
 {
@@ -17795,43 +18632,6 @@ format code  extension  resolution note
 	return make_pair(streamingYouTubeURL, extension);
 }
 
-void FFMpeg::encodingFileFormatValidation(string fileFormat,
-        shared_ptr<spdlog::logger> logger)
-{
-	string fileFormatLowerCase;
-	fileFormatLowerCase.resize(fileFormat.size());
-	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-		[](unsigned char c){return tolower(c); } );
-
-    if (fileFormatLowerCase != "3gp" 
-		&& fileFormatLowerCase != "mp4" 
-		&& fileFormatLowerCase != "mov"
-		&& fileFormatLowerCase != "webm" 
-		&& fileFormatLowerCase != "hls"
-		&& fileFormatLowerCase != "dash"
-		&& fileFormatLowerCase != "ts"
-		&& fileFormatLowerCase != "mts"
-		&& fileFormatLowerCase != "mkv"
-		&& fileFormatLowerCase != "avi"
-		&& fileFormatLowerCase != "flv"
-		&& fileFormatLowerCase != "ogg"
-		&& fileFormatLowerCase != "wmv"
-		&& fileFormatLowerCase != "yuv"
-		&& fileFormatLowerCase != "mpg"
-		&& fileFormatLowerCase != "mpeg"
-		&& fileFormatLowerCase != "mjpeg"
-		&& fileFormatLowerCase != "mxf"
-	)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
-                + ", fileFormatLowerCase: " + fileFormatLowerCase;
-
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
 void FFMpeg::encodingVideoCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger)
 {    
@@ -17847,172 +18647,6 @@ void FFMpeg::encodingVideoCodecValidation(string codec,
         
         throw runtime_error(errorMessage);
     }
-}
-
-void FFMpeg::encodingVideoProfileValidation(
-        string codec, string profile,
-        shared_ptr<spdlog::logger> logger)
-{
-    if (codec == "libx264")
-    {
-        if (profile != "high" && profile != "baseline" && profile != "main"
-				&& profile != "high422"	// used in case of mxf
-			)
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
-                    + ", codec: " + codec
-                    + ", profile: " + profile;
-
-            logger->error(errorMessage);
-        
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (codec == "libvpx")
-    {
-        if (profile != "best" && profile != "good")
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
-                    + ", codec: " + codec
-                    + ", profile: " + profile;
-
-            logger->error(errorMessage);
-        
-            throw runtime_error(errorMessage);
-        }
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
-                + ", codec: " + codec;
-
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
-void FFMpeg::encodingAudioCodecValidation(string codec,
-        shared_ptr<spdlog::logger> logger)
-{    
-    if (codec != "aac" 
-            && codec != "libfdk_aac" 
-            && codec != "libvo_aacenc" 
-            && codec != "libvorbis"
-            && codec != "pcm_s32le"
-    )
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: Audio codec is wrong"
-                + ", codec: " + codec;
-
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
-bool FFMpeg::isMetadataPresent(Json::Value root, string field)
-{
-    if (root.isObject() && root.isMember(field) && !root[field].isNull()
-)
-        return true;
-    else
-        return false;
-}
-
-int FFMpeg::asInt(Json::Value root, string field, int defaultValue)
-{
-	if (field == "")
-	{
-		if (root.type() == Json::stringValue)
-			return strtol(root.asString().c_str(), nullptr, 10);
-		else
-			return root.asInt();
-	}
-	else
-	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return strtol(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
-		else
-			return root.get(field, defaultValue).asInt();
-	}
-}
-
-int64_t FFMpeg::asInt64(Json::Value root, string field, int64_t defaultValue)
-{
-	if (field == "")
-	{
-		if (root.type() == Json::stringValue)
-			return strtoll(root.asString().c_str(), nullptr, 10);
-		else
-			return root.asInt64();
-	}
-	else
-	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return strtoll(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
-		else
-			return root.get(field, defaultValue).asInt64();
-	}
-}
-
-double FFMpeg::asDouble(Json::Value root, string field, double defaultValue)
-{
-	if (field == "")
-	{
-		if (root.type() == Json::stringValue)
-			return stod(root.asString(), nullptr);
-		else
-			return root.asDouble();
-	}
-	else
-	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return stod(root.get(field, defaultValue).asString(), nullptr);
-		else
-			return root.get(field, defaultValue).asDouble();
-	}
-}
-
-bool FFMpeg::asBool(Json::Value root, string field, bool defaultValue)
-{
-	if (field == "")
-	{
-		if (root.type() == Json::stringValue)
-		{
-			string sTrue = "true";
-
-			bool isEqual = root.asString().length() != sTrue.length() ? false :
-				equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
-						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
-
-			return isEqual ? true : false;
-		}
-		else
-			return root.asBool();
-	}
-	else
-	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-		{
-			string sTrue = "true";
-
-			bool isEqual = root.asString().length() != sTrue.length() ? false :
-				equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
-						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
-
-			return isEqual ? true : false;
-		}
-		else
-			return root.get(field, defaultValue).asBool();
-	}
-}
-
-string FFMpeg::toString(Json::Value joValueRoot)
-{
-	Json::StreamWriterBuilder wbuilder;
-
-	return Json::writeString(wbuilder, joValueRoot);
 }
 
 void FFMpeg::setStatus(
@@ -18060,7 +18694,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 
 	if (filtersRoot != Json::nullValue)
 	{
-		if (isMetadataPresent(filtersRoot, "video"))
+		if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["video"].size(); filterIndex++)
 			{
@@ -18073,7 +18707,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 			}
 		}
 
-		if (isMetadataPresent(filtersRoot, "audio"))
+		if (JSONUtils::isMetadataPresent(filtersRoot, "audio"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["audio"].size(); filterIndex++)
 			{
@@ -18086,7 +18720,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 			}
 		}
 
-		if (isMetadataPresent(filtersRoot, "complex"))
+		if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["complex"].size(); filterIndex++)
 			{
@@ -18111,7 +18745,7 @@ string FFMpeg::getFilter(
 	string filter;
 
 
-	if (!isMetadataPresent(filterRoot, "type"))
+	if (!JSONUtils::isMetadataPresent(filterRoot, "type"))
 	{
 		string errorMessage = string("filterRoot->type field does not exist");
 		_logger->error(__FILEREF__ + errorMessage);
@@ -18122,31 +18756,31 @@ string FFMpeg::getFilter(
 
 	if (type == "blackdetect")
 	{
-		double black_min_duration = asDouble(filterRoot, "black_min_duration", 2);
-		double pixel_black_th = asDouble(filterRoot, "pixel_black_th", 0.0);
+		double black_min_duration = JSONUtils::asDouble(filterRoot, "black_min_duration", 2);
+		double pixel_black_th = JSONUtils::asDouble(filterRoot, "pixel_black_th", 0.0);
 
 		filter = ("blackdetect=d=" + to_string(black_min_duration)
 			+ ":pix_th=" + to_string(pixel_black_th));
 	}
 	else if (type == "blackframe")
 	{
-		int amount = asInt(filterRoot, "amount", 98);
-		int threshold = asInt(filterRoot, "threshold", 32);
+		int amount = JSONUtils::asInt(filterRoot, "amount", 98);
+		int threshold = JSONUtils::asInt(filterRoot, "threshold", 32);
 
 		filter = ("blackframe=amount=" + to_string(amount)
 			+ ":threshold=" + to_string(threshold));
 	}
 	else if (type == "freezedetect")
 	{
-		int noiseInDb = asInt(filterRoot, "noiseInDb", -60);
-		int duration = asInt(filterRoot, "duration", 2);
+		int noiseInDb = JSONUtils::asInt(filterRoot, "noiseInDb", -60);
+		int duration = JSONUtils::asInt(filterRoot, "duration", 2);
 
 		filter = ("freezedetect=noise=" + to_string(noiseInDb)
 			+ "dB:duration=" + to_string(duration));
 	}
 	else if (type == "fade")
 	{
-		int duration = asInt(filterRoot, "duration", 4);
+		int duration = JSONUtils::asInt(filterRoot, "duration", 4);
 
 		if (streamingDurationInSeconds >= duration)
 		{
@@ -18175,13 +18809,13 @@ string FFMpeg::getFilter(
 	}
 	else if (type == "silencedetect")
 	{
-		double noise = asDouble(filterRoot, "noise", 0.0001);
+		double noise = JSONUtils::asDouble(filterRoot, "noise", 0.0001);
 
 		filter = ("silencedetect=noise=" + to_string(noise));
 	}
 	else if (type == "volume")
 	{
-		double factor = asDouble(filterRoot, "factor", 5.0);
+		double factor = JSONUtils::asDouble(filterRoot, "factor", 5.0);
 
 		filter = ("volume=" + to_string(factor));
 	}

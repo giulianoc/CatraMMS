@@ -69,6 +69,7 @@ add_executable(awsSigner ${SOURCES} ${HEADERS})
 
 target_link_libraries (awsSigner MMSEngine)
 target_link_libraries (awsSigner FFMpeg)
+target_link_libraries (awsSigner MMSUtility)
 target_link_libraries (awsSigner curl)
 target_link_libraries (awsSigner curlpp)
 target_link_libraries (awsSigner mysqlcppconn)

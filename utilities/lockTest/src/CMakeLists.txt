@@ -71,6 +71,7 @@ add_executable(lockTest ${SOURCES} ${HEADERS})
 
 target_link_libraries (lockTest MMSEngine)
 target_link_libraries (lockTest FFMpeg)
+target_link_libraries (lockTest MMSUtility)
 target_link_libraries (lockTest curl)
 target_link_libraries (lockTest curlpp)
 target_link_libraries (lockTest mysqlcppconn)

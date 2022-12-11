@@ -71,6 +71,7 @@ add_executable(registerActiveDirectoryUser ${SOURCES} ${HEADERS})
 
 target_link_libraries (registerActiveDirectoryUser MMSEngine)
 target_link_libraries (registerActiveDirectoryUser FFMpeg)
+target_link_libraries (registerActiveDirectoryUser MMSUtility)
 target_link_libraries (registerActiveDirectoryUser curl)
 target_link_libraries (registerActiveDirectoryUser curlpp)
 target_link_libraries (registerActiveDirectoryUser mysqlcppconn)

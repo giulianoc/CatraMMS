@@ -39,7 +39,6 @@ SET (SOURCES
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp
 	Workspace.cpp
-	JSONUtils.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
@@ -54,7 +53,6 @@ SET (HEADERS
 	MMSEngineDBFacade.h
 	PersistenceLock.h
 	Workspace.h
-	JSONUtils.h
 	Validator.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
@@ -75,6 +73,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
