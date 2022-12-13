@@ -2320,6 +2320,7 @@ MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTec
 	)
 		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 	else if (fileFormatLowerCase == "hls"
+		|| fileFormatLowerCase == "m3u8"
 		|| fileFormatLowerCase == "dash"
 	)
 		deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;

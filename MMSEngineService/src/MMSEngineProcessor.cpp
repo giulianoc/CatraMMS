@@ -5749,6 +5749,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEventThread"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+		+ ", metadataContent: " + localAssetIngestionEvent.localAssetIngestionEvent.getMetadataContent()
 		+ ", _processorsThreadsNumber.use_count(): "
 			+ to_string(_processorsThreadsNumber.use_count())
 	);
@@ -5757,7 +5758,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     try
     {
         string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
-        
+
         // LF and CR create problems to the json parser...
         while (sMetadataContent.size() > 0
 			&& (sMetadataContent.back() == 10 || sMetadataContent.back() == 13))
@@ -6551,6 +6552,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				// 3. here, handleLocalAssetIngestionEventThread (when the MMS file name is generated)
 				if (mediaFileFormat == "m3u8-streaming")
 					mediaSourceFileName += ".mp4";
+				else if (mediaFileFormat == "m3u8-tar.gz")
+					;	// mediaSourceFileName is like "2131450_source"
 				else
 					mediaSourceFileName += ("." + mediaFileFormat);
 			}

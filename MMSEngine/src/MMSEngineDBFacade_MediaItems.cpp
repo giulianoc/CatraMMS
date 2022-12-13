@@ -1125,16 +1125,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = toString(contentType);
             }
             
-			/*
-            if (startAndEndIngestionDatePresent)
-            {
-                field = "startIngestionDate";
-                requestParametersRoot[field] = startIngestionDate;
-
-                field = "endIngestionDate";
-                requestParametersRoot[field] = endIngestionDate;
-            }
-			*/
             if (startIngestionDate != "")
             {
                 field = "startIngestionDate";
@@ -1778,7 +1768,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         else
 						{
 							fileExtension = fileName.substr(extensionIndex + 1);
-							profileRoot[field] = fileExtension;
+							if (fileExtension == "m3u8")
+								profileRoot[field] = "hls";
+							else
+								profileRoot[field] = fileExtension;
 						}
 
 						if (admin)
@@ -1828,27 +1821,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
 									MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileExtension);
 								profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
-								/*
-								string fileExtensionLowerCase;
-								fileExtensionLowerCase.resize(fileExtension.size());
-								transform(fileExtension.begin(), fileExtension.end(), fileExtensionLowerCase.begin(),
-									[](unsigned char c){return tolower(c); } );
-
-								if (fileExtensionLowerCase == "mp4" || fileExtensionLowerCase == "mov"
-										|| fileExtensionLowerCase == "webm")
-									profileRoot[field] =
-										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming);
-								else if (fileExtensionLowerCase == "m3u8" || fileExtensionLowerCase == "hls")
-									profileRoot[field] =
-										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
-								else
-								{
-									// 2021-02-20: by default we set just download
-									// profileRoot[field] = Json::nullValue;
-									profileRoot[field] =
-										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::Download);
-								}
-								*/
 							}
 						}
                         else
@@ -5304,7 +5276,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
-                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, markedAsRemoved, processorMMSForRetention) values ("
+                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, "
+				"retentionInMinutes, markedAsRemoved, processorMMSForRetention) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -5609,20 +5582,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				mediaInfoDetails,
 				videoTracks,
 				audioTracks,
-				/*
-				durationInMilliSeconds,
-				bitRate,
-				videoCodecName,
-				videoProfile,
-				videoWidth,
-				videoHeight,
-				videoAvgFrameRate,
-				videoBitRate,
-				audioCodecName,
-				audioSampleRate,
-				audioChannels,
-				audioBitRate,
-				*/
 
 				// image
 				imageWidth,
@@ -6592,20 +6551,6 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
-		/*
-        int64_t durationInMilliSeconds,
-        long bitRate,
-        string videoCodecName,
-        string videoProfile,
-        int videoWidth,
-        int videoHeight,
-        string videoAvgFrameRate,
-        long videoBitRate,
-        string audioCodecName,
-        long audioSampleRate,
-        int audioChannels,
-        long audioBitRate,
-		*/
 
         // image
         int imageWidth,
@@ -6658,20 +6603,6 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			mediaInfoDetails,
 			videoTracks,
 			audioTracks,
-			/*
-            durationInMilliSeconds,
-            bitRate,
-            videoCodecName,
-            videoProfile,
-            videoWidth,
-            videoHeight,
-            videoAvgFrameRate,
-            videoBitRate,
-            audioCodecName,
-            audioSampleRate,
-            audioChannels,
-            audioBitRate,
-			*/
 
             // image
             imageWidth,
