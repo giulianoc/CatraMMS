@@ -8700,8 +8700,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
+        Json::Value metadataRoot = JSONUtils::toJson(-1, encodingJobKey, requestBody);
 
         liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
         liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
@@ -8713,7 +8712,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		//		nfs would not be enough fast and could create random file system error
         liveRecording->_chunksTranscoderStagingContentsPath =
 			encodingParametersRoot.get("chunksTranscoderStagingContentsPath", "").asString();
-        string userAgent = metadataRoot.get("userAgent", "").asString();
+		string userAgent = ingestedParametersRoot.get("UserAgent", "").asString();
+
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp
@@ -8759,8 +8759,62 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_ingestedParametersRoot =
 			metadataRoot["ingestedParametersRoot"];
 
-        bool autoRenew = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
-			"autoRenew", false);
+		time_t utcRecordingPeriodStart;
+		time_t utcRecordingPeriodEnd;
+		bool autoRenew;
+		int segmentDurationInSeconds;
+		string outputFileFormat;
+		{
+			string field = "schedule";
+			Json::Value recordingPeriodRoot = (liveRecording->_ingestedParametersRoot)[field];
+
+			field = "start";
+			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
+			utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
+
+			field = "end";
+			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
+			utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
+
+			field = "autoRenew";
+			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
+
+			field = "SegmentDuration";
+			if (!JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
+
+			field = "OutputFileFormat";
+			outputFileFormat = (liveRecording->_ingestedParametersRoot).get(field, "ts").asString();
+		}
 
 		liveRecording->_monitoringEnabled = JSONUtils::asBool(
 			liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
@@ -8887,18 +8941,6 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveURL = encodingParametersRoot.get("liveURL", "").asString();
 		}
 
-        time_t utcRecordingPeriodStart = JSONUtils::asInt64(
-			liveRecording->_encodingParametersRoot,
-			"utcScheduleStart", -1);
-        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(
-			liveRecording->_encodingParametersRoot,
-			"utcScheduleEnd", -1);
-        int segmentDurationInSeconds = JSONUtils::asInt(
-			liveRecording->_encodingParametersRoot,
-			"segmentDurationInSeconds", -1);
-        string outputFileFormat = liveRecording->_encodingParametersRoot
-			.get("outputFileFormat", "").asString();
-
 		{
 			bool monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
@@ -8922,8 +8964,9 @@ void FFMPEGEncoder::liveRecorderThread(
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
+				+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", segmentListPathName: " + liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
@@ -8983,6 +9026,8 @@ void FFMPEGEncoder::liveRecorderThread(
 						try
 						{
 							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
 							Boolean_t bRemoveRecursively = true;
@@ -8992,8 +9037,7 @@ void FFMPEGEncoder::liveRecorderThread(
 						catch(runtime_error e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: "
-									+ to_string(liveRecording->_ingestionJobKey)
+								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								+ ", e.what(): " + e.what()

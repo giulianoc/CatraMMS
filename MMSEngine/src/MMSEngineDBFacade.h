@@ -1733,12 +1733,6 @@ public:
 		string streamSourceType,
 		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
-		string userAgent,
-		time_t utcRecordingPeriodStart,
-		time_t utcRecordingPeriodEnd,
-		bool autoRenew,
-		int segmentDurationInSeconds,
-		string outputFileFormat,
 		EncodingPriority encodingPriority,
 
 		int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,

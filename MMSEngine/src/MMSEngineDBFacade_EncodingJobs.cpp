@@ -6913,12 +6913,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string streamSourceType,
 
 	string configurationLabel, int64_t confKey, string liveURL, string encodersPoolLabel,
-	string userAgent,
-	time_t utcRecordingPeriodStart,
-	time_t utcRecordingPeriodEnd,
-	bool autoRenew,
-	int segmentDurationInSeconds,
-	string outputFileFormat,
 	EncodingPriority encodingPriority,
 
 	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
@@ -6961,12 +6955,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
             + ", liveURL: " + liveURL
-            + ", userAgent: " + userAgent
-            + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
-            + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
-            + ", autoRenew: " + to_string(autoRenew)
-            + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-            + ", outputFileFormat: " + outputFileFormat
             + ", encodingPriority: " + toString(encodingPriority)
             + ", monitorHLS: " + to_string(monitorHLS)
             + ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD)
@@ -7067,24 +7055,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "tvAudioItalianPid";
 				parametersRoot[field] = tvAudioItalianPid;
-
-				field = "userAgent";
-				parametersRoot[field] = userAgent;
-
-				field = "utcScheduleStart";
-				parametersRoot[field] = utcRecordingPeriodStart;
-
-				field = "utcScheduleEnd";
-				parametersRoot[field] = utcRecordingPeriodEnd;
-
-				field = "autoRenew";
-				parametersRoot[field] = autoRenew;
-
-				field = "segmentDurationInSeconds";
-				parametersRoot[field] = segmentDurationInSeconds;
-
-				field = "outputFileFormat";
-				parametersRoot[field] = outputFileFormat;
 
 				field = "monitorHLS";
 				parametersRoot[field] = monitorHLS;

@@ -12136,11 +12136,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		int64_t deliveryCode;
 
-		string userAgent;
         string recordingPeriodStart;
         string recordingPeriodEnd;
         bool autoRenew;
-		int segmentDurationInSeconds;
 		string outputFileFormat;
 		bool liveRecorderVirtualVOD = false;
 		int liveRecorderVirtualVODMaxDurationInMinutes = 30;
@@ -12194,10 +12192,6 @@ void MMSEngineProcessor::manageLiveRecorder(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				encodersPoolLabel = parametersRoot.get(field, "").asString();
 
-            field = "UserAgent";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				userAgent = parametersRoot.get(field, "").asString();
-
             field = "schedule";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
 
@@ -12231,23 +12225,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			else
 				autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
-            field = "SegmentDuration";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-
             field = "OutputFileFormat";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputFileFormat = "ts";
-			else
-            	outputFileFormat = parametersRoot.get(field, "XXX").asString();
+			outputFileFormat = parametersRoot.get(field, "ts").asString();
 
 			field = "MonitorHLS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -12780,8 +12759,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			ingestionJobLabel, streamSourceType,
 			configurationLabel, confKey, liveURL, encodersPoolLabel,
-			userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
-			autoRenew, segmentDurationInSeconds, outputFileFormat,
+
 			encodingPriority,
 
 			pushListenTimeout, pushEncoderKey, pushServerName,
