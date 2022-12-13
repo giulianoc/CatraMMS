@@ -6936,6 +6936,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string monitorManifestFileName,
 
 	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
+
+	string chunksTranscoderStagingContentsPath, string chunksNFSStagingContentsPath,
+	string segmentListFileName, string recordedFileNamePrefix,
+	string virtualVODStagingContentsPath, string virtualVODTranscoderStagingContentsPath,
+	int64_t liveRecorderVirtualVODImageMediaItemKey,
+
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 )
 {
@@ -7102,6 +7108,27 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "framesToBeDetectedRoot";
 				parametersRoot[field] = framesToBeDetectedRoot;
+
+				field = "chunksTranscoderStagingContentsPath";
+				parametersRoot[field] = chunksTranscoderStagingContentsPath;
+
+				field = "chunksNFSStagingContentsPath";
+				parametersRoot[field] = chunksNFSStagingContentsPath;
+
+				field = "segmentListFileName";
+				parametersRoot[field] = segmentListFileName;
+
+				field = "recordedFileNamePrefix";
+				parametersRoot[field] = recordedFileNamePrefix;
+
+				field = "virtualVODStagingContentsPath";
+				parametersRoot[field] = virtualVODStagingContentsPath;
+
+				field = "virtualVODTranscoderStagingContentsPath";
+				parametersRoot[field] = virtualVODTranscoderStagingContentsPath;
+
+				field = "liveRecorderVirtualVODImageMediaItemKey";
+				parametersRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
 
 				field = "mmsWorkflowIngestionURL";
 				parametersRoot[field] = mmsWorkflowIngestionURL;

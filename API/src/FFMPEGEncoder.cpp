@@ -8703,59 +8703,54 @@ void FFMPEGEncoder::liveRecorderThread(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, encodingJobKey, requestBody);
 
-        liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot,
-			"ingestionJobKey", -1);
+        liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+        liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
-        liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot,
-			"externalEncoder", false);
-
-		// _transcoderStagingContentsPath is a transcoder LOCAL path,
+		// _chunksTranscoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
-        liveRecording->_transcoderStagingContentsPath =
-			metadataRoot.get("transcoderStagingContentsPath", "").asString();
+        liveRecording->_chunksTranscoderStagingContentsPath =
+			encodingParametersRoot.get("chunksTranscoderStagingContentsPath", "").asString();
         string userAgent = metadataRoot.get("userAgent", "").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp
-        liveRecording->_stagingContentsPath =
-			metadataRoot.get("stagingContentsPath", "").asString();
-		// 2022-08-09: the stagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
+        liveRecording->_chunksNFSStagingContentsPath = encodingParametersRoot.get("chunksNFSStagingContentsPath", "").asString();
+		// 2022-08-09: the chunksNFSStagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
 		// 		into the shared working area.
 		// 		In case of an external encoder, the external working area does not have this directory
 		// 		and the encoder will fail. For this reason, the directory is created if it does not exist
 		// 2022-08-10: in case of an external encoder, the chunk has to be ingested
-		//	as push, so the stagingContentsPath dir is not used at all
+		//	as push, so the chunksNFSStagingContentsPath dir is not used at all
 		//	For this reason the directory check is useless and it is commented
 		/*
-		if (!FileIO::directoryExisting(liveRecording->_stagingContentsPath))
+		if (!FileIO::directoryExisting(liveRecording->_chunksNFSStagingContentsPath))
 		{
 			bool noErrorIfExists = true;
 			bool recursive = true;
 			_logger->info(__FILEREF__ + "Creating directory"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 			);
-			FileIO::createDirectory(liveRecording->_stagingContentsPath,
+			FileIO::createDirectory(liveRecording->_chunksNFSStagingContentsPath,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
 				noErrorIfExists, recursive);
 		}
 		*/
 
-        liveRecording->_segmentListFileName =
-			metadataRoot.get("segmentListFileName", "").asString();
-        liveRecording->_recordedFileNamePrefix =
-			metadataRoot.get("recordedFileNamePrefix", "").asString();
+        liveRecording->_segmentListFileName = encodingParametersRoot.get("segmentListFileName", "").asString();
+        liveRecording->_recordedFileNamePrefix = encodingParametersRoot.get("recordedFileNamePrefix", "").asString();
 		// see the comments in EncoderVideoAudioProxy.cpp
 		if (liveRecording->_externalEncoder)
 			liveRecording->_virtualVODStagingContentsPath =
-				metadataRoot.get("virtualVODTranscoderStagingContentsPath", "").asString();
+				encodingParametersRoot.get("virtualVODTranscoderStagingContentsPath", "").asString();
 		else
 			liveRecording->_virtualVODStagingContentsPath =
-				metadataRoot.get("virtualVODStagingContentsPath", "").asString();
+				encodingParametersRoot.get("virtualVODStagingContentsPath", "").asString();
         liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
-			JSONUtils::asInt64(metadataRoot,
-				"liveRecorderVirtualVODImageMediaItemKey", -1);
+			JSONUtils::asInt64(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
@@ -8889,7 +8884,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			// in case of actAsServer
 			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
 			//	false: it comes from the LiveRecorder json ingested
-			liveURL = metadataRoot.get("liveURL", "").asString();
+			liveURL = encodingParametersRoot.get("liveURL", "").asString();
 		}
 
         time_t utcRecordingPeriodStart = JSONUtils::asInt64(
@@ -8923,16 +8918,16 @@ void FFMPEGEncoder::liveRecorderThread(
 			}
 		}
 
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9044,7 +9039,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_ingestionJobKey,
 			encodingJobKey,
 			liveRecording->_externalEncoder,
-			liveRecording->_transcoderStagingContentsPath
+			liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
 
@@ -9125,16 +9120,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9221,16 +9216,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
 		}
 
@@ -9307,16 +9302,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9394,16 +9389,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9481,16 +9476,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9568,16 +9563,16 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
 				+ ", segmentListPathName: "
-					+ liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_chunksTranscoderStagingContentsPath
 					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_transcoderStagingContentsPath
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
@@ -9672,8 +9667,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_ingestedParametersRoot,
 
-									liveRecording->_transcoderStagingContentsPath,
-									liveRecording->_stagingContentsPath,
+									liveRecording->_chunksTranscoderStagingContentsPath,
+									liveRecording->_chunksNFSStagingContentsPath,
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
@@ -9690,8 +9685,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_ingestedParametersRoot,
 
-									liveRecording->_transcoderStagingContentsPath,
-									liveRecording->_stagingContentsPath,
+									liveRecording->_chunksTranscoderStagingContentsPath,
+									liveRecording->_chunksNFSStagingContentsPath,
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
@@ -10053,8 +10048,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value ingestedParametersRoot,
-	string transcoderStagingContentsPath,
-	string stagingContentsPath,
+	string chunksTranscoderStagingContentsPath,
+	string chunksNFSStagingContentsPath,
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
@@ -10074,19 +10069,19 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			// + ", main: " + to_string(main)
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", outputFileFormat: " + outputFileFormat
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
 			+ ", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
 		);
 
-		ifstream segmentList(transcoderStagingContentsPath + segmentListFileName);
+		ifstream segmentList(chunksTranscoderStagingContentsPath + segmentListFileName);
 		if (!segmentList)
         {
             string errorMessage = __FILEREF__ + "No segment list file found yet"
-				+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+				+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 				+ ", segmentListFileName: " + segmentListFileName
 				+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
             _logger->warn(errorMessage);
@@ -10120,12 +10115,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
-			if (!FileIO::fileExisting(transcoderStagingContentsPath + currentRecordedAssetFileName))
+			if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName))
 			{
 				// it could be the scenario where mmsEngineService is restarted,
 				// the segments list file still contains obsolete filenames
 				_logger->error(__FILEREF__ + "file not existing"
-						", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+						", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
 				);
 
 				continue;
@@ -10152,12 +10147,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 
 			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
 					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
-					transcoderStagingContentsPath, recordedFileNamePrefix,
+					chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
 					segmentDurationInSeconds, isFirstChunk);
 			_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+					+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 					+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 					+ ", ingestionRowToBeUpdatedAsSuccess: " + to_string(ingestionRowToBeUpdatedAsSuccess));
 
@@ -10176,12 +10171,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", transcoderStagingContentsPath + currentRecordedAssetFileName: "
-						+ (transcoderStagingContentsPath + currentRecordedAssetFileName)
+					+ ", chunksTranscoderStagingContentsPath + currentRecordedAssetFileName: "
+						+ (chunksTranscoderStagingContentsPath + currentRecordedAssetFileName)
 				);
 				FFMpeg ffmpeg (_configuration, _logger);
 				tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-					ffmpeg.getMediaInfo(transcoderStagingContentsPath + currentRecordedAssetFileName);
+					ffmpeg.getMediaInfo(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 				tie(durationInMilliSeconds, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
@@ -10206,8 +10201,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				_logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", transcoderStagingContentsPath + currentRecordedAssetFileName: "
-						+ (transcoderStagingContentsPath + currentRecordedAssetFileName)
+					+ ", chunksTranscoderStagingContentsPath + currentRecordedAssetFileName: "
+						+ (chunksTranscoderStagingContentsPath + currentRecordedAssetFileName)
 				);
 			}
 			*/
@@ -10364,15 +10359,15 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+					+ ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
 					+ ", title: " + addContentTitle
 				);
 
 				_logger->info(__FILEREF__ + "Remove"
-					+ ", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+					+ ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
 				);
 
-                FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName);
+                FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 			}
 			else
 			{
@@ -10381,21 +10376,21 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					_logger->info(__FILEREF__ + "ingest Recorded media"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 						+ ", addContentTitle: " + addContentTitle
 					);
 
 					if (externalEncoder)
 						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
-							transcoderStagingContentsPath, currentRecordedAssetFileName,
+							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot);
 					else
 						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-							transcoderStagingContentsPath, currentRecordedAssetFileName,
-							stagingContentsPath,
+							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+							chunksNFSStagingContentsPath,
 							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot,
 							false);
@@ -10406,9 +10401,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", externalEncoder: " + to_string(externalEncoder)
-						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 						+ ", addContentTitle: " + addContentTitle
 						+ ", outputFileFormat: " + outputFileFormat
 						+ ", e.what(): " + e.what()
@@ -10422,9 +10417,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", externalEncoder: " + to_string(externalEncoder)
-						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 						+ ", addContentTitle: " + addContentTitle
 						+ ", outputFileFormat: " + outputFileFormat
 					);
@@ -10450,8 +10445,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
         _logger->error(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
             + ", e.what(): " + e.what()
         );
@@ -10463,8 +10458,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
         _logger->error(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
         );
                 
@@ -10481,8 +10476,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value ingestedParametersRoot,
-	string transcoderStagingContentsPath,
-	string sharedStagingContentsPath,
+	string chunksTranscoderStagingContentsPath,
+	string chunksNFSStagingContentsPath,
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
@@ -10501,8 +10496,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 			// + ", main: " + to_string(main)
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", outputFileFormat: " + outputFileFormat
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
@@ -10522,15 +10517,15 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 			_logger->info(__FILEREF__ + "Reading manifest"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", transcoderStagingContentsPath + segmentListFileName: " + transcoderStagingContentsPath + segmentListFileName
+				+ ", chunksTranscoderStagingContentsPath + segmentListFileName: " + chunksTranscoderStagingContentsPath + segmentListFileName
 			);
 
 			ifstream segmentList;
-			segmentList.open(transcoderStagingContentsPath + segmentListFileName, ifstream::in);
+			segmentList.open(chunksTranscoderStagingContentsPath + segmentListFileName, ifstream::in);
 			if (!segmentList)
 			{
 				string errorMessage = __FILEREF__ + "No segment list file found yet"
-					+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+					+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 					+ ", segmentListFileName: " + segmentListFileName
 					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
 				_logger->warn(errorMessage);
@@ -10663,12 +10658,12 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 							+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
 						);
 
-						if (!FileIO::fileExisting(transcoderStagingContentsPath + toBeIngestedSegmentFileName))
+						if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName))
 						{
 							// it could be the scenario where mmsEngineService is restarted,
 							// the segments list file still contains obsolete filenames
 							_logger->error(__FILEREF__ + "file not existing"
-								", currentRecordedAssetPathName: " + transcoderStagingContentsPath + toBeIngestedSegmentFileName
+								", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName
 							);
 
 							return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
@@ -10826,21 +10821,21 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									_logger->info(__FILEREF__ + "ingest Recorded media"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 									);
 
 									if (externalEncoder)
 										liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
-											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
+											chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 											ingestedParametersRoot, encodingParametersRoot);
 									else
 										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-											transcoderStagingContentsPath, toBeIngestedSegmentFileName,
-											sharedStagingContentsPath,
+											chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName,
+											chunksNFSStagingContentsPath,
 											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 											ingestedParametersRoot, encodingParametersRoot,
 											true);
@@ -10851,9 +10846,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", externalEncoder: " + to_string(externalEncoder)
-										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 										+ ", outputFileFormat: " + outputFileFormat
 										+ ", e.what(): " + e.what()
@@ -10867,9 +10862,9 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", externalEncoder: " + to_string(externalEncoder)
-										+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 										+ ", addContentTitle: " + addContentTitle
 										+ ", outputFileFormat: " + outputFileFormat
 									);
@@ -10931,8 +10926,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
         _logger->error(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
             + ", e.what(): " + e.what()
         );
@@ -10944,8 +10939,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
         _logger->error(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-			+ ", sharedStagingContentsPath: " + sharedStagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
+			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
 			+ ", segmentListFileName: " + segmentListFileName
         );
                 
@@ -10957,8 +10952,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 	int64_t ingestionJobKey,
-	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
-	string sharedStagingContentsPath,
+	string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
+	string chunksNFSStagingContentsPath,
 	string addContentTitle,
 	string uniqueName,
 	// bool highAvailability,
@@ -10977,18 +10972,18 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			_logger->info(__FILEREF__ + "Chunk copying"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + sharedStagingContentsPath
+				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + chunksNFSStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startCopying = chrono::system_clock::now();
-			FileIO::copyFile(transcoderStagingContentsPath + currentRecordedAssetFileName, sharedStagingContentsPath);
+			FileIO::copyFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
 			chrono::system_clock::time_point endCopying = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk copied"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + sharedStagingContentsPath
+				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + chunksNFSStagingContentsPath
 				+ ", @MMS COPY statistics@ - copyingDuration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endCopying - startCopying).count()) + "@"
 			);
@@ -10998,18 +10993,18 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			_logger->info(__FILEREF__ + "Chunk moving"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + sharedStagingContentsPath
+				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + chunksNFSStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-			FileIO::moveFile(transcoderStagingContentsPath + currentRecordedAssetFileName, sharedStagingContentsPath);
+			FileIO::moveFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
 			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk moved"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + sharedStagingContentsPath
+				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + chunksNFSStagingContentsPath
 				+ ", @MMS MOVE statistics@ - movingDuration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
 			);
@@ -11030,10 +11025,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 
 
 		_logger->info(__FILEREF__ + "remove"
-			+ ", generated chunk: " + transcoderStagingContentsPath + currentRecordedAssetFileName 
+			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
 		);
 		bool exceptionInCaseOfError = false;
-		FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
 
 		throw e;
 	}
@@ -11045,10 +11040,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		);
 
 		_logger->info(__FILEREF__ + "remove"
-			+ ", generated chunk: " + transcoderStagingContentsPath + currentRecordedAssetFileName 
+			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
 		);
 		bool exceptionInCaseOfError = false;
-		FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
 
 		throw e;
 	}
@@ -11061,7 +11056,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			ingestionJobKey,
 			false,	// externalEncoder,
 			currentRecordedAssetFileName,
-			sharedStagingContentsPath,
+			chunksNFSStagingContentsPath,
 			addContentTitle,
 			uniqueName,
 			userDataRoot,
@@ -11145,7 +11140,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 
 void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	int64_t ingestionJobKey,
-	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+	string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
 	string addContentTitle,
 	string uniqueName,
 	Json::Value userDataRoot,
@@ -11165,7 +11160,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			ingestionJobKey,
 			true,	// externalEncoder,
 			"",	// currentRecordedAssetFileName,
-			"",	// stagingContentsPath,
+			"",	// chunksNFSStagingContentsPath,
 			addContentTitle,
 			uniqueName,
 			userDataRoot,
@@ -11263,7 +11258,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 	{
 		bool inCaseOfLinkHasItToBeRead = false;
 		int64_t chunkFileSize = FileIO::getFileSizeInBytes(
-			transcoderStagingContentsPath + currentRecordedAssetFileName,
+			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
 			inCaseOfLinkHasItToBeRead);
 
 		string mmsBinaryIngestionURL;
@@ -11293,7 +11288,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			_mmsBinaryTimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
-			transcoderStagingContentsPath + currentRecordedAssetFileName,
+			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
 			chunkFileSize,
 			_logger);
 	}
@@ -11325,7 +11320,7 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 	int64_t ingestionJobKey,
 	bool externalEncoder,
 	string currentRecordedAssetFileName,
-	string stagingContentsPath,
+	string chunksNFSStagingContentsPath,
 	string addContentTitle,
 	string uniqueName,
 	Json::Value userDataRoot,
@@ -11404,7 +11399,7 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 
 		if (!externalEncoder)
 		{
-			string sourceURL = string("move") + "://" + stagingContentsPath + currentRecordedAssetFileName;
+			string sourceURL = string("move") + "://" + chunksNFSStagingContentsPath + currentRecordedAssetFileName;
 			field = "SourceURL";
 			addContentParametersRoot[field] = sourceURL;
 		}
@@ -11578,7 +11573,7 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 
 bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	time_t utcCurrentRecordedFileCreationTime, string transcoderStagingContentsPath,
+	time_t utcCurrentRecordedFileCreationTime, string chunksTranscoderStagingContentsPath,
 	string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk)
 {
 	bool isLastLiveRecorderFile = true;
@@ -11586,13 +11581,13 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
     try
     {
 		_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
-			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 		);
 
         FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (transcoderStagingContentsPath);
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (chunksTranscoderStagingContentsPath);
 
         bool scanDirectoryFinished = false;
         while (!scanDirectoryFinished)
@@ -15288,7 +15283,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						// looking the manifests path name timestamp
 
-						string segmentListPathName = copiedLiveRecording->_transcoderStagingContentsPath
+						string segmentListPathName = copiedLiveRecording->_chunksTranscoderStagingContentsPath
 							+ copiedLiveRecording->_segmentListFileName;
 
 						{

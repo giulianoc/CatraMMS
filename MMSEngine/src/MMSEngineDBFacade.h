@@ -1757,6 +1757,12 @@ public:
 		string monitorManifestFileName,
 
 		Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
+
+		string chunksTranscoderStagingContentsPath, string chunksNFSStagingContentsPath,
+		string segmentListFileName, string recordedFileNamePrefix,
+		string virtualVODStagingContentsPath, string virtualVODTranscoderStagingContentsPath,
+		int64_t liveRecorderVirtualVODImageMediaItemKey,
+
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL);
 
 	void addEncoding_LiveProxyJob (

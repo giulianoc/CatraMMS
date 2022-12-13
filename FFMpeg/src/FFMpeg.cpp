@@ -18212,13 +18212,11 @@ string FFMpeg::getLastPartOfFile(
 }
 
 pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string youTubeURL)
+	int64_t ingestionJobKey, string youTubeURL)
 {
 	_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL"
 		+ ", youTubeURL: " + youTubeURL
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
 	);
 
 	string detailsYouTubeProfilesPath;
@@ -18226,8 +18224,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 		detailsYouTubeProfilesPath =
 			_ffmpegTempDir + "/"
 			+ to_string(ingestionJobKey)
-			+ "_"
-			+ to_string(encodingJobKey)
 			+ "-youTubeProfiles.txt";
     
 		string youTubeExecuteCommand =
@@ -18242,7 +18238,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 		{
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 			);
 
@@ -18264,7 +18259,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -18275,7 +18269,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				;
 				throw runtime_error(errorMessage);
 			}
@@ -18284,7 +18277,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed. no profiles file created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 				;
@@ -18294,7 +18286,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: command failed. no profiles file created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				;
 				throw runtime_error(errorMessage);
 			}
@@ -18303,7 +18294,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 				+ ", detailsYouTubeProfilesPath size: " + to_string(FileIO::getFileSizeInBytes(detailsYouTubeProfilesPath, false))
 				+ ", @FFMPEG statistics@ - duration (secs): @"
@@ -18314,7 +18304,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
 			;
 			_logger->error(errorMessage);
@@ -18333,7 +18322,6 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
 			;
 			_logger->error(errorMessage);
@@ -18377,7 +18365,6 @@ format code  extension  resolution note
 		{
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath
 				+ ", formatCodeLabelFound: " + to_string(formatCodeLabelFound)
 				+ ", lastFormatCode: " + to_string(lastFormatCode)
@@ -18417,7 +18404,6 @@ format code  extension  resolution note
 
 		_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles, final info"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath
 			+ ", formatCodeLabelFound: " + to_string(formatCodeLabelFound)
 			+ ", lastFormatCode: " + to_string(lastFormatCode)
@@ -18428,7 +18414,6 @@ format code  extension  resolution note
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
@@ -18443,7 +18428,6 @@ format code  extension  resolution note
 			string errorMessage = __FILEREF__
 				+ "retrieveStreamingYouTubeURL: no format code found"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 			;
 			_logger->error(errorMessage);
 
@@ -18454,7 +18438,6 @@ format code  extension  resolution note
     {
         string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profile error processing or format code not found"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
@@ -18473,7 +18456,6 @@ format code  extension  resolution note
     {
         string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profiles error processing"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
@@ -18494,8 +18476,6 @@ format code  extension  resolution note
 		string detailsYouTubeURLPath =
 			_ffmpegTempDir + "/"
 			+ to_string(ingestionJobKey)
-			+ "_"
-			+ to_string(encodingJobKey)
 			+ "-youTubeUrl.txt";
 
 		string youTubeExecuteCommand =
@@ -18510,7 +18490,6 @@ format code  extension  resolution note
 		{
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 			);
 
@@ -18522,7 +18501,6 @@ format code  extension  resolution note
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 				;
@@ -18532,7 +18510,6 @@ format code  extension  resolution note
 				errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				;
 				throw runtime_error(errorMessage);
 			}
@@ -18541,7 +18518,6 @@ format code  extension  resolution note
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed. no URL file created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 				;
@@ -18551,7 +18527,6 @@ format code  extension  resolution note
 				errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: command failed. no URL file created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				;
 				throw runtime_error(errorMessage);
 			}
@@ -18560,7 +18535,6 @@ format code  extension  resolution note
 
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 				+ ", @FFMPEG statistics@ - duration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
@@ -18576,7 +18550,6 @@ format code  extension  resolution note
 
 				_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
 					+ ", streamingYouTubeURL: " + streamingYouTubeURL
 				);
@@ -18593,7 +18566,6 @@ format code  extension  resolution note
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
 			;
 			_logger->error(errorMessage);
@@ -18612,7 +18584,6 @@ format code  extension  resolution note
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", e.what(): " + e.what()
 			;
 			_logger->error(errorMessage);

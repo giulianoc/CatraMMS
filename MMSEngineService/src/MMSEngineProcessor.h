@@ -57,18 +57,18 @@ public:
     };
 
     MMSEngineProcessor(
-            int processorIdentifier,
-            shared_ptr<spdlog::logger> logger, 
-            shared_ptr<MultiEventsSet> multiEventsSet,
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            shared_ptr<long> processorsThreadsNumber,
-			shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
-			shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
-            ActiveEncodingsManager* pActiveEncodingsManager,
-			mutex* cpuUsageMutex,
-			deque<int>* cpuUsage,
-            Json::Value configuration);
+		int processorIdentifier,
+		shared_ptr<spdlog::logger> logger, 
+		shared_ptr<MultiEventsSet> multiEventsSet,
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		shared_ptr<MMSStorage> mmsStorage,
+		shared_ptr<long> processorsThreadsNumber,
+		shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
+		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
+		ActiveEncodingsManager* pActiveEncodingsManager,
+		mutex* cpuUsageMutex,
+		deque<int>* cpuUsage,
+		Json::Value configuration);
     
     ~MMSEngineProcessor();
     
@@ -156,6 +156,8 @@ private:
 
 	int						_waitingNFSSync_maxMillisecondsToWait;
 	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;
+
+	string					_liveRecorderVirtualVODImageLabel;
 
 
 	Json::Value getReviewedOutputsRoot(
@@ -528,6 +530,16 @@ private:
 		string, int64_t, string, string, bool> processDependencyInfo(
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType);
+
+	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey, int64_t confKey, string liveURL);
+
+	pair<long,string> getLastYouTubeURLDetails(shared_ptr<Workspace> workspace,
+		int64_t ingestionKey, int64_t confKey);
+
+	void updateChannelDataWithNewYouTubeURL(shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		int64_t confKey, string streamingYouTubeLiveURL);
+
 } ;
 
 #endif

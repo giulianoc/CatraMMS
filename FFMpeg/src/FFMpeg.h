@@ -507,7 +507,7 @@ public:
         shared_ptr<spdlog::logger> logger);
 
 	pair<string, string> retrieveStreamingYouTubeURL(
-		int64_t ingestionJobKey, int64_t encodingJobKey,
+		int64_t ingestionJobKey,
 		string youTubeURL);
 
 private:

@@ -140,8 +140,6 @@ private:
     shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
 	string								_hostName;
 
-	string								_liveRecorderVirtualVODImageLabel;
-    
 	shared_ptr<long>					_faceRecognitionNumber;
 	int									_maxFaceRecognitionNumber;
 

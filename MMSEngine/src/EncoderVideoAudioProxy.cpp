@@ -107,11 +107,13 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
 
+	/*
 	_liveRecorderVirtualVODImageLabel = _configuration["ffmpeg"].get("liveRecorderVirtualVODImageLabel",
 		"").asString();
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 	);
+	*/
 
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
@@ -8747,20 +8749,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				string body;
 				{
-					// the recorder generates the chunks in a local(transcoder) directory
-					string transcoderStagingContentsPath;
-
-					// in case of 'localTranscoder', the chunks are moved to a shared directory,
-					//		specified by 'stagingContentsPath', to be ingested using a copy/move source URL
-					// in case of an external encoder, 'stagingContentsPath' is not used and the chunk
-					//		is ingested using PUSH through the binary MMS URL (mms-binary)
-					string stagingContentsPath;
-
-					// playlist where the recorder writes the chunks generated
-					string segmentListFileName;
-
-					string recordedFileNamePrefix;
-
+					/*
 					// The VirtualVOD is built based on the HLS generated
 					// in the Live Directory (.../MMSLive/1/<deliverycode>/...)
 					// In case of an external encoder, the monitor will not work because the Live Directory
@@ -8776,70 +8765,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					int64_t liveRecorderVirtualVODImageMediaItemKey = -1;
 
 					{
-						{
-							bool removeLinuxPathIfExist = false;
-							bool neededForTranscoder = true;
-							string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
-								neededForTranscoder,
-								_encodingItem->_workspace->_directoryName,
-								to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
-								"/",    // _encodingItem->_relativePath,
-								to_string(_encodingItem->_ingestionJobKey),
-								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-								removeLinuxPathIfExist);
-							size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
-							if (directoryEndIndex == string::npos)
-							{
-								string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-								_logger->error(errorMessage);
-
-								// throw runtime_error(errorMessage);
-							}
-							transcoderStagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
-						}
-
-						{
-							bool removeLinuxPathIfExist = false;
-							bool neededForTranscoder = false;
-							string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
-								neededForTranscoder,
-								_encodingItem->_workspace->_directoryName,
-								to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
-								"/",    // _encodingItem->_relativePath,
-								to_string(_encodingItem->_ingestionJobKey),
-								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-								removeLinuxPathIfExist);
-							size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
-							if (directoryEndIndex == string::npos)
-							{
-								string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-								_logger->error(errorMessage);
-
-								// throw runtime_error(errorMessage);
-							}
-							stagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
-						}
-
-						segmentListFileName = to_string(_encodingItem->_ingestionJobKey)
-							+ "_" + to_string(_encodingItem->_encodingJobKey)
-							+ ".liveRecorder.list"
-						;
-
-						recordedFileNamePrefix = string("liveRecorder_")
-							+ to_string(_encodingItem->_ingestionJobKey)
-							+ "_" + to_string(_encodingItem->_encodingJobKey)
-							;
-
 						if (virtualVOD)
 						{
 							{
@@ -8912,186 +8837,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							}
 						}
 					}
-
-					string localLiveURL = liveURL;
-					// in case of youtube url, the real URL to be used has to be calcolated
-					{
-						string youTubePrefix1 ("https://www.youtube.com/");
-						string youTubePrefix2 ("https://youtu.be/");
-						if (
-							(liveURL.size() >= youTubePrefix1.size()
-								&& 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
-							||
-							(liveURL.size() >= youTubePrefix2.size()
-								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
-							)
-						{
-							string streamingYouTubeLiveURL;
-							long hoursFromLastCalculatedURL;
-							pair<long,string> lastYouTubeURLDetails;
-							try
-							{
-								lastYouTubeURLDetails = getLastYouTubeURLDetails(
-									_encodingItem->_ingestionJobKey,
-									_encodingItem->_encodingJobKey,
-									_encodingItem->_workspace->_workspaceKey,
-									confKey);
-
-								string lastCalculatedURL;
-
-								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
-
-								_logger->info(__FILEREF__
-									+ "LiveRecorder. check youTubeURLCalculate"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", confKey: " + to_string(confKey)
-									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
-								);
-								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
-									streamingYouTubeLiveURL = lastCalculatedURL;
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = __FILEREF__
-									+ "LiveRecorder. youTubeURLCalculate. getLastYouTubeURLDetails failed"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", confKey: " + to_string(confKey)
-									+ ", YouTube URL: " + streamingYouTubeLiveURL
-								;
-								_logger->error(errorMessage);
-							}
-
-							if (streamingYouTubeLiveURL == "")
-							{
-								try
-								{
-									FFMpeg ffmpeg (_configuration, _logger);
-									pair<string, string> streamingLiveURLDetails =
-										ffmpeg.retrieveStreamingYouTubeURL(
-										_encodingItem->_ingestionJobKey,
-										_encodingItem->_encodingJobKey,
-										liveURL);
-
-									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
-
-									_logger->info(__FILEREF__ + "LiveRecorder. youTubeURLCalculate. Retrieve streaming YouTube URL"
-										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", confKey: " + to_string(confKey)
-										+ ", initial YouTube URL: " + liveURL
-										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-									);
-								}
-								catch(runtime_error e)
-								{
-									// in case ffmpeg.retrieveStreamingYouTubeURL fails
-									// we will use the last saved URL
-									tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
-
-									string errorMessage = __FILEREF__
-										+ "LiveRecorder. youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
-										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", confKey: " + to_string(confKey)
-										+ ", YouTube URL: " + streamingYouTubeLiveURL
-									;
-									_logger->error(errorMessage);
-
-									try
-									{
-										string firstLineOfErrorMessage;
-										{
-											string firstLine;
-											stringstream ss(errorMessage);
-											if (getline(ss, firstLine))
-												firstLineOfErrorMessage = firstLine;
-											else
-												firstLineOfErrorMessage = errorMessage;
-										}
-
-										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-											_encodingItem->_ingestionJobKey,
-											firstLineOfErrorMessage);
-									}
-									catch(runtime_error e)
-									{
-										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
-											+ ", _ingestionJobKey: " +
-												to_string(_encodingItem->_ingestionJobKey)
-											+ ", _encodingJobKey: "
-												+ to_string(_encodingItem->_encodingJobKey)
-											+ ", e.what(): " + e.what()
-										);
-									}
-									catch(exception e)
-									{
-										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
-											+ ", _ingestionJobKey: " +
-												to_string(_encodingItem->_ingestionJobKey)
-											+ ", _encodingJobKey: "
-												+ to_string(_encodingItem->_encodingJobKey)
-										);
-									}
-
-									if (streamingYouTubeLiveURL == "")
-									{
-										// 2020-04-21: let's go ahead because it would be managed
-										// the killing of the encodingJob
-										// 2020-09-17: it does not have sense to continue
-										//	if we do not have the right URL (m3u8)
-										throw YouTubeURLNotRetrieved();
-									}
-								}
-
-								if (streamingYouTubeLiveURL != "")
-								{
-									try
-									{
-										updateChannelDataWithNewYouTubeURL(
-											_encodingItem->_ingestionJobKey,
-											_encodingItem->_encodingJobKey,
-											_encodingItem->_workspace->_workspaceKey,
-											confKey,
-											streamingYouTubeLiveURL);
-									}
-									catch(runtime_error e)
-									{
-										string errorMessage = __FILEREF__
-											+ "LiveRecorder. youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
-											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", confKey: " + to_string(confKey)
-											+ ", YouTube URL: " + streamingYouTubeLiveURL
-										;
-										_logger->error(errorMessage);
-									}
-								}
-							}
-							else
-							{
-								_logger->info(__FILEREF__ + "LiveRecorder. youTubeURLCalculate. Reuse a previous streaming YouTube URL"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", confKey: " + to_string(confKey)
-									+ ", initial YouTube URL: " + liveURL
-									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-								);
-							}
-
-							localLiveURL = streamingYouTubeLiveURL;
-						}
-					}
+					*/
 
 					Json::Value liveRecorderMedatada;
 
@@ -9099,24 +8845,18 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						= (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveRecorderMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
 					liveRecorderMedatada["userAgent"] = userAgent;
-					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
-					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
-					liveRecorderMedatada["virtualVODStagingContentsPath"] = virtualVODStagingContentsPath;
-					liveRecorderMedatada["virtualVODTranscoderStagingContentsPath"]
-						= virtualVODTranscoderStagingContentsPath;
-					liveRecorderMedatada["liveRecorderVirtualVODImageMediaItemKey"] =
-						liveRecorderVirtualVODImageMediaItemKey;
-					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
-					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
+					// liveRecorderMedatada["virtualVODStagingContentsPath"] = virtualVODStagingContentsPath;
+					// liveRecorderMedatada["virtualVODTranscoderStagingContentsPath"]
+					// 	= virtualVODTranscoderStagingContentsPath;
+					// liveRecorderMedatada["liveRecorderVirtualVODImageMediaItemKey"] =
+					// 	liveRecorderVirtualVODImageMediaItemKey;
 					liveRecorderMedatada["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
 					liveRecorderMedatada["ingestedParametersRoot"] =
 						_encodingItem->_ingestedParametersRoot;
-					liveRecorderMedatada["liveURL"] = localLiveURL;
+					// liveRecorderMedatada["liveURL"] = localLiveURL;
 
-					{
-						body = JSONUtils::toString(liveRecorderMedatada);
-					}
+					body = JSONUtils::toString(liveRecorderMedatada);
 				}
             
 				list<string> header;
@@ -10511,7 +10251,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 									pair<string, string> streamingLiveURLDetails =
 										ffmpeg.retrieveStreamingYouTubeURL(
 										_encodingItem->_ingestionJobKey,
-										_encodingItem->_encodingJobKey,
 										liveURL);
 
 									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
@@ -10536,7 +10275,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 										+ "LiveProxy. youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 										+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 										+ ", YouTube URL: " + streamingYouTubeLiveURL
 									;
@@ -12544,7 +12282,6 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									pair<string, string> streamingLiveURLDetails =
 										ffmpeg.retrieveStreamingYouTubeURL(
 										_encodingItem->_ingestionJobKey,
-										_encodingItem->_encodingJobKey,
 										liveURL);
 
 									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;

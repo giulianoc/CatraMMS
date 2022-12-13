@@ -105,8 +105,8 @@ struct LiveRecording
 	Json::Value				_encodingParametersRoot;
 	Json::Value				_ingestedParametersRoot;
 	string					_streamSourceType;
-	string					_transcoderStagingContentsPath;
-	string					_stagingContentsPath;
+	string					_chunksTranscoderStagingContentsPath;
+	string					_chunksNFSStagingContentsPath;
 	string					_segmentListFileName;
 	string					_recordedFileNamePrefix;
 	string					_lastRecordedAssetFileName;
@@ -139,8 +139,8 @@ struct LiveRecording
 		liveRecording->_encodingParametersRoot = _encodingParametersRoot;
 		liveRecording->_ingestedParametersRoot = _ingestedParametersRoot;
 		liveRecording->_streamSourceType = _streamSourceType;
-		liveRecording->_transcoderStagingContentsPath = _transcoderStagingContentsPath;
-		liveRecording->_stagingContentsPath = _stagingContentsPath;
+		liveRecording->_chunksTranscoderStagingContentsPath = _chunksTranscoderStagingContentsPath;
+		liveRecording->_chunksNFSStagingContentsPath = _chunksNFSStagingContentsPath;
 		liveRecording->_segmentListFileName = _segmentListFileName;
 		liveRecording->_recordedFileNamePrefix = _recordedFileNamePrefix;
 		liveRecording->_lastRecordedAssetFileName = _lastRecordedAssetFileName;
@@ -407,8 +407,8 @@ private:
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value ingestedParametersRoot,
-		string transcoderStagingContentsPath,
-		string stagingContentsPath,
+		string chunksTranscoderStagingContentsPath,
+		string chunksNFSStagingContentsPath,
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
@@ -420,7 +420,7 @@ private:
 		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value ingestedParametersRoot,
-		string transcoderStagingContentsPath,
+		string chunksTranscoderStagingContentsPath,
 		string sharedStagingContentsPath,
 		string segmentListFileName,
 		string recordedFileNamePrefix,
@@ -431,11 +431,11 @@ private:
 	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string mediaLiveRecorderFileName);
 	bool liveRecorder_isLastLiveRecorderFile(int64_t ingestionJobKey, int64_t encodingJobKey,
-			time_t currentRecordedFileCreationTime, string transcoderStagingContentsPath,
+			time_t currentRecordedFileCreationTime, string chunksTranscoderStagingContentsPath,
 			string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk);
 	void liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		int64_t ingestionJobKey,
-		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+		string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
 		string sharedStagingContentsPath,
 		string addContentTitle,
 		string uniqueName,
@@ -449,7 +449,7 @@ private:
 		int64_t ingestionJobKey,
 		bool externalEncoder,
 		string currentRecordedAssetFileName,
-		string stagingContentsPath,
+		string chunksNFSStagingContentsPath,
 		string addContentTitle,
 		string uniqueName,
 		Json::Value userDataRoot,
@@ -460,7 +460,7 @@ private:
 
 	void liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t ingestionJobKey,
-		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+		string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
 		string addContentTitle,
 		string uniqueName,
 		Json::Value userDataRoot,
