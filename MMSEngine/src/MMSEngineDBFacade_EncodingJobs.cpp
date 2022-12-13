@@ -6912,7 +6912,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int64_t ingestionJobKey, string ingestionJobLabel,
 	string streamSourceType,
 
-	string configurationLabel, int64_t confKey, string url, string encodersPoolLabel,
+	string configurationLabel, int64_t confKey, string liveURL, string encodersPoolLabel,
 	string userAgent,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
@@ -6960,7 +6960,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             // + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
-            + ", url: " + url
+            + ", liveURL: " + liveURL
             + ", userAgent: " + userAgent
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
             + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -6990,8 +6990,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 		int64_t mainEncodingJobKey = -1;
 		{
-			bool main = true;
-
 			EncodingType encodingType = EncodingType::LiveRecorder;
         
 			string parameters;
@@ -7004,17 +7002,14 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "streamSourceType";
 				parametersRoot[field] = streamSourceType;
 
-				field = "main";
-				parametersRoot[field] = main;
-
 				field = "configurationLabel";
 				parametersRoot[field] = configurationLabel;
 
 				field = "confKey";
 				parametersRoot[field] = confKey;
 
-				field = "url";
-				parametersRoot[field] = url;
+				field = "liveURL";
+				parametersRoot[field] = liveURL;
 
 				field = "encodersPoolLabel";
 				parametersRoot[field] = encodersPoolLabel;
@@ -7193,7 +7188,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 			mainEncodingJobKey = getLastInsertId(conn);
         
-			if (main)
 			{
 				IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
 
