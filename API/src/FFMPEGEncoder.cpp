@@ -8944,8 +8944,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		{
 			bool monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
-			liveRecording->_virtualVOD = JSONUtils::asBool(
-				liveRecording->_encodingParametersRoot,
+			liveRecording->_virtualVOD = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"liveRecorderVirtualVOD", false);
 
 			if (monitorHLS || liveRecording->_virtualVOD)
@@ -9680,22 +9679,14 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					{
 						if (liveRecording->_encodingParametersRoot != Json::nullValue)
 						{
-							// bool highAvailability;
-							// bool main;
 							int segmentDurationInSeconds;
 							string outputFileFormat;
 							{
-								// string field = "highAvailability";
-								// highAvailability = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
+								string field = "SegmentDuration";
+								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
 
-								// field = "main";
-								// main = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
-
-								string field = "segmentDurationInSeconds";
-								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, field, 0);
-
-								field = "outputFileFormat";                                                                
-								outputFileFormat = liveRecording->_encodingParametersRoot.get(field, "XXX").asString();                   
+								field = "OutputFileFormat";
+								outputFileFormat = (liveRecording->_ingestedParametersRoot).get(field, "ts").asString();
 							}
 
 							pair<string, int> lastRecordedAssetInfo;
@@ -15277,9 +15268,8 @@ void FFMPEGEncoder::monitorThread()
 				else
 					liveRecordingLiveTimeInMinutes = 0;
 
-				int segmentDurationInSeconds;
-				string field = "segmentDurationInSeconds";
-				segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_encodingParametersRoot, field, 0);
+				string field = "SegmentDuration";
+				int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
 
 				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 				// in order to be sure the file was already created
