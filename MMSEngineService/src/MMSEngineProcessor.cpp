@@ -5749,7 +5749,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEventThread"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-		+ ", metadataContent: " + localAssetIngestionEvent.localAssetIngestionEvent.getMetadataContent()
+		+ ", metadataContent: " + localAssetIngestionEvent.getMetadataContent()
 		+ ", _processorsThreadsNumber.use_count(): "
 			+ to_string(_processorsThreadsNumber.use_count())
 	);
