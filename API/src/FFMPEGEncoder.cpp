@@ -15269,7 +15269,7 @@ void FFMPEGEncoder::monitorThread()
 					liveRecordingLiveTimeInMinutes = 0;
 
 				string field = "SegmentDuration";
-				int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
+				int segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_ingestedParametersRoot, field, -1);
 
 				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 				// in order to be sure the file was already created
