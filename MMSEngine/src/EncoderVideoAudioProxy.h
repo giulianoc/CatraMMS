@@ -233,19 +233,6 @@ private:
 	bool liveProxy_through_ffmpeg(string proxyType);
     void processLiveProxy(bool killedByUser);
 
-	pair<long,string> getLastYouTubeURLDetails(
-		int64_t ingestionKey,
-		int64_t encodingJobKey,
-		int64_t workspaceKey,
-		int64_t liveURLConfKey);
-
-	void updateChannelDataWithNewYouTubeURL(
-		int64_t ingestionKey,
-		int64_t encodingJobKey,
-		int64_t workspaceKey,
-		int64_t liveURLConfKey,
-		string streamingYouTubeLiveURL);
-
     void processLiveGrid(bool killedByUser);
 
     void processVideoSpeed(bool killedByUser);    
