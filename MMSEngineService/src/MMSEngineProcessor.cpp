@@ -12423,7 +12423,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 					&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 				)
 			{
-				liveURL = getStreamingYouTubeLiveURL(workspace, ingestionJobKey, confKey, liveURL);
+				liveURL = _mmsEngineDBFacade->getStreamingYouTubeLiveURL(workspace, ingestionJobKey,
+					confKey, liveURL);
 			}
 		}
 		else if (streamSourceType == "IP_PUSH")
@@ -12847,7 +12848,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		Json::Value outputsRoot;
-		bool timePeriod;
+		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
@@ -12890,14 +12891,8 @@ void MMSEngineProcessor::manageLiveProxy(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
-			timePeriod = false;
             field = "TimePeriod";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				utcProxyPeriodStart = -1;
-				utcProxyPeriodEnd = -1;
-			}
-			else
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 				if (timePeriod)
@@ -12989,29 +12984,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
-		// string tvType;
-		// int64_t tvServiceId = -1;
-		// int64_t tvFrequency = -1;
-		// int64_t tvSymbolRate = -1;
-		// int64_t tvBandwidthInMhz = -1;
-		// string tvModulation;
-		// int tvVideoPid = -1;
-		// int tvAudioItalianPid = -1;
-		/*
-		string liveURL;
-
-		if (streamSourceType == "IP_PULL")
-			liveURL = pullUrl;
-		else if (streamSourceType == "IP_PUSH")
-		{
-			liveURL = pushProtocol + "://" + pushServerName
-				+ ":" + to_string(pushServerPort) + pushUri;
-		}
-		else if (streamSourceType == "TV")
-		{
-		}
-		*/
-
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
 			workspace, ingestionJobKey, false);
 
@@ -13027,7 +12999,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		else
 		{
 			Json::Value streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
-				workspace->_workspaceKey, configurationLabel,
+				workspace, ingestionJobKey, configurationLabel,
 				maxWidth, userAgent, otherInputOptions);
 
 			Json::Value inputRoot;
@@ -13990,16 +13962,11 @@ void MMSEngineProcessor::manageLiveGrid(
 		}
 		*/
 
-		vector<tuple<int64_t, string, string>> inputChannels;
+		Json::Value inputChannelsRoot(Json::arrayValue);
 		int64_t encodingProfileKey = -1;
-		string outputType;
-		// string userAgent;
-		int segmentDurationInSeconds = 0;
-		int playlistEntriesNumber = 0;
-		int64_t deliveryCode = -1;
-		long waitingSecondsBetweenAttemptsInCaseOfErrors;
-		long maxAttemptsNumberInCaseOfErrors;
-		string srtURL;
+		Json::Value encodingProfileDetailsRoot;
+		string manifestDirectoryPath;
+		string manifestFileName;
         {
             string field = "InputConfigurationLabels";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -14014,26 +13981,45 @@ void MMSEngineProcessor::manageLiveGrid(
 			Json::Value inputChannelsRoot = parametersRoot[field];
 			for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsRoot.size(); inputChannelIndex++)
 			{
-				string inputConfigurationLabel = inputChannelsRoot[inputChannelIndex].asString();
+				string configurationLabel = inputChannelsRoot[inputChannelIndex].asString();
 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 					int, string, int, int, int, int, int, int64_t>
 					confKeyAndChannelURL = _mmsEngineDBFacade->getStreamDetails(
-					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
+					workspace->_workspaceKey, configurationLabel, warningIfMissing);
 
-				int64_t inputConfKey;
+				int64_t confKey;
 				string streamSourceType;
-				string inputChannelURL;
-				tie(inputConfKey, streamSourceType, ignore, inputChannelURL,
+				string liveURL;
+				tie(confKey, streamSourceType, ignore, liveURL,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore) = confKeyAndChannelURL;
 
 				// bisognerebbe verificare streamSourceType
 
-				inputChannels.push_back(make_tuple(inputConfKey,
-					inputConfigurationLabel, inputChannelURL));
+				string youTubePrefix1 ("https://www.youtube.com/");
+				string youTubePrefix2 ("https://youtu.be/");
+				if (
+					(liveURL.size() >= youTubePrefix1.size()
+						&& 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
+					||
+					(liveURL.size() >= youTubePrefix2.size()
+						&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
+					)
+				{
+					liveURL = _mmsEngineDBFacade->getStreamingYouTubeLiveURL(workspace, ingestionJobKey,
+						confKey, liveURL);
+				}
+
+				Json::Value inputChannelRoot;
+
+				inputChannelRoot["confKey"] = confKey;
+				inputChannelRoot["configurationLabel"] = configurationLabel;
+				inputChannelRoot["liveURL"] = liveURL;
+
+				inputChannelsRoot.append(inputChannelRoot);
 			}
 
 			string keyField = "EncodingProfileKey";
@@ -14061,11 +14047,20 @@ void MMSEngineProcessor::manageLiveGrid(
 				throw runtime_error(errorMessage);
 			}
 
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType,
+					MMSEngineDBFacade::DeliveryTechnology, string>
+					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+					workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+			}
+
             field = "OutputType";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputType = "HLS";
-			else
-            	outputType = parametersRoot.get(field, "").asString();
+			string outputType = parametersRoot.get(field, "HLS").asString();
 
 			if (outputType == "HLS") // || outputType == "DASH")
 			{
@@ -14079,60 +14074,17 @@ void MMSEngineProcessor::manageLiveGrid(
 
 					throw runtime_error(errorMessage);
 				}
-				deliveryCode = JSONUtils::asInt64(parametersRoot, field, 0);
+				int64_t deliveryCode = JSONUtils::asInt64(parametersRoot, field, 0);
 
-				field = "SegmentDurationInSeconds";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					segmentDurationInSeconds = 10;
-				else
-					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-
-				field = "PlaylistEntriesNumber";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					playlistEntriesNumber = 6;
-				else
-					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+				manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+					to_string(deliveryCode), workspace);
+				manifestFileName = to_string(deliveryCode) + ".m3u8";
 			}
-			else if (outputType == "SRT")
-			{
-				field = "SRT_URL";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				srtURL = parametersRoot.get(field, "XXX").asString();
-			}
-
-			field = "MaxAttemptsNumberInCaseOfErrors";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				maxAttemptsNumberInCaseOfErrors = 3;
-			else
-				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(parametersRoot, field, 0);
-
-			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
-			else
-				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
-					parametersRoot, field, 0);
         }
 
-		string monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-			to_string(deliveryCode),
-			workspace);
-		string monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-
 		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
-			inputChannels, encodingProfileKey, outputType,
-			monitorManifestDirectoryPath, monitorManifestFileName,
-			segmentDurationInSeconds, playlistEntriesNumber, srtURL,
-			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
+			inputChannelsRoot, encodingProfileKey, encodingProfileDetailsRoot,
+			manifestDirectoryPath, manifestFileName);
 	}
     catch(runtime_error e)
     {
@@ -19539,80 +19491,47 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
-		string sourcePhysicalPath;
-		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies.back();
+		MMSEngineDBFacade::ContentType referenceContentType;
+		string sourceAssetPathName;
+		string sourceRelativePath;
+		string sourceFileName;
+		string sourceFileExtension;
+		int64_t sourceDurationInMilliSecs;
+		string sourcePhysicalDeliveryURL;
+		string sourceTranscoderStagingAssetPathName;
+		bool stopIfReferenceProcessingError;
+		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+			string, string, int64_t, string, string, bool> dependencyInfo =
+			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+			sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+			sourceDurationInMilliSecs, sourcePhysicalDeliveryURL,
+			sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
 
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
-
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
-			{
-				int64_t encodingProfileKey = -1;
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-						warningIfMissing);
-				tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
-					physicalPathDetails;
-
-				sourceMediaItemKey = key;
-			}
-			else
-			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPathDetails(key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
-
-				sourcePhysicalPathKey = key;
-
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
-					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-					= mediaItemDetails;
-			}
-		}
-
-		MMSEngineDBFacade::ContentType contentType;
 		string userData;
 		{
 			bool warningIfMissing = false;
 
 			tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
-				mediaItemDetails
-					= _mmsEngineDBFacade->getMediaItemKeyDetails(
+				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
 					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
 
-			string localTitle;
-			string ingestionDate;
-			int64_t localIngestionJobKey;
-			tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
-				= mediaItemDetails;
+			tie(ignore, ignore, userData, ignore, ignore, ignore) = mediaItemDetails;
 		}
 
-        if (contentType != MMSEngineDBFacade::ContentType::Video
-			&& contentType != MMSEngineDBFacade::ContentType::Audio)
+        if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+			&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
         {
             string errorMessage = __FILEREF__ + "It is not possible to cut a media that is not video or audio"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                    + ", contentType: " + MMSEngineDBFacade::toString(referenceContentType)
                     ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
-
-		int64_t sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-			sourceMediaItemKey, sourcePhysicalPathKey);
 
 		// check start time / end time
 		int framesNumber = -1;
@@ -19635,7 +19554,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			field = "EndTimeInSeconds";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				if (contentType == MMSEngineDBFacade::ContentType::Audio)
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 				{
 					// endTimeInSeconds in case of Audio is mandatory
 					// because we cannot use the other option (FramesNumber)
@@ -19651,7 +19570,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			}
 			endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
-			if (contentType == MMSEngineDBFacade::ContentType::Video)
+			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 			{
 				field = "FramesNumber";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -19683,7 +19602,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				if (endTimeInSeconds < 0)
 				{
 					// if negative, it has to be subtract by the durationInMilliSeconds
-					double newEndTimeInSeconds  = (sourceDurationInMilliSeconds
+					double newEndTimeInSeconds  = (sourceDurationInMilliSecs
 						- (endTimeInSeconds * -1000)) / 1000;
 
 					_logger->error(__FILEREF__ + "endTimeInSeconds was changed"
@@ -19693,7 +19612,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
 						+ ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds)
-						+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+						+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 					);
 
 					endTimeInSeconds = newEndTimeInSeconds;
@@ -19708,7 +19627,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-						+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+						+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 				;
 				_logger->error(errorMessage);
 
@@ -19718,12 +19637,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				if (framesNumber == -1)
 				{
-					if (sourceDurationInMilliSeconds < endTimeInSeconds * 1000)
+					if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
 					{
 						if (fixEndTimeIfOvercomeDuration)
 						{
 							double previousEndTimeInSeconds = endTimeInSeconds;
-							endTimeInSeconds = sourceDurationInMilliSeconds / 1000;
+							endTimeInSeconds = sourceDurationInMilliSecs / 1000;
 
 							_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19732,7 +19651,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 								+ ", previousEndTimeInSeconds: " + to_string(previousEndTimeInSeconds)
 								+ ", new endTimeInSeconds: " + to_string(endTimeInSeconds)
-								+ ", sourceDurationInMilliSeconds (input media): " + to_string(sourceDurationInMilliSeconds)
+								+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
 							);
 						}
 						else
@@ -19743,7 +19662,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 								+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 								+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-								+ ", sourceDurationInMilliSeconds (input media): " + to_string(sourceDurationInMilliSeconds)
+								+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
 							;
 							_logger->error(errorMessage);
 
@@ -19820,8 +19739,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			+ ", cutType: " + cutType
 			+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 			+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-			+ ", sourcePhysicalPath: " + sourcePhysicalPath
-			+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+			+ ", sourceAssetPathName: " + sourceAssetPathName
+			+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 			+ ", framesNumber: " + to_string(framesNumber)
 			+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 			+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
@@ -19846,7 +19765,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				try
 				{
-					if (contentType == MMSEngineDBFacade::ContentType::Video)
+					if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 					{
 						vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
 						vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
@@ -19907,24 +19826,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			string fileFormat;
 			if (outputFileFormat == "")
 			{
-				size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
-				if (extensionIndex == string::npos)
-				{
-					string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", sourcePhysicalPath: " + sourcePhysicalPath
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string extension = sourcePhysicalPath.substr(extensionIndex + 1);
-
-				if (extension == "m3u8")
+				if (sourceFileExtension == "m3u8")
 					fileFormat = "ts";
 				else
-					fileFormat = extension;
+					fileFormat = sourceFileExtension;
 			}
 			else
 			{
@@ -19984,9 +19889,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                 + localSourceFileName;
         
 			FFMpeg ffmpeg (_configuration, _logger);
-			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourcePhysicalPath, 
+			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourceAssetPathName, 
 				cutType,
-				contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+				referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
 				startTimeInSeconds, endTimeInSeconds, framesNumber,
 				cutMediaPathName);
 
@@ -20000,9 +19905,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			int64_t imageOfVideoMediaItemKey = -1;
 			int64_t cutOfVideoMediaItemKey = -1;
 			int64_t cutOfAudioMediaItemKey = -1;
-			if (contentType == MMSEngineDBFacade::ContentType::Video)
+			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 				cutOfVideoMediaItemKey = sourceMediaItemKey;
-			else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+			else if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 				cutOfAudioMediaItemKey = sourceMediaItemKey;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(
 				ingestionJobKey,
@@ -20030,7 +19935,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
 				// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
 				// force the concat file to have the same avgFrameRate of the source media
-				if (forcedAvgFrameRate != "" && contentType == MMSEngineDBFacade::ContentType::Video)
+				if (forcedAvgFrameRate != "" && referenceContentType == MMSEngineDBFacade::ContentType::Video)
 					localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
 
 				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
@@ -20097,14 +20002,54 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 
+			string encodedFileName;
+			{
+				string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
+				string fileFormatLowerCase;
+				fileFormatLowerCase.resize(fileFormat.size());
+				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+					[](unsigned char c){return tolower(c); } );
+
+				encodedFileName = to_string(ingestionJobKey)
+					+ "_"
+					+ to_string(encodingProfileKey)
+					+ "." + fileFormatLowerCase
+				;
+			}
+
+			string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+			string encodedNFSStagingAssetPathName;
+			{
+				bool removeLinuxPathIfExist = false;
+				bool neededForTranscoder = true;
+
+				encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+					neededForTranscoder,
+					workspace->_directoryName,	// workspaceDirectoryName
+					to_string(ingestionJobKey),					// directoryNamePrefix
+					"/",										// relativePath,
+					// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+					// in case of hls and external encoder (binary is ingested through PUSH),
+					// the directory inside the tar.gz has to be 'content'
+					encodedFileName,	// content
+					-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+					-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+					removeLinuxPathIfExist);
+
+				encodedNFSStagingAssetPathName =
+					_mmsStorage->getWorkspaceIngestionRepository(workspace)
+					+ "/" + encodedFileName;
+			}
+
 			_mmsEngineDBFacade->addEncoding_CutFrameAccurate(workspace, ingestionJobKey,
-				sourceMediaItemKey,
-				sourcePhysicalPathKey,
-				sourcePhysicalPath,
-				// sourceDurationInMilliSeconds,
+				sourceMediaItemKey, sourcePhysicalPathKey,
+				sourceAssetPathName, sourceDurationInMilliSecs, sourceFileExtension,
+				sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
 				endTimeInSeconds,
-				encodingProfileKey,
-				encodingProfileDetailsRoot, encodingPriority,
+				encodingProfileKey, encodingProfileDetailsRoot,
+				encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+				_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
+				encodingPriority,
 				newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs);
 		}
 	}
@@ -27384,473 +27329,5 @@ tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 		assetPathName, relativePath, fileName, fileExtension,
 		durationInMilliSecs, physicalDeliveryURL, transcoderStagingAssetPathName,
 		stopIfReferenceProcessingError);
-}
-
-string MMSEngineProcessor::getStreamingYouTubeLiveURL(
-	shared_ptr<Workspace> workspace,
-	int64_t ingestionJobKey,
-	int64_t confKey,
-	string liveURL
-)
-{
-
-	string streamingYouTubeLiveURL;
-
-	long hoursFromLastCalculatedURL;
-	pair<long, string> lastYouTubeURLDetails;
-	try
-	{
-		lastYouTubeURLDetails = getLastYouTubeURLDetails(workspace, ingestionJobKey, confKey);
-
-		string lastCalculatedURL;
-
-		tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
-
-		long retrieveStreamingYouTubeURLPeriodInHours = 5;	// 5 hours
-
-		_logger->info(__FILEREF__
-			+ "check youTubeURLCalculate"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", confKey: " + to_string(confKey)
-			+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-			+ ", retrieveStreamingYouTubeURLPeriodInHours: " + to_string(retrieveStreamingYouTubeURLPeriodInHours)
-		);
-		if (hoursFromLastCalculatedURL < retrieveStreamingYouTubeURLPeriodInHours)
-			streamingYouTubeLiveURL = lastCalculatedURL;
-	}
-	catch(runtime_error e)
-	{
-		string errorMessage = __FILEREF__
-			+ "youTubeURLCalculate. getLastYouTubeURLDetails failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", confKey: " + to_string(confKey)
-			+ ", YouTube URL: " + streamingYouTubeLiveURL
-		;
-		_logger->error(errorMessage);
-	}
-
-	if (streamingYouTubeLiveURL == "")
-	{
-		try
-		{
-			FFMpeg ffmpeg (_configuration, _logger);
-			pair<string, string> streamingLiveURLDetails =
-				ffmpeg.retrieveStreamingYouTubeURL(ingestionJobKey, liveURL);
-
-			tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
-
-			_logger->info(__FILEREF__ + "youTubeURLCalculate. Retrieve streaming YouTube URL"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", confKey: " + to_string(confKey)
-				+ ", initial YouTube URL: " + liveURL
-				+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-				+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-			);
-		}
-		catch(runtime_error e)
-		{
-			// in case ffmpeg.retrieveStreamingYouTubeURL fails
-			// we will use the last saved URL
-			tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
-
-			string errorMessage = __FILEREF__
-				+ "youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", confKey: " + to_string(confKey)
-				+ ", YouTube URL: " + streamingYouTubeLiveURL
-			;
-			_logger->error(errorMessage);
-
-			try
-			{
-				string firstLineOfErrorMessage;
-				{
-					string firstLine;
-					stringstream ss(errorMessage);
-					if (getline(ss, firstLine))
-						firstLineOfErrorMessage = firstLine;
-					else
-						firstLineOfErrorMessage = errorMessage;
-				}
-
-				_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-					ingestionJobKey, firstLineOfErrorMessage);
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", e.what(): " + e.what()
-				);
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				);
-			}
-
-			if (streamingYouTubeLiveURL == "")
-			{
-				// 2020-04-21: let's go ahead because it would be managed
-				// the killing of the encodingJob
-				// 2020-09-17: it does not have sense to continue
-				//	if we do not have the right URL (m3u8)
-				throw YouTubeURLNotRetrieved();
-			}
-		}
-
-		if (streamingYouTubeLiveURL != "")
-		{
-			try
-			{
-				updateChannelDataWithNewYouTubeURL(workspace, ingestionJobKey,
-					confKey, streamingYouTubeLiveURL);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__
-					+ "youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", confKey: " + to_string(confKey)
-					+ ", YouTube URL: " + streamingYouTubeLiveURL
-				;
-				_logger->error(errorMessage);
-			}
-		}
-	}
-	else
-	{
-		_logger->info(__FILEREF__ + "youTubeURLCalculate. Reuse a previous streaming YouTube URL"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", confKey: " + to_string(confKey)
-			+ ", initial YouTube URL: " + liveURL
-			+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-			+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
-		);
-	}
-
-	return streamingYouTubeLiveURL;
-}
-
-pair<long,string> MMSEngineProcessor::getLastYouTubeURLDetails(
-	shared_ptr<Workspace> workspace, int64_t ingestionKey, int64_t confKey
-)
-{
-	long hoursFromLastCalculatedURL = -1;
-	string lastCalculatedURL;
-
-	try
-	{
-		tuple<string, string, string> channelDetails = _mmsEngineDBFacade->getStreamDetails(
-			workspace->_workspaceKey, confKey);
-
-		string channelData;
-
-		tie(ignore, ignore, channelData) = channelDetails;
-
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionKey, -1, channelData);
-
-
-		string field;
-
-		Json::Value mmsDataRoot;
-		{
-			field = "mmsData";
-			if (!JSONUtils::isMetadataPresent(channelDataRoot, field))
-			{
-				_logger->info(__FILEREF__ + "no mmsData present"                
-					+ ", ingestionKey: " + to_string(ingestionKey)
-					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", confKey: " + to_string(confKey)
-				);
-
-				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
-			}
-
-			mmsDataRoot = channelDataRoot[field];
-		}
-
-		Json::Value youTubeURLsRoot(Json::arrayValue);
-		{
-			field = "youTubeURLs";
-			if (!JSONUtils::isMetadataPresent(mmsDataRoot, field))
-			{
-				_logger->info(__FILEREF__ + "no youTubeURLs present"                
-					+ ", ingestionKey: " + to_string(ingestionKey)
-					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", confKey: " + to_string(confKey)
-				);
-
-				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
-			}
-
-			youTubeURLsRoot = mmsDataRoot[field];
-		}
-
-		if (youTubeURLsRoot.size() == 0)
-		{
-			_logger->info(__FILEREF__ + "no youTubeURL present"                
-				+ ", ingestionKey: " + to_string(ingestionKey)
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-				+ ", confKey: " + to_string(confKey)
-			);
-
-			return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
-		}
-
-		{
-			Json::Value youTubeLiveURLRoot = youTubeURLsRoot[youTubeURLsRoot.size() - 1];
-
-			time_t tNow;
-			{
-				time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-				tm tmNow;
-
-				localtime_r (&utcNow, &tmNow);
-				tNow = mktime(&tmNow);
-			}
-
-			time_t tLastCalculatedURLTime;
-			{
-				unsigned long       ulYear;
-				unsigned long		ulMonth;
-				unsigned long		ulDay;
-				unsigned long		ulHour;
-				unsigned long		ulMinutes;
-				unsigned long		ulSeconds;
-				int					sscanfReturn;
-
-				field = "timestamp";
-				string timestamp = youTubeLiveURLRoot.get(field, "").asString();
-
-				if ((sscanfReturn = sscanf (timestamp.c_str(),
-					"%4lu-%2lu-%2lu %2lu:%2lu:%2lu",
-					&ulYear,
-					&ulMonth,
-					&ulDay,
-					&ulHour,
-					&ulMinutes,
-					&ulSeconds)) != 6)
-				{
-					string errorMessage = __FILEREF__ + "timestamp has a wrong format (sscanf failed)"                
-						+ ", ingestionKey: " + to_string(ingestionKey)
-						+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-						+ ", confKey: " + to_string(confKey)
-						+ ", sscanfReturn: " + to_string(sscanfReturn)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-				tm tmLastCalculatedURL;
-
-				localtime_r (&utcNow, &tmLastCalculatedURL);
-
-				tmLastCalculatedURL.tm_year	= ulYear - 1900;
-				tmLastCalculatedURL.tm_mon	= ulMonth - 1;
-				tmLastCalculatedURL.tm_mday	= ulDay;
-				tmLastCalculatedURL.tm_hour	= ulHour;
-				tmLastCalculatedURL.tm_min	= ulMinutes;
-				tmLastCalculatedURL.tm_sec	= ulSeconds;
-
-				tLastCalculatedURLTime = mktime(&tmLastCalculatedURL);
-			}
-
-			hoursFromLastCalculatedURL = (tNow - tLastCalculatedURLTime) / 3600;
-
-			field = "youTubeURL";
-			lastCalculatedURL = youTubeLiveURLRoot.get(field, "").asString();
-		}
-
-		return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
-	}
-	catch(...)
-	{
-		string errorMessage = string("getLastYouTubeURLDetails failed")
-			+ ", ingestionKey: " + to_string(ingestionKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-			+ ", confKey: " + to_string(confKey)
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-
-void MMSEngineProcessor::updateChannelDataWithNewYouTubeURL(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-	int64_t confKey, string streamingYouTubeLiveURL
-)
-{
-	try
-	{
-		tuple<string, string, string> channelDetails = _mmsEngineDBFacade->getStreamDetails(
-			workspace->_workspaceKey, confKey);
-
-		string channelData;
-
-		tie(ignore, ignore, channelData) = channelDetails;
-
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionJobKey, -1, channelData);
-
-		// add streamingYouTubeLiveURL info to the channelData
-		{
-			string field;
-
-			Json::Value youTubeLiveURLRoot;
-			{
-				char strNow[64];
-				{
-					time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-
-					tm tmNow;
-
-					localtime_r (&utcNow, &tmNow);
-					sprintf (strNow, "%04d-%02d-%02d %02d:%02d:%02d",
-						tmNow. tm_year + 1900,
-						tmNow. tm_mon + 1,
-						tmNow. tm_mday,
-						tmNow. tm_hour,
-						tmNow. tm_min,
-						tmNow. tm_sec);
-				}
-				field = "timestamp";
-				youTubeLiveURLRoot[field] = strNow;
-
-				field = "youTubeURL";
-				youTubeLiveURLRoot[field] = streamingYouTubeLiveURL;
-			}
-
-			Json::Value mmsDataRoot;
-			{
-				field = "mmsData";
-				if (JSONUtils::isMetadataPresent(channelDataRoot, field))
-					mmsDataRoot = channelDataRoot[field];
-			}
-
-			Json::Value previousYouTubeURLsRoot(Json::arrayValue);
-			{
-				field = "youTubeURLs";
-				if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
-					previousYouTubeURLsRoot = mmsDataRoot[field];
-			}
-
-			Json::Value youTubeURLsRoot(Json::arrayValue);
-
-			// maintain the last 10 URLs
-			int youTubeURLIndex;
-			if (previousYouTubeURLsRoot.size() > 10)
-				youTubeURLIndex = 10;
-			else
-				youTubeURLIndex = previousYouTubeURLsRoot.size();
-			for (; youTubeURLIndex >= 0; youTubeURLIndex--)
-				youTubeURLsRoot.append(previousYouTubeURLsRoot[youTubeURLIndex]);
-			youTubeURLsRoot.append(youTubeLiveURLRoot);
-
-			field = "youTubeURLs";
-			mmsDataRoot[field] = youTubeURLsRoot;
-
-			field = "mmsData";
-			channelDataRoot[field] = mmsDataRoot;
-		}
-
-		bool labelToBeModified = false;
-		string label;
-		bool sourceTypeToBeModified = false;
-		string sourceType;
-		bool encodersPoolToBeModified = false;
-		int64_t encodersPoolKey;
-		bool urlToBeModified = false;
-		string url;
-		bool pushProtocolToBeModified = false;
-		string pushProtocol;
-		bool pushEncoderKeyToBeModified = false;
-		int64_t pushEncoderKey = -1;
-		bool pushServerNameToBeModified = false;
-		string pushServerName;
-		bool pushServerPortToBeModified = false;
-		int pushServerPort = -1;
-		bool pushUriToBeModified = false;
-		string pushUri;
-		bool pushListenTimeoutToBeModified = false;
-		int pushListenTimeout = -1;
-		bool captureVideoDeviceNumberToBeModified = false;
-		int captureVideoDeviceNumber = -1;
-		bool captureVideoInputFormatToBeModified = false;
-		string captureVideoInputFormat;
-		bool captureFrameRateToBeModified = false;
-		int captureFrameRate = -1;
-		bool captureWidthToBeModified = false;
-		int captureWidth = -1;
-		bool captureHeightToBeModified = false;
-		int captureHeight = -1;
-		bool captureAudioDeviceNumberToBeModified = false;
-		int captureAudioDeviceNumber = -1;
-		bool captureChannelsNumberToBeModified = false;
-		int captureChannelsNumber = -1;
-		bool tvSourceTVConfKeyToBeModified = false;
-		int64_t tvSourceTVConfKey = -1;
-		bool typeToBeModified = false;
-		string type;
-		bool descriptionToBeModified = false;
-		string description;
-		bool nameToBeModified = false;
-		string name;
-		bool regionToBeModified = false;
-		string region;
-		bool countryToBeModified = false;
-		string country;
-		bool imageToBeModified = false;
-		int64_t imageMediaItemKey = -1;
-		string imageUniqueName;
-		bool positionToBeModified = false;
-		int position = -1;
-		bool channelDataToBeModified = true;
-
-		_mmsEngineDBFacade->modifyStream(
-			confKey,
-			workspace->_workspaceKey,
-			labelToBeModified, label,
-			sourceTypeToBeModified, sourceType,
-			encodersPoolToBeModified, encodersPoolKey,
-			urlToBeModified, url,
-			pushProtocolToBeModified, pushProtocol,
-			pushEncoderKeyToBeModified, pushEncoderKey,
-			pushServerNameToBeModified, pushServerName,
-			pushServerPortToBeModified, pushServerPort,
-			pushUriToBeModified, pushUri,
-			pushListenTimeoutToBeModified, pushListenTimeout,
-			captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
-			captureVideoInputFormatToBeModified, captureVideoInputFormat,
-			captureFrameRateToBeModified, captureFrameRate,
-			captureWidthToBeModified, captureWidth,
-			captureHeightToBeModified, captureHeight,
-			captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
-			captureChannelsNumberToBeModified, captureChannelsNumber,
-			tvSourceTVConfKeyToBeModified, tvSourceTVConfKey,
-			typeToBeModified, type,
-			descriptionToBeModified, description,
-			nameToBeModified, name,
-			regionToBeModified, region,
-			countryToBeModified, country,
-			imageToBeModified, imageMediaItemKey, imageUniqueName,
-			positionToBeModified, position,
-			channelDataToBeModified, channelDataRoot);
-	}
-	catch(...)
-	{
-		string errorMessage = string("updateChannelDataWithNewYouTubeURL failed")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-			+ ", confKey: " + to_string(confKey)
-			+ ", streamingYouTubeLiveURL: " + streamingYouTubeLiveURL
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 }
 

@@ -126,6 +126,13 @@ struct AlreadyLocked: public exception {
     };
 };
 
+struct YouTubeURLNotRetrieved: public exception {
+    char const* what() const throw() 
+    {
+        return "YouTube URL was not retrieved";
+    }; 
+};
+
 class MMSEngineDBFacade {
 
 public:
@@ -1788,12 +1795,10 @@ public:
 	void addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		vector<tuple<int64_t, string, string>>& inputChannels,
+		Json::Value inputChannelsRoot,
 		int64_t encodingProfileKey,
-		string outputType, string manifestDirectoryPath, string manifestFileName,
-		int segmentDurationInSeconds, int playlistEntriesNumber,
-		string srtURL,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+		Json::Value encodingProfileDetailsRoot,
+		string manifestDirectoryPath, string manifestFileName);
 
 	void addEncoding_VideoSpeed (
 		shared_ptr<Workspace> workspace,
@@ -1849,14 +1854,15 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 
-		int64_t sourceVideoMediaItemKey,
-		int64_t sourceVideoPhysicalPathKey,
-		string sourceVideoAssetPathName,
-		// int64_t sourceDurationInMilliSeconds,
+		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
+		string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,
+		string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
 		double endTimeInSeconds,
 
-		int64_t encodingProfileKey,
-		Json::Value encodingProfileDetailsRoot,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+
+		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 
 		EncodingPriority encodingPriority,
 		int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs);
@@ -2458,7 +2464,8 @@ public:
 	static int64_t parseRetention(string retention);
 
 	Json::Value getStreamInputRoot(
-		int64_t workspaceKey, string configurationLabel,
+		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		string configurationLabel,
 		int maxWidth, string userAgent, string otherInputOptions);
 
 	Json::Value getVodInputRoot(
@@ -2476,12 +2483,16 @@ public:
 	Json::Value getDirectURLInputRoot(
 		string url);
 
+	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey, int64_t confKey, string liveURL);
+
 	bool oncePerDayExecution(OncePerDayType oncePerDayType);
 
 	static MMSEngineDBFacade::DeliveryTechnology fileFormatToDeliveryTechnology(string fileFormat);
 
 private:
-    shared_ptr<spdlog::logger>                          _logger;
+    shared_ptr<spdlog::logger>		_logger;
+	Json::Value						_configuration;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
     shared_ptr<DBConnectionPool<MySQLConnection>>       _connectionPool;
     string                          _defaultContentProviderName;
@@ -2790,6 +2801,13 @@ private:
 	void removeTags(
 		shared_ptr<MySQLConnection> conn,
 		int64_t mediaItemKey);
+
+	pair<long,string> getLastYouTubeURLDetails(
+		shared_ptr<Workspace> workspace, int64_t ingestionKey, int64_t confKey);
+
+	void updateChannelDataWithNewYouTubeURL(
+		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		int64_t confKey, string streamingYouTubeLiveURL);
 };
 
 #endif /* MMSEngineDBFacade_h */

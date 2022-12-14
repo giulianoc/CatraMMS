@@ -8285,16 +8285,13 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 }
 
 void MMSEngineDBFacade::addEncoding_LiveGridJob (
-		shared_ptr<Workspace> workspace,
-		int64_t ingestionJobKey,
-		vector<tuple<int64_t, string, string>>& inputChannels,
-		int64_t encodingProfileKey,
-		string outputType,
-		string manifestDirectoryPath, string manifestFileName,
-		int segmentDurationInSeconds, int playlistEntriesNumber,
-		string srtURL,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
-	)
+	shared_ptr<Workspace> workspace,
+	int64_t ingestionJobKey,
+	Json::Value inputChannelsRoot,
+	int64_t encodingProfileKey,
+	Json::Value encodingProfileDetailsRoot,
+	string manifestDirectoryPath, string manifestFileName
+)
 {
 
     string      lastSQLCommand;
@@ -8306,16 +8303,9 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveGridJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", inputChannels.size: " + to_string(inputChannels.size())
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
-            + ", outputType: " + outputType
             + ", manifestDirectoryPath: " + manifestDirectoryPath
-            + ", manifestFileName: " + manifestFileName,
-            + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-            + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
-            + ", srtURL: " + srtURL
-            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
-            + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
+            + ", manifestFileName: " + manifestFileName
         );
 
         conn = _connectionPool->borrow();	
@@ -8342,62 +8332,20 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 
 				string field;
 
-				{
-					Json::Value inputChannelsRoot(Json::arrayValue);
-
-					for (int inputChannelIndex = 0; inputChannelIndex < inputChannels.size(); inputChannelIndex++)
-					{
-						tuple<int64_t, string, string> inputChannel = inputChannels[inputChannelIndex];
-
-						int64_t inputConfKey;
-						string inputConfigurationLabel;
-						string inputChannelURL;
-						tie(inputConfKey, inputConfigurationLabel, inputChannelURL) = inputChannel;
-
-						Json::Value inputChannelRoot;
-
-						field = "inputConfKey";
-						inputChannelRoot[field] = inputConfKey;
-
-						field = "inputConfigurationLabel";
-						inputChannelRoot[field] = inputConfigurationLabel;
-
-						field = "inputChannelURL";
-						inputChannelRoot[field] = inputChannelURL;
-
-						inputChannelsRoot.append(inputChannelRoot);
-					}
-
-					field = "inputChannels";
-					parametersRoot[field] = inputChannelsRoot;
-				}
+				field = "inputChannels";
+				parametersRoot[field] = inputChannelsRoot;
 
 				field = "encodingProfileKey";
 				parametersRoot[field] = encodingProfileKey;
 
-				field = "outputType";
-				parametersRoot[field] = outputType;
+				field = "encodingProfileDetails";
+				parametersRoot[field] = encodingProfileDetailsRoot;
 
 				field = "manifestDirectoryPath";
 				parametersRoot[field] = manifestDirectoryPath;
 
 				field = "manifestFileName";
 				parametersRoot[field] = manifestFileName;
-
-				field = "segmentDurationInSeconds";
-				parametersRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				parametersRoot[field] = playlistEntriesNumber;
-
-				field = "srtURL";
-				parametersRoot[field] = srtURL;
-
-				field = "maxAttemptsNumberInCaseOfErrors";
-				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
-
-				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -9709,14 +9657,15 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 
-	int64_t sourceVideoMediaItemKey,
-	int64_t sourceVideoPhysicalPathKey,
-	string sourceVideoAssetPathName,
-	// int64_t sourceDurationInMilliSeconds,
+	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
+	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,
+	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
 	double endTimeInSeconds,
 
-	int64_t encodingProfileKey,
-	Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+
+	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 
 	EncodingPriority encodingPriority,
 	int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs)
@@ -9749,18 +9698,26 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 		{
 			Json::Value parametersRoot;
 
-			string field = "sourceVideoMediaItemKey";
-			parametersRoot[field] = sourceVideoMediaItemKey;
+			string field = "sourceMediaItemKey";
+			parametersRoot[field] = sourceMediaItemKey;
 
-			// used in CatraMMSAPI.java
-			field = "sourceVideoPhysicalPathKey";
-			parametersRoot[field] = sourceVideoPhysicalPathKey;
+			field = "sourcePhysicalPathKey";
+			parametersRoot[field] = sourcePhysicalPathKey;
 
-			field = "sourceVideoAssetPathName";
-			parametersRoot[field] = sourceVideoAssetPathName;
+			field = "sourceAssetPathName";
+			parametersRoot[field] = sourceAssetPathName;
 
-			// field = "sourceDurationInMilliSeconds";
-			// parametersRoot[field] = sourceDurationInMilliSeconds;
+			field = "sourceDurationInMilliSeconds";
+			parametersRoot[field] = sourceDurationInMilliSeconds;
+
+			field = "sourceFileExtension";
+			parametersRoot[field] = sourceFileExtension;
+
+			field = "sourcePhysicalDeliveryURL";
+			parametersRoot[field] = sourcePhysicalDeliveryURL;
+
+			field = "sourceTranscoderStagingAssetPathName";
+			parametersRoot[field] = sourceTranscoderStagingAssetPathName;
 
 			field = "endTimeInSeconds";
 			parametersRoot[field] = endTimeInSeconds;
@@ -9770,6 +9727,21 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 
 			field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "encodedTranscoderStagingAssetPathName";
+			parametersRoot[field] = encodedTranscoderStagingAssetPathName;
+
+			field = "encodedNFSStagingAssetPathName";
+			parametersRoot[field] = encodedNFSStagingAssetPathName;
+
+			field = "mmsWorkflowIngestionURL";
+			parametersRoot[field] = mmsWorkflowIngestionURL;
+
+			field = "mmsBinaryIngestionURL";
+			parametersRoot[field] = mmsBinaryIngestionURL;
+
+			field = "mmsIngestionURL";
+			parametersRoot[field] = mmsIngestionURL;
 
 			field = "newUtcStartTimeInMilliSecs";
 			parametersRoot[field] = newUtcStartTimeInMilliSecs;

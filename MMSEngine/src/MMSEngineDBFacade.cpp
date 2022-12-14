@@ -39,7 +39,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		size_t dbPoolSize,
         shared_ptr<spdlog::logger> logger) 
 {
-    _logger     = logger;
+    _logger			= logger;
+	_configuration	= configuration;
     #if ENABLE_DBLOGGER == 1
         _globalLogger = logger;
     #endif

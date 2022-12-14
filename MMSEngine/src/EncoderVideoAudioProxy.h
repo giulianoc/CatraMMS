@@ -29,13 +29,6 @@
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
-struct YouTubeURLNotRetrieved: public exception {
-    char const* what() const throw() 
-    {
-        return "YouTube URL was not retrieved";
-    }; 
-};
-
 struct MaxConcurrentJobsReached: public exception {
     char const* what() const throw() 
     {
@@ -218,20 +211,12 @@ private:
     bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
     void processEncodedContentVideoAudio();    
 
-    // bool overlayImageOnVideo();
-    // bool overlayImageOnVideo_through_ffmpeg();
     void processOverlayedImageOnVideo(bool killedByUser);    
 
-    // bool overlayTextOnVideo();
-    // bool overlayTextOnVideo_through_ffmpeg();
     void processOverlayedTextOnVideo(bool killedByUser);    
     
-    // bool generateFrames();
-    // bool generateFrames_through_ffmpeg();
     void processGeneratedFrames(bool killedByUser);
 
-    // bool slideShow();
-    // bool slideShow_through_ffmpeg();
     void processSlideShow();    
 
     string faceRecognition();
@@ -243,32 +228,10 @@ private:
     bool liveRecorder();
     bool liveRecorder_through_ffmpeg();
     void processLiveRecorder(bool killedByUser);    
-	/*
-	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
-			string recordedFileNamePrefix);
-	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
-	time_t getMediaLiveRecorderEndTime(string mediaLiveRecorderFileName);
-	string processLastGeneratedLiveRecorderFiles(bool highAvailability, bool main, int segmentDurationInSeconds,
-		string segmentListPathName, string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
-	void ingestRecordedMedia(
-		string currentRecordedAssetPathName,
-		string title,
-		Json::Value userDataRoot,
-		string fileFormat,
-		Json::Value liveRecorderParametersRoot);
-	*/
 
 	bool liveProxy(string proxyType);
 	bool liveProxy_through_ffmpeg(string proxyType);
     void processLiveProxy(bool killedByUser);
-
-	// bool vodProxy();
-	// bool vodProxy_through_ffmpeg();
-    // void processVODProxy(bool killedByUser);
-
-	// bool awaitingTheBeginning();
-	// bool awaitingTheBeginning_through_ffmpeg();
-    // void processAwaitingTheBeginning(bool killedByUser);
 
 	pair<long,string> getLastYouTubeURLDetails(
 		int64_t ingestionKey,
@@ -283,25 +246,15 @@ private:
 		int64_t liveURLConfKey,
 		string streamingYouTubeLiveURL);
 
-	bool liveGrid();
-	bool liveGrid_through_ffmpeg();
     void processLiveGrid(bool killedByUser);
 
-    // bool videoSpeed();
-    // bool videoSpeed_through_ffmpeg();
     void processVideoSpeed(bool killedByUser);    
 
-    // pair<string, bool> pictureInPicture();
-    // pair<string, bool> pictureInPicture_through_ffmpeg();
     void processPictureInPicture(bool killedByUser);    
 
-    // pair<string, bool> introOutroOverlay();
-    // pair<string, bool> introOutroOverlay_through_ffmpeg();
     void processIntroOutroOverlay();    
 
-    pair<string, bool> cutFrameAccurate();
-    pair<string, bool> cutFrameAccurate_through_ffmpeg();
-    void processCutFrameAccurate(string stagingEncodedAssetPathName, bool killedByUser);    
+    void processCutFrameAccurate();    
 
     tuple<bool, bool, bool, string, bool, bool, int, int> getEncodingStatus();
 

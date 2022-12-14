@@ -4755,7 +4755,8 @@ void API::changeLiveProxyPlaylist(
 
 						broadcastDefaultStreamInputRoot =
 							_mmsEngineDBFacade->getStreamInputRoot(
-							workspace->_workspaceKey, broadcastDefaultConfigurationLabel,
+							workspace, broadcasterIngestionJobKey,
+							broadcastDefaultConfigurationLabel,
 							maxWidth, userAgent, otherInputOptions);
 					}
 					else if (broadcastDefaultMediaType == "Media")

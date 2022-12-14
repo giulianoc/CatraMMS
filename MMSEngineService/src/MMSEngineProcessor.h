@@ -531,15 +531,6 @@ private:
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType);
 
-	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace,
-		int64_t ingestionJobKey, int64_t confKey, string liveURL);
-
-	pair<long,string> getLastYouTubeURLDetails(shared_ptr<Workspace> workspace,
-		int64_t ingestionKey, int64_t confKey);
-
-	void updateChannelDataWithNewYouTubeURL(shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-		int64_t confKey, string streamingYouTubeLiveURL);
-
 } ;
 
 #endif

@@ -332,53 +332,6 @@ public:
 		pid_t* pChildPid,
 		chrono::system_clock::time_point* pRecordingStart);
 
-/*
-	void liveProxy(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		int maxWidth,
-
-		// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
-		//		listening for an incoming connection
-		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		string streamSourceType,
-		string liveURL,
-		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
-		int listenTimeoutInSeconds,
-
-		// parameters used only in case streamSourceType is CaptureLive
-		int captureLive_videoDeviceNumber,
-		string captureLive_videoInputFormat,
-		int captureLive_frameRate,
-		int captureLive_width,
-		int captureLive_height,
-		int captureLive_audioDeviceNumber,
-		int captureLive_channelsNumber,
-
-		string userAgent,
-		string otherInputOptions,
-
-		bool timePeriod,
-		time_t utcProxyPeriodStart,
-		time_t utcProxyPeriodEnd,
-
-		// array, each element is an output containing the following fields
-		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
-		//  #in case of HLS or DASH
-		//      Json::Value encodingProfileDetailsRoot,
-		//      int segmentDurationInSeconds,
-		//      int playlistEntriesNumber,
-		//      string manifestDirectoryPath,
-		//      string manifestFileName,
-		//  #in case of RTMP_Stream
-		//      Json::Value encodingProfileDetailsRoot,
-		//      string rtmpUrl,
-		//
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
-
-		pid_t* pChildPid);
-*/
-
 	void liveProxy2(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
@@ -392,77 +345,6 @@ public:
 		pid_t* pChildPid,
 		chrono::system_clock::time_point* pProxyStart
 	);
-
-	/*
-	void vodProxy(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-
-		string vodContentType,
-		string sourcePhysicalPathName,
-
-		string otherInputOptions,
-
-		bool timePeriod,
-		time_t utcProxyPeriodStart,
-		time_t utcProxyPeriodEnd,
-
-		// array, each element is an output containing the following fields
-		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
-		//  #in case of HLS or DASH
-		//		string otherOutputOptions
-		//		string audioVolumeChange
-		//      Json::Value encodingProfileDetailsRoot,
-		//      string encodingProfileContentType
-		//      int segmentDurationInSeconds,
-		//      int playlistEntriesNumber,
-		//      string manifestDirectoryPath,
-		//      string manifestFileName,
-		//  #in case of RTMP_Stream
-		//		string otherOutputOptions
-		//		string audioVolumeChange
-		//      Json::Value encodingProfileDetailsRoot,
-		//      string encodingProfileContentType
-		//      string rtmpUrl,
-		//
-		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string, string>>& outputRoots,
-
-		pid_t* pChildPid);
-		*/
-
-/*
-	void awaitingTheBegining(
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-
-        string mmsSourceVideoAssetPathName,
-		int64_t videoDurationInMilliSeconds,
-
-		time_t utcCountDownEnd,
-
-		string text,
-		string textPosition_X_InPixel,
-		string textPosition_Y_InPixel,
-		string fontType,
-		int fontSize,
-		string fontColor,
-		int textPercentageOpacity,
-		bool boxEnable,
-		string boxColor,
-		int boxPercentageOpacity,
-
-		string outputType,
-		Json::Value encodingProfileDetailsRoot,
-		string manifestDirectoryPath,
-		string manifestFileName,
-		int segmentDurationInSeconds,
-		int playlistEntriesNumber,
-		bool isVideo,
-		string rtmpUrl,
-		string udpUrl,
-
-		pid_t* pChildPid);
-*/
 
 	void liveGrid(
 		int64_t ingestionJobKey,
@@ -511,6 +393,133 @@ public:
 		string youTubeURL);
 
 private:
+	enum class APIName {
+		EncodeContent					= 0,
+		OverlayImageOnVideo				= 1,
+		OverlayTextOnVideo				= 2,
+		VideoSpeed						= 3,
+		PictureInPicture				= 4,
+		IntroOutroOverlay				= 5,
+		GetMediaInfo					= 6,
+		ProbeChannel					= 7,
+		MuxAllFiles						= 8,
+		GenerateFrameToIngest			= 9,
+		GenerateFramesToIngest			= 10,
+		Concat							= 11,
+		CutWithoutEncoding				= 12,
+		CutFrameAccurateWithEncoding	= 13,
+		SlideShow						= 14,
+		ExtractTrackMediaToIngest		= 15,
+		LiveRecorder					= 16,
+		LiveProxy						= 17,
+		LiveGrid						= 18,
+		ChangeFileFormat				= 19,
+		StreamingToFile					= 20
+	};
+	static const char* toString(const APIName& apiName)
+	{
+		switch (apiName)
+		{
+			case APIName::EncodeContent:
+				return "EncodeContent";
+			case APIName::OverlayImageOnVideo:
+				return "OverlayImageOnVideo";
+			case APIName::OverlayTextOnVideo:
+				return "OverlayTextOnVideo";
+			case APIName::VideoSpeed:
+				return "VideoSpeed";
+			case APIName::PictureInPicture:
+				return "PictureInPicture";
+			case APIName::IntroOutroOverlay:
+				return "IntroOutroOverlay";
+			case APIName::GetMediaInfo:
+				return "GetMediaInfo";
+			case APIName::ProbeChannel:
+				return "ProbeChannel";
+			case APIName::MuxAllFiles:
+				return "MuxAllFiles";
+			case APIName::GenerateFrameToIngest:
+				return "GenerateFrameToIngest";
+			case APIName::GenerateFramesToIngest:
+				return "GenerateFramesToIngest";
+			case APIName::Concat:
+				return "Concat";
+			case APIName::CutWithoutEncoding:
+				return "CutWithoutEncoding";
+			case APIName::CutFrameAccurateWithEncoding:
+				return "CutFrameAccurateWithEncoding";
+			case APIName::SlideShow:
+				return "SlideShow";
+			case APIName::ExtractTrackMediaToIngest:
+				return "ExtractTrackMediaToIngest";
+			case APIName::LiveRecorder:
+				return "LiveRecorder";
+			case APIName::LiveProxy:
+				return "LiveProxy";
+			case APIName::LiveGrid:
+				return "LiveGrid";
+			case APIName::ChangeFileFormat:
+				return "ChangeFileFormat";
+			case APIName::StreamingToFile:
+				return "StreamingToFile";
+			default:
+				throw runtime_error(string("Wrong APIName"));
+		}
+	}
+	static APIName toAPIName(const string& apiName)
+	{
+		string lowerCase;
+		lowerCase.resize(apiName.size());
+		transform(apiName.begin(), apiName.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+		if (lowerCase == "encodecontent")
+			return APIName::EncodeContent;
+		else if (lowerCase == "overlayimageonvideo")
+			return APIName::OverlayImageOnVideo;
+		else if (lowerCase == "overlaytextonvideo")
+			return APIName::OverlayTextOnVideo;
+		else if (lowerCase == "videospeed")
+			return APIName::VideoSpeed;
+		else if (lowerCase == "pictureinpicture")
+			return APIName::PictureInPicture;
+		else if (lowerCase == "introoutrooverlay")
+			return APIName::IntroOutroOverlay;
+		else if (lowerCase == "getmediainfo")
+			return APIName::GetMediaInfo;
+		else if (lowerCase == "probechannel")
+			return APIName::ProbeChannel;
+		else if (lowerCase == "muxallfiles")
+			return APIName::MuxAllFiles;
+		else if (lowerCase == "generateframetoingest")
+			return APIName::GenerateFrameToIngest;
+		else if (lowerCase == "generateframestoingest")
+			return APIName::GenerateFramesToIngest;
+		else if (lowerCase == "concat")
+			return APIName::Concat;
+		else if (lowerCase == "cutwithoutencoding")
+			return APIName::CutWithoutEncoding;
+		else if (lowerCase == "cutframeaccuratewithencoding")
+			return APIName::CutFrameAccurateWithEncoding;
+		else if (lowerCase == "slideshow")
+			return APIName::SlideShow;
+		else if (lowerCase == "extracttrackmediatoingest")
+			return APIName::ExtractTrackMediaToIngest;
+		else if (lowerCase == "liverecorder")
+			return APIName::LiveRecorder;
+		else if (lowerCase == "liveproxy")
+			return APIName::LiveProxy;
+		else if (lowerCase == "livegrid")
+			return APIName::LiveGrid;
+		else if (lowerCase == "changefileformat")
+			return APIName::ChangeFileFormat;
+		else if (lowerCase == "streamingtofile")
+			return APIName::StreamingToFile;
+		else
+			throw runtime_error(string("Wrong APIName")
+				+ ", current apiName: " + apiName
+			);
+	}
+
     shared_ptr<spdlog::logger>  _logger;
     string          _ffmpegPath;
     string          _ffmpegTempDir;
@@ -524,7 +533,7 @@ private:
 	string			_youTubeDlPath;
 	string			_pythonPathName;
 
-	string			_currentApiName;
+	APIName			_currentApiName;
 
     int64_t         _currentDurationInMilliSeconds;
     string          _currentMMSSourceAssetPathName;
