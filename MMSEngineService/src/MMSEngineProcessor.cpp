@@ -19826,7 +19826,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			string fileFormat;
 			if (outputFileFormat == "")
 			{
-				string sourceFileExtensionWithoutDot = sourceFileExtension.substr(1);
+				string sourceFileExtensionWithoutDot = sourceFileExtension.size() > 0 ?
+					sourceFileExtension.substr(1) : sourceFileExtension;
 
 				if (sourceFileExtensionWithoutDot == "m3u8")
 					fileFormat = "ts";
