@@ -495,6 +495,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
 	int64_t minimalNextRequestDistanceInSeconds,
+	bool totalNumFoundToBeCalculated,
 	int start, int rows
 )
 {
@@ -587,6 +588,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
+		if (totalNumFoundToBeCalculated)
         {
 			lastSQLCommand = 
 				string("select title, count(*) from MMS_RequestStatistic ")
@@ -610,7 +612,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics Per content rowsCount@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -626,6 +628,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             field = "numFound";
             responseRoot[field] = resultSet->rowsCount();
         }
+		else
+		{
+			field = "numFound";
+			responseRoot[field] = -1;
+		}
 
         Json::Value statisticsRoot(Json::arrayValue);
         {
@@ -668,7 +675,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 
                 statisticsRoot.append(statisticRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per content limit"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -764,6 +771,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
 	int64_t minimalNextRequestDistanceInSeconds,
+	bool totalNumFoundToBeCalculated,
 	int start, int rows
 )
 {
@@ -856,6 +864,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
+		if (totalNumFoundToBeCalculated)
         {
 			lastSQLCommand = 
 				string("select userId, count(*) from MMS_RequestStatistic ")
@@ -879,7 +888,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per user rowsCount"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -895,6 +904,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
             field = "numFound";
             responseRoot[field] = resultSet->rowsCount();
         }
+		else
+		{
+			field = "numFound";
+			responseRoot[field] = -1;
+		}
 
         Json::Value statisticsRoot(Json::arrayValue);
         {
@@ -937,7 +951,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 
                 statisticsRoot.append(statisticRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per user limit"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1033,6 +1047,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
 	int64_t minimalNextRequestDistanceInSeconds,
+	bool totalNumFoundToBeCalculated,
 	int start, int rows
 )
 {
@@ -1125,6 +1140,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
+		if (totalNumFoundToBeCalculated)
         {
 			lastSQLCommand = 
 				"select DATE_FORMAT(requestTimestamp, \"%Y-%m\") as date, count(*) as count "
@@ -1149,7 +1165,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per month rowsCount"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1165,6 +1181,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
             field = "numFound";
             responseRoot[field] = resultSet->rowsCount();
         }
+		else
+		{
+			field = "numFound";
+			responseRoot[field] = -1;
+		}
 
         Json::Value statisticsRoot(Json::arrayValue);
         {
@@ -1208,7 +1229,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 
                 statisticsRoot.append(statisticRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per month limit"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1304,6 +1325,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
 	int64_t minimalNextRequestDistanceInSeconds,
+	bool totalNumFoundToBeCalculated,
 	int start, int rows
 )
 {
@@ -1396,6 +1418,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
+		if (totalNumFoundToBeCalculated)
 		{
 			lastSQLCommand = 
 				"select DATE_FORMAT(requestTimestamp, \"%Y-%m-%d\") as date, count(*) as count "
@@ -1420,7 +1443,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per day rowsCount"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1436,6 +1459,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
             field = "numFound";
             responseRoot[field] = resultSet->rowsCount();
         }
+		else
+		{
+			field = "numFound";
+			responseRoot[field] = -1;
+		}
 
         Json::Value statisticsRoot(Json::arrayValue);
         {
@@ -1479,7 +1507,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 
                 statisticsRoot.append(statisticRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per day limit"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1575,6 +1603,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
 	int64_t minimalNextRequestDistanceInSeconds,
+	bool totalNumFoundToBeCalculated,
 	int start, int rows
 )
 {
@@ -1667,6 +1696,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 			sqlWhere += ("and upToNextRequestInSeconds >= ? ");
 
         Json::Value responseRoot;
+		if (totalNumFoundToBeCalculated)
 		{
 			lastSQLCommand = 
 				"select DATE_FORMAT(requestTimestamp, \"%Y-%m-%d %H\") as date, count(*) as count "
@@ -1691,7 +1721,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 				preparedStatement->setInt64(queryParameterIndex++, minimalNextRequestDistanceInSeconds);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per hour rowsCount"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title
@@ -1707,6 +1737,11 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
             field = "numFound";
             responseRoot[field] = resultSet->rowsCount();
         }
+		else
+		{
+			field = "numFound";
+			responseRoot[field] = -1;
+		}
 
         Json::Value statisticsRoot(Json::arrayValue);
         {
@@ -1750,7 +1785,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 
                 statisticsRoot.append(statisticRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@ Per hour limit"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", title: " + title

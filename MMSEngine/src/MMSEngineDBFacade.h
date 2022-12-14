@@ -2326,6 +2326,7 @@ public:
 		string title, string userId,
 		string startDate, string endDate,
 		int64_t minimalNextRequestDistanceInSeconds,
+		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerUserList (
@@ -2333,6 +2334,7 @@ public:
 		string title, string userId,
 		string startDate, string endDate,
 		int64_t minimalNextRequestDistanceInSeconds,
+		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerMonthList (
@@ -2340,6 +2342,7 @@ public:
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int64_t minimalNextRequestDistanceInSeconds,
+		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerDayList (
@@ -2347,6 +2350,7 @@ public:
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int64_t minimalNextRequestDistanceInSeconds,
+		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
 	Json::Value getRequestStatisticPerHourList (
@@ -2354,6 +2358,7 @@ public:
 		string title, string userId,
 		string startStatisticDate, string endStatisticDate,
 		int64_t minimalNextRequestDistanceInSeconds,
+		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,

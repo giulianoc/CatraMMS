@@ -413,11 +413,16 @@ void API::requestStatisticPerContentList(
 		if (minimalIt != queryParameters.end() && minimalIt->second != "")
 			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerContentList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-				minimalNextRequestDistanceInSeconds,
+				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
 				start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);
@@ -561,11 +566,16 @@ void API::requestStatisticPerUserList(
 		if (minimalIt != queryParameters.end() && minimalIt->second != "")
 			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerUserList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-				minimalNextRequestDistanceInSeconds,
+				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
 				start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);
@@ -709,11 +719,16 @@ void API::requestStatisticPerMonthList(
 		if (minimalIt != queryParameters.end() && minimalIt->second != "")
 			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerMonthList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-				minimalNextRequestDistanceInSeconds,
+				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
 				start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);
@@ -857,11 +872,16 @@ void API::requestStatisticPerDayList(
 		if (minimalIt != queryParameters.end() && minimalIt->second != "")
 			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerDayList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-				minimalNextRequestDistanceInSeconds,
+				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
 				start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);
@@ -1005,11 +1025,16 @@ void API::requestStatisticPerHourList(
 		if (minimalIt != queryParameters.end() && minimalIt->second != "")
 			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
+
         {
 			Json::Value statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerHourList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-				minimalNextRequestDistanceInSeconds,
+				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
 				start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);
