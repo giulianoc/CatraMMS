@@ -630,38 +630,6 @@ void API::shareWorkspace_(
 
     try
     {
-		// In case of ActiveDirectory, userAlreadyPresent is always true
-        bool userAlreadyPresent;
-		if(_ldapEnabled)
-		{
-			userAlreadyPresent = true;
-		}
-		else
-		{
-			auto userAlreadyPresentIt = queryParameters.find("userAlreadyPresent");
-			if (userAlreadyPresentIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'userAlreadyPresent' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
-		}
-
-		if (!userAlreadyPresent && !_registerUserEnabled)
-		{
-			string errorMessage = string("registerUser is not enabled"
-			);
-			_logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
         Json::Value metadataRoot;
         try
         {
@@ -680,6 +648,7 @@ void API::shareWorkspace_(
         }
 
 		vector<string> mandatoryFields = {
+			"userAlreadyPresent",
 			"email",
 			"createRemoveWorkspace",
 			"ingestWorkflow",
@@ -705,6 +674,24 @@ void API::shareWorkspace_(
 
 				throw runtime_error(errorMessage);
 			}
+		}
+
+		// In case of ActiveDirectory, userAlreadyPresent is always true
+        bool userAlreadyPresent;
+		if(_ldapEnabled)
+			userAlreadyPresent = true;
+		else
+			userAlreadyPresent = JSONUtils::asBool(metadataRoot, "userAlreadyPresent", false);
+
+		if (!userAlreadyPresent && !_registerUserEnabled)
+		{
+			string errorMessage = string("registerUser is not enabled"
+			);
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
 		string email = metadataRoot.get("email", "").asString();
