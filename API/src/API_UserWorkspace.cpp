@@ -308,7 +308,7 @@ void API::registerUser(
             
             vector<string> emailBody;
             emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>&emsp;the registration has been done successfully, user and default Workspace have been created</p>"));
+            emailBody.push_back(string("<p>&emsp;the registration has been done successfully</p>"));
             emailBody.push_back(string("<p>&emsp;Here follows the user key <b>") + to_string(userKey) 
                 + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
             emailBody.push_back(
