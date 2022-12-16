@@ -1,22 +1,22 @@
 
 {
-	"label": "Zog e i medici volanti",
+	"label": "Natale a Palm Springs",
 	"sourceType": "IP_PULL",
-	"url": "https://b70cb04c54ab478189e9d8ee45637b13.msvdn.net/dom6/podcastcdn/teche_root/KIDS_TECHE_HD/15534418_,1200,1800,2400,.mp4.csmil/playlist.m3u8?auth=daEajbacRbTazaoaaacdmcydsaVa2aIdCde-bJhkQh-c0-JkrwuFs__url__aifp=V001",
+	"url": "https://b70cb04c54ab478189e9d8ee45637b13.msvdn.net/dom7/podcastcdn/teche_root/PLAYRAI_TECHE_CINEMA_HD/13637020_,1200,1800,2400,.mp4.csmil/playlist.m3u8",
 	"type": "direct-kids",
-	"description": "La principessa Sabrina e Ubaldo il Gagliardo sono i famosi medici volanti che in sella al fido Zog, drago pasticcione, girano il mondo per curare chi ha bisogno. Un giorno, però, mentre si reca in visita allo zio Re, Sabrina viene fatta prigioniera e costretta a dedicarsi solo al ricamo. Questo fino a quando il prepotente parente, dopo essersi ammalato, necessiterà dell'aiuto della nipote...",
-	"name": "Zog e i medici volanti",
+	"description": "Joe e Jessica stanno per separarsi, ma lui è ancora innamorato. I figli Dylan e Zoey fanno il tifo per il papà, però le rispettive carriere, musicista lui e pubblicitaria lei, non aiutano i suoi tentativi. Joe vorrebbe che, almeno per Natale, stessero tutti e quattro insieme, ma l'affascinante capo di Jessica, lan, le propone un importante viaggio di lavoro a Palm Springs proprio in quei giorni. Riuscirà Joe, con il prezioso aiuto di Dylan e Zoey, a riconquistare la moglie?",
+	"name": "Natale a Palm Springs",
 	"region": "",
 	"country": "",
-	"imageUniqueName": "Zog e i medici volanti",
+	"imageUniqueName": "Natale a Palm Springs",
 	"userData": {
 		"staging": true,
 		"production": true,
-		"year": 2019,
-		"categories": ["Animazione", "Fantastico"],
-		"channelName": "Zog e i medici volanti",
+		"year": 2014,
+		"categories": ["Natale-Romantico"],
+		"channelName": "Natale a Palm Springs",
 		"language": "Italiano",
-		"duration": "26m"
+		"duration": "1h17m"
 	}
 }
 

@@ -136,6 +136,43 @@ struct YouTubeURLNotRetrieved: public exception {
 class MMSEngineDBFacade {
 
 public:
+    enum class CodeType {
+		UserRegistration		= 0,
+		ShareWorkspace			= 1,
+		UserRegistrationComingFromShareWorkspace		= 2
+    };
+    static const char* toString(const CodeType& codeType)
+    {
+        switch (codeType)
+        {
+            case CodeType::UserRegistration:
+                return "UserRegistration";
+            case CodeType::ShareWorkspace:
+                return "ShareWorkspace";
+            case CodeType::UserRegistrationComingFromShareWorkspace:
+                return "UserRegistrationComingFromShareWorkspace";
+            default:
+                throw runtime_error(string("Wrong CodeType"));
+        }
+    }
+    static CodeType toCodeType(const string& codeType)
+    {
+        string lowerCase;
+        lowerCase.resize(codeType.size());
+        transform(codeType.begin(), codeType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+		if (lowerCase == "userregistration")
+			return CodeType::UserRegistration;
+		else if (lowerCase == "shareworkspace")
+			return CodeType::ShareWorkspace;
+		else if (lowerCase == "userregistrationcomingfromshareworkspace")
+			return CodeType::UserRegistrationComingFromShareWorkspace;
+		else
+			throw runtime_error(string("Wrong CodeType")
+				+ ", current codeType: " + codeType
+			);
+	}
+
     enum class LockType {
 		Ingestion						= 0,
 		Encoding						= 1
@@ -1106,6 +1143,15 @@ public:
 
 	Json::Value getLoginWorkspace(int64_t userKey);
 
+	string createCode(
+		int64_t workspaceKey,
+		int64_t userKey, string userEmail,
+		CodeType codeType,
+		bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder);
+
     tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
         string userEmailAddress,
@@ -1119,6 +1165,14 @@ public:
         long maxIngestionsNumber,
         long maxStorageInMB,
         string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
+    
+    tuple<int64_t,int64_t,string> registerUserAndShareWorkspace(
+        string userName,
+        string userEmailAddress,
+        string userPassword,
+        string userCountry,
+        string shareWorkspaceCode,
         chrono::system_clock::time_point userExpirationDate);
     
     pair<int64_t,string> createWorkspace(
@@ -1136,6 +1190,7 @@ public:
 
 	void deleteWorkspace(int64_t userKey, int64_t workspaceKey);
 
+	/*
     pair<int64_t,string> registerUserAndShareWorkspace(
 			bool ldapEnabled,
         bool userAlreadyPresent,
@@ -1149,6 +1204,7 @@ public:
 		bool applicationRecorder,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
+	*/
 
     tuple<string,string,string> confirmRegistration(
 		string confirmationCode, int expirationInDaysWorkspaceDefaultValue);

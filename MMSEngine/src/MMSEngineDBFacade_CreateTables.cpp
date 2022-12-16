@@ -629,8 +629,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_ConfirmationCode ("
-                    "userKey                        BIGINT UNSIGNED NOT NULL,"
+                "create table if not exists MMS_Code ("
+                    "code							VARCHAR (64) NOT NULL,"
+                    "workspaceKey					BIGINT UNSIGNED NOT NULL,"
+                    "userKey						BIGINT UNSIGNED NULL,"
+                    "userEmail						VARCHAR (128) NULL,"
+                    "type							VARCHAR (64) NOT NULL,"
                     // same in MMS_APIKey
                     "flags              SET("
 						"'ADMIN', "
@@ -646,16 +650,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						"'EDIT_ENCODERSPOOL', "
 						"'APPLICATION_RECORDER'"
 						") NOT NULL,"
-                    "workspaceKey                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "isSharedWorkspace              TINYINT (1) NOT NULL,"
-                    "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "confirmationCode               VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (userKey, workspaceKey),"
-                    "constraint MMS_ConfirmationCode_FK foreign key (userKey) "
+                    "creationDate					TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "constraint MMS_Code_PK PRIMARY KEY (code),"
+                    "constraint MMS_Code_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade, "
-                    "constraint MMS_ConfirmationCode_FK2 foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (confirmationCode))"
+                    "constraint MMS_Code_FK2 foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }

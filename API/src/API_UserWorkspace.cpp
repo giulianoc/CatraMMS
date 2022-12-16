@@ -49,15 +49,13 @@ void API::registerUser(
 			throw runtime_error(errorMessage);
 		}
 
-        string name;
         string email;
         string password;
-        string workspaceName;
-        string country;
-        MMSEngineDBFacade::EncodingPriority encodingPriority;
-        MMSEngineDBFacade::EncodingPeriod encodingPeriod;
-        int maxIngestionsNumber;
-        int maxStorageInMB;
+        string shareWorkspaceCode;
+
+		int64_t workspaceKey;
+		int64_t userKey;
+		string confirmationCode;
 
         Json::Value metadataRoot;
         try
@@ -76,30 +74,40 @@ void API::registerUser(
             throw runtime_error(errorMessage);
         }
 
-        {
-            vector<string> mandatoryFields = {
-				"email",
-				"password"
-            };
-            for (string field: mandatoryFields)
-            {
-				if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
+		vector<string> mandatoryFields = {
+			"email",
+			"password"
+		};
+		for (string field: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				string errorMessage = string("Json field is not present or it is null")
+					+ ", Json field: " + field;
+				_logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(request, 400, errorMessage);
+				sendError(request, 400, errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }
-            }
+				throw runtime_error(errorMessage);
+			}
+		}
 
-            email = metadataRoot.get("email", "").asString();
-            password = metadataRoot.get("password", "").asString();
+		email = metadataRoot.get("email", "").asString();
+		password = metadataRoot.get("password", "").asString();
+		shareWorkspaceCode = metadataRoot.get("shareWorkspaceCode", "").asString();
+
+		string name = metadataRoot.get("name", "").asString();
+		string country = metadataRoot.get("country", "").asString();
+
+		if (shareWorkspaceCode == "")
+		{
+			string workspaceName;
+			MMSEngineDBFacade::EncodingPriority encodingPriority;
+			MMSEngineDBFacade::EncodingPeriod encodingPeriod;
+			int maxIngestionsNumber;
+			int maxStorageInMB;
+
             workspaceName = metadataRoot.get("workspaceName", "").asString();
-            name = metadataRoot.get("name", "").asString();
-            country = metadataRoot.get("country", "").asString();
 
 			if (workspaceName == "")
 			{
@@ -110,255 +118,175 @@ void API::registerUser(
 			}
 			if (name == "")
 				workspaceName = email;
-        }
 
-        encodingPriority = _encodingPriorityWorkspaceDefaultValue;
-        /*
-        // encodingPriority
-        {
-            string field = "EncodingPriority";
-            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-            {
-                _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value"
-                    + ", _encodingPriorityWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPriorityWorkspaceDefaultValue)
-                );
+			encodingPriority = _encodingPriorityWorkspaceDefaultValue;
 
-                encodingPriority = _encodingPriorityWorkspaceDefaultValue;
-            }
-            else
-            {
-                string sEncodingPriority = metadataRoot.get(field, "XXX").asString();
-                try
-                {                        
-                    encodingPriority = MMSEngineDBFacade::toEncodingPriority(sEncodingPriority);
-                }
-                catch(exception e)
-                {
-                    string errorMessage = string("Json value is wrong. Correct values are: Low, Medium or High")
-                            + ", Field: " + field
-                            + ", Value: " + sEncodingPriority
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
+			encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
+			maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
-                    sendError(request, 400, errorMessage);
+			maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
 
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-        */
+			try
+			{
+				_logger->info(__FILEREF__ + "Registering User because of Add Workspace"
+					+ ", workspaceName: " + workspaceName
+					+ ", shareWorkspaceCode: " + shareWorkspaceCode
+					+ ", email: " + email
+				);
 
-        encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
-        maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
-        /*
-        // EncodingPeriod
-        {
-            string field = "EncodingPeriod";
-            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-            {
-                _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value"
-                    + ", _encodingPeriodWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPeriodWorkspaceDefaultValue)
-                );
+				tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
+					= _mmsEngineDBFacade->registerUserAndAddWorkspace(
+						name, 
+						email, 
+						password,
+						country, 
+						workspaceName,
+						MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
+						"",                             // string deliveryURL,
+						encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+						maxIngestionsNumber,            // long maxIngestionsNumber,
+						maxStorageInMB,                 // long maxStorageInMB,
+						"",                             // string languageCode,
+						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+					);
 
-                encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
-            }
-            else
-            {
-                string sEncodingPeriod = metadataRoot.get(field, "XXX").asString();
-                try
-                {                        
-                    encodingPeriod = MMSEngineDBFacade::toEncodingPeriod(sEncodingPeriod);
-                }
-                catch(exception e)
-                {
-                    string errorMessage = string("Json value is wrong. Correct values are: Daily, Weekly, Monthly or Yearly")
-                            + ", Field: " + field
-                            + ", Value: " + sEncodingPeriod
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
+				workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
+				userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
+				confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
 
-                    sendError(request, 400, errorMessage);
+				_logger->info(__FILEREF__ + "Registered User and added Workspace"
+					+ ", workspaceName: " + workspaceName
+					+ ", email: " + email
+					+ ", userKey: " + to_string(userKey)
+					+ ", confirmationCode: " + confirmationCode
+				);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
 
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
+				string errorMessage = string("Internal server error: ") + e.what();
+				_logger->error(__FILEREF__ + errorMessage);
 
-        // MaxIngestionsNumber
-        {
-            string field = "MaxIngestionsNumber";
-            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-            {
-                _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value"
-                    + ", _maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
-                );
+				sendError(request, 500, errorMessage);
 
-                maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
-            }
-            else
-            {
-                string sMaxIngestionsNumber = metadataRoot.get(field, "XXX").asString();
-                try
-                {                        
-                    maxIngestionsNumber = stol(sMaxIngestionsNumber);
-                }
-                catch(exception e)
-                {
-                    string errorMessage = string("Json value is wrong, a number is expected")
-                            + ", Field: " + field
-                            + ", Value: " + sMaxIngestionsNumber
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
 
-                    sendError(request, 400, errorMessage);
+				string errorMessage = string("Internal server error");
+				_logger->error(__FILEREF__ + errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-        */
+				sendError(request, 500, errorMessage);
 
-        maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
-        /*
-        // MaxStorageInGB
-        {
-            string field = "MaxStorageInGB";
-            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-            {
-                _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value"
-                    + ", _maxStorageInGBWorkspaceDefaultValue: " + to_string(_maxStorageInGBWorkspaceDefaultValue)
-                );
+				throw runtime_error(errorMessage);
+			}
 
-                maxStorageInGB = _maxStorageInGBWorkspaceDefaultValue;
-            }
-            else
-            {
-                string sMaxStorageInGB = metadataRoot.get(field, "XXX").asString();
-                try
-                {                        
-                    maxStorageInGB = stol(sMaxStorageInGB);
-                }
-                catch(exception e)
-                {
-                    string errorMessage = string("Json value is wrong, a number is expected")
-                            + ", Field: " + field
-                            + ", Value: " + sMaxStorageInGB
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
+			try
+			{
+				_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
+				);
 
-                    sendError(request, 400, errorMessage);
+				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
+					_sharedEncodersPoolLabel, _sharedEncodersLabel);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
 
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-        */
+				string errorMessage = string("Internal server error: ") + e.what();
+				_logger->error(__FILEREF__ + errorMessage);
 
-		int64_t workspaceKey;
-		int64_t userKey;
-		string confirmationCode;
-        try
-        {
-            _logger->info(__FILEREF__ + "Registering User"
-                + ", workspaceName: " + workspaceName
-                + ", email: " + email
-            );
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
 
-			tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
-				= _mmsEngineDBFacade->registerUserAndAddWorkspace(
-                    name, 
-                    email, 
-                    password,
-                    country, 
-                    workspaceName,
-                    MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
-                    "",                             // string deliveryURL,
-                    encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-                    encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-                    maxIngestionsNumber,            // long maxIngestionsNumber,
-                    maxStorageInMB,                 // long maxStorageInMB,
-                    "",                             // string languageCode,
-                    chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-                );
+				// throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
 
-			workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
-			userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
-			confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
+				string errorMessage = string("Internal server error");
+				_logger->error(__FILEREF__ + errorMessage);
 
-            _logger->info(__FILEREF__ + "Registered User and added Workspace"
-                + ", workspaceName: " + workspaceName
-                + ", email: " + email
-                + ", userKey: " + to_string(userKey)
-                + ", confirmationCode: " + confirmationCode
-            );
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		try
-		{
-			_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
-			);
-
-			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-				_sharedEncodersPoolLabel, _sharedEncodersLabel);
+				// throw runtime_error(errorMessage);
+			}
 		}
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		else
+		{
+			try
+			{
+				_logger->info(__FILEREF__ + "Registering User because of Share Workspace"
+					+ ", shareWorkspaceCode: " + shareWorkspaceCode
+					+ ", email: " + email
+				);
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+				tuple<int64_t,int64_t,string> registerUserDetails
+					= _mmsEngineDBFacade->registerUserAndShareWorkspace(
+						name, 
+						email, 
+						password,
+						country, 
+						shareWorkspaceCode,
+						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+					);
 
-			// 2021-09-30: we do not raise an exception because this association
-			// is not critical for the account
-            // sendError(request, 500, errorMessage);
+				workspaceKey = get<0>(registerUserDetails);
+				userKey = get<1>(registerUserDetails);
+				confirmationCode = get<2>(registerUserDetails);
 
-            // throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+				_logger->info(__FILEREF__ + "Registered User and shared Workspace"
+					+ ", email: " + email
+					+ ", userKey: " + to_string(userKey)
+					+ ", confirmationCode: " + confirmationCode
+				);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = string("Internal server error: ") + e.what();
+				_logger->error(__FILEREF__ + errorMessage);
 
-			// 2021-09-30: we do not raise an exception because this association
-			// is not critical for the account
-            // sendError(request, 500, errorMessage);
+				sendError(request, 500, errorMessage);
 
-            // throw runtime_error(errorMessage);
-        }
+				throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				string errorMessage = string("Internal server error");
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+		}
 
         try
         {
@@ -734,155 +662,6 @@ void API::shareWorkspace_(
 			throw runtime_error(errorMessage);
 		}
 
-        bool createRemoveWorkspace;
-        auto createRemoveWorkspaceIt = queryParameters.find("createRemoveWorkspace");
-        if (createRemoveWorkspaceIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'createRemoveWorkspace' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        createRemoveWorkspace = (createRemoveWorkspaceIt->second == "true" ? true : false);
-
-        bool ingestWorkflow;
-        auto ingestWorkflowIt = queryParameters.find("ingestWorkflow");
-        if (ingestWorkflowIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestWorkflow' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        ingestWorkflow = (ingestWorkflowIt->second == "true" ? true : false);
-
-        bool createProfiles;
-        auto createProfilesIt = queryParameters.find("createProfiles");
-        if (createProfilesIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'createProfiles' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        createProfiles = (createProfilesIt->second == "true" ? true : false);
-
-        bool deliveryAuthorization;
-        auto deliveryAuthorizationIt = queryParameters.find("deliveryAuthorization");
-        if (deliveryAuthorizationIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'deliveryAuthorization' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        deliveryAuthorization = (deliveryAuthorizationIt->second == "true" ? true : false);
-
-        bool shareWorkspace;
-        auto shareWorkspaceIt = queryParameters.find("shareWorkspace");
-        if (shareWorkspaceIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'shareWorkspace' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        shareWorkspace = (shareWorkspaceIt->second == "true" ? true : false);
-
-        bool editMedia;
-        auto editMediaIt = queryParameters.find("editMedia");
-        if (editMediaIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'editMedia' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        editMedia = (editMediaIt->second == "true" ? true : false);
-
-        bool editConfiguration;
-        auto editConfigurationIt = queryParameters.find("editConfiguration");
-        if (editConfigurationIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'editConfiguration' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        editConfiguration = (editConfigurationIt->second == "true" ? true : false);
-
-        bool killEncoding;
-        auto killEncodingIt = queryParameters.find("killEncoding");
-        if (killEncodingIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'killEncoding' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        killEncoding = (killEncodingIt->second == "true" ? true : false);
-
-        bool cancelIngestionJob;
-        auto cancelIngestionJobIt = queryParameters.find("cancelIngestionJob");
-        if (cancelIngestionJobIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'cancelIngestionJob' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        cancelIngestionJob = (cancelIngestionJobIt->second == "true" ? true : false);
-
-        bool editEncodersPool;
-        auto editEncodersPoolIt = queryParameters.find("editEncodersPool");
-        if (editEncodersPoolIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'editEncodersPool' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        editEncodersPool = (editEncodersPoolIt->second == "true" ? true : false);
-
-        bool applicationRecorder;
-        auto applicationRecorderIt = queryParameters.find("applicationRecorder");
-        if (applicationRecorderIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'applicationRecorder' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        applicationRecorder = (applicationRecorderIt->second == "true" ? true : false);
-
-
-        string name;
-        string email;
-        string password;
-        string country;
-
         Json::Value metadataRoot;
         try
         {
@@ -900,122 +679,165 @@ void API::shareWorkspace_(
             throw runtime_error(errorMessage);
         }
 
-        if (userAlreadyPresent)
-        {
-            vector<string> mandatoryFields = {
-				"email"
-            };
-            for (string field: mandatoryFields)
-            {
-                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
+		vector<string> mandatoryFields = {
+			"email",
+			"createRemoveWorkspace",
+			"ingestWorkflow",
+			"createProfiles",
+			"deliveryAuthorization",
+			"shareWorkspace",
+			"editMedia",
+			"editConfiguration",
+			"killEncoding",
+			"cancelIngestionJob",
+			"editEncodersPool",
+			"applicationRecorder"
+		};
+		for (string field: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				string errorMessage = string("Json field is not present or it is null")
+				+ ", Json field: " + field;
+				_logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(request, 400, errorMessage);
+				sendError(request, 400, errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }
-            }
+				throw runtime_error(errorMessage);
+			}
+		}
 
-            email = metadataRoot.get("email", "").asString();
-        }
-        else
-        {
-            vector<string> mandatoryFields = {
-                "name",
-                "email",
-                "password",
-                "country"
-            };
-            for (string field: mandatoryFields)
-            {
-                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
+		string email = metadataRoot.get("email", "").asString();
+		bool createRemoveWorkspace = JSONUtils::asBool(metadataRoot, "createRemoveWorkspace", false);
+		bool ingestWorkflow = JSONUtils::asBool(metadataRoot, "ingestWorkflow", false);
+		bool createProfiles = JSONUtils::asBool(metadataRoot, "createProfiles", false);
+		bool deliveryAuthorization = JSONUtils::asBool(metadataRoot, "deliveryAuthorization", false);
+		bool shareWorkspace = JSONUtils::asBool(metadataRoot, "shareWorkspace", false);
+		bool editMedia = JSONUtils::asBool(metadataRoot, "editMedia", false);
+		bool editConfiguration = JSONUtils::asBool(metadataRoot, "editConfiguration", false);
+		bool killEncoding = JSONUtils::asBool(metadataRoot, "killEncoding", false);
+		bool cancelIngestionJob = JSONUtils::asBool(metadataRoot, "cancelIngestionJob", false);
+		bool editEncodersPool = JSONUtils::asBool(metadataRoot, "editEncodersPool", false);
+		bool applicationRecorder = JSONUtils::asBool(metadataRoot, "applicationRecorder", false);
 
-                    sendError(request, 400, errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-
-            email = metadataRoot.get("email", "").asString();
-            password = metadataRoot.get("password", "").asString();
-            name = metadataRoot.get("name", "").asString();
-            country = metadataRoot.get("country", "").asString();
-        }
 
         try
         {
             _logger->info(__FILEREF__ + "Registering User"
                 + ", email: " + email
             );
-            
-            tuple<int64_t,string> userKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerUserAndShareWorkspace(
-					_ldapEnabled,
-                    userAlreadyPresent,
-                    name, 
-                    email, 
-                    password,
-                    country, 
-                    createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+
+			if (userAlreadyPresent)
+			{
+				int64_t userKey;
+				string name;
+
+				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email);
+				tie(userKey, name) = userDetails;
+
+				bool admin = false;
+				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
+					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace,
+					admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 					editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
-					applicationRecorder,
-                    workspace->_workspaceKey,
-                    chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-                );
+					applicationRecorder
+				);
 
-			int64_t userKey = get<0>(userKeyAndConfirmationCode);
-			string confirmationCode = get<1>(userKeyAndConfirmationCode);
+				string confirmationURL = _guiProtocol + "://" + _guiHostname;
+				if (_guiProtocol == "https" && _guiPort != 443)
+					confirmationURL += (":" + to_string(_guiPort));
+				confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
+					+ to_string(userKey)
+					+ "&confirmationCode=" + shareWorkspaceCode);
 
-			string confirmationURL = _guiProtocol + "://" + _guiHostname;
-			if (_guiProtocol == "https" && _guiPort != 443)
-				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
-				+ to_string(userKey)
-				+ "&confirmationCode=" + confirmationCode);
+				_logger->info(__FILEREF__ + "Created Shared Workspace code"
+					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", email: " + email
+					+ ", userKey: " + to_string(userKey)
+					+ ", confirmationCode: " + shareWorkspaceCode
+					+ ", confirmationURL: " + confirmationURL
+				);
 
-            _logger->info(__FILEREF__ + "Registered User and shared Workspace"
-                + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                + ", email: " + email
-                + ", userKey: " + to_string(userKey)
-                + ", confirmationCode: " + confirmationCode
-                + ", confirmationURL: " + confirmationURL
-            );
+				Json::Value registrationRoot;
+				registrationRoot["userKey"] = userKey;
+				registrationRoot["confirmationCode"] = shareWorkspaceCode;
 
-			Json::Value registrationRoot;
-			registrationRoot["userKey"] = userKey;
-			registrationRoot["confirmationCode"] = confirmationCode;
+				string responseBody = JSONUtils::toString(registrationRoot);
 
-            string responseBody = JSONUtils::toString(registrationRoot);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+					request, "", api, 201, responseBody);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 201, responseBody);
-
-            string to = email;
-            string subject = "Confirmation code";
+				string to = email;
+				string subject = "Share Workspace code";
             
-            vector<string> emailBody;
-            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
-            emailBody.push_back(string("<p>Here follows the user key <b>")
-				+ to_string(userKey) 
-                + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the sharing of the Workspace</p>");
-            emailBody.push_back(
+				vector<string> emailBody;
+				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+				emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
+				emailBody.push_back(string("<p>Here follows the user key <b>")
+					+ to_string(userKey) 
+					+ "</b> and the confirmation code <b>" + shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>");
+				emailBody.push_back(
 					string("<p>Please click <a href=\"")
 					+ confirmationURL
 					+ "\">here</a> to confirm the registration</p>");
-            emailBody.push_back("<p>Have a nice day, best regards</p>");
-            emailBody.push_back("<p>MMS technical support</p>");
+				emailBody.push_back("<p>Have a nice day, best regards</p>");
+				emailBody.push_back("<p>MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+				EMailSender emailSender(_logger, _configuration);
+				bool useMMSCCToo = true;
+				emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			}
+			else
+			{
+				bool admin = false;
+
+				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
+					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace,
+					admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+					editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+					applicationRecorder
+				);
+
+				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
+				if (_guiProtocol == "https" && _guiPort != 443)
+					shareWorkspaceURL += (":" + to_string(_guiPort));
+				shareWorkspaceURL += ("/catramms/login.xhtml?shareWorkspaceRequested=true&shareWorkspaceCode="
+					+ shareWorkspaceCode);
+
+				_logger->info(__FILEREF__ + "Created Shared Workspace code"
+					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", email: " + email
+					+ ", shareWorkspaceCode: " + shareWorkspaceCode
+					+ ", shareWorkspaceURL: " + shareWorkspaceURL
+				);
+
+				Json::Value registrationRoot;
+				registrationRoot["shareWorkspaceCode"] = shareWorkspaceCode;
+
+				string responseBody = JSONUtils::toString(registrationRoot);
+
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+					request, "", api, 201, responseBody);
+
+				string to = email;
+				string subject = "Share Workspace code";
+
+				vector<string> emailBody;
+				emailBody.push_back(string("<p>Dear ") + email + ",</p>");
+				emailBody.push_back(string("<p>the " + workspace->_name + " workspace was shared for you</p>"));
+				emailBody.push_back(string("<p>Here follows the share workspace code <b>")
+					+ shareWorkspaceCode + "</b></p>");
+				emailBody.push_back(
+					string("<p>Please click <a href=\"")
+					+ shareWorkspaceURL
+					+ "\">here</a> for the registration</p>");
+				emailBody.push_back("<p>Have a nice day, best regards</p>");
+				emailBody.push_back("<p>MMS technical support</p>");
+
+				EMailSender emailSender(_logger, _configuration);
+				bool useMMSCCToo = true;
+				emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			}
         }
         catch(runtime_error e)
         {
