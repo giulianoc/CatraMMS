@@ -201,6 +201,8 @@ for configurationFileName in $configurationFiles
 do
 	#for each <frequency>-<symbol rate>-<bandwidthInMhz>-<modulation>
 
+	echo "" >> $debugFilename
+
 	fileExtension=${configurationFileName##*.}
 	if [ $debug -eq 1 ]; then
 		echo "$(date): configurationFileName: $configurationFileName, fileExtension: $fileExtension" >> $debugFilename
