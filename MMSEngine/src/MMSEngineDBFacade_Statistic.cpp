@@ -10,8 +10,13 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 	string title
 	)
 {
-	Json::Value statisticRoot;
-	return statisticRoot;
+
+	if (!_statisticsEnabled)
+	{
+		Json::Value statisticRoot;
+
+		return statisticRoot;
+	}
 
     string      lastSQLCommand;
     

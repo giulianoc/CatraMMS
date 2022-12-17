@@ -2595,6 +2595,8 @@ private:
 	int				_getIngestionJobsCurrentIndex;
 	int				_getEncodingJobsCurrentIndex;
 
+	bool			_statisticsEnabled;
+
 	string createAPIKeyForActiveDirectoryUser(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
