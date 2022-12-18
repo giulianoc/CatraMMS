@@ -236,13 +236,34 @@ install-packages()
 		echo -n "Type the DB password: "
 		read dbPassword
 		echo "create database $dbName CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
-		echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		#grant process allows mysqldump
-		echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+		echo ""
+		echo -n "master (y/n): "
+		read master
+
+		if [ "$master" == "y" ]; then
+			echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+			echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		else
+			readOnlyDBUser=${dbUser}_RO
+
+			echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT SELECT, SHOW VIEW ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+			echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT SELECT, SHOW VIEW ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		fi
 
 		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, binlog_expire_logs_seconds"
 
@@ -948,7 +969,7 @@ else
 	echo ""
 	echo "- in case of engine ibrido, cambiare hostname (di default è quello assegnato da hetzner). In caso di engine è importante cambiare il nome dell'hostname perchè viene inserito nel DB. Per cambiare hostname seguire le istruzioni: https://www.cyberciti.biz/faq/ubuntu-20-04-lts-change-hostname-permanently/". In caso di transcoder ibridi, non è essenziale cambiare l'hostname ma è una buona cosa farlo per evitare di lasciare quei nomi strani decisi da hetzner.
 	echo ""
-	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add 10.0.0.2 db-server-active)"
+	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
 	echo ""
 	echo "- run the commands as mms user 'sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
 	echo ""

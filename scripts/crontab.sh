@@ -306,7 +306,7 @@ else
 
 			dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
 			#echo $dbUser $dbPwd $dbName $dumpFileName
-			mysqldump --no-tablespaces -u $dbUser -p$dbPwd -h db-server-active $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
+			mysqldump --no-tablespaces -u $dbUser -p$dbPwd -h db-slaves $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
 
 			dbUserPwdIndex=$((dbUserPwdIndex+4))
 

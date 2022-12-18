@@ -66,10 +66,14 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
     );
 
-    string dbUsername = configuration["database"].get("userName", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->userName: " + dbUsername
-    );
+	string masterDbUsername = configuration["database"]["master"].get("userName", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", database->master->userName: " + masterDbUsername
+	);
+	string slaveDbUsername = configuration["database"]["slave"].get("userName", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", database->slave->userName: " + slaveDbUsername
+	);
     string dbPassword;
     {
         string encryptedPassword = configuration["database"].get("password", "XXX").asString();
@@ -211,10 +215,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	bool reconnect = true;
 	// string defaultCharacterSet = "utf8";
 	_mySQLMasterConnectionFactory = 
-		make_shared<MySQLConnectionFactory>(masterDbServer, dbUsername, dbPassword, dbName,
+		make_shared<MySQLConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,
 			reconnect, defaultCharacterSet, selectTestingConnection);
 	_mySQLSlaveConnectionFactory = 
-		make_shared<MySQLConnectionFactory>(slaveDbServer, dbUsername, dbPassword, dbName,
+		make_shared<MySQLConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName,
 			reconnect, defaultCharacterSet, selectTestingConnection);
 
     // 2018-04-05: without an open stream the first connection fails

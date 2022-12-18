@@ -3652,62 +3652,6 @@ void API::ingestionRootsStatus(
 			}
         }
         
-/*
-        bool startAndEndIngestionDatePresent = false;
-        string startIngestionDate;
-        string endIngestionDate;
-        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-        if (startIngestionDateIt != queryParameters.end()
-			|| endIngestionDateIt != queryParameters.end())
-        {
-			if (startIngestionDateIt != queryParameters.end())
-				startIngestionDate = startIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				startIngestionDate = sUTCDateTime;
-			}
-
-			if (endIngestionDateIt != queryParameters.end())
-				endIngestionDate = endIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				endIngestionDate = sUTCDateTime;
-			}
-
-            startAndEndIngestionDatePresent = true;
-        }
-*/
 		string startIngestionDate;
 		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
 		if (startIngestionDateIt != queryParameters.end())
