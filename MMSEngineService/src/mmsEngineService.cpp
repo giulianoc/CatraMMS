@@ -160,14 +160,18 @@ int main (int iArgc, char *pArgv [])
     signal(SIGABRT, signalHandler);
     // signal(SIGBUS, signalHandler);
 
-    size_t dbPoolSize = JSONUtils::asInt(configuration["database"], "enginePoolSize", 5);
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", database->poolSize: " + to_string(dbPoolSize)
-    );
-    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-            );
-    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, dbPoolSize, logger);
+	size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "enginePoolSize", 5);
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", database->master->enginePoolSize: " + to_string(masterDbPoolSize)
+	);
+	size_t slaveDbPoolSize = JSONUtils::asInt(configuration["database"]["slave"], "enginePoolSize", 5);
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", database->slave->enginePoolSize: " + to_string(slaveDbPoolSize)
+	);
+	logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
+	);
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
+		configuration, masterDbPoolSize, slaveDbPoolSize, logger);
     
 	if (resetdata)
 	{

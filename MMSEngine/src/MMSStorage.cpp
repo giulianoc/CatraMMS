@@ -237,14 +237,14 @@ string MMSStorage::getIngestionRootRepository(string storage) {
 tuple<int64_t, string, int, string, string, int64_t, string>
 	MMSStorage::getPhysicalPathDetails(
 		int64_t mediaItemKey, int64_t encodingProfileKey,
-		bool warningIfMissing)
+		bool warningIfMissing, bool fromMaster)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
 				string, string, string, string, int64_t, bool>
 			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
-			warningIfMissing);
+			warningIfMissing, fromMaster);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -316,13 +316,13 @@ tuple<int64_t, string, int, string, string, int64_t, string>
 }
 
 tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(
-	int64_t physicalPathKey)
+	int64_t physicalPathKey, bool fromMaster)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
 			string, string, string, string, int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+			_mmsEngineDBFacade->getStorageDetails(physicalPathKey, fromMaster);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
@@ -394,7 +394,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
 			string, string, string, string, int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+			_mmsEngineDBFacade->getStorageDetails(physicalPathKey, false /* fromMaster */);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
@@ -503,7 +503,7 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,
 			shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
 			_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
-			warningIfMissing);
+			warningIfMissing, false /* fromMaster */);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -1200,7 +1200,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         
         tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,
 			string,string, string,string,int64_t, bool> storageDetails =
-            _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+            _mmsEngineDBFacade->getStorageDetails(physicalPathKey, true /*fromMaster*/);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
         int mmsPartitionNumber;
@@ -1279,7 +1279,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 
         vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string,
 			int64_t, bool>> allStorageDetails;
-        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
+        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, false /*fromMaster*/, allStorageDetails);
 
         for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string,
 				int64_t, bool>& storageDetails: allStorageDetails)

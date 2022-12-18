@@ -18,9 +18,11 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
 	shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
 	try
 	{
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -37,7 +39,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -55,7 +57,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -74,7 +76,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -92,7 +94,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -291,9 +293,11 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -359,7 +363,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -377,7 +381,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -396,7 +400,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -414,7 +418,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -431,6 +435,8 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -439,7 +445,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -568,7 +574,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -586,7 +592,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -605,7 +611,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -623,7 +629,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -643,6 +649,8 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -652,7 +660,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             + ", workflowLibraryKey: " + to_string(workflowLibraryKey)
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -696,7 +704,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -714,7 +722,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -733,7 +741,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -751,7 +759,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -771,6 +779,8 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -780,7 +790,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             + ", label: " + label
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -830,7 +840,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -848,7 +858,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -867,7 +877,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -885,7 +895,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 

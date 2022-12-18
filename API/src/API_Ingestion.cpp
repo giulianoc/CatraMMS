@@ -1594,6 +1594,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel (
 							workspace->_workspaceKey, waitForGlobalIngestionLabel,
+							// 2022-12-18: true perchè IngestionJob dovrebbe essere stato appena aggiunto
+							true,
 							waitForGlobalIngestionJobKeys);
 					_logger->info(__FILEREF__ + "getIngestionJobsKeyByGlobalLabel"
 						+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -2569,7 +2571,9 @@ void API::uploadedBinary(
 		{
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
-						workspace->_workspaceKey, ingestionJobKey);
+					workspace->_workspaceKey, ingestionJobKey,
+					// 2022-12-18: l'ingestionJob potrebbe essere stato appena aggiunto
+					true);
 
 			string parameters;
 			tie(ignore, ignore, ignore, parameters, ignore) = ingestionJobDetails;
@@ -3769,12 +3773,13 @@ void API::ingestionRootsStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
-                    workspace, ingestionRootKey, mediaItemKey,
-                    start, rows,
-                    // startAndEndIngestionDatePresent,
-					startIngestionDate, endIngestionDate,
-                    label, status, asc, dependencyInfo, ingestionJobOutputs
-                    );
+				workspace, ingestionRootKey, mediaItemKey,
+				start, rows,
+				// startAndEndIngestionDatePresent,
+				startIngestionDate, endIngestionDate,
+				label, status, asc, dependencyInfo, ingestionJobOutputs,
+				// 2022-12-18: IngestionRoot dovrebbe essere stato aggiunto da tempo
+				false);
 
             string responseBody = JSONUtils::toString(ingestionStatusRoot);
             
@@ -3850,7 +3855,9 @@ void API::ingestionRootMetaDataContent(
         {
             string ingestionRootMetaDataContent =
 				_mmsEngineDBFacade->getIngestionRootMetaDataContent(
-				workspace, ingestionRootKey, processedMetadata);
+				workspace, ingestionRootKey, processedMetadata,
+				// 2022-12-18: IngestionJobKey dovrebbe essere stato aggiunto da tempo
+				false);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, ingestionRootMetaDataContent);
@@ -3955,62 +3962,6 @@ void API::ingestionJobsStatus(
 			label = curlpp::unescape(firstDecoding);
         }
 
-		/*
-        bool startAndEndIngestionDatePresent = false;
-        string startIngestionDate;
-        string endIngestionDate;
-        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-        if (startIngestionDateIt != queryParameters.end()
-			|| endIngestionDateIt != queryParameters.end())
-        {
-			if (startIngestionDateIt != queryParameters.end())
-				startIngestionDate = startIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				startIngestionDate = sUTCDateTime;
-			}
-
-			if (endIngestionDateIt != queryParameters.end())
-				endIngestionDate = endIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				endIngestionDate = sUTCDateTime;
-			}
-
-            startAndEndIngestionDatePresent = true;
-        }
-		*/
         string startIngestionDate;
         auto startIngestionDateIt = queryParameters.find("startIngestionDate");
         if (startIngestionDateIt != queryParameters.end())
@@ -4140,6 +4091,16 @@ void API::ingestionJobsStatus(
             status = statusIt->second;
         }
 
+		bool fromMaster = false;
+		auto fromMasterIt = queryParameters.find("fromMaster");
+		if (fromMasterIt != queryParameters.end() && fromMasterIt->second != "")
+		{
+			if (fromMasterIt->second == "true")
+				fromMaster = true;
+			else
+				fromMaster = false;
+		}
+
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
 				workspace, ingestionJobKey,
@@ -4150,7 +4111,7 @@ void API::ingestionJobsStatus(
 				configurationLabel, outputChannelLabel,
 				deliveryCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,
 				asc, status,
-				dependencyInfo, ingestionJobOutputs
+				dependencyInfo, ingestionJobOutputs, fromMaster
 			);
 
             string responseBody = JSONUtils::toString(ingestionStatusRoot);
@@ -4267,7 +4228,9 @@ void API::cancelIngestionJob(
 
 		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 			string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
-			workspace->_workspaceKey, ingestionJobKey);
+			workspace->_workspaceKey, ingestionJobKey,
+			// 2022-12-18: meglio avere una info sicura
+			true);
 		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
 
 		if (!forceCancel && ingestionStatus !=
@@ -4372,7 +4335,9 @@ void API::updateIngestionJob(
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
-					workspace->_workspaceKey, ingestionJobKey);
+					workspace->_workspaceKey, ingestionJobKey,
+					// 2022-12-18: meglio avere una informazione sicura
+					true);
 
 			string			label;
 			MMSEngineDBFacade::IngestionType	ingestionType;
@@ -4627,7 +4592,9 @@ void API::changeLiveProxyPlaylist(
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 				string, string> ingestionJobDetails =
 				_mmsEngineDBFacade->getIngestionJobDetails (workspace->_workspaceKey,
-				broadcasterIngestionJobKey);
+				broadcasterIngestionJobKey,
+				// 2022-12-18: meglio avere una informazione sicura
+				true);
 
 			MMSEngineDBFacade::IngestionType	ingestionType;
 			MMSEngineDBFacade::IngestionStatus	ingestionStatus;
@@ -4786,7 +4753,9 @@ void API::changeLiveProxyPlaylist(
 									tuple<string, int, string, string, int64_t, string>
 										physicalPathDetails =
 										_mmsStorage->getPhysicalPathDetails(
-										broadcastDefaultPhysicalPathKey);
+										broadcastDefaultPhysicalPathKey,
+										// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+										false);
 									tie(sourcePhysicalPathName, ignore, ignore, ignore,
 										ignore, ignore) = physicalPathDetails;
 
@@ -4797,7 +4766,9 @@ void API::changeLiveProxyPlaylist(
 										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											workspace->_workspaceKey,
 											broadcastDefaultPhysicalPathKey,
-											warningIfMissing);
+											warningIfMissing,
+											// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+											false);
 									tie(ignore, vodContentType, ignore, ignore, ignore,
 										ignore, ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
@@ -4877,14 +4848,18 @@ void API::changeLiveProxyPlaylist(
 						{
 							tuple<string, int, string, string, int64_t, string>
 								physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-								broadcastDefaultPhysicalPathKey);
+								broadcastDefaultPhysicalPathKey,
+								// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+								false);
 							tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 								= physicalPathDetails;
 
 							int64_t sourceMediaItemKey = -1;
 							videoDurationInMilliSeconds = _mmsEngineDBFacade->
 								getMediaDurationInMilliseconds(sourceMediaItemKey,
-								broadcastDefaultPhysicalPathKey);
+								broadcastDefaultPhysicalPathKey,
+								// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+								false);
 
 							// calculate delivery URL in case of an external encoder
 							{
@@ -5112,7 +5087,9 @@ void API::changeLiveProxyPlaylist(
 								{
 									tuple<string, int, string, string, int64_t, string>
 										physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-										physicalPathKey);
+										physicalPathKey,
+										// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+										false);
 									tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 										= physicalPathDetails;
 
@@ -5121,7 +5098,9 @@ void API::changeLiveProxyPlaylist(
 										string,int64_t, string, string, int64_t> mediaItemKeyDetails =
 										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											workspace->_workspaceKey, physicalPathKey,
-											warningIfMissing);
+											warningIfMissing,
+											// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+											false);
 
 									tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
 										ignore, ignore, ignore) = mediaItemKeyDetails;
@@ -5204,7 +5183,9 @@ void API::changeLiveProxyPlaylist(
 							{
 								tuple<string, int, string, string, int64_t, string>
 									physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
-									physicalPathKey);
+									physicalPathKey,
+									// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+									false);
 								tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 									= physicalPathDetails;
 
@@ -5213,7 +5194,9 @@ void API::changeLiveProxyPlaylist(
 									string,int64_t, string, string, int64_t> mediaItemKeyDetails =
 									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 										workspace->_workspaceKey, physicalPathKey,
-										warningIfMissing);
+										warningIfMissing,
+										// 2022-12-18: MIK dovrebbe essere stato aggiunto da tempo
+										false);
 								tie(ignore, vodContentType, ignore, ignore, ignore, ignore,
 									ignore, ignore, videoDurationInMilliSeconds) = mediaItemKeyDetails;
 
@@ -5655,7 +5638,9 @@ void API::changeLiveProxyPlaylist(
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
-					workspace->_workspaceKey, broadcastIngestionJobKey);
+					workspace->_workspaceKey, broadcastIngestionJobKey,
+					// 2022-12-18: meglio avere una informazione sicura
+					true);
 
 			MMSEngineDBFacade::IngestionType	ingestionType;
 			MMSEngineDBFacade::IngestionStatus	ingestionStatus;
@@ -5686,7 +5671,9 @@ void API::changeLiveProxyPlaylist(
 			{
 				tuple<int64_t, int64_t, string> encodingJobDetails =
 					_mmsEngineDBFacade->getEncodingJobDetailsByIngestionJobKey(
-					broadcastIngestionJobKey);
+					broadcastIngestionJobKey,
+					// 2022-12-18: l'IngestionJob potrebbe essere stato appena aggiunto
+					true);
 
 				tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParameters)
 					= encodingJobDetails;

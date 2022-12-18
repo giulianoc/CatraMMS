@@ -373,7 +373,9 @@ int APICommon::operator()()
 
 				if (_accessToDBAllowed)
 				{
-					userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+					userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey,
+						// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
+						false);
 
 					if (get<0>(userKeyWorkspaceAndFlags) != stoll(userKey))
 					{

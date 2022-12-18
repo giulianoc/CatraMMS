@@ -4852,7 +4852,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 				jsonCondition,
 				deepLearnedModelTags, tagsNotIn, orderBy, jsonOrderBy,
-				responseFields, admin);
+				responseFields, admin,
+				// 2022-12-18: MIKs dovrebbero essere stati aggiunti da un po
+				false);
 
 			field = "response";
 			Json::Value responseRoot = mediaItemsListRoot[field];
@@ -4918,8 +4920,10 @@ string EncoderVideoAudioProxy::faceIdentification()
 					int64_t physicalPathKey = JSONUtils::asInt64(physicalPathRoot, field, 0);
 
 					tuple<string, int, string, string, int64_t, string>
-						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPathDetails(physicalPathKey,
+						// 2022-12-18: MIK dovrebbe essere aggiunto da un po
+						false);
 					string mmsImagePathName;
 					tie(mmsImagePathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
@@ -6508,7 +6512,9 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		else
 		{
 			long ingestionJobOutputsCount = _mmsEngineDBFacade->getIngestionJobOutputsCount(
-				_encodingItem->_ingestionJobKey);
+				_encodingItem->_ingestionJobKey,
+				// 2022-12-18: true because IngestionJobOutputs was updated recently
+				true);
 			if (ingestionJobOutputsCount <= 0)
 			{
 				string errorMessage = __FILEREF__ + "LiveRecorder: no chunks were generated"
@@ -7154,7 +7160,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus,
 								string> encodingJobDetails
 								= _mmsEngineDBFacade->getEncodingJobDetails(
-								_encodingItem->_encodingJobKey);
+								_encodingItem->_encodingJobKey,
+								// 2022-12-18: true because the inputsRoot maybe was just updated
+								true);
 
 							string encodingParameters;
 

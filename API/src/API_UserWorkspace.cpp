@@ -1783,7 +1783,9 @@ void API::login(
             );
 
             Json::Value loginWorkspaceRoot =
-                    _mmsEngineDBFacade->getLoginWorkspace(userKey);
+				_mmsEngineDBFacade->getLoginWorkspace(userKey,
+				// 2022-12-18: viene chiamato quando l'utente fa la login
+				false);
 
             string field = "workspace";
             loginDetailsRoot[field] = loginWorkspaceRoot;

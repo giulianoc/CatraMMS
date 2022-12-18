@@ -7821,7 +7821,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 					localAssetIngestionEvent.getWorkspace()->_workspaceKey,
-					variantOfUniqueName, warningIfMissing);
+					variantOfUniqueName, warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 				tie(variantOfMediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
@@ -7832,7 +7834,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
 					localAssetIngestionEvent.getWorkspace()->_workspaceKey, variantOfIngestionJobKey,
-					-1, mediaItemsDetails, warningIfMissing);
+					-1, mediaItemsDetails, warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 
 				if (mediaItemsDetails.size() != 1)
 				{
@@ -8624,7 +8628,9 @@ void MMSEngineProcessor::removeContentThread(
 						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						MMSEngineDBFacade::ContentType localContentType;
 						string localTitle;
@@ -8637,7 +8643,9 @@ void MMSEngineProcessor::removeContentThread(
 
 						int ingestionDependenciesNumber = 
 							_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-								localIngestionJobKey);
+								localIngestionJobKey,
+								// 2022-12-18: importante essere sicuri
+								true);
 						if (ingestionDependenciesNumber > 0)
 						{
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
@@ -8655,7 +8663,9 @@ void MMSEngineProcessor::removeContentThread(
 						tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 							string, string, int64_t> mediaItemDetails =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						int64_t localMediaItemKey;
 						MMSEngineDBFacade::ContentType localContentType;
@@ -8668,7 +8678,9 @@ void MMSEngineProcessor::removeContentThread(
 
 						int ingestionDependenciesNumber = 
 						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-								localIngestionJobKey);
+							localIngestionJobKey,
+							// 2022-12-18: importante essere sicuri
+							true);
 						if (ingestionDependenciesNumber > 0)
 						{
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
@@ -8917,8 +8929,10 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
                
 					bool warningIfMissing = false;
 					tuple<int64_t, string, int, string, string, int64_t, string>
-						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				}
@@ -8932,14 +8946,18 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 							string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, physicalPathKey, warningIfMissing);            
+								workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 						tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 					}
 
 					tuple<string, int, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(key);
+						_mmsStorage->getPhysicalPathDetails(key,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				}
@@ -9156,7 +9174,9 @@ void MMSEngineProcessor::localCopyContentThread(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, int, string, string, int64_t, string>
 						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				}
@@ -9166,7 +9186,9 @@ void MMSEngineProcessor::localCopyContentThread(
 
 					tuple<string, int, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(key);
+						_mmsStorage->getPhysicalPathDetails(key,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				}
@@ -9419,14 +9441,18 @@ void MMSEngineProcessor::extractTracksContentThread(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-							warningIfMissing);
+							warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathDetails;
 				}
 				else
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-						_mmsStorage->getPhysicalPathDetails(key);
+						_mmsStorage->getPhysicalPathDetails(key,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathDetails;
 				}
@@ -9832,7 +9858,9 @@ void MMSEngineProcessor::httpCallbackThread(
 						bool warningIfMissing = false;
 						tuple<int64_t, string, int, string, string, int64_t, string>
 							physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
-							encodingProfileKey, warningIfMissing);
+								encodingProfileKey, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 						tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore)
 							= physicalPathDetails;
 					}
@@ -9846,7 +9874,9 @@ void MMSEngineProcessor::httpCallbackThread(
 								string,int64_t, string, string, int64_t>
 								mediaItemDetails =
 								_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-									workspace->_workspaceKey, key, warningIfMissing);
+									workspace->_workspaceKey, key, warningIfMissing,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true);
 
 							tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore,
 								ignore, ignore, ignore) = mediaItemDetails;
@@ -9952,7 +9982,9 @@ void MMSEngineProcessor::httpCallbackThread(
 								tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 									contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 									_mmsEngineDBFacade->getMediaItemKeyDetails(
-										workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+										workspace->_workspaceKey, mediaItemKey, warningIfMissing,
+										// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+										true);
 
 								string localTitle;
 								string userData;
@@ -9975,8 +10007,10 @@ void MMSEngineProcessor::httpCallbackThread(
 								int64_t encodingProfileKey = -1;
 								bool warningIfMissing = false;
 								tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-									_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-									warningIfMissing);
+								_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
+									warningIfMissing,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true);
 
 								string physicalPath;
 								string fileName;
@@ -10003,7 +10037,9 @@ void MMSEngineProcessor::httpCallbackThread(
 									string, string, int64_t>
 									mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 									_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-										workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+										workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+										// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+										true);
 
 								string localTitle;
 								string userData;
@@ -10026,7 +10062,9 @@ void MMSEngineProcessor::httpCallbackThread(
 							{
 								int64_t encodingProfileKey = -1;
 								tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-									_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+								_mmsStorage->getPhysicalPathDetails(physicalPathKey,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true);
 
 								string physicalPath;
 								string fileName;
@@ -10047,7 +10085,9 @@ void MMSEngineProcessor::httpCallbackThread(
 							{
 								int64_t durationInMilliSeconds =
 									_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-									mediaItemKey, physicalPathKey);
+										mediaItemKey, physicalPathKey,
+										// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+										true);
 
 								float durationInSeconds = durationInMilliSeconds / 1000;
 
@@ -10302,18 +10342,21 @@ void MMSEngineProcessor::postOnFacebookThread(
 					int64_t encodingProfileKey = -1;
                 
 					bool warningIfMissing = false;
-					tuple<int64_t, string, int, string, string, int64_t, string>
-						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+						= physicalPathDetails;
 
 					{
 						bool warningIfMissing = false;
 						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						tie(contentType, ignore, ignore, ignore, ignore, ignore)
 							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
@@ -10322,17 +10365,20 @@ void MMSEngineProcessor::postOnFacebookThread(
 				else
 				{
 					tuple<string, int, string, string, int64_t, string>
-						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(key);
+					physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 					tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
-						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+						= physicalPathDetails;
                 
 					{
 						bool warningIfMissing = false;
 						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -10582,7 +10628,9 @@ void MMSEngineProcessor::postOnYouTubeThread(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-							warningIfMissing);
+							warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 						= physicalPathDetails;
 
@@ -10591,7 +10639,9 @@ void MMSEngineProcessor::postOnYouTubeThread(
 						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						tie(contentType, ignore, ignore, ignore, ignore, ignore)
 							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
@@ -10601,7 +10651,9 @@ void MMSEngineProcessor::postOnYouTubeThread(
 				{
 					tuple<string, int, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPathDetails(key);
+						_mmsStorage->getPhysicalPathDetails(key,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
                 
@@ -10610,7 +10662,9 @@ void MMSEngineProcessor::postOnYouTubeThread(
 						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 								= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -10838,7 +10892,9 @@ void MMSEngineProcessor::changeFileFormatThread(
 					tuple<int64_t, string, int, string, string, int64_t, string>
 						physicalPathDetails
 						= _mmsStorage->getPhysicalPathDetails(mediaItemKey,
-							encodingProfileKey, warningIfMissing);
+							encodingProfileKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(physicalPathKey, mmsSourceAssetPathName, ignore, relativePath,
 						ignore, ignore, ignore) = physicalPathDetails;
 				}
@@ -10847,8 +10903,9 @@ void MMSEngineProcessor::changeFileFormatThread(
 					physicalPathKey = key;
 
 					tuple<string, int, string, string, int64_t, string>
-						physicalPathDetails =
-						_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(physicalPathKey,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 						= physicalPathDetails;
 
@@ -10856,7 +10913,9 @@ void MMSEngineProcessor::changeFileFormatThread(
 					tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 						int64_t, string, string, int64_t> mediaItemDetails =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-							workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+							workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 						= mediaItemDetails;
 				}
@@ -10867,6 +10926,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					string>> audioTracks;
 
 				_mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true,
 					videoTracks, audioTracks);
 
 				// add the new file as a new variant of the MIK
@@ -11489,7 +11550,9 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					bool warningIfMissing = false;
 					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 						= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey,
-							warningIfMissing);
+							warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathDetails;
 
@@ -11503,12 +11566,16 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
 							= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-						_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey);
+						_mmsStorage->getPhysicalPathDetails(sourcePhysicalPathKey,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathDetails;
 				}
@@ -11874,7 +11941,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11885,7 +11954,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                     tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
 						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
-                            workspace->_workspaceKey, key, warningIfMissing);
+                            workspace->_workspaceKey, key, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                     tie(contentType, ignore, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
@@ -11895,7 +11966,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(key);
+					_mmsStorage->getPhysicalPathDetails(key,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11906,7 +11979,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                     tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                            workspace->_workspaceKey, key, warningIfMissing);
+                            workspace->_workspaceKey, key, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                     tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -12030,7 +12105,9 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -12039,7 +12116,9 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                     tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
 						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
-                            workspace->_workspaceKey, key, warningIfMissing);
+                            workspace->_workspaceKey, key, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                     tie(contentType, ignore, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
@@ -12049,7 +12128,9 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(key);
+					_mmsStorage->getPhysicalPathDetails(key,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
                 {
@@ -12057,7 +12138,9 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                     tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                            workspace->_workspaceKey, key, warningIfMissing);
+                            workspace->_workspaceKey, key, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                     tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -12363,7 +12446,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 						string picturePathName;
 
 						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+							_mmsStorage->getPhysicalPathDetails(physicalPathKey,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 						tie(picturePathName, ignore, ignore, ignore, ignore, ignore)
 							= physicalPathDetails;
 
@@ -12375,7 +12460,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 							int height;
 
 							tuple<int, int, string, int> imageDetails =
-								_mmsEngineDBFacade->getImageDetails(-1, physicalPathKey);
+								_mmsEngineDBFacade->getImageDetails(-1, physicalPathKey,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true);
 							tie(width, height, ignore, ignore) = imageDetails;
 
 							frameToBeDetectedRoot["width"] = width;
@@ -12732,7 +12819,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 					workspace->_workspaceKey,
 					_liveRecorderVirtualVODImageLabel,
-					warningIfMissing);
+					warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
 			}
 			catch (MediaItemKeyNotFound e)
@@ -13221,9 +13310,10 @@ void MMSEngineProcessor::manageVODProxy(
 				{
 					int64_t encodingProfileKey = -1;
 					bool warningIfMissing = false;
-					tuple<int64_t, string, int, string, string, int64_t, string>
-						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
-						encodingProfileKey, warningIfMissing);
+					tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(sourcePhysicalPathKey, sourcePhysicalPathName, ignore, ignore, ignore,
 						ignore, ignore) = physicalPathDetails;
 
@@ -13232,7 +13322,9 @@ void MMSEngineProcessor::manageVODProxy(
 				else
 				{
 					tuple<string, int, string, string, int64_t, string>
-						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key);
+						physicalPathDetails = _mmsStorage->getPhysicalPathDetails(key,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 					tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore)
 						= physicalPathDetails;
 
@@ -13242,7 +13334,9 @@ void MMSEngineProcessor::manageVODProxy(
 					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
 						string, string, int64_t> mediaItemKeyDetails =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+							workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
 					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
 						ignore, ignore, ignore) = mediaItemKeyDetails;
@@ -13457,7 +13551,9 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
                 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					_mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(sourcePhysicalPathKey, mmsSourceVideoAssetPathName, ignore, ignore,
 					ignore, ignore, ignore) = physicalPath;
 
@@ -13468,7 +13564,9 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			else
 			{
 				tuple<string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPathDetails(key);
+					_mmsStorage->getPhysicalPathDetails(key,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPath;
 
@@ -13478,7 +13576,9 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 
 				MMSEngineDBFacade::ContentType localContentType;
 				string localTitle;
@@ -13529,7 +13629,9 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		}
 
 		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-			sourceMediaItemKey, sourcePhysicalPathKey);
+			sourceMediaItemKey, sourcePhysicalPathKey,
+			// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+			true);
 
 		Json::Value outputsRoot;
 		{
@@ -14364,7 +14466,10 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
 					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
-					responseFields, admin);
+					responseFields, admin,
+					// 2022-12-18: MIKs potrebbero essere stati appena aggiunti
+					true
+				);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];
@@ -15361,7 +15466,10 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
 					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
-					responseFields, admin);
+					responseFields, admin,
+					// 2022-12-18: MIKs potrebbero essere stati appena aggiunti
+					true
+				);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];
@@ -18531,7 +18639,10 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 			_mmsEngineDBFacade->getVideoDetails(
-				sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+				sourceMediaItemKey, sourcePhysicalPathKey,
+				// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+				true,
+				videoTracks, audioTracks);
 			if (videoTracks.size() == 0)
 			{
 				string errorMessage = __FILEREF__ + "No video track are present"
@@ -18552,7 +18663,9 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			if (durationInMilliSeconds <= 0)
 			{
 				durationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-					sourceMediaItemKey, sourcePhysicalPathKey);
+					sourceMediaItemKey, sourcePhysicalPathKey,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 			}
         }
         catch(runtime_error e)
@@ -18902,7 +19015,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(key, encodingProfileKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -18912,7 +19027,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(key);
+					_mmsStorage->getPhysicalPathDetails(key,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -18922,7 +19039,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                 tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -18934,7 +19053,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 				mediaItemKeyDetails
 				= _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+                        workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
             
             MMSEngineDBFacade::ContentType contentType;
             {
@@ -19026,7 +19147,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 				_mmsEngineDBFacade->getVideoDetails(
-					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+					sourceMediaItemKey, sourcePhysicalPathKey,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true,
+					videoTracks, audioTracks);
 				if (videoTracks.size() == 0)
 				{
 					string errorMessage = __FILEREF__ + "No video track are present"
@@ -19515,7 +19639,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
 				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
-					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
+					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 
 			tie(ignore, ignore, userData, ignore, ignore, ignore) = mediaItemDetails;
 		}
@@ -19771,7 +19897,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 						_mmsEngineDBFacade->getVideoDetails(
-							sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+							sourceMediaItemKey, sourcePhysicalPathKey,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true,
+							videoTracks, audioTracks);
 						if (videoTracks.size() == 0)
 						{
 							string errorMessage = __FILEREF__ + "No video track are present"
@@ -20318,7 +20447,9 @@ void MMSEngineProcessor::manageEncodeTask(
 						{
 							bool warningIfMissing = true;
 							int64_t localPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-								sourceMediaItemKey, encodingProfileKey, warningIfMissing);
+								sourceMediaItemKey, encodingProfileKey, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 							string errorMessage = __FILEREF__ + "Content profile is already present"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20391,7 +20522,10 @@ void MMSEngineProcessor::manageEncodeTask(
 
 							// int64_t sourceMediaItemKey = -1;
 							_mmsEngineDBFacade->getVideoDetails(
-								-1, sourcePhysicalPathKey, videoTracks, audioTracks);
+								-1, sourcePhysicalPathKey,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true,
+								videoTracks, audioTracks);
 
 							for (tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack:
 									videoTracks)
@@ -20439,7 +20573,10 @@ void MMSEngineProcessor::manageEncodeTask(
 
 							// int64_t sourceMediaItemKey = -1;
 							_mmsEngineDBFacade->getAudioDetails(
-								-1, sourcePhysicalPathKey, audioTracks);
+								-1, sourcePhysicalPathKey,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true,
+								audioTracks);
 
 							for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
 									audioTracks)
@@ -21602,7 +21739,9 @@ void MMSEngineProcessor::emailNotificationThread(
 
 						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 							mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
         
 						MMSEngineDBFacade::ContentType contentType;
 						string title;
@@ -21623,7 +21762,9 @@ void MMSEngineProcessor::emailNotificationThread(
 						bool warningIfMissing = false;
 						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 							mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing);
+								workspace->_workspaceKey, key, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						int64_t mediaItemKey;
 						string title;
@@ -21645,7 +21786,9 @@ void MMSEngineProcessor::emailNotificationThread(
 						bool warningIfMissing = false;
 						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 							string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
-								workspace->_workspaceKey, key);
+								workspace->_workspaceKey, key,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true);
 
 						string label;
 						MMSEngineDBFacade::IngestionType ingestionType;
@@ -21706,7 +21849,9 @@ void MMSEngineProcessor::emailNotificationThread(
 								MMSEngineDBFacade::IngestionStatus,
 								string, string> ingestionJobDetails =
 								_mmsEngineDBFacade->getIngestionJobDetails(
-										workspace->_workspaceKey, referenceIngestionJobKey);
+									workspace->_workspaceKey, referenceIngestionJobKey,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true);
 							tie(referenceLabel, ingestionType, ignore, parameters,
 								referenceErrorMessage) = ingestionJobDetails;
 
@@ -22271,7 +22416,9 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+                        workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                 tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -22303,7 +22450,9 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string, int64_t>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+                        workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
 
                 tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -27236,7 +27385,9 @@ tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 
 			bool warningIfMissing = true;
 			tuple<int64_t, int, string, string, int64_t, bool, int64_t> physicalPathDetails =
-				_mmsEngineDBFacade->getSourcePhysicalPath(mediaItemKey, warningIfMissing);
+				_mmsEngineDBFacade->getSourcePhysicalPath(mediaItemKey, warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
 			tie(physicalPathKey, ignore, relativePath, fileName, ignore, ignore,
 				durationInMilliSecs) = physicalPathDetails;
 		}
@@ -27248,7 +27399,9 @@ tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 			tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string, int64_t,
 				string, string, int64_t> mediaItemDetails =
 				_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-					workspace->_workspaceKey, physicalPathKey, warningIfMissing);
+					workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
 			tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore,
 				fileName, relativePath, durationInMilliSecs) = mediaItemDetails;
 		}
@@ -27257,7 +27410,9 @@ tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 	string assetPathName;
 	{
 		tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-			_mmsStorage->getPhysicalPathDetails(physicalPathKey);
+			_mmsStorage->getPhysicalPathDetails(physicalPathKey,
+				// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+				true);
 		tie(assetPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 	}
 

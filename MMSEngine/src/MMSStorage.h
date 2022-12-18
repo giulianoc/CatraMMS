@@ -71,13 +71,13 @@ public:
 	tuple<int64_t, string, int, string, string, int64_t, string>
 		getPhysicalPathDetails(
 		int64_t mediaItemKey, int64_t encodingProfileKey,
-		bool warningIfMissing);
+		bool warningIfMissing, bool fromMaster);
 
 	tuple<string, int, string, string, int64_t, string> getPhysicalPathDetails(
-		int64_t physicalPathKey);
+		int64_t physicalPathKey, bool fromMaster);
 
 	tuple<string, int, string, string> getVODDeliveryURI(
-			int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
+		int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
 
 	tuple<string, int, int64_t, string, string> getVODDeliveryURI(
 		int64_t mediaItemKey,

@@ -1127,7 +1127,8 @@ public:
 public:
     MMSEngineDBFacade(
         Json::Value configuration,
-		size_t dbPoolSize,
+		size_t masterDbPoolSize,
+		size_t slaveDbPoolSize,
         shared_ptr<spdlog::logger> logger
             );
 
@@ -1141,7 +1142,7 @@ public:
 
 	Json::Value getWorkspaceList(int64_t userKey, bool admin);
 
-	Json::Value getLoginWorkspace(int64_t userKey);
+	Json::Value getLoginWorkspace(int64_t userKey, bool fromMaster);
 
 	string createCode(
 		int64_t workspaceKey,
@@ -1190,22 +1191,6 @@ public:
 
 	void deleteWorkspace(int64_t userKey, int64_t workspaceKey);
 
-	/*
-    pair<int64_t,string> registerUserAndShareWorkspace(
-			bool ldapEnabled,
-        bool userAlreadyPresent,
-        string userName,
-        string userEmailAddress,
-        string userPassword,
-        string userCountry,
-        bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
-		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-		bool applicationRecorder,
-        int64_t workspaceKeyToBeShared,
-        chrono::system_clock::time_point userExpirationDate);
-	*/
-
     tuple<string,string,string> confirmRegistration(
 		string confirmationCode, int expirationInDaysWorkspaceDefaultValue);
 
@@ -1234,7 +1219,7 @@ public:
 	pair<int64_t, string> getUserDetailsByEmail (string email);
 
     tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-		checkAPIKey (string apiKey);
+		checkAPIKey (string apiKey, bool fromMaster);
 
     Json::Value login (string eMailAddress, string password);
 
@@ -1298,10 +1283,10 @@ public:
 		int64_t liveRecordingIngestionJobKey
 	);
 
-	long getIngestionJobOutputsCount(int64_t ingestionJobKey);
+	long getIngestionJobOutputsCount(int64_t ingestionJobKey, bool fromMaster);
 
 	tuple<int64_t, int64_t, string> getEncodingJobDetailsByIngestionJobKey(
-		int64_t ingestionJobKey);
+		int64_t ingestionJobKey, bool fromMaster);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -1344,7 +1329,7 @@ public:
         int maxMediaItemKeysNumber);
 
 	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-			int64_t ingestionJobKey);
+			int64_t ingestionJobKey, bool fromMaster);
 
 	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
 			shared_ptr<MySQLConnection> conn, int64_t ingestionJobKey);
@@ -1395,6 +1380,7 @@ public:
 
 	void getIngestionJobsKeyByGlobalLabel (
 		int64_t workspaceKey, string globalIngestionLabel,
+		bool fromMaster,
 		vector<int64_t>& ingestionJobsKey);
 
     void updateIngestionJobMetadataContent (
@@ -1423,6 +1409,7 @@ public:
 
 	void getGroupOfTasksChildrenStatus(
 		int64_t groupOfTasksIngestionJobKey,
+		bool fromMaster,
 		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
 
     shared_ptr<MySQLConnection> endIngestionJobs (
@@ -1478,10 +1465,10 @@ public:
 
 	string getIngestionRootMetaDataContent (
 		shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-		bool processedMetadata);
+		bool processedMetadata, bool fromMaster);
 
 	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-		getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey);
+		getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
     Json::Value getIngestionRootsStatus (
         shared_ptr<Workspace> workspace,
@@ -1490,7 +1477,7 @@ public:
         // bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
         string label, string status, bool asc,
-		bool dependencyInfo, bool ingestionJobOutputs);
+		bool dependencyInfo, bool ingestionJobOutputs, bool fromMaster);
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
@@ -1502,7 +1489,7 @@ public:
 		bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,
         bool asc, string status,
 		bool dependencyInfo,
-		bool ingestionJobOutputs);
+		bool ingestionJobOutputs, bool fromMaster);
 
     Json::Value getEncodingJobsStatus (
         shared_ptr<Workspace> workspace, int64_t encodingJobKey,
@@ -1512,7 +1499,7 @@ public:
         // bool startAndEndEncodingDatePresent,
 		string startEncodingDate, string endEncodingDate,
 		int64_t encoderKey, bool alsoEncodingJobsFromOtherWorkspaces,
-        bool asc, string status, string types);
+        bool asc, string status, string types, bool fromMaster);
 
 	Json::Value updateMediaItem (
 		int64_t workspaceKey,
@@ -1547,12 +1534,12 @@ public:
 		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
 		string orderBy, string jsonOrderBy,
-		Json::Value responseFields, bool admin);
+		Json::Value responseFields, bool admin, bool fromMaster);
 
 	Json::Value getTagsList (
         int64_t workspaceKey, int start, int rows,
         int liveRecordingChunk, bool contentTypePresent, ContentType contentType,
-		string tagNameFilter);
+		string tagNameFilter, bool fromMaster);
 
 	void updateMediaItem(
 		int64_t mediaItemKey,
@@ -1594,50 +1581,50 @@ public:
 		string label);
 
     int64_t getPhysicalPathDetails(
-        int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing);
+        int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
    
     int64_t getPhysicalPathDetails(
         int64_t workspaceKey, 
         int64_t mediaItemKey, ContentType contentType,
-        string encodingProfileLabel, bool warningIfMissing);
+        string encodingProfileLabel, bool warningIfMissing, bool fromMaster);
 
 	tuple<int64_t, int, string, string, int64_t, bool, int64_t> getSourcePhysicalPath(
-		int64_t mediaItemKey, bool warningIfMissing);
+		int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
 
     tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> getMediaItemKeyDetails(
-        int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing);
+        int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
 
     tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 		string, string, int64_t> getMediaItemKeyDetailsByPhysicalPathKey(
-        int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing);
+        int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing, bool fromMaster);
     
     void getMediaItemDetailsByIngestionJobKey(
 		int64_t workspaceKey, int64_t referenceIngestionJobKey, 
 		int maxLastMediaItemsToBeReturned,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
-		bool warningIfMissing);
+		bool warningIfMissing, bool fromMaster);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
-        int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing);
+        int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing, bool fromMaster);
     
 	int64_t getMediaDurationInMilliseconds(
-		int64_t mediaItemKey, int64_t physicalPathKey);
+		int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster);
 
     // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
     //     int64_t mediaItemKey, int64_t physicalpathKey);
 	void getVideoDetails(
-		int64_t mediaItemKey, int64_t physicalPathKey,
+		int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster,
 		vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>>& videoTracks,
 		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks);
 
     // tuple<int64_t,string,long,long,int> getAudioDetails(
     //     int64_t mediaItemKey, int64_t physicalpathKey);
 	void getAudioDetails(
-		int64_t mediaItemKey, int64_t physicalPathKey,
+		int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster,
 		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks);
 
     tuple<int,int,string,int> getImageDetails(
-        int64_t mediaItemKey, int64_t physicalpathKey);
+        int64_t mediaItemKey, int64_t physicalpathKey, bool fromMaster);
 
     vector<int64_t> getEncodingProfileKeysBySetKey(
         int64_t workspaceKey,
@@ -1650,16 +1637,14 @@ public:
     tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
 		getEncodingProfileDetailsByKey( int64_t workspaceKey, int64_t encodingProfileKey);
 
-    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
-        int64_t physicalPathKey);
+    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
+		string, string, int64_t, bool> getStorageDetails(int64_t physicalPathKey, bool fromMaster);
 
-    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
-        int64_t mediaItemKey,
-        int64_t encodingProfileKey,
-		bool warningIfMissing
-    );
+    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
+		string, string, int64_t, bool> getStorageDetails(int64_t mediaItemKey,
+        int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 
-    void getAllStorageDetails(int64_t mediaItemKey,
+    void getAllStorageDetails(int64_t mediaItemKey, bool fromMaster,
         vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails);
     
     int64_t createDeliveryAuthorization(
@@ -1978,7 +1963,7 @@ public:
 		int outputIndex, string rtmpURL, string playURL);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
-		getEncodingJobDetails (int64_t encodingJobKey);
+		getEncodingJobDetails (int64_t encodingJobKey, bool fromMaster);
 
     void checkWorkspaceStorageAndMaxIngestionNumber (int64_t workspaceKey);
     
@@ -2554,8 +2539,12 @@ public:
 private:
     shared_ptr<spdlog::logger>		_logger;
 	Json::Value						_configuration;
-    shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
-    shared_ptr<DBConnectionPool<MySQLConnection>>       _connectionPool;
+
+	shared_ptr<MySQLConnectionFactory>				_mySQLMasterConnectionFactory;
+	shared_ptr<DBConnectionPool<MySQLConnection>>	_masterConnectionPool;
+	shared_ptr<MySQLConnectionFactory>				_mySQLSlaveConnectionFactory;
+	shared_ptr<DBConnectionPool<MySQLConnection>>	_slaveConnectionPool;
+
     string                          _defaultContentProviderName;
     // string                          _defaultTerritoryName;
     int								_ingestionJobsSelectPageSize;

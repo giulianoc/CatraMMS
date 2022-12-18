@@ -107,9 +107,11 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -128,7 +130,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -146,7 +148,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -165,7 +167,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -183,7 +185,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -401,9 +403,11 @@ void MMSEngineDBFacade::removeEncodingProfile(
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -444,7 +448,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -462,7 +466,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -481,7 +485,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -499,7 +503,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -671,9 +675,11 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -714,7 +720,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -732,7 +738,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -751,7 +757,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -769,7 +775,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -787,6 +793,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -798,7 +806,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
             + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -987,7 +995,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1005,7 +1013,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1024,7 +1032,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1042,7 +1050,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1063,6 +1071,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -1075,7 +1085,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             + ", label: " + label
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1240,7 +1250,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1258,7 +1268,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1277,7 +1287,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1295,7 +1305,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1315,9 +1325,11 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1390,7 +1402,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1408,7 +1420,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1427,7 +1439,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1445,7 +1457,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1465,9 +1477,11 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1532,7 +1546,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1550,7 +1564,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1569,7 +1583,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1587,7 +1601,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1610,9 +1624,11 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1679,7 +1695,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1697,7 +1713,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1716,7 +1732,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1734,7 +1750,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1754,9 +1770,11 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1810,7 +1828,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return make_tuple(label, contentType, deliveryTechnology, jsonProfile);
@@ -1830,7 +1848,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1849,7 +1867,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -1867,7 +1885,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         

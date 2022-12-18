@@ -677,7 +677,9 @@ void API::mediaItemsList(
 				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 				jsonCondition,
 				tagsIn, tagsNotIn, orderBy, jsonOrderBy,
-				responseFields, admin);
+				responseFields, admin,
+				// 2022-12-18: false because from API(get)
+				false);
 
             string responseBody = JSONUtils::toString(ingestionStatusRoot);
             
@@ -801,8 +803,10 @@ void API::tagsList(
 
         {
             Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
-                    workspace->_workspaceKey, start, rows,
-                    liveRecordingChunk, contentTypePresent, contentType, tagNameFilter);
+				workspace->_workspaceKey, start, rows,
+				liveRecordingChunk, contentTypePresent, contentType, tagNameFilter,
+				// 2022-12-18: false because from API(get)
+				false);
 
             string responseBody = JSONUtils::toString(tagsRoot);
             

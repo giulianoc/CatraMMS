@@ -121,7 +121,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 						requestWorkspace->_workspaceKey,
-						uniqueName, warningIfMissingMediaItemKey);
+						uniqueName, warningIfMissingMediaItemKey,
+						// 2022-12-18: assumo il MIK sia nel DB da un po di tempo
+						false);
 				tie(mediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 
@@ -135,8 +137,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					int64_t, int64_t> mediaItemDetails;
 				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
 					requestWorkspace->_workspaceKey, mediaItemKey,
-					false	// warningIfMissing
-				);
+					false,	// warningIfMissing
+					// 2022-12-18: assumo il MIK sia nel DB da un po di tempo
+					false);
 				tie(contentType, ignore, ignore, ignore, ignore, ignore) =
 					mediaItemDetails;
 
@@ -330,7 +333,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		tuple<string, MMSEngineDBFacade::IngestionType,
 			MMSEngineDBFacade::IngestionStatus, string, string>
 			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
-					requestWorkspace->_workspaceKey, ingestionJobKey);
+				requestWorkspace->_workspaceKey, ingestionJobKey,
+				// 2022-12-18: it is a live request, it has time to be present into the slave
+				false);
 		MMSEngineDBFacade::IngestionType ingestionType;
 		string metaDataContent;
 		tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;

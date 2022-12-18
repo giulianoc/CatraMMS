@@ -28,7 +28,7 @@ int main (int iArgc, char *pArgv [])
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, 3, logger);
+            configuration, 3, 3, logger);
 
 	// this_thread::sleep_for(chrono::seconds(secondsToWait));
 

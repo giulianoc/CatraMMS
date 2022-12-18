@@ -16,9 +16,11 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 	shared_ptr<MySQLConnection> conn = nullptr;
 	bool autoCommit = true;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
 	try
 	{
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -128,7 +130,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -155,7 +157,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -167,7 +169,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -180,7 +182,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -210,7 +212,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -222,7 +224,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -235,7 +237,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -264,7 +266,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -276,7 +278,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -289,7 +291,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -311,9 +313,11 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 	shared_ptr<MySQLConnection> conn = nullptr;
 	bool autoCommit = true;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
 	try
 	{
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -433,7 +437,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -460,7 +464,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -472,7 +476,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -485,7 +489,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -515,7 +519,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -527,7 +531,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -540,7 +544,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -569,7 +573,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -581,7 +585,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -594,7 +598,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -617,9 +621,11 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 	shared_ptr<MySQLConnection> conn = nullptr;
 	bool autoCommit = true;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
 	try
 	{
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -703,7 +709,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -730,7 +736,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -742,7 +748,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -755,7 +761,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -785,7 +791,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -797,7 +803,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -810,7 +816,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -839,7 +845,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(sql::SQLException se)
@@ -851,7 +857,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
             }
             catch(exception e)
@@ -864,7 +870,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
                 );
-                _connectionPool->unborrow(conn);
+                connectionPool->unborrow(conn);
 				conn = nullptr;
 				*/
             }
@@ -884,9 +890,11 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 
 	shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
 	try
 	{
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -926,7 +934,7 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -944,7 +952,7 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -963,7 +971,7 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -981,7 +989,7 @@ string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -998,11 +1006,13 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 
 	shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
 	try
 	{
 		partitionsInfo.clear();
 
-		conn = _connectionPool->borrow();	
+		conn = connectionPool->borrow();	
 		_logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
@@ -1033,7 +1043,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
-		_connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
     catch(sql::SQLException se)
@@ -1051,7 +1061,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1070,7 +1080,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1088,7 +1098,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 			_logger->debug(__FILEREF__ + "DB connection unborrow"
 				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-			_connectionPool->unborrow(conn);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 

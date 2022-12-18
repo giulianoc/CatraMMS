@@ -131,14 +131,18 @@ int main(int argc, char** argv)
 		// spdlog::register_logger(logger);
 		*/
 
-		size_t dbPoolSize = JSONUtils::asInt(configuration["database"], "apiPoolSize", 5);
+		size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "apiPoolSize", 5);
 		logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->poolSize: " + to_string(dbPoolSize)
+			+ ", database->master->apiPoolSize: " + to_string(masterDbPoolSize)
+		);
+		size_t slaveDbPoolSize = JSONUtils::asInt(configuration["database"]["slave"], "apiPoolSize", 5);
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize)
 		);
 		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, dbPoolSize, logger);
+            configuration, masterDbPoolSize, slaveDbPoolSize, logger);
 
 		logger->info(__FILEREF__ + "Creating MMSStorage"
 			);

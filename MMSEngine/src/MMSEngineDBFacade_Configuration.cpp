@@ -15,9 +15,11 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -85,7 +87,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return youTubeConfRoot;
@@ -105,7 +107,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -124,7 +126,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -142,7 +144,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -162,9 +164,11 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -329,7 +333,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return youTubeConfRoot;
@@ -349,7 +353,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -368,7 +372,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -386,7 +390,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -402,9 +406,11 @@ void MMSEngineDBFacade::removeYouTubeConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -443,7 +449,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -461,7 +467,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -480,7 +486,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -498,7 +504,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -515,6 +521,8 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -523,7 +531,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -635,7 +643,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -653,7 +661,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -672,7 +680,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -690,7 +698,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -708,6 +716,8 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {        
 		string		youTubeTokenType;
@@ -719,7 +729,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
             + ", youTubeConfigurationLabel: " + youTubeConfigurationLabel
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -767,7 +777,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return make_tuple(youTubeTokenType, youTubeRefreshToken, youTubeAccessToken);
@@ -787,7 +797,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -806,7 +816,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -824,7 +834,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -842,9 +852,11 @@ int64_t MMSEngineDBFacade::addFacebookConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -877,7 +889,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -895,7 +907,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -914,7 +926,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -932,7 +944,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -952,9 +964,11 @@ void MMSEngineDBFacade::modifyFacebookConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1000,7 +1014,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1018,7 +1032,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1037,7 +1051,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1055,7 +1069,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1071,9 +1085,11 @@ void MMSEngineDBFacade::removeFacebookConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1112,7 +1128,7 @@ void MMSEngineDBFacade::removeFacebookConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1130,7 +1146,7 @@ void MMSEngineDBFacade::removeFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1149,7 +1165,7 @@ void MMSEngineDBFacade::removeFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1167,7 +1183,7 @@ void MMSEngineDBFacade::removeFacebookConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1184,6 +1200,8 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -1192,7 +1210,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1286,7 +1304,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1304,7 +1322,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1323,7 +1341,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1341,7 +1359,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1360,6 +1378,8 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {        
         _logger->info(__FILEREF__ + "getFacebookPageTokenByConfigurationLabel"
@@ -1367,7 +1387,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
             + ", facebookConfigurationLabel: " + facebookConfigurationLabel
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1408,7 +1428,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -1426,7 +1446,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1445,7 +1465,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1463,7 +1483,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1508,9 +1528,11 @@ Json::Value MMSEngineDBFacade::addStream(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1727,7 +1749,7 @@ Json::Value MMSEngineDBFacade::addStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return streamsRoot[0];
@@ -1747,7 +1769,7 @@ Json::Value MMSEngineDBFacade::addStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1766,7 +1788,7 @@ Json::Value MMSEngineDBFacade::addStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1784,7 +1806,7 @@ Json::Value MMSEngineDBFacade::addStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -1828,9 +1850,11 @@ Json::Value MMSEngineDBFacade::modifyStream(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -2397,7 +2421,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return streamsRoot[0];
@@ -2417,7 +2441,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2436,7 +2460,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2454,7 +2478,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2470,9 +2494,11 @@ void MMSEngineDBFacade::removeStream(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -2512,7 +2538,7 @@ void MMSEngineDBFacade::removeStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -2530,7 +2556,7 @@ void MMSEngineDBFacade::removeStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2549,7 +2575,7 @@ void MMSEngineDBFacade::removeStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2567,7 +2593,7 @@ void MMSEngineDBFacade::removeStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -2587,6 +2613,8 @@ Json::Value MMSEngineDBFacade::getStreamList (
     Json::Value streamListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
 
     try
     {
@@ -2608,7 +2636,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
             + ", labelOrder: " + labelOrder
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -3098,7 +3126,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -3116,7 +3144,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3135,7 +3163,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3153,7 +3181,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3174,6 +3202,8 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         _logger->info(__FILEREF__ + "getStreamDetails"
@@ -3181,7 +3211,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
             + ", label: " + label
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -3301,7 +3331,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return make_tuple(confKey, sourceType, encodersPoolLabel, url,
@@ -3326,7 +3356,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3350,7 +3380,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -3369,7 +3399,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3387,7 +3417,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3403,6 +3433,8 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {        
         _logger->info(__FILEREF__ + "getStreamDetails"
@@ -3410,7 +3442,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
             + ", confKey: " + to_string(confKey)
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -3457,7 +3489,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return make_tuple(url, channelName, userData);
@@ -3477,7 +3509,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3496,7 +3528,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3514,7 +3546,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3549,9 +3581,11 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -3717,7 +3751,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return sourceTVStreamsRoot[0];
@@ -3737,7 +3771,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3756,7 +3790,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3774,7 +3808,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -3810,9 +3844,11 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -4219,7 +4255,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return sourceTVStreamsRoot[0];
@@ -4239,7 +4275,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4258,7 +4294,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4276,7 +4312,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4291,9 +4327,11 @@ void MMSEngineDBFacade::removeSourceTVStream(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -4331,7 +4369,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -4349,7 +4387,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4368,7 +4406,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4386,7 +4424,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4406,6 +4444,8 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -4424,7 +4464,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             + ", nameOrder: " + nameOrder
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -4797,7 +4837,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -4815,7 +4855,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4834,7 +4874,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4852,7 +4892,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4871,13 +4911,15 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         _logger->info(__FILEREF__ + "getTVStreamDetails"
             + ", confKey: " + to_string(confKey)
         );
 
-        conn = _connectionPool->borrow();
+        conn = connectionPool->borrow();
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -4943,7 +4985,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return make_tuple(type, serviceId, frequency, symbolRate, bandwidthInHz,
@@ -4964,7 +5006,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -4988,7 +5030,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
         
@@ -5007,7 +5049,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5025,7 +5067,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5044,9 +5086,11 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5088,7 +5132,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -5106,7 +5150,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5125,7 +5169,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5143,7 +5187,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5164,9 +5208,11 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5221,7 +5267,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -5239,7 +5285,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5258,7 +5304,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5276,7 +5322,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5292,9 +5338,11 @@ void MMSEngineDBFacade::removeAWSChannelConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5334,7 +5382,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -5352,7 +5400,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5371,7 +5419,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5389,7 +5437,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5405,6 +5453,8 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -5413,7 +5463,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5532,7 +5582,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -5550,7 +5600,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5569,7 +5619,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5587,7 +5637,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -5607,6 +5657,8 @@ tuple<string, string, string, bool>
     shared_ptr<MySQLConnection> conn = nullptr;
     bool autoCommit = true;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
         string field;
@@ -5618,7 +5670,7 @@ tuple<string, string, string, bool>
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5743,7 +5795,7 @@ tuple<string, string, string, bool>
         _logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		bool channelAlreadyReserved;
@@ -5779,7 +5831,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(sql::SQLException se)
@@ -5791,7 +5843,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(exception e)
@@ -5804,7 +5856,7 @@ tuple<string, string, string, bool>
 					_logger->debug(__FILEREF__ + "DB connection unborrow"
 						+ ", getConnectionId: " + to_string(conn->getConnectionId())
 					);
-					_connectionPool->unborrow(conn);
+					connectionPool->unborrow(conn);
 					conn = nullptr;
 				*/
 			}
@@ -5834,7 +5886,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(sql::SQLException se)
@@ -5846,7 +5898,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(exception e)
@@ -5859,7 +5911,7 @@ tuple<string, string, string, bool>
 					_logger->debug(__FILEREF__ + "DB connection unborrow"
 						+ ", getConnectionId: " + to_string(conn->getConnectionId())
 					);
-					_connectionPool->unborrow(conn);
+					connectionPool->unborrow(conn);
 					conn = nullptr;
 				*/
 			}
@@ -5888,7 +5940,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(sql::SQLException se)
@@ -5900,7 +5952,7 @@ tuple<string, string, string, bool>
 				_logger->debug(__FILEREF__ + "DB connection unborrow"
 					+ ", getConnectionId: " + to_string(conn->getConnectionId())
 				);
-				_connectionPool->unborrow(conn);
+				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
 			catch(exception e)
@@ -5913,7 +5965,7 @@ tuple<string, string, string, bool>
 					_logger->debug(__FILEREF__ + "DB connection unborrow"
 						+ ", getConnectionId: " + to_string(conn->getConnectionId())
 					);
-					_connectionPool->unborrow(conn);
+					connectionPool->unborrow(conn);
 					conn = nullptr;
 				*/
 			}
@@ -5922,134 +5974,6 @@ tuple<string, string, string, bool>
         throw e;
     } 
 }
-
-/*
-tuple<string, string, string> MMSEngineDBFacade::getAWSChannelByIngestionJobKey(
-	int64_t workspaceKey, int64_t ingestionJobKey)
-{
-    string      lastSQLCommand;
-	tuple<string, string, string> awsChannel;
-
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {        
-        _logger->info(__FILEREF__ + "getAWSChannelByIngestionJobKey"
-            + ", workspaceKey: " + to_string(workspaceKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        
-        {
-            lastSQLCommand = 
-                "select channelId, rtmpURL, playURL from MMS_Conf_AWSChannel "
-				"where workspaceKey = ? and reservedByIngestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-            if (!resultSet->next())
-            {
-                string errorMessage = __FILEREF__ + "select from MMS_Conf_AWSChannel failed"
-                    + ", workspaceKey: " + to_string(workspaceKey)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            string channelId = resultSet->getString("channelId");
-            string rtmpURL = resultSet->getString("rtmpURL");
-            string playURL = resultSet->getString("playURL");
-
-			awsChannel = make_tuple(channelId, rtmpURL, playURL);
-        }
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }    
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    } 
-    
-    return awsChannel;
-}
-*/
 
 string MMSEngineDBFacade::releaseAWSChannel(
 	int64_t workspaceKey, int64_t ingestionJobKey)
@@ -6057,6 +5981,8 @@ string MMSEngineDBFacade::releaseAWSChannel(
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
 
     try
     {
@@ -6067,7 +5993,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6145,7 +6071,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
 
 
@@ -6166,7 +6092,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6185,7 +6111,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6203,7 +6129,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6221,9 +6147,11 @@ int64_t MMSEngineDBFacade::addFTPConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6264,7 +6192,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6282,7 +6210,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6301,7 +6229,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6319,7 +6247,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6339,9 +6267,11 @@ void MMSEngineDBFacade::modifyFTPConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6395,7 +6325,7 @@ void MMSEngineDBFacade::modifyFTPConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6413,7 +6343,7 @@ void MMSEngineDBFacade::modifyFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6432,7 +6362,7 @@ void MMSEngineDBFacade::modifyFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6450,7 +6380,7 @@ void MMSEngineDBFacade::modifyFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6466,9 +6396,11 @@ void MMSEngineDBFacade::removeFTPConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6507,7 +6439,7 @@ void MMSEngineDBFacade::removeFTPConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6525,7 +6457,7 @@ void MMSEngineDBFacade::removeFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6544,7 +6476,7 @@ void MMSEngineDBFacade::removeFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6562,7 +6494,7 @@ void MMSEngineDBFacade::removeFTPConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6579,6 +6511,8 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -6587,7 +6521,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6693,7 +6627,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6711,7 +6645,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6730,7 +6664,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6748,7 +6682,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6767,6 +6701,8 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {        
         _logger->info(__FILEREF__ + "getFTPByConfigurationLabel"
@@ -6774,7 +6710,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
             + ", label: " + label
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6821,7 +6757,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6839,7 +6775,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6858,7 +6794,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6876,7 +6812,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6896,9 +6832,11 @@ int64_t MMSEngineDBFacade::addEMailConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6935,7 +6873,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -6953,7 +6891,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6972,7 +6910,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -6990,7 +6928,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7010,9 +6948,11 @@ void MMSEngineDBFacade::modifyEMailConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -7062,7 +7002,7 @@ void MMSEngineDBFacade::modifyEMailConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -7080,7 +7020,7 @@ void MMSEngineDBFacade::modifyEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7099,7 +7039,7 @@ void MMSEngineDBFacade::modifyEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7117,7 +7057,7 @@ void MMSEngineDBFacade::modifyEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7133,9 +7073,11 @@ void MMSEngineDBFacade::removeEMailConf(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
     try
     {
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -7174,7 +7116,7 @@ void MMSEngineDBFacade::removeEMailConf(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -7192,7 +7134,7 @@ void MMSEngineDBFacade::removeEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7211,7 +7153,7 @@ void MMSEngineDBFacade::removeEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7229,7 +7171,7 @@ void MMSEngineDBFacade::removeEMailConf(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7246,6 +7188,8 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {
         string field;
@@ -7254,7 +7198,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             + ", workspaceKey: " + to_string(workspaceKey)
         );
         
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -7354,7 +7298,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -7372,7 +7316,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7391,7 +7335,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7409,7 +7353,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7428,6 +7372,8 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
     try
     {        
         _logger->info(__FILEREF__ + "getEMailByConfigurationLabel"
@@ -7435,7 +7381,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
             + ", label: " + label
         );
 
-        conn = _connectionPool->borrow();	
+        conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -7480,7 +7426,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-        _connectionPool->unborrow(conn);
+        connectionPool->unborrow(conn);
 		conn = nullptr;
     }
     catch(sql::SQLException se)
@@ -7498,7 +7444,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7517,7 +7463,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 
@@ -7535,7 +7481,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
             _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
-            _connectionPool->unborrow(conn);
+            connectionPool->unborrow(conn);
 			conn = nullptr;
         }
 

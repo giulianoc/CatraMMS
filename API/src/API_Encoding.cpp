@@ -76,62 +76,6 @@ void API::encodingJobsStatus(
 			}
         }
         
-		/*
-        bool startAndEndIngestionDatePresent = false;
-        string startIngestionDate;
-        string endIngestionDate;
-        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-        if (startIngestionDateIt != queryParameters.end()
-			|| endIngestionDateIt != queryParameters.end())
-        {
-			if (startIngestionDateIt != queryParameters.end())
-				startIngestionDate = startIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				startIngestionDate = sUTCDateTime;
-			}
-
-			if (endIngestionDateIt != queryParameters.end())
-				endIngestionDate = endIngestionDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				endIngestionDate = sUTCDateTime;
-			}
-
-            startAndEndIngestionDatePresent = true;
-        }
-		*/
         string startIngestionDate;
         auto startIngestionDateIt = queryParameters.find("startIngestionDate");
         if (startIngestionDateIt != queryParameters.end())
@@ -142,62 +86,6 @@ void API::encodingJobsStatus(
         if (endIngestionDateIt != queryParameters.end())
 			endIngestionDate = endIngestionDateIt->second;
 
-		/*
-        bool startAndEndEncodingDatePresent = false;
-        string startEncodingDate;
-        string endEncodingDate;
-        auto startEncodingDateIt = queryParameters.find("startEncodingDate");
-        auto endEncodingDateIt = queryParameters.find("endEncodingDate");
-        if (startEncodingDateIt != queryParameters.end()
-			|| endEncodingDateIt != queryParameters.end())
-        {
-			if (startEncodingDateIt != queryParameters.end())
-				startEncodingDate = startEncodingDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				startEncodingDate = sUTCDateTime;
-			}
-
-			if (endEncodingDateIt != queryParameters.end())
-				endEncodingDate = endEncodingDateIt->second;
-			else
-			{
-				tm tmUTCDateTime;
-				char sUTCDateTime[64];
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow  = chrono::system_clock::to_time_t(now);
-
-				gmtime_r (&utcNow, &tmUTCDateTime);
-				sprintf (sUTCDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-					tmUTCDateTime. tm_year + 1900,
-					tmUTCDateTime. tm_mon + 1,
-					tmUTCDateTime. tm_mday,
-					tmUTCDateTime. tm_hour,
-					tmUTCDateTime. tm_min,
-					tmUTCDateTime. tm_sec);
-
-				endEncodingDate = sUTCDateTime;
-			}
-
-            startAndEndEncodingDatePresent = true;
-        }
-		*/
         string startEncodingDate;
         auto startEncodingDateIt = queryParameters.find("startEncodingDate");
         if (startEncodingDateIt != queryParameters.end())
@@ -259,17 +147,27 @@ void API::encodingJobsStatus(
 			types = curlpp::unescape(firstDecoding);
         }
 
+		bool fromMaster = false;
+		auto fromMasterIt = queryParameters.find("fromMaster");
+		if (fromMasterIt != queryParameters.end() && fromMasterIt->second != "")
+		{
+			if (fromMasterIt->second == "true")
+				fromMaster = true;
+			else
+				fromMaster = false;
+		}
+
         {
             Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
-                    workspace, encodingJobKey,
-                    start, rows,
-                    // startAndEndIngestionDatePresent,
-					startIngestionDate, endIngestionDate,
-                    // startAndEndEncodingDatePresent,
-					startEncodingDate, endEncodingDate,
-					encoderKey, alsoEncodingJobsFromOtherWorkspaces,
-                    asc, status, types
-                    );
+				workspace, encodingJobKey,
+				start, rows,
+				// startAndEndIngestionDatePresent,
+				startIngestionDate, endIngestionDate,
+				// startAndEndEncodingDatePresent,
+				startEncodingDate, endEncodingDate,
+				encoderKey, alsoEncodingJobsFromOtherWorkspaces,
+				asc, status, types,
+				fromMaster);
 
             string responseBody = JSONUtils::toString(encodingStatusRoot);
             
@@ -437,7 +335,9 @@ void API::killOrCancelEncodingJob(
         {
 			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 				encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
-					encodingJobKey);
+					encodingJobKey,
+					// 2022-12-18: true perchè serve una info sicura
+					true);
 
 			int64_t ingestionJobKey;
 			string type;

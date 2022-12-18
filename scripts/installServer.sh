@@ -197,7 +197,7 @@ install-packages()
 	read -n 1 -s -r -p "install dvb-tools/dvblast..."
 	echo ""
 	apt install -y dvb-tools
-	apt install dvblast
+	apt install -y dvblast
 
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 
@@ -374,9 +374,10 @@ create-directory()
 		mkdir /var/catramms/logs/nginx
 	fi
 
+	mkdir /mnt/mmsStorage
+	mkdir /mnt/mmsRepository0000
+
 	if [ "$moduleName" != "integration" ]; then
-		mkdir /mnt/mmsStorage
-		chown mms:mms /mnt/mmsStorage
 		mkdir /mnt/mmsRepository0000
 		chown mms:mms /mnt/mmsRepository0000
 	fi
@@ -384,19 +385,45 @@ create-directory()
 	read -n 1 -s -r -p "links..."
 	echo ""
 
-	if [ "$moduleName" == "externalEncoder" ]; then
+	if [ ! -d "/mnt/mmsStorage/IngestionRepository" ];
+	then
 		mkdir /mnt/mmsStorage/IngestionRepository
-		chown mms:mms /mnt/mmsStorage/IngestionRepository
+	fi
+	if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
+	then
+		mkdir /mnt/mmsStorage/MMSGUI
+	fi
+	if [ ! -d "/mnt/mmsStorage/MMSWorkingAreaRepository" ];
+	then
 		mkdir /mnt/mmsStorage/MMSWorkingAreaRepository
-		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
+	fi
+	if [ ! -d "/mnt/mmsStorage/MMSRepository-free" ];
+	then
 		mkdir /mnt/mmsStorage/MMSRepository-free
-		chown mms:mms /mnt/mmsStorage/MMSRepository-free
+	fi
+	if [ ! -d "/mnt/mmsStorage/MMSLive" ];
+	then
 		mkdir /mnt/mmsStorage/MMSLive
+	fi
+	if [ ! -d "/mnt/mmsStorage/dbDump" ];
+	then
+		mkdir /mnt/mmsStorage/dbDump
+	fi
+	if [ ! -d "/mnt/mmsStorage/commonConfiguration" ];
+	then
+		mkdir /mnt/mmsStorage/commonConfiguration
+	fi
+
+	if [ "$moduleName" == "externalEncoder" ]; then
+		chown mms:mms /mnt/mmsStorage/IngestionRepository
+		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
+		chown mms:mms /mnt/mmsStorage/MMSRepository-free
 		chown mms:mms /mnt/mmsStorage/MMSLive
 	fi
 
 	if [ "$moduleName" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
+
 		ln -s /mnt/mmsStorage/IngestionRepository /var/catramms/storage
 		ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
 		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
@@ -411,7 +438,10 @@ create-directory()
 	fi
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		if [ ! -d "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist" ];
+		then
+			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		fi
 		ln -s /var/catramms/storage /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 	fi
 
@@ -485,8 +515,12 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
-		echo -n "$packageName version (i.e.: 7.1.0)? "
+		imageMagickVersion=7.1.0
+		echo -n "$packageName version (i.e.: $imageMagickVersion)? "
 		read version
+		if [ "$version" == "" ]; then
+			version=$imageMagickVersion
+		fi
 		package=$packageName-$version
 		echo "Downloading $package..."
 		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -506,8 +540,12 @@ install-mms-packages()
 
 	packageName=ffmpeg
 	echo ""
-	echo -n "$packageName version (i.e.: 5.1)? "
+	ffmpegVersion=5.1
+	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
 	read version
+	if [ "$version" == "" ]; then
+		version=$ffmpegVersion
+	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
 	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -517,8 +555,12 @@ install-mms-packages()
 
 	packageName=nginx
 	echo ""
-	echo -n "$packageName version (i.e.: 1.22.0)? "
+	nginxVersion=1.22.0
+	echo -n "$packageName version (i.e.: $nginxVersion)? "
 	read version
+	if [ "$version" == "" ]; then
+		version=$nginxVersion
+	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
 	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -545,8 +587,12 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		echo -n "tomcat version (i.e.: 9.0.65)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		tomcatVersion=9.0.65
+		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat"
 		read VERSION
+		if [ "$VERSION" == "" ]; then
+			VERSION=$tomcatVersion
+		fi
 		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
 		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
 		ln -rs /opt/catramms/apache-tomcat-${VERSION} /opt/catramms/tomcat
@@ -626,8 +672,12 @@ install-mms-packages()
 		#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
 		packageName=youtube-dl
 		echo ""
-		echo -n "$packageName version (i.e.: 2022-08-07)? "
+		youtubeDlVersion=2022-08-07
+		echo -n "$packageName version (i.e.: $youtubeDlVersion)? "
 		read version
+		if [ "$version" == "" ]; then
+			version=$youtubeDlVersion
+		fi
 		package=$packageName-$version
 		echo "Downloading $package..."
 		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -639,8 +689,12 @@ install-mms-packages()
 	if [ "$moduleName" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		echo -n "$packageName version (i.e.: 1.0.1640)? "
+		catraLibrariesVersion=1.0.1640
+		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
 		read version
+		if [ "$version" == "" ]; then
+			version=$catraLibrariesVersion
+		fi
 		package=$packageName-$version
 		echo "Downloading $package..."
 		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -651,8 +705,12 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	echo -n "$packageName version (i.e.: 1.0.2460)? "
+	catraMMSVersion=1.0.3885
+	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
+	if [ "$version" == "" ]; then
+		version=$catraMMSVersion
+	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
 	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
@@ -685,11 +743,27 @@ install-mms-packages()
 
 
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		if [ $externalEncoder -eq 1 ]; then
+		if [ "$moduleName" == "externalEncoder" ]; then
 			packageName=externalEncoderMmsConf
 		else
 			packageName=encoderMmsConf
 		fi
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~
+	fi
+	if [ "$moduleName" == "engine" ]; then
+		packageName=engineMmsConf
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~
+	fi
+	if [ "$moduleName" == "api" ]; then
+		packageName=apiMmsConf
 		echo ""
 		package=$packageName
 		echo "Downloading $package..."
@@ -816,17 +890,23 @@ moduleName=$1
 
 #LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE
 
-#1. Per prima cosa: formattare e montare dischi se necessario
-#       sudo fdisk /dev/nvme1n1 (p n p w)
-#       sudo mkfs.ext4 /dev/nvme1n1p1
-#2. Inizializzare /etc/fstab
-#3. creare directory /logs /mnt/mmsRepository000???? /MMSTranscoderWorkingAreaRepository(solo in caso di encoder)
-#4. apt-get -y install nfs-common
-#5. sudo mount -a
-#6 sudo su; ./installServer.sh <module>
-#7. verificare ~/mms/conf/*
-#8. remove installServer.sh
-#9. remove ssh key from /home/ubuntu/.ssh/authorized_keys
+echo "se bisogna formattare e montare dischi"
+echo "sudo fdisk /dev/nvme1n1 (p n p w)"
+read -n 1 -s -r -p "sudo mkfs.ext4 /dev/nvme1n1p1"
+echo ""
+echo ""
+
+echo "seguire le istruzioni nel doc Hetzner Info in google drive per far comunicare la rete interna del cloud con il server dedicato"
+read -n 1 -s -r -p "reboot of the server to apply the new network configuration (se dovesse servire, eseguire apt-get -y install nfs-common e apt-get -y install cifs-utils)"
+echo ""
+
+echo "se c'è un mount per /mnt/logs, /mnt/mmsStorage, /mnt/mmsRepository000?, /mnt/MMSTranscoderWorkingAreaRepository (for encoder) aggiungere in /etc/fstab"
+echo "se la directory non viene montata, crearla con mkdir)
+echo "10.0.0.12:/mnt/mmsStorage /mnt/mmsStorage       nfs     nolock,hard     0       1"
+echo "//u313562.your-storagebox.de/backup	/mnt/mmsRepository0000	cifs	username=u313562,password=vae3zh8wFVtooRiN,file_mode=0664,dir_mode=0775,uid=1000,gid=1000	0	0"
+read -n 1 -s -r -p "3. mount -a"
+echo ""
+
 
 ssh-port
 mms-account-creation
@@ -847,6 +927,10 @@ else
 	install-mms-packages $moduleName
 fi
 firewall-rules $moduleName
+
+read -n 1 -s -r -p "verificare ~/mms/conf/*"
+read -n 1 -s -r -p "remove installServer.sh"
+read -n 1 -s -r -p "remove ssh key from /home/ubuntu/.ssh/authorized_keys"
 
 if [ "$moduleName" == "storage" ]; then
 
@@ -882,7 +966,7 @@ if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
 	echo "add the new hostname in every /etc/hosts of every api and engine servers"
 fi
 
-echo "if a temporary user has to be removed 'deluser test'"
+echo "if a temporary user has to be removed <deluser test>"
 echo ""
 echo "Restart of the machine and connect as ssh -p 9255 mms@<server ip>"
 echo ""

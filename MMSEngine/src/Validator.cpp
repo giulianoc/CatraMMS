@@ -5530,9 +5530,11 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             if (referenceMediaItemKey != -1)
             {
                 tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-					contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey = 
+				contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey = 
 					_mmsEngineDBFacade->getMediaItemKeyDetails(workspaceKey, referenceMediaItemKey,
-					warningIfMissing); 
+					warningIfMissing,
+					// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+					true);
                 tie(referenceContentType, ignore, ignore, ignore, ignore, ignore)
 					= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
@@ -5543,7 +5545,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);    
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
+						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
@@ -5551,15 +5555,19 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
-						referenceEncodingProfileLabel, warningIfMissing);
+						referenceEncodingProfileLabel, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 				}
             }
             else if (referencePhysicalPathKey != -1)
             {
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t,
 					string, string, int64_t> mediaItemKeyDetails = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        workspaceKey, referencePhysicalPathKey, warningIfMissing);  
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspaceKey, referencePhysicalPathKey, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 
                 tie(referenceMediaItemKey, referenceContentType, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore) = mediaItemKeyDetails;
@@ -5571,8 +5579,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        workspaceKey, referenceIngestionJobKey, -1,
-						mediaItemsDetails, warningIfMissing);  
+					workspaceKey, referenceIngestionJobKey, -1,
+					mediaItemsDetails, warningIfMissing,
+					// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+					true);
 
                 if (mediaItemsDetails.size() == 0)
                 {
@@ -5606,7 +5616,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 								MMSEngineDBFacade::IngestionStatus, string, string>
 								labelIngestionTypeAndErrorMessage =
 								_mmsEngineDBFacade->getIngestionJobDetails(
-										workspaceKey, referenceIngestionJobKey);
+									workspaceKey, referenceIngestionJobKey,
+									// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+									true);
 							tie(ignore, ingestionType, ignore, ignore, ignore) =
 								labelIngestionTypeAndErrorMessage;
 
@@ -5687,8 +5699,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             else if (referenceUniqueName != "")
             {
                 pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-                        workspaceKey, referenceUniqueName, warningIfMissing);  
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+						workspaceKey, referenceUniqueName, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 
                 referenceMediaItemKey = mediaItemKeyAndContentType.first;
                 referenceContentType = mediaItemKeyAndContentType.second;
@@ -5701,7 +5715,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 						fieldEncodingProfileKey, 0);    
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
+						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
@@ -5710,7 +5726,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
-						referenceEncodingProfileLabel, warningIfMissing);
+						referenceEncodingProfileLabel, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 				}
             }
             else // referenceLabel
@@ -5791,7 +5809,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 						bool warningIfMissing = false;
                         referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                                referenceMediaItemKey, encodingProfileKey, warningIfMissing);
+							referenceMediaItemKey, encodingProfileKey, warningIfMissing,
+							// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+							true);
                     }  
                     else
                     {
@@ -5802,8 +5822,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 							bool warningIfMissing = false;
                             referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-									workspaceKey, referenceMediaItemKey, referenceContentType,
-									encodingProfileLabel, warningIfMissing);
+								workspaceKey, referenceMediaItemKey, referenceContentType,
+								encodingProfileLabel, warningIfMissing,
+								// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+								true);
                         }        
                     }
                 }
@@ -5919,7 +5941,9 @@ void Validator::fillReferencesOutput(
 					bool warningIfMissing = true;
 					int64_t localPhysicalPathKey =
 						_mmsEngineDBFacade->getPhysicalPathDetails(
-						referenceMediaItemKey, -1, warningIfMissing);
+						referenceMediaItemKey, -1, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 
 					referencesOutput.push_back(make_pair(referenceMediaItemKey, localPhysicalPathKey));
 				}
@@ -5941,7 +5965,9 @@ void Validator::fillReferencesOutput(
 						string, string, int64_t>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspaceKey, referencePhysicalPathKey, warningIfMissing);  
+							workspaceKey, referencePhysicalPathKey, warningIfMissing,
+							// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+							true);
 
 					int64_t localMediaItemKey;
 					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
@@ -5965,8 +5991,10 @@ void Validator::fillReferencesOutput(
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        workspaceKey, referenceIngestionJobKey, -1,
-						mediaItemsDetails, warningIfMissing);  
+					workspaceKey, referenceIngestionJobKey, -1,
+					mediaItemsDetails, warningIfMissing,
+					// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+					true);
 
                 if (mediaItemsDetails.size() == 0)
                 {
@@ -6001,14 +6029,18 @@ void Validator::fillReferencesOutput(
 
 					pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-                        workspaceKey, referenceUniqueName, warningIfMissing);  
+                        workspaceKey, referenceUniqueName, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 
 					tie(localMediaItemKey, ignore) = mediaItemKeyAndContentType;
 
 					bool warningIfMissing = true;
 					localPhysicalPathKey =
 						_mmsEngineDBFacade->getPhysicalPathDetails(
-						localMediaItemKey, -1, warningIfMissing);
+						localMediaItemKey, -1, warningIfMissing,
+						// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+						true);
 
 					referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
 				}
