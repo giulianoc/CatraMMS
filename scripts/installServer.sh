@@ -252,12 +252,12 @@ install-packages()
 		readOnlyDBUser=${dbUser}_RO
 
 		echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT SELECT, SHOW VIEW, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 		#grant process allows mysqldump
 		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
 		echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT SELECT, SHOW VIEW, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 		#grant process allows mysqldump
 		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
@@ -374,23 +374,23 @@ create-directory()
 	fi
 
 	ln -s /mnt/logs /var/catramms/logs
-	chown -R mms:mms /mnt/logs
 
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
-		mkdir /var/catramms/logs/tomcat-gui
+		mkdir /mnt/logs/tomcat-gui
 	fi
 	if [ "$moduleName" == "api" ]; then
-		mkdir /var/catramms/logs/mmsAPI
+		mkdir /mnt/logs/mmsAPI
 	fi
 	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		mkdir /var/catramms/logs/mmsEncoder
+		mkdir /mnt/logs/mmsEncoder
 	fi
 	if [ "$moduleName" == "engine" ]; then
-		mkdir /var/catramms/logs/mmsEngineService
+		mkdir /mnt/logs/mmsEngineService
 	fi
 	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" -o "$moduleName" == "integration" ]; then
-		mkdir /var/catramms/logs/nginx
+		mkdir /mnt/logs/nginx
 	fi
+	chown -R mms:mms /mnt/logs
 
 	mkdir /mnt/mmsStorage
 	mkdir /mnt/mmsRepository0000
@@ -605,8 +605,8 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		tomcatVersion=9.0.65
-		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat"
+		tomcatVersion=9.0.70
+		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
 			VERSION=$tomcatVersion
@@ -770,7 +770,9 @@ install-mms-packages()
 		package=$packageName
 		echo "Downloading $package..."
 		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~
+		tar xvfz ~/$package.tar.gz -C ~mms
+
+		chown -R mms:mms ~mms/mms
 	fi
 	if [ "$moduleName" == "engine" ]; then
 		packageName=engineMmsConf
@@ -778,7 +780,9 @@ install-mms-packages()
 		package=$packageName
 		echo "Downloading $package..."
 		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~
+		tar xvfz ~/$package.tar.gz -C ~mms
+
+		chown -R mms:mms ~mms/mms
 	fi
 	if [ "$moduleName" == "api" ]; then
 		packageName=apiMmsConf
@@ -786,9 +790,10 @@ install-mms-packages()
 		package=$packageName
 		echo "Downloading $package..."
 		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~
-	fi
+		tar xvfz ~/$package.tar.gz -C ~mms
 
+		chown -R mms:mms ~mms/mms
+	fi
 
 	chown -R mms:mms /opt/catramms
 }
@@ -908,21 +913,28 @@ moduleName=$1
 
 #LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE
 
-echo "se bisogna formattare e montare dischi"
-echo "sudo fdisk /dev/nvme1n1 (p n p w)"
-read -n 1 -s -r -p "sudo mkfs.ext4 /dev/nvme1n1p1"
 echo ""
 echo ""
 
+echo "se bisogna formattare e montare dischi"
+echo "sudo fdisk /dev/nvme1n1 (p n p w)"
+echo "sudo mkfs.ext4 /dev/nvme1n1p1"
+read -n 1 -s -r -p "premi un tasto per continuare"
+echo ""
+echo ""
+
+echo "In caso di server dedicato:"
 echo "seguire le istruzioni nel doc Hetzner Info in google drive per far comunicare la rete interna del cloud con il server dedicato"
-read -n 1 -s -r -p "reboot of the server to apply the new network configuration (se dovesse servire, eseguire apt-get -y install nfs-common e apt-get -y install cifs-utils)"
+read -n 1 -s -r -p "reboot of the server to apply the new network configuration..."
+echo ""
 echo ""
 
 echo "se c'è un mount per /mnt/logs, /mnt/mmsStorage, /mnt/mmsRepository000?, /mnt/MMSTranscoderWorkingAreaRepository (for encoder) aggiungere in /etc/fstab"
-echo "se la directory non viene montata, crearla con mkdir)
+echo "e creare la directory"
 echo "10.0.0.12:/mnt/mmsStorage /mnt/mmsStorage       nfs     nolock,hard     0       1"
 echo "//u313562.your-storagebox.de/backup	/mnt/mmsRepository0000	cifs	username=u313562,password=vae3zh8wFVtooRiN,file_mode=0664,dir_mode=0775,uid=1000,gid=1000	0	0"
-read -n 1 -s -r -p "3. mount -a"
+read -n 1 -s -r -p "andando avando con l'istallazione, dopo l'istallazione del pacchetto nfs e cifs eseguire il mount -a ..."
+echo ""
 echo ""
 
 
@@ -947,8 +959,16 @@ fi
 firewall-rules $moduleName
 
 read -n 1 -s -r -p "verificare ~/mms/conf/*"
+echo ""
+echo ""
+
 read -n 1 -s -r -p "remove installServer.sh"
+echo ""
+echo ""
+
 read -n 1 -s -r -p "remove ssh key from /home/ubuntu/.ssh/authorized_keys"
+echo ""
+echo ""
 
 if [ "$moduleName" == "storage" ]; then
 
