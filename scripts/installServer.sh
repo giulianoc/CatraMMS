@@ -237,33 +237,30 @@ install-packages()
 		read dbPassword
 		echo "create database $dbName CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
 
-		echo ""
-		echo -n "master (y/n): "
-		read master
 
-		if [ "$master" == "y" ]; then
-			echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-			#grant process allows mysqldump
-			echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		#grant process allows mysqldump
+		echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-			echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-			#grant process allows mysqldump
-			echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		else
-			readOnlyDBUser=${dbUser}_RO
+		echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		#grant process allows mysqldump
+		echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-			echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-			echo "GRANT SELECT, SHOW VIEW ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-			#grant process allows mysqldump
-			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-			echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-			echo "GRANT SELECT, SHOW VIEW ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-			#grant process allows mysqldump
-			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		fi
+		readOnlyDBUser=${dbUser}_RO
+
+		echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT SELECT, SHOW VIEW, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		#grant process allows mysqldump
+		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+		echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+		echo "GRANT SELECT, SHOW VIEW, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+		#grant process allows mysqldump
+		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
 
 		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, binlog_expire_logs_seconds"
 
