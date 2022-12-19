@@ -20647,13 +20647,6 @@ void MMSEngineProcessor::manageEncodeTask(
 					sourceRoot[field] = encodedNFSStagingAssetPathName;
 
 					sourcesToBeEncodedRoot.append(sourceRoot);
-
-					_logger->error(__FILEREF__ + "aaaaaaaaaa"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", sourcesToBeEncodedRoot: " + JSONUtils::toString(sourcesToBeEncodedRoot)
-					);
-
 				}
 				catch(runtime_error e)
 				{
