@@ -1594,9 +1594,10 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
-            string errorMessage = __FILEREF__ + "No correct number of References"
+            string errorMessage = __FILEREF__ + "No correct number of References (1)"
                     + ", referencesRoot.size: " + to_string(referencesRoot.size())
                     + ", label: " + label
+                    + ", parametersRoot: " + JSONUtils::toString(parametersRoot)
                     ;
             _logger->error(errorMessage);
 
