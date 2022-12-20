@@ -1711,7 +1711,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			string country;
 			string labelOrder;
 			Json::Value streamListRoot = getStreamList (
-				workspaceKey, confKey,
+				conn, workspaceKey, confKey,
 				start, rows, label, labelLike, url, sourceType, type, name,
 				region, country, labelOrder);
 
@@ -2384,7 +2384,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			string country;
 			string labelOrder;
 			Json::Value streamListRoot = getStreamList (
-				workspaceKey, confKey,
+				conn, workspaceKey, confKey,
 				start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
@@ -2609,13 +2609,103 @@ Json::Value MMSEngineDBFacade::getStreamList (
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
-    string      lastSQLCommand;
     Json::Value streamListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
 
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		streamListRoot = MMSEngineDBFacade::getStreamList (
+			conn, workspaceKey, liveURLKey,
+			start, rows,
+			label, labelLike, url, sourceType, type,
+			name, region, country,
+			labelOrder);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return streamListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getStreamList (
+	shared_ptr<MySQLConnection> conn,
+	int64_t workspaceKey, int64_t liveURLKey,
+	int start, int rows,
+	string label, bool labelLike, string url, string sourceType, string type,
+	string name, string region, string country,
+	string labelOrder	// "" or "asc" or "desc"
+)
+{
+    string      lastSQLCommand;
+    Json::Value streamListRoot;
+    
     try
     {
         string field;
@@ -2636,11 +2726,6 @@ Json::Value MMSEngineDBFacade::getStreamList (
             + ", labelOrder: " + labelOrder
         );
         
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         {
             Json::Value requestParametersRoot;
 
@@ -3122,12 +3207,6 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
         field = "response";
         streamListRoot[field] = responseRoot;
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        connectionPool->unborrow(conn);
-		conn = nullptr;
     }
     catch(sql::SQLException se)
     {
@@ -3136,17 +3215,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
 
         throw se;
     }    
@@ -3155,17 +3224,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
 
         throw e;
     } 
@@ -3173,17 +3232,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
 
         throw e;
     } 

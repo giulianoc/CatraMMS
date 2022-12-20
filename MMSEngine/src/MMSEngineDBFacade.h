@@ -2586,6 +2586,14 @@ private:
 
 	bool			_statisticsEnabled;
 
+	Json::Value getStreamList (
+		shared_ptr<MySQLConnection> conn,
+		int64_t workspaceKey, int64_t liveURLKey,
+		int start, int rows,
+		string label, bool labelLike, string url, string sourceType, string type,
+		string name, string region, string country,
+		string labelOrder);
+
 	string createAPIKeyForActiveDirectoryUser(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
