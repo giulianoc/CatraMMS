@@ -11503,13 +11503,44 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
         
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No video found"
+            string errorMessage = __FILEREF__ + "No dependencies found"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependencies.size: " + to_string(dependencies.size());
             _logger->warn(errorMessage);
 
-            // throw runtime_error(errorMessage);
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+			);                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+					MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+					"" // errorMessage
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
+			}
+
+			// throw runtime_error(errorMessage);
+			return;
         }
 
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
@@ -11742,18 +11773,6 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 			dependencyIndex++;
         }
-
-		/*
-		_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_TaskSuccess"
-				+ ", errorMessage: " + ""
-		);
-		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-			"" // errorMessage
-		);
-		*/
     }
     catch(runtime_error e)
     {
