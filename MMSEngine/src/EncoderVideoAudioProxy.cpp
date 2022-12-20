@@ -2471,11 +2471,13 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 	}
 	catch (runtime_error e)
 	{
-		if (e.what().find(NoEncodingAvailable().what()) != string::npos)
+		string error = e.what();
+		if (error.find(NoEncodingAvailable().what()) != string::npos)
 		{
 			string errorMessage = string("No Encodings available / MaxConcurrentJobsReached")
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", error: " + error 
 			;
 			_logger->warn(__FILEREF__ + errorMessage);
 
@@ -6364,50 +6366,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			// is finished or not. This encodingJob will be set as failed
             throw runtime_error(e.what());
         }
-        catch (curlpp::LogicError& e) 
-        {
-            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-                + ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-            );
-            
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
-        }
-        catch (curlpp::RuntimeError& e) 
-        {
-            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-                + ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-            );
-
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
-        }
 		catch(MaxConcurrentJobsReached e)
 		{
             string errorMessage = string("MaxConcurrentJobsReached")
@@ -6424,11 +6382,13 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         }
         catch (runtime_error e)
         {
-			if (e.what().find(NoEncodingAvailable().what()) != string::npos)
+			string error = e.what();
+			if (error.find(NoEncodingAvailable().what()) != string::npos)
 			{
 				string errorMessage = string("No Encodings available / MaxConcurrentJobsReached")
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", error: " + error 
 				;
 				_logger->warn(__FILEREF__ + errorMessage);
 
@@ -7947,110 +7907,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			// is finished or not. This task will come back by the MMS system
             throw e;
         }
-        catch (curlpp::LogicError& e) 
-        {
-            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-                + ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-            );
-            
-			// update EncodingJob failures number to notify the GUI EncodingJob is failing
-			try
-			{
-				currentAttemptsNumberInCaseOfErrors++;
-
-				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					// + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-					+ ", currentAttemptsNumberInCaseOfErrors: "
-						+ to_string(currentAttemptsNumberInCaseOfErrors)
-				);
-
-				int64_t mediaItemKey = -1;
-				int64_t encodedPhysicalPathKey = -1;
-				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
-					_encodingItem->_encodingJobKey, 
-					currentAttemptsNumberInCaseOfErrors
-			);
-			}
-			catch(...)
-			{
-				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				);
-			}
-
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
-        }
-        catch (curlpp::RuntimeError& e) 
-        {
-            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-                + ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-            );
-
-			// update EncodingJob failures number to notify the GUI EncodingJob is failing
-			try
-			{
-				// 2021-02-12: scenario, ip of the encoder was wrong, a RuntimeError is generated
-				// contiuosly. The task will never exist from this loop because
-				// currentAttemptsNumberInCaseOfErrors always remain to 0 and the main loop
-				// look currentAttemptsNumberInCaseOfErrors.
-				// So added currentAttemptsNumberInCaseOfErrors++
-				currentAttemptsNumberInCaseOfErrors++;
-
-				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", currentAttemptsNumberInCaseOfErrors: "
-						+ to_string(currentAttemptsNumberInCaseOfErrors)
-				);
-
-				int64_t mediaItemKey = -1;
-				int64_t encodedPhysicalPathKey = -1;
-				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
-					_encodingItem->_encodingJobKey, 
-					currentAttemptsNumberInCaseOfErrors
-				);
-			}
-			catch(...)
-			{
-				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				);
-			}
-
-			// sleep a bit and try again
-			int sleepTime = 30;
-			this_thread::sleep_for(chrono::seconds(sleepTime));
-
-			{
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-			}
-
-            // throw e;
-        }
         catch (EncoderNotFound e)
         {
             _logger->error(__FILEREF__ + "Encoder not found"
@@ -8122,11 +7978,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
         }
         catch (runtime_error e)
         {
-			if (e.what().find(NoEncodingAvailable().what()) != string::npos)
+			string error = e.what();
+			if (error.find(NoEncodingAvailable().what()) != string::npos)
 			{
 				string errorMessage = string("No Encodings available / MaxConcurrentJobsReached")
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", error: " + error 
 				;
 				_logger->warn(__FILEREF__ + errorMessage);
 
