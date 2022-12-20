@@ -2601,6 +2601,16 @@ private:
 			int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 		);
 
+	string createCode(
+		shared_ptr<MySQLConnection> conn,
+		int64_t workspaceKey,
+		int64_t userKey, string userEmail,
+		CodeType codeType,
+		bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder);
+
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,
 		int64_t workspaceKey,

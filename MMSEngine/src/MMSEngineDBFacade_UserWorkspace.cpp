@@ -1268,8 +1268,6 @@ string MMSEngineDBFacade::createCode(
 {
 	string		code;
 
-	string		lastSQLCommand;
-
 	shared_ptr<MySQLConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
@@ -1281,6 +1279,93 @@ string MMSEngineDBFacade::createCode(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		code = createCode(workspaceKey, userKey, userEmail, codeType,
+			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
+			shareWorkspace, editMedia,
+			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+    return code;
+}
+
+string MMSEngineDBFacade::createCode(
+	shared_ptr<MySQLConnection> conn,
+    int64_t workspaceKey,
+    int64_t userKey, string userEmail,
+	CodeType codeType,
+    bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+	bool shareWorkspace, bool editMedia,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+	bool applicationRecorder
+)
+{
+	string		code;
+
+	string		lastSQLCommand;
+
+    try
+    {
 		unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 		default_random_engine e(seed);
 		code = to_string(e());
@@ -1417,12 +1502,6 @@ string MMSEngineDBFacade::createCode(
 				throw se;
 			}
         }
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        connectionPool->unborrow(conn);
-		conn = nullptr;
     }
     catch(sql::SQLException se)
     {
@@ -1434,15 +1513,6 @@ string MMSEngineDBFacade::createCode(
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
-        if (conn != nullptr)
-        {
-			_logger->debug(__FILEREF__ + "DB connection unborrow"
-				+ ", getConnectionId: " + to_string(conn->getConnectionId())
-			);
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
         throw se;
     }
     catch(runtime_error e)
@@ -1453,15 +1523,6 @@ string MMSEngineDBFacade::createCode(
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
-        if (conn != nullptr)
-        {
-			_logger->debug(__FILEREF__ + "DB connection unborrow"
-				+ ", getConnectionId: " + to_string(conn->getConnectionId())
-			);
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
         throw e;
     }
     catch(exception e)
@@ -1470,15 +1531,6 @@ string MMSEngineDBFacade::createCode(
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
-
-        if (conn != nullptr)
-        {
-			_logger->debug(__FILEREF__ + "DB connection unborrow"
-				+ ", getConnectionId: " + to_string(conn->getConnectionId())
-			);
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
 
         throw e;
     }
@@ -2233,6 +2285,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 		}
 
 		confirmationCode = MMSEngineDBFacade::createCode(
+			conn,
 			workspaceKey,
 			userKey, "",	// userEmail,
 			CodeType::UserRegistration,
