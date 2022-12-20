@@ -1597,6 +1597,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
             string errorMessage = __FILEREF__ + "No correct number of References (1)"
                     + ", referencesRoot.size: " + to_string(referencesRoot.size())
                     + ", label: " + label
+                    + ", dependencies.size: " + to_string(dependencies.size())
                     + ", parametersRoot: " + JSONUtils::toString(parametersRoot)
                     ;
             _logger->error(errorMessage);
