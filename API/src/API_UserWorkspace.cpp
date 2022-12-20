@@ -530,6 +530,7 @@ void API::createWorkspace(
 			Json::Value registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["userKey"] = userKey;
+			registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
             string responseBody = JSONUtils::toString(registrationRoot);
