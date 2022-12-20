@@ -1450,6 +1450,13 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
@@ -1461,6 +1468,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1537,10 +1545,16 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		// 2021-08-26: removed the check because we are adding the option to manage
+		// several contents
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
-		/*
-		 * 2021-08-26: removed the check because we are adding the option to manage
-		 * several contents
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1591,6 +1605,13 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -1604,6 +1625,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1687,6 +1709,13 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -1698,6 +1727,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1761,6 +1791,13 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -1772,6 +1809,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1833,6 +1871,13 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
@@ -1844,6 +1889,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1926,7 +1972,13 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        /*
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 2)
         {
@@ -2089,7 +2141,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        /*
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -2178,6 +2236,13 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
 		// the "DependOnIngestionJobKeysToBeAddedToReferences" thg
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         if (referencesRoot.size() > 2)
         {
             string errorMessage = __FILEREF__ + "Field is present but it has more than two elements"
@@ -2188,6 +2253,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -2425,6 +2491,13 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -2436,6 +2509,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -2519,8 +2593,14 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 	string field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
-		/*
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -2722,6 +2802,13 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 	string field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
@@ -2739,6 +2826,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -2810,6 +2898,13 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 	string field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -2822,6 +2917,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -2934,6 +3030,13 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -2946,6 +3049,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3020,6 +3124,13 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -3032,6 +3143,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3149,6 +3261,13 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() == 0)
 		{
@@ -3160,6 +3279,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3245,6 +3365,13 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 	string field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -3256,6 +3383,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3360,6 +3488,13 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -3371,6 +3506,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3489,6 +3625,13 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
@@ -3500,6 +3643,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -3627,6 +3771,13 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
@@ -3638,6 +3789,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -4071,7 +4223,13 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		field = "References";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			/*
+			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 			Json::Value referencesRoot = parametersRoot[field];
 			if (referencesRoot.size() != 1)
 			{
@@ -4394,6 +4552,13 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -4405,6 +4570,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+		*/
 
 		bool stopIfReferenceProcessingError;
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
@@ -4655,6 +4821,13 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
@@ -4666,6 +4839,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -4806,6 +4980,13 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 	field = "References";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
@@ -4817,6 +4998,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -4893,6 +5075,13 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
         Json::Value referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
@@ -4911,6 +5100,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -4984,6 +5174,13 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
     string field = "References";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
 		// input: 3 videos: intro, outro and main video
 		// before the check was
 		//	if (referencesRoot.size() != 3)
@@ -5003,6 +5200,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
