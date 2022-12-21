@@ -2454,7 +2454,10 @@ public:
 	void removeAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey);
 
+	Json::Value getEncoderWorkspacesAssociation(int64_t encoderKey);
+
 	Json::Value getEncoderList (
+		bool admin,
 		int start, int rows,
 		bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey,
 		string label, string serverName, int port,
@@ -2799,6 +2802,7 @@ private:
 		shared_ptr<MySQLConnection> conn);
 
 	Json::Value getEncoderRoot (
+		bool admin,
 		bool runningInfo,
 		shared_ptr<sql::ResultSet> resultSet);
 

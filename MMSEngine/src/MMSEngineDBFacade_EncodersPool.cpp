@@ -1049,7 +1049,126 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
     }        
 }
 
+Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
+    int64_t encoderKey)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		Json::Value encoderWorkspacesAssociatedRoot(Json::arrayValue);
+        {
+			lastSQLCommand = "select w.workspaceKey, w.name "
+				"from MMS_Workspace w, MMS_EncoderWorkspaceMapping ewm "
+				"where w.workspaceKey = ewm.workspaceKey and ewm.encoderKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            while (resultSet->next())
+			{
+				Json::Value encoderWorkspaceAssociatedRoot;
+    
+				string field = "workspaceKey";
+				encoderWorkspaceAssociatedRoot[field] = resultSet->getInt64("workspaceKey");
+
+				field = "workspaceName";
+				encoderWorkspaceAssociatedRoot[field] = static_cast<string>(resultSet->getString("name"));
+
+				encoderWorkspacesAssociatedRoot.append(encoderWorkspaceAssociatedRoot);
+			}
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return encoderWorkspacesAssociatedRoot;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+}
+
+
 Json::Value MMSEngineDBFacade::getEncoderList (
+	bool admin,
 	int start, int rows,
 	bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey,
 	string label, string serverName, int port,
@@ -1316,7 +1435,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			);
             while (resultSet->next())
             {
-                Json::Value encoderRoot = getEncoderRoot(runningInfo, resultSet);
+                Json::Value encoderRoot = getEncoderRoot(admin, runningInfo, resultSet);
 
                 encodersRoot.append(encoderRoot);
             }
@@ -1397,6 +1516,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 }
 
 Json::Value MMSEngineDBFacade::getEncoderRoot (
+	bool admin,
 	bool runningInfo,
 	shared_ptr<sql::ResultSet> resultSet
 )
@@ -1405,8 +1525,10 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
     
     try
     {
+		int64_t encoderKey = resultSet->getInt64("encoderKey");
+
         string field = "encoderKey";
-		encoderRoot[field] = resultSet->getInt64("encoderKey");
+		encoderRoot[field] = encoderKey;
 
 		field = "label";
 		encoderRoot[field] = static_cast<string>(resultSet->getString("label"));
@@ -1451,6 +1573,12 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 
 			field = "cpuUsage";
 			encoderRoot[field] = cpuUsage;
+		}
+
+		if (admin)
+		{
+			field = "workspacesAssociated";
+			encoderRoot[field] = getEncoderWorkspacesAssociation(encoderKey);
 		}
     }
     catch(sql::SQLException se)
@@ -1902,7 +2030,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getEncoderList"
+        _logger->info(__FILEREF__ + "getEncodersPoolList"
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", workspaceKey: " + to_string(workspaceKey)
@@ -2091,9 +2219,10 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 							);
 							if (resultSetEncoder->next())
 							{
+								bool admin = false;
 								bool runningInfo = false;
 								Json::Value encoderRoot = getEncoderRoot (
-									runningInfo, resultSetEncoder);
+									admin, runningInfo, resultSetEncoder);
 
 								encodersRoot.append(encoderRoot);
 							}

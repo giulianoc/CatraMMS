@@ -623,9 +623,10 @@ void API::encoderList(
 
         {
             Json::Value encoderListRoot = _mmsEngineDBFacade->getEncoderList(
-                    start, rows,
-					allEncoders, workspaceKey, runningInfo,
-					encoderKey, label, serverName, port, labelOrder);
+				admin,
+				start, rows,
+				allEncoders, workspaceKey, runningInfo,
+				encoderKey, label, serverName, port, labelOrder);
 
             string responseBody = JSONUtils::toString(encoderListRoot);
             
