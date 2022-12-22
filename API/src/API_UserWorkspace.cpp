@@ -2741,6 +2741,20 @@ void API::deleteWorkspace(
 
     try
     {
+		if (_noFileSystemAccess)
+		{
+            _logger->error(__FILEREF__ + api + " failed, no rights to execute this method"
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+            );
+
+            string errorMessage = string("Internal server error: ") + "no rights to execute this method";
+            _logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+
         try
         {
             _logger->info(__FILEREF__ + "Delete Workspace from DB"
@@ -2770,7 +2784,7 @@ void API::deleteWorkspace(
             string errorMessage = string("Internal server error: ") + e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }

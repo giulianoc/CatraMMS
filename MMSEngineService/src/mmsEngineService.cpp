@@ -202,10 +202,12 @@ int main (int iArgc, char *pArgv [])
 		return 0;
 	}
 
+	bool noFileSystemAccess = false;
     logger->info(__FILEREF__ + "Creating MMSStorage"
+		+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
             );
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
-		mmsEngineDBFacade, configuration, logger);
+		noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
     
     logger->info(__FILEREF__ + "Creating MultiEventsSet"
         + ", addDestination: " + MMSENGINEPROCESSORNAME

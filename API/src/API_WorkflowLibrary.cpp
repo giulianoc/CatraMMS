@@ -12,7 +12,6 @@
  */
 
 #include "JSONUtils.h"
-#include <fstream>
 #include <sstream>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>

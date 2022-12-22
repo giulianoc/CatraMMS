@@ -39,7 +39,7 @@ public:
         vector<RequestData>   _filesUploadProgressToBeMonitored;
     };
     
-    API(Json::Value configuration, 
+    API(bool noFileSystemAccess, Json::Value configuration, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
@@ -49,16 +49,6 @@ public:
     
     ~API();
     
-    /*
-    virtual void getBinaryAndResponse(
-        string requestURI,
-        string requestMethod,
-        string xCatraMMSResumeHeader,
-        unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
-        unsigned long contentLength);
-    */
-
     virtual void manageRequestAndResponse(
 			string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
             FCGX_Request& request,
@@ -78,7 +68,8 @@ public:
     void stopUploadFileProgressThread();
 
 private:
-	shared_ptr<MMSStorage>				_mmsStorage;
+	bool				_noFileSystemAccess;
+	shared_ptr<MMSStorage>					_mmsStorage;
 	shared_ptr<MMSDeliveryAuthorization>	_mmsDeliveryAuthorization;
 
     MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;

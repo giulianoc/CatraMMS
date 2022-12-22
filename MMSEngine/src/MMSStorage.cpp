@@ -8,6 +8,7 @@
 #include "catralibraries/ProcessUtility.h"
 
 MMSStorage::MMSStorage(
+	bool noFileSystemAccess,
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 	Json::Value configuration,
 	shared_ptr<spdlog::logger> logger) 
@@ -15,6 +16,7 @@ MMSStorage::MMSStorage(
 
 	try
 	{
+		_noFileSystemAccess	= noFileSystemAccess;
 		_mmsEngineDBFacade	= mmsEngineDBFacade;
 		_logger             = logger;
 		_configuration		= configuration;
@@ -39,9 +41,12 @@ MMSStorage::MMSStorage(
 			+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
 		);
 
-		MMSStorage::createDirectories(configuration, _logger);
+		if (!_noFileSystemAccess)
+		{
+			MMSStorage::createDirectories(configuration, _logger);
 
-		refreshPartitionsFreeSizes() ;
+			refreshPartitionsFreeSizes() ;
+		}
 	}
 	catch(runtime_error e)
 	{
@@ -61,12 +66,25 @@ MMSStorage::~MMSStorage(void) {
 }
 
 void MMSStorage::createDirectories(
-        Json::Value configuration,
-        shared_ptr<spdlog::logger> logger) 
+	Json::Value configuration,
+	shared_ptr<spdlog::logger> logger) 
 {
 
 	try
 	{
+		/* 2022-12-22: controllo non aggiunto perchè è un metodo static
+			E' il chiamante che si deve assicurare che ci sia accesso al file system
+		if (noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
+			;
+			logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		*/
+
 		string storage = configuration["storage"].get("path", "").asString();
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + storage
@@ -242,9 +260,9 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-				string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
-			warningIfMissing, fromMaster);
+			string, string, string, string, int64_t, bool> storageDetails =
+				_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
+					warningIfMissing, fromMaster);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -703,6 +721,20 @@ tuple<string, string, string> MMSStorage::getLiveDeliveryDetails(
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
 {
+	// 2022-12-22: ho dovuto aggiungere questo controllo (noFileSystemAccess) perchè sotto, se la directory non esiste,
+	//	viene creata. Probabilmente questa directory deve essere creata quando viene creato il workspace
+	//	e questo metodo non dovrebbe crearla se manca. In questo scenario, il controllo su noFileSystemAccess
+	//	non avrebbe piu senso
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
     string workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
     workspaceIngestionDirectory.append(workspace->_directoryName);
     
@@ -819,75 +851,6 @@ string MMSStorage::getMMSAssetPathName(
     return assetPathName;
 }
 
-/*
-string MMSStorage::getDownloadLinkPathName(
-        unsigned long ulPartitionNumber,
-        string workspaceDirectoryName,
-        string territoryName,
-        string relativePath,
-        string fileName,
-        bool downloadRepositoryToo)
-{
-
-    char pMMSPartitionName [64];
-    string linkPathName;
-
-    if (downloadRepositoryToo) 
-    {
-        sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
-
-        linkPathName = _downloadRootRepository;
-        linkPathName
-            .append(pMMSPartitionName)
-            .append(workspaceDirectoryName)
-            .append("/")
-            .append(territoryName)
-            .append(relativePath)
-            .append(fileName);
-    } 
-    else
-    {
-        sprintf(pMMSPartitionName, "/MMS_%04lu/", ulPartitionNumber);
-
-        linkPathName = pMMSPartitionName;
-        linkPathName
-            .append(workspaceDirectoryName)
-            .append("/")
-            .append(territoryName)
-            .append(relativePath)
-            .append(fileName);
-    }
-
-
-    return linkPathName;
-}
-
-string MMSStorage::getStreamingLinkPathName(
-        unsigned long ulPartitionNumber, // IN
-        string workspaceDirectoryName, // IN
-        string territoryName, // IN
-        string relativePath, // IN
-        string fileName) // IN
-{
-    char pMMSPartitionName [64];
-    string linkPathName;
-
-
-    sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
-
-    linkPathName = _streamingRootRepository;
-    linkPathName
-        .append(pMMSPartitionName)
-        .append(workspaceDirectoryName)
-        .append("/")
-        .append(territoryName)
-        .append(relativePath)
-        .append(fileName);
-
-
-    return linkPathName;
-}
-*/
 
 string MMSStorage::getStagingAssetPathName(
 		// neededForTranscoder=true uses a faster file system i.e. for recording
@@ -913,6 +876,16 @@ string MMSStorage::getStagingAssetPathName(
     char pDateTime [64];
     string assetPathName;
 
+
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
@@ -1037,60 +1010,6 @@ string MMSStorage::getStagingAssetPathName(
     return assetPathName;
 }
 
-/*
-string MMSStorage::getEncodingProfilePathName(
-        long long llEncodingProfileKey,
-        string profileFileNameExtension)
-{
-    string encodingProfilePathName(_profilesRootRepository);
-
-    encodingProfilePathName
-        .append(to_string(llEncodingProfileKey))
-        .append(profileFileNameExtension);
-
-    return encodingProfilePathName;
-}
-
-string MMSStorage::getFFMPEGEncodingProfilePathName(
-        MMSEngineDBFacade::ContentType contentType,
-        long long llEncodingProfileKey)
-{
-
-    if (contentType != MMSEngineDBFacade::ContentType::Video && 
-            contentType != MMSEngineDBFacade::ContentType::Audio &&
-            contentType != MMSEngineDBFacade::ContentType::Image)
-    {
-		string errorMessage = string("Wrong argument")                                                          
-                + ", contentType: " + to_string(static_cast<int>(contentType));
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string encodingProfilePathName(_profilesRootRepository);
-
-    encodingProfilePathName
-        .append(to_string(llEncodingProfileKey));
-
-    if (contentType == MMSEngineDBFacade::ContentType::Video)
-    {
-        encodingProfilePathName.append(".vep");
-    } 
-    else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-    {
-        encodingProfilePathName.append(".aep");
-    } 
-    else if (contentType == MMSEngineDBFacade::ContentType::Image)
-    {
-        encodingProfilePathName.append(".iep");
-    }
-
-
-    return encodingProfilePathName;
-}
-*/
-
 string MMSStorage::creatingDirsUsingTerritories(
         unsigned long ulCurrentMMSPartitionIndex,
         string relativePath,
@@ -1101,6 +1020,16 @@ string MMSStorage::creatingDirsUsingTerritories(
 
     char pMMSPartitionName [64];
 
+
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     sprintf(pMMSPartitionName, "MMS_%04lu/", ulCurrentMMSPartitionIndex);
 
@@ -1127,64 +1056,6 @@ string MMSStorage::creatingDirsUsingTerritories(
     if (mmsAssetPathName.size() > 0 && mmsAssetPathName.back() != '/')
         mmsAssetPathName.append("/");
 
-	/*
-	 * commented because currently we do not have territories 
-    if (deliveryRepositoriesToo) 
-    {
-        Workspace::TerritoriesHashMap::iterator it;
-
-
-        for (it = phmTerritories.begin(); it != phmTerritories.end(); ++it) 
-        {
-            string territoryName = it->second;
-
-            string downloadAssetPathName(_downloadRootRepository);
-            downloadAssetPathName
-                .append(pMMSPartitionName)
-                .append(workspaceDirectoryName)
-                .append("/")
-                .append(territoryName)
-                .append(relativePath);
-
-            string streamingAssetPathName(_streamingRootRepository);
-            streamingAssetPathName
-                .append(pMMSPartitionName)
-                .append(workspaceDirectoryName)
-                .append("/")
-                .append(territoryName)
-                .append(relativePath);
-
-            if (!FileIO::directoryExisting(downloadAssetPathName)) 
-            {
-                _logger->info(__FILEREF__ + "Create directory"
-                    + ", downloadAssetPathName: " + downloadAssetPathName
-                );
-                
-                bool noErrorIfExists = true;
-                bool recursive = true;
-                FileIO::createDirectory(downloadAssetPathName,
-                        S_IRUSR | S_IWUSR | S_IXUSR |
-                        S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-            }
-
-            if (!FileIO::directoryExisting(streamingAssetPathName)) 
-            {
-                _logger->info(__FILEREF__ + "Create directory"
-                    + ", streamingAssetPathName: " + streamingAssetPathName
-                );
-
-                bool noErrorIfExists = true;
-                bool recursive = true;
-                FileIO::createDirectory(streamingAssetPathName,
-                        S_IRUSR | S_IWUSR | S_IXUSR |
-                        S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-            }
-        }
-    }
-	*/
-
 
     return mmsAssetPathName;
 }
@@ -1194,6 +1065,16 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 
     try
     {
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         _logger->info(__FILEREF__ + "getStorageDetailsByPhysicalPathKey ..."
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
@@ -1273,6 +1154,16 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 {
     try
     {
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         _logger->info(__FILEREF__ + "getAllStorageDetails ..."
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
@@ -1352,6 +1243,16 @@ void MMSStorage::removePhysicalPathFile(
 {
     try
     {
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         _logger->info(__FILEREF__ + "removePhysicalPathFile"
             + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -1560,173 +1461,6 @@ void MMSStorage::removePhysicalPathFile(
 	}
 }
 
-/*
-void MMSStorage::moveContentInRepository(
-        string filePathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
-
-    contentInRepository(
-        1,
-        filePathName,
-        rtRepositoryType,
-        workspaceDirectoryName,
-        addDateTimeToFileName);
-}
-
-void MMSStorage::copyFileInRepository(
-        string filePathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
-
-    contentInRepository(
-        0,
-        filePathName,
-        rtRepositoryType,
-        workspaceDirectoryName,
-        addDateTimeToFileName);
-}
-
-void MMSStorage::contentInRepository(
-        unsigned long ulIsCopyOrMove,
-        string contentPathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
-
-    tm tmDateTime;
-    unsigned long ulMilliSecs;
-    FileIO::DirectoryEntryType_t detSourceFileType;
-
-
-    // pDestRepository includes the '/' at the end
-    string metaDataFileInDestRepository(getRepository(rtRepositoryType));
-    metaDataFileInDestRepository
-        .append(workspaceDirectoryName)
-        .append("/");
-
-    DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
-
-    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING) 
-    {
-        char pDateTime [64];
-        bool directoryExisting;
-
-
-        sprintf(pDateTime,
-                "%04lu_%02lu_%02lu",
-                (unsigned long) (tmDateTime. tm_year + 1900),
-                (unsigned long) (tmDateTime. tm_mon + 1),
-                (unsigned long) (tmDateTime. tm_mday));
-
-        metaDataFileInDestRepository.append(pDateTime);
-
-        if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
-        {
-            _logger->info(__FILEREF__ + "Create directory"
-                + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
-            );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-        }
-
-        metaDataFileInDestRepository.append("/");
-    }
-
-    if (addDateTimeToFileName) 
-    {
-        char pDateTime [64];
-
-
-        sprintf(pDateTime,
-                "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_",
-                (unsigned long) (tmDateTime. tm_year + 1900),
-                (unsigned long) (tmDateTime. tm_mon + 1),
-                (unsigned long) (tmDateTime. tm_mday),
-                (unsigned long) (tmDateTime. tm_hour),
-                (unsigned long) (tmDateTime. tm_min),
-                (unsigned long) (tmDateTime. tm_sec),
-                ulMilliSecs);
-
-        metaDataFileInDestRepository.append(pDateTime);
-    }
-
-    size_t fileNameStart;
-    string fileName;
-    if ((fileNameStart = contentPathName.find_last_of('/')) == string::npos)
-        fileName = contentPathName;
-    else
-        fileName = contentPathName.substr(fileNameStart + 1);
-
-    metaDataFileInDestRepository.append(fileName);
-
-    // file in case of .3gp content OR
-    // directory in case of IPhone content
-    detSourceFileType = FileIO::getDirectoryEntryType(contentPathName);
-
-    if (ulIsCopyOrMove == 1) 
-    {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            _logger->info(__FILEREF__ + "Move directory"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::moveDirectory(contentPathName,
-                    metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
-        } 
-        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
-        {
-            _logger->info(__FILEREF__ + "Move file"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::moveFile(contentPathName, metaDataFileInDestRepository);
-        }
-    } 
-    else 
-    {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            _logger->info(__FILEREF__ + "Copy directory"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::copyDirectory(contentPathName,
-                    metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
-        } 
-        else 
-        {
-            _logger->info(__FILEREF__ + "Copy file"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::copyFile(contentPathName,
-                    metaDataFileInDestRepository);
-        }
-    }
-}
-*/
 
 string MMSStorage::moveAssetInMMSRepository(
 	int64_t ingestionJobKey,
@@ -1742,6 +1476,16 @@ string MMSStorage::moveAssetInMMSRepository(
 	Workspace::TerritoriesHashMap& phmTerritories
 )
 {
+
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     if ((relativePath.size() > 0 && relativePath.front() != '/')
 			|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
@@ -1995,6 +1739,16 @@ string MMSStorage::moveAssetInMMSRepository(
 void MMSStorage::deleteWorkspace(
 		shared_ptr<Workspace> workspace)
 {
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
 	{
 		string workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
 		workspaceIngestionDirectory.append(workspace->_directoryName);
@@ -2077,6 +1831,16 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
     unsigned long long ullWorkspaceStorageUsageInBytes;
 
 
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
     ullWorkspaceStorageUsageInBytes = 0;
 
 	vector<pair<int, uint64_t>> partitionsInfo;
@@ -2128,6 +1892,16 @@ void MMSStorage::refreshPartitionsFreeSizes()
 {
 	int partitionKey = 0;
 	bool mmsAvailablePartitions = true;
+
+	if (_noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	while (mmsAvailablePartitions) 
 	{
@@ -2233,6 +2007,16 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 	string executeCommand;
 	try
 	{
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		_logger->info(__FILEREF__ + "Received manageTarFileInCaseOfIngestionOfSegments"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", tarBinaryPathName: " + tarBinaryPathName

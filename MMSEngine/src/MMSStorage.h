@@ -27,6 +27,7 @@ public:
 
 public:
     MMSStorage (
+		bool noFileSystemAccess,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		Json::Value configuration,
 		shared_ptr<spdlog::logger> logger);
@@ -135,23 +136,6 @@ public:
 		string relativePath,		// using '/'
 		string fileName);
 
-	/*
-    string getDownloadLinkPathName (
-		unsigned long ulPartitionNumber,
-		string workspaceDirectoryName,
-		string territoryName,
-		string relativePath,
-		string fileName,
-		bool downloadRepositoryToo);
-
-    string getStreamingLinkPathName (
-		unsigned long ulPartitionNumber,	// IN
-		string workspaceDirectoryName,	// IN
-		string territoryName,	// IN
-		string relativePath,	// IN
-		string fileName);	// IN
-	*/
-
     // bRemoveLinuxPathIfExist: often this method is called 
     // to get the path where the encoder put his output
     // (file or directory). In this case it is good
@@ -168,23 +152,6 @@ public:
 		long long llPhysicalPathKey,    // used only if fileName is ""
 		bool removeLinuxPathIfExist);
 
-	/*
-	string getDeliveryFreeAssetPathName(
-		string workspaceDirectoryName,
-		string liveProxyAssetName,
-		string assetExtension);
-	*/
-
-	/*
-    string getEncodingProfilePathName (
-		long long llEncodingProfileKey,
-		string profileFileNameExtension);
-
-    string getFFMPEGEncodingProfilePathName(
-        MMSEngineDBFacade::ContentType contentType,
-        long long llEncodingProfileKey);
-	*/
-
     unsigned long getWorkspaceStorageUsage (
 		string workspaceDirectoryName);
 
@@ -197,6 +164,7 @@ public:
 		string sourcePathName);
 
 private:
+	bool						_noFileSystemAccess;
 	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
     shared_ptr<spdlog::logger>  _logger;
 	Json::Value					_configuration;

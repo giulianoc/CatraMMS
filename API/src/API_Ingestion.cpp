@@ -2496,6 +2496,18 @@ void API::uploadedBinary(
 
     try
     {
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = string("no rights to execute this method")
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
         if (ingestionJobKeyIt == queryParameters.end())
         {

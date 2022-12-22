@@ -44,6 +44,15 @@ int main(int argc, char** argv)
 
 	try
 	{
+		bool noFileSystemAccess = false;
+
+		if (argc == 2)
+		{
+			string sAPIType = argv[1];
+			if (sAPIType == "NoFileSystem")
+				noFileSystemAccess = true;
+		}
+
 		// Init libxml
 		{
 			xmlInitParser();
@@ -145,9 +154,10 @@ int main(int argc, char** argv)
             configuration, masterDbPoolSize, slaveDbPoolSize, logger);
 
 		logger->info(__FILEREF__ + "Creating MMSStorage"
-			);
+			+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
+		);
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			mmsEngineDBFacade, configuration, logger);
+			noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
 
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configuration,
@@ -168,7 +178,9 @@ int main(int argc, char** argv)
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
-			shared_ptr<API> api = make_shared<API>(configuration, 
+			shared_ptr<API> api = make_shared<API>(
+				noFileSystemAccess,
+				configuration, 
                 mmsEngineDBFacade,
 				mmsStorage,
 				mmsDeliveryAuthorization,
@@ -235,7 +247,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-API::API(Json::Value configuration, 
+API::API(bool noFileSystemAccess, Json::Value configuration, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
@@ -247,6 +259,7 @@ API::API(Json::Value configuration,
 		mmsEngineDBFacade,
 		logger) 
 {
+	_noFileSystemAccess = noFileSystemAccess;
 	_mmsStorage = mmsStorage;
 	_mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 
@@ -806,6 +819,16 @@ void API::manageRequestAndResponse(
     {
         try
         {
+			if (_noFileSystemAccess)
+			{
+				string errorMessage = string("no rights to execute this method")
+					+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
             auto tokenIt = queryParameters.find("token");
             if (tokenIt == queryParameters.end())
 			{

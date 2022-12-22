@@ -2,11 +2,7 @@
 #include "JSONUtils.h"
 #include <algorithm>
 #include "MMSEngineDBFacade.h"
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
+#include "MMSCURL.h"
 #include "catralibraries/Convert.h"
 
 
@@ -1617,9 +1613,7 @@ bool MMSEngineDBFacade::isEncoderRunning(
 {
 	bool isRunning = true;
 
-	bool responseInitialized = false;
 	string ffmpegEncoderURL;
-	ostringstream response;
 	try
 	{
 		ffmpegEncoderURL = protocol + "://"
@@ -1628,96 +1622,30 @@ bool MMSEngineDBFacade::isEncoderRunning(
             + _ffmpegEncoderStatusURI
 		;
 
-		list<string> header;
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-
-		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderInfoTimeout));
-
-		string httpsPrefix("https");
-		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-		{
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-
-			// request.setOpt(new curlpp::options::SslEngineDefault());
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "isEncoderRunning"
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-		);
-		responseInitialized = true;
-		request.perform();
-		chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		_logger->info(__FILEREF__ + "isEncoderRunning"
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", sResponse: " + sResponse
-			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(
-				chrono::duration_cast<chrono::seconds>(
-				endEncodingStatus - startEncodingStatus).count()) + "@"
+		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+			-1,	// ingestionJobKey
+			ffmpegEncoderURL,
+			_ffmpegEncoderInfoTimeout,
+			_ffmpegEncoderUser,
+			_ffmpegEncoderPassword,
+			_logger
 		);
 	}
-	catch (curlpp::LogicError & e) 
+	catch (ServerNotReachable e)
 	{
-		_logger->error(__FILEREF__ + "Status URL failed (LogicError)"
+		_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		isRunning = false;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{ 
-		string errorMessage = string("Status URL failed (RuntimeError)")
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		isRunning = false;
-	}
+    }
 	catch (runtime_error e)
 	{
-		if (response.str().find("502 Bad Gateway") != string::npos)
-		{
-			_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
-		}
-		else
-		{
-			_logger->error(__FILEREF__ + "Status URL failed (exception)"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
-		}
+		_logger->error(__FILEREF__ + "Status URL failed (exception)"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+		);
 
 		isRunning = false;
     }
@@ -1726,7 +1654,6 @@ bool MMSEngineDBFacade::isEncoderRunning(
 		_logger->error(__FILEREF__ + "Status URL failed (exception)"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		isRunning = false;
@@ -1744,9 +1671,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
 	bool isRunning = true;
 	int cpuUsage = 0;
 
-	bool responseInitialized = false;
 	string ffmpegEncoderURL;
-	ostringstream response;
 	try
 	{
 		ffmpegEncoderURL = protocol + "://"
@@ -1755,122 +1680,33 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
             + _ffmpegEncoderInfoURI
 		;
 
-		list<string> header;
-
-		{
-			string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
-				+ _ffmpegEncoderPassword);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-
-		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderInfoTimeout));
-
-		string httpsPrefix("https");
-		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-		{
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-
-			// request.setOpt(new curlpp::options::SslEngineDefault());
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "isEncoderRunning"
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-		);
-		responseInitialized = true;
-		request.perform();
-		chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-			sResponse.pop_back();
-
-		_logger->info(__FILEREF__ + "isEncoderRunning"
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", sResponse: " + sResponse
-			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(
-				chrono::duration_cast<chrono::seconds>(
-				endEncodingStatus - startEncodingStatus).count()) + "@"
+		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+			-1,	// ingestionJobKey
+			ffmpegEncoderURL,
+			_ffmpegEncoderInfoTimeout,
+			_ffmpegEncoderUser,
+			_ffmpegEncoderPassword,
+			_logger
 		);
 
-		try
-		{
-			Json::Value infoResponseRoot = JSONUtils::toJson(-1, -1, sResponse);
-
-			string field = "cpuUsage";
-			if (JSONUtils::isMetadataPresent(infoResponseRoot, field))
-				cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);
-		}
-		catch(...)
-		{
-			string errorMessage = string("isEncoderRunning. Response Body json is not well format")
-				+ ", sResponse: " + sResponse
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		string field = "cpuUsage";
+		cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);
 	}
-	catch (curlpp::LogicError & e) 
+	catch (ServerNotReachable e)
 	{
-		_logger->error(__FILEREF__ + "Status URL failed (LogicError)"
+		_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		isRunning = false;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{ 
-		string errorMessage = string("Status URL failed (RuntimeError)")
-			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		isRunning = false;
-	}
+    }
 	catch (runtime_error e)
 	{
-		if (response.str().find("502 Bad Gateway") != string::npos)
-		{
-			_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
-		}
-		else
-		{
-			_logger->error(__FILEREF__ + "Status URL failed (exception)"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
-		}
+		_logger->error(__FILEREF__ + "Status URL failed (exception)"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+		);
 
 		isRunning = false;
     }
@@ -1879,7 +1715,6 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
 		_logger->error(__FILEREF__ + "Status URL failed (exception)"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		isRunning = false;
