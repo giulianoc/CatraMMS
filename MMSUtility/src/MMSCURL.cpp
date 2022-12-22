@@ -667,7 +667,7 @@ string MMSCURL::httpPostPutFile(
 		list<string> header;
 
 		string contentLengthOrRangeHeader;
-		if (contentRangeStart > 0 && contentRangeEnd_Excluded > 0)
+		if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 		{
 			// Content-Range: bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize
 
@@ -692,7 +692,11 @@ string MMSCURL::httpPostPutFile(
 		}
 
 		request.setOpt(new curlpp::options::CustomRequest(requestType));
-		request.setOpt(new curlpp::options::PostFieldSizeLarge(fileSizeInBytes));
+		if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
+			request.setOpt(new curlpp::options::PostFieldSizeLarge(
+				contentRangeEnd_Excluded - contentRangeStart));
+		else
+			request.setOpt(new curlpp::options::PostFieldSizeLarge(fileSizeInBytes));
 
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(url));
