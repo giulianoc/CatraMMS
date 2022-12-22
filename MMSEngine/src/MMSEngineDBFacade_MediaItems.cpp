@@ -1845,6 +1845,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileExtension);
 								profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
 							}
+
+							field = "encodingProfileLabel";
+                            profileRoot[field] = Json::nullValue;
 						}
                         else
 						{
@@ -1863,6 +1866,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 							field = "deliveryTechnology";
                             profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
+
+							field = "encodingProfileLabel";
+                            profileRoot[field] = label;
 						}
 
                         field = "sizeInBytes";
