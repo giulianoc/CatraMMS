@@ -15021,14 +15021,14 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 		}
 
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			_mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json", // contentType
-			_logger
+			"application/json" // contentType
 		);
 
 		/*
@@ -16052,14 +16052,14 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		}
 
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			_mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json", // contentType
-			_logger
+			"application/json" // contentType
 		);
 
 		/*
@@ -17633,14 +17633,14 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 
 		MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			_mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json", // contentType
-			_logger
+			"application/json" // contentType
 		);
 
 		/*

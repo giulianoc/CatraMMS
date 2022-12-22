@@ -1623,12 +1623,12 @@ bool MMSEngineDBFacade::isEncoderRunning(
 		;
 
 		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+			_logger,
 			-1,	// ingestionJobKey
 			ffmpegEncoderURL,
 			_ffmpegEncoderInfoTimeout,
 			_ffmpegEncoderUser,
-			_ffmpegEncoderPassword,
-			_logger
+			_ffmpegEncoderPassword
 		);
 	}
 	catch (ServerNotReachable e)
@@ -1681,12 +1681,12 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
 		;
 
 		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+			_logger,
 			-1,	// ingestionJobKey
 			ffmpegEncoderURL,
 			_ffmpegEncoderInfoTimeout,
 			_ffmpegEncoderUser,
-			_ffmpegEncoderPassword,
-			_logger
+			_ffmpegEncoderPassword
 		);
 
 		string field = "cpuUsage";

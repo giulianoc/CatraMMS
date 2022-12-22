@@ -11848,10 +11848,10 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 						else
 						{
 							MMSCURL::downloadFile(
+								_logger,
 								ingestionJobKey,
 								sourcePhysicalReference,
-								destBinaryPathName,
-								_logger
+								destBinaryPathName
 							);
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method

@@ -2361,14 +2361,14 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
             }
 
 			Json::Value encodeContentResponse = MMSCURL::httpPostStringAndGetJson(
+				_logger,
 				_encodingItem->_ingestionJobKey,
 				ffmpegEncoderURL,
 				_ffmpegEncoderTimeoutInSeconds,
 				_ffmpegEncoderUser,
 				_ffmpegEncoderPassword,
 				body,
-				"application/json", // contentType
-				_logger
+				"application/json" // contentType
 			);
 
             {
@@ -5893,14 +5893,14 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				}
 
 				Json::Value liveRecorderContentResponse = MMSCURL::httpPostStringAndGetJson(
+					_logger,
 					_encodingItem->_ingestionJobKey,
 					ffmpegEncoderURL,
 					_ffmpegEncoderTimeoutInSeconds,
 					_ffmpegEncoderUser,
 					_ffmpegEncoderPassword,
 					body,
-					"application/json", // contentType
-					_logger
+					"application/json" // contentType
 				);
 
 				{
@@ -7173,14 +7173,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 
 				Json::Value liveProxyContentResponse = MMSCURL::httpPostStringAndGetJson(
+					_logger,
 					_encodingItem->_ingestionJobKey,
 					ffmpegEncoderURL,
 					_ffmpegEncoderTimeoutInSeconds,
 					_ffmpegEncoderUser,
 					_ffmpegEncoderPassword,
 					body,
-					"application/json", // contentType
-					_logger
+					"application/json" // contentType
 				);
 
 				{

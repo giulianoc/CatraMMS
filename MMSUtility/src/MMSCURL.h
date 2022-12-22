@@ -54,72 +54,73 @@ public:
 		ifstream	mediaSourceFileStream;
 
 		int64_t		lastByteSent;
-		int64_t		fileSizeInBytes;        
+		int64_t		upToByte_Excluded;
 	};
 
 	static string httpGet(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
-		string basicAuthenticationPassword,
-		shared_ptr<spdlog::logger> logger
+		string basicAuthenticationPassword
 	);
 
 	static Json::Value httpGetJson(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
-		string basicAuthenticationPassword,
-		shared_ptr<spdlog::logger> logger
+		string basicAuthenticationPassword
 	);
 
 	static string httpPostString(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType,	// i.e.: application/json
-		shared_ptr<spdlog::logger> logger
+		string contentType	// i.e.: application/json
 	);
 
 	static string httpPutString(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType,	// i.e.: application/json
-		shared_ptr<spdlog::logger> logger
+		string contentType	// i.e.: application/json
 	);
 
 	static Json::Value httpPostStringAndGetJson(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType,	// i.e.: application/json
-		shared_ptr<spdlog::logger> logger
+		string contentType	// i.e.: application/json
 	);
 
 	static Json::Value httpPutStringAndGetJson(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType,	// i.e.: application/json
-		shared_ptr<spdlog::logger> logger
+		string contentType	// i.e.: application/json
 	);
 
 	static string httpPostFile(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
@@ -127,10 +128,12 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		shared_ptr<spdlog::logger> logger
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
 	);
 
 	static string httpPutFile(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
@@ -138,10 +141,12 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		shared_ptr<spdlog::logger> logger
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
 	);
 
 	static Json::Value httpPostFileAndGetJson(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
@@ -149,10 +154,12 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		shared_ptr<spdlog::logger> logger
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
 	);
 
 	static Json::Value httpPutFileAndGetJson(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		long timeoutInSeconds,
@@ -160,18 +167,31 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		shared_ptr<spdlog::logger> logger
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
+	);
+
+	static string httpPostFileSplittingInChunks(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		string pathFileName,
+		int64_t fileSizeInBytes
 	);
 
 	static void downloadFile(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
-		string destBinaryPathName,
-		shared_ptr<spdlog::logger> logger
+		string destBinaryPathName
 	);
 
 private:
 	static string httpPostPutString(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		string requestType,	// POST or PUT
@@ -179,11 +199,11 @@ private:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType,	// i.e.: application/json
-		shared_ptr<spdlog::logger> logger
+		string contentType	// i.e.: application/json
 	);
 
 	static string httpPostPutFile(
+		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
 		string requestType,	// POST or PUT
@@ -192,7 +212,8 @@ private:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		shared_ptr<spdlog::logger> logger
+		int64_t contentRangeStart,
+		int64_t contentRangeEnd_Excluded
 	);
 
 };

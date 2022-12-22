@@ -5848,12 +5848,12 @@ void FFMPEGEncoder::generateFramesThread(
 					;
 
 					Json::Value ingestionRoot = MMSCURL::httpGetJson(
+						_logger,
 						ingestionJobKey,
 						mmsIngestionJobURL,
 						_mmsAPITimeoutInSeconds,
 						to_string(userKey),
-						apiKey,
-						_logger);
+						apiKey);
 
 					string field = "response";
 					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
@@ -6240,14 +6240,14 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 		}
 
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json",	// contentType
-			_logger
+			"application/json"	// contentType
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -6317,14 +6317,14 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 		;
 
 		string sResponse = MMSCURL::httpPostFile(
+			_logger,
 			ingestionJobKey,
 			mmsBinaryURL,
 			_mmsBinaryTimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			imagesDirectory + "/" + generatedFrameFileName,
-			frameFileSize,
-			_logger);
+			frameFileSize);
 	}
 	catch (runtime_error e)
 	{
@@ -11304,14 +11304,14 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 		}
 
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json",	// contentType
-			_logger
+			"application/json"	// contentType
 		);
 	}
 	catch (runtime_error e)
@@ -11406,14 +11406,14 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json",	// contentType
-			_logger
+			"application/json"	// contentType
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -11483,14 +11483,14 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		;
 
 		string sResponse = MMSCURL::httpPostFile(
+			_logger,
 			ingestionJobKey,
 			mmsBinaryURL,
 			_mmsBinaryTimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			chunkFileSize,
-			_logger);
+			chunkFileSize);
 	}
 	catch (runtime_error e)
 	{
@@ -12621,14 +12621,14 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	try
 	{
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			liveRecorderIngestionJobKey,
 			mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(liveRecorderUserKey),
 			liveRecorderApiKey,
 			workflowMetadata,
-			"application/json",	// contentType
-			_logger
+			"application/json"	// contentType
 		);
 
 		if (externalEncoder)
@@ -12708,15 +12708,16 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				+ "/" + to_string(addContentIngestionJobKey)
 			;
 
-			string sResponse = MMSCURL::httpPostFile(
+			string sResponse = MMSCURL::httpPostFileSplittingInChunks(
+				_logger,
 				liveRecorderIngestionJobKey,
 				mmsBinaryURL,
 				_mmsBinaryTimeoutInSeconds,
 				to_string(liveRecorderUserKey),
 				liveRecorderApiKey,
 				tarGzStagingLiveRecorderVirtualVODPathName,
-				chunkFileSize,
-				_logger);
+				chunkFileSize
+			);
 
 			{
 				_logger->info(__FILEREF__ + "Remove"
@@ -17018,14 +17019,14 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 	try
 	{
 		string sResponse = MMSCURL::httpPostString(
+			_logger,
 			ingestionJobKey,
 			mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json",	// contentType
-			_logger
+			"application/json"	// contentType
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -17145,15 +17146,16 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 			+ "/" + to_string(addContentIngestionJobKey)
 		;
 
-		string sResponse = MMSCURL::httpPostFile(
+		string sResponse = MMSCURL::httpPostFileSplittingInChunks(
+			_logger,
 			ingestionJobKey,
 			mmsBinaryURL,
 			_mmsBinaryTimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			localBinaryPathFileName,
-			localBinaryFileSizeInBytes,
-			_logger);
+			localBinaryFileSizeInBytes
+		);
 
 		if (fileFormat == "hls")
 		{
@@ -17255,10 +17257,10 @@ string FFMPEGEncoder::downloadMediaFromMMS(
 	else
 	{
 		MMSCURL::downloadFile(
+			_logger,
 			ingestionJobKey,
 			sourcePhysicalDeliveryURL,
-			localDestAssetPathName,
-			_logger
+			localDestAssetPathName
 		);
 	}
 
@@ -17474,12 +17476,12 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 			;
 
 			Json::Value ingestionRoot = MMSCURL::httpGetJson(
+				_logger,
 				ingestionJobKey,
 				mmsIngestionJobURL,
 				_mmsAPITimeoutInSeconds,
 				to_string(userKey),
-				apiKey,
-				_logger);
+				apiKey);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
