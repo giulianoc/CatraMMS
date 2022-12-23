@@ -265,7 +265,6 @@ void ActiveEncodingsManager::operator()()
 								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 								+ ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
 								+ ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-								+ ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
 								+ ", encodingJob->_status: " + EncoderVideoAudioProxy::toString(encodingJob->_status)
 							);
 						}
@@ -279,7 +278,6 @@ void ActiveEncodingsManager::operator()()
 								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 								+ ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
 								+ ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-								+ ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
 								+ ", encodingJob->_status: " + EncoderVideoAudioProxy::toString(encodingJob->_status)
 							);
 						}
@@ -296,7 +294,6 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                         );
 
                         try
@@ -311,7 +308,6 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                             );
                         }
                         catch(runtime_error e)
@@ -324,7 +320,6 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                                 + ", runtime_error: " + e.what()
                             );
                         }
@@ -338,7 +333,6 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
 							);
                         }
                     }
@@ -534,7 +528,6 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
             + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
             + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-            + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
         );
         thread encoderVideoAudioProxyThread(ref(encodingJob->_encoderVideoAudioProxy));
         encoderVideoAudioProxyThread.detach();
@@ -636,7 +629,6 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
             + ", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
-            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
         );
 
         try
@@ -653,7 +645,6 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
-                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             );
             
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey,
@@ -670,7 +661,6 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
-                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             );
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,

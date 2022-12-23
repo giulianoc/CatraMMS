@@ -151,7 +151,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
 				string encodingType = encodingResultSet->getString("type");
                 encodingItem->_encodingType = toEncodingType(encodingType);
-                encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
                 encodingItem->_encodingPriority = static_cast<EncodingPriority>(
 						encodingResultSet->getInt("encodingPriority"));
 				if (encodingResultSet->isNull("encoderKey"))
@@ -163,6 +162,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 				else
 					encodingItem->_stagingEncodedAssetPathName =
 						encodingResultSet->getString("stagingEncodedAssetPathName");
+
+				string encodingParameters = encodingResultSet->getString("parameters");
 
 				_logger->info(__FILEREF__ + "getEncodingJobs (resultSet loop)"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -316,7 +317,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				try
                 {
 					encodingItem->_encodingParametersRoot = JSONUtils::toJson(-1, encodingJobKey,
-						encodingItem->_encodingParameters);
+						encodingParameters);
                 }
 				catch (runtime_error e)
                 {

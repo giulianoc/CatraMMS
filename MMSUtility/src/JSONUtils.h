@@ -26,6 +26,8 @@ public:
 
 	static bool isNull(Json::Value root, string field);
 
+	static string asString(Json::Value root, string field = "", string defaultValue = "");
+
 	static int asInt(Json::Value root, string field = "", int defaultValue = 0);
 
 	static int64_t asInt64(Json::Value root, string field = "", int64_t defaultValue = 0);

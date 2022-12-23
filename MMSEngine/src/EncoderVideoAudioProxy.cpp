@@ -280,7 +280,8 @@ void EncoderVideoAudioProxy::operator()()
         + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
         + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-        + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        + ", _encodingParametersRoot: " + JSONUtils::toString(_encodingItem->_encodingParametersRoot)
+        + ", _ingestedParametersRoot: " + JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
     );
 
     string stagingEncodedAssetPathName;
@@ -406,9 +407,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -425,9 +424,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
 			);
 		}
@@ -437,9 +434,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
 			);
 		}
@@ -450,7 +445,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -465,7 +459,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -490,7 +483,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -508,7 +500,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -523,7 +514,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -556,7 +546,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -577,7 +566,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -592,7 +580,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -625,7 +612,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -646,7 +632,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -661,7 +646,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -682,7 +666,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -700,7 +683,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -715,7 +697,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -752,7 +733,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -774,7 +754,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -789,7 +768,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -825,7 +803,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -847,7 +824,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -862,7 +838,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -895,7 +870,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -917,7 +891,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -932,7 +905,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -965,7 +937,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -987,7 +958,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -1002,7 +972,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -1205,7 +1174,6 @@ void EncoderVideoAudioProxy::operator()()
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-					+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", er.what(): " + er.what()
 				);
 			}
@@ -1230,7 +1198,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -1252,7 +1219,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -1267,7 +1233,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -1332,7 +1297,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
@@ -1354,7 +1318,6 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -1369,7 +1332,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -1384,7 +1346,6 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 			+ ", isIngestionJobCompleted: " + to_string(isIngestionJobCompleted)
 			+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 		);
 
         _mmsEngineDBFacade->updateEncodingJob (
@@ -1412,7 +1373,6 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -1430,7 +1390,7 @@ void EncoderVideoAudioProxy::operator()()
         + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
         + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-        + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        + ", _ingestedParametersRoot: " + JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
     );
 }
 
@@ -1789,8 +1749,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						+ to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: "
 						+ to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: "
-						+ _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -1832,7 +1790,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				_logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -1877,8 +1834,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						+ to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: "
 						+ to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: "
-						+ _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -1923,8 +1878,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						+ to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: "
 						+ to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: "
-						+ _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -1969,8 +1922,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						+ to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: "
 						+ to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: "
-						+ _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -2048,7 +1999,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 					+ ", e.what(): " + e.what()
 				);
@@ -2089,7 +2039,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 				);
 
@@ -2148,7 +2097,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					_logger->error(__FILEREF__ + "removeDirectory failed"
 						+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 						+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
@@ -2215,7 +2163,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				_logger->info(__FILEREF__ + "Saved the Encoded content"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
 				);
 			}
@@ -2224,7 +2171,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 				);
 
@@ -2256,7 +2202,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			_logger->error(__FILEREF__ + "process media input failed"
 				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", exception: " + e.what()
 			);
 
@@ -2268,7 +2213,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			_logger->error(__FILEREF__ + "process media input failed"
 				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", exception: " + e.what()
 			);
 
@@ -2309,8 +2253,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 	string ffmpegURI,
 	int maxConsecutiveEncodingStatusFailures)
 {
-	string field = "EncodersPool";
-	string encodersPool = _encodingItem->_ingestedParametersRoot.get(field, "").asString();
+	string encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "EncodersPool", "");
 
 	string ffmpegEncoderURL;
 	// string ffmpegURI = _ffmpegEncodeURI;
@@ -2333,6 +2276,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", encodersPool: " + encodersPool
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                 + ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
             );
@@ -2372,7 +2316,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 			);
 
             {
-                field = "error";
+                string field = "error";
                 if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                 {
                     string error = encodeContentResponse.get(field, "").asString();
@@ -2663,7 +2607,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -2706,7 +2649,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
@@ -2787,7 +2729,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
@@ -2830,7 +2771,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", sourceRelativePath: " + sourceRelativePath
@@ -2891,7 +2831,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 				+ ", directoryPathName: " + directoryPathName
 				+ ", exception: " + e.what()
@@ -2973,7 +2912,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
             + ", newSourceRelativePath: " + newSourceRelativePath
             + ", encodedFileName: " + encodedFileName
@@ -2985,7 +2923,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 			+ ", e.what(): " + e.what()
         );
@@ -3023,7 +2960,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
         );
 
@@ -3157,7 +3093,6 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3171,7 +3106,6 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3280,7 +3214,6 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3294,7 +3227,6 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3402,7 +3334,6 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3416,7 +3347,6 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3525,7 +3455,6 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3539,7 +3468,6 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3648,7 +3576,6 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3662,7 +3589,6 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3810,7 +3736,6 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -3824,7 +3749,6 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -3989,7 +3913,6 @@ void EncoderVideoAudioProxy::processSlideShow()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -4003,7 +3926,6 @@ void EncoderVideoAudioProxy::processSlideShow()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -4029,7 +3951,6 @@ string EncoderVideoAudioProxy::faceRecognition()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _faceRecognitionNumber.use_count: " + to_string(_faceRecognitionNumber.use_count())
             + ", _maxFaceRecognitionNumber: " + to_string(_maxFaceRecognitionNumber)
 		;
@@ -4071,7 +3992,6 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
 	);
@@ -4149,7 +4069,6 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -4177,7 +4096,6 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -4643,7 +4561,6 @@ string EncoderVideoAudioProxy::faceRecognition()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", cascadeName: " + faceRecognitionCascadeName
 				+ ", sourcePhysicalPath: " + sourcePhysicalPath
 				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -4660,7 +4577,6 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -4764,7 +4680,6 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -4778,7 +4693,6 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -5059,7 +4973,6 @@ string EncoderVideoAudioProxy::faceIdentification()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -5085,7 +4998,6 @@ string EncoderVideoAudioProxy::faceIdentification()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -5288,7 +5200,6 @@ string EncoderVideoAudioProxy::faceIdentification()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -5372,7 +5283,6 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -5386,7 +5296,6 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -6451,7 +6360,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
 			;
 			_logger->error(errorMessage);
@@ -6464,7 +6372,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
 			;
 			_logger->error(errorMessage);
@@ -6483,7 +6390,6 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 					+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
 					+ ", ingestionJobOutputsCount: " + to_string(ingestionJobOutputsCount)
 				;
@@ -6526,7 +6432,6 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
@@ -6539,7 +6444,6 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
@@ -8103,7 +8007,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
             ;
 		_logger->error(errorMessage);
         
@@ -8115,7 +8018,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
             ;
 		_logger->error(errorMessage);
         
@@ -8174,7 +8076,6 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
@@ -8187,7 +8088,6 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
@@ -8211,7 +8111,6 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
@@ -8224,7 +8123,6 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 

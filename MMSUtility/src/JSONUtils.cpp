@@ -30,6 +30,38 @@ bool JSONUtils::isNull(Json::Value root, string field)
 		return false;
 }
 
+string JSONUtils::asString(Json::Value root, string field, string defaultValue)
+{
+	if (field == "")
+	{
+		return root.asString();
+	}
+	else
+	{
+		string fieldFirstCharUpperCase;
+		string fieldFirstCharLowerCase;
+		if(isupper(field[0]))
+		{
+			fieldFirstCharUpperCase = field;
+
+			fieldFirstCharLowerCase = field;
+			fieldFirstCharLowerCase[0] = tolower(field[0]);
+		}
+		else
+		{
+			fieldFirstCharUpperCase = field;
+			fieldFirstCharUpperCase = toupper(field[0]);
+
+			fieldFirstCharLowerCase = field;
+		}
+
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+			return root.get(fieldFirstCharUpperCase, defaultValue).asString();
+		else
+			return root.get(fieldFirstCharLowerCase, defaultValue).asString();
+	}
+}
+
 int JSONUtils::asInt(Json::Value root, string field, int defaultValue)
 {
 	if (field == "")
@@ -41,10 +73,37 @@ int JSONUtils::asInt(Json::Value root, string field, int defaultValue)
 	}
 	else
 	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return strtol(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
+		string fieldFirstCharUpperCase;
+		string fieldFirstCharLowerCase;
+		if(isupper(field[0]))
+		{
+			fieldFirstCharUpperCase = field;
+
+			fieldFirstCharLowerCase = field;
+			fieldFirstCharLowerCase[0] = tolower(field[0]);
+		}
 		else
-			return root.get(field, defaultValue).asInt();
+		{
+			fieldFirstCharUpperCase = field;
+			fieldFirstCharUpperCase = toupper(field[0]);
+
+			fieldFirstCharLowerCase = field;
+		}
+
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		{
+			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
+				return strtol(root.get(fieldFirstCharUpperCase, defaultValue).asString().c_str(), nullptr, 10);
+			else
+				return root.get(fieldFirstCharUpperCase, defaultValue).asInt();
+		}
+		else
+		{
+			if (root.get(fieldFirstCharLowerCase, defaultValue).type() == Json::stringValue)
+				return strtol(root.get(fieldFirstCharLowerCase, defaultValue).asString().c_str(), nullptr, 10);
+			else
+				return root.get(fieldFirstCharLowerCase, defaultValue).asInt();
+		}
 	}
 }
 
@@ -59,10 +118,37 @@ int64_t JSONUtils::asInt64(Json::Value root, string field, int64_t defaultValue)
 	}
 	else
 	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return strtoll(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
+		string fieldFirstCharUpperCase;
+		string fieldFirstCharLowerCase;
+		if(isupper(field[0]))
+		{
+			fieldFirstCharUpperCase = field;
+
+			fieldFirstCharLowerCase = field;
+			fieldFirstCharLowerCase[0] = tolower(field[0]);
+		}
 		else
-			return root.get(field, defaultValue).asInt64();
+		{
+			fieldFirstCharUpperCase = field;
+			fieldFirstCharUpperCase = toupper(field[0]);
+
+			fieldFirstCharLowerCase = field;
+		}
+
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		{
+			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
+				return strtoll(root.get(fieldFirstCharUpperCase, defaultValue).asString().c_str(), nullptr, 10);
+			else
+				return root.get(fieldFirstCharUpperCase, defaultValue).asInt64();
+		}
+		else
+		{
+			if (root.get(fieldFirstCharLowerCase, defaultValue).type() == Json::stringValue)
+				return strtoll(root.get(fieldFirstCharLowerCase, defaultValue).asString().c_str(), nullptr, 10);
+			else
+				return root.get(fieldFirstCharLowerCase, defaultValue).asInt64();
+		}
 	}
 }
 
@@ -77,10 +163,37 @@ double JSONUtils::asDouble(Json::Value root, string field, double defaultValue)
 	}
 	else
 	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
-			return stod(root.get(field, defaultValue).asString(), nullptr);
+		string fieldFirstCharUpperCase;
+		string fieldFirstCharLowerCase;
+		if(isupper(field[0]))
+		{
+			fieldFirstCharUpperCase = field;
+
+			fieldFirstCharLowerCase = field;
+			fieldFirstCharLowerCase[0] = tolower(field[0]);
+		}
 		else
-			return root.get(field, defaultValue).asDouble();
+		{
+			fieldFirstCharUpperCase = field;
+			fieldFirstCharUpperCase = toupper(field[0]);
+
+			fieldFirstCharLowerCase = field;
+		}
+
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		{
+			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
+				return stod(root.get(fieldFirstCharUpperCase, defaultValue).asString(), nullptr);
+			else
+				return root.get(fieldFirstCharUpperCase, defaultValue).asDouble();
+		}
+		else
+		{
+			if (root.get(fieldFirstCharLowerCase, defaultValue).type() == Json::stringValue)
+				return stod(root.get(fieldFirstCharLowerCase, defaultValue).asString(), nullptr);
+			else
+				return root.get(fieldFirstCharLowerCase, defaultValue).asDouble();
+		}
 	}
 }
 
@@ -103,18 +216,53 @@ bool JSONUtils::asBool(Json::Value root, string field, bool defaultValue)
 	}
 	else
 	{
-		if (root.get(field, defaultValue).type() == Json::stringValue)
+		string fieldFirstCharUpperCase;
+		string fieldFirstCharLowerCase;
+		if(isupper(field[0]))
 		{
-			string sTrue = "true";
+			fieldFirstCharUpperCase = field;
 
-			bool isEqual = root.asString().length() != sTrue.length() ? false :
-				equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
-						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
-
-			return isEqual ? true : false;
+			fieldFirstCharLowerCase = field;
+			fieldFirstCharLowerCase[0] = tolower(field[0]);
 		}
 		else
-			return root.get(field, defaultValue).asBool();
+		{
+			fieldFirstCharUpperCase = field;
+			fieldFirstCharUpperCase = toupper(field[0]);
+
+			fieldFirstCharLowerCase = field;
+		}
+
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		{
+			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
+			{
+				string sTrue = "true";
+
+				bool isEqual = root.asString().length() != sTrue.length() ? false :
+					equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
+						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+
+				return isEqual ? true : false;
+			}
+			else
+				return root.get(fieldFirstCharUpperCase, defaultValue).asBool();
+		}
+		else
+		{
+			if (root.get(fieldFirstCharLowerCase, defaultValue).type() == Json::stringValue)
+			{
+				string sTrue = "true";
+
+				bool isEqual = root.asString().length() != sTrue.length() ? false :
+					equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
+						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+
+				return isEqual ? true : false;
+			}
+			else
+				return root.get(fieldFirstCharLowerCase, defaultValue).asBool();
+		}
 	}
 }
 

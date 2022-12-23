@@ -663,7 +663,6 @@ public:
 
 		Json::Value								_ingestedParametersRoot;
 
-        string                                  _encodingParameters;
         Json::Value                             _encodingParametersRoot;
 
         shared_ptr<Workspace>                   _workspace;
