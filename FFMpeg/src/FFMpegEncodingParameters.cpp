@@ -941,7 +941,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 					FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+					string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
 					{
 						string segmentPathFileName =
@@ -1026,7 +1026,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 					FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+					string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
 					{
 						string segmentPathFileName =
@@ -1134,7 +1134,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 				FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+				string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
 				{
 					string segmentPathFileName =
@@ -1254,9 +1254,9 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 		{
 			Json::Value audioTrack = _audioTracksRoot[index];
 
-			string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+			string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
-			string audioLanguage = audioTrack.get("language", "").asString();
+			string audioLanguage = JSONUtils::asString(audioTrack, "language", "");
 
 			string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
 				+ audioLanguage + "\",NAME=\"" + audioLanguage + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
@@ -1387,7 +1387,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             throw runtime_error(errorMessage);
         }
 
-        fileFormat = encodingProfileDetailsRoot.get(field, "XXX").asString();
+        fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, field, "");
 		fileFormatLowerCase.resize(fileFormat.size());
 		transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
 			[](unsigned char c){return tolower(c); } );
@@ -1508,7 +1508,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
                 throw runtime_error(errorMessage);
             }
 
-            codec = videoRoot.get(field, "XXX").asString();
+            codec = JSONUtils::asString(videoRoot, field, "");
 
 			// 2020-03-27: commented just to avoid to add the check every time a new codec is added
 			//		In case the codec is wrong, ffmpeg will generate the error later
@@ -1524,7 +1524,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             field = "Profile";
             if (JSONUtils::isMetadataPresent(videoRoot, field))
             {
-                string profile = videoRoot.get(field, "").asString();
+                string profile = JSONUtils::asString(videoRoot, field, "");
 
                 if (codec == "libx264" || codec == "libvpx")
 				{
@@ -1614,7 +1614,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             field = "OtherOutputParameters";
             if (JSONUtils::isMetadataPresent(videoRoot, field))
             {
-                string otherOutputParameters = videoRoot.get(field, "XXX").asString();
+                string otherOutputParameters = JSONUtils::asString(videoRoot, field, "");
 
                 ffmpegVideoOtherParameters =
                         otherOutputParameters + " "
@@ -1747,7 +1747,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 					string forceOriginalAspectRatio;
 					field = "ForceOriginalAspectRatio";
 					if (JSONUtils::isMetadataPresent(bitRateInfo, field))
-						forceOriginalAspectRatio = bitRateInfo.get(field, "").asString();
+						forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
 
 					bool pad = false;
 					if (forceOriginalAspectRatio != "")
@@ -1848,7 +1848,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
                 throw runtime_error(errorMessage);
             }
-            string codec = audioRoot.get(field, "XXX").asString();
+            string codec = JSONUtils::asString(audioRoot, field, "");
 
             FFMpegEncodingParameters::encodingAudioCodecValidation(codec, logger);
 
@@ -1877,7 +1877,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             field = "OtherOutputParameters";
             if (JSONUtils::isMetadataPresent(audioRoot, field))
             {
-                string otherOutputParameters = audioRoot.get(field, "XXX").asString();
+                string otherOutputParameters = JSONUtils::asString(audioRoot, field, "");
 
                 ffmpegAudioOtherParameters =
                         otherOutputParameters + " "

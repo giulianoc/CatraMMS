@@ -29,7 +29,7 @@ MMSStorage::MMSStorage(
 			+ ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 		);
 
-		_storage = configuration["storage"].get("path", "XXX").asString();
+		_storage = JSONUtils::asString(configuration["storage"], "path", "");
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + _storage
 		);
@@ -85,7 +85,7 @@ void MMSStorage::createDirectories(
 		}
 		*/
 
-		string storage = configuration["storage"].get("path", "").asString();
+		string storage = JSONUtils::asString(configuration["storage"], "path", "");
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + storage
 		);

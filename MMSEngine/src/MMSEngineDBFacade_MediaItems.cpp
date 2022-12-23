@@ -5237,7 +5237,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string contentProviderName;
             
             if (JSONUtils::isMetadataPresent(parametersRoot, "ContentProviderName"))
-                contentProviderName = parametersRoot.get("ContentProviderName", "").asString();
+                contentProviderName = JSONUtils::asString(parametersRoot, "ContentProviderName", "");
             else
                 contentProviderName = _defaultContentProviderName;
 
@@ -5286,11 +5286,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             // string encodingProfilesSet;
 
             string field = "Title";
-            title = parametersRoot.get(field, "").asString();
+            title = JSONUtils::asString(parametersRoot, field, "");
             
             field = "Ingester";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                ingester = parametersRoot.get(field, "").asString();
+                ingester = JSONUtils::asString(parametersRoot, field, "");
 
             field = "UserData";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5298,7 +5298,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == Json::stringValue)
 				{
-					userData = parametersRoot.get(field, "").asString();
+					userData = JSONUtils::asString(parametersRoot, field, "");
 
 					// _logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
 					// 	+ ", userData: " + userData
@@ -5316,12 +5316,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
             field = "DeliveryFileName";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                deliveryFileName = parametersRoot.get(field, "").asString();
+                deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Retention";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                string retention = parametersRoot.get(field, "1d").asString();
+                string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
             }
 
@@ -5335,11 +5335,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
                     field = "startPublishing";
                     if (JSONUtils::isMetadataPresent(publishingRoot, field))
-                        startPublishing = publishingRoot.get(field, "").asString();
+                        startPublishing = JSONUtils::asString(publishingRoot, field, "");
 
                     field = "endPublishing";
                     if (JSONUtils::isMetadataPresent(publishingRoot, field))
-                        endPublishing = publishingRoot.get(field, "").asString();
+                        endPublishing = JSONUtils::asString(publishingRoot, field, "");
                 }
                 
                 if (startPublishing == "NOW")
@@ -5455,7 +5455,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string uniqueName;
             if (JSONUtils::isMetadataPresent(parametersRoot, "UniqueName"))
-                uniqueName = parametersRoot.get("UniqueName", "").asString();
+                uniqueName = JSONUtils::asString(parametersRoot, "UniqueName", "");
 
             if (uniqueName != "")
             {
@@ -5478,7 +5478,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 				field = "Type";
 				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-					MMSEngineDBFacade::toCrossReferenceType(crossReferenceRoot.get(field, "").asString());
+					MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
 
 				int64_t sourceMediaItemKey;
 				int64_t targetMediaItemKey;
@@ -5527,11 +5527,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
             string field = "ExternalDeliveryTechnology";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				externalDeliveryTechnology = parametersRoot.get(field, "").asString();
+				externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
             field = "ExternalDeliveryURL";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				externalDeliveryURL = parametersRoot.get(field, "").asString();
+				externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 		}
 
 		int64_t physicalItemRetentionInMinutes = -1;
@@ -5539,7 +5539,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string field = "PhysicalItemRetention";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                string retention = parametersRoot.get(field, "1d").asString();
+                string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
             }
 		}
@@ -5566,7 +5566,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 						field = "dataType";
 						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
-							string dataType = mmsDataRoot.get(field, "").asString();
+							string dataType = JSONUtils::asString(mmsDataRoot, field, "");
 							if (dataType == "liveRecordingChunk"
 								|| dataType == "generatedFrame"
 								|| dataType == "externalTranscoder")
@@ -6395,7 +6395,7 @@ void MMSEngineDBFacade::addTags(
 
 		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
 		{
-			string tag = localTagsRoot[tagIndex].asString();
+			string tag = JSONUtils::asString(localTagsRoot[tagIndex]);
 
 			tag = StringUtils::trim(tag);
 

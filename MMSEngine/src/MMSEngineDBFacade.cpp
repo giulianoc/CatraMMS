@@ -49,15 +49,15 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_defaultContentProviderName     = "default";
 	// _defaultTerritoryName           = "default";
 
-    string masterDbServer = configuration["database"]["master"].get("server", "").asString();
+    string masterDbServer = JSONUtils::asString(configuration["database"]["master"], "server", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->master->server: " + masterDbServer
     );
-    string slaveDbServer = configuration["database"]["slave"].get("server", "").asString();
+    string slaveDbServer = JSONUtils::asString(configuration["database"]["slave"], "server", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->slave->server: " + slaveDbServer
     );
-    string defaultCharacterSet = configuration["database"].get("defaultCharacterSet", "").asString();
+    string defaultCharacterSet = JSONUtils::asString(configuration["database"], "defaultCharacterSet", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->defaultCharacterSet: " + defaultCharacterSet
     );
@@ -66,25 +66,25 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
     );
 
-	string masterDbUsername = configuration["database"]["master"].get("userName", "").asString();
+	string masterDbUsername = JSONUtils::asString(configuration["database"]["master"], "userName", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", database->master->userName: " + masterDbUsername
 	);
-	string slaveDbUsername = configuration["database"]["slave"].get("userName", "").asString();
+	string slaveDbUsername = JSONUtils::asString(configuration["database"]["slave"], "userName", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", database->slave->userName: " + slaveDbUsername
 	);
     string dbPassword;
     {
-        string encryptedPassword = configuration["database"].get("password", "XXX").asString();
+        string encryptedPassword = JSONUtils::asString(configuration["database"], "password", "");
         dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		// dbPassword = encryptedPassword;
     }    
-    string dbName = configuration["database"].get("dbName", "XXX").asString();
+    string dbName = JSONUtils::asString(configuration["database"], "dbName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->dbName: " + dbName
     );
-    string selectTestingConnection = configuration["database"].get("selectTestingConnection", "XXX").asString();
+    string selectTestingConnection = JSONUtils::asString(configuration["database"], "selectTestingConnection", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->selectTestingConnection: " + selectTestingConnection
     );
@@ -105,19 +105,19 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
     );
 
-	_ffmpegEncoderUser = configuration["ffmpeg"].get("encoderUser", "").asString();
+	_ffmpegEncoderUser = JSONUtils::asString(configuration["ffmpeg"], "encoderUser", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
 	);
-	_ffmpegEncoderPassword = configuration["ffmpeg"].get("encoderPassword", "").asString();
+	_ffmpegEncoderPassword = JSONUtils::asString(configuration["ffmpeg"], "encoderPassword", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderPassword: " + "..."
 	);
-	_ffmpegEncoderStatusURI = configuration["ffmpeg"].get("encoderStatusURI", "").asString();
+	_ffmpegEncoderStatusURI = JSONUtils::asString(configuration["ffmpeg"], "encoderStatusURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI
     );
-	_ffmpegEncoderInfoURI = configuration["ffmpeg"].get("encoderInfoURI", "").asString();
+	_ffmpegEncoderInfoURI = JSONUtils::asString(configuration["ffmpeg"], "encoderInfoURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI
     );
@@ -177,20 +177,20 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
     );
 
-    _predefinedVideoProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("videoDir", "XXX").asString();
+    _predefinedVideoProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "videoDir", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath
     );
-    _predefinedAudioProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("audioDir", "XXX").asString();
+    _predefinedAudioProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "audioDir", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->predefinedProfiles->audioDir: " + _predefinedAudioProfilesDirectoryPath
     );
-    _predefinedImageProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("imageDir", "XXX").asString();
+    _predefinedImageProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "imageDir", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath
     );
 
-    _predefinedWorkflowLibraryDirectoryPath = configuration["mms"].get("predefinedWorkflowLibraryDir", "XXX").asString();
+    _predefinedWorkflowLibraryDirectoryPath = JSONUtils::asString(configuration["mms"], "predefinedWorkflowLibraryDir", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath
     );
@@ -203,8 +203,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 			adminEmailAddressesIndex < configuration["api"]["adminEmailAddresses"].size();
 			adminEmailAddressesIndex++)
 	{
-		string adminEmailAddress = configuration["api"]["adminEmailAddresses"]
-			[adminEmailAddressesIndex].asString();
+		string adminEmailAddress = JSONUtils::asString(configuration["api"]["adminEmailAddresses"]
+			[adminEmailAddressesIndex]);
 		_adminEmailAddresses.push_back(adminEmailAddress);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", mms->adminEmailAddresses[adminEmailAddressesIndex]: " + adminEmailAddress

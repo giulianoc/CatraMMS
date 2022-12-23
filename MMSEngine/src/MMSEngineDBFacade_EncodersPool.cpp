@@ -828,7 +828,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 		for (int encoderIndex = 0; encoderIndex < sharedEncodersLabel.size();
 			encoderIndex++)
         {
-			string encoderLabel = sharedEncodersLabel[encoderIndex].asString();
+			string encoderLabel = JSONUtils::asString(sharedEncodersLabel[encoderIndex]);
 
 			lastSQLCommand = "select encoderKey from MMS_Encoder "
 				"where label = ?";

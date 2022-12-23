@@ -27,16 +27,16 @@ FFMpeg::FFMpeg(Json::Value configuration,
 {
     _logger             = logger;
 
-    _ffmpegPath = configuration["ffmpeg"].get("path", "").asString();
-    _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
-    _ffmpegEndlessRecursivePlaylistDir = configuration["ffmpeg"].get("endlessRecursivePlaylistDir", "").asString();
-    _ffmpegTtfFontDir = configuration["ffmpeg"].get("ttfFontDir", "").asString();
+    _ffmpegPath = JSONUtils::asString(configuration["ffmpeg"], "path", "");
+    _ffmpegTempDir = JSONUtils::asString(configuration["ffmpeg"], "tempDir", "");
+    _ffmpegEndlessRecursivePlaylistDir = JSONUtils::asString(configuration["ffmpeg"], "endlessRecursivePlaylistDir", "");
+    _ffmpegTtfFontDir = JSONUtils::asString(configuration["ffmpeg"], "ttfFontDir", "");
 
-    _youTubeDlPath = configuration["youTubeDl"].get("path", "").asString();
+    _youTubeDlPath = JSONUtils::asString(configuration["youTubeDl"], "path", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", youTubeDl->path: " + _youTubeDlPath
     );
-    _pythonPathName = configuration["youTubeDl"].get("pythonPathName", "").asString();
+    _pythonPathName = JSONUtils::asString(configuration["youTubeDl"], "pythonPathName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", youTubeDl->pythonPathName: " + _pythonPathName
     );
@@ -283,7 +283,7 @@ void FFMpeg::encodeContent(
 				{
 					Json::Value audioTrack = audioTracksRoot[index];
 
-					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+					string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
 					string audioPathName = encodedStagingAssetPathName + "/"
 						+ audioTrackDirectoryName;
@@ -4939,7 +4939,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     + ", Field: " + field;
                 throw runtime_error(errorMessage);
             }
-            string codecType = streamRoot.get(field, "XXX").asString();
+            string codecType = JSONUtils::asString(streamRoot, field, "");
             
             if (codecType == "video")
             {
@@ -4994,14 +4994,14 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 						throw runtime_error(errorMessage);
 					}
                 }
-                videoCodecName = streamRoot.get(field, "").asString();
+                videoCodecName = JSONUtils::asString(streamRoot, field, "");
 
 				if (firstVideoCodecName == "")
 					firstVideoCodecName = videoCodecName;
 
                 field = "profile";
                 if (JSONUtils::isMetadataPresent(streamRoot, field))
-                    videoProfile = streamRoot.get(field, "XXX").asString();
+                    videoProfile = JSONUtils::asString(streamRoot, field, "");
                 else
                 {
                     /*
@@ -5069,7 +5069,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                videoAvgFrameRate = streamRoot.get(field, "XXX").asString();
+                videoAvgFrameRate = JSONUtils::asString(streamRoot, field, "");
 
                 field = "bit_rate";
                 if (!JSONUtils::isMetadataPresent(streamRoot, field))
@@ -5088,7 +5088,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     }
                 }
                 else
-                    videoBitRate = stol(streamRoot.get(field, "").asString());
+                    videoBitRate = stol(JSONUtils::asString(streamRoot, field, ""));
 
 				field = "duration";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
@@ -5108,7 +5108,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				}
 				else
 				{
-					string duration = streamRoot.get(field, "0").asString();
+					string duration = JSONUtils::asString(streamRoot, field, "0");
 
 					// 2020-01-13: atoll remove the milliseconds and this is wrong
 					// durationInMilliSeconds = atoll(duration.c_str()) * 1000;
@@ -5166,7 +5166,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                audioCodecName = streamRoot.get(field, "XXX").asString();
+                audioCodecName = JSONUtils::asString(streamRoot, field, "");
 
                 field = "sample_rate";
                 if (!JSONUtils::isMetadataPresent(streamRoot, field))
@@ -5184,7 +5184,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                         + ", Field: " + field;
                     throw runtime_error(errorMessage);
                 }
-                audioSampleRate = stol(streamRoot.get(field, "XXX").asString());
+                audioSampleRate = stol(JSONUtils::asString(streamRoot, field, ""));
 
                 field = "channels";
                 if (!JSONUtils::isMetadataPresent(streamRoot, field))
@@ -5218,12 +5218,12 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
                     // throw runtime_error(errorMessage);
                 }
 				else
-					audioBitRate = stol(streamRoot.get(field, "XXX").asString());
+					audioBitRate = stol(JSONUtils::asString(streamRoot, field, ""));
 
 				field = "duration";
 				if (JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string duration = streamRoot.get(field, "0").asString();
+					string duration = JSONUtils::asString(streamRoot, field, "0");
 
 					// 2020-01-13: atoll remove the milliseconds and this is wrong
 					// durationInMilliSeconds = atoll(duration.c_str()) * 1000;
@@ -5239,7 +5239,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 					field = "language";
 					if (JSONUtils::isMetadataPresent(streamRoot[tagsField], field))
 					{
-						language = streamRoot[tagsField].get(field, "").asString();
+						language = JSONUtils::asString(streamRoot[tagsField], field, "");
 					}
                 }
 
@@ -5284,7 +5284,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         }
         else
         {
-            string duration = formatRoot.get(field, "XXX").asString();
+            string duration = JSONUtils::asString(formatRoot, field, "");
 
 			// 2020-01-13: atoll remove the milliseconds and this is wrong
             // durationInMilliSeconds = atoll(duration.c_str()) * 1000;
@@ -5310,7 +5310,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         }
         else
         {
-            string bit_rate = formatRoot.get(field, "XXX").asString();
+            string bit_rate = JSONUtils::asString(formatRoot, field, "");
             bitRate = atoll(bit_rate.c_str());
         }
 
@@ -8594,8 +8594,7 @@ void FFMpeg::liveRecorder(
 
 				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
-					string picturePathName = frameToBeDetectedRoot.get("picturePathName", "").
-						asString();
+					string picturePathName = JSONUtils::asString(frameToBeDetectedRoot, "picturePathName", "");
 
 					ffmpegArgumentList.push_back("-r");
 					ffmpegArgumentList.push_back("1");
@@ -8693,7 +8692,7 @@ void FFMpeg::liveRecorder(
 		{
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			string outputType = outputRoot.get("outputType", "").asString();
+			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 			Json::Value filtersRoot = Json::nullValue;
 			if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
@@ -8702,9 +8701,9 @@ void FFMpeg::liveRecorder(
 			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
 			string encodingProfileContentType =
-				outputRoot.get("encodingProfileContentType", "Video").asString();
+				JSONUtils::asString(outputRoot, "encodingProfileContentType", "Video");
 			bool isVideo = encodingProfileContentType == "Video" ? true : false;
-			string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+			string otherOutputOptions = JSONUtils::asString(outputRoot, "otherOutputOptions", "");
 
 			int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
 			int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
@@ -8725,9 +8724,8 @@ void FFMpeg::liveRecorder(
 				else
 					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
-				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-					asString();
-				string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+				string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 				int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
 				int localSegmentDurationInSeconds =
 					JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
@@ -9017,10 +9015,10 @@ void FFMpeg::liveRecorder(
 				else
 					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
-				string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
-				string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
-				string rtmpUserName = outputRoot.get("rtmpUserName", "").asString();
-				string rtmpPassword = outputRoot.get("rtmpPassword", "").asString();
+				string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
+				string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
+				string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
+				string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");
 				if (rtmpUrl == "")
 				{
 					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -9253,7 +9251,7 @@ void FFMpeg::liveRecorder(
 				else
 					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
-				string udpUrl = outputRoot.get("udpUrl", "").asString();
+				string udpUrl = JSONUtils::asString(outputRoot, "udpUrl", "");
 
 				if (udpUrl == "")
 				{
@@ -9699,11 +9697,11 @@ void FFMpeg::liveRecorder(
 		{
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			string outputType = outputRoot.get("outputType", "").asString();
+			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
-				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 				if (externalEncoder)
 					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
@@ -9907,11 +9905,11 @@ void FFMpeg::liveRecorder(
 		{
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			string outputType = outputRoot.get("outputType", "").asString();
+			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 			if (outputType == "HLS" || outputType == "DASH")
 			{
-				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 				if (externalEncoder)
 					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
@@ -10522,12 +10520,11 @@ void FFMpeg::liveProxy2(
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				string outputType = outputRoot.get("outputType", "").asString();
+				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
-					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
-						.asString();
+					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 					if (externalEncoder)
 						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
@@ -10743,12 +10740,11 @@ void FFMpeg::liveProxy2(
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				string outputType = outputRoot.get("outputType", "").asString();
+				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
-					string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
-						.asString();
+					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 					if (externalEncoder)
 						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
@@ -11134,7 +11130,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string streamSourceType = streamInputRoot.get(field, "").asString();
+		string streamSourceType = JSONUtils::asString(streamInputRoot, field, "");
 
 		int maxWidth = -1;
 		field = "maxWidth";
@@ -11144,12 +11140,12 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string url;
 		field = "url";
 		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			url = streamInputRoot.get(field, "").asString();
+			url = JSONUtils::asString(streamInputRoot, field, "");
 
 		string userAgent;
 		field = "userAgent";
 		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			userAgent = streamInputRoot.get(field, "").asString();
+			userAgent = JSONUtils::asString(streamInputRoot, field, "");
 
 		// int pushListenTimeout = -1;
 		field = "pushListenTimeout";
@@ -11159,12 +11155,12 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string otherInputOptions;
 		field = "otherInputOptions";
 		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			otherInputOptions = streamInputRoot.get(field, "").asString();
+			otherInputOptions = JSONUtils::asString(streamInputRoot, field, "");
 
 		string captureLive_videoInputFormat;
 		field = "captureVideoInputFormat";
 		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_videoInputFormat = streamInputRoot.get(field, "").asString();
+			captureLive_videoInputFormat = JSONUtils::asString(streamInputRoot, field, "");
 
 		int captureLive_frameRate = -1;
 		field = "captureFrameRate";
@@ -11571,7 +11567,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string url;
 		field = "url";
 		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			url = streamInputRoot.get(field, "").asString();
+			url = JSONUtils::asString(streamInputRoot, field, "");
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11650,7 +11646,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string vodContentType = vodInputRoot.get(field, "Video").asString();
+		string vodContentType = JSONUtils::asString(vodInputRoot, field, "Video");
 
 		vector<string> sources;
 		// int64_t durationOfInputsInMilliSeconds = 0;
@@ -11686,7 +11682,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 					throw runtime_error(errorMessage);
 				}
-				string sourcePhysicalReference = sourceRoot.get(field, "").asString();
+				string sourcePhysicalReference = JSONUtils::asString(sourceRoot, field, "");
 				sources.push_back(sourcePhysicalReference);
 
 				// field = "durationInMilliSeconds";
@@ -11698,7 +11694,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 		string otherInputOptions;
 		field = "otherInputOptions";
 		if (JSONUtils::isMetadataPresent(vodInputRoot, field))
-			otherInputOptions = vodInputRoot.get(field, "").asString();
+			otherInputOptions = JSONUtils::asString(vodInputRoot, field, "");
 
 
 		time_t utcNow;
@@ -11911,7 +11907,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 			throw runtime_error(errorMessage);
 		}
-		string mmsSourceVideoAssetPathName = countdownInputRoot.get(field, "").asString();
+		string mmsSourceVideoAssetPathName = JSONUtils::asString(countdownInputRoot, field, "");
 
 		field = "videoDurationInMilliSeconds";
 		if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
@@ -12053,7 +12049,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 				throw runtime_error(errorMessage);
 			}
-			string text = broadcastDrawTextDetailsRoot.get(field, "").asString();
+			string text = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int reloadAtFrameInterval = -1;
 			field = "reloadAtFrameInterval";
@@ -12063,17 +12059,17 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
 			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPosition_X_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
+				textPosition_X_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
 			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPosition_Y_InPixel = broadcastDrawTextDetailsRoot.get(field, "").asString();
+				textPosition_Y_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			string fontType = "";
 			field = "fontType";
 			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontType = broadcastDrawTextDetailsRoot.get(field, "").asString();
+				fontType = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int fontSize = -1;
 			field = "fontSize";
@@ -12083,7 +12079,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string fontColor = "";
 			field = "fontColor";
 			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
+				fontColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
@@ -12108,7 +12104,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string boxColor = "";
 			field = "boxColor";
 			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxColor = broadcastDrawTextDetailsRoot.get(field, "").asString();
+				boxColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
@@ -12127,7 +12123,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
-		string outputType = outputRoot.get("outputType", "").asString();
+		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 		Json::Value filtersRoot = Json::nullValue;
 		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
@@ -12137,13 +12133,12 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		if (JSONUtils::isMetadataPresent(outputRoot, "encodingProfileDetails"))
 			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
-		string otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+		string otherOutputOptions = JSONUtils::asString(outputRoot, "otherOutputOptions", "");
 
 		int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
 		int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
-		string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video")
-			.asString();
+		string encodingProfileContentType = JSONUtils::asString(outputRoot, "encodingProfileContentType", "Video");
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
 
 		if (ffmpegDrawTextFilter == "" && JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
@@ -12160,7 +12155,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 				throw runtime_error(errorMessage);
 			}
-			string text = drawTextDetailsRoot.get(field, "").asString();
+			string text = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			string textTemporaryFileName;
 			{
@@ -12185,17 +12180,17 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
 			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				textPosition_X_InPixel = drawTextDetailsRoot.get(field, "").asString();
+				textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
 			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				textPosition_Y_InPixel = drawTextDetailsRoot.get(field, "").asString();
+				textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			string fontType = "";
 			field = "fontType";
 			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				fontType = drawTextDetailsRoot.get(field, "").asString();
+				fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int fontSize = -1;
 			field = "fontSize";
@@ -12205,7 +12200,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string fontColor = "";
 			field = "fontColor";
 			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				fontColor = drawTextDetailsRoot.get(field, "").asString();
+				fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
@@ -12230,7 +12225,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string boxColor = "";
 			field = "boxColor";
 			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				boxColor = drawTextDetailsRoot.get(field, "").asString();
+				boxColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
@@ -12461,9 +12456,8 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		// output file
 		if (outputType == "HLS" || outputType == "DASH")
 		{
-			string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "")
-				.asString();
-			string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+			string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 			int segmentDurationInSeconds = JSONUtils::asInt(outputRoot,
 				"segmentDurationInSeconds", 10);
 			int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
@@ -12560,10 +12554,10 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 		else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
 		{
-			string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
-			string rtmpStreamName = outputRoot.get("rtmpStreamName", "").asString();
-			string rtmpUserName = outputRoot.get("rtmpUserName", "").asString();
-			string rtmpPassword = outputRoot.get("rtmpPassword", "").asString();
+			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
+			string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
+			string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
+			string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");
 
 			if (rtmpUrl == "")
 			{
@@ -12598,7 +12592,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 		else if (outputType == "UDP_Stream")
 		{
-			string udpUrl = outputRoot.get("udpUrl", "").asString();
+			string udpUrl = JSONUtils::asString(outputRoot, "udpUrl", "");
 
 			if (udpUrl == "")
 			{
@@ -12840,7 +12834,7 @@ void FFMpeg::liveGrid(
 		for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 		{
 			Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
-			string inputChannelURL = inputChannelRoot.get("inputChannelURL", "").asString();
+			string inputChannelURL = JSONUtils::asString(inputChannelRoot, "inputChannelURL", "");
 
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(inputChannelURL);
@@ -13274,7 +13268,7 @@ void FFMpeg::liveGrid(
 					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
 
 					Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
-					string inputChannelName = inputChannelRoot.get("inputConfigurationLabel", "").asString();
+					string inputChannelName = JSONUtils::asString(inputChannelRoot, "inputConfigurationLabel", "");
 
 					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
 						+ inputChannelName + "\",NAME=\"" + inputChannelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
@@ -14978,7 +14972,7 @@ string FFMpeg::getFilter(
 
 		throw runtime_error(errorMessage);
 	}
-	string type = filterRoot.get("type", "").asString();
+	string type = JSONUtils::asString(filterRoot, "type", "");
 
 	if (type == "blackdetect")
 	{

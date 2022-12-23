@@ -32,12 +32,11 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 	_logger = logger;
 
-	_keyPairId =  _configuration["aws"].get("keyPairId", "").asString();
+	_keyPairId =  JSONUtils::asString(_configuration["aws"], "keyPairId", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->keyPairId: " + _keyPairId
 	);
-	_privateKeyPEMPathName =  _configuration["aws"]
-		.get("privateKeyPEMPathName", "").asString();
+	_privateKeyPEMPathName =  JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName
 	);
@@ -48,15 +47,15 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 
     Json::Value api = _configuration["api"];
 
-    _deliveryProtocol  = api["delivery"].get("deliveryProtocol", "XXX").asString();
+    _deliveryProtocol  = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
     );
-    _deliveryHost_authorizationThroughParameter  = api["delivery"].get("deliveryHost_authorizationThroughParameter", "").asString();
+    _deliveryHost_authorizationThroughParameter  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
     );
-    _deliveryHost_authorizationThroughPath  = api["delivery"].get("deliveryHost_authorizationThroughPath", "").asString();
+    _deliveryHost_authorizationThroughPath  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath 
     );
@@ -189,7 +188,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				throw runtime_error(errorMessage);
 			}
 			string cloudFrontHostName
-				= (_vodCloudFrontHostNamesRoot[mmsPartitionNumber]).asString();
+				= JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			AWSSigner awsSigner(_logger);
 			string signedPlayURL = awsSigner.calculateSignedURL(
@@ -229,7 +228,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				throw runtime_error(errorMessage);
 			}
 			string cloudFrontHostName
-				= (_vodCloudFrontHostNamesRoot[mmsPartitionNumber]).asString();
+				= JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
 		}
@@ -390,7 +389,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				if (!JSONUtils::isMetadataPresent(outputRoot, field))
 					outputType = "HLS";
 				else
-					outputType = outputRoot.get(field, "HLS").asString();
+					outputType = JSONUtils::asString(outputRoot, field, "HLS");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
@@ -402,7 +401,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					|| outputType == "AWS_CHANNEL")
 				{
 					field = "PlayUrl";
-					playURL = outputRoot.get(field, "").asString();
+					playURL = JSONUtils::asString(outputRoot, field, "");
 					if (playURL == "")
 						continue;
 				}
@@ -569,7 +568,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 					throw runtime_error(errorMessage);
 				}
-				string configurationLabel = ingestionJobRoot.get(field, "").asString();
+				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
@@ -625,7 +624,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (!JSONUtils::isMetadataPresent(outputRoot, field))
 						outputType = "HLS";
 					else
-						outputType = outputRoot.get(field, "HLS").asString();
+						outputType = JSONUtils::asString(outputRoot, field, "HLS");
 
 					if (outputType == "HLS" || outputType == "DASH")
 					{
@@ -637,7 +636,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						|| outputType == "AWS_CHANNEL")
 					{
 						field = "PlayUrl";
-						playURL = outputRoot.get(field, "").asString();
+						playURL = JSONUtils::asString(outputRoot, field, "");
 						if (playURL == "")
 							continue;
 					}
@@ -845,7 +844,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 					throw runtime_error(errorMessage);
 				}
-				string configurationLabel = ingestionJobRoot.get(field, "").asString();
+				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,

@@ -8157,7 +8157,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 				int					sscanfReturn;
 
 				field = "timestamp";
-				string timestamp = youTubeLiveURLRoot.get(field, "").asString();
+				string timestamp = JSONUtils::asString(youTubeLiveURLRoot, field, "");
 
 				if ((sscanfReturn = sscanf (timestamp.c_str(),
 					"%4lu-%2lu-%2lu %2lu:%2lu:%2lu",
@@ -8197,7 +8197,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 			hoursFromLastCalculatedURL = (tNow - tLastCalculatedURLTime) / 3600;
 
 			field = "youTubeURL";
-			lastCalculatedURL = youTubeLiveURLRoot.get(field, "").asString();
+			lastCalculatedURL = JSONUtils::asString(youTubeLiveURLRoot, field, "");
 		}
 
 		return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);

@@ -69,8 +69,8 @@ int main(int argc, char** argv)
     
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
-		string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
-		string logType =  configuration["log"]["api"].get("type", "").asString();
+		string logPathName =  JSONUtils::asString(configuration["log"]["api"], "pathName", "");
+		string logType =  JSONUtils::asString(configuration["log"]["api"], "type", "");
 		bool stdout =  JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
     
 		std::vector<spdlog::sink_ptr> sinks;
@@ -114,14 +114,14 @@ int main(int argc, char** argv)
 		// trigger flush if the log severity is error or higher
 		logger->flush_on(spdlog::level::trace);
     
-		string logLevel =  configuration["log"]["api"].get("level", "XXX").asString();
+		string logLevel =  JSONUtils::asString(configuration["log"]["api"], "level", "");
 		if (logLevel == "debug")
 			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "info")
 			spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "err")
 			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-		string pattern =  configuration["log"]["api"].get("pattern", "XXX").asString();
+		string pattern =  JSONUtils::asString(configuration["log"]["api"], "pattern", "");
 		spdlog::set_pattern(pattern);
 
 		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -263,7 +263,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	_mmsStorage = mmsStorage;
 	_mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 
-    string encodingPriority =  _configuration["api"]["workspaceDefaults"].get("encodingPriority", "low").asString();
+    string encodingPriority =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPriority", "low");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->workspaceDefaults->encodingPriority: " + encodingPriority
     );
@@ -285,7 +285,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		+ ", database->maxPageSize: " + to_string(_maxPageSize)
 	);
 
-    string encodingPeriod =  _configuration["api"]["workspaceDefaults"].get("encodingPeriod", "daily").asString();
+    string encodingPeriod =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPeriod", "daily");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->workspaceDefaults->encodingPeriod: " + encodingPeriod
     );
@@ -310,7 +310,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	{
 		Json::Value sharedEncodersPoolRoot = _configuration["api"]["sharedEncodersPool"];
 
-		_sharedEncodersPoolLabel = sharedEncodersPoolRoot.get("label", "").asString();
+		_sharedEncodersPoolLabel = JSONUtils::asString(sharedEncodersPoolRoot, "label", "");
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", api->sharedEncodersPool->label: " + _sharedEncodersPoolLabel
 		);
@@ -318,11 +318,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
 	}
 
-    _apiProtocol =  _configuration["api"].get("protocol", "").asString();
+    _apiProtocol =  JSONUtils::asString(_configuration["api"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->protocol: " + _apiProtocol
     );
-    _apiHostname =  _configuration["api"].get("hostname", "").asString();
+    _apiHostname =  JSONUtils::asString(_configuration["api"], "hostname", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->hostname: " + _apiHostname
     );
@@ -330,7 +330,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_apiPort)
     );
-    _apiVersion =  _configuration["api"].get("version", "").asString();
+    _apiVersion =  JSONUtils::asString(_configuration["api"], "version", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->version: " + _apiVersion
     );
@@ -352,7 +352,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
     );
-    _progressURI  = api["binary"].get("progressURI", "XXX").asString();
+    _progressURI  = JSONUtils::asString(api["binary"], "progressURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressURI: " + _progressURI
     );
@@ -372,15 +372,15 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
         + ", api->delivery->defaultRedirect: " + to_string(_defaultRedirect)
     );
     
-    _deliveryProtocol  = api["delivery"].get("deliveryProtocol", "XXX").asString();
+    _deliveryProtocol  = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
     );
-    _deliveryHost_authorizationThroughParameter  = api["delivery"].get("deliveryHost_authorizationThroughParameter", "").asString();
+    _deliveryHost_authorizationThroughParameter  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
     );
-    _deliveryHost_authorizationThroughPath  = api["delivery"].get("deliveryHost_authorizationThroughPath", "").asString();
+    _deliveryHost_authorizationThroughPath  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
     _logger->info(__FILEREF__ + "Configuration item"
 		+ ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath
 	);
@@ -389,27 +389,27 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->enabled: " + to_string(_ldapEnabled)
     );
-    _ldapURL  = api["activeDirectory"].get("ldapURL", "XXX").asString();
+    _ldapURL  = JSONUtils::asString(api["activeDirectory"], "ldapURL", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->ldapURL: " + _ldapURL
     );
-    _ldapCertificatePathName  = api["activeDirectory"].get("certificatePathName", "XXX").asString();
+    _ldapCertificatePathName  = JSONUtils::asString(api["activeDirectory"], "certificatePathName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->certificatePathName: " + _ldapCertificatePathName
     );
-    _ldapManagerUserName  = api["activeDirectory"].get("managerUserName", "XXX").asString();
+    _ldapManagerUserName  = JSONUtils::asString(api["activeDirectory"], "managerUserName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->managerUserName: " + _ldapManagerUserName
     );
-    _ldapManagerPassword  = api["activeDirectory"].get("managerPassword", "XXX").asString();
+    _ldapManagerPassword  = JSONUtils::asString(api["activeDirectory"], "managerPassword", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->managerPassword: " + _ldapManagerPassword
     );
-    _ldapBaseDn  = api["activeDirectory"].get("baseDn", "XXX").asString();
+    _ldapBaseDn  = JSONUtils::asString(api["activeDirectory"], "baseDn", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->baseDn: " + _ldapBaseDn
     );
-	_ldapDefaultWorkspaceKeys	= api["activeDirectory"].get("defaultWorkspaceKeys", 0).asString();
+	_ldapDefaultWorkspaceKeys	= JSONUtils::asString(api["activeDirectory"], "defaultWorkspaceKeys", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", api->activeDirectory->defaultWorkspaceKeys: " + _ldapDefaultWorkspaceKeys
 	);
@@ -421,7 +421,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	_savingGEOUserInfo = JSONUtils::asBool(_configuration["mms"]["geoService"], "savingGEOUserInfo", false);
 	if (_savingGEOUserInfo)
 	{
-		_geoServiceURL = _configuration["mms"]["geoService"].get("geoServiceURL", "").asString();
+		_geoServiceURL = JSONUtils::asString(_configuration["mms"]["geoService"], "geoServiceURL", "");
 		_geoServiceTimeoutInSeconds = JSONUtils::asInt(_configuration["mms"]["geoService"], "geoServiceTimeoutInSeconds", 10);
 	}
 
@@ -435,11 +435,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
 	*/
-    _ffmpegEncoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+    _ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
     );
-    _ffmpegEncoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+    _ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPassword: " + "..."
     );
@@ -447,11 +447,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
     );
-    _ffmpegEncoderKillEncodingURI = _configuration["ffmpeg"].get("encoderKillEncodingURI", "").asString();
+    _ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
     );
-    _ffmpegEncoderChangeLiveProxyPlaylistURI = _configuration["ffmpeg"].get("encoderChangeLiveProxyPlaylistURI", "").asString();
+    _ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderChangeLiveProxyPlaylistURI: " + _ffmpegEncoderChangeLiveProxyPlaylistURI
     );
@@ -461,12 +461,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		+ ", mms->locks->maxSecondsToWaitAPIIngestionLock: " + to_string(_maxSecondsToWaitAPIIngestionLock)
 	);
 
-	_keyPairId =  _configuration["aws"].get("keyPairId", "").asString();
+	_keyPairId =  JSONUtils::asString(_configuration["aws"], "keyPairId", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->keyPairId: " + _keyPairId
 	);
-	_privateKeyPEMPathName =  _configuration["aws"]
-		.get("privateKeyPEMPathName", "").asString();
+	_privateKeyPEMPathName =  JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName
 	);
@@ -2792,16 +2791,16 @@ void API::createBulkOfDeliveryAuthorization(
 					int64_t encodingProfileKey = JSONUtils::asInt64(mediaItemKeyRoot,
 						field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = mediaItemKeyRoot.get(field, "").asString();
+					string encodingProfileLabel = JSONUtils::asString(mediaItemKeyRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = mediaItemKeyRoot.get(field, "").asString();
+					string deliveryType = JSONUtils::asString(mediaItemKeyRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic  = JSONUtils::asBool(mediaItemKeyRoot, field, false);
 
 					field = "userId";
-					string userId = mediaItemKeyRoot.get(field, "").asString();
+					string userId = JSONUtils::asString(mediaItemKeyRoot, field, "");
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2888,20 +2887,20 @@ void API::createBulkOfDeliveryAuthorization(
 					Json::Value uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
 					field = "uniqueName";
-					string uniqueName = uniqueNameRoot.get(field, "").asString();
+					string uniqueName = JSONUtils::asString(uniqueNameRoot, field, "");
 					field = "encodingProfileKey";
 					int64_t encodingProfileKey = JSONUtils::asInt64(uniqueNameRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = uniqueNameRoot.get(field, "").asString();
+					string encodingProfileLabel = JSONUtils::asString(uniqueNameRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = uniqueNameRoot.get(field, "").asString();
+					string deliveryType = JSONUtils::asString(uniqueNameRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic  = JSONUtils::asBool(uniqueNameRoot, field, false);
 
 					field = "userId";
-					string userId = uniqueNameRoot.get(field, "").asString();
+					string userId = JSONUtils::asString(uniqueNameRoot, field, "");
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -2994,13 +2993,13 @@ void API::createBulkOfDeliveryAuthorization(
 					int64_t deliveryCode = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);
 
 					field = "deliveryType";
-					string deliveryType = liveIngestionJobKeyRoot.get(field, "").asString();
+					string deliveryType = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic  = JSONUtils::asBool(liveIngestionJobKeyRoot, field, false);
 
 					field = "userId";
-					string userId = liveIngestionJobKeyRoot.get(field, "").asString();
+					string userId = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -3728,10 +3727,10 @@ void API::createDeliveryCDN77Authorization(
 			Json::Value liveURLDataRoot = JSONUtils::toJson(-1, -1, liveURLData);
 
 			string field = "deliveryURL";
-			cdn77DeliveryURL = liveURLDataRoot.get(field, "").asString();
+			cdn77DeliveryURL = JSONUtils::asString(liveURLDataRoot, field, "");
 
 			field = "cdn77SecureToken";
-			cdn77SecureToken = liveURLDataRoot.get(field, "").asString();
+			cdn77SecureToken = JSONUtils::asString(liveURLDataRoot, field, "");
 		}
 
 		string protocolPart;
@@ -4025,9 +4024,9 @@ void API::mmsSupport(
 			}
 		}
 
-		userEmailAddress = metadataRoot.get("UserEmailAddress", "").asString();
-		subject = metadataRoot.get("Subject", "").asString();
-		text = metadataRoot.get("Text", "").asString();
+		userEmailAddress = JSONUtils::asString(metadataRoot, "UserEmailAddress", "");
+		subject = JSONUtils::asString(metadataRoot, "Subject", "");
+		text = JSONUtils::asString(metadataRoot, "Text", "");
 
         try
         {

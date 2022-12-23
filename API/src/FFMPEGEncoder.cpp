@@ -45,8 +45,8 @@ int main(int argc, char** argv)
 
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
 
-		string logPathName =  configuration["log"]["encoder"].get("pathName", "").asString();
-		string logType =  configuration["log"]["encoder"].get("type", "").asString();
+		string logPathName =  JSONUtils::asString(configuration["log"]["encoder"], "pathName", "");
+		string logType =  JSONUtils::asString(configuration["log"]["encoder"], "type", "");
 		bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
 
 		std::vector<spdlog::sink_ptr> sinks;
@@ -90,14 +90,14 @@ int main(int argc, char** argv)
 		// trigger flush if the log severity is error or higher
 		logger->flush_on(spdlog::level::trace);
     
-		string logLevel =  configuration["log"]["encoder"].get("level", "err").asString();
+		string logLevel =  JSONUtils::asString(configuration["log"]["encoder"], "level", "err");
 		if (logLevel == "debug")
 			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "info")
 			spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "err")
 			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-		string pattern =  configuration["log"]["encoder"].get("pattern", "XXX").asString();
+		string pattern =  JSONUtils::asString(configuration["log"]["encoder"], "pattern", "");
 		spdlog::set_pattern(pattern);
 
 		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -375,13 +375,13 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: " + to_string(_liveRecorderVirtualVODIngestionInSeconds)
     );
-    _liveRecorderVirtualVODRetention = _configuration["ffmpeg"].get("liveRecorderVirtualVODRetention", "15m").asString();
+    _liveRecorderVirtualVODRetention = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderVirtualVODRetention", "15m");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveRecorderVirtualVODRetention: " + _liveRecorderVirtualVODRetention
     );
 
-	_tvChannelConfigurationDirectory = _configuration["ffmpeg"].
-		get("tvChannelConfigurationDirectory", "").asString();
+	_tvChannelConfigurationDirectory = JSONUtils::asString(_configuration["ffmpeg"],
+		"tvChannelConfigurationDirectory", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
 	);
@@ -4064,7 +4064,7 @@ void FFMPEGEncoder::encodeContentThread(
         int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
 				"sourceDurationInMilliSecs", -1);
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
-				encodingParametersRoot.get("contentType", "").asString());
+				JSONUtils::asString(encodingParametersRoot, "contentType", ""));
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
 
 		Json::Value videoTracksRoot;
@@ -4087,7 +4087,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string sourceFileExtension = sourceToBeEncodedRoot.get(field, "").asString();
+		string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 		if (externalEncoder)
 		{
@@ -4102,7 +4102,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -4135,7 +4135,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = sourceToBeEncodedRoot.get(field, "").asString();
+			string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
@@ -4148,7 +4148,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -4191,7 +4191,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
@@ -4204,7 +4204,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = sourceToBeEncodedRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 		}
 
         _logger->info(__FILEREF__ + "encoding content..."
@@ -4608,8 +4608,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-        string imagePosition_X_InPixel = ingestedParametersRoot.get("imagePosition_X_InPixel", "0").asString();
-        string imagePosition_Y_InPixel = ingestedParametersRoot.get("imagePosition_Y_InPixel", "0").asString();
+        string imagePosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_X_InPixel", "0");
+        string imagePosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_Y_InPixel", "0");
 
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"videoDurationInMilliSeconds", -1);
@@ -4629,7 +4629,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoFileExtension = encodingParametersRoot.get(field, "").asString();
+			sourceVideoFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sourceVideoAssetPathName;
@@ -4649,7 +4649,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceVideoAssetPathName.find_last_of("/");
@@ -4682,7 +4682,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -4715,7 +4715,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsSourceImageAssetPathName = encodingParametersRoot.get(field, "").asString();
+			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "sourceVideoPhysicalDeliveryURL";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -4728,7 +4728,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourceVideoPhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+			string sourceVideoPhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			sourceVideoAssetPathName = downloadMediaFromMMS(
 				ingestionJobKey,
@@ -4751,7 +4751,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -4764,7 +4764,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "mmsSourceImageAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -4777,7 +4777,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsSourceImageAssetPathName = encodingParametersRoot.get(field, "").asString();
+			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -4820,7 +4820,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add overlayImageOnVideo from external transcoder)"
 			;
 
@@ -5075,7 +5075,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -5094,7 +5094,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -5127,7 +5127,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -5160,7 +5160,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
 				ingestionJobKey,
@@ -5183,7 +5183,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -5196,23 +5196,23 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		Json::Value drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
-		string text = drawTextDetailsRoot.get("text", "").asString();
+		string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
         int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
-		string textPosition_X_InPixel = drawTextDetailsRoot.get("textPosition_X_InPixel", "").asString();
-		string textPosition_Y_InPixel = drawTextDetailsRoot.get("textPosition_Y_InPixel", "").asString();
-		string fontType = drawTextDetailsRoot.get("fontType", "").asString();
+		string textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_X_InPixel", "");
+		string textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_Y_InPixel", "");
+		string fontType = JSONUtils::asString(drawTextDetailsRoot, "fontType", "");
         int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
-		string fontColor = drawTextDetailsRoot.get("fontColor", "").asString();
+		string fontColor = JSONUtils::asString(drawTextDetailsRoot, "fontColor", "");
 		int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
 			"textPercentageOpacity", -1);
 		int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
 		int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
 		bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
-		string boxColor = drawTextDetailsRoot.get("boxColor", "").asString();
+		string boxColor = JSONUtils::asString(drawTextDetailsRoot, "boxColor", "");
 		int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, "boxPercentageOpacity", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -5264,7 +5264,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add overlayTextOnVideo from external transcoder)"
 			;
 
@@ -5504,7 +5504,7 @@ void FFMPEGEncoder::generateFramesThread(
 
         double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
         int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
-        string videoFilter = encodingParametersRoot.get("videoFilter", "").asString();
+        string videoFilter = JSONUtils::asString(encodingParametersRoot, "videoFilter", "");
         int periodInSeconds = JSONUtils::asInt(encodingParametersRoot, "periodInSeconds", -1);
         bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
         int imageWidth = JSONUtils::asInt(encodingParametersRoot, "imageWidth", -1);
@@ -5522,7 +5522,7 @@ void FFMPEGEncoder::generateFramesThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string sourceFileExtension = encodingParametersRoot.get(field, "").asString();
+		string sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 
 		string sourceAssetPathName;
 
@@ -5539,12 +5539,12 @@ void FFMPEGEncoder::generateFramesThread(
 
 				throw runtime_error(errorMessage);
 			}
-			imagesDirectory = encodingParametersRoot.get(field, "").asString();
+			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
 
-			string sourcePhysicalDeliveryURL = encodingParametersRoot.
-				get("sourcePhysicalDeliveryURL", "").asString();
-			string sourceTranscoderStagingAssetPathName = encodingParametersRoot.
-				get("sourceTranscoderStagingAssetPathName", "").asString();
+			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot,
+				"sourcePhysicalDeliveryURL", "");
+			string sourceTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot,
+				"sourceTranscoderStagingAssetPathName", "");
 
 			{
 				string sourceTranscoderStagingAssetDirectory;
@@ -5596,7 +5596,7 @@ void FFMPEGEncoder::generateFramesThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "nfsImagesDirectory";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -5609,7 +5609,7 @@ void FFMPEGEncoder::generateFramesThread(
 
 				throw runtime_error(errorMessage);
 			}
-			imagesDirectory = encodingParametersRoot.get(field, "").asString();
+			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string imageBaseFileName = to_string(ingestionJobKey);
@@ -5657,7 +5657,7 @@ void FFMPEGEncoder::generateFramesThread(
 						&& 0 == generatedFrameFileName.compare(0, imageBaseFileName.size(), imageBaseFileName)))
 						continue;
 
-					string generateFrameTitle = ingestedParametersRoot.get("Title", "").asString();
+					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "Title", "");
 
 					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
 
@@ -5817,7 +5817,7 @@ void FFMPEGEncoder::generateFramesThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
+				string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				int64_t userKey;
 				string apiKey;
@@ -5836,7 +5836,7 @@ void FFMPEGEncoder::generateFramesThread(
 							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 							field = "apiKey";
-							string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 						}
 					}
@@ -5919,7 +5919,7 @@ void FFMPEGEncoder::generateFramesThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
+					string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
 
 					string prefix = "End_";
 					if (ingestionJobStatus.size() >= prefix.size()
@@ -6232,7 +6232,7 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
@@ -6250,7 +6250,7 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sResponse = MMSCURL::httpPostString(
@@ -6323,7 +6323,7 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		mmsBinaryURL =
@@ -6407,7 +6407,7 @@ void FFMPEGEncoder::slideShowThread(
 		string frameRateMode = "vfr";
 		field = "frameRateMode";
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			frameRateMode = ingestedParametersRoot.get(field, "vfr").asString();
+			frameRateMode = JSONUtils::asString(ingestedParametersRoot, field, "vfr");
 
 		vector<string> imagesPathNames;
 		{
@@ -6429,7 +6429,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceFileExtension = imageRoot.get(field, "").asString();
+					string sourceFileExtension = JSONUtils::asString(imageRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
@@ -6442,7 +6442,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourcePhysicalDeliveryURL = imageRoot.get(field, "").asString();
+					string sourcePhysicalDeliveryURL = JSONUtils::asString(imageRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
@@ -6455,7 +6455,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceTranscoderStagingAssetPathName = imageRoot.get(field, "").asString();
+					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(imageRoot, field, "");
 
 					{
 						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
@@ -6488,7 +6488,7 @@ void FFMPEGEncoder::slideShowThread(
 				}
 				else
 				{
-					imagesPathNames.push_back(imageRoot.get("sourceAssetPathName", "").asString());
+					imagesPathNames.push_back(JSONUtils::asString(imageRoot, "sourceAssetPathName", ""));
 				}
 			}
 		}
@@ -6513,7 +6513,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceFileExtension = audioRoot.get(field, "").asString();
+					string sourceFileExtension = JSONUtils::asString(audioRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
@@ -6526,7 +6526,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourcePhysicalDeliveryURL = audioRoot.get(field, "").asString();
+					string sourcePhysicalDeliveryURL = JSONUtils::asString(audioRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
@@ -6539,7 +6539,7 @@ void FFMPEGEncoder::slideShowThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceTranscoderStagingAssetPathName = audioRoot.get(field, "").asString();
+					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(audioRoot, field, "");
 
 					{
 						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
@@ -6572,7 +6572,7 @@ void FFMPEGEncoder::slideShowThread(
 				}
 				else
 				{
-					audiosPathNames.push_back(audioRoot.get("sourceAssetPathName", "").asString());
+					audiosPathNames.push_back(JSONUtils::asString(audioRoot, "sourceAssetPathName", ""));
 				}
 			}
 		}
@@ -6591,7 +6591,7 @@ void FFMPEGEncoder::slideShowThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -6626,7 +6626,7 @@ void FFMPEGEncoder::slideShowThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
@@ -6682,10 +6682,10 @@ void FFMPEGEncoder::slideShowThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string targetFileFormat = encodingParametersRoot.get(field, "").asString();
+			string targetFileFormat = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add slideShow from external transcoder)"
 			;
 
@@ -6920,7 +6920,7 @@ void FFMPEGEncoder::videoSpeedThread(
 		if (!JSONUtils::isMetadataPresent(ingestedParametersRoot, "speedType"))
 			videoSpeedType = MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown);
 		else
-			videoSpeedType = ingestedParametersRoot.get("speedType", "SlowDown").asString();
+			videoSpeedType = JSONUtils::asString(ingestedParametersRoot, "speedType", "SlowDown");
 
         int videoSpeedSize = JSONUtils::asInt(ingestedParametersRoot, "videoSpeedSize", 3);
         
@@ -6937,7 +6937,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -6956,7 +6956,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -6989,7 +6989,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -7022,7 +7022,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
 				ingestionJobKey,
@@ -7045,7 +7045,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -7058,7 +7058,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		encoding->_ffmpeg->videoSpeed(
@@ -7098,7 +7098,7 @@ void FFMPEGEncoder::videoSpeedThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add videoSpeed from external transcoder)"
 			;
 
@@ -7349,7 +7349,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string overlaySourceFileExtension;
@@ -7365,7 +7365,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			overlaySourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			overlaySourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string mainSourceAssetPathName;
@@ -7386,7 +7386,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 					throw runtime_error(errorMessage);
 				}
-				mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
@@ -7419,7 +7419,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string mainSourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -7442,7 +7442,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 					throw runtime_error(errorMessage);
 				}
-				overlaySourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = overlaySourceAssetPathName.find_last_of("/");
@@ -7475,7 +7475,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string overlaySourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string overlaySourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				overlaySourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -7497,7 +7497,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -7532,7 +7532,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "overlaySourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -7545,7 +7545,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			overlaySourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -7558,7 +7558,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
@@ -7567,14 +7567,14 @@ void FFMPEGEncoder::pictureInPictureThread(
 			"overlaySourceDurationInMilliSeconds", 0);
 		bool soundOfMain = JSONUtils::asBool(encodingParametersRoot, "soundOfMain", false);
 
-        string overlayPosition_X_InPixel = ingestedParametersRoot.get(
-			"overlayPosition_X_InPixel", "0").asString();
-        string overlayPosition_Y_InPixel = ingestedParametersRoot.get(
-			"overlayPosition_Y_InPixel", "0").asString();
-        string overlay_Width_InPixel = ingestedParametersRoot.get(
-			"overlay_Width_InPixel", "100").asString();
-        string overlay_Height_InPixel = ingestedParametersRoot.get(
-			"overlay_Height_InPixel", "100").asString();
+        string overlayPosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot,
+			"overlayPosition_X_InPixel", "0");
+        string overlayPosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot,
+			"overlayPosition_Y_InPixel", "0");
+        string overlay_Width_InPixel = JSONUtils::asString(ingestedParametersRoot,
+			"overlay_Width_InPixel", "100");
+        string overlay_Height_InPixel = JSONUtils::asString(ingestedParametersRoot,
+			"overlay_Height_InPixel", "100");
 
 		encoding->_ffmpeg->pictureInPicture(
 			mainSourceAssetPathName,
@@ -7631,7 +7631,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add pictureInPicture from external transcoder)"
 			;
 
@@ -7882,7 +7882,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			introSourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			introSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string mainSourceFileExtension;
@@ -7898,7 +7898,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string outroSourceFileExtension;
@@ -7914,7 +7914,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			outroSourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			outroSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string introSourceAssetPathName;
@@ -7936,7 +7936,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				introSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = introSourceAssetPathName.find_last_of("/");
@@ -7969,7 +7969,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string introSourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string introSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				introSourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -7992,7 +7992,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
@@ -8025,7 +8025,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string mainSourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -8048,7 +8048,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				outroSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = outroSourceAssetPathName.find_last_of("/");
@@ -8081,7 +8081,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string outroSourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string outroSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				outroSourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -8103,7 +8103,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -8138,7 +8138,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			introSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "mainSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -8151,7 +8151,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "outroSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -8164,7 +8164,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			outroSourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -8177,7 +8177,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		int64_t introSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
@@ -8255,7 +8255,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add introOutroOverlay from external transcoder)"
 			;
 
@@ -8506,7 +8506,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = encodingParametersRoot.get(field, "").asString();
+			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -8526,7 +8526,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 					throw runtime_error(errorMessage);
 				}
-				sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+				sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -8559,7 +8559,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 					throw runtime_error(errorMessage);
 				}
-				string sourcePhysicalDeliveryURL = encodingParametersRoot.get(field, "").asString();
+				string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				sourceAssetPathName = downloadMediaFromMMS(
 					ingestionJobKey,
@@ -8581,7 +8581,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -8616,7 +8616,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = encodingParametersRoot.get(field, "").asString();
+			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -8629,7 +8629,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = encodingParametersRoot.get(field, "").asString();
+			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		encoding->_ffmpeg->cutFrameAccurateWithEncoding(
@@ -8667,7 +8667,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 			}
 
 			string workflowLabel =
-				ingestedParametersRoot.get("Title", "").asString()
+				JSONUtils::asString(ingestedParametersRoot, "Title", "")
 				+ " (add cutFrameAccurate from external transcoder)"
 			;
 
@@ -8918,13 +8918,13 @@ void FFMPEGEncoder::liveRecorderThread(
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
         liveRecording->_chunksTranscoderStagingContentsPath =
-			encodingParametersRoot.get("chunksTranscoderStagingContentsPath", "").asString();
-		string userAgent = ingestedParametersRoot.get("UserAgent", "").asString();
+			JSONUtils::asString(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
+		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
 
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp
-        liveRecording->_chunksNFSStagingContentsPath = encodingParametersRoot.get("chunksNFSStagingContentsPath", "").asString();
+        liveRecording->_chunksNFSStagingContentsPath = JSONUtils::asString(encodingParametersRoot, "chunksNFSStagingContentsPath", "");
 		// 2022-08-09: the chunksNFSStagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
 		// 		into the shared working area.
 		// 		In case of an external encoder, the external working area does not have this directory
@@ -8947,15 +8947,15 @@ void FFMPEGEncoder::liveRecorderThread(
 		}
 		*/
 
-        liveRecording->_segmentListFileName = encodingParametersRoot.get("segmentListFileName", "").asString();
-        liveRecording->_recordedFileNamePrefix = encodingParametersRoot.get("recordedFileNamePrefix", "").asString();
+        liveRecording->_segmentListFileName = JSONUtils::asString(encodingParametersRoot, "segmentListFileName", "");
+        liveRecording->_recordedFileNamePrefix = JSONUtils::asString(encodingParametersRoot, "recordedFileNamePrefix", "");
 		// see the comments in EncoderVideoAudioProxy.cpp
 		if (liveRecording->_externalEncoder)
 			liveRecording->_virtualVODStagingContentsPath =
-				encodingParametersRoot.get("virtualVODTranscoderStagingContentsPath", "").asString();
+				JSONUtils::asString(encodingParametersRoot, "virtualVODTranscoderStagingContentsPath", "");
 		else
 			liveRecording->_virtualVODStagingContentsPath =
-				encodingParametersRoot.get("virtualVODStagingContentsPath", "").asString();
+				JSONUtils::asString(encodingParametersRoot, "virtualVODStagingContentsPath", "");
         liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
 			JSONUtils::asInt64(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
 
@@ -8986,7 +8986,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
+			string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
 			utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
 
 			field = "end";
@@ -9000,7 +9000,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
+			string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
 			utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
 			field = "autoRenew";
@@ -9020,7 +9020,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
 
 			field = "OutputFileFormat";
-			outputFileFormat = (liveRecording->_ingestedParametersRoot).get(field, "ts").asString();
+			outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
 		}
 
 		liveRecording->_monitoringEnabled = JSONUtils::asBool(
@@ -9028,14 +9028,14 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
 			liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 
-		liveRecording->_channelLabel = liveRecording->_ingestedParametersRoot.get(
-			"ConfigurationLabel", "").asString();
+		liveRecording->_channelLabel = JSONUtils::asString(liveRecording->_ingestedParametersRoot,
+			"ConfigurationLabel", "");
 
 		liveRecording->_lastRecordedAssetFileName			= "";
 		liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
 
-        liveRecording->_streamSourceType = metadataRoot["encodingParametersRoot"].get(
-			"streamSourceType", "IP_PULL").asString();
+        liveRecording->_streamSourceType = JSONUtils::asString(metadataRoot["encodingParametersRoot"],
+			"streamSourceType", "IP_PULL");
 		int ipMMSAsServer_listenTimeoutInSeconds =
 			metadataRoot["encodingParametersRoot"]
 			.get("ActAsServerListenTimeout", 300).asInt();
@@ -9055,8 +9055,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				metadataRoot["encodingParametersRoot"],
 				"captureVideoDeviceNumber", -1);
 			captureLive_videoInputFormat =
-				metadataRoot["encodingParametersRoot"].
-				get("captureVideoInputFormat", "").asString();
+				JSONUtils::asString(metadataRoot["encodingParametersRoot"],
+				"captureVideoInputFormat", "");
 			captureLive_frameRate = JSONUtils::asInt(
 				metadataRoot["encodingParametersRoot"], "captureFrameRate", -1);
 			captureLive_width = JSONUtils::asInt(
@@ -9075,8 +9075,7 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		if (liveRecording->_streamSourceType == "TV")
 		{
-			tvType = metadataRoot["encodingParametersRoot"].
-				get("tvType", "").asString();
+			tvType = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvType", "");
 			tvServiceId = JSONUtils::asInt64(
 				metadataRoot["encodingParametersRoot"],
 				"tvServiceId", -1);
@@ -9089,8 +9088,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			tvBandwidthInHz = JSONUtils::asInt64(
 				metadataRoot["encodingParametersRoot"],
 				"tvBandwidthInHz", -1);
-			tvModulation = metadataRoot["encodingParametersRoot"].
-				get("tvModulation", "").asString();
+			tvModulation = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvModulation", "");
 			tvVideoPid = JSONUtils::asInt(
 				metadataRoot["encodingParametersRoot"], "tvVideoPid", -1);
 			tvAudioItalianPid = JSONUtils::asInt(
@@ -9145,7 +9143,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			// in case of actAsServer
 			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
 			//	false: it comes from the LiveRecorder json ingested
-			liveURL = encodingParametersRoot.get("liveURL", "").asString();
+			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
 		{
@@ -9158,11 +9156,11 @@ void FFMPEGEncoder::liveRecorderThread(
 			{
 				// see the comments in EncoderVideoAudioProxy.cpp
 				liveRecording->_monitorVirtualVODManifestDirectoryPath =
-					liveRecording->_encodingParametersRoot
-					.get("monitorManifestDirectoryPath", "").asString();
+					JSONUtils::asString(liveRecording->_encodingParametersRoot,
+					"monitorManifestDirectoryPath", "");
 				liveRecording->_monitorVirtualVODManifestFileName =
-					liveRecording->_encodingParametersRoot
-					.get("monitorManifestFileName", "").asString();
+					JSONUtils::asString(liveRecording->_encodingParametersRoot,
+					"monitorManifestFileName", "");
 			}
 		}
 
@@ -9221,9 +9219,8 @@ void FFMPEGEncoder::liveRecorderThread(
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
 
-				string outputType = outputRoot.get("outputType", "").asString();
-				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-					asString();
+				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
@@ -9273,8 +9270,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		Json::Value framesToBeDetectedRoot = liveRecording->_encodingParametersRoot[
 			"framesToBeDetectedRoot"];
 
-		string otherInputOptions = liveRecording->_ingestedParametersRoot.get(
-			"otherInputOptions", "").asString();
+		string otherInputOptions = JSONUtils::asString(liveRecording->_ingestedParametersRoot,
+			"otherInputOptions", "");
 
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
@@ -9893,7 +9890,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
 
 								field = "OutputFileFormat";
-								outputFileFormat = (liveRecording->_ingestedParametersRoot).get(field, "ts").asString();
+								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
 							}
 
 							pair<string, int> lastRecordedAssetInfo;
@@ -10132,8 +10129,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					{
 						int64_t deliveryCode = JSONUtils::asInt64(
 							copiedLiveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
-						string ingestionJobLabel = copiedLiveRecording->_encodingParametersRoot
-							.get("ingestionJobLabel", "").asString();
+						string ingestionJobLabel = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot,
+							"ingestionJobLabel", "");
 						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
 							+ to_string(deliveryCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ")";
@@ -10155,7 +10152,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 									userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 									field = "apiKey";
-									string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+									string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 									apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 								}
 							}
@@ -10176,7 +10173,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 								throw runtime_error(errorMessage);
 							}
-							mmsWorkflowIngestionURL = copiedLiveRecording->_encodingParametersRoot.get(field, "").asString();
+							mmsWorkflowIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
 
 							field = "mmsBinaryIngestionURL";
 							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot,
@@ -10190,7 +10187,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 								throw runtime_error(errorMessage);
 							}
-							mmsBinaryIngestionURL = copiedLiveRecording->_encodingParametersRoot.get(field, "").asString();
+							mmsBinaryIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
 						}
 
 						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
@@ -10465,7 +10462,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
 
-			string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
 
 			// UserData
 			Json::Value userDataRoot;
@@ -10922,7 +10919,7 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 								uniqueName += to_string(toBeIngestedSegmentUtcStartTimeInMillisecs);
 							}
 
-							string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+							string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
 
 							// UserData
 							Json::Value userDataRoot;
@@ -11324,7 +11321,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
@@ -11342,7 +11339,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sResponse = MMSCURL::httpPostString(
@@ -11427,7 +11424,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
@@ -11445,7 +11442,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		string sResponse = MMSCURL::httpPostString(
@@ -11518,7 +11515,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
 		mmsBinaryURL =
@@ -11758,7 +11755,7 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
 			{
 				Json::Value variableWorkflowRoot;
 
@@ -12884,7 +12881,7 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 
 				throw runtime_error(errorMessage);
 			}
-			string type = ingestionJobRoot.get(field, "").asString();
+			string type = JSONUtils::asString(ingestionJobRoot, field, "");
 
 			if (type == "Add-Content")
 			{
@@ -13203,12 +13200,12 @@ void FFMPEGEncoder::liveProxyThread(
 			{
 				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
 
-				string outputType = outputRoot.get("outputType", "").asString();
+				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					string manifestDirectoryPath
-						= outputRoot.get("manifestDirectoryPath", "").asString();
+						= JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
 					if (FileIO::directoryExisting(manifestDirectoryPath))
 					{
@@ -13267,15 +13264,15 @@ void FFMPEGEncoder::liveProxyThread(
 				continue;
 			Json::Value streamInputRoot = inputRoot["streamInput"];
 
-			string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
 			{
-				string tvType = streamInputRoot.get("tvType", "").asString();
+				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 					"tvAudioItalianPid", -1);
@@ -13353,7 +13350,7 @@ void FFMPEGEncoder::liveProxyThread(
 					Json::Value streamInputRoot = inputRoot["streamInput"];
 
 					string streamSourceType =
-						streamInputRoot.get("streamSourceType", "").asString();
+						JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 
 					if (streamSourceType == "IP_PUSH")
 					{
@@ -13426,18 +13423,18 @@ void FFMPEGEncoder::liveProxyThread(
 				continue;
 			Json::Value streamInputRoot = inputRoot["streamInput"];
 
-			string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
 			{
-				string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-				string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+				string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+				string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-				string tvType = streamInputRoot.get("tvType", "").asString();
+				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 					"tvAudioItalianPid", -1);
@@ -13511,18 +13508,18 @@ void FFMPEGEncoder::liveProxyThread(
 					continue;
 				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-					string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = streamInputRoot.get("tvType", "").asString();
+					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"tvAudioItalianPid", -1);
@@ -13619,18 +13616,18 @@ void FFMPEGEncoder::liveProxyThread(
 					continue;
 				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-					string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = streamInputRoot.get("tvType", "").asString();
+					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"tvAudioItalianPid", -1);
@@ -13722,18 +13719,18 @@ void FFMPEGEncoder::liveProxyThread(
 					continue;
 				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-					string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = streamInputRoot.get("tvType", "").asString();
+					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"tvAudioItalianPid", -1);
@@ -13825,18 +13822,18 @@ void FFMPEGEncoder::liveProxyThread(
 					continue;
 				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-					string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = streamInputRoot.get("tvType", "").asString();
+					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"tvAudioItalianPid", -1);
@@ -13928,18 +13925,18 @@ void FFMPEGEncoder::liveProxyThread(
 					continue;
 				Json::Value streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = streamInputRoot.get("streamSourceType", "").asString();
+				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = streamInputRoot.get("tvMulticastIP", "").asString();
-					string tvMulticastPort = streamInputRoot.get("tvMulticastPort", "").asString();
+					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = streamInputRoot.get("tvType", "").asString();
+					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
 					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
 					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = streamInputRoot.get("tvModulation", "").asString();
+					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
 					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
 					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
 						"tvAudioItalianPid", -1);
@@ -14050,17 +14047,17 @@ void FFMPEGEncoder::liveGridThread(
 
 		Json::Value inputChannelsRoot = encodingParametersRoot["inputChannels"];
 
-		string userAgent = ingestedParametersRoot.get("UserAgent", "").asString();
+		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
 		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
 		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
 		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
 
-		liveProxy->_liveGridOutputType = ingestedParametersRoot.get("OutputType", "HLS").asString();
+		liveProxy->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "OutputType", "HLS");
 
 		// it is present only in case of outputType == "SRT"
-		string srtURL = ingestedParametersRoot.get("SRT_URL", "").asString();
+		string srtURL = JSONUtils::asString(ingestedParametersRoot, "SRT_URL", "");
 
 		// it is present only in case of outputType == "HLS"
 		int segmentDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
@@ -14070,8 +14067,8 @@ void FFMPEGEncoder::liveGridThread(
 		int playlistEntriesNumber = JSONUtils::asInt(ingestedParametersRoot,
 			"PlaylistEntriesNumber", 6);
 
-		string manifestDirectoryPath = encodingParametersRoot.get("manifestDirectoryPath", "").asString();
-		string manifestFileName = encodingParametersRoot.get("manifestFileName", "").asString();
+		string manifestDirectoryPath = JSONUtils::asString(encodingParametersRoot, "manifestDirectoryPath", "");
+		string manifestFileName = JSONUtils::asString(encodingParametersRoot, "manifestFileName", "");
 
 		// if (liveProxy->_outputType == "HLS") // || liveProxy->_outputType == "DASH")
 		{
@@ -14576,8 +14573,7 @@ void FFMPEGEncoder::monitorThread()
 						Json::Value streamInputRoot = inputRoot[field];
 						field = "configurationLabel";
 						if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-							configurationLabel = streamInputRoot.
-								get(field, "").asString();
+							configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
 					}
 				}
 
@@ -14672,17 +14668,15 @@ void FFMPEGEncoder::monitorThread()
 					{
 						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
-						string outputType = outputRoot.get("outputType", "").asString();
+						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 						if (!liveProxyWorking)
 							break;
 
 						if (outputType == "HLS" || outputType == "DASH")
 						{
-							string manifestDirectoryPath = outputRoot
-								.get("manifestDirectoryPath", "").asString();
-							string manifestFileName = outputRoot
-								.get("manifestFileName", "").asString();
+							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 
 							try
 							{
@@ -14869,17 +14863,15 @@ void FFMPEGEncoder::monitorThread()
 					{
 						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
-						string outputType = outputRoot.get("outputType", "").asString();
+						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 						if (!liveProxyWorking)
 							break;
 
 						if (outputType == "HLS" || outputType == "DASH")
 						{
-							string manifestDirectoryPath = outputRoot
-								.get("manifestDirectoryPath", "").asString();
-							string manifestFileName = outputRoot
-								.get("manifestFileName", "").asString();
+							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 
 							try
 							{
@@ -15635,10 +15627,9 @@ void FFMPEGEncoder::monitorThread()
 					{
 						Json::Value outputRoot = outputsRoot[outputIndex];
 
-						string outputType = outputRoot.get("outputType", "").asString();
-						string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-							asString();
-						string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 
 						if (!liveRecorderWorking)
 							break;
@@ -15830,10 +15821,9 @@ void FFMPEGEncoder::monitorThread()
 					{
 						Json::Value outputRoot = outputsRoot[outputIndex];
 
-						string outputType = outputRoot.get("outputType", "").asString();
-						string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").
-							asString();
-						string manifestFileName = outputRoot.get("manifestFileName", "").asString();
+						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 						int outputPlaylistEntriesNumber = JSONUtils::asInt(outputRoot,
 							"playlistEntriesNumber", 10);
 						int outputSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
@@ -17364,7 +17354,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 				userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 				field = "apiKey";
-				string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+				string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
 		}
@@ -17384,7 +17374,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 
 			throw runtime_error(errorMessage);
 		}
-		fileFormat = encodingProfileDetailsRoot.get(field, "").asString();
+		fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, field, "");
 	}
 	else
 	{
@@ -17410,7 +17400,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 
 		throw runtime_error(errorMessage);
 	}
-	string mmsWorkflowIngestionURL = encodingParametersRoot.get(field, "").asString();
+	string mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 	field = "mmsBinaryIngestionURL";
 	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -17423,7 +17413,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 
 		throw runtime_error(errorMessage);
 	}
-	string mmsBinaryIngestionURL = encodingParametersRoot.get(field, "").asString();
+	string mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 	int64_t fileSizeInBytes = 0;
 	if (fileFormat != "hls")
@@ -17528,7 +17518,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 
 			throw runtime_error(errorMessage);
 		}
-		string mmsIngestionURL = encodingParametersRoot.get(field, "").asString();
+		string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 		chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
 		long maxSecondsWaiting = 5 * 60;
@@ -17604,7 +17594,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 
 				throw runtime_error(errorMessage);
 			}
-			string ingestionJobStatus = ingestionJobRoot.get(field, "").asString();
+			string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
 
 			string prefix = "End_";
 			if (ingestionJobStatus.size() >= prefix.size()

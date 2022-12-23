@@ -57,7 +57,7 @@ void API::addYouTubeConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "tokenType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -68,7 +68,7 @@ void API::addYouTubeConf(
 
                 throw runtime_error(errorMessage);
             }    
-            tokenType = requestBodyRoot.get(field, "").asString();            
+            tokenType = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			if (tokenType == "RefreshToken")
 			{
@@ -82,7 +82,7 @@ void API::addYouTubeConf(
 
 					throw runtime_error(errorMessage);
 				}    
-				refreshToken = requestBodyRoot.get(field, "XXX").asString();            
+				refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
 			}
 			else	// if (tokenType == "AccessToken")
 			{
@@ -95,7 +95,7 @@ void API::addYouTubeConf(
 
 					throw runtime_error(errorMessage);
 				}    
-				accessToken = requestBodyRoot.get(field, "").asString();            
+				accessToken = JSONUtils::asString(requestBodyRoot, field, "");            
 			}
         }
         catch(runtime_error e)
@@ -242,28 +242,28 @@ void API::modifyYouTubeConf(
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				label = requestBodyRoot.get(field, "").asString();            
+				label = JSONUtils::asString(requestBodyRoot, field, "");            
 				labelModified = true;
             }
 
 			field = "tokenType";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				tokenType = requestBodyRoot.get(field, "").asString();            
+				tokenType = JSONUtils::asString(requestBodyRoot, field, "");            
 				tokenTypeModified = true;
 			}
 
 			field = "refreshToken";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				refreshToken = requestBodyRoot.get(field, "").asString();            
+				refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
 				refreshTokenModified = true;
 			}
 
 			field = "accessToken";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				accessToken = requestBodyRoot.get(field, "").asString();            
+				accessToken = JSONUtils::asString(requestBodyRoot, field, "");            
 				accessTokenModified = true;
 			}
         }
@@ -571,7 +571,7 @@ void API::addFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "PageToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -582,7 +582,7 @@ void API::addFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            pageToken = requestBodyRoot.get(field, "XXX").asString();            
+            pageToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -700,7 +700,7 @@ void API::modifyFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "PageToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -711,7 +711,7 @@ void API::modifyFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            pageToken = requestBodyRoot.get(field, "XXX").asString();            
+            pageToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -1011,7 +1011,7 @@ void API::addStream(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "sourceType";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1022,7 +1022,7 @@ void API::addStream(
 
                 throw runtime_error(errorMessage);
             }    
-            sourceType = requestBodyRoot.get(field, "").asString();            
+            sourceType = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "encodersPoolKey";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1030,11 +1030,11 @@ void API::addStream(
 
             field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				url = requestBodyRoot.get(field, "").asString();            
+				url = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "pushProtocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushProtocol = requestBodyRoot.get(field, "").asString();            
+				pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushEncoderKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1042,7 +1042,7 @@ void API::addStream(
 
             field = "pushServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushServerName = requestBodyRoot.get(field, "").asString();            
+				pushServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushServerPort";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1050,7 +1050,7 @@ void API::addStream(
 
             field = "pushURI";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushUri = requestBodyRoot.get(field, "").asString();            
+				pushUri = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushListenTimeout";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1062,7 +1062,7 @@ void API::addStream(
 
             field = "captureLiveVideoInputFormat";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveVideoInputFormat = requestBodyRoot.get(field, "").asString();
+				captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "captureLiveFrameRate";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1090,23 +1090,23 @@ void API::addStream(
 
             field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				type = requestBodyRoot.get(field, "").asString();            
+				type = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				description = requestBodyRoot.get(field, "").asString();            
+				description = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				name = requestBodyRoot.get(field, "").asString();            
+				name = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				region = requestBodyRoot.get(field, "").asString();            
+				region = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				country = requestBodyRoot.get(field, "").asString();            
+				country = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "imageMediaItemKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1114,7 +1114,7 @@ void API::addStream(
 
 			field = "imageUniqueName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				imageUniqueName = requestBodyRoot.get(field, "").asString();            
+				imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "position";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1305,7 +1305,7 @@ void API::modifyStream(
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				label = requestBodyRoot.get(field, "").asString();            
+				label = JSONUtils::asString(requestBodyRoot, field, "");            
 				labelToBeModified = true;
             }    
 
@@ -1313,7 +1313,7 @@ void API::modifyStream(
             field = "sourceType";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				sourceType = requestBodyRoot.get(field, "").asString();
+				sourceType = JSONUtils::asString(requestBodyRoot, field, "");
 				sourceTypeToBeModified = true;
             }
 
@@ -1329,7 +1329,7 @@ void API::modifyStream(
             field = "url";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				url = requestBodyRoot.get(field, "").asString();            
+				url = JSONUtils::asString(requestBodyRoot, field, "");            
 				urlToBeModified = true;
 			}
 
@@ -1337,7 +1337,7 @@ void API::modifyStream(
             field = "pushProtocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushProtocol = requestBodyRoot.get(field, "").asString();            
+				pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");            
 				pushProtocolToBeModified = true;
 			}
 
@@ -1353,7 +1353,7 @@ void API::modifyStream(
             field = "pushServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushServerName = requestBodyRoot.get(field, "").asString();            
+				pushServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 				pushServerNameToBeModified = true;
 			}
 
@@ -1369,7 +1369,7 @@ void API::modifyStream(
             field = "pushURI";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushUri = requestBodyRoot.get(field, "").asString();            
+				pushUri = JSONUtils::asString(requestBodyRoot, field, "");            
 				pushUriToBeModified = true;
 			}
 
@@ -1393,7 +1393,7 @@ void API::modifyStream(
             field = "captureLiveVideoInputFormat";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveVideoInputFormat = requestBodyRoot.get(field, "").asString();
+				captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
 				captureLiveVideoInputFormatToBeModified = true;
 			}
 
@@ -1449,7 +1449,7 @@ void API::modifyStream(
             field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				type = requestBodyRoot.get(field, "XXX").asString();            
+				type = JSONUtils::asString(requestBodyRoot, field, "");            
 				typeToBeModified = true;
 			}
 
@@ -1457,7 +1457,7 @@ void API::modifyStream(
             field = "description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				description = requestBodyRoot.get(field, "XXX").asString();            
+				description = JSONUtils::asString(requestBodyRoot, field, "");            
 				descriptionToBeModified = true;
 			}
 
@@ -1465,7 +1465,7 @@ void API::modifyStream(
             field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				name = requestBodyRoot.get(field, "XXX").asString();            
+				name = JSONUtils::asString(requestBodyRoot, field, "");            
 				nameToBeModified = true;
 			}
 
@@ -1473,7 +1473,7 @@ void API::modifyStream(
             field = "region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				region = requestBodyRoot.get(field, "XXX").asString();            
+				region = JSONUtils::asString(requestBodyRoot, field, "");            
 				regionToBeModified = true;
 			}
 
@@ -1481,7 +1481,7 @@ void API::modifyStream(
             field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				country = requestBodyRoot.get(field, "XXX").asString();            
+				country = JSONUtils::asString(requestBodyRoot, field, "");            
 				countryToBeModified = true;
 			}
 
@@ -1497,7 +1497,7 @@ void API::modifyStream(
 			field = "imageUniqueName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				imageUniqueName = requestBodyRoot.get(field, "").asString();            
+				imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");            
 				imageToBeModified = true;
 			}
 
@@ -2004,7 +2004,7 @@ void API::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			type = requestBodyRoot.get(field, "").asString();            
+			type = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "serviceId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2033,11 +2033,11 @@ void API::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			name = requestBodyRoot.get(field, "").asString();            
+			name = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "satellite";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				satellite = requestBodyRoot.get(field, "").asString();            
+				satellite = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "frequency";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2052,7 +2052,7 @@ void API::addSourceTVStream(
 
 			field = "lnb";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				lnb = requestBodyRoot.get(field, "").asString();            
+				lnb = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "videoPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2062,7 +2062,7 @@ void API::addSourceTVStream(
 
 			field = "audioPids";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				audioPids = requestBodyRoot.get(field, "").asString();            
+				audioPids = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "audioItalianPid";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2084,11 +2084,11 @@ void API::addSourceTVStream(
 
 			field = "modulation";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				modulation = requestBodyRoot.get(field, "").asString();            
+				modulation = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "polarization";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				polarization = requestBodyRoot.get(field, "").asString();            
+				polarization = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "symbolRate";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2104,11 +2104,11 @@ void API::addSourceTVStream(
 
 			field = "country";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				country = requestBodyRoot.get(field, "").asString();            
+				country = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "deliverySystem";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				deliverySystem = requestBodyRoot.get(field, "").asString();            
+				deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -2259,7 +2259,7 @@ void API::modifySourceTVStream(
             string field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				type = requestBodyRoot.get(field, "").asString();            
+				type = JSONUtils::asString(requestBodyRoot, field, "");            
 				typeToBeModified = true;
             }
 
@@ -2287,14 +2287,14 @@ void API::modifySourceTVStream(
             field = "name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				name = requestBodyRoot.get(field, "").asString();            
+				name = JSONUtils::asString(requestBodyRoot, field, "");            
 				nameToBeModified = true;
             }
 
             field = "satellite";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				satellite = requestBodyRoot.get(field, "").asString();            
+				satellite = JSONUtils::asString(requestBodyRoot, field, "");            
 				satelliteToBeModified = true;
             }
 
@@ -2308,7 +2308,7 @@ void API::modifySourceTVStream(
             field = "lnb";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				lnb = requestBodyRoot.get(field, "").asString();            
+				lnb = JSONUtils::asString(requestBodyRoot, field, "");            
 				lnbToBeModified = true;
             }
 
@@ -2322,7 +2322,7 @@ void API::modifySourceTVStream(
             field = "audioPids";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				audioPids = requestBodyRoot.get(field, "").asString();            
+				audioPids = JSONUtils::asString(requestBodyRoot, field, "");            
 				audioPidsToBeModified = true;
             }
 
@@ -2350,14 +2350,14 @@ void API::modifySourceTVStream(
             field = "modulation";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				modulation = requestBodyRoot.get(field, "").asString();            
+				modulation = JSONUtils::asString(requestBodyRoot, field, "");            
 				modulationToBeModified = true;
             }
 
             field = "polarization";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				polarization = requestBodyRoot.get(field, "").asString();            
+				polarization = JSONUtils::asString(requestBodyRoot, field, "");            
 				polarizationToBeModified = true;
             }
 
@@ -2378,14 +2378,14 @@ void API::modifySourceTVStream(
             field = "country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				country = requestBodyRoot.get(field, "").asString();            
+				country = JSONUtils::asString(requestBodyRoot, field, "");            
 				countryToBeModified = true;
             }
 
             field = "deliverySystem";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				deliverySystem = requestBodyRoot.get(field, "").asString();            
+				deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");            
 				deliverySystemToBeModified = true;
             }
         }
@@ -2800,7 +2800,7 @@ void API::addAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "channelId";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2811,7 +2811,7 @@ void API::addAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            channelId = requestBodyRoot.get(field, "").asString();            
+            channelId = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "rtmpURL";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2822,7 +2822,7 @@ void API::addAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            rtmpURL = requestBodyRoot.get(field, "").asString();            
+            rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "playURL";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2833,7 +2833,7 @@ void API::addAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            playURL = requestBodyRoot.get(field, "").asString();            
+            playURL = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2844,7 +2844,7 @@ void API::addAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            type = requestBodyRoot.get(field, "").asString();            
+            type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -2966,7 +2966,7 @@ void API::modifyAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "channelId";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2977,7 +2977,7 @@ void API::modifyAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            channelId = requestBodyRoot.get(field, "").asString();            
+            channelId = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "rtmpURL";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2988,7 +2988,7 @@ void API::modifyAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            rtmpURL = requestBodyRoot.get(field, "").asString();            
+            rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "playURL";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2999,7 +2999,7 @@ void API::modifyAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            playURL = requestBodyRoot.get(field, "").asString();            
+            playURL = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3010,7 +3010,7 @@ void API::modifyAWSChannelConf(
 
                 throw runtime_error(errorMessage);
             }    
-            type = requestBodyRoot.get(field, "").asString();            
+            type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -3289,7 +3289,7 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Server";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3300,7 +3300,7 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            server = requestBodyRoot.get(field, "XXX").asString();            
+            server = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Port";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3322,7 +3322,7 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            userName = requestBodyRoot.get(field, "XXX").asString();            
+            userName = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Password";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3333,7 +3333,7 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            password = requestBodyRoot.get(field, "XXX").asString();            
+            password = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "RemoteDirectory";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3344,7 +3344,7 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            remoteDirectory = requestBodyRoot.get(field, "XXX").asString();            
+            remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -3467,7 +3467,7 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Server";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3478,7 +3478,7 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            server = requestBodyRoot.get(field, "XXX").asString();            
+            server = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Port";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3500,7 +3500,7 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            userName = requestBodyRoot.get(field, "XXX").asString();            
+            userName = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Password";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3511,7 +3511,7 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            password = requestBodyRoot.get(field, "XXX").asString();            
+            password = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "RemoteDirectory";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3522,7 +3522,7 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            remoteDirectory = requestBodyRoot.get(field, "XXX").asString();            
+            remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -3798,7 +3798,7 @@ void API::addEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Addresses";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3809,7 +3809,7 @@ void API::addEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            addresses = requestBodyRoot.get(field, "XXX").asString();            
+            addresses = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Subject";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3820,7 +3820,7 @@ void API::addEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            subject = requestBodyRoot.get(field, "XXX").asString();            
+            subject = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Message";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3831,7 +3831,7 @@ void API::addEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            message = requestBodyRoot.get(field, "XXX").asString();            
+            message = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -3951,7 +3951,7 @@ void API::modifyEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Addresses";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3962,7 +3962,7 @@ void API::modifyEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            addresses = requestBodyRoot.get(field, "XXX").asString();            
+            addresses = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Subject";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3973,7 +3973,7 @@ void API::modifyEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            subject = requestBodyRoot.get(field, "XXX").asString();            
+            subject = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "Message";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3984,7 +3984,7 @@ void API::modifyEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            message = requestBodyRoot.get(field, "XXX").asString();            
+            message = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {

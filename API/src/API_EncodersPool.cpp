@@ -53,7 +53,7 @@ void API::addEncoder(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "External";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -76,7 +76,7 @@ void API::addEncoder(
 
                 throw runtime_error(errorMessage);
             }    
-            protocol = requestBodyRoot.get(field, "").asString();            
+            protocol = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "PublicServerName";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -87,7 +87,7 @@ void API::addEncoder(
 
                 throw runtime_error(errorMessage);
             }    
-            publicServerName = requestBodyRoot.get(field, "").asString();            
+            publicServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "InternalServerName";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -98,7 +98,7 @@ void API::addEncoder(
 
                 throw runtime_error(errorMessage);
             }    
-            internalServerName = requestBodyRoot.get(field, "").asString();            
+            internalServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 
 
             field = "Port";
@@ -242,7 +242,7 @@ void API::modifyEncoder(
             string field = "Label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				label = requestBodyRoot.get(field, "").asString();            
+				label = JSONUtils::asString(requestBodyRoot, field, "");            
 				labelToBeModified = true;
 			}
 			else
@@ -269,7 +269,7 @@ void API::modifyEncoder(
             field = "Protocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				protocol = requestBodyRoot.get(field, "").asString();            
+				protocol = JSONUtils::asString(requestBodyRoot, field, "");            
 				protocolToBeModified = true;
             }
 			else
@@ -278,7 +278,7 @@ void API::modifyEncoder(
             field = "PublicServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				publicServerName = requestBodyRoot.get(field, "").asString();            
+				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 				publicServerNameToBeModified = true;
             }
 			else
@@ -287,7 +287,7 @@ void API::modifyEncoder(
             field = "InternalServerName";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				internalServerName = requestBodyRoot.get(field, "").asString();            
+				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 				internalServerNameToBeModified = true;
             }
 			else
@@ -813,7 +813,7 @@ void API::addEncodersPool(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "encoderKeys";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -956,7 +956,7 @@ void API::modifyEncodersPool(
 
                 throw runtime_error(errorMessage);
             }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "encoderKeys";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))

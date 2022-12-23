@@ -88,12 +88,12 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }    
-            string rootType = requestBodyRoot.get(field, "").asString();
+            string rootType = JSONUtils::asString(requestBodyRoot, field, "");
 
             string rootLabel;
             field = "Label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-                rootLabel = requestBodyRoot.get(field, "").asString();
+                rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
@@ -120,7 +120,7 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }    
-            string taskType = taskRoot.get(field, "").asString();
+            string taskType = JSONUtils::asString(taskRoot, field, "");
             
             if (taskType == "GroupOfTasks")
             {
@@ -371,7 +371,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						Json::Value variableDetails = (*it);
 
 						field = "Type";
-						string variableType = variableDetails.get(field, "XXX").asString();
+						string variableType = JSONUtils::asString(variableDetails, field, "");
 
 						field = "IsNull";
 						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
@@ -392,7 +392,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								}
 								else
 								{
-									sValue = variableDetails.get(field, "").asString();
+									sValue = JSONUtils::asString(variableDetails, field, "");
 
 									// scenario, the json will be: "field": "${var_name}"
 									//	so in case the value of the variable contains " we have
@@ -429,14 +429,14 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								if (variableIsNull)
 									sValue = "";
 								else
-									sValue = variableDetails.get(field, "").asString();
+									sValue = JSONUtils::asString(variableDetails, field, "");
 							}
 							else if (variableType == "datetime-millisecs")
 							{
 								if (variableIsNull)
 									sValue = "";
 								else
-									sValue = variableDetails.get(field, "").asString();
+									sValue = JSONUtils::asString(variableDetails, field, "");
 							}
 							else if (variableType == "jsonObject")
 							{
@@ -478,7 +478,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						{
 							if (variableType == "string")
 							{
-								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
 
 								// scenario, the json will be: "field": "${var_name}"
 								//	so in case the value of the variable contains " we have
@@ -495,9 +495,9 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								sValue = bValue ? "true" : "false";
 							}
 							else if (variableType == "datetime")
-								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
 							else if (variableType == "datetime-millisecs")
-								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
 							else if (variableType == "jsonObject")
 							{
 								if (variableIsNull)
@@ -666,7 +666,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 		field = "DependenciesToBeAddedToReferencesAt";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			dependenciesToBeAddedToReferencesAt = parametersRoot.get(field, "").asString();
+			dependenciesToBeAddedToReferencesAt = JSONUtils::asString(parametersRoot, field, "");
 			if (dependenciesToBeAddedToReferencesAt != "")
 			{
 				if (dependenciesToBeAddedToReferencesAt == atTheBeginning)
@@ -710,7 +710,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
             field = "ReferenceLabel";
             if (JSONUtils::isMetadataPresent(referenceRoot, field))
             {
-                string referenceLabel = referenceRoot.get(field, "").asString();
+                string referenceLabel = JSONUtils::asString(referenceRoot, field, "");
 
                 if (referenceLabel == "")
                 {
@@ -936,13 +936,13 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
 {
     string field = "Type";
-    string type = taskRoot.get(field, "").asString();
+    string type = JSONUtils::asString(taskRoot, field, "");
 
     string taskLabel;
     field = "Label";
     if (JSONUtils::isMetadataPresent(taskRoot, field))
     {
-        taskLabel = taskRoot.get(field, "").asString();
+        taskLabel = JSONUtils::asString(taskRoot, field, "");
     }
 
 	_logger->info(__FILEREF__ + "Processing SingleTask..."
@@ -1048,7 +1048,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				}
 				else // if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
 				{
-					string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "").asString();
+					string encodingProfilesSetLabel = JSONUtils::asString(parametersRoot, encodingProfilesSetLabelField, "");
         
 					encodingProfilesSetReference = encodingProfilesSetLabel;
             
@@ -1401,7 +1401,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		string field = "variantOfReferencedLabel";
     	if (JSONUtils::isMetadataPresent(parametersRoot, field))
     	{
-			string referenceLabel = parametersRoot.get(field, "").asString();
+			string referenceLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			if (referenceLabel == "")
 			{
@@ -1467,8 +1467,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				throw runtime_error(errorMessage);
 			}
 
-			string workflowAsLibraryType = parametersRoot.get(workflowAsLibraryTypeField, "").asString();
-			string workflowAsLibraryLabel = parametersRoot.get(workflowAsLibraryLabelField, "").asString();
+			string workflowAsLibraryType = JSONUtils::asString(parametersRoot, workflowAsLibraryTypeField, "");
+			string workflowAsLibraryLabel = JSONUtils::asString(parametersRoot, workflowAsLibraryLabelField, "");
 
 			int workspaceKey;
 			if (workflowAsLibraryType == "MMS")
@@ -1590,7 +1590,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				field = "GlobalIngestionLabel";
 				if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
 				{
-					string waitForGlobalIngestionLabel = waitForLabelRoot.get(field, "").asString();
+					string waitForGlobalIngestionLabel = JSONUtils::asString(waitForLabelRoot, field, "");
 
 					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel (
 							workspace->_workspaceKey, waitForGlobalIngestionLabel,
@@ -1613,7 +1613,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	{
 		field = "ProcessingStartingFrom";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			processingStartingFrom = parametersRoot.get(field, "").asString();
+			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
 		if (processingStartingFrom == "")
 		{
@@ -1750,7 +1750,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	string field = "Label";
 	if (JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
 	{
-		groupOfTaskLabel = groupOfTasksRoot.get(field, "").asString();
+		groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
 	}
 
 	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
@@ -1781,7 +1781,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         throw runtime_error(errorMessage);
     }
-    string executionType = parametersRoot.get(field, "").asString();
+    string executionType = JSONUtils::asString(parametersRoot, field, "");
     if (executionType == "parallel")
         parallelTasks = true;
     else if (executionType == "sequential")
@@ -1844,7 +1844,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
             
         vector<int64_t> localIngestionTaskDependOnIngestionJobKeyExecution;
         if (parallelTasks)
@@ -1960,7 +1960,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 				field = "ReferenceLabel";
 				if (JSONUtils::isMetadataPresent(referenceOutputRoot, field))
 				{
-					string referenceLabel = referenceOutputRoot.get(field, "XXX").asString();
+					string referenceLabel = JSONUtils::asString(referenceOutputRoot, field, "");
 
 					if (referenceLabel == "")
 					{
@@ -2057,7 +2057,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	{
 		field = "ProcessingStartingFrom";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			processingStartingFrom = parametersRoot.get(field, "").asString();
+			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
 		if (processingStartingFrom == "")
 		{
@@ -2264,10 +2264,10 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
         field = "Label";
-        string taskLabel = taskRoot.get(field, "").asString();
+        string taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -2351,10 +2351,10 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
 		field = "Label";
-        string taskLabel = taskRoot.get(field, "").asString();
+        string taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -2439,7 +2439,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -2599,7 +2599,7 @@ void API::uploadedBinary(
 			string field = "FileFormat";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string fileFormat = parametersRoot.get(field, "").asString();
+				string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 				// 2022-08-11: I guess the correct fileFormat is m3u8-tar.gz and not m3u8
 				// if (fileFormat == "m3u8")
 				if (fileFormat == "m3u8-tar.gz")
@@ -3351,7 +3351,7 @@ void API::fileUploadProgressCheck()
                     // { "state" : "uploading", "received" : 731195032, "size" : 745871360 }
                     // At the end: { "state" : "done" }
                     // In case of error: { "state" : "error", "status" : 500 }
-                    string state = uploadProgressResponse.get("state", "XXX").asString();
+                    string state = JSONUtils::asString(uploadProgressResponse, "state", "");
                     if (state == "done")
                     {
                         double relativeProgress = 100.0;
@@ -4338,7 +4338,7 @@ void API::updateIngestionJob(
 
 				throw runtime_error(errorMessage);
 			}
-			string sIngestionType = metadataRoot.get("IngestionType", "").asString();
+			string sIngestionType = JSONUtils::asString(metadataRoot, "IngestionType", "");
 
 			if (sIngestionType == MMSEngineDBFacade::toString(
 				MMSEngineDBFacade::IngestionType::LiveRecorder))
@@ -4371,28 +4371,28 @@ void API::updateIngestionJob(
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							ingestionJobLabelModified = true;
-							newIngestionJobLabel = metadataRoot.get("IngestionJobLabel", "").asString();
+							newIngestionJobLabel = JSONUtils::asString(metadataRoot, "IngestionJobLabel", "");
 						}
 
 						field = "ChannelLabel";
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							channelLabelModified = true;
-							newChannelLabel = metadataRoot.get("ChannelLabel", "").asString();
+							newChannelLabel = JSONUtils::asString(metadataRoot, "ChannelLabel", "");
 						}
 
 						field = "scheduleStart";
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							recordingPeriodStartModified = true;
-							newRecordingPeriodStart = metadataRoot.get("scheduleStart", "").asString();
+							newRecordingPeriodStart = JSONUtils::asString(metadataRoot, "scheduleStart", "");
 						}
 
 						field = "scheduleEnd";
 						if (JSONUtils::isMetadataPresent(metadataRoot, field))
 						{
 							recordingPeriodEndModified = true;
-							newRecordingPeriodEnd = metadataRoot.get("scheduleEnd", "").asString();
+							newRecordingPeriodEnd = JSONUtils::asString(metadataRoot, "scheduleEnd", "");
 						}
 
 						field = "RecordingVirtualVOD";
@@ -4662,11 +4662,11 @@ void API::changeLiveProxyPlaylist(
             }
 
 			field = "start";
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 			field = "end";
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 
 			field = "broadcastDefaultPlaylistItem";
@@ -4677,14 +4677,14 @@ void API::changeLiveProxyPlaylist(
 				field = "mediaType";
 				if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
 				{
-					broadcastDefaultMediaType = broadcastDefaultPlaylistItemRoot.get(
-						field, "").asString();
+					broadcastDefaultMediaType = JSONUtils::asString(broadcastDefaultPlaylistItemRoot,
+						field, "");
 
 					if (broadcastDefaultMediaType == "Stream")
 					{
 						field = "streamConfigurationLabel";
 						string broadcastDefaultConfigurationLabel =
-							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 						int maxWidth = -1;
 						string userAgent;
 						string otherInputOptions;
@@ -4802,13 +4802,13 @@ void API::changeLiveProxyPlaylist(
 							broadcastDefaultPlaylistItemRoot, field, -1);
 						field = "text";
 						string broadcastDefaultText =
-							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 						field = "textPosition_X_InPixel";
 						string broadcastDefaultTextPosition_X_InPixel =
-							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 						field = "textPosition_Y_InPixel";
 						string broadcastDefaultTextPosition_Y_InPixel =
-							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
 						MMSEngineDBFacade::ContentType vodContentType;
 						string sourcePhysicalPathName;
@@ -4924,7 +4924,7 @@ void API::changeLiveProxyPlaylist(
 					{
 						field = "url";
 						string broadcastDefaultURL =
-							broadcastDefaultPlaylistItemRoot.get(field, "").asString();
+							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
 						broadcastDefaultDirectURLInputRoot =
 							_mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL);

@@ -55,7 +55,7 @@ void API::addRequestStatistic(
 
                 throw runtime_error(errorMessage);
             }
-            userId = requestBodyRoot.get(field, "").asString();            
+            userId = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "physicalPathKey";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -84,7 +84,7 @@ void API::addRequestStatistic(
 
                 throw runtime_error(errorMessage);
             }
-            title = requestBodyRoot.get(field, "").asString();            
+            title = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {

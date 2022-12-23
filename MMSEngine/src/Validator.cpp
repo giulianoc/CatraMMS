@@ -24,7 +24,7 @@ Validator::Validator(
     _logger             = logger;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
 
-    _storagePath = configuration["storage"].get("path", "").asString();
+    _storagePath = JSONUtils::asString(configuration["storage"], "path", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->path: " + _storagePath
     );
@@ -51,7 +51,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    string type = root.get(field, "").asString();
+    string type = JSONUtils::asString(root, field, "");
     if (type != "Workflow")
     {
         string errorMessage = __FILEREF__ + "Type field is wrong"
@@ -87,7 +87,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    string taskType = taskRoot.get(field, "").asString();
+    string taskType = JSONUtils::asString(taskRoot, field, "");
 
     // this method is called when the json is just ingested, for this reason
     // we cannot validate dependencies too because we would not have them (they have to be generated yet)
@@ -163,7 +163,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
         if (taskType == "GroupOfTasks")
         {
@@ -194,7 +194,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         throw runtime_error(errorMessage);
     }
 
-    string executionType = parametersRoot.get(field, "").asString();
+    string executionType = JSONUtils::asString(parametersRoot, field, "");
     if (executionType != "parallel" 
             && executionType != "sequential")
     {
@@ -240,7 +240,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
         if (taskType == "GroupOfTasks")
         {
@@ -283,7 +283,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
         if (taskType == "GroupOfTasks")
         {
@@ -326,7 +326,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "").asString();
+        string taskType = JSONUtils::asString(taskRoot, field, "");
 
         if (taskType == "GroupOfTasks")
         {
@@ -363,9 +363,9 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     string label;
     field = "Label";
     if (JSONUtils::isMetadataPresent(taskRoot, field))
-        label = taskRoot.get(field, "").asString();
+        label = JSONUtils::asString(taskRoot, field, "");
 
-    string type = taskRoot.get("Type", "").asString();
+    string type = JSONUtils::asString(taskRoot, "Type", "");
     if (type == "Add-Content")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
@@ -1354,7 +1354,7 @@ void Validator::validateAddContentMetadata(
         }
     }
     string field = "FileFormat";
-    string fileFormat = parametersRoot.get(field, "").asString();
+    string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 
     if (!isVideoAudioFileFormat(fileFormat)
             && !isImageFileFormat(fileFormat))
@@ -1373,7 +1373,7 @@ void Validator::validateAddContentMetadata(
         field = "SourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-			string sourceURL = parametersRoot.get(field, "").asString();
+			string sourceURL = JSONUtils::asString(parametersRoot, field, "");
 
 			string externalStoragePrefix("externalStorage://");
             if (sourceURL.size() >= externalStoragePrefix.size()
@@ -1409,7 +1409,7 @@ void Validator::validateAddContentMetadata(
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1480,7 +1480,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1501,7 +1501,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 	string field = "EncodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string encodingPriority = parametersRoot.get(field, "").asString();
+        string encodingPriority = JSONUtils::asString(parametersRoot, field, "");
         try
         {
 			// it generate an exception in case of wrong string
@@ -1579,7 +1579,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1663,7 +1663,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1765,7 +1765,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1847,7 +1847,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -1946,7 +1946,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2068,7 +2068,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2122,7 +2122,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     field = "CutType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-		string cutType = parametersRoot.get(field, "").asString();
+		string cutType = JSONUtils::asString(parametersRoot, field, "");
 
         if (!isCutTypeValid(cutType))
         {
@@ -2206,7 +2206,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2310,7 +2310,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2377,7 +2377,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 		string field = "fontType";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			string fontType = drawTextDetailsRoot.get(field, "").asString();
+			string fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			if (!isFontTypeValid(fontType))
 			{
@@ -2394,7 +2394,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 		field = "fontColor";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			string fontColor = drawTextDetailsRoot.get(field, "").asString();
+			string fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			if (!isColorValid(fontColor))
 			{
@@ -2452,7 +2452,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     string field = "encodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string encodingPriority = parametersRoot.get(field, "").asString();
+        string encodingPriority = JSONUtils::asString(parametersRoot, field, "");
         try
         {
             MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
@@ -2472,7 +2472,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "boxColor";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string boxColor = parametersRoot.get(field, "").asString();
+        string boxColor = JSONUtils::asString(parametersRoot, field, "");
                         
         if (!isColorValid(boxColor))
         {
@@ -2547,7 +2547,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2669,7 +2669,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2707,7 +2707,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
         }
     }
 	string field = "inputType";
-	string inputType = parametersRoot.get(field, "").asString();
+	string inputType = JSONUtils::asString(parametersRoot, field, "");
 
 	if (inputType == "Channel")
 	{
@@ -2771,7 +2771,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
     field = "processingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2852,7 +2852,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2932,7 +2932,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -2977,7 +2977,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     string field = "method";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string method = parametersRoot.get(field, "").asString();
+        string method = JSONUtils::asString(parametersRoot, field, "");
                         
         if (method != "GET" && method != "POST" && method != "PUT")
         {
@@ -3064,7 +3064,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3106,7 +3106,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     }
     
     string field = "LocalPath";
-    string localPath = parametersRoot.get(field, "").asString();
+    string localPath = JSONUtils::asString(parametersRoot, field, "");
     if (localPath.size() >= _storagePath.size() && 0 == localPath.compare(0, _storagePath.size(), _storagePath))
     {
         string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS"
@@ -3158,7 +3158,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3228,7 +3228,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
             throw runtime_error(errorMessage);
         }
-        string trackType = trackRoot.get(field, "").asString();
+        string trackType = JSONUtils::asString(trackRoot, field, "");
         if (trackType != "video" && trackType != "audio")
         {
             string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
@@ -3243,7 +3243,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     }
 
     field = "OutputFileFormat";
-    string outputFileFormat = parametersRoot.get(field, "").asString();
+    string outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
     if (!isVideoAudioFileFormat(outputFileFormat))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
@@ -3320,7 +3320,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3424,7 +3424,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3466,7 +3466,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     string field = "PrivacyStatus";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string youTubePrivacyStatus = parametersRoot.get(field, "").asString();
+        string youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "");
 
         if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
         {
@@ -3546,7 +3546,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3588,7 +3588,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     }
 
     string field = "CascadeName";
-    string faceRecognitionCascadeName = parametersRoot.get(field, "").asString();
+    string faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionCascadeNameValid(faceRecognitionCascadeName))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3605,7 +3605,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     }
 
     field = "Output";
-    string faceRecognitionOutput = parametersRoot.get(field, "").asString();
+    string faceRecognitionOutput = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3695,7 +3695,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3737,7 +3737,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     }
 
     string field = "CascadeName";
-    string faceIdentificationCascadeName = parametersRoot.get(field, "").asString();
+    string faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionCascadeNameValid(faceIdentificationCascadeName))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3841,7 +3841,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -3934,7 +3934,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	// next code is the same in the MMSEngineProcessor class
-	string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
+	string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
 	time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
 
     field = "end";
@@ -3952,7 +3952,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	// next code is the same in the MMSEngineProcessor class
-	string recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
+	string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
 	time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
 	if (utcRecordingPeriodStart >= utcRecordingPeriodEnd)
@@ -3974,7 +3974,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "OutputFormat";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string liveRecorderOutputFormat = parametersRoot.get(field, "").asString();
+		string liveRecorderOutputFormat = JSONUtils::asString(parametersRoot, field, "");
 		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -4006,7 +4006,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4073,14 +4073,14 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
@@ -4142,7 +4142,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4166,7 +4166,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
     string field = "SourceType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-		sourceType = parametersRoot.get(field, "").asString();
+		sourceType = JSONUtils::asString(parametersRoot, field, "");
 
         if (!isYouTubeLiveBroadcastSourceTypeValid(sourceType))
         {
@@ -4183,7 +4183,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
     field = "PrivacyStatus";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string youTubePrivacyStatus = parametersRoot.get(field, "").asString();
+        string youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "");
 
         if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
         {
@@ -4312,14 +4312,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
@@ -4344,7 +4344,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4437,14 +4437,14 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
@@ -4527,7 +4527,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4630,14 +4630,14 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		field = "start";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
@@ -4699,7 +4699,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4740,7 +4740,7 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
     }
 
     string field = "WorkflowAsLibraryType";
-    string workflowAsLibraryType = parametersRoot.get(field, "").asString();
+    string workflowAsLibraryType = JSONUtils::asString(parametersRoot, field, "");
 
     if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
     {
@@ -4756,7 +4756,7 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4799,7 +4799,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 	bool isImage = false;
 
     string field = "OutputFileFormat";
-    string outputFileFormat = parametersRoot.get(field, "").asString();
+    string outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
     if (isVideoAudioFileFormat(outputFileFormat))
 		isVideoOrAudio = true;
     else if (isImageFileFormat(outputFileFormat))
@@ -4897,7 +4897,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -4942,7 +4942,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     string field = "speedType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string speedType = parametersRoot.get(field, "").asString();
+		string speedType = JSONUtils::asString(parametersRoot, field, "");
 		if (!isVideoSpeedTypeValid(speedType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -5050,7 +5050,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -5150,7 +5150,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -5439,7 +5439,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 	string liveGridOutputType;
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		liveGridOutputType = parametersRoot.get(field, "").asString();
+		liveGridOutputType = JSONUtils::asString(parametersRoot, field, "");
 		if (!isLiveGridOutputTypeValid(liveGridOutputType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be SRT or HLS)"
@@ -5501,7 +5501,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -5586,7 +5586,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	// next code is the same in the MMSEngineProcessor class
-	string cutPeriodStart = cutPeriodRoot.get(field, "").asString();
+	string cutPeriodStart = JSONUtils::asString(cutPeriodRoot, field, "");
 	int64_t utcCutPeriodStart = DateTime::sDateMilliSecondsToUtc(cutPeriodStart);
 
     field = "End";
@@ -5604,7 +5604,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	// next code is the same in the MMSEngineProcessor class
-	string cutPeriodEnd = cutPeriodRoot.get(field, "").asString();
+	string cutPeriodEnd = JSONUtils::asString(cutPeriodRoot, field, "");
 	int64_t utcCutPeriodEnd = DateTime::sDateMilliSecondsToUtc(cutPeriodEnd);
 
 	if (utcCutPeriodStart >= utcCutPeriodEnd)
@@ -5626,7 +5626,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = parametersRoot.get(field, "").asString();
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -5696,7 +5696,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     }
                     else
                     {
-                        referenceUniqueName = referenceRoot.get(field, "").asString();
+                        referenceUniqueName = JSONUtils::asString(referenceRoot, field, "");
                     }        
                 }
                 else
@@ -5751,7 +5751,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
-					string referenceEncodingProfileLabel = referenceRoot.get(fieldEncodingProfileLabel, "").asString();
+					string referenceEncodingProfileLabel = JSONUtils::asString(referenceRoot,
+						fieldEncodingProfileLabel, "");
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
@@ -5921,8 +5922,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
-					string referenceEncodingProfileLabel = referenceRoot.get(
-						fieldEncodingProfileLabel, "").asString();
+					string referenceEncodingProfileLabel = JSONUtils::asString(referenceRoot,
+						fieldEncodingProfileLabel, "");
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
@@ -6018,7 +6019,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                         field = "EncodingProfileLabel";
                         if (JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
-                            string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+                            string encodingProfileLabel = JSONUtils::asString(referenceRoot, field, "0");
 
 							bool warningIfMissing = false;
                             referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
@@ -6113,7 +6114,7 @@ void Validator::fillReferencesOutput(
 					}
                     else
                     {
-                        referenceUniqueName = referenceOutputRoot.get(field, "").asString();
+                        referenceUniqueName = JSONUtils::asString(referenceOutputRoot, field, "");
                     }        
                 }
                 else
@@ -6638,7 +6639,7 @@ void Validator::validateCrossReference(
 	}
 
 	string field = "Type";
-	string sCrossReferenceType = crossReferenceRoot.get(field, "").asString();
+	string sCrossReferenceType = JSONUtils::asString(crossReferenceRoot, field, "");
 	MMSEngineDBFacade::CrossReferenceType crossReferenceType;
 	try
 	{
@@ -6779,7 +6780,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "").asString();
+        string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
@@ -6950,7 +6951,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "").asString();
+        string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
@@ -7054,7 +7055,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "").asString();
+        string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
@@ -7101,7 +7102,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 	string liveProxyOutputType;
 	if (JSONUtils::isMetadataPresent(outputRoot, field))
 	{
-		liveProxyOutputType = outputRoot.get(field, "").asString();
+		liveProxyOutputType = JSONUtils::asString(outputRoot, field, "");
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
@@ -7212,7 +7213,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		string field = "fontType";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			string fontType = drawTextDetailsRoot.get(field, "").asString();
+			string fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			if (!isFontTypeValid(fontType))
 			{
@@ -7229,7 +7230,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		field = "fontColor";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			string fontColor = drawTextDetailsRoot.get(field, "").asString();
+			string fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			if (!isColorValid(fontColor))
 			{

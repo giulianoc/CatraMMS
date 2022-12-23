@@ -92,12 +92,12 @@ void API::registerUser(
 			}
 		}
 
-		email = metadataRoot.get("email", "").asString();
-		password = metadataRoot.get("password", "").asString();
-		shareWorkspaceCode = metadataRoot.get("shareWorkspaceCode", "").asString();
+		email = JSONUtils::asString(metadataRoot, "email", "");
+		password = JSONUtils::asString(metadataRoot, "password", "");
+		shareWorkspaceCode = JSONUtils::asString(metadataRoot, "shareWorkspaceCode", "");
 
-		string name = metadataRoot.get("name", "").asString();
-		string country = metadataRoot.get("country", "").asString();
+		string name = JSONUtils::asString(metadataRoot, "name", "");
+		string country = JSONUtils::asString(metadataRoot, "country", "");
 
 		if (shareWorkspaceCode == "")
 		{
@@ -106,7 +106,7 @@ void API::registerUser(
 			int maxIngestionsNumber;
 			int maxStorageInMB;
 
-            string workspaceName = metadataRoot.get("workspaceName", "").asString();
+            string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
 			if (workspaceName == "")
 			{
 				if (name != "")
@@ -691,7 +691,7 @@ void API::shareWorkspace_(
 			throw runtime_error(errorMessage);
 		}
 
-		string email = metadataRoot.get("email", "").asString();
+		string email = JSONUtils::asString(metadataRoot, "email", "");
 		bool createRemoveWorkspace = JSONUtils::asBool(metadataRoot, "createRemoveWorkspace", false);
 		bool ingestWorkflow = JSONUtils::asBool(metadataRoot, "ingestWorkflow", false);
 		bool createProfiles = JSONUtils::asBool(metadataRoot, "createProfiles", false);
@@ -1123,14 +1123,14 @@ void API::login(
 				}
 
 				string field = "email";
-				string email = metadataRoot.get(field, "").asString();
+				string email = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "password";
-				string password = metadataRoot.get(field, "").asString();
+				string password = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					remoteClientIPAddress = metadataRoot.get(field, "").asString();
+					remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
 
 				try
 				{
@@ -1215,14 +1215,14 @@ void API::login(
 				}
 
 				string field = "name";
-				string userName = metadataRoot.get(field, "").asString();
+				string userName = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "password";
-				string password = metadataRoot.get(field, "").asString();
+				string password = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					remoteClientIPAddress = metadataRoot.get(field, "").asString();
+					remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
 
 				try
 				{
@@ -1544,28 +1544,28 @@ void API::login(
 
 						field = "continent";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continent = geoServiceResponse.get(field, "").asString();
+							continent = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "continent_code";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continentCode = geoServiceResponse.get(field, "").asString();
+							continentCode = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "country";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							country = geoServiceResponse.get(field, "").asString();
+							country = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "country_code";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							countryCode = geoServiceResponse.get(field, "").asString();
+							countryCode = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "region";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							region = geoServiceResponse.get(field, "").asString();
+							region = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "city";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							city = geoServiceResponse.get(field, "").asString();
+							city = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "org";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							org = geoServiceResponse.get(field, "").asString();
+							org = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "isp";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							isp = geoServiceResponse.get(field, "").asString();
+							isp = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "timezone_gmtOffset";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
 							timezoneGMTOffset = JSONUtils::asInt(geoServiceResponse, field, -1);
@@ -1904,21 +1904,21 @@ void API::updateUser(
 			string field = "name";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				name = metadataRoot.get(field, "").asString();
+				name = JSONUtils::asString(metadataRoot, field, "");
 				nameChanged = true;
 			}
 
 			field = "email";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				email = metadataRoot.get(field, "").asString();
+				email = JSONUtils::asString(metadataRoot, field, "");
 				emailChanged = true;
 			}
 
 			field = "country";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				country = metadataRoot.get(field, "").asString();
+				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
 			}
 
@@ -1927,7 +1927,7 @@ void API::updateUser(
 				field = "expirationDate";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
 				{
-					expirationDate = metadataRoot.get(field, "").asString();
+					expirationDate = JSONUtils::asString(metadataRoot, field, "");
 					expirationDateChanged = true;
 				}
 			}
@@ -1936,8 +1936,8 @@ void API::updateUser(
 				&& JSONUtils::isMetadataPresent(metadataRoot, "oldPassword"))
 			{
 				passwordChanged = true;
-				newPassword = metadataRoot.get("newPassword", "").asString();
-				oldPassword = metadataRoot.get("oldPassword", "").asString();
+				newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
+				oldPassword = JSONUtils::asString(metadataRoot, "oldPassword", "");
 			}
         }
 		else
@@ -1945,7 +1945,7 @@ void API::updateUser(
 			string field = "country";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				country = metadataRoot.get(field, "").asString();
+				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
 			}
         }
@@ -2222,7 +2222,7 @@ void API::resetPassword(
             throw runtime_error(errorMessage);
 		}
 
-		resetPasswordToken = metadataRoot.get("resetPasswordToken", "").asString();
+		resetPasswordToken = JSONUtils::asString(metadataRoot, "resetPasswordToken", "");
 		if (resetPasswordToken == "")
 		{
 			string errorMessage = string("The 'resetPasswordToken' parameter is not found");
@@ -2233,7 +2233,7 @@ void API::resetPassword(
 			throw runtime_error(errorMessage);
 		}
 
-		newPassword = metadataRoot.get("newPassword", "").asString();
+		newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
 		if (newPassword == "")
 		{
 			string errorMessage = string("The 'newPassword' parameter is not found");
@@ -2420,21 +2420,21 @@ void API::updateWorkspace(
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			nameChanged = true;
-			newName = metadataRoot.get(field, "").asString();
+			newName = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "maxEncodingPriority";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			maxEncodingPriorityChanged = true;
-			newMaxEncodingPriority = metadataRoot.get(field, "").asString();
+			newMaxEncodingPriority = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "encodingPeriod";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			encodingPeriodChanged = true;
-			newEncodingPeriod = metadataRoot.get(field, "").asString();
+			newEncodingPeriod = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "maxIngestionsNumber";
@@ -2455,7 +2455,7 @@ void API::updateWorkspace(
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			languageCodeChanged = true;
-			newLanguageCode = metadataRoot.get(field, "").asString();
+			newLanguageCode = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "userAPIKey";
@@ -2497,7 +2497,7 @@ void API::updateWorkspace(
 			if (JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
 			{
 				expirationDateChanged = true;
-				newExpirationDate = userAPIKeyRoot.get(field, "").asString();
+				newExpirationDate = JSONUtils::asString(userAPIKeyRoot, field, "");
 			}
 
 			field = "createRemoveWorkspace";

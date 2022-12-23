@@ -75,11 +75,11 @@ void APICommon::init(
 		+ ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
 	);
 
-	_guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
+	_guiProtocol =  JSONUtils::asString(_configuration["mms"], "guiProtocol", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->guiProtocol: " + _guiProtocol
     );
-    _guiHostname =  _configuration["mms"].get("guiHostname", "XXX").asString();
+    _guiHostname =  JSONUtils::asString(_configuration["mms"], "guiHostname", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->guiHostname: " + _guiHostname
     );
@@ -88,11 +88,11 @@ void APICommon::init(
         + ", mms->guiPort: " + to_string(_guiPort)
     );
 
-	_encoderUser =  _configuration["ffmpeg"].get("encoderUser", 0).asString();
+	_encoderUser =  JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderUser: " + _encoderUser
 	);
-	_encoderPassword =  _configuration["ffmpeg"].get("encoderPassword", 0).asString();
+	_encoderPassword =  JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderPassword: " + _encoderPassword
 	);

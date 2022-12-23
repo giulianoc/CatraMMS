@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     
     Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
-    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
+    string logPathName =  JSONUtils::asString(configuration["log"], "pathName", "");
     bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
     
     std::vector<spdlog::sink_ptr> sinks;
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    string logLevel =  JSONUtils::asString(configuration["log"], "level", "");
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->level: " + logLevel
     );
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
         spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    string pattern =  JSONUtils::asString(configuration["log"], "pattern", "");
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->pattern: " + pattern
     );

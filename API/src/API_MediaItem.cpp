@@ -82,14 +82,14 @@ void API::updateMediaItem(
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				titleModified = true;
-				newTitle = metadataRoot.get("Title", "").asString();
+				newTitle = JSONUtils::asString(metadataRoot, "Title", "");
 			}
 
 			field = "UserData";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				userDataModified = true;
-				newUserData = metadataRoot.get("UserData", "").asString();
+				newUserData = JSONUtils::asString(metadataRoot, "UserData", "");
 			}
 
 			field = "RetentionInMinutes";
@@ -110,7 +110,7 @@ void API::updateMediaItem(
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				uniqueNameModified = true;
-				newUniqueName = metadataRoot.get(field, "").asString();
+				newUniqueName = JSONUtils::asString(metadataRoot, field, "");
 			}
         }
 
@@ -562,7 +562,7 @@ void API::mediaItemsList(
 
 				for (int tagIndex = 0; tagIndex < tagsInRoot.size(); ++tagIndex)
 				{
-					tagsIn.push_back (tagsInRoot[tagIndex].asString());
+					tagsIn.push_back (JSONUtils::asString(tagsInRoot[tagIndex]));
 				}
 			}
 
@@ -573,7 +573,7 @@ void API::mediaItemsList(
 
 				for (int tagIndex = 0; tagIndex < tagsNotInRoot.size(); ++tagIndex)
 				{
-					tagsNotIn.push_back (tagsNotInRoot[tagIndex].asString());
+					tagsNotIn.push_back (JSONUtils::asString(tagsNotInRoot[tagIndex]));
 				}
 			}
 
