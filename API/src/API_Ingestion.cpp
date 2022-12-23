@@ -2828,15 +2828,6 @@ void API::uploadedBinary(
                 }
             }
 
-			{
-				_logger->info(__FILEREF__ + "Update IngestionJob (uploading progress)"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", uploadingProgress: " + to_string(uploadingProgress)
-				);
-				_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-					ingestionJobKey, uploadingProgress);
-			}
-
             if (contentRangeEnd + 1 == contentRangeSize)
             {
 				if (segmentedContent)
@@ -2869,6 +2860,15 @@ void API::uploadedBinary(
                 _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
 					ingestionJobKey, sourceBinaryTransferred);
             }
+			else
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob (uploading progress)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", uploadingProgress: " + to_string(uploadingProgress)
+				);
+				_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+					ingestionJobKey, uploadingProgress);
+			}
         }
         
         string responseBody;

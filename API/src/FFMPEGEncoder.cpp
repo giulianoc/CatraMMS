@@ -5865,7 +5865,9 @@ void FFMPEGEncoder::generateFramesThread(
 						mmsIngestionJobURL,
 						_mmsAPITimeoutInSeconds,
 						to_string(userKey),
-						apiKey);
+						apiKey,
+						3 // maxRetryNumber
+					);
 
 					string field = "response";
 					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
@@ -6259,7 +6261,8 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json"	// contentType
+			"application/json",	// contentType
+			3	// maxRetries
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -6336,7 +6339,9 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 			to_string(userKey),
 			apiKey,
 			imagesDirectory + "/" + generatedFrameFileName,
-			frameFileSize);
+			frameFileSize,
+			3 // maxRetryNumber
+		);
 	}
 	catch (runtime_error e)
 	{
@@ -11348,7 +11353,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json"	// contentType
+			"application/json",	// contentType
+			3 // maxRetryNumber
 		);
 	}
 	catch (runtime_error e)
@@ -11450,7 +11456,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json"	// contentType
+			"application/json",	// contentType
+			3 // maxRetryNumber
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -11527,7 +11534,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 			to_string(userKey),
 			apiKey,
 			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			chunkFileSize);
+			chunkFileSize,
+			3 // maxRetryNumber
+		);
 	}
 	catch (runtime_error e)
 	{
@@ -12665,7 +12674,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			to_string(liveRecorderUserKey),
 			liveRecorderApiKey,
 			workflowMetadata,
-			"application/json"	// contentType
+			"application/json",	// contentType
+			3 // maxRetryNumber
 		);
 
 		if (externalEncoder)
@@ -12753,7 +12763,8 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				to_string(liveRecorderUserKey),
 				liveRecorderApiKey,
 				tarGzStagingLiveRecorderVirtualVODPathName,
-				chunkFileSize
+				chunkFileSize,
+				3 // maxRetryNumber
 			);
 
 			{
@@ -17069,7 +17080,8 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json"	// contentType
+			"application/json",	// contentType
+			3 // maxRetryNumber
 		);
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
@@ -17197,7 +17209,8 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 			to_string(userKey),
 			apiKey,
 			localBinaryPathFileName,
-			localBinaryFileSizeInBytes
+			localBinaryFileSizeInBytes,
+			3 // maxRetryNumber
 		);
 
 		if (fileFormat == "hls")
@@ -17303,7 +17316,8 @@ string FFMPEGEncoder::downloadMediaFromMMS(
 			_logger,
 			ingestionJobKey,
 			sourcePhysicalDeliveryURL,
-			localDestAssetPathName
+			localDestAssetPathName,
+			3 // maxRetryNumber
 		);
 	}
 
@@ -17536,7 +17550,9 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 				mmsIngestionJobURL,
 				_mmsAPITimeoutInSeconds,
 				to_string(userKey),
-				apiKey);
+				apiKey,
+				3 // maxRetryNumber
+			);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(ingestionRoot, field))

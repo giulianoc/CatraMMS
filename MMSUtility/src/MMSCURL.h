@@ -63,7 +63,9 @@ public:
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
-		string basicAuthenticationPassword
+		string basicAuthenticationPassword,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static Json::Value httpGetJson(
@@ -72,7 +74,9 @@ public:
 		string url,
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
-		string basicAuthenticationPassword
+		string basicAuthenticationPassword,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static string httpPostString(
@@ -83,7 +87,9 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType	// i.e.: application/json
+		string contentType,	// i.e.: application/json
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static string httpPutString(
@@ -94,7 +100,9 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType	// i.e.: application/json
+		string contentType,	// i.e.: application/json
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static Json::Value httpPostStringAndGetJson(
@@ -105,7 +113,9 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType	// i.e.: application/json
+		string contentType,	// i.e.: application/json
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static Json::Value httpPutStringAndGetJson(
@@ -116,7 +126,9 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType	// i.e.: application/json
+		string contentType,	// i.e.: application/json
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static string httpPostFile(
@@ -128,6 +140,8 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
 	);
@@ -141,6 +155,8 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
 	);
@@ -154,6 +170,8 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
 	);
@@ -167,6 +185,8 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
 	);
@@ -179,14 +199,18 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string pathFileName,
-		int64_t fileSizeInBytes
+		int64_t fileSizeInBytes,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static void downloadFile(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
-		string destBinaryPathName
+		string destBinaryPathName,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 private:
@@ -199,7 +223,9 @@ private:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		string body,
-		string contentType	// i.e.: application/json
+		string contentType,	// i.e.: application/json
+		int maxRetryNumber,
+		int secondsToWaitBeforeToRetry
 	);
 
 	static string httpPostPutFile(
@@ -212,6 +238,8 @@ private:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
+		int maxRetryNumber,
+		int secondsToWaitBeforeToRetry,
 		int64_t contentRangeStart,
 		int64_t contentRangeEnd_Excluded
 	);

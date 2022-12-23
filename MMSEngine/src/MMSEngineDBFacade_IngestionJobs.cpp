@@ -3382,7 +3382,8 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         {
             lastSQLCommand = 
                 "update MMS_IngestionJob set uploadingProgress = ? where ingestionJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setDouble(queryParameterIndex++, uploadingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -3538,9 +3539,15 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         );
 
         {
-            lastSQLCommand = 
-                "update MMS_IngestionJob set sourceBinaryTransferred = ? where ingestionJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			if (sourceBinaryTransferred)
+				lastSQLCommand = 
+					"update MMS_IngestionJob set sourceBinaryTransferred = ?, uploadingProgress = 100 "
+					"where ingestionJobKey = ?";
+			else
+				lastSQLCommand = 
+					"update MMS_IngestionJob set sourceBinaryTransferred = ? where ingestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, sourceBinaryTransferred ? 1 : 0);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
