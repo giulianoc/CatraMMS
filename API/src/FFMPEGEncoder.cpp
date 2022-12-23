@@ -4280,7 +4280,9 @@ void FFMPEGEncoder::encodeContentThread(
 			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, field, -1);
 
 			string workflowLabel = "Add Variant " + to_string(sourceMediaItemKey)
-				+ " - " + to_string(encodingProfileKey);
+				+ " - " + to_string(encodingProfileKey)
+				+ " (encoding from external transcoder)"
+			;
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -4290,7 +4292,7 @@ void FFMPEGEncoder::encodeContentThread(
 				sourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"Transcoder -> Encode",	// ingester
+				"External Transcoder",	// ingester
 				sourceMediaItemKey,
 				encodingProfileKey
 			);
@@ -4817,6 +4819,11 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				FileIO::remove(sourceVideoAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add overlayImageOnVideo from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -4825,8 +4832,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				encodingParametersRoot,
 				sourceVideoFileExtension,
 				encodedStagingAssetPathName,
-				"Add overlayImageOnVideo",	// workflowLabel
-				"Transcoder -> OverlayImage"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -5256,6 +5263,11 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add overlayTextOnVideo from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -5264,8 +5276,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				encodingParametersRoot,
 				sourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add overlayTextOnVideo",	// workflowLabel
-				"Transcoder -> OverlayText"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -6196,7 +6208,7 @@ int64_t FFMPEGEncoder::generateFrames_ingestFrame(
 		workflowMetadata = buildAddContentIngestionWorkflow(
 			ingestionJobKey, addContentTitle,
 			outputFileFormat,
-			"Transcoder -> Generateor Frames",
+			"Transcoder -> Generator Frames",
 			sourceURL,
 			addContentTitle,
 			userDataRoot,
@@ -6667,6 +6679,11 @@ void FFMPEGEncoder::slideShowThread(
 			}
 			string targetFileFormat = encodingParametersRoot.get(field, "").asString();
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add slideShow from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -6675,8 +6692,8 @@ void FFMPEGEncoder::slideShowThread(
 				encodingParametersRoot,
 				targetFileFormat,	// sourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add slideShow",	// workflowLabel
-				"Transcoder -> SlideShow"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -7075,6 +7092,11 @@ void FFMPEGEncoder::videoSpeedThread(
 				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add videoSpeed from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -7083,8 +7105,8 @@ void FFMPEGEncoder::videoSpeedThread(
 				encodingParametersRoot,
 				sourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add videoSpeed",	// workflowLabel
-				"Transcoder -> VideoSpeed"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -7603,6 +7625,11 @@ void FFMPEGEncoder::pictureInPictureThread(
 				FileIO::remove(overlaySourceAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add pictureInPicture from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -7611,8 +7638,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 				encodingParametersRoot,
 				mainSourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add pictureInPicture",	// workflowLabel
-				"Transcoder -> PictureInPicture"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -8222,6 +8249,11 @@ void FFMPEGEncoder::introOutroOverlayThread(
 				FileIO::remove(outroSourceAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add introOutroOverlay from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -8230,8 +8262,8 @@ void FFMPEGEncoder::introOutroOverlayThread(
 				encodingParametersRoot,
 				mainSourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add introOutroOverlay",	// workflowLabel
-				"Transcoder -> IntroOutroOverlay"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -8629,6 +8661,11 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
 			}
 
+			string workflowLabel =
+				ingestedParametersRoot.get("Title", "").asString()
+				+ " (add cutFrameAccurate from external transcoder)"
+			;
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				encodingJobKey,
@@ -8637,8 +8674,8 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 				encodingParametersRoot,
 				sourceFileExtension,
 				encodedStagingAssetPathName,
-				"Add cutFrameAccurate",	// workflowLabel
-				"Transcoder -> CutFrameAccurate"	// ingester
+				workflowLabel,
+				"External Transcoder"	// ingester
 			);
 		}
 
@@ -16952,7 +16989,7 @@ string FFMPEGEncoder::buildAddContentIngestionWorkflow(
 		Json::Value workflowRoot;
 
 		field = "Label";
-		workflowRoot[field] = title;
+		workflowRoot[field] = label;
 
 		field = "Type";
 		workflowRoot[field] = "Workflow";
@@ -17376,6 +17413,18 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 			inCaseOfLinkHasItToBeRead);                                                                          
 	}
 
+	Json::Value userDataRoot;
+	{
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
+			userDataRoot = ingestedParametersRoot["UserData"];
+
+		Json::Value mmsDataRoot;
+		mmsDataRoot["dataType"] = "externalTranscoder";
+		mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
+
+		userDataRoot["mmsData"] = mmsDataRoot;
+	}
+
 	string workflowMetadata;
 	{
 		string localFileFormat = fileFormat;
@@ -17388,7 +17437,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 				ingestionJobKey, workflowLabel, localFileFormat, ingester,
 				"",	// sourceURL
 				"",	// title
-				Json::nullValue, // userDataRoot
+				userDataRoot,
 				Json::nullValue,
 				variantOfMediaItemKey,
 				variantEncodingProfileKey
@@ -17400,7 +17449,7 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 				ingestionJobKey, workflowLabel, localFileFormat, ingester,
 				"",	// sourceURL
 				"",	// title
-				Json::nullValue, // userDataRoot
+				userDataRoot,
 				ingestedParametersRoot
 			);
 		}

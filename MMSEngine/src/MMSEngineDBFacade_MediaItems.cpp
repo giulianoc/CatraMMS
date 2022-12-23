@@ -5522,103 +5522,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 		}
 
-        /*
-        // territories
-        {
-            string field = "Territories";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                const Json::Value territories = parametersRoot[field];
-                
-                lastSQLCommand = 
-                    "select territoryKey, name from MMS_Territory where workspaceKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatementTerrirories (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatementTerrirories->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-
-                shared_ptr<sql::ResultSet> resultSetTerritories (preparedStatementTerrirories->executeQuery());
-                while (resultSetTerritories->next())
-                {
-                    int64_t territoryKey = resultSetTerritories->getInt64("territoryKey");
-                    string territoryName = resultSetTerritories->getString("name");
-
-                    string startPublishing = "NOW";
-                    string endPublishing = "FOREVER";
-                    if (JSONUtils::isMetadataPresent(territories, territoryName))
-                    {
-                        Json::Value territory = territories[territoryName];
-                        
-                        field = "startPublishing";
-                        if (JSONUtils::isMetadataPresent(territory, field))
-                            startPublishing = territory.get(field, "XXX").asString();
-
-                        field = "endPublishing";
-                        if (JSONUtils::isMetadataPresent(territory, field))
-                            endPublishing = territory.get(field, "XXX").asString();
-                    }
-                    
-                    if (startPublishing == "NOW")
-                    {
-                        tm          tmDateTime;
-                        char        strDateTime [64];
-
-                        chrono::system_clock::time_point now = chrono::system_clock::now();
-                        time_t utcTime = chrono::system_clock::to_time_t(now);
-                        
-                        localtime_r (&utcTime, &tmDateTime);
-
-                        sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-                                tmDateTime. tm_year + 1900,
-                                tmDateTime. tm_mon + 1,
-                                tmDateTime. tm_mday,
-                                tmDateTime. tm_hour,
-                                tmDateTime. tm_min,
-                                tmDateTime. tm_sec);
-
-                        startPublishing = strDateTime;
-                    }
-                    
-                    if (endPublishing == "FOREVER")
-                    {
-                        tm          tmDateTime;
-                        char        strDateTime [64];
-
-                        chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
-                        
-                        time_t utcTime = chrono::system_clock::to_time_t(forever);
-                        
-                        localtime_r (&utcTime, &tmDateTime);
-
-                        sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-                                tmDateTime. tm_year + 1900,
-                                tmDateTime. tm_mon + 1,
-                                tmDateTime. tm_mday,
-                                tmDateTime. tm_hour,
-                                tmDateTime. tm_min,
-                                tmDateTime. tm_sec);
-
-                        endPublishing = strDateTime;
-                    }
-                    
-                    {
-                        lastSQLCommand = 
-                            "insert into MMS_DefaultTerritoryInfo(defaultTerritoryInfoKey, mediaItemKey, territoryKey, startPublishing, endPublishing) values ("
-                            "NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
-
-                        shared_ptr<sql::PreparedStatement> preparedStatementDefaultTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementDefaultTerritory->setInt64(queryParameterIndex++, mediaItemKey);
-                        preparedStatementDefaultTerritory->setInt(queryParameterIndex++, territoryKey);
-                        preparedStatementDefaultTerritory->setString(queryParameterIndex++, startPublishing);
-                        preparedStatementDefaultTerritory->setString(queryParameterIndex++, endPublishing);
-
-                        preparedStatementDefaultTerritory->executeUpdate();
-                    }
-                }                
-            }
-        }
-        */
-
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
 		{
@@ -5646,8 +5549,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			int64_t sourceIngestionJobKey = -1;
 
 			// in case of a content generated by a live recording or generateFrames,
+			// or, in general, added by the External Transcoder,
 			// we have to insert into MMS_IngestionJobOutput
-			// of the live recording or generateFrames ingestion job
+			// of the ingestion job
 			{
                 string field = "UserData";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5663,7 +5567,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
 							string dataType = mmsDataRoot.get(field, "").asString();
-							if (dataType == "liveRecordingChunk" || dataType == "generatedFrame")
+							if (dataType == "liveRecordingChunk"
+								|| dataType == "generatedFrame"
+								|| dataType == "externalEncoder")
 							{
 								field = "ingestionJobKey";
 								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
@@ -5677,7 +5583,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			int64_t encodingProfileKey = -1;
 			physicalPathKey = saveVariantContentMetadata(
 				conn,
-                
+
 				workspace->_workspaceKey,
 				ingestionJobKey,
 				sourceIngestionJobKey,
@@ -6649,7 +6555,7 @@ void MMSEngineDBFacade::removeTags(
 int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t workspaceKey,
 		int64_t ingestionJobKey,
-		int64_t liveRecordingIngestionJobKey,
+		int64_t sourceIngestionJobKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
 		string externalDeliveryTechnology,
@@ -6703,7 +6609,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
             workspaceKey,
 			ingestionJobKey,
-			liveRecordingIngestionJobKey,
+			sourceIngestionJobKey,
             mediaItemKey,
 			externalReadOnlyStorage,
 			externalDeliveryTechnology,
@@ -6918,7 +6824,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
         int64_t workspaceKey,
 		int64_t ingestionJobKey,
-		int64_t liveRecordingIngestionJobKey,
+		int64_t sourceIngestionJobKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
 		string externalDeliveryTechnology,
@@ -7257,7 +7163,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		}            
 
 		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey,
-			liveRecordingIngestionJobKey);
+			sourceIngestionJobKey);
     }
     catch(sql::SQLException se)
     {
