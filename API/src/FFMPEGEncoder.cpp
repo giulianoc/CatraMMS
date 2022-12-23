@@ -16939,6 +16939,12 @@ string FFMPEGEncoder::buildAddContentIngestionWorkflow(
 
 			field = "variantEncodingProfileKey";
 			addContentParametersRoot[field] = variantEncodingProfileKey;
+
+			if (userDataRoot != Json::nullValue)
+			{
+				field = "UserData";
+				addContentParametersRoot[field] = userDataRoot;
+			}
 		}
 		else
 		{
