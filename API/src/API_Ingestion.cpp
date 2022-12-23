@@ -2538,6 +2538,7 @@ void API::uploadedBinary(
         long long contentRangeStart  = -1;
         long long contentRangeEnd  = -1;
         long long contentRangeSize  = -1;
+		double uploadingProgress = 0.0;
         auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
         if (contentRangeIt != requestDetails.end())
         {
@@ -2548,6 +2549,9 @@ void API::uploadedBinary(
                     contentRangeStart,
                     contentRangeEnd,
                     contentRangeSize);
+
+				// X : 100 = contentRangeEnd : contentRangeSize
+				uploadingProgress = 100 * contentRangeEnd / contentRangeSize;
 
                 contentRangePresent = true;                
             }
@@ -2823,7 +2827,16 @@ void API::uploadedBinary(
                     throw runtime_error(errorMessage);            
                 }
             }
-            
+
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob (uploading progress)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", uploadingProgress: " + to_string(uploadingProgress)
+				);
+				_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+					ingestionJobKey, uploadingProgress);
+			}
+
             if (contentRangeEnd + 1 == contentRangeSize)
             {
 				if (segmentedContent)
@@ -2852,7 +2865,7 @@ void API::uploadedBinary(
                 _logger->info(__FILEREF__ + "Update IngestionJob"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
-                );                            
+                );
                 _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
 					ingestionJobKey, sourceBinaryTransferred);
             }
