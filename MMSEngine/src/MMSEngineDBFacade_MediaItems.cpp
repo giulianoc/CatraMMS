@@ -5569,7 +5569,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 							string dataType = mmsDataRoot.get(field, "").asString();
 							if (dataType == "liveRecordingChunk"
 								|| dataType == "generatedFrame"
-								|| dataType == "externalEncoder")
+								|| dataType == "externalTranscoder")
 							{
 								field = "ingestionJobKey";
 								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))

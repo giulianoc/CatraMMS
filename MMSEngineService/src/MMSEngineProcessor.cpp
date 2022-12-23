@@ -7965,7 +7965,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
 							string dataType = mmsDataRoot.get(field, "").asString();
-							if (dataType == "externalEncoder")
+							if (dataType == "externalTranscoder")
 							{
 								field = "ingestionJobKey";
 								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
