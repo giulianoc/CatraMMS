@@ -308,15 +308,15 @@ void API::registerUser(
             
             vector<string> emailBody;
             emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>&emsp;the registration has been done successfully</p>"));
-            emailBody.push_back(string("<p>&emsp;Here follows the user key <b>") + to_string(userKey) 
+            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the registration has been done successfully</p>"));
+            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) 
                 + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
             emailBody.push_back(
-					string("<p>&emsp;Please click <a href=\"")
+					string("<p>&emsp;&emsp;&emsp;&emsp;Please click <a href=\"")
 					+ confirmationURL
 					+ "\">here</a> to confirm the registration</p>");
-            emailBody.push_back("<p>&emsp;Have a nice day, best regards</p>");
-            emailBody.push_back("<p>&emsp;&emsp;MMS technical support</p>");
+            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
 			bool useMMSCCToo = true;
@@ -842,7 +842,7 @@ void API::shareWorkspace_(
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the share workspace code <b>")
 					+ shareWorkspaceCode + "</b></p>");
 				emailBody.push_back(
-					string("<p>&emsp;Please click <a href=\"")
+					string("<p>&emsp;&emsp;&emsp;&emsp;Please click <a href=\"")
 					+ shareWorkspaceURL
 					+ "\">here</a> to continue with the registration</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
