@@ -1032,12 +1032,21 @@ void API::confirmRegistration(
 
             string to = emailAddress;
             string subject = "Welcome";
-            
+
+			string loginURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				loginURL += (":" + to_string(_guiPort));
+			loginURL += "/catramms/login.xhtml?confirmationRequested=false";
+
             vector<string> emailBody;
             emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>Your registration is now completed and you can enjoy working with MMS</p>"));
-            emailBody.push_back("<p>Best regards</p>");
-            emailBody.push_back("<p>MMS technical support</p>");
+            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>"));
+            emailBody.push_back(
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
+					+ loginURL
+					+ "\">here</a> to login into the MMS platform</b></p>");
+            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
+            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
 			bool useMMSCCToo = true;
