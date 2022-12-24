@@ -312,9 +312,9 @@ void API::registerUser(
             emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) 
                 + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
             emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;Please click <a href=\"")
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
 					+ confirmationURL
-					+ "\">here</a> to confirm the registration</p>");
+					+ "\">here</a> to confirm the registration</b></p>");
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
@@ -783,9 +783,9 @@ void API::shareWorkspace_(
 					+ to_string(userKey) 
 					+ "</b> and the confirmation code <b>" + shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>");
 				emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;Please click <a href=\"")
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
 					+ confirmationURL
-					+ "\">here</a> to confirm the registration</p>");
+					+ "\">here</a> to confirm the registration</b></p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
@@ -842,9 +842,9 @@ void API::shareWorkspace_(
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the share workspace code <b>")
 					+ shareWorkspaceCode + "</b></p>");
 				emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;Please click <a href=\"")
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
 					+ shareWorkspaceURL
-					+ "\">here</a> to continue with the registration</p>");
+					+ "\">here</a> to continue with the registration</b></p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
@@ -2141,8 +2141,8 @@ void API::createTokenToResetPassword(
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
 			emailBody.push_back(
-				string("<p>Please click <a href=\"") + resetPasswordURL
-				+ "\">here</a> to reset your password. This link is valid for a limited time.</p>");
+				string("<p><b>Please click <a href=\"") + resetPasswordURL
+				+ "\">here</a> to reset your password. This link is valid for a limited time.</b></p>");
             emailBody.push_back(string("In case you did not request any reset of your password, just ignore this email</p>"));
 
             emailBody.push_back("<p>Have a nice day, best regards</p>");
