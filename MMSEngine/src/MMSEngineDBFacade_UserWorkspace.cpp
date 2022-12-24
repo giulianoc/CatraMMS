@@ -1279,7 +1279,7 @@ string MMSEngineDBFacade::createCode(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		code = createCode(workspaceKey, userKey, userEmail, codeType,
+		code = createCode(conn, workspaceKey, userKey, userEmail, codeType,
 			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder);
