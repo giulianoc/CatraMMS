@@ -645,7 +645,6 @@ void API::shareWorkspace_(
         }
 
 		vector<string> mandatoryFields = {
-			"userAlreadyPresent",
 			"email",
 			"createRemoveWorkspace",
 			"ingestWorkflow",
@@ -673,12 +672,33 @@ void API::shareWorkspace_(
 			}
 		}
 
-		// In case of ActiveDirectory, userAlreadyPresent is always true
+		int64_t userKey;
+		string name;
         bool userAlreadyPresent;
+
+		string email = JSONUtils::asString(metadataRoot, "email", "");
+
+		// In case of ActiveDirectory, userAlreadyPresent is always true
 		if(_ldapEnabled)
 			userAlreadyPresent = true;
 		else
-			userAlreadyPresent = JSONUtils::asBool(metadataRoot, "userAlreadyPresent", false);
+		{
+			try
+			{
+				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email);
+				tie(userKey, name) = userDetails;
+
+				userAlreadyPresent = true;
+			}
+			catch(runtime_error e)
+			{
+				_logger->warn(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				userAlreadyPresent = false;
+			}
+		}
 
 		if (!userAlreadyPresent && !_registerUserEnabled)
 		{
@@ -691,7 +711,6 @@ void API::shareWorkspace_(
 			throw runtime_error(errorMessage);
 		}
 
-		string email = JSONUtils::asString(metadataRoot, "email", "");
 		bool createRemoveWorkspace = JSONUtils::asBool(metadataRoot, "createRemoveWorkspace", false);
 		bool ingestWorkflow = JSONUtils::asBool(metadataRoot, "ingestWorkflow", false);
 		bool createProfiles = JSONUtils::asBool(metadataRoot, "createProfiles", false);
@@ -714,12 +733,6 @@ void API::shareWorkspace_(
 
 			if (userAlreadyPresent)
 			{
-				int64_t userKey;
-				string name;
-
-				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email);
-				tie(userKey, name) = userDetails;
-
 				bool admin = false;
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
 					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace,
