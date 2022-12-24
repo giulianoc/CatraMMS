@@ -58,12 +58,10 @@ void API::addRequestStatistic(
             userId = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "physicalPathKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				physicalPathKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			physicalPathKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "confStreamKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				confStreamKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			confStreamKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			if (physicalPathKey == -1 && confStreamKey == -1)
             {

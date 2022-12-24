@@ -1129,8 +1129,7 @@ void API::login(
 				string password = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
-				if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
+				remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
 
 				try
 				{
@@ -1221,8 +1220,7 @@ void API::login(
 				string password = JSONUtils::asString(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
-				if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
+				remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
 
 				try
 				{
@@ -1527,10 +1525,7 @@ void API::login(
 
 						bool geoSuccess;
 						string field = "success";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							geoSuccess = JSONUtils::asBool(geoServiceResponse, field, false);
-						else
-							geoSuccess = false;
+						geoSuccess = JSONUtils::asBool(geoServiceResponse, field, false);
 						if (!geoSuccess)
 						{
 							string errorMessage = __FILEREF__ + "geoService failed"
@@ -1543,32 +1538,23 @@ void API::login(
 						}
 
 						field = "continent";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continent = JSONUtils::asString(geoServiceResponse, field, "");
+						continent = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "continent_code";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continentCode = JSONUtils::asString(geoServiceResponse, field, "");
+						continentCode = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "country";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							country = JSONUtils::asString(geoServiceResponse, field, "");
+						country = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "country_code";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							countryCode = JSONUtils::asString(geoServiceResponse, field, "");
+						countryCode = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "region";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							region = JSONUtils::asString(geoServiceResponse, field, "");
+						region = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "city";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							city = JSONUtils::asString(geoServiceResponse, field, "");
+						city = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "org";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							org = JSONUtils::asString(geoServiceResponse, field, "");
+						org = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "isp";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							isp = JSONUtils::asString(geoServiceResponse, field, "");
+						isp = JSONUtils::asString(geoServiceResponse, field, "");
 						field = "timezone_gmtOffset";
-						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							timezoneGMTOffset = JSONUtils::asInt(geoServiceResponse, field, -1);
+						timezoneGMTOffset = JSONUtils::asInt(geoServiceResponse, field, -1);
 					}
 					catch(...)
 					{

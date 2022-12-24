@@ -386,16 +386,12 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string playURL;
 
 				field = "OutputType";
-				if (!JSONUtils::isMetadataPresent(outputRoot, field))
-					outputType = "HLS";
-				else
-					outputType = JSONUtils::asString(outputRoot, field, "HLS");
+				outputType = JSONUtils::asString(outputRoot, field, "HLS");
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					field = "DeliveryCode";
-					if (JSONUtils::isMetadataPresent(outputRoot, field))
-						localDeliveryCode = outputRoot.get(field, 0).asInt64();
+					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
 				else if (outputType == "RTMP_Stream"
 					|| outputType == "AWS_CHANNEL")
@@ -621,16 +617,12 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string playURL;
 
 					field = "OutputType";
-					if (!JSONUtils::isMetadataPresent(outputRoot, field))
-						outputType = "HLS";
-					else
-						outputType = JSONUtils::asString(outputRoot, field, "HLS");
+					outputType = JSONUtils::asString(outputRoot, field, "HLS");
 
 					if (outputType == "HLS" || outputType == "DASH")
 					{
 						field = "DeliveryCode";
-						if (JSONUtils::isMetadataPresent(outputRoot, field))
-							localDeliveryCode = outputRoot.get(field, 0).asInt64();
+						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 					}
 					else if (outputType == "RTMP_Stream"
 						|| outputType == "AWS_CHANNEL")

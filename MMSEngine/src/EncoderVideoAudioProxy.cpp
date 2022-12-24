@@ -8269,52 +8269,28 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
             Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 			string field = "completedWithError";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
-			else
-				completedWithError = false;
+			completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "errorMessage";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				encoderErrorMessage = JSONUtils::asString(encodeStatusResponse, field, "");
-			else
-				encoderErrorMessage = "";
+			encoderErrorMessage = JSONUtils::asString(encodeStatusResponse, field, "");
 
 			field = "encodingFinished";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				encodingFinished = JSONUtils::asBool(encodeStatusResponse, field, false);
-			else
-				encodingFinished = false;
+			encodingFinished = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "killedByUser";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				killedByUser = JSONUtils::asBool(encodeStatusResponse, field, false);
-			else
-				killedByUser = false;
+			killedByUser = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "urlForbidden";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				urlForbidden = JSONUtils::asBool(encodeStatusResponse, field, false);
-			else
-				urlForbidden = false;
+			urlForbidden = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "urlNotFound";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
-			else
-				urlNotFound = false;
+			urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "encodingProgress";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				encodingProgress = JSONUtils::asInt(encodeStatusResponse, field, -1);
-			else
-				encodingProgress = 0;
+			encodingProgress = JSONUtils::asInt(encodeStatusResponse, field, 0);
 
 			field = "pid";
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
-				pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
-			else
-				pid = -1;
+			pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
         }
         catch(...)
         {

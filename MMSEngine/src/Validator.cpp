@@ -362,8 +362,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
 
     string label;
     field = "Label";
-    if (JSONUtils::isMetadataPresent(taskRoot, field))
-        label = JSONUtils::asString(taskRoot, field, "");
+	label = JSONUtils::asString(taskRoot, field, "");
 
     string type = JSONUtils::asString(taskRoot, "Type", "");
     if (type == "Add-Content")

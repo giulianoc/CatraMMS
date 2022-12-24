@@ -14,12 +14,43 @@
 #include "JSONUtils.h"
 
 
-bool JSONUtils::isMetadataPresent(Json::Value root, string field)
+bool JSONUtils::isMetadataPresent(Json::Value root, string field, bool firstCharCaseInsensitive)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
         return true;
     else
-        return false;
+	{
+		if (firstCharCaseInsensitive)
+		{
+			if (field.size() > 0)
+			{
+				if(isupper(field[0]))
+				{
+					string fieldFirstCharLowerCase = field;
+					fieldFirstCharLowerCase[0] = tolower(field[0]);
+
+					if (root.isObject() && root.isMember(fieldFirstCharLowerCase) && !root[fieldFirstCharLowerCase].isNull())
+						return true;
+					else
+						return false;
+				}
+				else
+				{
+					string fieldFirstCharUpperCase = field;
+					fieldFirstCharUpperCase = toupper(field[0]);
+
+					if (root.isObject() && root.isMember(fieldFirstCharUpperCase) && !root[fieldFirstCharUpperCase].isNull())
+						return true;
+					else
+						return false;
+				}
+			}
+			else
+				return false;
+		}
+		else
+			return false;
+	}
 }
 
 bool JSONUtils::isNull(Json::Value root, string field)
@@ -55,7 +86,7 @@ string JSONUtils::asString(Json::Value root, string field, string defaultValue)
 			fieldFirstCharLowerCase = field;
 		}
 
-		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase, false))
 			return root.get(fieldFirstCharUpperCase, defaultValue).asString();
 		else
 			return root.get(fieldFirstCharLowerCase, defaultValue).asString();
@@ -90,7 +121,7 @@ int JSONUtils::asInt(Json::Value root, string field, int defaultValue)
 			fieldFirstCharLowerCase = field;
 		}
 
-		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase, false))
 		{
 			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
 				return strtol(root.get(fieldFirstCharUpperCase, defaultValue).asString().c_str(), nullptr, 10);
@@ -135,7 +166,7 @@ int64_t JSONUtils::asInt64(Json::Value root, string field, int64_t defaultValue)
 			fieldFirstCharLowerCase = field;
 		}
 
-		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase, false))
 		{
 			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
 				return strtoll(root.get(fieldFirstCharUpperCase, defaultValue).asString().c_str(), nullptr, 10);
@@ -180,7 +211,7 @@ double JSONUtils::asDouble(Json::Value root, string field, double defaultValue)
 			fieldFirstCharLowerCase = field;
 		}
 
-		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase, false))
 		{
 			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
 				return stod(root.get(fieldFirstCharUpperCase, defaultValue).asString(), nullptr);
@@ -233,7 +264,7 @@ bool JSONUtils::asBool(Json::Value root, string field, bool defaultValue)
 			fieldFirstCharLowerCase = field;
 		}
 
-		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase))
+		if (JSONUtils::isMetadataPresent(root, fieldFirstCharUpperCase, false))
 		{
 			if (root.get(fieldFirstCharUpperCase, defaultValue).type() == Json::stringValue)
 			{

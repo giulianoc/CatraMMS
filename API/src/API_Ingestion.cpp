@@ -92,8 +92,7 @@ void API::ingestion(
 
             string rootLabel;
             field = "Label";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-                rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
+			rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
@@ -940,10 +939,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     string taskLabel;
     field = "Label";
-    if (JSONUtils::isMetadataPresent(taskRoot, field))
-    {
-        taskLabel = JSONUtils::asString(taskRoot, field, "");
-    }
+	taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 	_logger->info(__FILEREF__ + "Processing SingleTask..."
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -1748,10 +1744,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 	string groupOfTaskLabel;
 	string field = "Label";
-	if (JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
-	{
-		groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
-	}
+	groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
 
 	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -2056,8 +2049,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	string processingStartingFrom;
 	{
 		field = "ProcessingStartingFrom";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
+		processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
 		if (processingStartingFrom == "")
 		{

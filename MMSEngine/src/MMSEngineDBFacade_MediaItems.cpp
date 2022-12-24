@@ -5236,10 +5236,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string contentProviderName;
             
-            if (JSONUtils::isMetadataPresent(parametersRoot, "ContentProviderName"))
-                contentProviderName = JSONUtils::asString(parametersRoot, "ContentProviderName", "");
-            else
-                contentProviderName = _defaultContentProviderName;
+			contentProviderName = JSONUtils::asString(parametersRoot, "ContentProviderName", _defaultContentProviderName);
 
             lastSQLCommand = 
                 "select contentProviderKey from MMS_ContentProvider where workspaceKey = ? and name = ?";
@@ -5289,8 +5286,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             title = JSONUtils::asString(parametersRoot, field, "");
             
             field = "Ingester";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                ingester = JSONUtils::asString(parametersRoot, field, "");
+			ingester = JSONUtils::asString(parametersRoot, field, "");
 
             field = "UserData";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5315,8 +5311,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             }
 
             field = "DeliveryFileName";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
+			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Retention";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5334,12 +5329,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                     Json::Value publishingRoot = parametersRoot[field];
 
                     field = "startPublishing";
-                    if (JSONUtils::isMetadataPresent(publishingRoot, field))
-                        startPublishing = JSONUtils::asString(publishingRoot, field, "");
+					startPublishing = JSONUtils::asString(publishingRoot, field, "NOW");
 
                     field = "endPublishing";
-                    if (JSONUtils::isMetadataPresent(publishingRoot, field))
-                        endPublishing = JSONUtils::asString(publishingRoot, field, "");
+					endPublishing = JSONUtils::asString(publishingRoot, field, "FOREVER");
                 }
                 
                 if (startPublishing == "NOW")
@@ -5460,9 +5453,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             if (uniqueName != "")
             {
 				bool allowUniqueNameOverride = false;
-				if (JSONUtils::isMetadataPresent(parametersRoot, "AllowUniqueNameOverride"))
-					allowUniqueNameOverride =
-						JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
+				allowUniqueNameOverride =
+					JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
 
 				manageExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
 					allowUniqueNameOverride, uniqueName);
@@ -5526,12 +5518,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		string externalDeliveryURL;
 		{
             string field = "ExternalDeliveryTechnology";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
             field = "ExternalDeliveryURL";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 		}
 
 		int64_t physicalItemRetentionInMinutes = -1;
@@ -5572,8 +5562,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 								|| dataType == "externalTranscoder")
 							{
 								field = "ingestionJobKey";
-								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
-									sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
+								sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
 							}
 						}
 					}

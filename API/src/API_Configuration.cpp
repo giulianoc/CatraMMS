@@ -1025,100 +1025,76 @@ void API::addStream(
             sourceType = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "encodersPoolKey";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
             field = "url";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				url = JSONUtils::asString(requestBodyRoot, field, "");            
+			url = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "pushProtocol";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");            
+			pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushEncoderKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
             field = "pushServerName";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushServerName = JSONUtils::asString(requestBodyRoot, field, "");            
+			pushServerName = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushServerPort";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
             field = "pushURI";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushUri = JSONUtils::asString(requestBodyRoot, field, "");            
+			pushUri = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "pushListenTimeout";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
 			field = "captureLiveVideoDeviceNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
             field = "captureLiveVideoInputFormat";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
+			captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "captureLiveFrameRate";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
 
 			field = "captureLiveWidth";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
 
 			field = "captureLiveHeight";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
 
 			field = "captureLiveAudioDeviceNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
 			field = "captureLiveChannelsNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
 
 			field = "sourceTVConfKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				tvSourceTVConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
+			tvSourceTVConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
 
             field = "type";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				type = JSONUtils::asString(requestBodyRoot, field, "");            
+			type = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "description";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				description = JSONUtils::asString(requestBodyRoot, field, "");            
+			description = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "name";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				name = JSONUtils::asString(requestBodyRoot, field, "");            
+			name = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "region";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				region = JSONUtils::asString(requestBodyRoot, field, "");            
+			region = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "country";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				country = JSONUtils::asString(requestBodyRoot, field, "");            
+			country = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "imageMediaItemKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "imageUniqueName";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");            
+			imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "position";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			position = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
             field = "userData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2007,22 +1983,13 @@ void API::addSourceTVStream(
 			type = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "serviceId";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				serviceId = -1;
-			else
-				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "networkId";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				networkId = -1;
-			else
-				networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "transportStreamId";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				transportStreamId = -1;
-			else
-				transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "name";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2036,8 +2003,7 @@ void API::addSourceTVStream(
 			name = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "satellite";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				satellite = JSONUtils::asString(requestBodyRoot, field, "");            
+			satellite = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "frequency";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2051,64 +2017,40 @@ void API::addSourceTVStream(
 			frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "lnb";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				lnb = JSONUtils::asString(requestBodyRoot, field, "");            
+			lnb = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "videoPid";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				videoPid = -1;
-			else
-				videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
 			field = "audioPids";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				audioPids = JSONUtils::asString(requestBodyRoot, field, "");            
+			audioPids = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "audioItalianPid";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				audioItalianPid = -1;
-			else
-				audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
 			field = "audioEnglishPid";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				audioEnglishPid = -1;
-			else
-				audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
 			field = "teletextPid";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				teletextPid = -1;
-			else
-				teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
+			teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);            
 
 			field = "modulation";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				modulation = JSONUtils::asString(requestBodyRoot, field, "");            
+			modulation = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "polarization";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				polarization = JSONUtils::asString(requestBodyRoot, field, "");            
+			polarization = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "symbolRate";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				symbolRate = -1;
-			else
-				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "bandwidthInHz";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				bandwidthInHz = -1;
-			else
-				bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+			bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);            
 
 			field = "country";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				country = JSONUtils::asString(requestBodyRoot, field, "");            
+			country = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "deliverySystem";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");            
+			deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {

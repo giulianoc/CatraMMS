@@ -22,7 +22,7 @@ class JSONUtils {
     
 public:
 
-	static bool isMetadataPresent(Json::Value root, string field);
+	static bool isMetadataPresent(Json::Value root, string field, bool firstCharCaseInsensitive = true);
 
 	static bool isNull(Json::Value root, string field);
 

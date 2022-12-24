@@ -56,16 +56,10 @@ void API::addEncoder(
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "External";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				external = requestBodyRoot.get(field, false).asBool();            
-			else
-				external = false;
+			external = requestBodyRoot.get(field, false).asBool();            
 
             field = "Enabled";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				enabled = requestBodyRoot.get(field, true).asBool();            
-			else
-				enabled = true;
+			enabled = requestBodyRoot.get(field, true).asBool();            
 
             field = "Protocol";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

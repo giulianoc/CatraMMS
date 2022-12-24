@@ -10086,13 +10086,11 @@ void FFMpeg::liveProxy2(
 
 			bool timePeriod = false;
 			string field = "timePeriod";
-			if (JSONUtils::isMetadataPresent(inputRoot, field))
-				timePeriod = JSONUtils::asBool(inputRoot, field, false);
+			timePeriod = JSONUtils::asBool(inputRoot, field, false);
 
 			int64_t utcProxyPeriodStart = -1;
 			field = "utcScheduleStart";
-			if (JSONUtils::isMetadataPresent(inputRoot, field))
-				utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
+			utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 			// else
 			// {
 			// 	field = "utcProxyPeriodStart";
@@ -10102,8 +10100,7 @@ void FFMpeg::liveProxy2(
 
 			int64_t utcProxyPeriodEnd = -1;
 			field = "utcScheduleEnd";
-			if (JSONUtils::isMetadataPresent(inputRoot, field))
-				utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
+			utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// else
 			// {
 			// 	field = "utcProxyPeriodEnd";
@@ -11088,13 +11085,11 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	// }
 	bool timePeriod = false;
 	string field = "timePeriod";
-	if (JSONUtils::isMetadataPresent(inputRoot, field))
-		timePeriod = JSONUtils::asBool(inputRoot, field, false);
+	timePeriod = JSONUtils::asBool(inputRoot, field, false);
 
 	// int64_t utcProxyPeriodStart = -1;
 	field = "utcScheduleStart";
-	if (JSONUtils::isMetadataPresent(inputRoot, field))
-		utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
+	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
 	// else
 	// {
 	// 	field = "utcProxyPeriodStart";
@@ -11104,8 +11099,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 	int64_t utcProxyPeriodEnd = -1;
 	field = "utcScheduleEnd";
-	if (JSONUtils::isMetadataPresent(inputRoot, field))
-		utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
+	utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 	// else
 	// {
 	// 	field = "utcProxyPeriodEnd";
@@ -11134,63 +11128,51 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 		int maxWidth = -1;
 		field = "maxWidth";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			maxWidth = JSONUtils::asInt(streamInputRoot, field, -1);
+		maxWidth = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		string url;
 		field = "url";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			url = JSONUtils::asString(streamInputRoot, field, "");
+		url = JSONUtils::asString(streamInputRoot, field, "");
 
 		string userAgent;
 		field = "userAgent";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			userAgent = JSONUtils::asString(streamInputRoot, field, "");
+		userAgent = JSONUtils::asString(streamInputRoot, field, "");
 
 		// int pushListenTimeout = -1;
 		field = "pushListenTimeout";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			pushListenTimeout = JSONUtils::asInt(streamInputRoot, field, -1);
+		pushListenTimeout = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		string otherInputOptions;
 		field = "otherInputOptions";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			otherInputOptions = JSONUtils::asString(streamInputRoot, field, "");
+		otherInputOptions = JSONUtils::asString(streamInputRoot, field, "");
 
 		string captureLive_videoInputFormat;
 		field = "captureVideoInputFormat";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_videoInputFormat = JSONUtils::asString(streamInputRoot, field, "");
+		captureLive_videoInputFormat = JSONUtils::asString(streamInputRoot, field, "");
 
 		int captureLive_frameRate = -1;
 		field = "captureFrameRate";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_frameRate = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_frameRate = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_width = -1;
 		field = "captureWidth";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_width = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_width = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_height = -1;
 		field = "captureHeight";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_height = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_height = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		field = "captureVideoDeviceNumber";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_videoDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_videoDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_channelsNumber = -1;
 		field = "captureChannelsNumber";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_channelsNumber = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_channelsNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		int captureLive_audioDeviceNumber = -1;
 		field = "captureAudioDeviceNumber";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			captureLive_audioDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
+		captureLive_audioDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11566,8 +11548,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 		string url;
 		field = "url";
-		if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-			url = JSONUtils::asString(streamInputRoot, field, "");
+		url = JSONUtils::asString(streamInputRoot, field, "");
 
 		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11693,8 +11674,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 
 		string otherInputOptions;
 		field = "otherInputOptions";
-		if (JSONUtils::isMetadataPresent(vodInputRoot, field))
-			otherInputOptions = JSONUtils::asString(vodInputRoot, field, "");
+		otherInputOptions = JSONUtils::asString(vodInputRoot, field, "");
 
 
 		time_t utcNow;
@@ -12053,63 +12033,51 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 			int reloadAtFrameInterval = -1;
 			field = "reloadAtFrameInterval";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				reloadAtFrameInterval = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			reloadAtFrameInterval = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPosition_X_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
+			textPosition_X_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPosition_Y_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
+			textPosition_Y_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			string fontType = "";
 			field = "fontType";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontType = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
+			fontType = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int fontSize = -1;
 			field = "fontSize";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontSize = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			fontSize = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			string fontColor = "";
 			field = "fontColor";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				fontColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
+			fontColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				textPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			textPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			int shadowx = 0;
 			field = "shadowx";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				shadowx = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			shadowx = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
 
 			int shadowy = 0;
 			field = "shadowy";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				shadowy = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			shadowy = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
 
 			bool boxEnable = false;
 			field = "boxEnable";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxEnable = JSONUtils::asBool(broadcastDrawTextDetailsRoot, field, false);
+			boxEnable = JSONUtils::asBool(broadcastDrawTextDetailsRoot, field, false);
 
 			string boxColor = "";
 			field = "boxColor";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
+			boxColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-				boxPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
+			boxPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
@@ -12174,63 +12142,51 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 
 			int reloadAtFrameInterval = -1;
 			field = "reloadAtFrameInterval";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			string textPosition_X_InPixel = "";
 			field = "textPosition_X_InPixel";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			string textPosition_Y_InPixel = "";
 			field = "textPosition_Y_InPixel";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			string fontType = "";
 			field = "fontType";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int fontSize = -1;
 			field = "fontSize";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				fontSize = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			fontSize = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			string fontColor = "";
 			field = "fontColor";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int textPercentageOpacity = -1;
 			field = "textPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			int shadowx = 0;
 			field = "shadowx";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				shadowx = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			shadowx = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
 
 			int shadowy = 0;
 			field = "shadowy";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				shadowy = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			shadowy = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
 
 			bool boxEnable = false;
 			field = "boxEnable";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, false);
+			boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, false);
 
 			string boxColor = "";
 			field = "boxColor";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				boxColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			boxColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
 			int boxPercentageOpacity = -1;
 			field = "boxPercentageOpacity";
-			if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-				boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
+			boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				"", textTemporaryFileName, reloadAtFrameInterval,

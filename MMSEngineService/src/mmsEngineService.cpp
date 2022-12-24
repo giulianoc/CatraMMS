@@ -97,8 +97,8 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(configPathName);
 
-    string logPathName =  configuration["log"]["mms"].get("pathName", "").asString();
-	string logType =  configuration["log"]["mms"].get("type", "").asString();
+    string logPathName =  JSONUtils::asString(configuration["log"]["mms"], "pathName", "");
+	string logType =  JSONUtils::asString(configuration["log"]["mms"], "type", "");
     bool stdout =  JSONUtils::asBool(configuration["log"]["mms"], "stdout", false);
     
     std::vector<spdlog::sink_ptr> sinks;
@@ -143,7 +143,7 @@ int main (int iArgc, char *pArgv [])
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"]["mms"].get("level", "").asString();
+    string logLevel =  JSONUtils::asString(configuration["log"]["mms"], "level", "");
     if (logLevel == "debug")
         spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "info")
@@ -151,7 +151,7 @@ int main (int iArgc, char *pArgv [])
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
 
-    string pattern =  configuration["log"]["mms"].get("pattern", "").asString();
+    string pattern =  JSONUtils::asString(configuration["log"]["mms"], "pattern", "");
     spdlog::set_pattern(pattern);
 
     // install a signal handler
@@ -331,8 +331,8 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(threadsStatisticTimes);
 
 
-    string contentRetentionTimesSchedule = configuration["scheduler"].get(
-		"contentRetentionTimesSchedule", "").asString();
+    string contentRetentionTimesSchedule = JSONUtils::asString(configuration["scheduler"],
+		"contentRetentionTimesSchedule", "");
     logger->info(__FILEREF__ + "Creating and Starting ContentRetentionTimes"
 		+ ", contentRetentionTimesSchedule: " + contentRetentionTimesSchedule
 	);
@@ -342,7 +342,7 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(contentRetentionTimes);
 
     string           dbDataRetentionTimesSchedule =
-		configuration["scheduler"].get("dbDataRetentionTimesSchedule", "").asString();
+		JSONUtils::asString(configuration["scheduler"], "dbDataRetentionTimesSchedule", "");
     logger->info(__FILEREF__ + "Creating and Starting DBDataRetentionTimes"
         + ", dbDataRetentionTimesSchedule: " + dbDataRetentionTimesSchedule
             );
@@ -352,7 +352,7 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(dbDataRetentionTimes);
 
     string			checkRefreshPartitionFreeSizeTimesSchedule =
-		configuration["scheduler"].get("checkRefreshPartitionFreeSizeTimesSchedule", "").asString();
+		JSONUtils::asString(configuration["scheduler"], "checkRefreshPartitionFreeSizeTimesSchedule", "");
     logger->info(__FILEREF__ + "Creating and Starting CheckRefreshPartitionFreeSizeTimes"
         + ", checkRefreshPartitionFreeSizeTimesSchedule: "
 			+ checkRefreshPartitionFreeSizeTimesSchedule

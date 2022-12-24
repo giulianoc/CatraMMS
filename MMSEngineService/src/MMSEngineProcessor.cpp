@@ -107,11 +107,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
     );
     
-    _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "").asString();
+    _emailProtocol                      = JSONUtils::asString(_configuration["EmailNotification"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->protocol: " + _emailProtocol
     );
-    _emailServer                        = _configuration["EmailNotification"].get("server", "").asString();
+    _emailServer                        = JSONUtils::asString(_configuration["EmailNotification"], "server", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->server: " + _emailServer
     );
@@ -119,25 +119,25 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->port: " + to_string(_emailPort)
     );
-    _emailUserName                      = _configuration["EmailNotification"].get("userName", "XXX").asString();
+    _emailUserName                      = JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->userName: " + _emailUserName
     );
     string _emailPassword;
     {
-        string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
+        string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
         _emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
     }
-    _emailFrom                          = _configuration["EmailNotification"].get("from", "XXX").asString();
+    _emailFrom                          = JSONUtils::asString(_configuration["EmailNotification"], "from", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->from: " + _emailFrom
     );
     
-    _facebookGraphAPIProtocol           = _configuration["FacebookGraphAPI"].get("protocol", "XXX").asString();
+    _facebookGraphAPIProtocol           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol
     );
-    _facebookGraphAPIHostName           = _configuration["FacebookGraphAPI"].get("hostName", "XXX").asString();
+    _facebookGraphAPIHostName           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "hostName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName
     );
@@ -145,7 +145,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort)
     );
-    _facebookGraphAPIVersion           = _configuration["FacebookGraphAPI"].get("version", "XXX").asString();
+    _facebookGraphAPIVersion           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "version", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion
     );
@@ -154,11 +154,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds)
     );
 
-    _youTubeDataAPIProtocol           = _configuration["YouTubeDataAPI"].get("protocol", "XXX").asString();
+    _youTubeDataAPIProtocol           = JSONUtils::asString(_configuration["YouTubeDataAPI"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol
     );
-    _youTubeDataAPIHostName           = _configuration["YouTubeDataAPI"].get("hostName", "XXX").asString();
+    _youTubeDataAPIHostName           = JSONUtils::asString(_configuration["YouTubeDataAPI"], "hostName", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName
     );
@@ -166,26 +166,24 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort)
     );
-    _youTubeDataAPIRefreshTokenURI       = _configuration["YouTubeDataAPI"].get("refreshTokenURI", "XXX").asString();
+    _youTubeDataAPIRefreshTokenURI       = JSONUtils::asString(_configuration["YouTubeDataAPI"], "refreshTokenURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI
     );
-    _youTubeDataAPIUploadVideoURI       = _configuration["YouTubeDataAPI"].get("uploadVideoURI", "XXX").asString();
+    _youTubeDataAPIUploadVideoURI       = JSONUtils::asString(_configuration["YouTubeDataAPI"], "uploadVideoURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI
     );
-    _youTubeDataAPILiveBroadcastURI		= _configuration["YouTubeDataAPI"].get("liveBroadcastURI", "")
-		.asString();
+    _youTubeDataAPILiveBroadcastURI		= JSONUtils::asString(_configuration["YouTubeDataAPI"], "liveBroadcastURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI
     );
-    _youTubeDataAPILiveStreamURI		= _configuration["YouTubeDataAPI"].get("liveStreamURI", "")
-		.asString();
+    _youTubeDataAPILiveStreamURI		= JSONUtils::asString(_configuration["YouTubeDataAPI"], "liveStreamURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI
     );
-    _youTubeDataAPILiveBroadcastBindURI		= _configuration["YouTubeDataAPI"].
-		get("liveBroadcastBindURI", "").asString();
+    _youTubeDataAPILiveBroadcastBindURI		= JSONUtils::asString(_configuration["YouTubeDataAPI"],
+		"liveBroadcastBindURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI
     );
@@ -193,11 +191,11 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds)
     );
-    _youTubeDataAPIClientId       = _configuration["YouTubeDataAPI"].get("clientId", "XXX").asString();
+    _youTubeDataAPIClientId       = JSONUtils::asString(_configuration["YouTubeDataAPI"], "clientId", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId
     );
-    _youTubeDataAPIClientSecret       = _configuration["YouTubeDataAPI"].get("clientSecret", "XXX").asString();
+    _youTubeDataAPIClientSecret       = JSONUtils::asString(_configuration["YouTubeDataAPI"], "clientSecret", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret
     );
@@ -207,11 +205,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
     );
 
-    string mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
+    string mmsAPIProtocol = JSONUtils::asString(_configuration["api"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->protocol: " + mmsAPIProtocol
     );
-    string mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
+    string mmsAPIHostname = JSONUtils::asString(_configuration["api"], "hostname", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->hostname: " + mmsAPIHostname
     );
@@ -219,23 +217,23 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(mmsAPIPort)
     );
-    string mmsAPIVersion = _configuration["api"].get("version", "").asString();
+    string mmsAPIVersion = JSONUtils::asString(_configuration["api"], "version", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->version: " + mmsAPIVersion
     );
-    string mmsAPIWorkflowURI = _configuration["api"].get("workflowURI", "").asString();
+    string mmsAPIWorkflowURI = JSONUtils::asString(_configuration["api"], "workflowURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->workflowURI: " + mmsAPIWorkflowURI
     );
-    string mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
+    string mmsAPIIngestionURI = JSONUtils::asString(_configuration["api"], "ingestionURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + mmsAPIIngestionURI
     );
-    string mmsBinaryProtocol = _configuration["api"]["binary"].get("protocol", "").asString();
+    string mmsBinaryProtocol = JSONUtils::asString(_configuration["api"]["binary"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->protocol: " + mmsBinaryProtocol
     );
-    string mmsBinaryHostname = _configuration["api"]["binary"].get("hostname", "").asString();
+    string mmsBinaryHostname = JSONUtils::asString(_configuration["api"]["binary"], "hostname", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->hostname: " + mmsBinaryHostname
     );
@@ -243,15 +241,15 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->port: " + to_string(mmsBinaryPort)
     );
-    string mmsBinaryVersion = _configuration["api"]["binary"].get("version", "").asString();
+    string mmsBinaryVersion = JSONUtils::asString(_configuration["api"]["binary"], "version", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->version: " + mmsBinaryVersion
     );
-    string mmsBinaryIngestionURI = _configuration["api"]["binary"].get("ingestionURI", "").asString();
+    string mmsBinaryIngestionURI = JSONUtils::asString(_configuration["api"]["binary"], "ingestionURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI
     );
-    _mmsAPIVODDeliveryURI = _configuration["api"].get("vodDeliveryURI", "").asString();
+    _mmsAPIVODDeliveryURI = JSONUtils::asString(_configuration["api"], "vodDeliveryURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI
     );
@@ -260,11 +258,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
 
-    _deliveryProtocol  = _configuration["api"]["delivery"].get("deliveryProtocol", "XXX").asString();
+    _deliveryProtocol  = JSONUtils::asString(_configuration["api"]["delivery"], "deliveryProtocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
     );
-    _deliveryHost  = _configuration["api"]["delivery"].get("deliveryHost", "XXX").asString();
+    _deliveryHost  = JSONUtils::asString(_configuration["api"]["delivery"], "deliveryHost", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost: " + _deliveryHost
     );
@@ -281,8 +279,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
-	_liveRecorderVirtualVODImageLabel = _configuration["ffmpeg"].get("liveRecorderVirtualVODImageLabel",
-		"").asString();
+	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 	);
@@ -5877,7 +5874,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			binaryPathName = workspaceIngestionBinaryPathName;
 
 			string field = "FileFormat";
-			string fileFormat = parametersRoot.get(field, "").asString();
+			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 			if (fileFormat == "m3u8-streaming")
 			{
 				// .mp4 is used in
@@ -7816,7 +7813,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				bool warningIfMissing = false;
 
-				string variantOfUniqueName = parametersRoot.get(variantOfUniqueNameField, "").asString();
+				string variantOfUniqueName = JSONUtils::asString(parametersRoot, variantOfUniqueNameField, "");
 
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
@@ -7919,20 +7916,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			{
 				string field = "variantEncodingProfileKey";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
 			}
 
 			string externalDeliveryTechnology;
 			string externalDeliveryURL;
 			{
 				string field = "ExternalDeliveryTechnology";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					externalDeliveryTechnology = parametersRoot.get(field, "").asString();
+				externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
 				field = "ExternalDeliveryURL";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					externalDeliveryURL = parametersRoot.get(field, "").asString();
+				externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 			}
 
 			int64_t physicalItemRetentionInMinutes = -1;
@@ -7940,7 +7934,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				string field = "PhysicalItemRetention";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
-					string retention = parametersRoot.get(field, "1d").asString();
+					string retention = JSONUtils::asString(parametersRoot, field, "1d");
 					physicalItemRetentionInMinutes =
 						MMSEngineDBFacade::parseRetention(retention);
 				}
@@ -7964,12 +7958,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						field = "dataType";
 						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
-							string dataType = mmsDataRoot.get(field, "").asString();
+							string dataType = JSONUtils::asString(mmsDataRoot, field, "");
 							if (dataType == "externalTranscoder")
 							{
 								field = "ingestionJobKey";
-								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
-									sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
+								sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
 							}
 						}
 					}
@@ -8915,7 +8908,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 
                 throw runtime_error(errorMessage);
             }
-            configurationLabel = parametersRoot.get(field, "XXX").asString();
+            configurationLabel = JSONUtils::asString(parametersRoot, field, "");
         }
         
         string ftpServer;
@@ -9169,13 +9162,10 @@ void MMSEngineProcessor::localCopyContentThread(
 
                 throw runtime_error(errorMessage);
             }
-            localPath = parametersRoot.get(field, "XXX").asString();
+            localPath = JSONUtils::asString(parametersRoot, field, "");
 
             field = "LocalFileName";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                localFileName = parametersRoot.get(field, "XXX").asString();
-            }
+			localFileName = JSONUtils::asString(parametersRoot, field, "");
         }
         
 		int dependencyIndex = 0;
@@ -9422,12 +9412,11 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                         throw runtime_error(errorMessage);
                     }
-                    string trackType = trackRoot.get(field, "XXX").asString();
+                    string trackType = JSONUtils::asString(trackRoot, field, "");
 
                     int trackNumber = 0;
                     field = "TrackNumber";
-                    if (JSONUtils::isMetadataPresent(trackRoot, field))
-                        trackNumber = JSONUtils::asInt(trackRoot, field, 0);
+					trackNumber = JSONUtils::asInt(trackRoot, field, 0);
 
                     tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
                 }
@@ -9443,7 +9432,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                 throw runtime_error(errorMessage);
             }
-            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+            outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
         }
 
 		int dependencyIndex = 0;
@@ -9751,22 +9740,13 @@ void MMSEngineProcessor::httpCallbackThread(
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
             string field = "protocol";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-                httpProtocol = "http";
-            else
-            {
-                httpProtocol = parametersRoot.get(field, "").asString();
-                if (httpProtocol == "")
-                    httpProtocol = "http";
-            }
+			httpProtocol = JSONUtils::asString(parametersRoot, field, "http");
 
             field = "userName";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                userName = parametersRoot.get(field, "").asString();
+			userName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "password";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                password = parametersRoot.get(field, "").asString();
+			password = JSONUtils::asString(parametersRoot, field, "");
 
             field = "hostName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9778,7 +9758,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
                 throw runtime_error(errorMessage);
             }
-            httpHostName = parametersRoot.get(field, "").asString();
+            httpHostName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "port";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9792,10 +9772,7 @@ void MMSEngineProcessor::httpCallbackThread(
                 httpPort = JSONUtils::asInt(parametersRoot, field, 0);
 
             field = "timeout";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-                callbackTimeoutInSeconds = 120;
-            else
-                callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+			callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, field, 120);
             
             field = "uri";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9807,31 +9784,22 @@ void MMSEngineProcessor::httpCallbackThread(
 
                 throw runtime_error(errorMessage);
             }
-            httpURI = parametersRoot.get(field, "").asString();
+            httpURI = JSONUtils::asString(parametersRoot, field, "");
 
             field = "parameters";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                httpURLParameters = parametersRoot.get(field, "XXX").asString();
+			httpURLParameters = JSONUtils::asString(parametersRoot, field, "");
 
             field = "method";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-                httpMethod = "POST";
-            else
-            {
-                httpMethod = parametersRoot.get(field, "").asString();
-                if (httpMethod == "")
-                    httpMethod = "POST";
-            }
+			httpMethod = JSONUtils::asString(parametersRoot, field, "POST");
 
 			field = "httpBody";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				httpBody = parametersRoot.get(field, "").asString();
+			httpBody = JSONUtils::asString(parametersRoot, field, "");
 
             field = "headers";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// semicolon as separator
-				stringstream ss(parametersRoot.get(field, "").asString());
+				stringstream ss(JSONUtils::asString(parametersRoot, field, ""));
 				string token;
 				char delim = ';';
 				while (getline(ss, token, delim))
@@ -9843,14 +9811,9 @@ void MMSEngineProcessor::httpCallbackThread(
             }
 
             field = "maxRetries";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			maxRetries = JSONUtils::asInt(parametersRoot, field, 2);
+			if (maxRetries == 0)
 				maxRetries = 2;
-            else
-			{
-                maxRetries = JSONUtils::asInt(parametersRoot, field, 3);
-				if (maxRetries == 0)
-					maxRetries = 2;
-			}
         }
 
 		if ((httpMethod == "POST" || httpMethod == "PUT") && httpBody != "")
@@ -10332,7 +10295,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
                 throw runtime_error(errorMessage);
             }
-            facebookConfigurationLabel = parametersRoot.get(field, "XXX").asString();
+            facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
             field = "NodeId";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10344,7 +10307,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
                 throw runtime_error(errorMessage);
             }
-            facebookNodeId = parametersRoot.get(field, "XXX").asString();
+            facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
         }
         
 		int dependencyIndex = 0;
@@ -10605,29 +10568,23 @@ void MMSEngineProcessor::postOnYouTubeThread(
 
                 throw runtime_error(errorMessage);
             }
-            youTubeConfigurationLabel = parametersRoot.get(field, "XXX").asString();
+            youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Title";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeTitle = parametersRoot.get(field, "XXX").asString();
+			youTubeTitle = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Description";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeDescription = parametersRoot.get(field, "XXX").asString();
+			youTubeDescription = JSONUtils::asString(parametersRoot, field, "");
             
             field = "Tags";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeTags = parametersRoot[field];
             
             field = "CategoryId";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, 0);
+			youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, -1);
 
             field = "PrivacyStatus";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                youTubePrivacyStatus = parametersRoot.get(field, "").asString();
-            else
-                youTubePrivacyStatus = "private";
+			youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "private");
         }
         
 		int dependencyIndex = 0;
@@ -10889,7 +10846,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
                 throw runtime_error(errorMessage);
             }
-            outputFileFormat = parametersRoot.get(field, "").asString();
+            outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
         }
 
 		int dependencyIndex = 0;
@@ -11286,7 +11243,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							string field = "PhysicalItemRetention";
 							if (JSONUtils::isMetadataPresent(parametersRoot, field))
 							{
-								string retention = parametersRoot.get(field, "1d").asString();
+								string retention = JSONUtils::asString(parametersRoot, field, "1d");
 								physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 							}
 						}
@@ -11918,7 +11875,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		else
 		{
 			encodingPriority =
-				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+				MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
 		}
 
         string faceRecognitionCascadeName;
@@ -11936,7 +11893,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-            faceRecognitionCascadeName = parametersRoot.get(field, "XXX").asString();
+            faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Output";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -11948,19 +11905,17 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-            faceRecognitionOutput = parametersRoot.get(field, "XXX").asString();
+            faceRecognitionOutput = JSONUtils::asString(parametersRoot, field, "");
 
 			initialFramesNumberToBeSkipped = 0;
 			oneFramePerSecond = true;
 			if (faceRecognitionOutput == "FrameContainingFace")
 			{
 				field = "InitialFramesNumberToBeSkipped";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
+				initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
 
 				field = "OneFramePerSecond";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, false);
+				oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, true);
 			}
         }
         
@@ -12099,7 +12054,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		else
 		{
 			encodingPriority =
-				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+				MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
 		}
 
 		string faceIdentificationCascadeName;
@@ -12115,7 +12070,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-            faceIdentificationCascadeName = parametersRoot.get(field, "XXX").asString();
+            faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "DeepLearnedModelTags";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -12127,7 +12082,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-            deepLearnedModelTagsCommaSeparated = parametersRoot.get(field, "XXX").asString();
+            deepLearnedModelTagsCommaSeparated = JSONUtils::asString(parametersRoot, field, "");
         }
         
         {
@@ -12242,7 +12197,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				workspace->_maxEncodingPriority);
 		else
 			encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-				parametersRoot.get(field, "").asString());
+				JSONUtils::asString(parametersRoot, field, ""));
 
 		string configurationLabel;
 
@@ -12293,7 +12248,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = parametersRoot.get(field, "").asString();
+				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 				{
 					bool warningIfMissing = false;
@@ -12320,8 +12275,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			// EncodersPool override the one included in ChannelConf if present
             field = "EncodersPool";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				encodersPoolLabel = parametersRoot.get(field, "").asString();
+			encodersPoolLabel = JSONUtils::asString(parametersRoot, field, "");
 
             field = "schedule";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
@@ -12336,7 +12290,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
+            recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
 
             field = "end";
             if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -12348,16 +12302,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
+            recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
 
             field = "autoRenew";
-            if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
-				autoRenew = false;
-			else
-				autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
+			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
             field = "OutputFileFormat";
-			outputFileFormat = parametersRoot.get(field, "ts").asString();
+			outputFileFormat = JSONUtils::asString(parametersRoot, field, "ts");
 
 			field = "MonitorHLS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -12367,16 +12318,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 				monitorHLS = true;
 
 				field = "PlaylistEntriesNumber";
-				if (!JSONUtils::isMetadataPresent(monitorHLSRoot, field))
-					monitorPlaylistEntriesNumber = 6;
-				else
-					monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
+				monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
 
 				field = "SegmentDurationInSeconds";
-				if (!JSONUtils::isMetadataPresent(monitorHLSRoot, field))
-					monitorSegmentDurationInSeconds = 10;
-				else
-					monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
+				monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
 
 
 				string keyField = "EncodingProfileKey";
@@ -12386,13 +12331,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 					monitorEncodingProfileKey = JSONUtils::asInt64(monitorHLSRoot, keyField, 0);
 				else if (JSONUtils::isMetadataPresent(monitorHLSRoot, labelField))
 				{
-					string encodingProfileLabel = monitorHLSRoot.get(labelField, "").asString();
+					string encodingProfileLabel = JSONUtils::asString(monitorHLSRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType;
 					if (JSONUtils::isMetadataPresent(monitorHLSRoot, contentTypeField))
 					{
 						contentType = MMSEngineDBFacade::toContentType(
-							monitorHLSRoot.get(contentTypeField, "").asString());
+							JSONUtils::asString(monitorHLSRoot, contentTypeField, ""));
 
 						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 							workspace->_workspaceKey, contentType,
@@ -12424,10 +12369,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					virtualVODRoot, field, 30);
 
 				field = "SegmentDurationInSeconds";
-				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
-					virtualVODSegmentDurationInSeconds = 10;
-				else
-					virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
+				virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
 
 				string keyField = "EncodingProfileKey";
 				string labelField = "EncodingProfileLabel";
@@ -12436,13 +12378,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 					virtualVODEncodingProfileKey = JSONUtils::asInt64(virtualVODRoot, keyField, 0);
 				else if (JSONUtils::isMetadataPresent(virtualVODRoot, labelField))
 				{
-					string encodingProfileLabel = virtualVODRoot.get(labelField, "").asString();
+					string encodingProfileLabel = JSONUtils::asString(virtualVODRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType;
 					if (JSONUtils::isMetadataPresent(virtualVODRoot, contentTypeField))
 					{
 						contentType = MMSEngineDBFacade::toContentType(
-							virtualVODRoot.get(contentTypeField, "").asString());
+							JSONUtils::asString(virtualVODRoot, contentTypeField, ""));
 
 						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 							workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -13000,7 +12942,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = parametersRoot.get(field, "").asString();
+				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 				{
 					bool warningIfMissing = false;
@@ -13025,8 +12967,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			// 	encodersPoolLabel = parametersRoot.get(field, "").asString();
 
 			string field = "defaultBroadcast";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
             field = "TimePeriod";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13062,7 +13003,7 @@ void MMSEngineProcessor::manageLiveProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 					field = "end";
@@ -13077,22 +13018,19 @@ void MMSEngineProcessor::manageLiveProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
 			field = "MaxWidth";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				maxWidth = JSONUtils::asInt(parametersRoot, field, -1);
+			maxWidth = JSONUtils::asInt(parametersRoot, field, -1);
 
 			field = "UserAgent";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				userAgent = parametersRoot.get(field, "").asString();
+			userAgent = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "OtherInputOptions";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				otherInputOptions = parametersRoot.get(field, "").asString();
+			otherInputOptions = JSONUtils::asString(parametersRoot, field, "");
 
 			// field = "MaxAttemptsNumberInCaseOfErrors";
 			// if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13102,11 +13040,8 @@ void MMSEngineProcessor::manageLiveProxy(
 			// 		parametersRoot, field, 0);
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
-			else
-				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
-					parametersRoot, field, 0);
+			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
+				parametersRoot, field, 5);
 
 			field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13281,7 +13216,7 @@ void MMSEngineProcessor::manageVODProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 					field = "end";
@@ -13295,14 +13230,13 @@ void MMSEngineProcessor::manageVODProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
 			field = "defaultBroadcast";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13533,8 +13467,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		int64_t utcProxyPeriodEnd = -1;
         {
 			string field = "defaultBroadcast";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			field = "schedule";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -13561,7 +13494,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 				throw runtime_error(errorMessage);
 			}
-			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 			field = "end";
@@ -13574,7 +13507,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 				throw runtime_error(errorMessage);
 			}
-			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
@@ -13836,22 +13769,16 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 
 		string field = "OutputType";
-		if (!JSONUtils::isMetadataPresent(outputRoot, field))
-			outputType = "HLS";
-		else
-			outputType = outputRoot.get(field, "HLS").asString();
+		outputType = JSONUtils::asString(outputRoot, field, "HLS");
 
 		field = "OtherOutputOptions";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-			otherOutputOptions = outputRoot.get(field, "").asString();
+		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
 
 		field = "videoTrackIndexToBeUsed";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-			videoTrackIndexToBeUsed = outputRoot.get(field, -1).asInt();
+		videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
 
 		field = "audioTrackIndexToBeUsed";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
-			audioTrackIndexToBeUsed = outputRoot.get(field, -1).asInt();
+		audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
 
 		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
@@ -13874,16 +13801,10 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 				deliveryCode = outputRoot.get(field, 0).asInt64();
 
 			field = "SegmentDurationInSeconds";
-			if (!JSONUtils::isMetadataPresent(outputRoot, field))
-				segmentDurationInSeconds = 10;
-			else
-				segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
+			segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 10);
 
 			field = "PlaylistEntriesNumber";
-			if (!JSONUtils::isMetadataPresent(outputRoot, field))
-				playlistEntriesNumber = 6;
-			else
-				playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
+			playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 6);
 
 			string manifestExtension;
 			if (outputType == "HLS")
@@ -13902,24 +13823,24 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		else if (outputType == "RTMP_Stream")
 		{
 			field = "RtmpUrl";
-			rtmpUrl = outputRoot.get(field, "").asString();
+			rtmpUrl = JSONUtils::asString(outputRoot, field, "");
 
 			field = "rtmpStreamName";
-			rtmpStreamName = outputRoot.get(field, "").asString();
+			rtmpStreamName = JSONUtils::asString(outputRoot, field, "");
 
 			field = "rtmpUserName";
-			rtmpUserName = outputRoot.get(field, "").asString();
+			rtmpUserName = JSONUtils::asString(outputRoot, field, "");
 
 			field = "rtmpPassword";
-			rtmpPassword = outputRoot.get(field, "").asString();
+			rtmpPassword = JSONUtils::asString(outputRoot, field, "");
 
 			field = "PlayUrl";
-			playUrl = outputRoot.get(field, "").asString();
+			playUrl = JSONUtils::asString(outputRoot, field, "");
 		}
 		else if (outputType == "AWS_CHANNEL")
 		{
 			field = "awsChannelConfigurationLabel";
-			awsChannelConfigurationLabel = outputRoot.get(field, "").asString();
+			awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
 
 			field = "awsSignedURL";
 			awsSignedURL = JSONUtils::asBool(outputRoot, field, false);
@@ -13930,7 +13851,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		else // if (outputType == "UDP_Stream")
 		{
 			field = "udpUrl";
-			udpUrl = outputRoot.get(field, "").asString();
+			udpUrl = JSONUtils::asString(outputRoot, field, "");
 		}
 
 		string keyField = "EncodingProfileKey";
@@ -13948,14 +13869,14 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		}
 		else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
 		{
-			string encodingProfileLabel = outputRoot.get(labelField, "").asString();
+			string encodingProfileLabel = JSONUtils::asString(outputRoot, labelField, "");
 			if (encodingProfileLabel != "")
 			{
 				MMSEngineDBFacade::ContentType contentType;
 				if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
 				{
 					contentType = MMSEngineDBFacade::toContentType(
-						outputRoot.get(contentTypeField, "").asString());
+						JSONUtils::asString(outputRoot, contentTypeField, ""));
 
 					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 						workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -14131,7 +14052,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			Json::Value inputChannelsRoot = parametersRoot[field];
 			for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsRoot.size(); inputChannelIndex++)
 			{
-				string configurationLabel = inputChannelsRoot[inputChannelIndex].asString();
+				string configurationLabel = JSONUtils::asString(inputChannelsRoot[inputChannelIndex]);
 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
@@ -14180,7 +14101,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel);
@@ -14210,7 +14131,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			}
 
             field = "OutputType";
-			string outputType = parametersRoot.get(field, "HLS").asString();
+			string outputType = JSONUtils::asString(parametersRoot, field, "HLS");
 
 			if (outputType == "HLS") // || outputType == "DASH")
 			{
@@ -14346,12 +14267,10 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			deliveryCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
 			field = "MaxWaitingForLastChunkInSeconds";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
 
 			field = "ErrorIfAChunkIsMissing";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
+			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
 
             field = "CutPeriod";
 			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
@@ -14367,7 +14286,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-            cutPeriodStartTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+            cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
 
             field = "End";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
@@ -14380,7 +14299,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-            cutPeriodEndTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+            cutPeriodEndTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
         }
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -14535,7 +14454,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					Json::Value userDataRoot;
 					{
 						field = "userData";
-						string userData = mediaItemRoot.get(field, "").asString();
+						string userData = JSONUtils::asString(mediaItemRoot, field, "");
 						if (userData == "")
 						{
 							string errorMessage = __FILEREF__ + "recording media item without userData!!!"
@@ -14786,7 +14705,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -14892,7 +14811,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				}
 
 				field = "Retention";
-				cutParametersRoot[field] = liveCutParametersRoot.get(field, "").asString();
+				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- (utcFirstChunkStartTime * 1000);
@@ -14939,7 +14858,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 						if (valueType == Json::ValueType::stringValue)
 						{
-							string sUserData = liveCutParametersRoot.get(field, "").asString();
+							string sUserData = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 							if (sUserData != "")
 								userDataRoot = JSONUtils::toJson(ingestionJobKey, -1, sUserData);
@@ -15336,20 +15255,16 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			deliveryCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
 			field = "ChunkEncodingProfileKey";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+			chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
 			field = "ChunkEncodingProfileLabel";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				chunkEncodingProfileLabel = liveCutParametersRoot.get(field, "").asString();
+			chunkEncodingProfileLabel = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 			field = "MaxWaitingForLastChunkInSeconds";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
 
 			field = "ErrorIfAChunkIsMissing";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
+			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
 
             field = "CutPeriod";
 			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
@@ -15365,7 +15280,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-            cutPeriodStartTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+            cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
 
             field = "End";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
@@ -15378,7 +15293,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
                 throw runtime_error(errorMessage);
             }
-            cutPeriodEndTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+            cutPeriodEndTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
         }
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -15535,7 +15450,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					Json::Value userDataRoot;
 					{
 						field = "userData";
-						string userData = mediaItemRoot.get(field, "").asString();
+						string userData = JSONUtils::asString(mediaItemRoot, field, "");
 						if (userData == "")
 						{
 							string errorMessage = __FILEREF__ + "recording media item without userData!!!"
@@ -15815,7 +15730,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -15921,7 +15836,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				}
 
 				field = "Retention";
-				cutParametersRoot[field] = liveCutParametersRoot.get(field, "").asString();
+				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
@@ -15968,7 +15883,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 						if (valueType == Json::ValueType::stringValue)
 						{
-							string sUserData = liveCutParametersRoot.get(field, "").asString();
+							string sUserData = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 							if (sUserData != "")
 							{
@@ -16319,7 +16234,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            youTubeConfigurationLabel = parametersRoot.get(field, "").asString();
+            youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
             field = "Title";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -16331,30 +16246,19 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            youTubeLiveBroadcastTitle = parametersRoot.get(field, "").asString();
+            youTubeLiveBroadcastTitle = JSONUtils::asString(parametersRoot, field, "");
 
             field = "MadeForKids";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				youTubeLiveBroadcastMadeForKids = JSONUtils::asBool(parametersRoot,
-					"MadeForKids", true);
-			else
-				youTubeLiveBroadcastMadeForKids = true;
+			youTubeLiveBroadcastMadeForKids = JSONUtils::asBool(parametersRoot, "MadeForKids", true);
 
             field = "Description";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				youTubeLiveBroadcastDescription = parametersRoot.get(field, "").asString();
+			youTubeLiveBroadcastDescription = JSONUtils::asString(parametersRoot, field, "");
 
             field = "PrivacyStatus";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				youTubeLiveBroadcastPrivacyStatus = "unlisted";
-			else
-				youTubeLiveBroadcastPrivacyStatus = parametersRoot.get(field, "").asString();
+			youTubeLiveBroadcastPrivacyStatus = JSONUtils::asString(parametersRoot, field, "unlisted");
 
             field = "LatencyPreference";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				youTubeLiveBroadcastLatencyPreference = "normal";
-			else
-				youTubeLiveBroadcastLatencyPreference = parametersRoot.get(field, "").asString();
+			youTubeLiveBroadcastLatencyPreference = JSONUtils::asString(parametersRoot, field, "normal");
 
             field = "schedule";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -16379,7 +16283,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            scheduleStartTimeInSeconds = scheduleRoot.get(field, "").asString();
+            scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
 
             field = "end";
             if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
@@ -16392,7 +16296,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            scheduleEndTimeInSeconds = scheduleRoot.get(field, "").asString();
+            scheduleEndTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
 
             field = "SourceType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -16404,7 +16308,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            sourceType = parametersRoot.get(field, "").asString();
+            sourceType = JSONUtils::asString(parametersRoot, field, "");
 
 			if (sourceType == "Live")
 			{
@@ -16418,7 +16322,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					throw runtime_error(errorMessage);
 				}
-				streamConfigurationLabel = parametersRoot.get(field, "").asString();
+				streamConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 			}
 			else // if (sourceType == "MediaItem")
 			{
@@ -16808,7 +16712,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-            broadcastId = responseRoot.get(field, "").asString();
+            broadcastId = JSONUtils::asString(responseRoot, field, "");
 
 			sResponse = "";
 		}
@@ -17125,7 +17029,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			streamId = responseRoot.get(field, "").asString();
+			streamId = JSONUtils::asString(responseRoot, field, "");
 
 			field = "cdn";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -17167,7 +17071,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string streamName = ingestionInfoRoot.get(field, "").asString();
+			string streamName = JSONUtils::asString(ingestionInfoRoot, field, "");
 
 			field = "ingestionAddress";
 			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
@@ -17181,7 +17085,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string ingestionAddress = ingestionInfoRoot.get(field, "").asString();
+			string ingestionAddress = JSONUtils::asString(ingestionInfoRoot, field, "");
 
 			rtmpURL = ingestionAddress + "/" + streamName;
 
@@ -17489,7 +17393,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = credentialsRoot.get(field, "").asString();
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -18153,7 +18057,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 {
                     string field = "Title";
                     if (JSONUtils::isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
-                        title = multiLocalAssetIngestionEvent.getParametersRoot().get(field, "XXX").asString();                    
+                        title = JSONUtils::asString(multiLocalAssetIngestionEvent.getParametersRoot(), field, "");                    
                     title += (
                             " (" 
                             + to_string(it - generatedFramesFileNames.begin() + 1) 
@@ -18418,7 +18322,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t sourceMediaItemKey;
@@ -18587,10 +18491,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
 			{
 				field = "InstantInSeconds";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
-				}
+				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
 			}
 			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
@@ -18598,10 +18499,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
 				field = "StartTimeInSeconds";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
-				}
+				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
 			}
 		}
 
@@ -18617,10 +18515,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
 				field = "MaxFramesNumber";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					maxFramesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-				}
+				maxFramesNumber = JSONUtils::asInt(parametersRoot, field, -1);
 			}
 		}
 
@@ -18664,19 +18559,13 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
         int width = -1;
 		{
 			field = "Width";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				width = JSONUtils::asInt64(parametersRoot, field, 0);
-			}
+			width = JSONUtils::asInt64(parametersRoot, field, -1);
 		}
 
         int height = -1;
 		{
 			field = "Height";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				height = JSONUtils::asInt(parametersRoot, field, 0);
-			}
+			height = JSONUtils::asInt(parametersRoot, field, -1);
 		}
 
         int videoWidth;
@@ -18826,7 +18715,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t encodingProfileKey = -1;
@@ -18844,7 +18733,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video,
@@ -19756,8 +19645,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			//	For this reason this field is set to true by default
 			bool fixEndTimeIfOvercomeDuration = true;
 			field = "FixEndTimeIfOvercomeDuration";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
+			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
 
 			/*
 			if (endTimeInSeconds == -1 && framesNumber == -1)
@@ -19904,8 +19792,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		string cutType = "KeyFrameSeeking";
         string field = "CutType";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			cutType = parametersRoot.get(field, "KeyFrameSeeking").asString();
+		cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
 		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread new start/end"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19925,8 +19812,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		{
 			string outputFileFormat;
 			field = "OutputFileFormat";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputFileFormat = parametersRoot.get(field, "").asString();
+			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
 			_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20139,7 +20025,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 			else
 				encodingPriority =
-					MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "").asString());
+					MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
 
 			int64_t encodingProfileKey;
 			Json::Value encodingProfileDetailsRoot;
@@ -20152,7 +20038,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 				else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 				{
-					string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+					string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
@@ -20184,7 +20070,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			string encodedFileName;
 			{
-				string fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
+				string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "FileFormat", "");
 				string fileFormatLowerCase;
 				fileFormatLowerCase.resize(fileFormat.size());
 				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
@@ -20357,7 +20243,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			else
 			{
 				encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-						parametersRoot.get(field, "").asString());
+						JSONUtils::asString(parametersRoot, field, ""));
 			}
 		}
 
@@ -20376,7 +20262,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -20517,7 +20403,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					string encodedFileName;
 					string fileFormat;
 					{
-						fileFormat = encodingProfileDetailsRoot.get("FileFormat", "").asString();
+						fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "FileFormat", "");
 
 						encodedFileName =
 							to_string(ingestionJobKey)
@@ -20773,7 +20659,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 				workspace->_maxEncodingPriority);
         else
             encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-					parametersRoot.get(field, "").asString());
+					JSONUtils::asString(parametersRoot, field, ""));
 
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
@@ -20809,7 +20695,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, referenceContentType, encodingProfileLabel);
@@ -20933,7 +20819,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t sourceMediaItemKey_1;
@@ -21058,7 +20944,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video,
@@ -21175,7 +21061,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t introSourceMediaItemKey;
@@ -21247,7 +21133,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
@@ -21382,7 +21268,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t sourceMediaItemKey_1;
@@ -21494,7 +21380,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
@@ -21609,7 +21495,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         else
         {
             encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+                MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
         }
 
 		int64_t sourceMediaItemKey;
@@ -21641,7 +21527,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
@@ -21912,8 +21798,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 								string inputType;
 								field = "inputType";
-								if (JSONUtils::isMetadataPresent(parametersRoot, field))
-									inputType = parametersRoot.get(field, "").asString();
+								inputType = JSONUtils::asString(parametersRoot, field, "");
 
 								if (inputType == "Channel")
 								{
@@ -21922,7 +21807,7 @@ void MMSEngineProcessor::emailNotificationThread(
 										field))
 									{
 										checkStreaming_streamingName
-											= parametersRoot.get(field, "").asString();
+											= JSONUtils::asString(parametersRoot, field, "");
 
 										bool warningIfMissing = false;
 										tuple<int64_t, string, string, string, string, int64_t, string,
@@ -21948,11 +21833,11 @@ void MMSEngineProcessor::emailNotificationThread(
 									field = "streamingName";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
 										checkStreaming_streamingName
-											= parametersRoot.get(field, "").asString();
+											= JSONUtils::asString(parametersRoot, field, "");
 									field = "streamingUrl";
 									if (JSONUtils::isMetadataPresent(parametersRoot, field))
 										checkStreaming_streamingUrl
-											= parametersRoot.get(field, "").asString();
+											= JSONUtils::asString(parametersRoot, field, "");
 								}
 							}
 						}
@@ -21980,7 +21865,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
             throw runtime_error(errorMessage);
         }
-        string configurationLabel = parametersRoot.get(field, "XXX").asString();
+        string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 		string emailAddresses;
 		string subject;
@@ -22009,7 +21894,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 					continue;
 				}
-				string strToBeReplaced = userSubstitutionRoot.get(field, "").asString();
+				string strToBeReplaced = JSONUtils::asString(userSubstitutionRoot, field, "");
 
 				field = "ReplaceWith";
 				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
@@ -22020,7 +21905,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 					continue;
 				}
-				string strToReplace = userSubstitutionRoot.get(field, "").asString();
+				string strToReplace = JSONUtils::asString(userSubstitutionRoot, field, "");
 
 				_logger->info(__FILEREF__ + "User substitution"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22217,7 +22102,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
             throw runtime_error(errorMessage);
         }
-        string inputType = parametersRoot.get(field, "").asString();
+        string inputType = JSONUtils::asString(parametersRoot, field, "");
 
 		string streamingUrl;
 		if (inputType == "Channel")
@@ -22231,7 +22116,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string configurationLabel = parametersRoot.get(field, "").asString();
+			string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			bool warningIfMissing = false;
 			tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
@@ -22258,7 +22143,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string streamingName = parametersRoot.get(field, "").asString();
+			string streamingName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "streamingUrl";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -22269,7 +22154,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			streamingUrl = parametersRoot.get(field, "").asString();
+			streamingUrl = JSONUtils::asString(parametersRoot, field, "");
 		}
 
 		_logger->info(__FILEREF__ + "checkStreamingThread"
@@ -22426,7 +22311,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             throw runtime_error(errorMessage);
         }
         MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-			MMSEngineDBFacade::toCrossReferenceType(parametersRoot.get(field, "").asString());
+			MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(parametersRoot, field, ""));
 		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
 			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
@@ -22761,7 +22646,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     string field = "FileFormat";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string fileFormatSpecifiedByUser = parametersRoot.get(field, "XXX").asString();
+        string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
         if (fileFormatSpecifiedByUser != fileFormat)
         {
             string errorMessage = string("Wrong fileFormat")
@@ -23580,10 +23465,10 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
     {
         field = "SourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            mediaSourceURL = parametersRoot.get(field, "").asString();
+            mediaSourceURL = JSONUtils::asString(parametersRoot, field, "");
 
         field = "FileFormat";
-        mediaFileFormat = parametersRoot.get(field, "").asString();
+        mediaFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
         string httpPrefix ("http://");
         string httpsPrefix ("https://");
@@ -23632,13 +23517,12 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
         // MD5         md5;
         // char        md5RealDigest [32 + 1];
 
-        md5FileCheckSum = parametersRoot.get(field, "XXX").asString();
+        md5FileCheckSum = JSONUtils::asString(parametersRoot, field, "");
     }
 
     int fileSizeInBytes = -1;
     field = "FileSizeInBytes";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        fileSizeInBytes = JSONUtils::asInt(parametersRoot, field, 3);
+	fileSizeInBytes = JSONUtils::asInt(parametersRoot, field, -1);
 
 	/*
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
@@ -25119,7 +25003,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                 throw runtime_error(errorMessage);
             }
-            uploadSessionId = facebookResponseRoot.get(field, "XXX").asString();
+            uploadSessionId = JSONUtils::asString(facebookResponseRoot, field, "");
 
             field = "video_id";
             if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -25132,7 +25016,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                 throw runtime_error(errorMessage);
             }
-            videoId = facebookResponseRoot.get(field, "XXX").asString();
+            videoId = JSONUtils::asString(facebookResponseRoot, field, "");
             
             field = "start_offset";
             if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -25145,7 +25029,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                 throw runtime_error(errorMessage);
             }
-            string sStartOffset = facebookResponseRoot.get(field, "XXX").asString();
+            string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
             startOffset = stoll(sStartOffset);
             
             field = "end_offset";
@@ -25159,7 +25043,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                 throw runtime_error(errorMessage);
             }
-            string sEndOffset = facebookResponseRoot.get(field, "XXX").asString();
+            string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
             endOffset = stoll(sEndOffset);
         }
         
@@ -25344,7 +25228,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                     throw runtime_error(errorMessage);
                 }
-                string sStartOffset = facebookResponseRoot.get(field, "XXX").asString();
+                string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
                 startOffset = stoll(sStartOffset);
 
                 field = "end_offset";
@@ -25358,7 +25242,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                     throw runtime_error(errorMessage);
                 }
-                string sEndOffset = facebookResponseRoot.get(field, "XXX").asString();
+                string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
                 endOffset = stoll(sEndOffset);
             }
         }
@@ -26485,7 +26369,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
             throw runtime_error(errorMessage);
         }
         
-        return youTubeResponseRoot.get(field, "").asString();
+        return JSONUtils::asString(youTubeResponseRoot, field, "");
     }
     catch(runtime_error e)
     {
@@ -26584,7 +26468,7 @@ void MMSEngineProcessor::userHttpCallback(
 			for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size();
 				++userHeaderIndex)
 			{
-				string userHeader = userHeadersRoot[userHeaderIndex].asString();
+				string userHeader = JSONUtils::asString(userHeadersRoot[userHeaderIndex]);
 
 				header.push_back(userHeader);
 			}

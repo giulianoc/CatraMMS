@@ -1952,11 +1952,8 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_")
 				+ pMMSPartitionName;
 
-			if (JSONUtils::isMetadataPresent(_configuration["storage"], freeSpaceConfField))
-				localFreeSpaceToLeaveInMB = JSONUtils::asInt(
-					_configuration["storage"], freeSpaceConfField, 100);
-			else
-				localFreeSpaceToLeaveInMB = _freeSpaceToLeaveInEachPartitionInMB;
+			localFreeSpaceToLeaveInMB = JSONUtils::asInt(
+				_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
 		}
 
 		_logger->info(__FILEREF__ + "addUpdatePartitionInfo"

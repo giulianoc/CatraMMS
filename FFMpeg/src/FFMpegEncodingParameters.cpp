@@ -1410,8 +1410,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				Json::Value hlsRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "SegmentDuration";
-				if (JSONUtils::isMetadataPresent(hlsRoot, field))
-					segmentDurationInSeconds = JSONUtils::asInt(hlsRoot, field, 10);
+				segmentDurationInSeconds = JSONUtils::asInt(hlsRoot, field, 10);
 			}
 
             ffmpegHttpStreamingParameter = 
@@ -1437,8 +1436,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				Json::Value dashRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "SegmentDuration";
-				if (JSONUtils::isMetadataPresent(dashRoot, field))
-					segmentDurationInSeconds = JSONUtils::asInt(dashRoot, field, 10);
+				segmentDurationInSeconds = JSONUtils::asInt(dashRoot, field, 10);
 			}
 
             ffmpegHttpStreamingParameter =
@@ -1746,15 +1744,13 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 					string forceOriginalAspectRatio;
 					field = "ForceOriginalAspectRatio";
-					if (JSONUtils::isMetadataPresent(bitRateInfo, field))
-						forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
+					forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
 
 					bool pad = false;
 					if (forceOriginalAspectRatio != "")
 					{
 						field = "Pad";
-						if (JSONUtils::isMetadataPresent(bitRateInfo, field))
-							pad = JSONUtils::asBool(bitRateInfo, field, false);
+						pad = JSONUtils::asBool(bitRateInfo, field, false);
 					}
 
 					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"

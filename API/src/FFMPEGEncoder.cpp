@@ -6396,18 +6396,15 @@ void FFMPEGEncoder::slideShowThread(
 
 		float durationOfEachSlideInSeconds = 2.0;
 		string field = "durationOfEachSlideInSeconds";
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			durationOfEachSlideInSeconds = JSONUtils::asDouble(ingestedParametersRoot, field, 2.0);
+		durationOfEachSlideInSeconds = JSONUtils::asDouble(ingestedParametersRoot, field, 2.0);
 
 		float shortestAudioDurationInSeconds = -1.0;
 		field = "shortestAudioDurationInSeconds";
-		if (JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			shortestAudioDurationInSeconds = JSONUtils::asDouble(encodingParametersRoot, field, -1.0);
+		shortestAudioDurationInSeconds = JSONUtils::asDouble(encodingParametersRoot, field, -1.0);
 
 		string frameRateMode = "vfr";
 		field = "frameRateMode";
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			frameRateMode = JSONUtils::asString(ingestedParametersRoot, field, "vfr");
+		frameRateMode = JSONUtils::asString(ingestedParametersRoot, field, "vfr");
 
 		vector<string> imagesPathNames;
 		{
@@ -6917,10 +6914,8 @@ void FFMPEGEncoder::videoSpeedThread(
 			"sourceDurationInMilliSeconds", -1);
 
 		string videoSpeedType;
-		if (!JSONUtils::isMetadataPresent(ingestedParametersRoot, "speedType"))
-			videoSpeedType = MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown);
-		else
-			videoSpeedType = JSONUtils::asString(ingestedParametersRoot, "speedType", "SlowDown");
+		videoSpeedType = JSONUtils::asString(ingestedParametersRoot, "speedType", 
+			MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown));
 
         int videoSpeedSize = JSONUtils::asInt(ingestedParametersRoot, "videoSpeedSize", 3);
         
@@ -14572,8 +14567,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						Json::Value streamInputRoot = inputRoot[field];
 						field = "configurationLabel";
-						if (JSONUtils::isMetadataPresent(streamInputRoot, field))
-							configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
+						configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
 					}
 				}
 
