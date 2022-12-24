@@ -734,6 +734,14 @@ void API::shareWorkspace_(
 			if (userAlreadyPresent)
 			{
 				bool admin = false;
+
+				_logger->info(__FILEREF__ + "createdCode"
+					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", userKey: " + to_string(userKey)
+					+ ", email: " + email
+					+ ", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace)
+				);
+
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
 					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace,
 					admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
@@ -788,6 +796,13 @@ void API::shareWorkspace_(
 			else
 			{
 				bool admin = false;
+
+				_logger->info(__FILEREF__ + "createdCode"
+					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", userKey: " + "-1"
+					+ ", email: " + email
+					+ ", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::ShareWorkspace)
+				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
 					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace,
