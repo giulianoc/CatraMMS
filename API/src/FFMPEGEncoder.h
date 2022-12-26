@@ -17,6 +17,7 @@
 #include "APICommon.h"
 #include "FFMpeg.h"
 #include <deque>
+#include "FFMPEGEncoderTask.h"
 
 #define __VECTOR__
 // #define __MAP__
@@ -28,23 +29,24 @@
 // see comment 2020-11-30
 #define __VECTOR__NO_LOCK_FOR_ENCODINGSTATUS
 
+/*
 struct Encoding
 {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>		_ffmpeg;
-		pid_t					_childPid;
+	bool					_available;
+	pid_t					_childPid;
+	int64_t					_encodingJobKey;
+	shared_ptr<FFMpeg>		_ffmpeg;
 
-		string					_errorMessage;
+	string					_errorMessage;
 };
 
 struct LiveProxyAndGrid
 {
-	bool                    _running;
-	int64_t                 _encodingJobKey;
+	bool					_available;
+	pid_t					_childPid;
+	int64_t					_encodingJobKey;
 	string					_method;	// liveProxy, liveGrid or awaitingTheBeginning
 	shared_ptr<FFMpeg>		_ffmpeg;
-	pid_t					_childPid;
 	bool					_killedBecauseOfNotWorking;	// by monitorThread
 
 	string					_errorMessage;
@@ -65,11 +67,11 @@ struct LiveProxyAndGrid
 		shared_ptr<LiveProxyAndGrid> liveProxyAndGrid =
 			make_shared<LiveProxyAndGrid>();
 
-		liveProxyAndGrid->_running = _running;
+		liveProxyAndGrid->_available = _available;
+		liveProxyAndGrid->_childPid = _childPid;
 		liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
 		liveProxyAndGrid->_method = _method;
 		liveProxyAndGrid->_ffmpeg = _ffmpeg;
-		liveProxyAndGrid->_childPid = _childPid;
 		liveProxyAndGrid->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
 		liveProxyAndGrid->_errorMessage = _errorMessage;
 		liveProxyAndGrid->_liveGridOutputType = _liveGridOutputType;
@@ -89,10 +91,10 @@ struct LiveProxyAndGrid
 // no encoding, just copying the video/audio tracks
 struct LiveRecording
 {
-	bool                    _running;
+	bool                    _available;
+	pid_t					_childPid;
 	int64_t                 _encodingJobKey;
 	shared_ptr<FFMpeg>      _ffmpeg;
-	pid_t					_childPid;
 	bool					_killedBecauseOfNotWorking;	// by monitorThread
 
 	string					_errorMessage;
@@ -126,13 +128,13 @@ struct LiveRecording
 		shared_ptr<LiveRecording> liveRecording =
 			make_shared<LiveRecording>();
 
-		liveRecording->_running = _running;
+		liveRecording->_available = _available;
+		liveRecording->_childPid = _childPid;
 		liveRecording->_monitoringEnabled = _monitoringEnabled;
 		liveRecording->_monitoringFrameIncreasingEnabled = _monitoringFrameIncreasingEnabled;
 		liveRecording->_encodingJobKey = _encodingJobKey;
 		liveRecording->_externalEncoder = _externalEncoder;
 		liveRecording->_ffmpeg = _ffmpeg;
-		liveRecording->_childPid = _childPid;
 		liveRecording->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
 		liveRecording->_errorMessage = _errorMessage;
 		liveRecording->_ingestionJobKey = _ingestionJobKey;
@@ -168,6 +170,7 @@ struct EncodingCompleted
 		bool					_urlNotFound;
 		chrono::system_clock::time_point	_timestamp;
 };
+*/
 
 class FFMPEGEncoder: public APICommon {
 public:

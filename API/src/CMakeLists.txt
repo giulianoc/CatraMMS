@@ -44,6 +44,8 @@ SET (SOURCES_API
 
 SET (SOURCES_FFMPEGENCODER
 	FFMPEGEncoder.cpp
+	FFMPEGEncoderTask.cpp
+	EncodeContent.cpp
 )
 
 SET (HEADERS

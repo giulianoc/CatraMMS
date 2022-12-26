@@ -353,6 +353,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -384,6 +385,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -459,6 +462,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -490,6 +494,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -570,6 +576,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -601,6 +608,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -731,6 +740,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -762,6 +772,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -837,6 +849,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -868,6 +881,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -951,6 +966,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -982,6 +998,8 @@ void FFMpeg::encodeContent(
 				}
 				catch(runtime_error e)
 				{
+					*pChildPid = 0;
+
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -1107,6 +1125,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -1138,6 +1157,8 @@ void FFMpeg::encodeContent(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -1213,6 +1234,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed (second step)"
@@ -1244,6 +1266,8 @@ void FFMpeg::encodeContent(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -1357,6 +1381,7 @@ void FFMpeg::encodeContent(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
@@ -1387,6 +1412,8 @@ void FFMpeg::encodeContent(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -1901,6 +1928,7 @@ void FFMpeg::overlayImageOnVideo(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "overlayImageOnVideo: ffmpeg command failed"
@@ -1930,6 +1958,8 @@ void FFMpeg::overlayImageOnVideo(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -2408,6 +2438,7 @@ void FFMpeg::overlayTextOnVideo(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "overlayTextOnVideo: ffmpeg command failed"
@@ -2438,6 +2469,8 @@ void FFMpeg::overlayTextOnVideo(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -3233,6 +3266,7 @@ void FFMpeg::videoSpeed(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "videoSpeed: ffmpeg command failed"
@@ -3262,6 +3296,8 @@ void FFMpeg::videoSpeed(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -3789,6 +3825,7 @@ void FFMpeg::pictureInPicture(
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "pictureInPicture: ffmpeg command failed"
@@ -3819,6 +3856,8 @@ void FFMpeg::pictureInPicture(
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -4394,6 +4433,7 @@ ffmpeg \
 						ffmpegArgumentList,
 						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 						pChildPid, &iReturnedStatus);
+					*pChildPid = 0;
 					if (iReturnedStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "introOutroOverlay: ffmpeg command failed"
@@ -4425,6 +4465,8 @@ ffmpeg \
                 }
                 catch(runtime_error e)
                 {
+					*pChildPid = 0;
+
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
@@ -6271,6 +6313,7 @@ void FFMpeg::generateFrameToIngest(
 			ffmpegArgumentList,
 			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 			pChildPid, &iReturnedStatus);
+		*pChildPid = 0;
 		if (iReturnedStatus != 0)
         {
 			string errorMessage = __FILEREF__ + "generateFrameToIngest: ffmpeg command failed"
@@ -6298,6 +6341,8 @@ void FFMpeg::generateFrameToIngest(
     }
     catch(runtime_error e)
     {
+		*pChildPid = 0;
+
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
@@ -6528,6 +6573,7 @@ void FFMpeg::generateFramesToIngest(
 			ffmpegArgumentList,
 			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 			pChildPid, &iReturnedStatus);
+		*pChildPid = 0;
 		if (iReturnedStatus != 0)
         {
 			string errorMessage = __FILEREF__ + "generateFramesToIngest: ffmpeg command failed"
@@ -6556,6 +6602,8 @@ void FFMpeg::generateFramesToIngest(
     }
     catch(runtime_error e)
     {
+		*pChildPid = 0;
+
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
@@ -7311,6 +7359,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					ffmpegArgumentList,
 					_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 					pChildPid, &iReturnedStatus);
+				*pChildPid = 0;
 				if (iReturnedStatus != 0)
 				{
 					string errorMessage = __FILEREF__ + "cut with reencoding: ffmpeg command failed"      
@@ -7340,6 +7389,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			}
 			catch(runtime_error e)
 			{
+				*pChildPid = 0;
+
 				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 					_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 				string errorMessage;
@@ -7915,6 +7966,7 @@ void FFMpeg::slideShow(
 			ffmpegArgumentList,
 			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 			pChildPid, &iReturnedStatus);
+		*pChildPid = 0;
 		if (iReturnedStatus != 0)
         {
 			string errorMessage = __FILEREF__ + "slideShow: ffmpeg command failed"
@@ -7941,6 +7993,8 @@ void FFMpeg::slideShow(
     }
     catch(runtime_error e)
     {
+		*pChildPid = 0;
+
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 			string errorMessage;
@@ -9585,6 +9639,7 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList,
 				_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 				pChildPid, &iReturnedStatus);
+			*pChildPid = 0;
 
 			endFfmpegCommand = chrono::system_clock::now();
 
@@ -9828,6 +9883,8 @@ void FFMpeg::liveRecorder(
 	}
     catch(runtime_error e)
     {
+		*pChildPid = 0;
+
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
@@ -10428,6 +10485,7 @@ void FFMpeg::liveProxy2(
 				ffmpegArgumentList,
 				_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 				pChildPid, &iReturnedStatus);
+			*pChildPid = 0;
 
 			endFfmpegCommand = chrono::system_clock::now();
 
@@ -10614,6 +10672,8 @@ void FFMpeg::liveProxy2(
 		}
 		catch(runtime_error e)
 		{
+			*pChildPid = 0;
+
 			bool stoppedBySigQuit = false;
 
 			string lastPartOfFfmpegOutputFile = getLastPartOfFile(
@@ -13270,6 +13330,7 @@ void FFMpeg::liveGrid(
 			ffmpegArgumentList,
 			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
 			pChildPid, &iReturnedStatus);
+		*pChildPid = 0;
 		if (iReturnedStatus != 0)
 		{
 			string errorMessage = __FILEREF__ + "liveGrid: ffmpeg command failed"
@@ -13300,6 +13361,8 @@ void FFMpeg::liveGrid(
     }
     catch(runtime_error e)
     {
+		*pChildPid = 0;
+
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;

@@ -28,6 +28,7 @@
 #include "catralibraries/GetCpuUsage.h"
 #include "FFMPEGEncoder.h"
 #include "MMSStorage.h"
+#include "EncodeContent.h"
 
 extern char** environ;
 
@@ -177,8 +178,8 @@ int main(int argc, char** argv)
 			for (int encodingIndex = 0; encodingIndex < VECTOR_MAX_CAPACITY; encodingIndex++)
 			{
 				shared_ptr<Encoding>    encoding = make_shared<Encoding>();
-				encoding->_running   = false;
-				encoding->_childPid		= 0;
+				encoding->_available   = true;
+				encoding->_childPid		= 0;	// not running
 				encoding->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
 
 				encodingsCapability.push_back(encoding);
@@ -193,9 +194,9 @@ int main(int argc, char** argv)
 			for (int liveProxyIndex = 0; liveProxyIndex < VECTOR_MAX_CAPACITY; liveProxyIndex++)
 			{
 				shared_ptr<LiveProxyAndGrid>    liveProxy = make_shared<LiveProxyAndGrid>();
-				liveProxy->_running					= false;
+				liveProxy->_available				= true;
+				liveProxy->_childPid				= 0;	// not running
 				liveProxy->_ingestionJobKey			= 0;
-				liveProxy->_childPid				= 0;
 				liveProxy->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
 
 				liveProxiesCapability.push_back(liveProxy);
@@ -211,10 +212,10 @@ int main(int argc, char** argv)
 				liveRecordingIndex++)
 			{
 				shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
-				liveRecording->_running   = false;
+				liveRecording->_available			= true;
+				liveRecording->_childPid			= 0;	// not running
 				liveRecording->_ingestionJobKey		= 0;
 				liveRecording->_encodingParametersRoot = Json::nullValue;
-				liveRecording->_childPid		= 0;
 				liveRecording->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
 
 				liveRecordingsCapability.push_back(liveRecording);
@@ -600,7 +601,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -697,14 +698,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating encodeContent thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -727,8 +728,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -801,7 +802,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -898,14 +899,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating cut thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -929,8 +930,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -1003,7 +1004,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -1100,14 +1101,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating overlayImageOnVideo thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1130,8 +1131,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -1204,7 +1205,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -1301,14 +1302,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating overlayTextOnVideo thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1331,8 +1332,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -1405,7 +1406,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -1502,14 +1503,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating generateFrames thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1532,8 +1533,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -1606,7 +1607,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -1703,14 +1704,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating slideShow thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1733,8 +1734,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -1807,7 +1808,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -1904,14 +1905,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating videoSpeed thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1934,8 +1935,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -2008,7 +2009,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -2105,14 +2106,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating pictureInPicture thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2135,8 +2136,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -2209,7 +2210,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
-				if (!encoding->_running)
+				if (encoding->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -2306,14 +2307,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_running		 = false;
-				selectedEncoding->_childPid		= 0;
+				selectedEncoding->_available	 = true;
+				selectedEncoding->_childPid		= 0;	// not running
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
-				selectedEncoding->_running = true;
+				selectedEncoding->_available = false;
+				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
-				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating introOutroOverlay thread"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2336,8 +2337,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedEncoding->_running = false;
-				selectedEncoding->_childPid = 0;
+				selectedEncoding->_available = true;
+				selectedEncoding->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -2411,7 +2412,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
 
-				if (!liveRecording->_running)
+				if (liveRecording->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -2509,9 +2510,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<LiveRecording> selectedLiveRecording = make_shared<LiveRecording>();
-				selectedLiveRecording->_running		 = false;
+				selectedLiveRecording->_available		 = true;
+				selectedLiveRecording->_childPid		= 0;	// not running
 				selectedLiveRecording->_encodingParametersRoot = Json::nullValue;
-				selectedLiveRecording->_childPid		= 0;
 				selectedLiveRecording->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
 				#endif
 
@@ -2522,9 +2523,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				//		his checks before recorder is not really started.
 				//		_recordingStart will be initialized correctly into the liveRecorderThread method
 				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
-				selectedLiveRecording->_running = true;
+				selectedLiveRecording->_available = false;
+				selectedLiveRecording->_childPid = 0;	// not running
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
-				selectedLiveRecording->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating liveRecorder thread"
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2547,8 +2548,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedLiveRecording->_running = false;
-				selectedLiveRecording->_childPid = 0;
+				selectedLiveRecording->_available = true;
+				selectedLiveRecording->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -2625,7 +2626,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				shared_ptr<LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
 
-				if (!liveProxy->_running)
+				if (liveProxy->_available)
 				{
 					if (!freeEncodingFound)
 					{
@@ -2730,16 +2731,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#ifdef __VECTOR__
 				#else	// __MAP__
 				shared_ptr<LiveProxyAndGrid>    selectedLiveProxy = make_shared<LiveProxyAndGrid>();
-				selectedLiveProxy->_running   = false;
-				selectedLiveProxy->_childPid		= 0;
+				selectedLiveProxy->_available   = true;
+				selectedLiveProxy->_childPid		= 0;	// not running
 				selectedLiveProxy->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 				selectedLiveProxy->_ingestionJobKey		= 0;
 				#endif
 
-				selectedLiveProxy->_running = true;
+				selectedLiveProxy->_available = false;
+				selectedLiveProxy->_childPid = 0;	// not running
 				selectedLiveProxy->_encodingJobKey = encodingJobKey;
 				selectedLiveProxy->_method = method;
-				selectedLiveProxy->_childPid = 0;
 
 				if (method == "liveProxy")
 				{
@@ -2799,8 +2800,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch(exception e)
 			{
 				#ifdef __VECTOR__
-				selectedLiveProxy->_running = false;
-				selectedLiveProxy->_childPid = 0;
+				selectedLiveProxy->_available = true;
+				selectedLiveProxy->_childPid = 0;	// not running
 				#else	// __MAP__
 				#endif
 
@@ -3080,19 +3081,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         else
         {
-            /* in case we see the encoding is finished but encoding->_running is true,
-            it means the thread encodingContent is hanged.
-             In this case we can implement the method _ffmpeg->stillEncoding
-             doing a check may be looking if the encoded file is growing.
-             That will allow us to know for sure if the encoding finished and
-             reset the Encoding structure
-            bool stillEncoding = encoding->_ffmpeg->stillEncoding();
-            if (!stillEncoding)
-            {
-                encoding->_running = false;
-            }
-            */
-            
 			if (encodingCompleted)
 			{
 				Json::Value responseBodyRoot;
@@ -3197,23 +3185,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = selectedEncoding->_errorMessage;
 
 				field = "encodingFinished";
-				// 2022-11-29: spesso tra _running false e encodingCompleted true passa del tempo
-				//	soprattutto in caso di attività su externalEncoder perche, dopo che running è false
-				//	serve del tempo affinchè l'output generato viene ingestato nell'MMS. Solo infatti
-				//	successivamente all'ingestion terminato, encodingCompleted è true
-				//	E' importante che viene indicato encodingFinished true solamente quando
-				//	encodingCompleted è true, altrimenti se indichiamo che encodingFinished è true
-				//	ma ancora l'ingestion dell'output non è terminato, il Task successivo
-				//	si ritrova senza input
-				responseBodyRoot[field] = encodingCompleted;	// !selectedEncoding->_running;
+				responseBodyRoot[field] = encodingCompleted;
 
 				field = "encodingProgress";
 				if (encodingProgress == -2)
 				{
-					// vedi commento sopra del 2022-11-29. Se _running è false e encodingCompleted false
-					// siamo nello scenario in cui l'output è stato generato e si sta aspettando che
-					// l'ingestion sia terminato. In questo caso indichiamo progress al 100%
-					if (!selectedEncoding->_running && !encodingCompleted)
+					if (selectedEncoding->_available && !encodingCompleted)	// non dovrebbe accadere mai
 						responseBodyRoot[field] = 100;
 					else
 						responseBodyRoot[field] = Json::nullValue;
@@ -3248,54 +3225,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "errorMessage";
 				responseBodyRoot[field] = selectedLiveProxy->_errorMessage;
 
-				/*
-				// 2022-07-20: if we do not have a correct pid after 10 minutes
-				//	we will force encodingFinished to true
-				{
-					field = "encodingFinished";
-					if (selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
-					{
-						// 2022-07-21: pensavo si verificasse questo scenario
-						//	(selectedLiveProxy->_childPid <= 0 && selectedLiveProxy->_running)
-						//	in realtà sembra non si verifica mai
-						int64_t liveProxyLiveTimeInMinutes = 0;
-						{
-							chrono::system_clock::time_point now = chrono::system_clock::now();                           
-
-							if (now > selectedLiveProxy->_proxyStart)
-								liveProxyLiveTimeInMinutes = chrono::duration_cast<
-									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
-							else	// it will be negative
-								liveProxyLiveTimeInMinutes = chrono::duration_cast<
-									chrono::minutes>(now - selectedLiveProxy->_proxyStart).count();
-						}
-						if (liveProxyLiveTimeInMinutes > 10)
-						{
-							_logger->error(__FILEREF__ + "encodingStatus, force encodingFinished to true"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
-								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
-							);
-
-							responseBodyRoot[field] = true;
-						}
-						else
-						{
-							_logger->warn(__FILEREF__ + "encodingStatus, encoding running but pid is <= 0!!!"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
-								+ ", selectedLiveProxy->_running: " + to_string(selectedLiveProxy->_running)
-							);
-
-							responseBodyRoot[field] = !selectedLiveProxy->_running;
-						}
-					}
-					else
-						responseBodyRoot[field] = !selectedLiveProxy->_running;
-				}
-				*/
 				field = "encodingFinished";
 				responseBodyRoot[field] = encodingCompleted;
 
@@ -3331,7 +3260,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = selectedLiveRecording->_errorMessage;
 
 				field = "encodingFinished";
-				responseBodyRoot[field] = encodingCompleted;	// !selectedLiveRecording->_running;
+				responseBodyRoot[field] = encodingCompleted;
 
 				// 2020-10-13: we do not have here the information to calculate the encoding progress,
 				//	it is calculated in EncoderVideoAudioProxy.cpp
@@ -4016,466 +3945,24 @@ void FFMPEGEncoder::encodeContentThread(
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "encodeContent";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", requestBody: " + requestBody
-    );
-
-	bool externalEncoder = false;
-	string sourceAssetPathName;
-	string encodedStagingAssetPathName;
-	int64_t ingestionJobKey = 1;
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-
-		externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-
-        int videoTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot,
-			"VideoTrackIndex", -1);
-        int audioTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot,
-			"AudioTrackIndex", -1);
-
-		Json::Value sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
-		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-        int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
-				"sourceDurationInMilliSecs", -1);
-        MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
-				JSONUtils::asString(encodingParametersRoot, "contentType", ""));
-        int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
-
-		Json::Value videoTracksRoot;
-		string field = "videoTracks";
-        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			videoTracksRoot = sourceToBeEncodedRoot[field];
-		Json::Value audioTracksRoot;
-		field = "audioTracks";
-        if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			audioTracksRoot = sourceToBeEncodedRoot[field];
-
-		field = "sourceFileExtension";
-		if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-
-		if (externalEncoder)
-		{
-			field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = sourceAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-
-			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				encoding->_ffmpeg,
-				sourceFileExtension,
-				sourcePhysicalDeliveryURL,
-				sourceAssetPathName);
-		}
-		else
-		{
-			field = "mmsSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
-		}
-
-        _logger->info(__FILEREF__ + "encoding content..."
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", sourceAssetPathName: " + sourceAssetPathName
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        encoding->_ffmpeg->encodeContent(
-			sourceAssetPathName,
-			durationInMilliSeconds,
-			encodedStagingAssetPathName,
-			encodingProfileDetailsRoot,
-			contentType == MMSEngineDBFacade::ContentType::Video,
-			videoTracksRoot,
-			audioTracksRoot,
-			videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
-			physicalPathKey,
-			encodingJobKey,
-			ingestionJobKey,
-			&(encoding->_childPid)
-		);
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
-        _logger->info(__FILEREF__ + "encoded content"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", sourceAssetPathName: " + sourceAssetPathName
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			field = "sourceMediaItemKey";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
-
-			field = "encodingProfileKey";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, field, -1);
-
-			string workflowLabel = "Add Variant " + to_string(sourceMediaItemKey)
-				+ " - " + to_string(encodingProfileKey)
-				+ " (encoding from external transcoder)"
-			;
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				sourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder",	// ingester
-				sourceMediaItemKey,
-				encodingProfileKey
-			);
-		}
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, encoding->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		EncodeContent encodeContent(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		encodeContent.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
-	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
+    {
+		_logger->error(__FILEREF__ + e.what());
 
-		if (externalEncoder)
-		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			if (encodedStagingAssetPathName != "")
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, encoding->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
-		if (externalEncoder)
-		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			if (encodedStagingAssetPathName != "")
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-		
-		encoding->_errorMessage = e.what();
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4484,85 +3971,7 @@ void FFMPEGEncoder::encodeContentThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
-		if (externalEncoder)
-		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			if (encodedStagingAssetPathName != "")
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4784,10 +4193,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
             ingestionJobKey,
 			&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-        
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
+
         _logger->info(__FILEREF__ + "overlayImageOnVideo finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4827,13 +4233,18 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 			);
 		}
 
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -4856,9 +4267,6 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -4877,13 +4285,18 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -4906,9 +4319,6 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -4929,13 +4339,18 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -4963,9 +4378,6 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -4986,13 +4398,18 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5231,9 +4648,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5271,13 +4685,18 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			);
 		}
 
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5300,9 +4719,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -5321,13 +4737,18 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5350,9 +4771,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -5373,13 +4791,18 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5407,9 +4830,6 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -5430,13 +4850,18 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5620,9 +5045,6 @@ void FFMPEGEncoder::generateFramesThread(
 			videoDurationInMilliSeconds,
 			&(encoding->_childPid)
 		);
-
-        encoding->_running = false;
-        encoding->_childPid = 0;
 
 		bool completedWithError			= false;
 		if (externalEncoder)
@@ -5963,12 +5385,17 @@ void FFMPEGEncoder::generateFramesThread(
             + ", completedWithError: " + to_string(completedWithError)
         );
 
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -5991,9 +5418,6 @@ void FFMPEGEncoder::generateFramesThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		if (externalEncoder)
 		{
 			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
@@ -6023,13 +5447,18 @@ void FFMPEGEncoder::generateFramesThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6052,9 +5481,6 @@ void FFMPEGEncoder::generateFramesThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		if (externalEncoder)
 		{
 			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
@@ -6086,13 +5512,18 @@ void FFMPEGEncoder::generateFramesThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6115,9 +5546,6 @@ void FFMPEGEncoder::generateFramesThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		if (externalEncoder)
 		{
 			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
@@ -6149,13 +5577,18 @@ void FFMPEGEncoder::generateFramesThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6624,9 +6057,6 @@ void FFMPEGEncoder::slideShowThread(
 			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
 			encodedStagingAssetPathName, &(encoding->_childPid));
 
-		encoding->_running = false;
-        encoding->_childPid = 0;
-        
         _logger->info(__FILEREF__ + "slideShow finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -6689,13 +6119,18 @@ void FFMPEGEncoder::slideShowThread(
 			);
 		}
 
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6718,9 +6153,6 @@ void FFMPEGEncoder::slideShowThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -6739,13 +6171,18 @@ void FFMPEGEncoder::slideShowThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6768,9 +6205,6 @@ void FFMPEGEncoder::slideShowThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -6791,13 +6225,18 @@ void FFMPEGEncoder::slideShowThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -6820,9 +6259,6 @@ void FFMPEGEncoder::slideShowThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -6843,13 +6279,18 @@ void FFMPEGEncoder::slideShowThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7060,9 +6501,6 @@ void FFMPEGEncoder::videoSpeedThread(
 			ingestionJobKey,
 			&(encoding->_childPid));
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -7100,13 +6538,18 @@ void FFMPEGEncoder::videoSpeedThread(
 			);
 		}
 
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7129,9 +6572,6 @@ void FFMPEGEncoder::videoSpeedThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7150,13 +6590,18 @@ void FFMPEGEncoder::videoSpeedThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7179,9 +6624,6 @@ void FFMPEGEncoder::videoSpeedThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7202,13 +6644,18 @@ void FFMPEGEncoder::videoSpeedThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7236,9 +6683,6 @@ void FFMPEGEncoder::videoSpeedThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7259,13 +6703,18 @@ void FFMPEGEncoder::videoSpeedThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7582,9 +7031,6 @@ void FFMPEGEncoder::pictureInPictureThread(
 			ingestionJobKey,
 			&(encoding->_childPid));
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
-        
         _logger->info(__FILEREF__ + "PictureInPicture encoding content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -7633,13 +7079,18 @@ void FFMPEGEncoder::pictureInPictureThread(
 			);
 		}
 
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7662,9 +7113,6 @@ void FFMPEGEncoder::pictureInPictureThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7683,13 +7131,18 @@ void FFMPEGEncoder::pictureInPictureThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		{
+			bool completedWithError			= false;
+			bool killedByUser				= true;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7712,9 +7165,6 @@ void FFMPEGEncoder::pictureInPictureThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7735,13 +7185,18 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -7769,9 +7224,6 @@ void FFMPEGEncoder::pictureInPictureThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
-
 		char strDateTime [64];
 		{
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
@@ -7792,13 +7244,18 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 		encoding->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
+		{
+			bool completedWithError			= true;
+			bool killedByUser				= false;
+			bool urlForbidden				= false;
+			bool urlNotFound				= false;
+			addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+
+			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
+			encoding->_available = true;	// this is the last setting making the encoding available again
+		}
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8195,7 +7652,6 @@ void FFMPEGEncoder::introOutroOverlayThread(
 			ingestionJobKey,
 			&(encoding->_childPid));
 
-        encoding->_running = false;
         encoding->_childPid = 0;
 
         _logger->info(__FILEREF__ + "introOutroOverlay encoding content finished"
@@ -8264,6 +7720,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8286,7 +7743,6 @@ void FFMPEGEncoder::introOutroOverlayThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8314,6 +7770,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8336,7 +7793,6 @@ void FFMPEGEncoder::introOutroOverlayThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8366,6 +7822,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8393,7 +7850,6 @@ void FFMPEGEncoder::introOutroOverlayThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8423,6 +7879,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8629,7 +8086,6 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 			&(encoding->_childPid));
 
-        encoding->_running = false;
         encoding->_childPid = 0;
 
         _logger->info(__FILEREF__ + "cut encoding content finished"
@@ -8676,6 +8132,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8698,7 +8155,6 @@ void FFMPEGEncoder::cutFrameAccurateThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8726,6 +8182,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		addEncodingCompleted(encoding->_encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8748,7 +8205,6 @@ void FFMPEGEncoder::cutFrameAccurateThread(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8778,6 +8234,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -8805,7 +8262,6 @@ void FFMPEGEncoder::cutFrameAccurateThread(
     }
     catch(exception e)
     {
-        encoding->_running = false;
         encoding->_childPid = 0;
 
 		char strDateTime [64];
@@ -8835,6 +8291,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        encoding->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9304,8 +8761,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			&(liveRecording->_recordingStart)
 		);
 
-		// 2022-11-20: _running to false has to be set soon to avoid monitoring
-        liveRecording->_running = false;
+		// 2022-11-20: _childPid to 0 has to be set soon to avoid monitoring
         liveRecording->_childPid = 0;
 
 		if (liveRecording->_streamSourceType == "TV"
@@ -9349,6 +8805,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		addEncodingCompleted(encodingJobKey,
 			completedWithError, liveRecording->_errorMessage, killedByUser,
 			urlForbidden, urlNotFound);
+        liveRecording->_available = true;
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
@@ -9388,10 +8845,9 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 
 		if (liveRecording->_streamSourceType == "TV"
@@ -9426,6 +8882,21 @@ void FFMPEGEncoder::liveRecorderThread(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
+		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
+					+ liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: "
+					+ liveRecording->_chunksTranscoderStagingContentsPath
+					+ liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
+				+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
+		}
+
 		bool completedWithError			= false;
 		bool killedByUser;
 		if (liveRecording->_killedBecauseOfNotWorking)
@@ -9445,21 +8916,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
-		}
+        liveRecording->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9483,10 +8940,9 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLForbidden e)
     {
-        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
 
@@ -9524,14 +8980,6 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		liveRecording->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= true;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, liveRecording->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
@@ -9547,6 +8995,15 @@ void FFMPEGEncoder::liveRecorderThread(
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= true;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+			completedWithError, liveRecording->_errorMessage, killedByUser,
+			urlForbidden, urlNotFound);
+        liveRecording->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9570,10 +9027,9 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLNotFound e)
     {
-        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
 
@@ -9611,14 +9067,6 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		liveRecording->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= true;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
@@ -9634,6 +9082,15 @@ void FFMPEGEncoder::liveRecorderThread(
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        liveRecording->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9657,10 +9114,9 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(runtime_error e)
     {
-        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
 
@@ -9698,14 +9154,6 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		liveRecording->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
@@ -9721,6 +9169,15 @@ void FFMPEGEncoder::liveRecorderThread(
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        liveRecording->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9744,10 +9201,9 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(exception e)
     {
-        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
-        liveRecording->_childPid = 0;
 		liveRecording->_channelLabel		= "";
 		liveRecording->_killedBecauseOfNotWorking = false;
 
@@ -9785,14 +9241,6 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		liveRecording->_errorMessage = errorMessage;
 
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
@@ -9808,6 +9256,15 @@ void FFMPEGEncoder::liveRecorderThread(
 				+ liveRecording->_segmentListFileName,
 				exceptionInCaseOfError);
 		}
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        liveRecording->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -9854,7 +9311,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 				shared_ptr<LiveRecording> liveRecording = it->second;
 				#endif
 
-				if (liveRecording->_running)
+				if (liveRecording->_childPid != 0)	// running
 				{
 					_logger->info(__FILEREF__ + "liveRecorder_processSegmenterOutput ..."
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
@@ -10000,7 +9457,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 			// this is to have a copy of LiveRecording
 			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
 
-			// this is to have access to _running and _proxyStart
+			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
 			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
@@ -10026,7 +9483,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					shared_ptr<LiveRecording> liveRecording = it->second;
 					#endif
 
-					if (liveRecording->_running && liveRecording->_virtualVOD
+					if (liveRecording->_childPid != 0 && liveRecording->_virtualVOD
 						&& startClone > liveRecording->_recordingStart)
 					{
 						liveRecordingVirtualVODCounter++;
@@ -10071,14 +9528,14 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
 				);
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "virtualVOD. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): "
 							+ to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): "
@@ -10097,7 +9554,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", externalEncoder: " + to_string(copiedLiveRecording->_externalEncoder)
-						+ ", running: " + to_string(copiedLiveRecording->_running)
+						+ ", childPid: " + to_string(copiedLiveRecording->_childPid)
 						+ ", virtualVOD: " + to_string(copiedLiveRecording->_virtualVOD)
 						+ ", virtualVODsNumber: " + to_string(virtualVODsNumber)
 						+ ", monitorVirtualVODManifestDirectoryPath: "
@@ -13399,6 +12856,9 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_proxyStart)
 			);
 		}
+        liveProxy->_childPid = 0;
+		liveProxy->_method = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
 
 		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
 		{
@@ -13438,11 +12898,6 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
-		liveProxy->_method = "";
-        liveProxy->_childPid = 0;
-		liveProxy->_killedBecauseOfNotWorking = false;
-        
         _logger->info(__FILEREF__ + "_ffmpeg->liveProxy finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -13456,6 +12911,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(encodingJobKey,
 			completedWithError, liveProxy->_errorMessage, killedByUser,
 			urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		liveProxy->_ingestionJobKey = 0;
 		// liveProxy->_channelLabel = "";
@@ -13483,6 +12939,8 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
+        liveProxy->_childPid = 0;
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13524,10 +12982,8 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 
@@ -13569,6 +13025,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(liveProxy->_encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -13591,6 +13048,8 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLForbidden e)
     {
+        liveProxy->_childPid = 0;
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13632,10 +13091,8 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -13667,6 +13124,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -13694,6 +13152,8 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
+        liveProxy->_childPid = 0;
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13735,10 +13195,8 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -13770,6 +13228,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -13797,6 +13256,8 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
+        liveProxy->_childPid = 0;
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13838,10 +13299,8 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -13873,6 +13332,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -13900,6 +13360,8 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
+        liveProxy->_childPid = 0;
+
 		if (liveProxy->_inputsRoot != Json::nullValue)
 		{
 			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
@@ -13941,10 +13403,8 @@ void FFMPEGEncoder::liveProxyThread(
 			}
 		}
 
-        liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -13976,6 +13436,7 @@ void FFMPEGEncoder::liveProxyThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14114,9 +13575,8 @@ void FFMPEGEncoder::liveGridThread(
 				&(liveProxy->_childPid));
 		}
 
-        liveProxy->_running = false;
-		liveProxy->_method = "";
         liveProxy->_childPid = 0;
+		liveProxy->_method = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
         _logger->info(__FILEREF__ + "_ffmpeg->liveGridBy... finished"
@@ -14132,6 +13592,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_liveGridOutputType = "";
@@ -14158,10 +13619,9 @@ void FFMPEGEncoder::liveGridThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
 
@@ -14203,6 +13663,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(liveProxy->_encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14225,10 +13686,9 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(FFMpegURLForbidden e)
     {
-        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -14260,6 +13720,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14287,10 +13748,9 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(FFMpegURLNotFound e)
     {
-        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -14322,6 +13782,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14349,10 +13810,9 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(runtime_error e)
     {
-        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -14384,6 +13844,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14411,10 +13872,9 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(exception e)
     {
-        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
-        liveProxy->_childPid = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -14446,6 +13906,7 @@ void FFMPEGEncoder::liveGridThread(
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
+        liveProxy->_available = true;
 
 		#ifdef __VECTOR__
 		#else	// __MAP__
@@ -14484,7 +13945,7 @@ void FFMPEGEncoder::monitorThread()
 			// this is to have a copy of LiveProxyAndGrid
 			vector<shared_ptr<LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
 
-			// this is to have access to _running and _proxyStart
+			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
 			vector<shared_ptr<LiveProxyAndGrid>> sourceLiveProxiesCapability;
@@ -14510,7 +13971,7 @@ void FFMPEGEncoder::monitorThread()
 					shared_ptr<LiveProxyAndGrid> liveProxy = it->second;
 					#endif
 
-					if (liveProxy->_running)
+					if (liveProxy->_childPid != 0)	// running
 					{
 						liveProxyAndGridRunningCounter++;
 
@@ -14565,7 +14026,7 @@ void FFMPEGEncoder::monitorThread()
 					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 					+ ", configurationLabel: " + configurationLabel
-					+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+					+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 					+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): "
 						+ to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 					+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): "
@@ -14577,14 +14038,14 @@ void FFMPEGEncoder::monitorThread()
 				bool liveProxyWorking = true;
 				string localErrorMessage;
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -14620,14 +14081,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -14748,14 +14209,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -14812,14 +14273,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -15084,14 +14545,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -15154,14 +14615,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -15223,14 +14684,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_running ||
+				if (sourceLiveProxy->_childPid == 0 ||
 					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
 					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_running: " + to_string(sourceLiveProxy->_running)
+						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
 						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
 						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
@@ -15332,7 +14793,7 @@ void FFMPEGEncoder::monitorThread()
 			// this is to have a copy of LiveRecording
 			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
 
-			// this is to have access to _running and _proxyStart
+			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
 			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
@@ -15358,7 +14819,7 @@ void FFMPEGEncoder::monitorThread()
 					shared_ptr<LiveRecording> liveRecording = it->second;
 					#endif
 
-					if (liveRecording->_running && liveRecording->_monitoringEnabled)
+					if (liveRecording->_childPid != 0 && liveRecording->_monitoringEnabled)
 					{
 						liveRecordingRunningCounter++;
 
@@ -15407,14 +14868,14 @@ void FFMPEGEncoder::monitorThread()
 				bool liveRecorderWorking = true;
 				string localErrorMessage;
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
@@ -15450,14 +14911,14 @@ void FFMPEGEncoder::monitorThread()
 					continue;
 				}
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
@@ -15578,14 +15039,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
@@ -15705,14 +15166,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
@@ -15769,14 +15230,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
@@ -16053,14 +15514,14 @@ void FFMPEGEncoder::monitorThread()
 					}
 				}
 
-				if (!sourceLiveRecording->_running ||
+				if (sourceLiveRecording->_childPid == 0 ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_running: " + to_string(sourceLiveRecording->_running)
+						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
 						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
 						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
