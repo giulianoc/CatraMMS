@@ -3056,16 +3056,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
         if (!encodingFound && !liveProxyFound && !liveRecordingFound && !encodingCompleted)
         {
 			// it should never happen
-			/*
-            responseBody = string("{ ")
-                + "\"ingestionJobKey\": " + to_string(ingestionJobKey)
-                + "\"encodingJobKey\": " + to_string(encodingJobKey)
-                + ", \"pid\": 0"
-				+ ", \"killedByUser\": false"
-                + ", \"encodingFinished\": true "
-                + ", \"encodingProgress\": 100 "
-                + "}";
-			*/
 			Json::Value responseBodyRoot;
 
 			string field = "ingestionJobKey";

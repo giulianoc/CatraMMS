@@ -28,7 +28,8 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "EMailSender.h"
 #include "Magick++.h"
-#include <openssl/md5.h>
+// #include <openssl/md5.h>
+#include <openssl/evp.h>                                                                                      
 
 #define MD5BUFFERSIZE 16384
 
@@ -23595,43 +23596,61 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	// we just simplify and md5FileCheck is not done in case of segments
     if (mediaFileFormat != "m3u8-tar.gz" && md5FileCheckSum != "")
     {
-		char buffer[MD5BUFFERSIZE];
-		unsigned char digest[MD5_DIGEST_LENGTH];
-		std::stringstream ss;
+		EVP_MD_CTX* ctx = EVP_MD_CTX_create();
+		const EVP_MD* mdType = EVP_md5();
+		EVP_MD_CTX_init(ctx);
+		EVP_DigestInit_ex(ctx, mdType, nullptr);
 
-		std::ifstream ifs(mediaSourcePathName, std::ifstream::binary);
-		MD5_CTX md5Context;
-		MD5_Init(&md5Context);
-		while (ifs.good())
+		std::ifstream ifs;                                        
+		ifs.open(mediaSourcePathName, ios::binary | ios::in);                                        
+		if (!ifs.good())
 		{
-			ifs.read(buffer, MD5BUFFERSIZE);
-			MD5_Update(&md5Context, buffer, ifs.gcount());
+			string errorMessage = __FILEREF__ + "Media files to be opened"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSourcePathName: " + mediaSourcePathName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
+
+		char data[MD5BUFFERSIZE];                                                                           
+		size_t size;
+		do
+		{                                                                                                     
+			ifs.read(data, MD5BUFFERSIZE);                                                                                    
+			size = ifs.gcount();
+			for (size_t bytes_done = 0; bytes_done < size;)
+			{
+				size_t bytes = 4096;
+				auto missing = size - bytes_done;
+
+				if (missing < bytes)
+					bytes = missing;
+  
+				auto dataStart = static_cast<void*>(static_cast<char*>(data) + bytes_done);
+				EVP_DigestUpdate(ctx, dataStart, bytes);
+				bytes_done += bytes;
+			}
+		}
+		while(ifs.good());
 		ifs.close();
-		int res = MD5_Final(digest, &md5Context);
 
-		if(res == 0) // hash failed
-        {
-            string errorMessage = __FILEREF__ + "MD5 calculation failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", mediaSourcePathName: " + mediaSourcePathName
-                + ", md5FileCheckSum: " + md5FileCheckSum
-                    ;
-            _logger->error(errorMessage);
-            throw runtime_error(errorMessage);
-        }
+		std::vector<unsigned char> md(EVP_MD_size(mdType));
+		EVP_DigestFinal_ex(ctx, md.data(), nullptr);
+		EVP_MD_CTX_destroy(ctx);
 
-		// set up stringstream format
-		ss << std::hex << std::setfill('0');
-		for(unsigned char uc: digest)
-			ss << std::setw(2) << (int)uc;
+		std::ostringstream hashBuffer;
 
-        string md5RealDigest = ss.str();
+		for (auto c : md)
+			hashBuffer << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(c);
+
+		string md5RealDigest = hashBuffer.str();
 
 		bool isCaseInsensitiveEqual = md5FileCheckSum.length() != md5RealDigest.length()
 			? false :
-            equal(md5FileCheckSum.begin(), md5FileCheckSum.end(), md5RealDigest.begin(),
+			equal(md5FileCheckSum.begin(), md5FileCheckSum.end(), md5RealDigest.begin(),
 				[](int c1, int c2){ return toupper(c1) == toupper(c2); });
 
         if (!isCaseInsensitiveEqual)
@@ -23644,6 +23663,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
                 + ", md5RealDigest: " + md5RealDigest
                     ;
             _logger->error(errorMessage);
+
             throw runtime_error(errorMessage);
         }
     }

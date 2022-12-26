@@ -11,6 +11,7 @@
 #include <regex>
 
 
+
 using namespace std;
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
@@ -71,8 +72,8 @@ int main (int iArgc, char *pArgv [])
     }
 
     logger->info(__FILEREF__ + "Shutdown done");
-    
-    return 0;
+
+	return 0;
 }
 
 Json::Value loadConfigurationFile(const char* configurationPathName)

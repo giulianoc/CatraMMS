@@ -49,6 +49,9 @@ find_package(ZLIB)
 find_package(aws-cpp-sdk-ec2)
 
 add_compile_options(-D_FILE_OFFSET_BITS=64)
+#Next Magick defines are just to avoid compilation warnings
+add_compile_options(-DMAGICKCORE_HDRI_ENABLE=0)
+add_compile_options(-DMAGICKCORE_QUANTUM_DEPTH=16)
 
 add_subdirectory(API/src)
 
