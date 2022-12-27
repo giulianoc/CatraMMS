@@ -6,6 +6,7 @@
 #include "catralibraries/FileIO.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
 	shared_ptr<Encoding> encoding,                                                                        
@@ -36,6 +37,15 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
 		);
+
+		_tvChannelConfigurationDirectory = JSONUtils::asString(configuration["ffmpeg"],
+			"tvChannelConfigurationDirectory", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", ffmpeg->tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
+		);
+
+		_tvChannelPort_Start = 8000;                                                                              
+		_tvChannelPort_MaxNumberOfOffsets = 100;                                                                  
 
 
 		_encoding->_errorMessage = "";
@@ -965,5 +975,340 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 	);
 
 	return localDestAssetPathName;
+}
+
+void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string multicastIP,
+	string multicastPort,
+	string tvType,
+	int64_t tvServiceId,
+	int64_t tvFrequency,
+	int64_t tvSymbolRate,
+	int64_t tvBandwidthInMhz,
+	string tvModulation,
+	int tvVideoPid,
+	int tvAudioItalianPid,
+	bool toBeAdded
+)
+{
+	try
+	{
+		_logger->info(__FILEREF__ + "Received createOrUpdateTVDvbLastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", multicastIP: " + multicastIP
+			+ ", multicastPort: " + multicastPort
+			+ ", tvType: " + tvType
+			+ ", tvServiceId: " + to_string(tvServiceId)
+			+ ", tvFrequency: " + to_string(tvFrequency)
+			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
+			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
+			+ ", tvModulation: " + tvModulation
+			+ ", tvVideoPid: " + to_string(tvVideoPid)
+			+ ", tvAudioItalianPid: " + to_string(tvAudioItalianPid)
+			+ ", toBeAdded: " + to_string(toBeAdded)
+		);
+
+		string localModulation;
+
+		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
+		if (tvModulation != "")
+		{
+			if (tvModulation == "PSK/8")
+				localModulation = "psk_8";
+			else if (tvModulation == "QAM/64")
+				localModulation = "QAM_64";
+			else if (tvModulation == "QPSK")
+				localModulation = "qpsk";
+			else
+			{
+				string errorMessage = __FILEREF__ + "unknown modulation"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", tvModulation: " + tvModulation
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (!FileIO::directoryExisting(_tvChannelConfigurationDirectory))
+		{
+			_logger->info(__FILEREF__ + "Create directory"
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
+			);
+
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(
+				_tvChannelConfigurationDirectory,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IWUSR | S_IXGRP |
+				S_IROTH | S_IWUSR | S_IXOTH,
+				noErrorIfExists, recursive);
+		}
+
+		string dvblastConfigurationPathName =
+			_tvChannelConfigurationDirectory
+			+ "/" + to_string(tvFrequency)
+		;
+		if (tvSymbolRate < 0)
+			dvblastConfigurationPathName += "-";
+		else
+			dvblastConfigurationPathName += (string("-") + to_string(tvSymbolRate));
+		if (tvBandwidthInMhz < 0)
+			dvblastConfigurationPathName += "-";
+		else
+			dvblastConfigurationPathName += (string("-") + to_string(tvBandwidthInMhz));
+		dvblastConfigurationPathName += (string("-") + localModulation);
+
+		ifstream ifConfigurationFile;
+		bool changedFileFound = false;
+		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
+			ifConfigurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
+		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
+		{
+			changedFileFound = true;
+			ifConfigurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
+		}
+
+		vector<string> vConfiguration;
+		if (ifConfigurationFile.is_open())
+        {
+			string configuration;
+            while(getline(ifConfigurationFile, configuration))
+			{
+				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+
+				if (trimmedConfiguration.size() > 10)
+					vConfiguration.push_back(trimmedConfiguration);
+			}
+            ifConfigurationFile.close();
+			if (!changedFileFound)	// .txt found
+			{
+				_logger->info(__FILEREF__ + "Remove dvblast configuration file to create the new one"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
+				);
+
+				FileIO::remove(dvblastConfigurationPathName + ".txt");
+			}
+		}
+
+		string newConfiguration =
+			multicastIP + ":" + multicastPort 
+			+ " 1 "
+			+ to_string(tvServiceId)
+			+ " "
+			+ to_string(tvVideoPid) + "," + to_string(tvAudioItalianPid)
+		;
+
+		_logger->info(__FILEREF__ + "Creation dvblast configuration file"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+		);
+
+		ofstream ofConfigurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
+		if (!ofConfigurationFile)
+		{
+			string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		bool configurationAlreadyPresent = false;
+		bool wroteFirstLine = false;
+		for(string configuration: vConfiguration)
+		{
+			if (toBeAdded)
+			{
+				if (newConfiguration == configuration)
+					configurationAlreadyPresent = true;
+
+				if (wroteFirstLine)
+					ofConfigurationFile << endl;
+				ofConfigurationFile << configuration;
+				wroteFirstLine = true;
+			}
+			else
+			{
+				if (newConfiguration != configuration)
+				{
+					if (wroteFirstLine)
+						ofConfigurationFile << endl;
+					ofConfigurationFile << configuration;
+					wroteFirstLine = true;
+				}
+			}
+		}
+
+		if (toBeAdded)
+		{
+			// added only if not already present
+			if (!configurationAlreadyPresent)
+			{
+				if (wroteFirstLine)
+					ofConfigurationFile << endl;
+				ofConfigurationFile << newConfiguration;
+				wroteFirstLine = true;
+			}
+		}
+
+		ofConfigurationFile << endl;
+	}
+	catch (...)
+	{
+		// make sure do not raise an exception to the calling method to avoid
+		// to interrupt "closure" encoding procedure
+		string errorMessage = __FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		;
+		_logger->error(errorMessage);
+	}
+}
+
+pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFile(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string tvType,
+	int64_t tvServiceId,
+	int64_t tvFrequency,
+	int64_t tvSymbolRate,
+	int64_t tvBandwidthInMhz,
+	string tvModulation
+)
+{
+	string multicastIP;
+	string multicastPort;
+
+	try
+	{
+		_logger->info(__FILEREF__ + "Received getTVMulticastFromDvblastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", tvType: " + tvType
+			+ ", tvServiceId: " + to_string(tvServiceId)
+			+ ", tvFrequency: " + to_string(tvFrequency)
+			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
+			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
+			+ ", tvModulation: " + tvModulation
+		);
+
+		string localModulation;
+
+		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
+		if (tvModulation != "")
+		{
+			if (tvModulation == "PSK/8")
+				localModulation = "psk_8";
+			else if (tvModulation == "QAM/64")
+				localModulation = "QAM_64";
+			else if (tvModulation == "QPSK")
+				localModulation = "qpsk";
+			else
+			{
+				string errorMessage = __FILEREF__ + "unknown modulation"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", tvModulation: " + tvModulation
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string dvblastConfigurationPathName =
+			_tvChannelConfigurationDirectory
+			+ "/" + to_string(tvFrequency)
+		;
+		if (tvSymbolRate < 0)
+			dvblastConfigurationPathName += "-";
+		else
+			dvblastConfigurationPathName += (string("-") + to_string(tvSymbolRate));
+		if (tvBandwidthInMhz < 0)
+			dvblastConfigurationPathName += "-";
+		else
+			dvblastConfigurationPathName += (string("-") + to_string(tvBandwidthInMhz));
+		dvblastConfigurationPathName += (string("-") + localModulation);
+
+
+		ifstream configurationFile;
+		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
+			configurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
+		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
+			configurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
+
+		if (configurationFile.is_open())
+		{
+			string configuration;
+            while(getline(configurationFile, configuration))
+			{
+				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+
+				// configuration is like: 239.255.1.1:8008 1 3401 501,601
+				istringstream iss(trimmedConfiguration);
+				vector<string> configurationPieces;
+				copy(
+					istream_iterator<std::string>(iss),
+					istream_iterator<std::string>(),
+					back_inserter(configurationPieces)
+				);
+				if(configurationPieces.size() < 3)
+					continue;
+
+				if (configurationPieces[2] == to_string(tvServiceId))
+				{
+					size_t ipSeparator = (configurationPieces[0]).find(":");
+					if (ipSeparator != string::npos)
+					{
+						multicastIP = (configurationPieces[0]).substr(0, ipSeparator);
+						multicastPort = (configurationPieces[0]).substr(ipSeparator + 1);
+
+						break;
+					}
+				}
+			}
+            configurationFile.close();
+        }
+
+		_logger->info(__FILEREF__ + "Received getTVMulticastFromDvblastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", tvType: " + tvType
+			+ ", tvServiceId: " + to_string(tvServiceId)
+			+ ", tvFrequency: " + to_string(tvFrequency)
+			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
+			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
+			+ ", tvModulation: " + tvModulation
+			+ ", multicastIP: " + multicastIP
+			+ ", multicastPort: " + multicastPort
+		);
+	}
+	catch (...)
+	{
+		// make sure do not raise an exception to the calling method to avoid
+		// to interrupt "closure" encoding procedure
+		string errorMessage = __FILEREF__ + "getTVMulticastFromDvblastConfigurationFile failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		;
+		_logger->error(errorMessage);
+	}
+
+	return make_pair(multicastIP, multicastPort);
 }
 

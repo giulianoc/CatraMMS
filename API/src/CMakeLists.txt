@@ -46,6 +46,15 @@ SET (SOURCES_FFMPEGENCODER
 	FFMPEGEncoder.cpp
 	FFMPEGEncoderTask.cpp
 	EncodeContent.cpp
+	OverlayImageOnVideo.cpp
+	OverlayTextOnVideo.cpp
+	GenerateFrames.cpp
+	SlideShow.cpp
+	VideoSpeed.cpp
+	PictureInPicture.cpp
+	IntroOutroOverlay.cpp
+	CutFrameAccurate.cpp
+	LiveRecorder.cpp
 )
 
 SET (HEADERS

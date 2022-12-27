@@ -29,6 +29,15 @@
 #include "FFMPEGEncoder.h"
 #include "MMSStorage.h"
 #include "EncodeContent.h"
+#include "OverlayImageOnVideo.h"
+#include "OverlayTextOnVideo.h"
+#include "GenerateFrames.h"
+#include "SlideShow.h"
+#include "VideoSpeed.h"
+#include "PictureInPicture.h"
+#include "IntroOutroOverlay.h"
+#include "CutFrameAccurate.h"
+#include "LiveRecorder.h"
 
 extern char** environ;
 
@@ -143,31 +152,18 @@ int main(int argc, char** argv)
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
-		#ifdef __VECTOR__
-			vector<shared_ptr<Encoding>> encodingsCapability;
-		#else	// __MAP__
-			map<int64_t, shared_ptr<Encoding>> encodingsCapability;
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::Encoding>> encodingsCapability;
 
 		mutex liveProxyMutex;
-		#ifdef __VECTOR__
-			vector<shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
-		#else	// __MAP__
-			map<int64_t, shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> liveProxiesCapability;
 
 		mutex liveRecordingMutex;
-		#ifdef __VECTOR__
-			vector<shared_ptr<LiveRecording>> liveRecordingsCapability;
-		#else	// __MAP__
-			map<int64_t, shared_ptr<LiveRecording>> liveRecordingsCapability;
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> liveRecordingsCapability;
 
 		mutex encodingCompletedMutex;
-		map<int64_t, shared_ptr<EncodingCompleted>> encodingCompletedMap;
+		map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>> encodingCompletedMap;
 		chrono::system_clock::time_point lastEncodingCompletedCheck;
 
-		#ifdef __VECTOR__
 		{
 			// int maxEncodingsCapability =  JSONUtils::asInt(
 			// 	encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
@@ -177,7 +173,7 @@ int main(int argc, char** argv)
 
 			for (int encodingIndex = 0; encodingIndex < VECTOR_MAX_CAPACITY; encodingIndex++)
 			{
-				shared_ptr<Encoding>    encoding = make_shared<Encoding>();
+				shared_ptr<FFMPEGEncoderTask::Encoding>    encoding = make_shared<FFMPEGEncoderTask::Encoding>();
 				encoding->_available   = true;
 				encoding->_childPid		= 0;	// not running
 				encoding->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
@@ -193,7 +189,7 @@ int main(int argc, char** argv)
 
 			for (int liveProxyIndex = 0; liveProxyIndex < VECTOR_MAX_CAPACITY; liveProxyIndex++)
 			{
-				shared_ptr<LiveProxyAndGrid>    liveProxy = make_shared<LiveProxyAndGrid>();
+				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>    liveProxy = make_shared<FFMPEGEncoderTask::LiveProxyAndGrid>();
 				liveProxy->_available				= true;
 				liveProxy->_childPid				= 0;	// not running
 				liveProxy->_ingestionJobKey			= 0;
@@ -211,7 +207,7 @@ int main(int argc, char** argv)
 			for (int liveRecordingIndex = 0; liveRecordingIndex < VECTOR_MAX_CAPACITY;
 				liveRecordingIndex++)
 			{
-				shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
+				shared_ptr<FFMPEGEncoderTask::LiveRecording>    liveRecording = make_shared<FFMPEGEncoderTask::LiveRecording>();
 				liveRecording->_available			= true;
 				liveRecording->_childPid			= 0;	// not running
 				liveRecording->_ingestionJobKey		= 0;
@@ -222,8 +218,6 @@ int main(int argc, char** argv)
 
 			}
 		}
-		#else	// __MAP__
-		#endif
 
 		mutex tvChannelsPortsMutex;
 		long tvChannelPort_CurrentOffset = 0;
@@ -328,28 +322,16 @@ FFMPEGEncoder::FFMPEGEncoder(
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
-		#ifdef __VECTOR__
-			vector<shared_ptr<Encoding>>* encodingsCapability,
-		#else	// __MAP__
-			map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::Encoding>>* encodingsCapability,
 
 		mutex* liveProxyMutex,
-		#ifdef __VECTOR__
-			vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
-		#else	// __MAP__
-			map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>>* liveProxiesCapability,
 
 		mutex* liveRecordingMutex,
-		#ifdef __VECTOR__
-			vector<shared_ptr<LiveRecording>>* liveRecordingsCapability,
-		#else	// __MAP__
-			map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
-		#endif
+		vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>>* liveRecordingsCapability,
 
 		mutex* encodingCompletedMutex,
-		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
+		map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
 		mutex* tvChannelsPortsMutex,
@@ -591,15 +573,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -635,36 +616,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{
@@ -695,14 +646,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -715,23 +658,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					selectedEncoding, encodingJobKey, requestBody);
 				encodeContentThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (encodeContent)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "encodeContentThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -792,15 +724,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -836,36 +767,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{
@@ -896,14 +797,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -916,24 +809,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				cutFrameAccurateThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(
-					make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (cut)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -994,15 +875,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1038,36 +918,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{
@@ -1098,14 +948,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1118,23 +960,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				overlayImageOnVideoThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (overlayImageOnVideo)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1195,15 +1026,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1239,36 +1069,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -1299,14 +1099,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1319,23 +1111,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				overlayTextOnVideoThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (overlayTextOnVideo)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1396,15 +1177,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1440,36 +1220,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -1500,14 +1250,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1520,23 +1262,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				generateFramesThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (generateFrames)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "generateFrames failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1597,15 +1328,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1641,36 +1371,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -1701,14 +1401,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1721,23 +1413,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				slideShowThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (slideShow)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "slideShow failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1798,15 +1479,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1842,36 +1522,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -1902,14 +1552,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1922,23 +1564,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				videoSpeedThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (videoSpeed)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "videoSpeedThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1999,15 +1630,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -2043,36 +1673,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -2103,14 +1703,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -2123,23 +1715,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				pictureInPictureThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (pictureInPicture)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "pictureInPictureThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2200,15 +1781,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -2244,36 +1824,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			if (_encodingsCapability->size() >= maxEncodingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{            
@@ -2304,14 +1854,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
-				selectedEncoding->_available	 = true;
-				selectedEncoding->_childPid		= 0;	// not running
-				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -2324,23 +1866,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				introOutroOverlayThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
-				_logger->info(__FILEREF__ + "_encodingsCapability->insert (introOutroOverlay)"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
-				);
-				#endif
-
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "introOutroOverlayThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2401,16 +1932,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<LiveRecording>    selectedLiveRecording;
+			shared_ptr<FFMPEGEncoderTask::LiveRecording>    selectedLiveRecording;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			int maxLiveRecordingsCapability = getMaxLiveRecordingsCapability();
 			for(int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability;
 				liveRecordingIndex++)
 			{
-				shared_ptr<LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
+				shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
 
 				if (liveRecording->_available)
 				{
@@ -2446,36 +1976,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxLiveRecordingsCapability = getMaxLiveRecordingsCapability();
-			if (_liveRecordingsCapability->size() >= maxLiveRecordingsCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<LiveRecording>>::iterator it =
-				_liveRecordingsCapability->find(encodingJobKey);
-			if (it != _liveRecordingsCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{
@@ -2507,15 +2007,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 				*/
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<LiveRecording> selectedLiveRecording = make_shared<LiveRecording>();
-				selectedLiveRecording->_available		 = true;
-				selectedLiveRecording->_childPid		= 0;	// not running
-				selectedLiveRecording->_encodingParametersRoot = Json::nullValue;
-				selectedLiveRecording->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				#endif
-
 				// 2022-11-23: ho visto che, in caso di autoRenew, monitoring generates errors and trys to kill
 				//		the process. Moreover the selectedLiveRecording->_errorMessage remain initialized
 				//		with the error (like killed because segment file is not present).
@@ -2535,23 +2026,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedLiveRecording, encodingJobKey, requestBody);
 				liveRecorderThread.detach();
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_liveRecordingsCapability->insert(make_pair(selectedLiveRecording->_encodingJobKey, selectedLiveRecording));
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->insert"
-					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(selectedLiveRecording->_encodingJobKey)
-				);
-				#endif
-
 				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedLiveRecording->_available = true;
 				selectedLiveRecording->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "liveRecorder failed"
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
@@ -2616,15 +2096,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			#ifdef __VECTOR__
-			shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
+			shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>    selectedLiveProxy;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			// for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
 			for(int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
 			{
-				shared_ptr<LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
+				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
 
 				if (liveProxy->_available)
 				{
@@ -2661,36 +2140,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
-			#else	// __MAP__
-			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
-			if (_liveProxiesCapability->size() >= maxLiveProxiesCapability)
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + NoEncodingAvailable().what();
-            
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-        
-			map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
-				_liveProxiesCapability->find(encodingJobKey);
-			if (it != _liveProxiesCapability->end())
-			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-			#endif
 
 			try
 			{
@@ -2727,15 +2176,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 				*/
-
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<LiveProxyAndGrid>    selectedLiveProxy = make_shared<LiveProxyAndGrid>();
-				selectedLiveProxy->_available   = true;
-				selectedLiveProxy->_childPid		= 0;	// not running
-				selectedLiveProxy->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
-				selectedLiveProxy->_ingestionJobKey		= 0;
-				#endif
 
 				selectedLiveProxy->_available = false;
 				selectedLiveProxy->_childPid = 0;	// not running
@@ -2787,23 +2227,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 				*/
 
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				_liveProxiesCapability->insert(make_pair(selectedLiveProxy->_encodingJobKey, selectedLiveProxy));
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->insert"
-					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
-				);
-				#endif
-
 				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{
-				#ifdef __VECTOR__
 				selectedLiveProxy->_available = true;
 				selectedLiveProxy->_childPid = 0;	// not running
-				#else	// __MAP__
-				#endif
 
 				_logger->error(__FILEREF__ + "liveProxyThread failed"
 					+ ", method: " + method
@@ -2878,16 +2307,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
 		bool                    encodingFound = false;
-		shared_ptr<Encoding>    selectedEncoding;
+		shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 
 		bool                    liveProxyFound = false;
-		shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
+		shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
 
 		bool                    liveRecordingFound = false;
-		shared_ptr<LiveRecording>    selectedLiveRecording;
+		shared_ptr<FFMPEGEncoderTask::LiveRecording>    selectedLiveRecording;
 
 		bool                    encodingCompleted = false;
-		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
+		shared_ptr<FFMPEGEncoderTask::EncodingCompleted>    selectedEncodingCompleted;
 
 		int encodingCompletedMutexDuration = -1;
 		int encodingMutexDuration = -1;
@@ -2900,7 +2329,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			encodingCompletedMutexDuration = chrono::duration_cast<chrono::seconds>(
 				endLockTime - startLockTime).count();
 
-			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+			map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
 				_encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
@@ -2913,18 +2342,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			// next \{ is to make the lock free as soon as the check is done
 			{
-				// see comment 2020-11-30
-				#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-				#else
-				chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
-				lock_guard<mutex> locker(*_encodingMutex);
-				chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
-				encodingMutexDuration = chrono::duration_cast<chrono::seconds>(
-					endLockTime - startLockTime).count();
-				#endif
-
-				#ifdef __VECTOR__
-				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+				for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 				{
 					if (encoding->_encodingJobKey == encodingJobKey)
 					{
@@ -2934,15 +2352,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						break;
 					}
 				}
-				#else	// __MAP__
-				map<int64_t, shared_ptr<Encoding>>::iterator it =
-					_encodingsCapability->find(encodingJobKey);
-				if (it != _encodingsCapability->end())
-				{
-					encodingFound = true;
-					selectedEncoding = it->second;
-				}
-				#endif
 			}
 
 			if (!encodingFound)
@@ -2968,18 +2377,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
  *		WE MAY AVOID THE USING OF THE LOCK
  *
  */
-					// see comment 2020-11-30
-					#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-					#else
-					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
-					lock_guard<mutex> locker(*_liveProxyMutex);
-					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
-					liveProxyMutexDuration = chrono::duration_cast<chrono::seconds>(
-						endLockTime - startLockTime).count();
-					#endif
-
-					#ifdef __VECTOR__
-					for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+					for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 					{
 						if (liveProxy->_encodingJobKey == encodingJobKey)
 						{
@@ -2989,31 +2387,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 							break;
 						}
 					}
-					#else	// __MAP__
-					map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
-						_liveProxiesCapability->find(encodingJobKey);
-					if (it != _liveProxiesCapability->end())
-					{
-						liveProxyFound = true;
-						selectedLiveProxy = it->second;
-					}
-					#endif
 				}
 
 				if (!liveProxyFound)
 				{
-					// see comment 2020-11-30
-					#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-					#else
-					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
-					lock_guard<mutex> locker(*_liveRecordingMutex);
-					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
-					liveRecordingMutexDuration = chrono::duration_cast<chrono::seconds>(
-						endLockTime - startLockTime).count();
-					#endif
-
-					#ifdef __VECTOR__
-					for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+					for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 					{
 						if (liveRecording->_encodingJobKey == encodingJobKey)
 						{
@@ -3023,15 +2401,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 							break;
 						}
 					}
-					#else	// __MAP__
-					map<int64_t, shared_ptr<LiveRecording>>::iterator it =
-						_liveRecordingsCapability->find(encodingJobKey);
-					if (it != _liveRecordingsCapability->end())
-					{
-						liveRecordingFound = true;
-						selectedLiveRecording = it->second;
-					}
-					#endif
 				}
 			}
 		}
@@ -3345,14 +2714,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool			liveRecorderFound = false;
 
 		{
-			// see comment 2020-11-30
-			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-			#else
-			lock_guard<mutex> locker(*_encodingMutex);
-			#endif
-
-			#ifdef __VECTOR__
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -3362,27 +2724,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
-			#else	// __MAP__
-			map<int64_t, shared_ptr<Encoding>>::iterator it =
-				_encodingsCapability->find(encodingJobKey);
-			if (it != _encodingsCapability->end())
-			{
-				encodingFound = true;
-				pidToBeKilled = it->second->_childPid;
-			}
-			#endif
 		}
 
 		if (!encodingFound)
 		{
-			// see comment 2020-11-30
-			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-			#else
-			lock_guard<mutex> locker(*_liveProxyMutex);
-			#endif
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -3392,27 +2738,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
-			#else	// __MAP__
-			map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
-				_liveProxiesCapability->find(encodingJobKey);
-			if (it != _liveProxiesCapability->end())
-			{
-				liveProxyFound = true;
-				pidToBeKilled = it->second->_childPid;
-			}
-			#endif
 		}
 
 		if (!encodingFound && !liveProxyFound)
 		{
-			// see comment 2020-11-30
-			#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
-			#else
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-			#endif
-
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_encodingJobKey == encodingJobKey)
 				{
@@ -3422,15 +2752,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
-			#else	// __MAP__
-			map<int64_t, shared_ptr<LiveRecording>>::iterator it =
-				_liveRecordingsCapability->find(encodingJobKey);
-			if (it != _liveRecordingsCapability->end())
-			{
-				liveRecorderFound = true;
-				pidToBeKilled = it->second->_childPid;
-			}
-			#endif
 		}
 
         if (!encodingFound && !liveProxyFound && !liveRecorderFound)
@@ -3606,10 +2927,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
+			shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
 
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -3619,15 +2939,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
-			#else	// __MAP__
-			map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
-				_liveProxiesCapability->find(encodingJobKey);
-			if (it != _liveProxiesCapability->end())
-			{
-				encodingFound = true;
-				selectedLiveProxy = it->second;
-			}
-			#endif
 
 			if (!encodingFound)
 			{
@@ -3728,18 +3039,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
 		bool                    encodingCompleted = false;
-		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
+		shared_ptr<FFMPEGEncoderTask::EncodingCompleted>    selectedEncodingCompleted;
 
-		shared_ptr<Encoding>    selectedEncoding;
+		shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
 		bool                    encodingFound = false;
 
-		shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
+		shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
 		bool					liveProxyFound = false;
 
 		{
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+			map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
 				_encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
@@ -3755,7 +3066,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_encodingMutex);
 
-				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+				for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
 				{
 					if (encoding->_encodingJobKey == encodingJobKey)
 					{
@@ -3771,7 +3082,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+				for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -3941,7 +3252,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 void FFMPEGEncoder::encodeContentThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3980,396 +3291,25 @@ void FFMPEGEncoder::encodeContentThread(
     }
 }
 
-
 void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "overlayImageOnVideo";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-
-        string imagePosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_X_InPixel", "0");
-        string imagePosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_Y_InPixel", "0");
-
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"videoDurationInMilliSeconds", -1);
-
-        Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		string sourceVideoFileExtension;
-		{
-			string field = "sourceVideoFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceVideoFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sourceVideoAssetPathName;
-		string encodedStagingAssetPathName;
-        string mmsSourceImageAssetPathName;
-
-		if (externalEncoder)
-		{
-			string field = "sourceVideoTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = sourceVideoAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = sourceVideoAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "sourceImagePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "sourceVideoPhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string sourceVideoPhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			sourceVideoAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				encoding->_ffmpeg,
-				sourceVideoFileExtension,
-				sourceVideoPhysicalDeliveryURL,
-				sourceVideoAssetPathName);
-		}
-		else
-		{
-			string field = "mmsSourceVideoAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "mmsSourceImageAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        encoding->_ffmpeg->overlayImageOnVideo(
-			externalEncoder,
-			sourceVideoAssetPathName,
-            videoDurationInMilliSeconds,
-            mmsSourceImageAssetPathName,
-            imagePosition_X_InPixel,
-            imagePosition_Y_InPixel,
-            encodedStagingAssetPathName,
-			encodingProfileDetailsRoot,
-            encodingJobKey,
-            ingestionJobKey,
-			&(encoding->_childPid));
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "overlayImageOnVideo finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
-            + ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceVideoAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add overlayImageOnVideo from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				sourceVideoFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		OverlayImageOnVideo overlayImageOnVideo(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		overlayImageOnVideo.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4378,57 +3318,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
     }
     catch(exception e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4439,389 +3329,23 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 void FFMPEGEncoder::overlayTextOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "overlayTextOnVideo";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"sourceDurationInMilliSeconds", -1);
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		string sourceFileExtension;
-		{
-			string field = "sourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sourceAssetPathName;
-		string encodedStagingAssetPathName;
-
-		if (externalEncoder)
-		{
-			string field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = sourceAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				encoding->_ffmpeg,
-				sourceFileExtension,
-				sourcePhysicalDeliveryURL,
-				sourceAssetPathName);
-		}
-		else
-		{
-			string field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		Json::Value drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
-		string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
-        int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
-		string textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_X_InPixel", "");
-		string textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_Y_InPixel", "");
-		string fontType = JSONUtils::asString(drawTextDetailsRoot, "fontType", "");
-        int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
-		string fontColor = JSONUtils::asString(drawTextDetailsRoot, "fontColor", "");
-		int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
-			"textPercentageOpacity", -1);
-		int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
-		int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
-		bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
-		string boxColor = JSONUtils::asString(drawTextDetailsRoot, "boxColor", "");
-		int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, "boxPercentageOpacity", -1);
-
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-		encoding->_ffmpeg->overlayTextOnVideo(
-			sourceAssetPathName,
-			videoDurationInMilliSeconds,
-
-			text,
-			reloadAtFrameInterval,
-			textPosition_X_InPixel,
-			textPosition_Y_InPixel,
-			fontType,
-			fontSize,
-			fontColor,
-			textPercentageOpacity,
-			shadowX, shadowY,
-			boxEnable,
-			boxColor,
-			boxPercentageOpacity,
-
-			encodingProfileDetailsRoot,
-
-			encodedStagingAssetPathName,
-			encodingJobKey,
-			ingestionJobKey,
-			&(encoding->_childPid));
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "Encode content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add overlayTextOnVideo from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				sourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		OverlayTextOnVideo overlayTextOnVideo(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		overlayTextOnVideo.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4830,57 +3354,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
     }
     catch(exception e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4891,1790 +3365,74 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 void FFMPEGEncoder::generateFramesThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "generateFrames";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
-	bool externalEncoder = false;
-	string imagesDirectory;
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-        bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-
-        double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
-        int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
-        string videoFilter = JSONUtils::asString(encodingParametersRoot, "videoFilter", "");
-        int periodInSeconds = JSONUtils::asInt(encodingParametersRoot, "periodInSeconds", -1);
-        bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
-        int imageWidth = JSONUtils::asInt(encodingParametersRoot, "imageWidth", -1);
-        int imageHeight = JSONUtils::asInt(encodingParametersRoot, "imageHeight", -1);
-        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
-
-		string field = "sourceFileExtension";
-		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		string sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-
-		string sourceAssetPathName;
-
-		if (externalEncoder)
-		{
-			field = "transcoderStagingImagesDirectory";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot,
-				"sourcePhysicalDeliveryURL", "");
-			string sourceTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot,
-				"sourceTranscoderStagingAssetPathName", "");
-
-			{
-				string sourceTranscoderStagingAssetDirectory;
-				{
-					size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");                             
-					if (endOfDirectoryIndex == string::npos)                                                   
-					{                                                                                     
-						string errorMessage = __FILEREF__ + "No directory find in the asset file name"
-							+ ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);                                                
-					}                                                                                     
-					sourceTranscoderStagingAssetDirectory = sourceTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);                          
-				}
-
-				if (!FileIO::directoryExisting(sourceTranscoderStagingAssetDirectory))
-				{
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", sourceTranscoderStagingAssetDirectory: " + sourceTranscoderStagingAssetDirectory
-					);
-					FileIO::createDirectory(sourceTranscoderStagingAssetDirectory,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
-						noErrorIfExists, recursive);
-				}
-			}
-
-			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				encoding->_ffmpeg,
-				sourceFileExtension,
-				sourcePhysicalDeliveryURL,
-				sourceAssetPathName);
-		}
-		else
-		{
-			field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "nfsImagesDirectory";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string imageBaseFileName = to_string(ingestionJobKey);
-
-		encoding->_ffmpeg->generateFramesToIngest(
-			ingestionJobKey,
-			encodingJobKey,
-			imagesDirectory,
-			imageBaseFileName,
-			startTimeInSeconds,
-			maxFramesNumber,
-			videoFilter,
-			periodInSeconds,
-			mjpeg,
-			imageWidth, 
-			imageHeight,
-			sourceAssetPathName,
-			videoDurationInMilliSeconds,
-			&(encoding->_childPid)
-		);
-
-		bool completedWithError			= false;
-		if (externalEncoder)
-		{
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imagesDirectory + "/");
-
-			vector<int64_t> addContentIngestionJobKeys;
-
-			bool scanDirectoryFinished = false;
-			int generatedFrameIndex = 0;
-			while (!scanDirectoryFinished)
-			{
-				try
-				{
-					string generatedFrameFileName = FileIO::readDirectory (directory, &detDirectoryEntryType);
-
-					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-						continue;
-
-					if (!(generatedFrameFileName.size() >= imageBaseFileName.size()
-						&& 0 == generatedFrameFileName.compare(0, imageBaseFileName.size(), imageBaseFileName)))
-						continue;
-
-					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "Title", "");
-
-					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
-
-					Json::Value userDataRoot;
-					{
-						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-							userDataRoot = ingestedParametersRoot["UserData"];
-
-						Json::Value mmsDataRoot;
-						mmsDataRoot["dataType"] = "generatedFrame";
-						mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-						mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
-						mmsDataRoot["generatedFrameIndex"] = generatedFrameIndex;
-
-						userDataRoot["mmsData"] = mmsDataRoot;
-					}
-
-					// Title
-					string addContentTitle = ingestionJobLabel;
-
-					string outputFileFormat;                                                               
-					try
-					{
-						{
-							size_t extensionIndex = generatedFrameFileName.find_last_of(".");                             
-							if (extensionIndex == string::npos)                                                   
-							{                                                                                     
-								string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-									+ ", generatedFrameFileName: " + generatedFrameFileName;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);                                                
-							}                                                                                     
-							outputFileFormat = generatedFrameFileName.substr(extensionIndex + 1);                          
-						}
-
-						_logger->info(__FILEREF__ + "ingest Frame"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", externalEncoder: " + to_string(externalEncoder)
-							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
-							+ ", addContentTitle: " + addContentTitle
-							+ ", outputFileFormat: " + outputFileFormat
-						);
-
-						addContentIngestionJobKeys.push_back(
-							generateFrames_ingestFrame(
-								ingestionJobKey, externalEncoder,
-								imagesDirectory, generatedFrameFileName,
-								addContentTitle, userDataRoot, outputFileFormat,
-								ingestedParametersRoot, encodingParametersRoot)
-						);
-					}
-					catch(runtime_error e)
-					{
-						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", externalEncoder: " + to_string(externalEncoder)
-							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
-							+ ", addContentTitle: " + addContentTitle
-							+ ", outputFileFormat: " + outputFileFormat
-							+ ", e.what(): " + e.what()
-						);
-
-						throw e;
-					}
-					catch(exception e)
-					{
-						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", externalEncoder: " + to_string(externalEncoder)
-							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
-							+ ", addContentTitle: " + addContentTitle
-							+ ", outputFileFormat: " + outputFileFormat
-							+ ", e.what(): " + e.what()
-						);
-
-						throw e;
-					}
-
-					{
-						_logger->info(__FILEREF__ + "remove"
-							+ ", framePathName: " + imagesDirectory + "/" + generatedFrameFileName
-						);
-						bool exceptionInCaseOfError = false;
-						FileIO::remove(imagesDirectory + "/" + generatedFrameFileName,
-							exceptionInCaseOfError);
-					}
-
-					generatedFrameIndex++;
-				}
-				catch(DirectoryListFinished e)
-				{
-					scanDirectoryFinished = true;
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					scanDirectoryFinished = true;
-
-					completedWithError		= true;
-					encoding->_errorMessage = errorMessage;
-
-					// throw e;
-				}
-				catch(exception e)
-				{
-					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					scanDirectoryFinished = true;
-
-					completedWithError		= true;
-					encoding->_errorMessage = errorMessage;
-
-					// throw e;
-				}
-			}
-
-			FileIO::closeDirectory (directory);
-
-			if (FileIO::directoryExisting(imagesDirectory))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
-			}
-
-			// wait the addContent to be executed
-			try
-			{
-				string field = "mmsIngestionURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						// + ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				int64_t userKey;
-				string apiKey;
-				{
-					string field = "internalMMS";
-					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-					{
-						Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-						field = "credentials";
-						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-						{
-							Json::Value credentialsRoot = internalMMSRoot[field];
-
-							field = "userKey";
-							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-							field = "apiKey";
-							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-						}
-					}
-				}
-
-				chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
-				long maxSecondsWaiting = 5 * 60;
-				long addContentFinished = 0;
-				long addContentToBeWaited = addContentIngestionJobKeys.size();
-
-				while (addContentIngestionJobKeys.size() > 0
-					&& chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
-				{
-					int64_t addContentIngestionJobKey = *(addContentIngestionJobKeys.begin());
-
-					string mmsIngestionJobURL =
-						mmsIngestionURL
-						+ "/" + to_string(addContentIngestionJobKey)
-						+ "?ingestionJobOutputs=false"
-					;
-
-					Json::Value ingestionRoot = MMSCURL::httpGetJson(
-						_logger,
-						ingestionJobKey,
-						mmsIngestionJobURL,
-						_mmsAPITimeoutInSeconds,
-						to_string(userKey),
-						apiKey,
-						3 // maxRetryNumber
-					);
-
-					string field = "response";
-					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					Json::Value responseRoot = ingestionRoot[field];
-
-					field = "ingestionJobs";
-					if (!JSONUtils::isMetadataPresent(responseRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					Json::Value ingestionJobsRoot = responseRoot[field];
-
-					if (ingestionJobsRoot.size() != 1)
-					{
-						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
-
-					field = "status";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							// + ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
-
-					string prefix = "End_";
-					if (ingestionJobStatus.size() >= prefix.size()
-						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
-					{
-						_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-							+ ", ingestionJobStatus: " + ingestionJobStatus);
-
-						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
-						addContentFinished++;
-					}
-					else
-					{
-						int secondsToSleep = 5;
-
-						_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-							+ ", ingestionJobStatus: " + ingestionJobStatus
-							+ ", secondsToSleep: " + to_string(secondsToSleep)
-						);
-
-						this_thread::sleep_for(chrono::seconds(secondsToSleep));
-					}
-				}
-
-				_logger->info(__FILEREF__ + "Waiting result..."
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", addContentToBeWaited: " + to_string(addContentToBeWaited)
-					+ ", addContentFinished: " + to_string(addContentFinished)
-					+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
-					+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startWaiting).count())
-				);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-				;
-				_logger->error(errorMessage);
-			}
-		}
-
-        _logger->info(__FILEREF__ + "generateFrames finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", completedWithError: " + to_string(completedWithError)
-        );
-
-		{
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		GenerateFrames generateFrames(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		generateFrames.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		if (externalEncoder)
-		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		if (externalEncoder)
-		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(exception e)
     {
-		if (externalEncoder)
-		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
-			}
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 	}
-}
-
-int64_t FFMPEGEncoder::generateFrames_ingestFrame(
-	int64_t ingestionJobKey,
-	bool externalEncoder,
-	string imagesDirectory, string generatedFrameFileName,
-	string addContentTitle,
-	Json::Value userDataRoot,
-	string outputFileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot)
-{
-	string workflowMetadata;
-	int64_t userKey;
-	string apiKey;
-	int64_t addContentIngestionJobKey = -1;
-	string mmsWorkflowIngestionURL;
-	// create the workflow and ingest it
-	try
-	{
-		string sourceURL = "move://" + imagesDirectory + "/" + generatedFrameFileName;
-		workflowMetadata = buildAddContentIngestionWorkflow(
-			ingestionJobKey, addContentTitle,
-			outputFileFormat,
-			"Transcoder -> Generator Frames",
-			sourceURL,
-			addContentTitle,
-			userDataRoot,
-			ingestedParametersRoot
-		);
-
-		{
-			string field = "internalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
-
-					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
-			}
-		}
-
-		{
-			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sResponse = MMSCURL::httpPostString(
-			_logger,
-			ingestionJobKey,
-			mmsWorkflowIngestionURL,
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			3	// maxRetries
-		);
-
-		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-
-	if (addContentIngestionJobKey == -1)
-	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	string mmsBinaryURL;
-	// ingest binary
-	try
-	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		int64_t frameFileSize = FileIO::getFileSizeInBytes(
-			imagesDirectory + "/" + generatedFrameFileName,
-			inCaseOfLinkHasItToBeRead);
-
-		string mmsBinaryIngestionURL;
-		{
-			string field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		mmsBinaryURL =
-			mmsBinaryIngestionURL
-			+ "/" + to_string(addContentIngestionJobKey)
-		;
-
-		string sResponse = MMSCURL::httpPostFile(
-			_logger,
-			ingestionJobKey,
-			mmsBinaryURL,
-			_mmsBinaryTimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			imagesDirectory + "/" + generatedFrameFileName,
-			frameFileSize,
-			3 // maxRetryNumber
-		);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-
-	return addContentIngestionJobKey;
 }
 
 void FFMPEGEncoder::slideShowThread(
-	shared_ptr<Encoding> encoding,
+	shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
 	int64_t encodingJobKey,
 	string requestBody)
 {
-    string api = "slideShow";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		// + ", requestBody: " + requestBody already logged
-    );
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-		float durationOfEachSlideInSeconds = 2.0;
-		string field = "durationOfEachSlideInSeconds";
-		durationOfEachSlideInSeconds = JSONUtils::asDouble(ingestedParametersRoot, field, 2.0);
-
-		float shortestAudioDurationInSeconds = -1.0;
-		field = "shortestAudioDurationInSeconds";
-		shortestAudioDurationInSeconds = JSONUtils::asDouble(encodingParametersRoot, field, -1.0);
-
-		string frameRateMode = "vfr";
-		field = "frameRateMode";
-		frameRateMode = JSONUtils::asString(ingestedParametersRoot, field, "vfr");
-
-		vector<string> imagesPathNames;
-		{
-			Json::Value imagesRoot = encodingParametersRoot["imagesRoot"];
-			for(int index = 0; index < imagesRoot.size(); index++)
-			{
-				Json::Value imageRoot = imagesRoot[index];
-
-				if (externalEncoder)
-				{
-					field = "sourceFileExtension";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourceFileExtension = JSONUtils::asString(imageRoot, field, "");
-
-					field = "sourcePhysicalDeliveryURL";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourcePhysicalDeliveryURL = JSONUtils::asString(imageRoot, field, "");
-
-					field = "sourceTranscoderStagingAssetPathName";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(imageRoot, field, "");
-
-					{
-						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
-						if (endOfDirectoryIndex != string::npos)
-						{
-							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
-								0, endOfDirectoryIndex);
-
-							bool noErrorIfExists = true;
-							bool recursive = true;
-							_logger->info(__FILEREF__ + "Creating directory"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", directoryPathName: " + directoryPathName
-							);
-							FileIO::createDirectory(directoryPathName,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-						}
-					}
-
-					imagesPathNames.push_back(
-						downloadMediaFromMMS(
-							ingestionJobKey,
-							encodingJobKey,
-							encoding->_ffmpeg,
-							sourceFileExtension,
-							sourcePhysicalDeliveryURL,
-							sourceTranscoderStagingAssetPathName));
-				}
-				else
-				{
-					imagesPathNames.push_back(JSONUtils::asString(imageRoot, "sourceAssetPathName", ""));
-				}
-			}
-		}
-
-		vector<string> audiosPathNames;
-		{
-			Json::Value audiosRoot = encodingParametersRoot["audiosRoot"];
-			for(int index = 0; index < audiosRoot.size(); index++)
-			{
-				Json::Value audioRoot = audiosRoot[index];
-
-				if (externalEncoder)
-				{
-					field = "sourceFileExtension";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourceFileExtension = JSONUtils::asString(audioRoot, field, "");
-
-					field = "sourcePhysicalDeliveryURL";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourcePhysicalDeliveryURL = JSONUtils::asString(audioRoot, field, "");
-
-					field = "sourceTranscoderStagingAssetPathName";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
-					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", Field: " + field;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(audioRoot, field, "");
-
-					{
-						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
-						if (endOfDirectoryIndex != string::npos)
-						{
-							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
-								0, endOfDirectoryIndex);
-
-							bool noErrorIfExists = true;
-							bool recursive = true;
-							_logger->info(__FILEREF__ + "Creating directory"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", directoryPathName: " + directoryPathName
-							);
-							FileIO::createDirectory(directoryPathName,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-						}
-					}
-
-					audiosPathNames.push_back(
-						downloadMediaFromMMS(
-							ingestionJobKey,
-							encodingJobKey,
-							encoding->_ffmpeg,
-							sourceFileExtension,
-							sourcePhysicalDeliveryURL,
-							sourceTranscoderStagingAssetPathName));
-				}
-				else
-				{
-					audiosPathNames.push_back(JSONUtils::asString(audioRoot, "sourceAssetPathName", ""));
-				}
-			}
-		}
-
-		string encodedStagingAssetPathName;
-		if (externalEncoder)
-		{
-			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-		}
-		else
-		{
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
-
-		encoding->_ffmpeg->slideShow(ingestionJobKey, encodingJobKey,
-			durationOfEachSlideInSeconds, frameRateMode,
-			encodingProfileDetailsRoot,
-			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
-			encodedStagingAssetPathName, &(encoding->_childPid));
-
-        _logger->info(__FILEREF__ + "slideShow finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-        );
-
-		if (externalEncoder)
-		{
-			for (string imagePathName: imagesPathNames)
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", imagePathName: " + imagePathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(imagePathName, exceptionInCaseOfError);
-			}
-
-			for (string audioPathName: audiosPathNames)
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", audioPathName: " + audioPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(audioPathName, exceptionInCaseOfError);
-			}
-
-			field = "targetFileFormat";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string targetFileFormat = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add slideShow from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				targetFileFormat,	// sourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		SlideShow slideShow(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		slideShow.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(exception e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
 }
 
 void FFMPEGEncoder::videoSpeedThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "videoSpeed";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", requestBody: " + requestBody
-	);
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"sourceDurationInMilliSeconds", -1);
-
-		string videoSpeedType;
-		videoSpeedType = JSONUtils::asString(ingestedParametersRoot, "speedType", 
-			MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown));
-
-        int videoSpeedSize = JSONUtils::asInt(ingestedParametersRoot, "videoSpeedSize", 3);
-        
-		string sourceFileExtension;
-		{
-			string field = "sourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sourceAssetPathName;
-		string encodedStagingAssetPathName;
-
-		if (externalEncoder)
-		{
-			string field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = sourceAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				encoding->_ffmpeg,
-				sourceFileExtension,
-				sourcePhysicalDeliveryURL,
-				sourceAssetPathName);
-		}
-		else
-		{
-			string field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		encoding->_ffmpeg->videoSpeed(
-			sourceAssetPathName,
-			videoDurationInMilliSeconds,
-
-			videoSpeedType,
-			videoSpeedSize,
-
-			encodingProfileDetailsRoot,
-
-			encodedStagingAssetPathName,
-			encodingJobKey,
-			ingestionJobKey,
-			&(encoding->_childPid));
-
-        _logger->info(__FILEREF__ + "Encode content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add videoSpeed from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				sourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		VideoSpeed videoSpeed(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		videoSpeed.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6683,57 +3441,7 @@ void FFMPEGEncoder::videoSpeedThread(
     }
     catch(exception e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6744,478 +3452,23 @@ void FFMPEGEncoder::videoSpeedThread(
 
 void FFMPEGEncoder::pictureInPictureThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "pictureInPicture";
-
-    _logger->info(__FILEREF__ + "Received " + api
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		string mainSourceFileExtension;
-		{
-			string field = "mainSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string overlaySourceFileExtension;
-		{
-			string field = "overlaySourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			overlaySourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string mainSourceAssetPathName;
-		string overlaySourceAssetPathName;
-		string encodedStagingAssetPathName;
-
-		if (externalEncoder)
-		{
-			{
-				string field = "mainSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = mainSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "mainSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				mainSourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					mainSourceFileExtension,
-					mainSourcePhysicalDeliveryURL,
-					mainSourceAssetPathName);
-			}
-
-			{
-				string field = "overlaySourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = overlaySourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = overlaySourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "overlaySourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string overlaySourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				overlaySourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					overlaySourceFileExtension,
-					overlaySourcePhysicalDeliveryURL,
-					overlaySourceAssetPathName);
-			}
-
-			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-		}
-		else
-		{
-			string field = "mainSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "overlaySourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"mainSourceDurationInMilliSeconds", 0);
-		int64_t overlaySourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"overlaySourceDurationInMilliSeconds", 0);
-		bool soundOfMain = JSONUtils::asBool(encodingParametersRoot, "soundOfMain", false);
-
-        string overlayPosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot,
-			"overlayPosition_X_InPixel", "0");
-        string overlayPosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot,
-			"overlayPosition_Y_InPixel", "0");
-        string overlay_Width_InPixel = JSONUtils::asString(ingestedParametersRoot,
-			"overlay_Width_InPixel", "100");
-        string overlay_Height_InPixel = JSONUtils::asString(ingestedParametersRoot,
-			"overlay_Height_InPixel", "100");
-
-		encoding->_ffmpeg->pictureInPicture(
-			mainSourceAssetPathName,
-			mainSourceDurationInMilliSeconds,
-
-			overlaySourceAssetPathName,
-			overlaySourceDurationInMilliSeconds,
-
-			soundOfMain,
-
-			overlayPosition_X_InPixel,
-			overlayPosition_Y_InPixel,
-			overlay_Width_InPixel,
-			overlay_Height_InPixel,
-
-			encodingProfileDetailsRoot,
-
-			encodedStagingAssetPathName,
-			encodingJobKey,
-			ingestionJobKey,
-			&(encoding->_childPid));
-
-        _logger->info(__FILEREF__ + "PictureInPicture encoding content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", mainSourceAssetPathName: " + mainSourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(mainSourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", overlaySourceAssetPathName: " + overlaySourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(overlaySourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add pictureInPicture from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				mainSourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		PictureInPicture pictureInPicture(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		pictureInPicture.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		{
-			bool completedWithError			= false;
-			bool killedByUser				= true;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7224,57 +3477,7 @@ void FFMPEGEncoder::pictureInPictureThread(
     }
     catch(exception e)
     {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		{
-			bool completedWithError			= true;
-			bool killedByUser				= false;
-			bool urlForbidden				= false;
-			bool urlNotFound				= false;
-			addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-
-			encoding->_childPid = 0;	// set to 0 just to be sure because it is set info the FFMpeg lib
-			encoding->_available = true;	// this is the last setting making the encoding available again
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7285,563 +3488,23 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 void FFMPEGEncoder::introOutroOverlayThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "introOutroOverlay";
-
-	_logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", requestBody: " + requestBody
-	);
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		string introSourceFileExtension;
-		{
-			string field = "introSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			introSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string mainSourceFileExtension;
-		{
-			string field = "mainSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string outroSourceFileExtension;
-		{
-			string field = "outroSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			outroSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string introSourceAssetPathName;
-		string mainSourceAssetPathName;
-		string outroSourceAssetPathName;
-		string encodedStagingAssetPathName;
-
-		if (externalEncoder)
-		{
-			{
-				string field = "introSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = introSourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = introSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "introSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string introSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				introSourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					introSourceFileExtension,
-					introSourcePhysicalDeliveryURL,
-					introSourceAssetPathName);
-			}
-
-			{
-				string field = "mainSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = mainSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "mainSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				mainSourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					mainSourceFileExtension,
-					mainSourcePhysicalDeliveryURL,
-					mainSourceAssetPathName);
-			}
-
-			{
-				string field = "outroSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = outroSourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = outroSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "outroSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string outroSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				outroSourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					outroSourceFileExtension,
-					outroSourcePhysicalDeliveryURL,
-					outroSourceAssetPathName);
-			}
-
-			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-		}
-		else
-		{
-			string field = "introSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "mainSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "outroSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		int64_t introSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"introSourceDurationInMilliSeconds", -1);                 
-		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"mainSourceDurationInMilliSeconds", -1);                 
-		int64_t outroSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"outroSourceDurationInMilliSeconds", -1);                 
-
-		int introOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"introOverlayDurationInSeconds", -1);                 
-		int outroOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"outroOverlayDurationInSeconds", -1);                 
-		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);                 
-		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);                 
-
-		encoding->_ffmpeg->introOutroOverlay(
-			introSourceAssetPathName, introSourceDurationInMilliSeconds,
-			mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
-			outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
-
-			introOverlayDurationInSeconds, outroOverlayDurationInSeconds,
-			muteIntroOverlay, muteOutroOverlay,
-
-			encodingProfileDetailsRoot,
-
-			encodedStagingAssetPathName,
-
-			encodingJobKey,
-			ingestionJobKey,
-			&(encoding->_childPid));
-
-        encoding->_childPid = 0;
-
-        _logger->info(__FILEREF__ + "introOutroOverlay encoding content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", introSourceAssetPathName: " + introSourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(introSourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", mainSourceAssetPathName: " + mainSourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(mainSourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", outroSourceAssetPathName: " + outroSourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(outroSourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add introOutroOverlay from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				mainSourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		IntroOutroOverlay introOutroOverlay(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		introOutroOverlay.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7850,55 +3513,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
     }
     catch(exception e)
     {
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7909,351 +3524,23 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 void FFMPEGEncoder::cutFrameAccurateThread(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-	string api = "cutFrameAccurate";
-
-	_logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", requestBody: " + requestBody
-	);
-
     try
     {
-		encoding->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
-
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		string sourceFileExtension;
-		{
-			string field = "sourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sourceAssetPathName;
-		string encodedStagingAssetPathName;
-
-		if (externalEncoder)
-		{
-			{
-				string field = "sourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				{
-					size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
-					if (endOfDirectoryIndex != string::npos)
-					{
-						string directoryPathName = sourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
-
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
-						);
-						FileIO::createDirectory(directoryPathName,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-					}
-				}
-
-				field = "sourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-				sourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
-					encodingJobKey,
-					encoding->_ffmpeg,
-					sourceFileExtension,
-					sourcePhysicalDeliveryURL,
-					sourceAssetPathName);
-			}
-
-			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-		}
-		else
-		{
-			string field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-
-			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		encoding->_ffmpeg->cutFrameAccurateWithEncoding(
-			ingestionJobKey,
-			sourceAssetPathName,
-			encodingJobKey,
-			encodingProfileDetailsRoot,
-			JSONUtils::asDouble(ingestedParametersRoot, "StartTimeInSeconds", 0.0),
-			JSONUtils::asDouble(encodingParametersRoot, "endTimeInSeconds", 0.0),
-			JSONUtils::asInt(ingestedParametersRoot, "FramesNumber", -1),
-			encodedStagingAssetPathName,
-
-			&(encoding->_childPid));
-
-        encoding->_childPid = 0;
-
-        _logger->info(__FILEREF__ + "cut encoding content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
-
-		if (externalEncoder)
-		{
-			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
-				);
-
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-			}
-
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
-				+ " (add cutFrameAccurate from external transcoder)"
-			;
-
-			uploadLocalMediaToMMS(
-				ingestionJobKey,
-				encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				sourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder"	// ingester
-			);
-		}
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		CutFrameAccurate cutFrameAccurate(encoding, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		cutFrameAccurate.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		bool completedWithError			= false;
-		bool killedByUser				= true;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(runtime_error e)
     {
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -8262,55 +3549,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
     }
     catch(exception e)
     {
-        encoding->_childPid = 0;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		encoding->_errorMessage = errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, encoding->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        encoding->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			int erase = _encodingsCapability->erase(encoding->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_encodingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_encodingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -8321,970 +3560,56 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 void FFMPEGEncoder::liveRecorderThread(
 	// FCGX_Request& request,
-	shared_ptr<LiveRecording> liveRecording,
+	shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording,
 	int64_t encodingJobKey,
 	string requestBody)
 {
-	string api = "liveRecorder";
-
-	_logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", requestBody: " + requestBody
-	);
-
-	string tvMulticastIP;
-	string tvMulticastPort;
-	string tvType;
-	int64_t tvServiceId = -1;
-	int64_t tvFrequency = -1;
-	int64_t tvSymbolRate = -1;
-	int64_t tvBandwidthInHz = -1;
-	string tvModulation;
-	int tvVideoPid = -1;
-	int tvAudioItalianPid = -1;
-
     try
     {
-        liveRecording->_killedBecauseOfNotWorking = false;
-		liveRecording->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(-1, encodingJobKey, requestBody);
-
-        liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-        liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-
-		// _chunksTranscoderStagingContentsPath is a transcoder LOCAL path,
-		//		this is important because in case of high bitrate,
-		//		nfs would not be enough fast and could create random file system error
-        liveRecording->_chunksTranscoderStagingContentsPath =
-			JSONUtils::asString(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
-
-
-		// this is the global shared path where the chunks would be moved for the ingestion
-		// see the comments in EncoderVideoAudioProxy.cpp
-        liveRecording->_chunksNFSStagingContentsPath = JSONUtils::asString(encodingParametersRoot, "chunksNFSStagingContentsPath", "");
-		// 2022-08-09: the chunksNFSStagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
-		// 		into the shared working area.
-		// 		In case of an external encoder, the external working area does not have this directory
-		// 		and the encoder will fail. For this reason, the directory is created if it does not exist
-		// 2022-08-10: in case of an external encoder, the chunk has to be ingested
-		//	as push, so the chunksNFSStagingContentsPath dir is not used at all
-		//	For this reason the directory check is useless and it is commented
-		/*
-		if (!FileIO::directoryExisting(liveRecording->_chunksNFSStagingContentsPath))
-		{
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			_logger->info(__FILEREF__ + "Creating directory"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-			);
-			FileIO::createDirectory(liveRecording->_chunksNFSStagingContentsPath,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
-				noErrorIfExists, recursive);
-		}
-		*/
-
-        liveRecording->_segmentListFileName = JSONUtils::asString(encodingParametersRoot, "segmentListFileName", "");
-        liveRecording->_recordedFileNamePrefix = JSONUtils::asString(encodingParametersRoot, "recordedFileNamePrefix", "");
-		// see the comments in EncoderVideoAudioProxy.cpp
-		if (liveRecording->_externalEncoder)
-			liveRecording->_virtualVODStagingContentsPath =
-				JSONUtils::asString(encodingParametersRoot, "virtualVODTranscoderStagingContentsPath", "");
-		else
-			liveRecording->_virtualVODStagingContentsPath =
-				JSONUtils::asString(encodingParametersRoot, "virtualVODStagingContentsPath", "");
-        liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
-			JSONUtils::asInt64(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
-
-		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
-		//		checks this field is set before to see if there are chunks to be ingested
-		liveRecording->_encodingParametersRoot =
-			metadataRoot["encodingParametersRoot"];
-		liveRecording->_ingestedParametersRoot =
-			metadataRoot["ingestedParametersRoot"];
-
-		time_t utcRecordingPeriodStart;
-		time_t utcRecordingPeriodEnd;
-		bool autoRenew;
-		int segmentDurationInSeconds;
-		string outputFileFormat;
-		{
-			string field = "schedule";
-			Json::Value recordingPeriodRoot = (liveRecording->_ingestedParametersRoot)[field];
-
-			field = "start";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
-			utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
-
-			field = "end";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
-			utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
-
-			field = "autoRenew";
-			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
-
-			field = "SegmentDuration";
-			if (!JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
-
-			field = "OutputFileFormat";
-			outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
-		}
-
-		liveRecording->_monitoringEnabled = JSONUtils::asBool(
-			liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
-		liveRecording->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
-			liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-
-		liveRecording->_channelLabel = JSONUtils::asString(liveRecording->_ingestedParametersRoot,
-			"ConfigurationLabel", "");
-
-		liveRecording->_lastRecordedAssetFileName			= "";
-		liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
-
-        liveRecording->_streamSourceType = JSONUtils::asString(metadataRoot["encodingParametersRoot"],
-			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds =
-			metadataRoot["encodingParametersRoot"]
-			.get("ActAsServerListenTimeout", 300).asInt();
-		int pushListenTimeout = JSONUtils::asInt(
-			metadataRoot["encodingParametersRoot"], "pushListenTimeout", -1);
-
-		int captureLive_videoDeviceNumber = -1;
-		string captureLive_videoInputFormat;
-		int captureLive_frameRate = -1;
-		int captureLive_width = -1;
-		int captureLive_height = -1;
-		int captureLive_audioDeviceNumber = -1;
-		int captureLive_channelsNumber = -1;
-		if (liveRecording->_streamSourceType == "CaptureLive")
-		{
-			captureLive_videoDeviceNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureVideoDeviceNumber", -1);
-			captureLive_videoInputFormat =
-				JSONUtils::asString(metadataRoot["encodingParametersRoot"],
-				"captureVideoInputFormat", "");
-			captureLive_frameRate = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureFrameRate", -1);
-			captureLive_width = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureWidth", -1);
-			captureLive_height = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureHeight", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureAudioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureChannelsNumber", -1);
-		}
-
-        string liveURL;
-
-		if (liveRecording->_streamSourceType == "TV")
-		{
-			tvType = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvType", "");
-			tvServiceId = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
-				"tvServiceId", -1);
-			tvFrequency = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
-				"tvFrequency", -1);
-			tvSymbolRate = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
-				"tvSymbolRate", -1);
-			tvBandwidthInHz = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
-				"tvBandwidthInHz", -1);
-			tvModulation = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvModulation", "");
-			tvVideoPid = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "tvVideoPid", -1);
-			tvAudioItalianPid = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"tvAudioItalianPid", -1);
-
-			// In case ffmpeg crashes and is automatically restarted, it should use the same
-			// IP-PORT it was using before because we already have a dbvlast sending the stream
-			// to the specified IP-PORT.
-			// For this reason, before to generate a new IP-PORT, let's look for the serviceId
-			// inside the dvblast conf. file to see if it was already running before
-
-			pair<string, string> tvMulticast =
-				getTVMulticastFromDvblastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation);
-			tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
-
-			if (tvMulticastIP == "")
-			{
-				lock_guard<mutex> locker(*_tvChannelsPortsMutex);
-
-				tvMulticastIP = "239.255.1.1";
-				tvMulticastPort = to_string(*_tvChannelPort_CurrentOffset
-					+ _tvChannelPort_Start);
-
-				*_tvChannelPort_CurrentOffset =
-					(*_tvChannelPort_CurrentOffset + 1)
-					% _tvChannelPort_MaxNumberOfOffsets;
-			}
-
-			// overrun_nonfatal=1 prevents ffmpeg from exiting,
-			//		it can recover in most circumstances.
-			// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
-			liveURL = string("udp://@") + tvMulticastIP
-				+ ":" + tvMulticastPort
-				+ "?overrun_nonfatal=1&fifo_size=50000000"
-			;
-
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				true);
-		}
-		else 
-		{
-			// in case of actAsServer
-			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
-			//	false: it comes from the LiveRecorder json ingested
-			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
-		}
-
-		{
-			bool monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
-				"monitorHLS", false);
-			liveRecording->_virtualVOD = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
-				"liveRecorderVirtualVOD", false);
-
-			if (monitorHLS || liveRecording->_virtualVOD)
-			{
-				// see the comments in EncoderVideoAudioProxy.cpp
-				liveRecording->_monitorVirtualVODManifestDirectoryPath =
-					JSONUtils::asString(liveRecording->_encodingParametersRoot,
-					"monitorManifestDirectoryPath", "");
-				liveRecording->_monitorVirtualVODManifestFileName =
-					JSONUtils::asString(liveRecording->_encodingParametersRoot,
-					"monitorManifestFileName", "");
-			}
-		}
-
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", segmentListPathName: " + liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		// since the first chunk is discarded, we will start recording before the period of the chunk
-		// In case of autorenew, when it is renewed, we will lose the first chunk
-		// utcRecordingPeriodStart -= segmentDurationInSeconds;
-		// 2019-12-19: the above problem is managed inside _ffmpeg->liveRecorder
-		//		(see the secondsToStartEarly variable inside _ffmpeg->liveRecorder)
-		//		For this reason the above decrement was commented
-
-		// based on liveProxy->_proxyStart, the monitor thread starts the checkings
-		// In case of IP_PUSH, the checks should be done after the ffmpeg server
-		// receives the stream and we do not know what it happens.
-		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-		if (liveRecording->_streamSourceType == "IP_PUSH")
-		{
-			if (chrono::system_clock::from_time_t(
-					utcRecordingPeriodStart) < chrono::system_clock::now())
-				liveRecording->_recordingStart = chrono::system_clock::now() +
-					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
-			else
-				liveRecording->_recordingStart = chrono::system_clock::from_time_t(
-					utcRecordingPeriodStart) +
-					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
-		}
-		else
-		{
-			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart)
-					< chrono::system_clock::now())
-				liveRecording->_recordingStart = chrono::system_clock::now();
-			else
-				liveRecording->_recordingStart = chrono::system_clock::from_time_t(
-					utcRecordingPeriodStart);
-		}
-
-		Json::Value outputsRoot = liveRecording->_encodingParametersRoot["outputsRoot"];
-
-		// liveRecording->_liveRecorderOutputRoots.clear();
-		{
-			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
-
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					if (FileIO::directoryExisting(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath,
-								bRemoveRecursively);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: "
-									+ to_string(liveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-		}
-
-		Json::Value framesToBeDetectedRoot = liveRecording->_encodingParametersRoot[
-			"framesToBeDetectedRoot"];
-
-		string otherInputOptions = JSONUtils::asString(liveRecording->_ingestedParametersRoot,
-			"otherInputOptions", "");
-
-		liveRecording->_segmenterType = "hlsSegmenter";
-		// liveRecording->_segmenterType = "streamSegmenter";
-
-		_logger->info(__FILEREF__ + "liveRecorder. _ffmpeg->liveRecorder"
-			+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", streamSourceType: " + liveRecording->_streamSourceType
-			+ ", liveURL: " + liveURL
-		);
-		liveRecording->_ffmpeg->liveRecorder(
-			liveRecording->_ingestionJobKey,
-			encodingJobKey,
-			liveRecording->_externalEncoder,
-			liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-			liveRecording->_recordedFileNamePrefix,
-
-			otherInputOptions,
-
-			liveRecording->_streamSourceType,
-			StringUtils::trimTabToo(liveURL),
-			pushListenTimeout,
-			captureLive_videoDeviceNumber,
-			captureLive_videoInputFormat,
-			captureLive_frameRate,
-			captureLive_width,
-			captureLive_height,
-			captureLive_audioDeviceNumber,
-			captureLive_channelsNumber,
-
-			userAgent,
-			utcRecordingPeriodStart,
-			utcRecordingPeriodEnd,
-
-			segmentDurationInSeconds,
-			outputFileFormat,
-			liveRecording->_segmenterType,
-
-			outputsRoot,
-
-			framesToBeDetectedRoot,
-
-			&(liveRecording->_childPid),
-			&(liveRecording->_recordingStart)
-		);
-
-		// 2022-11-20: _childPid to 0 has to be set soon to avoid monitoring
-        liveRecording->_childPid = 0;
-
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		if (!autoRenew)
-		{
-			// to wait the ingestion of the last chunk
-			this_thread::sleep_for(chrono::seconds(
-				2 * _liveRecorderChunksIngestionCheckInSeconds));
-		}
-
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_killedBecauseOfNotWorking = false;
-        
-        _logger->info(__FILEREF__ + "liveRecorded finished"
-            + ", liveRecording->_ingestionJobKey: "
-				+ to_string(liveRecording->_ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-        );
-
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-		// liveRecording->_liveRecorderOutputRoots.clear();
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, liveRecording->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		LiveRecorder liveRecorder(liveRecording, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger,
+			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
+		liveRecorder.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        liveRecording->_childPid = 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
-		}
-
-		bool completedWithError			= false;
-		bool killedByUser;
-		if (liveRecording->_killedBecauseOfNotWorking)
-		{
-			// it was killed just because it was not working and not because of user
-			// In this case the process has to be restarted soon
-			killedByUser				= false;
-			completedWithError			= true;
-			liveRecording->_killedBecauseOfNotWorking = false;
-		}
-		else
-		{
-			killedByUser                = true;
-		}
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(FFMpegURLForbidden e)
     {
-        liveRecording->_childPid = 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
+		_logger->error(__FILEREF__ + e.what());
 
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveRecording->_errorMessage = errorMessage;
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= true;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, liveRecording->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
     }
     catch(FFMpegURLNotFound e)
     {
-        liveRecording->_childPid = 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
+		_logger->error(__FILEREF__ + e.what());
 
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveRecording->_errorMessage = errorMessage;
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= true;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
     }
     catch(runtime_error e)
     {
-        liveRecording->_childPid = 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
+		_logger->error(__FILEREF__ + e.what());
 
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveRecording->_errorMessage = errorMessage;
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
     }
     catch(exception e)
     {
-        liveRecording->_childPid = 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_channelLabel		= "";
-		liveRecording->_killedBecauseOfNotWorking = false;
+		_logger->error(__FILEREF__ + e.what());
 
-		if (liveRecording->_streamSourceType == "TV"
-			&& tvServiceId != -1	// this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, encodingJobKey,
-				tvMulticastIP, tvMulticastPort,
-				tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000,
-				tvModulation, tvVideoPid, tvAudioItalianPid,
-				false);
-		}
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveRecording->_errorMessage = errorMessage;
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(liveRecording->_chunksTranscoderStagingContentsPath
-			+ liveRecording->_segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: "
-					+ liveRecording->_chunksTranscoderStagingContentsPath
-					+ liveRecording->_segmentListFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(liveRecording->_chunksTranscoderStagingContentsPath
-				+ liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
-		}
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveRecording->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			int erase = _liveRecordingsCapability->erase(liveRecording->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveRecordingsCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveRecordingsCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
     }
 }
 
@@ -9299,18 +3624,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			#ifdef __VECTOR__
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-			#else	// __MAP__
-			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
-				it != _liveRecordingsCapability->end(); it++)
-			#endif
+			for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
-				#ifdef __VECTOR__
-				#else	// __MAP__
-				shared_ptr<LiveRecording> liveRecording = it->second;
-				#endif
-
 				if (liveRecording->_childPid != 0)	// running
 				{
 					_logger->info(__FILEREF__ + "liveRecorder_processSegmenterOutput ..."
@@ -9455,12 +3770,12 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 		try
 		{
 			// this is to have a copy of LiveRecording
-			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> copiedRunningLiveRecordingCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> sourceLiveRecordingCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -9471,18 +3786,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 				int liveRecordingNotVirtualVODCounter = 0;
 
-				#ifdef __VECTOR__
-				for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-				#else	// __MAP__
-				for(map<int64_t, shared_ptr<LiveRecording>>::iterator it =
-					_liveRecordingsCapability->begin(); it != _liveRecordingsCapability->end(); it++)
-				#endif
+				for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 				{
-					#ifdef __VECTOR__
-					#else	// __MAP__
-					shared_ptr<LiveRecording> liveRecording = it->second;
-					#endif
-
 					if (liveRecording->_childPid != 0 && liveRecording->_virtualVOD
 						&& startClone > liveRecording->_recordingStart)
 					{
@@ -9517,9 +3822,9 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
 				liveRecordingIndex++)
 			{
-				shared_ptr<LiveRecording> copiedLiveRecording
+				shared_ptr<FFMPEGEncoderTask::LiveRecording> copiedLiveRecording
 					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<LiveRecording> sourceLiveRecording
+				shared_ptr<FFMPEGEncoderTask::LiveRecording> sourceLiveRecording
 					= sourceLiveRecordingCapability[liveRecordingIndex];
 
 				_logger->info(__FILEREF__ + "virtualVOD"
@@ -11360,7 +5665,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	bool isFirstChunk)
 {
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
-	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
+	// liveRecorder_<ingestionJobKey>_<FFMPEGEncoderTask::encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
 
 	_logger->info(__FILEREF__ + "Received liveRecorder_getMediaLiveRecorderStartTime"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12602,7 +6907,7 @@ string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
 
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
-	shared_ptr<LiveProxyAndGrid> liveProxy,
+	shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -12916,26 +7221,6 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestionJobKey = 0;
 		// liveProxy->_channelLabel = "";
 		// liveProxy->_liveProxyOutputRoots.clear();
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__
-					+ "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -13026,25 +7311,6 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
     }
     catch(FFMpegURLForbidden e)
     {
@@ -13125,25 +7391,6 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -13230,25 +7477,6 @@ void FFMPEGEncoder::liveProxyThread(
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
 
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
-
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -13333,25 +7561,6 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -13438,25 +7647,6 @@ void FFMPEGEncoder::liveProxyThread(
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
 
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
-
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -13466,7 +7656,7 @@ void FFMPEGEncoder::liveProxyThread(
 
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
-	shared_ptr<LiveProxyAndGrid> liveProxy,
+	shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -13597,25 +7787,6 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_liveGridOutputType = "";
 		// liveProxy->_channelLabel = "";
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -13664,25 +7835,6 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
     }
     catch(FFMpegURLForbidden e)
     {
@@ -13721,25 +7873,6 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -13784,25 +7917,6 @@ void FFMPEGEncoder::liveGridThread(
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
 
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
-
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -13845,25 +7959,6 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
-
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -13908,25 +8003,6 @@ void FFMPEGEncoder::liveGridThread(
 				urlForbidden, urlNotFound);
         liveProxy->_available = true;
 
-		#ifdef __VECTOR__
-		#else	// __MAP__
-		{
-			lock_guard<mutex> locker(*_liveProxyMutex);
-
-			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
-			if (erase)
-				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-			else
-				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", erase: " + to_string(erase)
-				);
-		}
-		#endif
-
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -13943,12 +8019,12 @@ void FFMPEGEncoder::monitorThread()
 		try
 		{
 			// this is to have a copy of LiveProxyAndGrid
-			vector<shared_ptr<LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<LiveProxyAndGrid>> sourceLiveProxiesCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> sourceLiveProxiesCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -13959,18 +8035,8 @@ void FFMPEGEncoder::monitorThread()
 
 				int liveProxyAndGridNotRunningCounter = 0;
 
-				#ifdef __VECTOR__
-				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
-				#else	// __MAP__
-				for(map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
-					_liveProxiesCapability->begin(); it != _liveProxiesCapability->end(); it++)
-				#endif
+				for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
-					#ifdef __VECTOR__
-					#else	// __MAP__
-					shared_ptr<LiveProxyAndGrid> liveProxy = it->second;
-					#endif
-
 					if (liveProxy->_childPid != 0)	// running
 					{
 						liveProxyAndGridRunningCounter++;
@@ -14003,9 +8069,9 @@ void FFMPEGEncoder::monitorThread()
 				liveProxyIndex < copiedRunningLiveProxiesCapability.size();
 				liveProxyIndex++)
 			{
-				shared_ptr<LiveProxyAndGrid> copiedLiveProxy
+				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> copiedLiveProxy
 					= copiedRunningLiveProxiesCapability[liveProxyIndex];
-				shared_ptr<LiveProxyAndGrid> sourceLiveProxy
+				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> sourceLiveProxy
 					= sourceLiveProxiesCapability[liveProxyIndex];
 
 				// this is just for logging
@@ -14791,12 +8857,12 @@ void FFMPEGEncoder::monitorThread()
 		try
 		{
 			// this is to have a copy of LiveRecording
-			vector<shared_ptr<LiveRecording>> copiedRunningLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> copiedRunningLiveRecordingCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<LiveRecording>> sourceLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> sourceLiveRecordingCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -14807,18 +8873,8 @@ void FFMPEGEncoder::monitorThread()
 
 				int liveRecordingNotRunningCounter = 0;
 
-				#ifdef __VECTOR__
-				for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
-				#else	// __MAP__
-				for(map<int64_t, shared_ptr<LiveRecording>>::iterator it =
-					_liveRecordingsCapability->begin(); it != _liveRecordingsCapability->end(); it++)
-				#endif
+				for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
 				{
-					#ifdef __VECTOR__
-					#else	// __MAP__
-					shared_ptr<LiveRecording> liveRecording = it->second;
-					#endif
-
 					if (liveRecording->_childPid != 0 && liveRecording->_monitoringEnabled)
 					{
 						liveRecordingRunningCounter++;
@@ -14852,9 +8908,9 @@ void FFMPEGEncoder::monitorThread()
 				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
 				liveRecordingIndex++)
 			{
-				shared_ptr<LiveRecording> copiedLiveRecording
+				shared_ptr<FFMPEGEncoderTask::LiveRecording> copiedLiveRecording
 					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<LiveRecording> sourceLiveRecording
+				shared_ptr<FFMPEGEncoderTask::LiveRecording> sourceLiveRecording
 					= sourceLiveRecordingCapability[liveRecordingIndex];
 
 				_logger->info(__FILEREF__ + "liveRecordingMonitor"
@@ -15747,7 +9803,7 @@ void FFMPEGEncoder::addEncodingCompleted(
 {
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
+	shared_ptr<FFMPEGEncoderTask::EncodingCompleted> encodingCompleted = make_shared<FFMPEGEncoderTask::EncodingCompleted>();
 
 	encodingCompleted->_encodingJobKey		= encodingJobKey;
 	encodingCompleted->_completedWithError	= completedWithError;
@@ -15770,7 +9826,7 @@ void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+	map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
 		_encodingCompletedMap->find(encodingJobKey);
 	if (it != _encodingCompletedMap->end())
 	{
@@ -15790,7 +9846,7 @@ void FFMPEGEncoder::encodingCompletedRetention()
 
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
-	for(map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
+	for(map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
 			it != _encodingCompletedMap->end(); )
 	{
 		if(start - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
