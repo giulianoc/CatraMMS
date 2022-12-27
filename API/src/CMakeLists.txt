@@ -44,6 +44,8 @@ SET (SOURCES_API
 
 SET (SOURCES_FFMPEGENCODER
 	FFMPEGEncoder.cpp
+	FFMPEGEncoderDaemons.cpp
+	FFMPEGEncoderBase.cpp
 	FFMPEGEncoderTask.cpp
 	EncodeContent.cpp
 	OverlayImageOnVideo.cpp
@@ -55,6 +57,9 @@ SET (SOURCES_FFMPEGENCODER
 	IntroOutroOverlay.cpp
 	CutFrameAccurate.cpp
 	LiveRecorder.cpp
+	LiveRecorderDaemons.cpp
+	LiveProxy.cpp
+	LiveGrid.cpp
 )
 
 SET (HEADERS

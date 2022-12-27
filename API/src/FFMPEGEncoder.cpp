@@ -27,6 +27,7 @@
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/GetCpuUsage.h"
 #include "FFMPEGEncoder.h"
+#include "FFMPEGEncoderDaemons.h"
 #include "MMSStorage.h"
 #include "EncodeContent.h"
 #include "OverlayImageOnVideo.h"
@@ -38,6 +39,9 @@
 #include "IntroOutroOverlay.h"
 #include "CutFrameAccurate.h"
 #include "LiveRecorder.h"
+#include "LiveRecorderDaemons.h"
+#include "LiveProxy.h"
+#include "LiveGrid.h"
 
 extern char** environ;
 
@@ -152,16 +156,16 @@ int main(int argc, char** argv)
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
-		vector<shared_ptr<FFMPEGEncoderTask::Encoding>> encodingsCapability;
+		vector<shared_ptr<FFMPEGEncoderBase::Encoding>> encodingsCapability;
 
 		mutex liveProxyMutex;
-		vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> liveProxiesCapability;
+		vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> liveProxiesCapability;
 
 		mutex liveRecordingMutex;
-		vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> liveRecordingsCapability;
+		vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> liveRecordingsCapability;
 
 		mutex encodingCompletedMutex;
-		map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>> encodingCompletedMap;
+		map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> encodingCompletedMap;
 		chrono::system_clock::time_point lastEncodingCompletedCheck;
 
 		{
@@ -173,7 +177,7 @@ int main(int argc, char** argv)
 
 			for (int encodingIndex = 0; encodingIndex < VECTOR_MAX_CAPACITY; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding>    encoding = make_shared<FFMPEGEncoderTask::Encoding>();
+				shared_ptr<FFMPEGEncoderBase::Encoding>    encoding = make_shared<FFMPEGEncoderBase::Encoding>();
 				encoding->_available   = true;
 				encoding->_childPid		= 0;	// not running
 				encoding->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
@@ -189,7 +193,7 @@ int main(int argc, char** argv)
 
 			for (int liveProxyIndex = 0; liveProxyIndex < VECTOR_MAX_CAPACITY; liveProxyIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>    liveProxy = make_shared<FFMPEGEncoderTask::LiveProxyAndGrid>();
+				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>    liveProxy = make_shared<FFMPEGEncoderBase::LiveProxyAndGrid>();
 				liveProxy->_available				= true;
 				liveProxy->_childPid				= 0;	// not running
 				liveProxy->_ingestionJobKey			= 0;
@@ -207,7 +211,7 @@ int main(int argc, char** argv)
 			for (int liveRecordingIndex = 0; liveRecordingIndex < VECTOR_MAX_CAPACITY;
 				liveRecordingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveRecording>    liveRecording = make_shared<FFMPEGEncoderTask::LiveRecording>();
+				shared_ptr<FFMPEGEncoderBase::LiveRecording>    liveRecording = make_shared<FFMPEGEncoderBase::LiveRecording>();
 				liveRecording->_available			= true;
 				liveRecording->_childPid			= 0;	// not running
 				liveRecording->_ingestionJobKey		= 0;
@@ -265,23 +269,41 @@ int main(int argc, char** argv)
 		// shutdown should be managed in some way:
 		// - mod_fcgid send just one shutdown, so only one thread will go down
 		// - mod_fastcgi ???
-		if (threadsNumber > 0)
+		// if (threadsNumber > 0)
 		{
-			thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread,
-					ffmpegEncoders[0]);
-			thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
-					ffmpegEncoders[0]);
+			// thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread,
+			// 		ffmpegEncoders[0]);
+			// thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
+			// 		ffmpegEncoders[0]);
+			shared_ptr<LiveRecorderDaemons> liveRecorderDaemons = make_shared<LiveRecorderDaemons>(
+				configuration, &liveRecordingMutex, &liveRecordingsCapability, logger);
 
-			thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
+			thread liveRecorderChunksIngestion(&LiveRecorderDaemons::startChunksIngestionThread,
+					liveRecorderDaemons);
+			thread liveRecorderVirtualVODIngestion(&LiveRecorderDaemons::startVirtualVODIngestionThread,
+					liveRecorderDaemons);
 
-			thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
+			// thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
+			// thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
+			shared_ptr<FFMPEGEncoderDaemons> ffmpegEncoderDaemons = make_shared<FFMPEGEncoderDaemons>(
+				configuration, &liveRecordingMutex, &liveRecordingsCapability,
+				&liveProxyMutex, &liveProxiesCapability, &cpuUsageMutex, &cpuUsage, logger);
+
+			thread monitor(&FFMPEGEncoderDaemons::startMonitorThread, ffmpegEncoderDaemons);
+			thread cpuUsage(&FFMPEGEncoderDaemons::startCPUUsageThread, ffmpegEncoderDaemons);
+
 
 			ffmpegEncoderThreads[0].join();
         
-			ffmpegEncoders[0]->stopLiveRecorderVirtualVODIngestionThread();
-			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
-			ffmpegEncoders[0]->stopMonitorThread();
-			ffmpegEncoders[0]->stopCPUUsageThread();
+			// ffmpegEncoders[0]->stopLiveRecorderVirtualVODIngestionThread();
+			// ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
+			liveRecorderDaemons->stopVirtualVODIngestionThread();
+			liveRecorderDaemons->stopChunksIngestionThread();
+
+			// ffmpegEncoders[0]->stopMonitorThread();
+			// ffmpegEncoders[0]->stopCPUUsageThread();
+			ffmpegEncoderDaemons->stopMonitorThread();
+			ffmpegEncoderDaemons->stopCPUUsageThread();
 		}
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
@@ -322,16 +344,16 @@ FFMPEGEncoder::FFMPEGEncoder(
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::Encoding>>* encodingsCapability,
+		vector<shared_ptr<FFMPEGEncoderBase::Encoding>>* encodingsCapability,
 
 		mutex* liveProxyMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>>* liveProxiesCapability,
+		vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>>* liveProxiesCapability,
 
 		mutex* liveRecordingMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>>* liveRecordingsCapability,
+		vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* liveRecordingsCapability,
 
 		mutex* encodingCompletedMutex,
-		map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>* encodingCompletedMap,
+		map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
 		mutex* tvChannelsPortsMutex,
@@ -344,6 +366,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 {
 	// _encoderCapabilityConfigurationPathName = encoderCapabilityConfigurationPathName;
 
+	/*
     _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
@@ -368,12 +391,14 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
 	);
+	*/
 
     _encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
     );
 
+	/*
     _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
@@ -383,6 +408,7 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
     );
+	*/
 
 	_cpuUsageThresholdForEncoding =  JSONUtils::asInt(_configuration["ffmpeg"],
 		"cpuUsageThresholdForEncoding", 50);
@@ -435,13 +461,13 @@ FFMPEGEncoder::FFMPEGEncoder(
 	// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
 	// );
 
-	_tvChannelPort_Start = 8000;
-	_tvChannelPort_MaxNumberOfOffsets = 100;
+	// _tvChannelPort_Start = 8000;
+	// _tvChannelPort_MaxNumberOfOffsets = 100;
 
-	_cpuUsageThreadShutdown = false;
-	_monitorThreadShutdown = false;
-	_liveRecorderChunksIngestionThreadShutdown = false;
-	_liveRecorderVirtualVODIngestionThreadShutdown = false;
+	// _cpuUsageThreadShutdown = false;
+	// _monitorThreadShutdown = false;
+	// _liveRecorderChunksIngestionThreadShutdown = false;
+	// _liveRecorderVirtualVODIngestionThreadShutdown = false;
 
 	_encodingCompletedMutex = encodingCompletedMutex;
 	_encodingCompletedMap = encodingCompletedMap;
@@ -573,14 +599,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -724,14 +750,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -875,14 +901,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1026,14 +1052,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1177,14 +1203,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1328,14 +1354,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1479,14 +1505,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1630,14 +1656,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1781,14 +1807,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			int maxEncodingsCapability = getMaxEncodingsCapability();
 			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
 
 				if (encoding->_available)
 				{
@@ -1932,15 +1958,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			shared_ptr<FFMPEGEncoderTask::LiveRecording>    selectedLiveRecording;
+			shared_ptr<FFMPEGEncoderBase::LiveRecording>    selectedLiveRecording;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			int maxLiveRecordingsCapability = getMaxLiveRecordingsCapability();
 			for(int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability;
 				liveRecordingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
+				shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
 
 				if (liveRecording->_available)
 				{
@@ -2096,14 +2122,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>    selectedLiveProxy;
+			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>    selectedLiveProxy;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			// for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
 			for(int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
+				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
 
 				if (liveProxy->_available)
 				{
@@ -2307,16 +2333,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
 		bool                    encodingFound = false;
-		shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+		shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 
 		bool                    liveProxyFound = false;
-		shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>	selectedLiveProxy;
 
 		bool                    liveRecordingFound = false;
-		shared_ptr<FFMPEGEncoderTask::LiveRecording>    selectedLiveRecording;
+		shared_ptr<FFMPEGEncoderBase::LiveRecording>    selectedLiveRecording;
 
 		bool                    encodingCompleted = false;
-		shared_ptr<FFMPEGEncoderTask::EncodingCompleted>    selectedEncodingCompleted;
+		shared_ptr<FFMPEGEncoderBase::EncodingCompleted>    selectedEncodingCompleted;
 
 		int encodingCompletedMutexDuration = -1;
 		int encodingMutexDuration = -1;
@@ -2329,7 +2355,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			encodingCompletedMutexDuration = chrono::duration_cast<chrono::seconds>(
 				endLockTime - startLockTime).count();
 
-			map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
+			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it =
 				_encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
@@ -2342,7 +2368,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			// next \{ is to make the lock free as soon as the check is done
 			{
-				for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+				for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 				{
 					if (encoding->_encodingJobKey == encodingJobKey)
 					{
@@ -2377,7 +2403,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
  *		WE MAY AVOID THE USING OF THE LOCK
  *
  */
-					for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+					for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 					{
 						if (liveProxy->_encodingJobKey == encodingJobKey)
 						{
@@ -2391,7 +2417,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				if (!liveProxyFound)
 				{
-					for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+					for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 					{
 						if (liveRecording->_encodingJobKey == encodingJobKey)
 						{
@@ -2714,7 +2740,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool			liveRecorderFound = false;
 
 		{
-			for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+			for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -2728,7 +2754,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound)
 		{
-			for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -2742,7 +2768,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound && !liveProxyFound)
 		{
-			for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+			for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_encodingJobKey == encodingJobKey)
 				{
@@ -2927,9 +2953,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
+			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>	selectedLiveProxy;
 
-			for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -3039,18 +3065,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
 		bool                    encodingCompleted = false;
-		shared_ptr<FFMPEGEncoderTask::EncodingCompleted>    selectedEncodingCompleted;
+		shared_ptr<FFMPEGEncoderBase::EncodingCompleted>    selectedEncodingCompleted;
 
-		shared_ptr<FFMPEGEncoderTask::Encoding>    selectedEncoding;
+		shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
 		bool                    encodingFound = false;
 
-		shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>	selectedLiveProxy;
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>	selectedLiveProxy;
 		bool					liveProxyFound = false;
 
 		{
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-			map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
+			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it =
 				_encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
@@ -3066,7 +3092,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_encodingMutex);
 
-				for (shared_ptr<FFMPEGEncoderTask::Encoding> encoding: *_encodingsCapability)
+				for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
 				{
 					if (encoding->_encodingJobKey == encodingJobKey)
 					{
@@ -3082,7 +3108,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+				for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -3252,7 +3278,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 void FFMPEGEncoder::encodeContentThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3293,7 +3319,7 @@ void FFMPEGEncoder::encodeContentThread(
 
 void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3329,7 +3355,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 
 void FFMPEGEncoder::overlayTextOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3365,7 +3391,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 
 void FFMPEGEncoder::generateFramesThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3390,7 +3416,7 @@ void FFMPEGEncoder::generateFramesThread(
 }
 
 void FFMPEGEncoder::slideShowThread(
-	shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+	shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -3416,7 +3442,7 @@ void FFMPEGEncoder::slideShowThread(
 
 void FFMPEGEncoder::videoSpeedThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3452,7 +3478,7 @@ void FFMPEGEncoder::videoSpeedThread(
 
 void FFMPEGEncoder::pictureInPictureThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3488,7 +3514,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 
 void FFMPEGEncoder::introOutroOverlayThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3524,7 +3550,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 void FFMPEGEncoder::cutFrameAccurateThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -3560,7 +3586,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 void FFMPEGEncoder::liveRecorderThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording,
+	shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -3613,6 +3639,7 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 }
 
+/*
 void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 {
 
@@ -3624,7 +3651,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+			for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_childPid != 0)	// running
 				{
@@ -3770,12 +3797,12 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 		try
 		{
 			// this is to have a copy of LiveRecording
-			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> copiedRunningLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> copiedRunningLiveRecordingCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> sourceLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> sourceLiveRecordingCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -3786,7 +3813,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 				int liveRecordingNotVirtualVODCounter = 0;
 
-				for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 				{
 					if (liveRecording->_childPid != 0 && liveRecording->_virtualVOD
 						&& startClone > liveRecording->_recordingStart)
@@ -3822,9 +3849,9 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
 				liveRecordingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveRecording> copiedLiveRecording
+				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording
 					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<FFMPEGEncoderTask::LiveRecording> sourceLiveRecording
+				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording
 					= sourceLiveRecordingCapability[liveRecordingIndex];
 
 				_logger->info(__FILEREF__ + "virtualVOD"
@@ -4118,19 +4145,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds,
 				isFirstChunk);
 
-			/*
-			time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			if (utcNow - utcCurrentRecordedFileCreationTime < _secondsToWaitNFSBuffers)
-			{
-				long secondsToWait = _secondsToWaitNFSBuffers
-					- (utcNow - utcCurrentRecordedFileCreationTime);
-
-				_logger->info(__FILEREF__ + "processing LiveRecorder file too young"
-					+ ", secondsToWait: " + to_string(secondsToWait));
-				this_thread::sleep_for(chrono::seconds(secondsToWait));
-			}
-			*/
-
 			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
 					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
 					chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
@@ -4145,60 +4159,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 			newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
 
-			/*
-			 * 2019-10-17: we just saw that, even if the real duration is 59 seconds,
-			 * next utc time inside the chunk file name is still like +60 from the previuos chunk utc.
-			 * For this reason next code was commented.
-			try
-			{
-				int64_t durationInMilliSeconds;
-
-
-				_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", chunksTranscoderStagingContentsPath + currentRecordedAssetFileName: "
-						+ (chunksTranscoderStagingContentsPath + currentRecordedAssetFileName)
-				);
-				FFMpeg ffmpeg (_configuration, _logger);
-				tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-					ffmpeg.getMediaInfo(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
-
-				tie(durationInMilliSeconds, ignore,
-					ignore, ignore, ignore, ignore, ignore, ignore,
-					ignore, ignore, ignore, ignore) = mediaInfo;
-
-				newLastRecordedAssetDurationInSeconds = durationInMilliSeconds / 1000;
-
-				if (newLastRecordedAssetDurationInSeconds != segmentDurationInSeconds)
-				{
-					_logger->warn(__FILEREF__ + "segment duration is different from file duration"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", durationInMilliSeconds: " + to_string (durationInMilliSeconds)
-						+ ", newLastRecordedAssetDurationInSeconds: "
-							+ to_string (newLastRecordedAssetDurationInSeconds)
-						+ ", segmentDurationInSeconds: " + to_string (segmentDurationInSeconds)
-					);
-				}
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", chunksTranscoderStagingContentsPath + currentRecordedAssetFileName: "
-						+ (chunksTranscoderStagingContentsPath + currentRecordedAssetFileName)
-				);
-			}
-			*/
-
 			time_t utcCurrentRecordedFileLastModificationTime =
 				utcCurrentRecordedFileCreationTime + newLastRecordedAssetDurationInSeconds;
-			/*
-			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
-				currentRecordedAssetPathName);
-			*/
 
 			string uniqueName;
 			{
@@ -4219,14 +4181,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
-				/*
-				mmsDataRoot["streamSourceType"] = streamSourceType;
-				if (streamSourceType == "IP_PULL")
-					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else if (streamSourceType == "TV")
-					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else // if (streamSourceType == "IP_PUSH")
-				*/
 				{
 					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"DeliveryCode", 0);
@@ -4254,21 +4208,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 			// Title
 			string addContentTitle;
 			{
-				/*
-				if (streamSourceType == "IP_PUSH")
-				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					addContentTitle = to_string(deliveryCode);
-				}
-				else
-				{
-					// 2021-02-03: in this case, we will use the 'ConfigurationLabel' that
-					// it is much better that a code. Who will see the title of the chunks will recognize
-					// easily the recording
-					addContentTitle = ingestedParametersRoot.get("ConfigurationLabel", "").asString();
-				}
-				*/
 				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
 				if (ingestionJobLabel == "")
 				{
@@ -4288,17 +4227,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					// from utc to local time
 					localtime_r (&utcCurrentRecordedFileCreationTime, &tmDateTime);
 
-					/*
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-					*/
-
 					sprintf (strCurrentRecordedFileTime,
 						"%02d:%02d:%02d",
 						tmDateTime. tm_hour,
@@ -4317,16 +4245,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					// from utc to local time
 					localtime_r (&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
 
-					/*
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-					*/
 					sprintf (strCurrentRecordedFileTime,
 						"%02d:%02d:%02d",
 						tmDateTime. tm_hour,
@@ -4371,13 +4289,13 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					if (externalEncoder)
 						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
 							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
-							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
+							addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot);
 					else
 						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
 							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
 							chunksNFSStagingContentsPath,
-							addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
+							addContentTitle, uniqueName, userDataRoot, outputFileFormat,
 							ingestedParametersRoot, encodingParametersRoot,
 							false);
 				}
@@ -4676,14 +4594,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 
 								Json::Value mmsDataRoot;
 								mmsDataRoot["dataType"] = "liveRecordingChunk";
-								/*
-								mmsDataRoot["streamSourceType"] = streamSourceType;
-								if (streamSourceType == "IP_PULL")
-									mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else if (streamSourceType == "TV")
-									mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else // if (streamSourceType == "IP_PUSH")
-								*/
 								{
 									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
 										"DeliveryCode", 0);
@@ -4698,10 +4608,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									mmsDataRoot["validated"] = validated;
 								}
 								mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
-								/*
-								mmsDataRoot["utcPreviousChunkStartTime"] =
-									(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
-								*/
 								mmsDataRoot["utcChunkStartTime"] =
 									(int64_t) (toBeIngestedSegmentUtcStartTimeInMillisecs / 1000);
 								mmsDataRoot["utcStartTimeInMilliSecs"] =
@@ -4742,17 +4648,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									// from utc to local time
 									localtime_r (&toBeIngestedSegmentUtcStartTimeInSeconds, &tmDateTime);
 
-									/*
-									sprintf (strCurrentRecordedFileTime,
-										"%04d-%02d-%02d %02d:%02d:%02d",
-										tmDateTime. tm_year + 1900,
-										tmDateTime. tm_mon + 1,
-										tmDateTime. tm_mday,
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec);
-									*/
-
 									sprintf (strCurrentRecordedFileTime,
 										"%02d:%02d:%02d.%03d",
 										tmDateTime. tm_hour,
@@ -4777,16 +4672,6 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									// from utc to local time
 									localtime_r (&toBeIngestedSegmentUtcEndTimeInSeconds, &tmDateTime);
 
-									/*
-									sprintf (strCurrentRecordedFileTime,
-										"%04d-%02d-%02d %02d:%02d:%02d",
-										tmDateTime. tm_year + 1900,
-										tmDateTime. tm_mon + 1,
-										tmDateTime. tm_mday,
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec);
-									*/
 									sprintf (strCurrentRecordedFileTime,
 										"%02d:%02d:%02d.%03d",
 										tmDateTime. tm_hour,
@@ -5322,21 +5207,6 @@ string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
 	string workflowMetadata;
 	try
 	{
-		/*
-		{
-        	"Label": "<workflow label>",
-        	"Type": "Workflow",
-        	"Task": {
-                "Label": "<task label 1>",
-                "Type": "Add-Content"
-                "Parameters": {
-                        "FileFormat": "ts",
-                        "Ingester": "Giuliano",
-                        "SourceURL": "move:///abc...."
-                },
-        	}
-		}
-		*/
 		Json::Value mmsDataRoot = userDataRoot["mmsData"];
 		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
 		int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
@@ -5665,7 +5535,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	bool isFirstChunk)
 {
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
-	// liveRecorder_<ingestionJobKey>_<FFMPEGEncoderTask::encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
+	// liveRecorder_<ingestionJobKey>_<FFMPEGEncoderBase::encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
 
 	_logger->info(__FILEREF__ + "Received liveRecorder_getMediaLiveRecorderStartTime"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -5748,61 +5618,6 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	}
 
 	return utcMediaLiveRecorderStartTime;
-	/*
-	tm                      tmDateTime;
-
-
-	// liveRecorder_6405_2019-02-02_22-11-00.ts
-
-	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
-		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-	);
-
-	size_t index = mediaLiveRecorderFileName.find_last_of(".");
-	if (mediaLiveRecorderFileName.length() < 20 ||
-		   index == string::npos)
-	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format"
-			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-			;
-			_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	time_t utcMediaLiveRecorderStartTime;
-	time (&utcMediaLiveRecorderStartTime);
-	gmtime_r(&utcMediaLiveRecorderStartTime, &tmDateTime);
-
-	tmDateTime.tm_year		= stoi(mediaLiveRecorderFileName.substr(index - 19, 4))
-		- 1900;
-	tmDateTime.tm_mon		= stoi(mediaLiveRecorderFileName.substr(index - 14, 2))
-		- 1;
-	tmDateTime.tm_mday		= stoi(mediaLiveRecorderFileName.substr(index - 11, 2));
-	tmDateTime.tm_hour		= stoi(mediaLiveRecorderFileName.substr(index - 8, 2));
-	tmDateTime.tm_min      = stoi(mediaLiveRecorderFileName.substr(index - 5, 2));
-
-	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-	// For this reason, 0 is set.
-	// From the other side the first generated file is the only one where we can have seconds
-	// different from 0, anyway here this is not possible because we discard the first chunk
-	int seconds = stoi(mediaLiveRecorderFileName.substr(index - 2, 2));
-	if (seconds != 0)
-	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(seconds)
-				);
-		seconds = 0;
-	}
-	tmDateTime.tm_sec      = seconds;
-
-	utcMediaLiveRecorderStartTime = timegm (&tmDateTime);
-
-	return utcMediaLiveRecorderStartTime;
-	*/
 }
 
 time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
@@ -5949,32 +5764,6 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		//	ffmpeg is not accurate to remove the obsolete ts files, so we will have the manifest files
 		//	having for example 300 ts references but the directory contains thousands of ts files.
 		//	So we will copy only the manifest file and ONLY the ts files referenced into the manifest file
-
-		/*
-		// copy manifest and TS files into the stagingLiveRecorderVirtualVODPathName
-		{
-			_logger->info(__FILEREF__ + "Coping directory"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
-				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-			);
-
-			chrono::system_clock::time_point startCoping = chrono::system_clock::now();
-			FileIO::copyDirectory(sourceSegmentsDirectoryPathName, stagingLiveRecorderVirtualVODPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |                                                                 
-                  S_IRGRP | S_IXGRP |                                                                           
-                  S_IROTH | S_IXOTH);
-			chrono::system_clock::time_point endCoping = chrono::system_clock::now();
-
-			_logger->info(__FILEREF__ + "Copied directory"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", @MMS COPY statistics@ - copingDuration (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
-			);
-		}
-		*/
 
 		// 2022-05-26: non dovrebbe accadere ma, a volte, capita che il file ts non esiste, perchè eliminato
 		//	da ffmpeg, ma risiede ancora nel manifest. Per evitare quindi che la generazione del virtualVOD
@@ -6572,29 +6361,6 @@ long FFMPEGEncoder::getAddContentIngestionJobKey(
 	{
 		int64_t addContentIngestionJobKey;
 
-		/*
-		{
-			"tasks" :
-			[
-				{
-					"ingestionJobKey" : 10793,
-					"label" : "Add Content test",
-					"type" : "Add-Content"
-				},
-				{
-					"ingestionJobKey" : 10794,
-					"label" : "Frame Containing Face: test",
-					"type" : "Face-Recognition"
-				},
-				...
-			],
-			"workflow" :
-			{
-				"ingestionRootKey" : 831,
-				"label" : "ingestContent test"
-			}
-		}
-		*/
         Json::Value ingestionResponseRoot = JSONUtils::toJson(
 			ingestionJobKey, -1, ingestionResponse);
 
@@ -6802,16 +6568,6 @@ string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
 		{
 			try
 			{
-				/*
-				bool warningIfMissing = true;
-				pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-					workspace->_workspaceKey, liveRecorderVirtualVODImageLabel, warningIfMissing);
-
-				int64_t liveRecorderVirtualVODImageMediaItemKey;
-				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
-				*/
-
 				Json::Value crossReferenceRoot;
 
 				field = "Type";
@@ -6904,493 +6660,28 @@ string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
 		throw runtime_error(errorMessage);
 	}
 }
+*/
 
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
+	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData,
 	int64_t encodingJobKey,
 	string requestBody)
 {
-    string api = "liveProxy";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
-	// string tvMulticastIP;
-	// string tvMulticastPort;
-	// string tvType;
-	// int64_t tvServiceId = -1;
-	// int64_t tvFrequency = -1;
-	// int64_t tvSymbolRate = -1;
-	// int64_t tvBandwidthInMhz = -1;
-	// string tvModulation;
-	// int tvVideoPid = -1;
-	// int tvAudioItalianPid = -1;
     try
     {
-		liveProxy->_killedBecauseOfNotWorking = false;
-		liveProxy->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-
-		liveProxy->_outputsRoot = metadataRoot["encodingParametersRoot"]["outputsRoot"];
-		// liveProxy->_liveProxyOutputRoots.clear();
-		{
-			for(int outputIndex = 0; outputIndex < liveProxy->_outputsRoot.size(); outputIndex++)
-			{
-				Json::Value outputRoot = liveProxy->_outputsRoot[outputIndex];
-
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-
-				if (outputType == "HLS" || outputType == "DASH")
-				{
-					string manifestDirectoryPath
-						= JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-					if (FileIO::directoryExisting(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-		}
-
-		liveProxy->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-
-		// non serve
-		// liveProxy->_channelLabel = "";
-
-		// liveProxy->_streamSourceType = metadataRoot["encodingParametersRoot"].
-		// 	get("streamSourceType", "IP_PULL").asString();
-
-		liveProxy->_inputsRoot = metadataRoot["encodingParametersRoot"]["inputsRoot"];
-
-		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-		{
-			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-				continue;
-			Json::Value streamInputRoot = inputRoot["streamInput"];
-
-			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-			if (streamSourceType == "TV")
-			{
-				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-					"tvAudioItalianPid", -1);
-
-				// In case ffmpeg crashes and is automatically restarted, it should use the same
-				// IP-PORT it was using before because we already have a dbvlast sending the stream
-				// to the specified IP-PORT.
-				// For this reason, before to generate a new IP-PORT, let's look for the serviceId
-				// inside the dvblast conf. file to see if it was already running before
-
-				string tvMulticastIP;
-				string tvMulticastPort;
-
-				// in case there is already a serviceId running, we will use the same multicastIP-Port
-				pair<string, string> tvMulticast = getTVMulticastFromDvblastConfigurationFile(
-					liveProxy->_ingestionJobKey, encodingJobKey,
-					tvType, tvServiceId, tvFrequency, tvSymbolRate,
-					tvBandwidthInHz / 1000000,
-					tvModulation);
-				tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
-
-				if (tvMulticastIP == "")
-				{
-					lock_guard<mutex> locker(*_tvChannelsPortsMutex);
-
-					tvMulticastIP = "239.255.1.1";
-					tvMulticastPort = to_string(*_tvChannelPort_CurrentOffset
-						+ _tvChannelPort_Start);
-
-					*_tvChannelPort_CurrentOffset = (*_tvChannelPort_CurrentOffset + 1)
-						% _tvChannelPort_MaxNumberOfOffsets;
-				}
-
-				// overrun_nonfatal=1 prevents ffmpeg from exiting,
-				//		it can recover in most circumstances.
-				// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
-				string newURL = string("udp://@") + tvMulticastIP
-					+ ":" + tvMulticastPort
-					// 2022-12-08: the below parameters are added inside the liveProxy2 method
-					// + "?overrun_nonfatal=1&fifo_size=50000000"
-				;
-
-				streamInputRoot["url"] = newURL;
-				streamInputRoot["tvMulticastIP"] = tvMulticastIP;
-				streamInputRoot["tvMulticastPort"] = tvMulticastPort;
-				inputRoot["streamInput"] = streamInputRoot;
-				liveProxy->_inputsRoot[inputIndex] = inputRoot;
-
-				createOrUpdateTVDvbLastConfigurationFile(
-					liveProxy->_ingestionJobKey, encodingJobKey,
-					tvMulticastIP, tvMulticastPort,
-					tvType, tvServiceId, tvFrequency, tvSymbolRate,
-					tvBandwidthInHz / 1000000,
-					tvModulation, tvVideoPid, tvAudioItalianPid,
-					true);
-			}
-		}
-
-		{
-			// setting of liveProxy->_proxyStart
-			// Based on liveProxy->_proxyStart, the monitor thread starts the checkings
-			// In case of IP_PUSH, the checks should be done after the ffmpeg server
-			// receives the stream and we do not know what it happens.
-			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-			if (liveProxy->_inputsRoot.size() > 0)	// it has to be > 0
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[0];
-
-				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcScheduleStart", -1);
-				// if (utcProxyPeriodStart == -1)
-				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
-
-				if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-				{
-					Json::Value streamInputRoot = inputRoot["streamInput"];
-
-					string streamSourceType =
-						JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-
-					if (streamSourceType == "IP_PUSH")
-					{
-						int pushListenTimeout = JSONUtils::asInt(
-							streamInputRoot, "pushListenTimeout", -1);
-
-						if (utcProxyPeriodStart != -1)
-						{
-							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
-								chrono::system_clock::now())
-								liveProxy->_proxyStart = chrono::system_clock::now() +
-									chrono::seconds(pushListenTimeout);
-							else
-								liveProxy->_proxyStart = chrono::system_clock::from_time_t(
-									utcProxyPeriodStart) +
-									chrono::seconds(pushListenTimeout);
-						}
-						else
-							liveProxy->_proxyStart = chrono::system_clock::now() +
-								chrono::seconds(pushListenTimeout);
-					}
-					else
-					{
-						if (utcProxyPeriodStart != -1)
-						{
-							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
-									chrono::system_clock::now())
-								liveProxy->_proxyStart = chrono::system_clock::now();
-							else
-								liveProxy->_proxyStart = chrono::system_clock::from_time_t(
-									utcProxyPeriodStart);
-						}
-						else
-							liveProxy->_proxyStart = chrono::system_clock::now();
-					}
-				}
-				else
-				{
-					if (utcProxyPeriodStart != -1)
-					{
-						if (chrono::system_clock::from_time_t(utcProxyPeriodStart) <
-								chrono::system_clock::now())
-							liveProxy->_proxyStart = chrono::system_clock::now();
-						else
-							liveProxy->_proxyStart = chrono::system_clock::from_time_t(
-								utcProxyPeriodStart);
-					}
-					else
-						liveProxy->_proxyStart = chrono::system_clock::now();
-				}
-			}
-
-			liveProxy->_ffmpeg->liveProxy2(
-				liveProxy->_ingestionJobKey,
-				encodingJobKey,
-				externalEncoder,
-				&(liveProxy->_inputsRootMutex),
-				&(liveProxy->_inputsRoot),
-				liveProxy->_outputsRoot,
-				&(liveProxy->_childPid),
-				&(liveProxy->_proxyStart)
-			);
-		}
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-		{
-			Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-				continue;
-			Json::Value streamInputRoot = inputRoot["streamInput"];
-
-			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-			if (streamSourceType == "TV")
-			{
-				string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-				string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-					"tvAudioItalianPid", -1);
-
-				if (tvServiceId != -1) // this is just to be sure variables are initialized
-				{
-					// remove configuration from dvblast configuration file
-					createOrUpdateTVDvbLastConfigurationFile(
-						liveProxy->_ingestionJobKey, encodingJobKey,
-						tvMulticastIP, tvMulticastPort,
-						tvType, tvServiceId, tvFrequency, tvSymbolRate,
-						tvBandwidthInHz / 1000000,
-						tvModulation, tvVideoPid, tvAudioItalianPid,
-						false);
-				}
-			}
-		}
-
-        _logger->info(__FILEREF__ + "_ffmpeg->liveProxy finished"
-			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            // + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
-        );
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-			completedWithError, liveProxy->_errorMessage, killedByUser,
-			urlForbidden, urlNotFound);
-        liveProxy->_available = true;
-
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
+		LiveProxy liveProxy(liveProxyData, encodingJobKey,
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger,
+			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
+		liveProxy.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        liveProxy->_childPid = 0;
-
-		if (liveProxy->_inputsRoot != Json::nullValue)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-						"tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxy->_ingestionJobKey, encodingJobKey,
-							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate,
-							tvBandwidthInHz / 1000000,
-							tvModulation, tvVideoPid, tvAudioItalianPid,
-							false);
-					}
-				}
-			}
-		}
-
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-
-        _logger->error(__FILEREF__ + errorMessage);
-
-		bool completedWithError			= false;
-		bool killedByUser;
-		if (liveProxy->_killedBecauseOfNotWorking)
-		{
-			// it was killed just because it was not working and not because of user
-			// In this case the process has to be restarted soon
-			killedByUser				= false;
-			completedWithError			= true;
-			liveProxy->_killedBecauseOfNotWorking = false;
-		}
-		else
-		{
-			killedByUser				= true;
-		}
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(liveProxy->_encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(FFMpegURLForbidden e)
     {
-        liveProxy->_childPid = 0;
-
-		if (liveProxy->_inputsRoot != Json::nullValue)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-						"tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxy->_ingestionJobKey, encodingJobKey,
-							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate,
-							tvBandwidthInHz / 1000000,
-							tvModulation, tvVideoPid, tvAudioItalianPid,
-							false);
-					}
-				}
-			}
-		}
-
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= true;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7399,83 +6690,7 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
-        liveProxy->_childPid = 0;
-
-		if (liveProxy->_inputsRoot != Json::nullValue)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-						"tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxy->_ingestionJobKey, encodingJobKey,
-							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate,
-							tvBandwidthInHz / 1000000,
-							tvModulation, tvVideoPid, tvAudioItalianPid,
-							false);
-					}
-				}
-			}
-		}
-
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= true;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7484,83 +6699,7 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
-        liveProxy->_childPid = 0;
-
-		if (liveProxy->_inputsRoot != Json::nullValue)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-						"tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxy->_ingestionJobKey, encodingJobKey,
-							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate,
-							tvBandwidthInHz / 1000000,
-							tvModulation, tvVideoPid, tvAudioItalianPid,
-							false);
-					}
-				}
-			}
-		}
-
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7569,83 +6708,7 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
-        liveProxy->_childPid = 0;
-
-		if (liveProxy->_inputsRoot != Json::nullValue)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxy->_inputsRoot.size(); inputIndex++)
-			{
-				Json::Value inputRoot = liveProxy->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot,
-						"tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxy->_ingestionJobKey, encodingJobKey,
-							tvMulticastIP, tvMulticastPort,
-							tvType, tvServiceId, tvFrequency, tvSymbolRate,
-							tvBandwidthInHz / 1000000,
-							tvModulation, tvVideoPid, tvAudioItalianPid,
-							false);
-					}
-				}
-			}
-		}
-
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		// liveProxy->_channelLabel = "";
-		// liveProxy->_liveProxyOutputRoots.clear();
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7656,223 +6719,23 @@ void FFMPEGEncoder::liveProxyThread(
 
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
+	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData,
 	int64_t encodingJobKey,
 	string requestBody)
 {
-    string api = "liveGrid";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
-
     try
     {
-		liveProxy->_killedBecauseOfNotWorking = false;
-		liveProxy->_errorMessage = "";
-		removeEncodingCompletedIfPresent(encodingJobKey);
-
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, encodingJobKey, requestBody);
-
-		liveProxy->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-        Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-
-		Json::Value inputChannelsRoot = encodingParametersRoot["inputChannels"];
-
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
-
-		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
-		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
-		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
-
-		liveProxy->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "OutputType", "HLS");
-
-		// it is present only in case of outputType == "SRT"
-		string srtURL = JSONUtils::asString(ingestedParametersRoot, "SRT_URL", "");
-
-		// it is present only in case of outputType == "HLS"
-		int segmentDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"SegmentDurationInSeconds", 10);
-
-		// it is present only in case of outputType == "HLS"
-		int playlistEntriesNumber = JSONUtils::asInt(ingestedParametersRoot,
-			"PlaylistEntriesNumber", 6);
-
-		string manifestDirectoryPath = JSONUtils::asString(encodingParametersRoot, "manifestDirectoryPath", "");
-		string manifestFileName = JSONUtils::asString(encodingParametersRoot, "manifestFileName", "");
-
-		// if (liveProxy->_outputType == "HLS") // || liveProxy->_outputType == "DASH")
-		{
-			if (liveProxy->_liveGridOutputType == "HLS"
-				&& FileIO::directoryExisting(manifestDirectoryPath))
-			{
-				try
-				{
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "remove directory failed"
-						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					// throw e;
-				}
-				catch(exception e)
-				{
-					string errorMessage = __FILEREF__ + "remove directory failed"
-						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					// throw e;
-				}
-			}
-
-			liveProxy->_proxyStart = chrono::system_clock::now();
-
-			liveProxy->_ffmpeg->liveGrid(
-				liveProxy->_ingestionJobKey,
-				encodingJobKey,
-				encodingProfileDetailsRoot,
-				userAgent,
-				inputChannelsRoot,
-				gridColumns,
-				gridWidth,
-				gridHeight,
-				liveProxy->_liveGridOutputType,
-				segmentDurationInSeconds,
-				playlistEntriesNumber,
-				manifestDirectoryPath,
-				manifestFileName,
-				srtURL,
-				&(liveProxy->_childPid));
-		}
-
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-        _logger->info(__FILEREF__ + "_ffmpeg->liveGridBy... finished"
-			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            // + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
-        );
-
-		bool completedWithError			= false;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
-
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
+		LiveGrid liveGrid(liveProxyData, encodingJobKey,
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		liveGrid.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-
-        _logger->error(__FILEREF__ + errorMessage);
-
-		bool completedWithError			= false;
-		bool killedByUser;
-		if (liveProxy->_killedBecauseOfNotWorking)
-		{
-			// it was killed just because it was not working and not because of user
-			// In this case the process has to be restarted soon
-			killedByUser				= false;
-			completedWithError			= true;
-			liveProxy->_killedBecauseOfNotWorking = false;
-		}
-		else
-		{
-			killedByUser				= true;
-		}
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(liveProxy->_encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
     }
     catch(FFMpegURLForbidden e)
     {
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= true;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7881,41 +6744,7 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(FFMpegURLNotFound e)
     {
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= true;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7924,41 +6753,7 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(runtime_error e)
     {
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -7967,41 +6762,7 @@ void FFMPEGEncoder::liveGridThread(
     }
     catch(exception e)
     {
-        liveProxy->_childPid = 0;
-		liveProxy->_method = "";
-		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_liveGridOutputType = "";
-		// liveProxy->_channelLabel = "";
-		liveProxy->_killedBecauseOfNotWorking = false;
-
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
-		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-		liveProxy->_errorMessage	= errorMessage;
-
-		bool completedWithError			= true;
-		bool killedByUser				= false;
-		bool urlForbidden				= false;
-		bool urlNotFound				= false;
-		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveProxy->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
-        liveProxy->_available = true;
+		_logger->error(__FILEREF__ + e.what());
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -8010,6 +6771,7 @@ void FFMPEGEncoder::liveGridThread(
     }
 }
 
+/*
 void FFMPEGEncoder::monitorThread()
 {
 
@@ -8019,12 +6781,12 @@ void FFMPEGEncoder::monitorThread()
 		try
 		{
 			// this is to have a copy of LiveProxyAndGrid
-			vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>> sourceLiveProxiesCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> sourceLiveProxiesCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -8035,7 +6797,7 @@ void FFMPEGEncoder::monitorThread()
 
 				int liveProxyAndGridNotRunningCounter = 0;
 
-				for (shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+				for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_childPid != 0)	// running
 					{
@@ -8069,9 +6831,9 @@ void FFMPEGEncoder::monitorThread()
 				liveProxyIndex < copiedRunningLiveProxiesCapability.size();
 				liveProxyIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> copiedLiveProxy
+				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> copiedLiveProxy
 					= copiedRunningLiveProxiesCapability[liveProxyIndex];
-				shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> sourceLiveProxy
+				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> sourceLiveProxy
 					= sourceLiveProxiesCapability[liveProxyIndex];
 
 				// this is just for logging
@@ -8386,18 +7148,6 @@ void FFMPEGEncoder::monitorThread()
 
 							try
 							{
-								/*
-								int64_t liveProxyLiveTimeInMinutes =
-									chrono::duration_cast<chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
-
-								// check id done after 3 minutes LiveProxy started, in order to be sure
-								// segments were already created
-								// 1. get the timestamp of the last generated file
-								// 2. fill the vector with the chunks (pathname) to be removed because too old
-								//		(10 minutes after the "capacity" of the playlist)
-								// 3. kill ffmpeg in case no segments were generated
-								if (liveProxyLiveTimeInMinutes > 3)
-								*/
 								{
 									string manifestFilePathName =
 										manifestDirectoryPath + "/" + manifestFileName;
@@ -8857,12 +7607,12 @@ void FFMPEGEncoder::monitorThread()
 		try
 		{
 			// this is to have a copy of LiveRecording
-			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> copiedRunningLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> copiedRunningLiveRecordingCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>> sourceLiveRecordingCapability;
+			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> sourceLiveRecordingCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
@@ -8873,7 +7623,7 @@ void FFMPEGEncoder::monitorThread()
 
 				int liveRecordingNotRunningCounter = 0;
 
-				for (shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording: *_liveRecordingsCapability)
+				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
 				{
 					if (liveRecording->_childPid != 0 && liveRecording->_monitoringEnabled)
 					{
@@ -8908,9 +7658,9 @@ void FFMPEGEncoder::monitorThread()
 				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
 				liveRecordingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderTask::LiveRecording> copiedLiveRecording
+				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording
 					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<FFMPEGEncoderTask::LiveRecording> sourceLiveRecording
+				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording
 					= sourceLiveRecordingCapability[liveRecordingIndex];
 
 				_logger->info(__FILEREF__ + "liveRecordingMonitor"
@@ -9795,7 +8545,10 @@ void FFMPEGEncoder::stopCPUUsageThread()
 
 	this_thread::sleep_for(chrono::seconds(1));
 }
+*/
 
+
+/*
 void FFMPEGEncoder::addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,
 		string errorMessage,
@@ -9803,7 +8556,7 @@ void FFMPEGEncoder::addEncodingCompleted(
 {
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	shared_ptr<FFMPEGEncoderTask::EncodingCompleted> encodingCompleted = make_shared<FFMPEGEncoderTask::EncodingCompleted>();
+	shared_ptr<FFMPEGEncoderBase::EncodingCompleted> encodingCompleted = make_shared<FFMPEGEncoderBase::EncodingCompleted>();
 
 	encodingCompleted->_encodingJobKey		= encodingJobKey;
 	encodingCompleted->_completedWithError	= completedWithError;
@@ -9826,7 +8579,7 @@ void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it =
+	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it =
 		_encodingCompletedMap->find(encodingJobKey);
 	if (it != _encodingCompletedMap->end())
 	{
@@ -9838,6 +8591,7 @@ void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 			);
 	}
 }
+*/
 
 void FFMPEGEncoder::encodingCompletedRetention()
 {
@@ -9846,7 +8600,7 @@ void FFMPEGEncoder::encodingCompletedRetention()
 
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
-	for(map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
+	for(map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
 			it != _encodingCompletedMap->end(); )
 	{
 		if(start - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
@@ -9864,6 +8618,7 @@ void FFMPEGEncoder::encodingCompletedRetention()
 	);
 }
 
+/*
 void FFMPEGEncoder::createOrUpdateTVDvbLastConfigurationFile(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
@@ -10198,6 +8953,7 @@ pair<string, string> FFMPEGEncoder::getTVMulticastFromDvblastConfigurationFile(
 
 	return make_pair(multicastIP, multicastPort);
 }
+*/
 
 int FFMPEGEncoder::getMaxEncodingsCapability(void)
 {
@@ -10396,6 +9152,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	*/
 }
 
+/*
 string FFMPEGEncoder::buildAddContentIngestionWorkflow(
 	int64_t ingestionJobKey,
 	string label,
@@ -10726,13 +9483,6 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 		{
 			// it is useless to remove the generated tar.gz file because the parent staging directory
 			// will be removed. Also here we should add a bool above to be sure the tar was successful
-			/*
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localBinaryPathFileName: " + localBinaryPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
-			*/
 		}
 
 		throw e;
@@ -10750,13 +9500,6 @@ int64_t FFMPEGEncoder::ingestContentByPushingBinary(
 		{
 			// it is useless to remove the generated tar.gz file because the parent staging directory
 			// will be removed. Also here we should add a bool above to be sure the tar was successful
-			/*
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localBinaryPathFileName: " + localBinaryPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
-			*/
 		}
 
 		throw e;
@@ -10978,19 +9721,6 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 		mmsBinaryIngestionURL
 	);
 
-	/*
-	{
-		_logger->info(__FILEREF__ + "Remove file"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", sourceAssetPathName: " + sourceAssetPathName
-		);
-
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
-	}
-	*/
-
 	{
 		size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 		if (endOfDirectoryIndex != string::npos)
@@ -11142,4 +9872,5 @@ void FFMPEGEncoder::uploadLocalMediaToMMS(
 		throw runtime_error(errorMessage);
 	}
 }
+*/
 

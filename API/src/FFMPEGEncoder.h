@@ -30,12 +30,14 @@
 
 class FFMPEGEncoder: public APICommon {
 public:
+/*
 	struct CurlUploadData {
 		ifstream	mediaSourceFileStream;
 
 		int64_t		lastByteSent;
 		int64_t		fileSizeInBytes;        
 	};
+*/
 
     FFMPEGEncoder(
 		Json::Value configuration, 
@@ -50,16 +52,16 @@ public:
 		chrono::system_clock::time_point* lastEncodingAcceptedTime,
 
 		mutex* encodingMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::Encoding>>* encodingsCapability,
+		vector<shared_ptr<FFMPEGEncoderBase::Encoding>>* encodingsCapability,
 
 		mutex* liveProxyMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>>* liveProxiesCapability,
+		vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>>* liveProxiesCapability,
 
 		mutex* liveRecordingMutex,
-		vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>>* liveRecordingsCapability, 
+		vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* liveRecordingsCapability, 
 
 		mutex* encodingCompletedMutex,
-		map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>* encodingCompletedMap,
+		map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
 		mutex* tvChannelsPortsMutex,
@@ -83,25 +85,25 @@ public:
             unordered_map<string, string>& requestDetails
     );
 
-	void liveRecorderChunksIngestionThread();
-	void stopLiveRecorderChunksIngestionThread();
+	// void liveRecorderChunksIngestionThread();
+	// void stopLiveRecorderChunksIngestionThread();
 
-	void liveRecorderVirtualVODIngestionThread();
-	void stopLiveRecorderVirtualVODIngestionThread();
+	// void liveRecorderVirtualVODIngestionThread();
+	// void stopLiveRecorderVirtualVODIngestionThread();
 
-	void monitorThread();
-	void stopMonitorThread();
+	// void monitorThread();
+	// void stopMonitorThread();
     
-	void cpuUsageThread();
-	void stopCPUUsageThread();
+	// void cpuUsageThread();
+	// void stopCPUUsageThread();
 
 private:
 	// string						_encoderCapabilityConfigurationPathName;
 
-	GetCpuUsage_t				_getCpuUsage;
+	// GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
 	deque<int>*						_cpuUsage;
-	bool						_cpuUsageThreadShutdown;
+	// bool						_cpuUsageThreadShutdown;
 
 	// 2021-09-24: chrono is already thread safe.
 	// mutex*						_lastEncodingAcceptedTimeMutex;
@@ -117,19 +119,19 @@ private:
 	int							_cpuUsageThresholdForRecording;
 
     mutex*						_encodingMutex;
-	vector<shared_ptr<FFMPEGEncoderTask::Encoding>>* _encodingsCapability;
+	vector<shared_ptr<FFMPEGEncoderBase::Encoding>>* _encodingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxEncodingsCapability;
 	int getMaxEncodingsCapability(void);
 
     mutex*						_liveProxyMutex;
-	vector<shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid>>* _liveProxiesCapability;
+	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>>* _liveProxiesCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveProxiesCapability;
 	int getMaxLiveProxiesCapability(void);
 
     mutex*						_liveRecordingMutex;
-	vector<shared_ptr<FFMPEGEncoderTask::LiveRecording>>* _liveRecordingsCapability;
+	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* _liveRecordingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveRecordingsCapability;
 	int getMaxLiveRecordingsCapability(void);
@@ -140,68 +142,69 @@ private:
 	// 	int configuredMaxLiveRecordingsCapability
 	// );
 
-	int							_liveRecorderChunksIngestionCheckInSeconds;
-	bool						_liveRecorderChunksIngestionThreadShutdown;
+	// int							_liveRecorderChunksIngestionCheckInSeconds;
+	// bool						_liveRecorderChunksIngestionThreadShutdown;
 
-	int							_liveRecorderVirtualVODIngestionInSeconds;
-	string						_liveRecorderVirtualVODRetention;
-	bool						_liveRecorderVirtualVODIngestionThreadShutdown;
-	string						_liveRecorderVirtualVODImageLabel;
+	// int							_liveRecorderVirtualVODIngestionInSeconds;
+	// string						_liveRecorderVirtualVODRetention;
+	// bool						_liveRecorderVirtualVODIngestionThreadShutdown;
+	// string						_liveRecorderVirtualVODImageLabel;
 
-	string						_tvChannelConfigurationDirectory;
+	// string						_tvChannelConfigurationDirectory;
 
     mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
-    map<int64_t, shared_ptr<FFMPEGEncoderTask::EncodingCompleted>>*	_encodingCompletedMap;
+    map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>*	_encodingCompletedMap;
 	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
 
 	mutex*						_tvChannelsPortsMutex;
 	long*						_tvChannelPort_CurrentOffset;
-	long						_tvChannelPort_Start;
-	long						_tvChannelPort_MaxNumberOfOffsets;
+	// long						_tvChannelPort_Start;
+	// long						_tvChannelPort_MaxNumberOfOffsets;
 
-	int							_monitorCheckInSeconds;
-	bool						_monitorThreadShutdown;
+	// int							_monitorCheckInSeconds;
+	// bool						_monitorThreadShutdown;
 
-    int									_mmsAPITimeoutInSeconds;
+    // int									_mmsAPITimeoutInSeconds;
 
-	int							_mmsBinaryTimeoutInSeconds;
+	// int							_mmsBinaryTimeoutInSeconds;
 
     void encodeContentThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
             int64_t encodingJobKey,
         string requestBody);
     
     void overlayImageOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
             int64_t encodingJobKey,
         string requestBody);
 
     void overlayTextOnVideoThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
     void generateFramesThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
     void slideShowThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
 	void liveRecorderThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::LiveRecording> liveRecording,
+        shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
+	/*
 	pair<string, double> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string streamSourceType, 
@@ -259,7 +262,6 @@ private:
 		Json::Value ingestedParametersRoot,
 		Json::Value encodingParametersRoot
 	);
-
 	void liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t ingestionJobKey,
 		string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
@@ -303,51 +305,55 @@ private:
 	long getAddContentIngestionJobKey(
 		int64_t ingestionJobKey,
 		string ingestionResponse);
+	*/
 
 	void liveProxyThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
+        shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 
 	void liveGridThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::LiveProxyAndGrid> liveProxy,
+        shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 
 	void videoSpeedThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
 	void pictureInPictureThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
 	void introOutroOverlayThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
 	void cutFrameAccurateThread(
         // FCGX_Request& request,
-        shared_ptr<FFMPEGEncoderTask::Encoding> encoding,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
+	/*
 	void addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError, string errorMessage,
 		bool killedByUser, bool urlForbidden, bool urlNotFound);
 
 	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);
+	*/
 
 	void encodingCompletedRetention();
 
+	/*
 	void createOrUpdateTVDvbLastConfigurationFile(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
@@ -423,6 +429,7 @@ private:
 		// in case of a Variant
 		int64_t variantOfMediaItemKey = -1,
 		int64_t variantEncodingProfileKey = -1);
+	*/
 };
 
 #endif
