@@ -24,6 +24,7 @@
 			// - StopIfReferenceProcessingError in case of multiple References,
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
+			// - title, optional
 
 			{ "ReferenceMediaItemKey": 11 }
 		],

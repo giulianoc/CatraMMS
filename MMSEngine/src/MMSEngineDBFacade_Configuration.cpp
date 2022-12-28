@@ -7754,7 +7754,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getVodInputRoot(
 	MMSEngineDBFacade::ContentType vodContentType,
-	vector<tuple<int64_t, string, string>>& sources
+	vector<tuple<int64_t, string, string, string>>& sources
 )
 {
 	Json::Value vodInputRoot;
@@ -7766,17 +7766,21 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 
 		Json::Value sourcesRoot(Json::arrayValue);
 
-		for (tuple<int64_t, string, string> source: sources)
+		for (tuple<int64_t, string, string, string> source: sources)
 		{
 			int64_t physicalPathKey;
+			string mediaItemTitle;
 			string sourcePhysicalPathName;
 			string sourcePhysicalDeliveryURL;
 
-			tie(physicalPathKey, sourcePhysicalPathName,
+			tie(physicalPathKey, mediaItemTitle, sourcePhysicalPathName,
 				sourcePhysicalDeliveryURL) = source;
 
 
 			Json::Value sourceRoot;
+
+			field = "mediaItemTitle";
+			sourceRoot[field] = mediaItemTitle;
 
 			field = "sourcePhysicalPathName";
 			sourceRoot[field] = sourcePhysicalPathName;

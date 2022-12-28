@@ -4689,25 +4689,28 @@ void API::changeLiveProxyPlaylist(
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
-						vector<tuple<int64_t, string, string>> sources;
+						vector<tuple<int64_t, string, string, string>> sources;
 
 						MMSEngineDBFacade::ContentType vodContentType;
 
-						field = "physicalPathKeys";
+						field = "referencePhysicalPathKeys";
 						if (JSONUtils::isMetadataPresent(
 							broadcastDefaultPlaylistItemRoot, field))
 						{
-							Json::Value physicalPathKeysRoot
+							Json::Value referencePhysicalPathKeysRoot
 								= broadcastDefaultPlaylistItemRoot[field];
 
-							for (int physicalPathKeyIndex = 0;
-								physicalPathKeyIndex < physicalPathKeysRoot.size();
-								physicalPathKeyIndex++)
+							for (int referencePhysicalPathKeyIndex = 0;
+								referencePhysicalPathKeyIndex < referencePhysicalPathKeysRoot.size();
+								referencePhysicalPathKeyIndex++)
 							{
-								int64_t broadcastDefaultPhysicalPathKey
-									= JSONUtils::asInt64(
-									physicalPathKeysRoot[physicalPathKeyIndex],
-									"", -1);
+								Json::Value referencePhysicalPathKeyRoot =
+									referencePhysicalPathKeysRoot[referencePhysicalPathKeyIndex];
+
+								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(
+									referencePhysicalPathKeyRoot, "ReferencePhysicalPathKey", -1);
+								string broadcastDefaultTitle
+									= JSONUtils::asString(referencePhysicalPathKeyRoot, "title", "");
 
 								string sourcePhysicalPathName;
 								{
@@ -4777,7 +4780,7 @@ void API::changeLiveProxyPlaylist(
 								}
 
 								sources.push_back(
-									make_tuple(broadcastDefaultPhysicalPathKey,
+									make_tuple(broadcastDefaultPhysicalPathKey, broadcastDefaultTitle,
 									sourcePhysicalPathName, sourcePhysicalDeliveryURL));
 							}
 						}

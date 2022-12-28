@@ -13266,7 +13266,7 @@ void MMSEngineProcessor::manageVODProxy(
 		}
 		else
 		{
-			vector<tuple<int64_t, string, string>> sources;
+			vector<tuple<int64_t, string, string, string>> sources;
 
 			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType: dependencies)
@@ -13289,6 +13289,7 @@ void MMSEngineProcessor::manageVODProxy(
 				);
 
 				int64_t sourceMediaItemKey;
+				string mediaItemTitle;
 				if (dependencyType == Validator::DependencyType::MediaItemKey)
 				{
 					int64_t encodingProfileKey = -1;
@@ -13301,6 +13302,15 @@ void MMSEngineProcessor::manageVODProxy(
 						ignore, ignore) = physicalPathDetails;
 
 					sourceMediaItemKey = key;
+
+					warningIfMissing = false;
+					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+						mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
+							workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing,
+							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+							true);
+
+					tie(ignore, mediaItemTitle, ignore, ignore, ignore, ignore) = mediaItemKeyDetails;
 				}
 				else
 				{
@@ -13321,7 +13331,7 @@ void MMSEngineProcessor::manageVODProxy(
 							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 							true);
 
-					tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore,
+					tie(sourceMediaItemKey, ignore, mediaItemTitle, ignore, ignore, ignore,
 						ignore, ignore, ignore) = mediaItemKeyDetails;
 				}
 
@@ -13367,7 +13377,7 @@ void MMSEngineProcessor::manageVODProxy(
 					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 				}
 
-				sources.push_back(make_tuple(sourcePhysicalPathKey, sourcePhysicalPathName,
+				sources.push_back(make_tuple(sourcePhysicalPathKey, mediaItemTitle, sourcePhysicalPathName,
 					sourcePhysicalDeliveryURL));
 			}
 
