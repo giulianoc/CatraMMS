@@ -47,7 +47,7 @@
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video by which this Cut depend on.
 			// As reference can be used:
-			//    "ReferenceMediaItemKey" or
+			//    "referenceMediaItemKey" or
 			//    "ReferencePhysicalPathKey"
 			//    "ReferenceUniqueName"
 
@@ -58,7 +58,7 @@
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
 
-			{ "ReferenceMediaItemKey": 11 }
+			{ "referenceMediaItemKey": 11 }
 		],
 
 		// optional. To be set with the EncodersPool label only in case 

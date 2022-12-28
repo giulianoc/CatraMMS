@@ -5663,10 +5663,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         string referenceUniqueName = "";
         bool referenceLabel = false;
 
-        field = "ReferenceMediaItemKey";
+        field = "referenceMediaItemKey";
         if (!JSONUtils::isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferencePhysicalPathKey";
+            field = "referencePhysicalPathKey";
             if (!JSONUtils::isMetadataPresent(referenceRoot, field))
             {
                 field = "ReferenceIngestionJobKey";
@@ -6089,10 +6089,10 @@ void Validator::fillReferencesOutput(
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
 
-        field = "ReferenceMediaItemKey";
+        field = "referenceMediaItemKey";
         if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
         {
-            field = "ReferencePhysicalPathKey";
+            field = "referencePhysicalPathKey";
             if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
             {
                 field = "ReferenceIngestionJobKey";

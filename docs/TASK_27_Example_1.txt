@@ -5,7 +5,7 @@
 
 	"Parameters": {
 		"References": [
-			{ "ReferenceMediaItemKey": 11 }
+			{ "referenceMediaItemKey": 11 }
 		],
 		"CascadeName": "haarcascade_frontalface_alt",
 		"Output": "VideoWithHighlightedFaces"

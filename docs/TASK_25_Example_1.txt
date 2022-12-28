@@ -5,7 +5,7 @@
 
 	"Parameters": {
 		"References": [
-			{ "ReferenceMediaItemKey": 11 }
+			{ "referenceMediaItemKey": 11 }
 		],
 		"ConfigurationLabel": "My Facebook Conf",
 		"NodeId": "YYYY"

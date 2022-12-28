@@ -9,7 +9,7 @@
 		"Type": "Periodical-Frames",
 		"Parameters": {
 			"References": [
-				{ "ReferenceMediaItemKey": 11 }
+				{ "referenceMediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 2.5,
 			"PeriodInSeconds": 2,

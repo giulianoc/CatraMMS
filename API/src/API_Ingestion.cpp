@@ -4708,7 +4708,7 @@ void API::changeLiveProxyPlaylist(
 									referencePhysicalPathKeysRoot[referencePhysicalPathKeyIndex];
 
 								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(
-									referencePhysicalPathKeyRoot, "ReferencePhysicalPathKey", -1);
+									referencePhysicalPathKeyRoot, "referencePhysicalPathKey", -1);
 								string broadcastDefaultTitle
 									= JSONUtils::asString(referencePhysicalPathKeyRoot, "mediaItemTitle", "");
 

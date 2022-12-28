@@ -6,7 +6,7 @@
 		"Type": "Encode",
 		"Parameters": {
 			"References": [
-				{ "ReferenceMediaItemKey": 11 }
+				{ "referenceMediaItemKey": 11 }
 			],
 			"EncodingPriority": "Low",
 			"EncodingProfilesSetLabel": "Sport"

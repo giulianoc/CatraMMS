@@ -14,7 +14,7 @@
 			// the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video or the profile by which this task depend on.
-			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// As reference can be used "referenceMediaItemKey", "ReferenceUniqueName" or 
 			// "ReferencePhysicalPathKey".
 			// In case this task depend on one or more tasks generating videos, the videos will be 
 			// removed.
@@ -29,7 +29,7 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "ReferenceMediaItemKey": 11 }
+			{ "referenceMediaItemKey": 11 }
 		],
 
 		// Optional. This tag is used in the scenario where the Contents to be removed are the one specified

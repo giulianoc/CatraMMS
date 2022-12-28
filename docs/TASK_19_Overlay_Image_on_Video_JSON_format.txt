@@ -12,7 +12,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video and the key of the Image by which the Overlay has to depend on.
-			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "referenceMediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -22,8 +22,8 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "ReferenceMediaItemKey": 11 },
-			{ "ReferenceMediaItemKey": 12 }
+			{ "referenceMediaItemKey": 11 },
+			{ "referenceMediaItemKey": 12 }
 		],
 
 		// Optional. This tag is used in the scenario where the Video is inherit from the parent Task

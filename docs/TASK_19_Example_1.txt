@@ -9,8 +9,8 @@
 		"Type": "Overlay-Image-On-Video",
 		"Parameters": {
 			"References": [
-				{ "ReferenceMediaItemKey": 11 },
-				{ "ReferenceMediaItemKey": 12 }
+				{ "referenceMediaItemKey": 11 },
+				{ "referenceMediaItemKey": 12 }
 			],
 			"ImagePosition_X_InPixel": "10",                                  
 			"ImagePosition_Y_InPixel": "10",                                

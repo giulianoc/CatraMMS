@@ -14,7 +14,7 @@
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video by which this Cut depend on.
 			// As reference can be used:
-			//    "ReferenceMediaItemKey" or
+			//    "referenceMediaItemKey" or
 			//    "ReferencePhysicalPathKey"
 			//    "ReferenceUniqueName"
 
@@ -26,7 +26,7 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "ReferenceMediaItemKey": 11 }
+			{ "referenceMediaItemKey": 11 }
 		],
 
 		// mandatory 

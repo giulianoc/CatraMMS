@@ -14615,7 +14615,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					{
 						Json::Value mediaItemKeyReferenceRoot;
 
-						field = "ReferenceMediaItemKey";
+						field = "referenceMediaItemKey";
 						mediaItemKeyReferenceRoot[field] = mediaItemKey;
 
 						mediaItemKeyReferencesRoot.append(mediaItemKeyReferenceRoot);
@@ -15617,7 +15617,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					{
 						Json::Value mediaItemKeyReferenceRoot;
 
-						field = "ReferenceMediaItemKey";
+						field = "referenceMediaItemKey";
 						mediaItemKeyReferenceRoot[field] = mediaItemKey;
 
 						if (chunkEncodingProfileKey != -1)

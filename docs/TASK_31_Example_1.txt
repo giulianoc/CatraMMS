@@ -9,7 +9,7 @@
 		"Type": "Video-Speed",
 		"Parameters": {
 			"References": [
-				{ "ReferenceMediaItemKey": 11 }
+				{ "referenceMediaItemKey": 11 }
 			],
 			"SpeedType": "SlowDown",
 			"SpeedSize": 3,
