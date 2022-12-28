@@ -816,6 +816,7 @@ void API::shareWorkspace_(
 					shareWorkspaceURL += (":" + to_string(_guiPort));
 				shareWorkspaceURL += ("/catramms/login.xhtml?shareWorkspaceRequested=true&shareWorkspaceCode="
 					+ shareWorkspaceCode);
+				shareWorkspaceURL += ("&registrationEMail=" + email);
 
 				_logger->info(__FILEREF__ + "Created Shared Workspace code"
 					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
