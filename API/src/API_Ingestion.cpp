@@ -743,7 +743,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
                     throw runtime_error(errorMessage);
                 }
 
-                field = "ReferenceIngestionJobKey";
+                field = "ingestionJobKey";
                 referenceRoot[field] = ingestionJobKeys.back();
                 
                 referencesRoot[referenceIndex] = referenceRoot;
@@ -842,7 +842,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 					);
 
 					Json::Value referenceRoot;
-					string addedField = "ReferenceIngestionJobKey";
+					string addedField = "ingestionJobKey";
 					referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(
 						index - dependenciesToBeAddedToReferencesAtIndex);
 
@@ -855,7 +855,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 				referenceIndex > 0; --referenceIndex)
 			{
 				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
+				string addedField = "ingestionJobKey";
 				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
 
 				// add at the beginning in referencesRoot
@@ -877,7 +877,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 				++referenceIndex)
 			{
 				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
+				string addedField = "ingestionJobKey";
 				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
 
 				referencesRoot.append(referenceRoot);
@@ -1985,7 +1985,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 						throw runtime_error(errorMessage);
 					}
 
-					field = "ReferenceIngestionJobKey";
+					field = "ingestionJobKey";
 					referenceOutputRoot[field] = ingestionJobKeys.back();
                 
 					referencesOutputRoot[referenceIndex] = referenceOutputRoot;
@@ -2017,7 +2017,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 					++referenceIndex)
 			{
 				Json::Value referenceOutputRoot;
-				field = "ReferenceIngestionJobKey";
+				field = "ingestionJobKey";
 				referenceOutputRoot[field] = newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(referenceIndex);
             
 				referencesOutputRoot.append(referenceOutputRoot);

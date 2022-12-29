@@ -24,7 +24,7 @@
 		"ReferencesOutput": [
 			// optional. References to identify the videos the GroupOfTasks has to forward to the Tasks
 			// connected to the OnSuccess, OnError and OnComplete events
-			// As reference can be used "ReferenceLabel", "mediaItemKey", "ReferenceUniqueName"
+			// As reference can be used "ReferenceLabel", "mediaItemKey", "uniqueName"
 
 			{ "mediaItemKey": 11 }
 		],

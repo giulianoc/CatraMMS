@@ -9,13 +9,13 @@
 		// optional
 		"References": [
 			// optional.
-			// The System will automatically add the ReferenceIngestionJobKey item
+			// The System will automatically add the ingestionJobKey item
 			//		using the key of the ingestion job by which this EMail depend on.
-			//		The ReferenceIngestionJobKey item is used by this task to prepare
+			//		The ingestionJobKey item is used by this task to prepare
 			//		all the MMS substitution (see the next comment)
 			// - title, optional
 
-			{ "ReferenceIngestionJobKey": 11 }
+			{ "ingestionJobKey": 11 }
 		],
 
 		// mandatory

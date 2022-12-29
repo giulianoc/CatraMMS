@@ -12,10 +12,10 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key
 			// of the video by which this video depend on.
-			// As references can be used "mediaItemKey" or "ReferenceUniqueName"
+			// As references can be used "mediaItemKey" or "uniqueName"
 
 			// The below object could contain optionally:
-			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			// - encodingProfileKey or encodingProfileLabel to specify
 			//		a specific profile
 			// - StopIfReferenceProcessingError in case of multiple References,
 			//		this boolean field specifies if the MMS has to continue or not

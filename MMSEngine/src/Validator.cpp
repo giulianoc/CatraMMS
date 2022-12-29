@@ -2627,7 +2627,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 int64_t referenceIngestionJobKey = -1;
                 bool referenceLabel = false;
 
-                field = "ReferenceIngestionJobKey";
+                field = "ingestionJobKey";
                 if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
                     field = "ReferenceLabel";
@@ -5669,10 +5669,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             field = "physicalPathKey";
             if (!JSONUtils::isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceIngestionJobKey";
+                field = "ingestionJobKey";
                 if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
-                    field = "ReferenceUniqueName";
+                    field = "uniqueName";
                     if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         field = "ReferenceLabel";
@@ -5737,8 +5737,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 tie(referenceContentType, ignore, ignore, ignore, ignore, ignore)
 					= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
-				string fieldEncodingProfileKey = "ReferenceEncodingProfileKey";
-				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
+				string fieldEncodingProfileKey = "encodingProfileKey";
+				string fieldEncodingProfileLabel = "encodingProfileLabel";
 				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
 				{
 					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);    
@@ -5907,8 +5907,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 referenceMediaItemKey = mediaItemKeyAndContentType.first;
                 referenceContentType = mediaItemKeyAndContentType.second;
 
-				string fieldEncodingProfileKey = "ReferenceEncodingProfileKey";
-				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
+				string fieldEncodingProfileKey = "encodingProfileKey";
+				string fieldEncodingProfileLabel = "encodingProfileLabel";
 				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
 				{
 					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot,
@@ -6095,10 +6095,10 @@ void Validator::fillReferencesOutput(
             field = "physicalPathKey";
             if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
             {
-                field = "ReferenceIngestionJobKey";
+                field = "ingestionJobKey";
                 if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
                 {
-                    field = "ReferenceUniqueName";
+                    field = "uniqueName";
                     if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
                     {
 						string sParametersRoot = JSONUtils::toString(parametersRoot);

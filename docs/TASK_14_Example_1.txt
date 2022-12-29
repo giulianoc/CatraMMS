@@ -6,7 +6,7 @@
 		"Type": "Email-Notification",
 		"Parameters": {
 			"References": [
-				{ "ReferenceIngestionJobKey": 11 }
+				{ "ingestionJobKey": 11 }
 			],
 			"ConfigurationLabel": "My email"
 		}

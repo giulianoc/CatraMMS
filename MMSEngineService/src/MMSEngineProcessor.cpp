@@ -15622,12 +15622,12 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 						if (chunkEncodingProfileKey != -1)
 						{
-							field = "ReferenceEncodingProfileKey";
+							field = "encodingProfileKey";
 							mediaItemKeyReferenceRoot[field] = chunkEncodingProfileKey;
 						}
 						else if (chunkEncodingProfileLabel != "")
 						{
-							field = "ReferenceEncodingProfileLabel";
+							field = "encodingProfileLabel";
 							mediaItemKeyReferenceRoot[field] = chunkEncodingProfileLabel;
 						}
 
@@ -21772,7 +21772,7 @@ void MMSEngineProcessor::emailNotificationThread(
 					try
 					{
 						Json::Value referenceRoot = referencesRoot[referenceIndex];
-						field = "ReferenceIngestionJobKey";
+						field = "ingestionJobKey";
 						if (JSONUtils::isMetadataPresent(referenceRoot, field))
 						{
 							int64_t referenceIngestionJobKey =

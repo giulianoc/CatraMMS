@@ -14,7 +14,7 @@
 			// the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video or the profile by which this task depend on.
-			// As reference can be used "mediaItemKey", "ReferenceUniqueName" or 
+			// As reference can be used "mediaItemKey", "uniqueName" or 
 			// "physicalPathKey".
 			// In case this task depend on one or more tasks generating videos, the videos will be 
 			// removed.
@@ -22,7 +22,7 @@
 			// the profiles will be removed.
 
 			// The below object could contain optionally:
-			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			// - encodingProfileKey or encodingProfileLabel to specify
 			//		a specific profile
 			// - StopIfReferenceProcessingError (in case of multiple References)
 			//		this boolean field specifies if the MMS has to continue or not

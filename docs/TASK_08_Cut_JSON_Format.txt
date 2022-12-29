@@ -16,10 +16,10 @@
 			// As reference can be used:
 			//    "mediaItemKey" or
 			//    "physicalPathKey"
-			//    "ReferenceUniqueName"
+			//    "uniqueName"
 
 			// The below object could contain optionally:
-			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			// - encodingProfileKey or encodingProfileLabel to specify
 			//		a specific profile
 			// - StopIfReferenceProcessingError in case of multiple References,
 			//		this boolean field specifies if the MMS has to continue or not
