@@ -31,7 +31,7 @@ if [ "$deploy" == "y" ]; then
 	date
 fi
 
-echo -n "deploy su cloud production? " 
+echo -n "deploy su cloud production (rel 22)? " 
 read deploy
 if [ "$deploy" == "y" ]; then
 	echo "hetzner-api-gui-1"
@@ -78,26 +78,12 @@ if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-cibortv1-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-35-152-80-3.eu-south-1.compute.amazonaws.com:/opt/catramms
 	date
 
-fi
-
-echo -n "deploy su cibortv? " 
-read deploy
-if [ "$deploy" == "y" ]; then
 	echo "aws-mms-api-gui-1"
-	#scp -i ~/ssh-keys/aws-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@aws-mms-api-gui-1:/opt/catramms
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-35-35-24.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-api-gui-2"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-243-155.eu-west-1.compute.amazonaws.com:/opt/catramms
-	date
-
-	echo "aws-mms-engine-db-1"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
-	date
-
-	echo "aws-mms-engine-db-2"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-transcoder-irl-1"
@@ -114,6 +100,19 @@ if [ "$deploy" == "y" ]; then
 
 	echo "aws-mms-transcoder-irl-4"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-215-51-62.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+fi
+
+echo -n "deploy su cibortv (rel 20)? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+	echo "aws-mms-engine-db-1"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-2"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aruba-mms-transcoder-1"
