@@ -13,7 +13,7 @@
 			//		using the key of the ingestion job by which this EMail depend on.
 			//		The ingestionJobKey item is used by this task to prepare
 			//		all the MMS substitution (see the next comment)
-			// - title, optional
+			// - mediaItemTitle, optional
 
 			{ "ingestionJobKey": 11 }
 		],

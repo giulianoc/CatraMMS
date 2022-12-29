@@ -19,13 +19,10 @@
 			// The below object could contain optionally:
 			// - encodingProfileKey or encodingProfileLabel to specify
 			//		a specific profile
-			// - "StopIfContentNotFound" in case of multiple References,
-			//		this boolean field specifies if the MMS has to continue or not
-			//		in case of a content not found. Default is false
-			// - StopIfReferenceProcessingError (in case of multiple References)
+			// - stopIfReferenceProcessingError (in case of multiple References)
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
-			// - title, optional
+			// - mediaItemTitle, optional
 
 			{ "mediaItemKey": 11 }
 		],

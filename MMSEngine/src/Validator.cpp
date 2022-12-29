@@ -5652,7 +5652,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         Json::Value referenceRoot = referencesRoot[referenceIndex];
 
 		bool stopIfReferenceProcessingError = false;
-		field = "StopIfReferenceProcessingError";
+		field = "stopIfReferenceProcessingError";
 		if (JSONUtils::isMetadataPresent(referenceRoot, field))
 			stopIfReferenceProcessingError =
 				JSONUtils::asBool(referenceRoot, field, stopIfReferenceProcessingError);
