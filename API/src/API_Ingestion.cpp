@@ -706,14 +706,14 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         {
             Json::Value referenceRoot = referencesRoot[referenceIndex];
 
-            field = "ReferenceLabel";
+            field = "label";
             if (JSONUtils::isMetadataPresent(referenceRoot, field))
             {
                 string referenceLabel = JSONUtils::asString(referenceRoot, field, "");
 
                 if (referenceLabel == "")
                 {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
+                    string errorMessage = __FILEREF__ + "The 'label' value cannot be empty"
 						+ ", processing label: " + taskOrGroupOfTasksLabel
 						+ ", referenceLabel: " + referenceLabel;
                     _logger->error(errorMessage);
@@ -725,7 +725,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 
                 if (ingestionJobKeys.size() == 0)
                 {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
+                    string errorMessage = __FILEREF__ + "The 'label' value is not found"
 						+ ", processing label: " + taskOrGroupOfTasksLabel
 						+ ", referenceLabel: " + referenceLabel;
                     _logger->error(errorMessage);
@@ -734,7 +734,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
                 }
                 else if (ingestionJobKeys.size() > 1)
                 {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+                    string errorMessage = __FILEREF__ + "The 'label' value cannot be used in more than one Task"
                             + ", referenceLabel: " + referenceLabel
                             + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
                             ;
@@ -1401,7 +1401,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			if (referenceLabel == "")
 			{
-				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
+				string errorMessage = __FILEREF__ + "The 'label' value cannot be empty"
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
@@ -1415,7 +1415,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 
 			if (ingestionJobKeys.size() == 0)
 			{
-				string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
+				string errorMessage = __FILEREF__ + "The 'label' value is not found"
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
@@ -1426,7 +1426,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 			else if (ingestionJobKeys.size() > 1)
 			{
-				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+				string errorMessage = __FILEREF__ + "The 'label' value cannot be used in more than one Task"
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
@@ -1950,14 +1950,14 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 			{
 				Json::Value referenceOutputRoot = referencesOutputRoot[referenceIndex];
 
-				field = "ReferenceLabel";
+				field = "label";
 				if (JSONUtils::isMetadataPresent(referenceOutputRoot, field))
 				{
 					string referenceLabel = JSONUtils::asString(referenceOutputRoot, field, "");
 
 					if (referenceLabel == "")
 					{
-						string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
+						string errorMessage = __FILEREF__ + "The 'label' value cannot be empty"
                             + ", referenceLabel: " + referenceLabel;
 						_logger->error(errorMessage);
 
@@ -1968,7 +1968,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 
 					if (ingestionJobKeys.size() == 0)
 					{
-						string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
+						string errorMessage = __FILEREF__ + "The 'label' value is not found"
                             + ", referenceLabel: " + referenceLabel;
 						_logger->error(errorMessage);
 
@@ -1976,7 +1976,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 					}
 					else if (ingestionJobKeys.size() > 1)
 					{
-						string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+						string errorMessage = __FILEREF__ + "The 'label' value cannot be used in more than one Task"
                             + ", referenceLabel: " + referenceLabel
                             + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
                             ;

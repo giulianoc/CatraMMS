@@ -75,8 +75,8 @@
       "ExecutionType": "parallel",
 	  "ProcessingStartingFrom": "${ProcessingStartingFrom}",
       "ReferencesOutput": [
-        {"ReferenceLabel": "Frame Containing Face: ${Title}"},
-        {"ReferenceLabel": "Frame: ${Title}"}
+        {"label": "Frame Containing Face: ${Title}"},
+        {"label": "Frame: ${Title}"}
       ],
       "Tasks": [{
         "Label": "Frame Containing Face: ${Title}",

@@ -20,7 +20,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the keys
 			// of the videos.
-			// As reference can be used "ReferenceLabel", "mediaItemKey" or "uniqueName"
+			// As reference can be used "label", "mediaItemKey" or "uniqueName"
 
 			// The below object could contain optionally:
 			// - encodingProfileKey or encodingProfileLabel to specify

@@ -2630,7 +2630,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 field = "ingestionJobKey";
                 if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
-                    field = "ReferenceLabel";
+                    field = "Label";
                     if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -5675,7 +5675,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     field = "uniqueName";
                     if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
-                        field = "ReferenceLabel";
+                        field = "label";
                         if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
                             string sParametersRoot = JSONUtils::toString(parametersRoot);

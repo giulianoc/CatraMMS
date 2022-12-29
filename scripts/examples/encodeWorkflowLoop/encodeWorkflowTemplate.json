@@ -5,7 +5,7 @@
                 "Parameters": {
                         "EncodingPriority": "Low",
                         "EncodingProfileLabel": "MMS_H264_veryfast_360p25_aac_92",
-                        "References": [{"ReferencePhysicalPathKey": __REFERENCEPHYSICALPATHKEY__}]
+                        "References": [{"physicalPathKey": __REFERENCEPHYSICALPATHKEY__}]
                 },
                 "Type": "Encode"
         },

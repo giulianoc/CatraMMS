@@ -54,8 +54,8 @@
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",                                
 					"EncodingPriority": "High",                                                               
 					"References": [                                                                           
-						{ "ReferenceLabel": "my image encode", "EncodingProfileLabel": "Profile Logo" },      
-						{ "ReferenceLabel": "${TitleOfVideo_1}" }                                             
+						{ "label": "my image encode", "EncodingProfileLabel": "Profile Logo" },      
+						{ "label": "${TitleOfVideo_1}" }                                             
 					],                                                                                        
 					"UserData": { "MyData": "this is my overlay data" },                                      
 					"Title": "${TitleOfOverlayVideo_1}"                                                       
