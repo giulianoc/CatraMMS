@@ -14,8 +14,8 @@
 			// the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video or the profile by which this task depend on.
-			// As reference can be used "referenceMediaItemKey", "ReferenceUniqueName" or 
-			// "ReferencePhysicalPathKey".
+			// As reference can be used "mediaItemKey", "ReferenceUniqueName" or 
+			// "physicalPathKey".
 			// In case this task depend on one or more tasks generating videos, the videos will be 
 			// uploaded.
 			// In case this task depend on one or more tasks generating profiles (i.e. Encode Task),
@@ -29,7 +29,7 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		// Optional. This tag is used in the scenario where it is needed to call the callback for both

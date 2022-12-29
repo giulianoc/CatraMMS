@@ -9,7 +9,7 @@
 		"Type": "Cut",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 }
+				{ "mediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 1.0,
 			"EndTimeInSeconds": 5.0,

@@ -9,7 +9,7 @@
 		"Type": "I-Frames",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 }
+				{ "mediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 0.0,
 			"MaxFramesNumber": 5,

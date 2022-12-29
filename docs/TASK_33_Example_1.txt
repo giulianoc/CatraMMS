@@ -9,8 +9,8 @@
 		"Type": "Picture-In-Picture",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 },
-				{ "referenceMediaItemKey": 12 }
+				{ "mediaItemKey": 11 },
+				{ "mediaItemKey": 12 }
 			],
 			"OverlayPosition_X_InPixel": "10",                                  
 			"OverlayPosition_Y_InPixel": "10",                                

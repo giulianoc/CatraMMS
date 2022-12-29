@@ -5,7 +5,7 @@
 
 	"Parameters": {
 		"References": [
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		"Tracks": [

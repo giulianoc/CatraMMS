@@ -9,8 +9,8 @@
 		"Type": "Media-Cross-Reference",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 },
-				{ "referenceMediaItemKey": 12 }
+				{ "mediaItemKey": 11 },
+				{ "mediaItemKey": 12 }
 			],
 			"Type": "imageOfVideo",
 			"UserData": { "MyData": "this is my data" }

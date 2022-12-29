@@ -14,8 +14,8 @@
 			// the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video or the profile by which this task depend on.
-			// As reference can be used "referenceMediaItemKey", "ReferenceUniqueName" or 
-			// "ReferencePhysicalPathKey".
+			// As reference can be used "mediaItemKey", "ReferenceUniqueName" or 
+			// "physicalPathKey".
 			// In case this task depend on one task generating a media, the media will be 
 			// used.
 			// In case this task depend on one task generating a profile (i.e. Encode Task),
@@ -27,9 +27,9 @@
 			// - StopIfReferenceProcessingError in case of multiple References,
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
-			// - title, optional
+			// - mediaItemTitle, optional
 
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		// Optional. This tag is used in the scenario where it is needed to Post on YouTube both

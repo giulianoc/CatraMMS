@@ -14,8 +14,8 @@
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video by which this Cut depend on.
 			// As reference can be used:
-			//    "referenceMediaItemKey" or
-			//    "ReferencePhysicalPathKey"
+			//    "mediaItemKey" or
+			//    "physicalPathKey"
 			//    "ReferenceUniqueName"
 
 			// The below object could contain optionally:
@@ -24,9 +24,9 @@
 			// - StopIfReferenceProcessingError in case of multiple References,
 			//		this boolean field specifies if the MMS has to continue or not
 			//		in case of an error during the processing. Default is false
-			// - title, optional
+			// - mediaItemTitle, optional
 
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		// mandatory 

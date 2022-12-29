@@ -9,7 +9,7 @@
 		"Type": "Motion-JPEG-by-Periodical-Frames",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 }
+				{ "mediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 1.5,
 			"PeriodInSeconds": 2,

@@ -9,7 +9,7 @@
 		"Type": "Frame",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 }
+				{ "mediaItemKey": 11 }
 			],
 			"InstantInSeconds": 2.5,
 			"UserData": { "MyData": "this is my data" },

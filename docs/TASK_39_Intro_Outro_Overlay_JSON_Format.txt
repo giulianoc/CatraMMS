@@ -17,7 +17,7 @@
 			//	then the main video and last is the outro video
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... 
-			// As reference can be used "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -27,9 +27,9 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "referenceMediaItemKey": 11 },
-			{ "referenceMediaItemKey": 12 },
-			{ "referenceMediaItemKey": 13 }
+			{ "mediaItemKey": 11 },
+			{ "mediaItemKey": 12 },
+			{ "mediaItemKey": 13 }
 		],
 
 		// mandatory: it specifies the duration in seconds of the overlay

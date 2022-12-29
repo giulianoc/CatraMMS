@@ -9,8 +9,8 @@
 		"Type": "Concat-Demuxer",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 11 },
-				{ "referenceMediaItemKey": 12 }
+				{ "mediaItemKey": 11 },
+				{ "mediaItemKey": 12 }
 			],
 			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"

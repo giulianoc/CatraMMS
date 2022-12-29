@@ -9,12 +9,12 @@
 		"Type": "Slideshow",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 100 },
-				{ "referenceMediaItemKey": 101 },
-				{ "referenceMediaItemKey": 103 },
-				{ "referenceMediaItemKey": 104 },
-				{ "referenceMediaItemKey": 105 },
-				{ "referenceMediaItemKey": 106 }
+				{ "mediaItemKey": 100 },
+				{ "mediaItemKey": 101 },
+				{ "mediaItemKey": 103 },
+				{ "mediaItemKey": 104 },
+				{ "mediaItemKey": 105 },
+				{ "mediaItemKey": 106 }
 			],
 			"DurationOfEachSlideInSeconds": 5,
 			"OutputFrameRate": 30,

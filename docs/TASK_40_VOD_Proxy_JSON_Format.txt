@@ -12,7 +12,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key
 			// of the video by which this video depend on.
-			// As references can be used "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As references can be used "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -24,7 +24,7 @@
 
 			// it works also in case of an external transcoder
 
-			{ "referenceMediaItemKey": 12 }
+			{ "mediaItemKey": 12 }
 		],
 
 		// Optional. This tag is used in the scenario where it is needed to proxy both

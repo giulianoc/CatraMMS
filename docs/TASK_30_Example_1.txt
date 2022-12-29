@@ -9,7 +9,7 @@
 		"Type": "Change-File-Format",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 12 }
+				{ "mediaItemKey": 12 }
 			],
 			OutputFileFormat="mp4"
 		}

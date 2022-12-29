@@ -20,7 +20,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the keys
 			// of the videos.
-			// As reference can be used "ReferenceLabel", "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "ReferenceLabel", "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -30,8 +30,8 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "referenceMediaItemKey": 11 },
-			{ "referenceMediaItemKey": 12 }
+			{ "mediaItemKey": 11 },
+			{ "mediaItemKey": 12 }
 		],
 
 		// optional. By default the second video will be overlayed on the second (true)

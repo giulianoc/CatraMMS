@@ -8,7 +8,7 @@
         "RtmpUrl": "rtmp://aaa/bbb"
       }],
       "References": [
-        {"ReferencePhysicalPathKey": 1630295}
+        {"physicalPathKey": 1630295}
       ],
       "TimePeriod": false
     },

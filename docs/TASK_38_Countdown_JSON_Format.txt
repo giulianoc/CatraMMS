@@ -14,7 +14,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the picture
-			// As reference can be used "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -26,7 +26,7 @@
 
 			// It works also in case of an external transcoder
 
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		// mandatory: It specifies the proxy period, his format is:

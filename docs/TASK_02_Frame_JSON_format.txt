@@ -14,7 +14,7 @@
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video by which this frame depend on.
-			// As reference can be used "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -27,7 +27,7 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "referenceMediaItemKey": 11 }
+			{ "mediaItemKey": 11 }
 		],
 
 		// optional. default is 0 

@@ -9,7 +9,7 @@
 		"Type": "Overlay-Text-On-Video",
 		"Parameters": {
 			"References": [
-				{ "referenceMediaItemKey": 12 }
+				{ "mediaItemKey": 12 }
 			],
 
 			"Text": "This video is for adult",                                  

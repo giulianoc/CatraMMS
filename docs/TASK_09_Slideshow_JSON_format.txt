@@ -10,7 +10,7 @@
 		//	The width/height of the Images has to be divisible by 2 (required by h.264 codec)
 		"References": [
 			// mandatory. As many References as the number of images and number of audio.
-			// As reference can be used "referenceMediaItemKey" or "ReferenceUniqueName"
+			// As reference can be used "mediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
@@ -20,8 +20,8 @@
 			//		in case of an error during the processing. Default is false
 			// - title, optional
 
-			{ "referenceMediaItemKey": 11 },
-			{ "referenceMediaItemKey": 12 }
+			{ "mediaItemKey": 11 },
+			{ "mediaItemKey": 12 }
 		],
 
 		// Optional. This tag is used in the scenario where it is needed to use both
