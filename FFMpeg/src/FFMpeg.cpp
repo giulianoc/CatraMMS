@@ -2849,7 +2849,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 				}
 			}
 			if (boxBorderW != -1)
-				ffmpegDrawTextFilter += (":boxborderw=" + boxBorderW);                
+				ffmpegDrawTextFilter += (":boxborderw=" + to_string(boxBorderW));                
 		}
 	}
 
