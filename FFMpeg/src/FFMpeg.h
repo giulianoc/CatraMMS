@@ -125,20 +125,7 @@ public:
 		string mmsSourceVideoAssetPathName,
 		int64_t videoDurationInMilliSeconds,
 
-		string text,
-		int reloadAtFrameInterval,
-		string textPosition_X_InPixel,
-		string textPosition_Y_InPixel,
-		string fontType,
-		int fontSize,
-		string fontColor,
-		int textPercentageOpacity,
-		int shadowX,
-		int shadowY,
-		bool boxEnable,
-		string boxColor,
-		int boxPercentageOpacity,
-
+		Json::Value drawTextDetailsRoot,
 		Json::Value encodingProfileDetailsRoot,
 		string stagingEncodedAssetPathName,
 		int64_t encodingJobKey,
@@ -568,6 +555,7 @@ private:
 		bool boxEnable,
 		string boxColor,
 		int boxPercentageOpacity,
+		int boxBorderW,
 		int64_t streamingDurationInSeconds
 	);
 

@@ -232,6 +232,9 @@
 
 					// optional
 					"boxPercentageOpacity": 20,
+
+					// optional
+					"boxBorderW": 0
 				}
 			}
 		],

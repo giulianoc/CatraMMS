@@ -170,38 +170,13 @@ void OverlayTextOnVideo::encodeContent(
 		}
 
 		Json::Value drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
-		string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
-        int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
-		string textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_X_InPixel", "");
-		string textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, "textPosition_Y_InPixel", "");
-		string fontType = JSONUtils::asString(drawTextDetailsRoot, "fontType", "");
-        int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
-		string fontColor = JSONUtils::asString(drawTextDetailsRoot, "fontColor", "");
-		int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
-			"textPercentageOpacity", -1);
-		int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
-		int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
-		bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
-		string boxColor = JSONUtils::asString(drawTextDetailsRoot, "boxColor", "");
-		int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, "boxPercentageOpacity", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 		_encoding->_ffmpeg->overlayTextOnVideo(
 			sourceAssetPathName,
 			videoDurationInMilliSeconds,
 
-			text,
-			reloadAtFrameInterval,
-			textPosition_X_InPixel,
-			textPosition_Y_InPixel,
-			fontType,
-			fontSize,
-			fontColor,
-			textPercentageOpacity,
-			shadowX, shadowY,
-			boxEnable,
-			boxColor,
-			boxPercentageOpacity,
+			drawTextDetailsRoot,
 
 			encodingProfileDetailsRoot,
 

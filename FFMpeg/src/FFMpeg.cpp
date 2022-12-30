@@ -2153,19 +2153,7 @@ void FFMpeg::overlayTextOnVideo(
 	string mmsSourceVideoAssetPathName,
 	int64_t videoDurationInMilliSeconds,
 
-	string text,
-	int reloadAtFrameInterval,
-	string textPosition_X_InPixel,
-	string textPosition_Y_InPixel,
-	string fontType,
-	int fontSize,
-	string fontColor,
-	int textPercentageOpacity,
-	int shadowX,
-	int shadowY,
-	bool boxEnable,
-	string boxColor,
-	int boxPercentageOpacity,
+	Json::Value drawTextDetailsRoot,
 
 	Json::Value encodingProfileDetailsRoot,
 	string stagingEncodedAssetPathName,
@@ -2368,6 +2356,25 @@ void FFMpeg::overlayTextOnVideo(
 		}
 
         {
+			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
+			int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
+			string textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot,
+				"textPosition_X_InPixel", "");
+			string textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot,
+				"textPosition_Y_InPixel", "");
+			string fontType = JSONUtils::asString(drawTextDetailsRoot, "fontType", "");
+			int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
+			string fontColor = JSONUtils::asString(drawTextDetailsRoot, "fontColor", "");
+			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
+				"textPercentageOpacity", -1);
+			int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
+			int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
+			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
+			string boxColor = JSONUtils::asString(drawTextDetailsRoot, "boxColor", "");
+			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
+				"boxPercentageOpacity", -1);
+			int boxBorderW = JSONUtils::asInt(drawTextDetailsRoot, "boxBorderW", 0);
+
 			{
 				textTemporaryFileName =
 					_ffmpegTempDir + "/"
@@ -2391,7 +2398,7 @@ void FFMpeg::overlayTextOnVideo(
 				"", textTemporaryFileName, reloadAtFrameInterval,
 				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowX, shadowY,
-				boxEnable, boxColor, boxPercentageOpacity, -1);
+				boxEnable, boxColor, boxPercentageOpacity, boxBorderW, -1);
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
@@ -2683,6 +2690,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 	bool boxEnable,
 	string boxColor,
 	int boxPercentageOpacity,
+	int boxBorderW,
 	int64_t streamingDurationInSeconds	// used in case of countdown
 )
 {
@@ -2840,6 +2848,8 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 					ffmpegDrawTextFilter += ("@" + string(opacity));                
 				}
 			}
+			if (boxBorderW != -1)
+				ffmpegDrawTextFilter += (":boxborderw=" + boxBorderW);                
 		}
 	}
 
@@ -12139,10 +12149,13 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			field = "boxPercentageOpacity";
 			boxPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
 
+			field = "boxBorderW";
+			int boxBorderW = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
+
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
 				fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
-				boxEnable, boxColor, boxPercentageOpacity,
+				boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
 				streamingDurationInSeconds);
 		}
 	}
@@ -12248,11 +12261,14 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			field = "boxPercentageOpacity";
 			boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
 
+			field = "boxBorderW";
+			int boxBorderW = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
+
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				"", textTemporaryFileName, reloadAtFrameInterval,
 				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowx, shadowy,
-				boxEnable, boxColor, boxPercentageOpacity,
+				boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
 				streamingDurationInSeconds);
 		}
 

@@ -83,6 +83,9 @@
 
 			// optional
 			"boxPercentageOpacity": 20,
+
+			// optional
+			"boxBorderW": 0
 		}
 
 		// optional. Possible values: Low, Medium, High
