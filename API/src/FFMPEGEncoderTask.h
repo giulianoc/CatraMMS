@@ -76,9 +76,10 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			Json::Value userDataRoot,
 			Json::Value ingestedParametersRoot,	// it could be also nullValue
 
-			// in case of a Variant
-			int64_t variantOfMediaItemKey = -1,		// in case of a variant, otherwise -1
-			int64_t variantEncodingProfileKey = -1);	// in case of a variant, otherwise -1
+			int64_t encodingProfileKey,
+
+			int64_t variantOfMediaItemKey = -1	// in case of a variant, otherwise -1
+		);
 
 		void uploadLocalMediaToMMS(
 			int64_t ingestionJobKey,
@@ -90,8 +91,9 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			string encodedStagingAssetPathName,
 			string workflowLabel,
 			string ingester,
-			int64_t variantOfMediaItemKey = -1,	// in case Media is a variant of a MediaItem already present
-			int64_t variantEncodingProfileKey = -1);	// in case Media is a variant of a MediaItem already present
+			int64_t encodingProfileKey,
+			int64_t variantOfMediaItemKey = -1	// in case Media is a variant of a MediaItem already present
+		);
 
 		string downloadMediaFromMMS(
 			int64_t ingestionJobKey,

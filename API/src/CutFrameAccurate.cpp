@@ -203,6 +203,9 @@ void CutFrameAccurate::encodeContent(
 				+ " (add cutFrameAccurate from external transcoder)"
 			;
 
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
+				"encodingProfileKey", -1);
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				_encodingJobKey,
@@ -212,7 +215,8 @@ void CutFrameAccurate::encodeContent(
 				sourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"External Transcoder"	// ingester
+				"External Transcoder",	// ingester
+				encodingProfileKey
 			);
 		}
     }

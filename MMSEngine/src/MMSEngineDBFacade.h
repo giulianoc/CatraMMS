@@ -1748,7 +1748,7 @@ public:
 	void addEncoding_SlideShowJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		Json::Value encodingProfileDetailsRoot, string targetFileFormat,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 		Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
@@ -1846,7 +1846,7 @@ public:
 		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,                                                        
 		string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,                                                         
 		string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
-		Json::Value encodingProfileDetailsRoot,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 		EncodingPriority encodingPriority);
@@ -1861,7 +1861,7 @@ public:
 		int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
 		string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName,                    
 		bool soundOfMain,
-		Json::Value encodingProfileDetailsRoot,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 		EncodingPriority encodingPriority);
@@ -1973,6 +1973,7 @@ public:
         int64_t ingestionJobKey,
         bool ingestionRowToBeUpdatedAsSuccess,
         MMSEngineDBFacade::ContentType contentType,
+		int64_t encodingProfileKey,
         Json::Value parametersRoot,
 		bool externalReadOnlyStorage,
         string relativePath,
@@ -1984,20 +1985,6 @@ public:
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
-		/*
-        int64_t durationInMilliSeconds,
-        long bitRate,
-        string videoCodecName,
-        string videoProfile,
-        int videoWidth,
-        int videoHeight,
-        string videoAvgFrameRate,
-        long videoBitRate,
-        string audioCodecName,
-        long audioSampleRate,
-        int audioChannels,
-        long audioBitRate,
-		*/
 
         // image
         int imageWidth,

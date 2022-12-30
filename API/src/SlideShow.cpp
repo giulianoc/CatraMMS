@@ -315,6 +315,9 @@ void SlideShow::encodeContent(
 				+ " (add slideShow from external transcoder)"
 			;
 
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
+				"encodingProfileKey", -1);
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				_encodingJobKey,
@@ -324,7 +327,8 @@ void SlideShow::encodeContent(
 				targetFileFormat,	// sourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"External Transcoder"	// ingester
+				"External Transcoder",	// ingester
+				encodingProfileKey
 			);
 		}
     }

@@ -324,6 +324,9 @@ void PictureInPicture::encodeContent(
 				+ " (add pictureInPicture from external transcoder)"
 			;
 
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
+				"encodingProfileKey", -1);
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				_encodingJobKey,
@@ -333,7 +336,8 @@ void PictureInPicture::encodeContent(
 				mainSourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"External Transcoder"	// ingester
+				"External Transcoder",	// ingester
+				encodingProfileKey
 			);
 		}
     }

@@ -5185,6 +5185,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         int64_t ingestionJobKey,
         bool ingestionRowToBeUpdatedAsSuccess,        
         MMSEngineDBFacade::ContentType contentType,
+		int64_t encodingProfileKey,
         Json::Value parametersRoot,
 		bool externalReadOnlyStorage,
         string relativePath,
@@ -5569,7 +5570,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 			}
 
-			int64_t encodingProfileKey = -1;
 			physicalPathKey = saveVariantContentMetadata(
 				conn,
 

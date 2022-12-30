@@ -415,6 +415,9 @@ void IntroOutroOverlay::encodeContent(
 				+ " (add introOutroOverlay from external transcoder)"
 			;
 
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
+				"encodingProfileKey", -1);
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				_encodingJobKey,
@@ -424,7 +427,8 @@ void IntroOutroOverlay::encodeContent(
 				mainSourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"External Transcoder"	// ingester
+				"External Transcoder",	// ingester
+				encodingProfileKey
 			);
 		}
     }

@@ -7855,11 +7855,22 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
+		// 2022-12-30: indipendentemente se si tratta di una variante o di un source,
+		//	è possibile indicare encodingProfileKey
+		//	Ad esempio: se si esegue un Task OverlayText dove si specifica l'encoding profile,
+		//	il file generato e ingestato in MMS è un source ed ha anche uno specifico profilo.
+		int64_t encodingProfileKey = -1;
+		{
+			string field = "encodingProfileKey";
+			encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
+		}
+
 		if (variantOfMediaItemKey == -1)
 		{
 			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata..."
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent.getExternalReadOnlyStorage())
 				+ ", relativePathToBeUsed: " + relativePathToBeUsed
@@ -7882,6 +7893,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                     localAssetIngestionEvent.getIngestionJobKey(),
                     localAssetIngestionEvent.getIngestionRowToBeUpdatedAsSuccess(),
                     contentType,
+					encodingProfileKey,
                     parametersRoot,
 					localAssetIngestionEvent.getExternalReadOnlyStorage(),
                     relativePathToBeUsed,
@@ -7913,13 +7925,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		}
 		else
 		{
-			int64_t encodingProfileKey = -1;
-
-			{
-				string field = "variantEncodingProfileKey";
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
-			}
-
 			string externalDeliveryTechnology;
 			string externalDeliveryURL;
 			{
@@ -18860,7 +18865,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 		}
 
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-			encodingProfileDetailsRoot, targetFileFormat,
+			encodingProfileKey, encodingProfileDetailsRoot, targetFileFormat,
 			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
@@ -20769,7 +20774,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			sourceMediaItemKey, sourcePhysicalPathKey,
 			sourceAssetPathName, sourceDurationInMilliSeconds, sourceFileExtension,
 			sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
-			encodingProfileDetailsRoot,
+			encodingProfileKey, encodingProfileDetailsRoot,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
@@ -21011,7 +21016,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			overlaySourceDurationInMilliSeconds, overlaySourceFileExtension,
 			overlaySourcePhysicalDeliveryURL, overlaySourceTranscoderStagingAssetPathName,
 			soundOfMain,
-			encodingProfileDetailsRoot,
+			encodingProfileKey, encodingProfileDetailsRoot,
 			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
@@ -21203,8 +21208,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		}
 
 		_mmsEngineDBFacade->addEncoding_IntroOutroOverlayJob (workspace, ingestionJobKey,
-			encodingProfileKey,
-			encodingProfileDetailsRoot,
+			encodingProfileKey, encodingProfileDetailsRoot,
 
 			introSourcePhysicalPathKey, introSourceAssetPathName,
 			introSourceFileExtension, introSourceDurationInMilliSeconds,

@@ -2511,9 +2511,9 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
         field = "sourceMediaItemKey";
         sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, 0);
 
-        field = "encodingProfileKey";
-        encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
-				field, 0);
+		field = "encodingProfileKey";
+		encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+			field, -1);
 
 		field = "PhysicalItemRetention";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
@@ -3048,7 +3048,6 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
@@ -3169,7 +3168,6 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
@@ -3410,7 +3408,6 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
@@ -3531,7 +3528,6 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay()
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
@@ -3862,8 +3858,6 @@ void EncoderVideoAudioProxy::processSlideShow()
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-
-        
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
@@ -5235,7 +5229,6 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
             throw runtime_error(errorMessage);
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-
 
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,

@@ -6064,7 +6064,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-	Json::Value encodingProfileDetailsRoot, string targetFileFormat,
+	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot, string targetFileFormat,
 	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
@@ -6104,6 +6104,9 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 			string field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "encodingProfileKey";
+			parametersRoot[field] = encodingProfileKey;
 
 			field = "targetFileFormat";
 			parametersRoot[field] = targetFileFormat;
@@ -8673,7 +8676,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,                                                        
 	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,                                                         
 	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
-	Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 	EncodingPriority encodingPriority)
@@ -8731,6 +8734,9 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 			field = "sourceTranscoderStagingAssetPathName";
 			parametersRoot[field] = sourceTranscoderStagingAssetPathName;
+
+			field = "encodingProfileKey";
+			parametersRoot[field] = encodingProfileKey;
 
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
@@ -9006,7 +9012,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 	int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
 	string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName,                    
 	bool soundOfMain,
-	Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 	EncodingPriority encodingPriority)
@@ -9088,6 +9094,9 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
 			field = "soundOfMain";
 			parametersRoot[field] = soundOfMain;
+
+			field = "encodingProfileKey";
+			parametersRoot[field] = encodingProfileKey;
 
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;

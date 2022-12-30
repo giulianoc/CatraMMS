@@ -129,8 +129,8 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	string encodedStagingAssetPathName,
 	string workflowLabel,
 	string ingester,
-	int64_t variantOfMediaItemKey,	// in case Media is a variant of a MediaItem already present
-	int64_t variantEncodingProfileKey	// in case Media is a variant of a MediaItem already present
+	int64_t encodingProfileKey,
+	int64_t variantOfMediaItemKey	// in case Media is a variant of a MediaItem already present
 )
 {
 	string field;
@@ -239,7 +239,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		if (fileFormat == "hls")
 			localFileFormat = "m3u8-tar.gz";
 
-		if (variantOfMediaItemKey != -1 && variantEncodingProfileKey != -1)
+		if (variantOfMediaItemKey != -1)
 		{
 			workflowMetadata = buildAddContentIngestionWorkflow(
 				ingestionJobKey, workflowLabel, localFileFormat, ingester,
@@ -247,8 +247,8 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				"",	// title
 				userDataRoot,
 				Json::nullValue,
-				variantOfMediaItemKey,
-				variantEncodingProfileKey
+				encodingProfileKey,
+				variantOfMediaItemKey
 			);
 		}
 		else
@@ -258,7 +258,8 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				"",	// sourceURL
 				"",	// title
 				userDataRoot,
-				ingestedParametersRoot
+				ingestedParametersRoot,
+				encodingProfileKey
 			);
 		}
 	}
@@ -678,10 +679,9 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 	string title,
 	Json::Value userDataRoot,
 	Json::Value ingestedParametersRoot,	// it could be also nullValue
+	int64_t encodingProfileKey,
 
-	// in case of a Variant
-	int64_t variantOfMediaItemKey,		// in case of a variant, otherwise -1
-	int64_t variantEncodingProfileKey	// in case of a variant, otherwise -1
+	int64_t variantOfMediaItemKey		// in case of a variant, otherwise -1
 )
 {
 	string workflowMetadata;
@@ -710,8 +710,8 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			field = "variantOfMediaItemKey";
 			addContentParametersRoot[field] = variantOfMediaItemKey;
 
-			field = "variantEncodingProfileKey";
-			addContentParametersRoot[field] = variantEncodingProfileKey;
+			field = "encodingProfileKey";
+			addContentParametersRoot[field] = encodingProfileKey;
 
 			if (userDataRoot != Json::nullValue)
 			{
@@ -758,6 +758,12 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			{
 				field = "UserData";
 				addContentParametersRoot[field] = userDataRoot;
+			}
+
+			if (encodingProfileKey != -1)
+			{
+				field = "encodingProfileKey";
+				addContentParametersRoot[field] = encodingProfileKey;
 			}
 		}
 

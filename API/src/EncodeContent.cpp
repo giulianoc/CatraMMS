@@ -271,8 +271,8 @@ void EncodeContent::encodeContent(
 				encodedStagingAssetPathName,
 				workflowLabel,
 				"External Transcoder",	// ingester
-				sourceMediaItemKey,
-				encodingProfileKey
+				encodingProfileKey,
+				sourceMediaItemKey
 			);
 		}
     }

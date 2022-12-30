@@ -212,6 +212,9 @@ void VideoSpeed::encodeContent(
 				+ " (add videoSpeed from external transcoder)"
 			;
 
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
+				"encodingProfileKey", -1);
+
 			uploadLocalMediaToMMS(
 				ingestionJobKey,
 				_encodingJobKey,
@@ -221,7 +224,8 @@ void VideoSpeed::encodeContent(
 				sourceFileExtension,
 				encodedStagingAssetPathName,
 				workflowLabel,
-				"External Transcoder"	// ingester
+				"External Transcoder",	// ingester
+				encodingProfileKey
 			);
 		}
     }

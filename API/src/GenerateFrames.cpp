@@ -628,6 +628,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	try
 	{
 		string sourceURL = "move://" + imagesDirectory + "/" + generatedFrameFileName;
+		int64_t encodingProfileKey = -1;
 		workflowMetadata = buildAddContentIngestionWorkflow(
 			ingestionJobKey, addContentTitle,
 			outputFileFormat,
@@ -635,7 +636,8 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			sourceURL,
 			addContentTitle,
 			userDataRoot,
-			ingestedParametersRoot
+			ingestedParametersRoot,
+			encodingProfileKey
 		);
 
 		{
