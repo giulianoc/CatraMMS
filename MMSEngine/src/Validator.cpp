@@ -6466,7 +6466,18 @@ bool Validator::isColorValid(string color)
         if (color == validColor) 
             return true;
     }
-    
+
+	if (color.size() == 7
+		&& color[0] == '#'
+		&& isxdigit(color[1])
+		&& isxdigit(color[2])
+		&& isxdigit(color[3])
+		&& isxdigit(color[4])
+		&& isxdigit(color[5])
+		&& isxdigit(color[6])
+	)
+		return true;
+
     return false;
 }
 
