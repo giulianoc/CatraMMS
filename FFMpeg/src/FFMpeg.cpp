@@ -2798,18 +2798,18 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		else if (textPosition_X_InPixel == "leftToRight_false")
 			ffmpegTextPosition_X_InPixel = "(10 * t) - text_w";
 		else if (textPosition_X_InPixel == "loopLeftToRight_slow")
-			ffmpegTextPosition_X_InPixel = "mod(5 * t, w + text_w) - text_w";
+			ffmpegTextPosition_X_InPixel = "mod(5 * t\\, w + text_w) - text_w";
 		else if (textPosition_X_InPixel == "loopLeftToRight_fast")
-			ffmpegTextPosition_X_InPixel = "mod(10 * t, w + text_w) - text_w";
+			ffmpegTextPosition_X_InPixel = "mod(10 * t\\, w + text_w) - text_w";
 
 		else if (textPosition_X_InPixel == "rightToLeft_slow")
 			ffmpegTextPosition_X_InPixel = "w - ((w - text_w)/10)*t";
 		else if (textPosition_X_InPixel == "rightToLeft_fast")
 			ffmpegTextPosition_X_InPixel = "w - ((w - text_w)/5)*t";
 		else if (textPosition_X_InPixel == "loopRightToLeft_slow")
-			ffmpegTextPosition_X_InPixel = "w - (w - text_w)/10*mod(t, 10)";
+			ffmpegTextPosition_X_InPixel = "w - ((w / 10) * mod(t\\, 10))";
 		else if (textPosition_X_InPixel == "loopRightToLeft_fast")
-			ffmpegTextPosition_X_InPixel = "w - (w - text_w)/5*mod(t, 10)";
+			ffmpegTextPosition_X_InPixel = "w - (w - text_w)/5*mod(t\\, 10)";
 		else
 		{
 			ffmpegTextPosition_X_InPixel = 
@@ -2836,18 +2836,18 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		else if (textPosition_Y_InPixel == "bottomToTop_false")
 			ffmpegTextPosition_Y_InPixel = "h - (t * 100)";
 		else if (textPosition_Y_InPixel == "loopBottomToTop_slow")
-			ffmpegTextPosition_Y_InPixel = "h - mod(t * 50, h)";
+			ffmpegTextPosition_Y_InPixel = "h - mod(t * 50\\, h)";
 		else if (textPosition_Y_InPixel == "loopBottomToTop_fast")
-			ffmpegTextPosition_Y_InPixel = "h - mod(t * 100, h)";
+			ffmpegTextPosition_Y_InPixel = "h - mod(t * 100\\, h)";
 
 		else if (textPosition_Y_InPixel == "topToBottom_slow")
 			ffmpegTextPosition_Y_InPixel = "t * 50";
 		else if (textPosition_Y_InPixel == "topToBottom_fast")
 			ffmpegTextPosition_Y_InPixel = "t * 100";
 		else if (textPosition_Y_InPixel == "loopTopToBottom_slow")
-			ffmpegTextPosition_Y_InPixel = "mod(t * 50, h)";
+			ffmpegTextPosition_Y_InPixel = "mod(t * 50\\, h)";
 		else if (textPosition_Y_InPixel == "loopTopToBottom_fast")
-			ffmpegTextPosition_Y_InPixel = "mod(t * 100, h)";
+			ffmpegTextPosition_Y_InPixel = "mod(t * 100\\, h)";
 		else
 		{
 			ffmpegTextPosition_Y_InPixel = 
