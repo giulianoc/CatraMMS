@@ -2784,23 +2784,81 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 
 		* 5447324 is the countdown duration expressed in seconds
 		*/
-		string ffmpegTextPosition_X_InPixel = 
-			regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
-		ffmpegTextPosition_X_InPixel = 
-			regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
-		ffmpegTextPosition_X_InPixel = 
-			regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
-		ffmpegTextPosition_X_InPixel = 
-			regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
+		string ffmpegTextPosition_X_InPixel;
+		if (textPosition_X_InPixel == "left")
+			ffmpegTextPosition_X_InPixel = 20;
+		else if (textPosition_X_InPixel == "center")
+			ffmpegTextPosition_X_InPixel = "(w - text_w)/2";
+		else if (textPosition_X_InPixel == "right")
+			ffmpegTextPosition_X_InPixel = "w - (text_w + 20)";
 
-		string ffmpegTextPosition_Y_InPixel = 
-			regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
-		ffmpegTextPosition_Y_InPixel = 
-			regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
-		ffmpegTextPosition_Y_InPixel = 
-			regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
-		ffmpegTextPosition_Y_InPixel = 
-			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
+		// t (timestamp): 0, 1, 2, ...
+		else if (textPosition_X_InPixel == "leftToRight_slow")
+			ffmpegTextPosition_X_InPixel = "(5 * t) - text_w";
+		else if (textPosition_X_InPixel == "leftToRight_false")
+			ffmpegTextPosition_X_InPixel = "(10 * t) - text_w";
+		else if (textPosition_X_InPixel == "loopLeftToRight_slow")
+			ffmpegTextPosition_X_InPixel = "mod(5 * t, w + text_w) - text_w";
+		else if (textPosition_X_InPixel == "loopLeftToRight_fast")
+			ffmpegTextPosition_X_InPixel = "mod(10 * t, w + text_w) - text_w";
+
+		else if (textPosition_X_InPixel == "rightToLeft_slow")
+			ffmpegTextPosition_X_InPixel = "w - ((w - text_w)/10)*t";
+		else if (textPosition_X_InPixel == "rightToLeft_fast")
+			ffmpegTextPosition_X_InPixel = "w - ((w - text_w)/5)*t";
+		else if (textPosition_X_InPixel == "loopRightToLeft_slow")
+			ffmpegTextPosition_X_InPixel = "w - (w - text_w)/10*mod(t, 10)";
+		else if (textPosition_X_InPixel == "loopRightToLeft_fast")
+			ffmpegTextPosition_X_InPixel = "w - (w - text_w)/5*mod(t, 10)";
+		else
+		{
+			ffmpegTextPosition_X_InPixel = 
+				regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
+			ffmpegTextPosition_X_InPixel = 
+				regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
+			ffmpegTextPosition_X_InPixel = 
+				regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
+			ffmpegTextPosition_X_InPixel = 
+				regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
+		}
+
+		string ffmpegTextPosition_Y_InPixel;
+		if (textPosition_Y_InPixel == "below")
+			ffmpegTextPosition_Y_InPixel = "h - (text_h + 20)";
+		else if (textPosition_Y_InPixel == "center")
+			ffmpegTextPosition_Y_InPixel = "(h - text_h)/2";
+		else if (textPosition_Y_InPixel == "high")
+			ffmpegTextPosition_Y_InPixel = "20";
+
+		// t (timestamp): 0, 1, 2, ...
+		else if (textPosition_Y_InPixel == "bottomToTop_slow")
+			ffmpegTextPosition_Y_InPixel = "h - (t * 50)";
+		else if (textPosition_Y_InPixel == "bottomToTop_false")
+			ffmpegTextPosition_Y_InPixel = "h - (t * 100)";
+		else if (textPosition_Y_InPixel == "loopBottomToTop_slow")
+			ffmpegTextPosition_Y_InPixel = "h - mod(t * 50, h)";
+		else if (textPosition_Y_InPixel == "loopBottomToTop_fast")
+			ffmpegTextPosition_Y_InPixel = "h - mod(t * 100, h)";
+
+		else if (textPosition_Y_InPixel == "topToBottom_slow")
+			ffmpegTextPosition_Y_InPixel = "t * 50";
+		else if (textPosition_Y_InPixel == "topToBottom_fast")
+			ffmpegTextPosition_Y_InPixel = "t * 100";
+		else if (textPosition_Y_InPixel == "loopTopToBottom_slow")
+			ffmpegTextPosition_Y_InPixel = "mod(t * 50, h)";
+		else if (textPosition_Y_InPixel == "loopTopToBottom_fast")
+			ffmpegTextPosition_Y_InPixel = "mod(t * 100, h)";
+		else
+		{
+			ffmpegTextPosition_Y_InPixel = 
+				regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
+			ffmpegTextPosition_Y_InPixel = 
+				regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
+			ffmpegTextPosition_Y_InPixel = 
+				regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
+			ffmpegTextPosition_Y_InPixel = 
+				regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
+		}
 
 		if (textFilePathName != "")
 		{
