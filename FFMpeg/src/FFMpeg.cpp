@@ -2805,11 +2805,11 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		else if (textPosition_X_InPixel == "rightToLeft_slow")
 			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
 		else if (textPosition_X_InPixel == "rightToLeft_fast")
-			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 10) * t)";
+			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * t)";
 		else if (textPosition_X_InPixel == "loopRightToLeft_slow")
 			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
 		else if (textPosition_X_InPixel == "loopRightToLeft_fast")
-			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 10) * mod(t\\, 10))";
+			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
 		else
 		{
 			ffmpegTextPosition_X_InPixel = 
