@@ -581,14 +581,14 @@ private:
 		Json::Value* inputsRoot, mutex* inputsRootMutex,
 		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
-	tuple<long, string, string, int, int64_t> liveProxyInput(
+	tuple<long, string, string, int, int64_t, Json::Value> liveProxyInput(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
 
 	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		bool externalEncoder,
 		string otherOutputOptionsBecauseOfMaxWidth,
-		Json::Value inputRoot,
+		Json::Value inputDrawTextDetailsRoot,
 		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);

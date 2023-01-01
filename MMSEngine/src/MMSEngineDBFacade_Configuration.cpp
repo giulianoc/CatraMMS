@@ -7544,7 +7544,8 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 Json::Value MMSEngineDBFacade::getStreamInputRoot(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 	string configurationLabel,
-	int maxWidth, string userAgent, string otherInputOptions
+	int maxWidth, string userAgent, string otherInputOptions,
+	Json::Value drawTextDetailsRoot
 )
 {
 	Json::Value streamInputRoot;
@@ -7657,6 +7658,9 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		field = "url";
 		streamInputRoot[field] = liveURL;
 
+		field = "drawTextDetailsRoot";
+		streamInputRoot[field] = drawTextDetailsRoot;
+
 		if (maxWidth != -1)
 		{
 			field = "maxWidth";
@@ -7754,7 +7758,8 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getVodInputRoot(
 	MMSEngineDBFacade::ContentType vodContentType,
-	vector<tuple<int64_t, string, string, string>>& sources
+	vector<tuple<int64_t, string, string, string>>& sources,
+	Json::Value drawTextDetailsRoot
 )
 {
 	Json::Value vodInputRoot;
@@ -7796,6 +7801,9 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 
 		field = "sources";
 		vodInputRoot[field] = sourcesRoot;
+
+		field = "drawTextDetailsRoot";
+		vodInputRoot[field] = drawTextDetailsRoot;
 	}
     catch(runtime_error e)
     {
@@ -7822,7 +7830,7 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 	string mmsSourceVideoAssetDeliveryURL,
 	int64_t physicalPathKey,
 	int64_t videoDurationInMilliSeconds,
-	Json::Value broadcastDrawTextDetailsRoot
+	Json::Value drawTextDetailsRoot
 )
 {
 	Json::Value countdownInputRoot;
@@ -7841,8 +7849,8 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 		field = "videoDurationInMilliSeconds";
 		countdownInputRoot[field] = videoDurationInMilliSeconds;
 
-		field = "broadcastDrawTextDetails";
-		countdownInputRoot[field] = broadcastDrawTextDetailsRoot;
+		field = "drawTextDetails";
+		countdownInputRoot[field] = drawTextDetailsRoot;
 
 		/*
 		field = "text";
@@ -7897,7 +7905,7 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
 Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
-	string url
+	string url, Json::Value drawTextDetailsRoot
 )
 {
 	Json::Value directURLInputRoot;
@@ -7906,6 +7914,9 @@ Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
     {
 		string field = "url";
 		directURLInputRoot[field] = url;
+
+		field = "drawTextDetailsRoot";
+		directURLInputRoot[field] = drawTextDetailsRoot;
 	}
     catch(runtime_error e)
     {

@@ -2501,22 +2501,25 @@ public:
 	Json::Value getStreamInputRoot(
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		string configurationLabel,
-		int maxWidth, string userAgent, string otherInputOptions);
+		int maxWidth, string userAgent, string otherInputOptions,
+		Json::Value drawTextDetailsRoot);
 
 	Json::Value getVodInputRoot(
 		MMSEngineDBFacade::ContentType vodContentType,
-		vector<tuple<int64_t, string, string, string>>& sources);
+		vector<tuple<int64_t, string, string, string>>& sources,
+		Json::Value drawTextDetailsRoot);
 
 	Json::Value getCountdownInputRoot(
 		string mmsSourceVideoAssetPathName,
 		string mmsSourceVideoAssetDeliveryURL,
 		int64_t physicalPathKey,
 		int64_t videoDurationInMilliSeconds,
-		Json::Value broadcastDrawTextDetailsRoot
+		Json::Value drawTextDetailsRoot
 	);
 
 	Json::Value getDirectURLInputRoot(
-		string url);
+		string url,
+		Json::Value drawTextDetailsRoot);
 
 	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey, int64_t confKey, string liveURL);

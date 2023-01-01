@@ -13076,9 +13076,20 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else
 		{
+			/* 2023-01-01: normalmente, nel caso di un semplica Task di LiveProxy, il drawTextDetails viene
+				inserito all'interno dell'OutputRoot,
+				Nel caso pero' di un Live Channel, per capire il campo broadcastDrawTextDetails,
+				vedi il commento all'interno del metodo java CatraMMSBroadcaster::buildLiveProxyJsonForBroadcast
+			*/
+			Json::Value drawTextDetailsRoot = Json::nullValue;
+
+			string field = "broadcastDrawTextDetails";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				drawTextDetailsRoot = parametersRoot[field];
+
 			Json::Value streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel,
-				maxWidth, userAgent, otherInputOptions);
+				maxWidth, userAgent, otherInputOptions, drawTextDetailsRoot);
 
 			Json::Value inputRoot;
 			{
@@ -13386,9 +13397,20 @@ void MMSEngineProcessor::manageVODProxy(
 					sourcePhysicalDeliveryURL));
 			}
 
+			/* 2023-01-01: normalmente, nel caso di un semplica Task di VODProxy, il drawTextDetails viene
+				inserito all'interno dell'OutputRoot,
+				Nel caso pero' di un Live Channel, per capire il campo broadcastDrawTextDetails,
+				vedi il commento all'interno del metodo java CatraMMSBroadcaster::buildVODProxyJsonForBroadcast
+			*/
+			Json::Value drawTextDetailsRoot = Json::nullValue;
+
+			string field = "broadcastDrawTextDetails";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				drawTextDetailsRoot = parametersRoot[field];
+
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
 			Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
-				vodContentType, sources);
+				vodContentType, sources, drawTextDetailsRoot);
 
 			Json::Value inputRoot;
 			{
@@ -13661,19 +13683,22 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 		}
 		else
 		{
-			Json::Value broadcastDrawTextDetailsRoot = Json::nullValue;
+			/* 2023-01-01: normalmente, nel caso di un semplica Task di Countdown, il drawTextDetails viene
+				inserito all'interno dell'OutputRoot,
+				Nel caso pero' di un Live Channel, per capire il campo broadcastDrawTextDetails,
+				vedi il commento all'interno del metodo java CatraMMSBroadcaster::buildCountdownJsonForBroadcast
+			*/
+			Json::Value drawTextDetailsRoot = Json::nullValue;
 
 			string field = "broadcastDrawTextDetails";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				broadcastDrawTextDetailsRoot = parametersRoot[field];
+				drawTextDetailsRoot = parametersRoot[field];
 
 			// same json structure is used in API_Ingestion::changeLiveProxyPlaylist
 			Json::Value countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
 				mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL,
 				sourcePhysicalPathKey, videoDurationInMilliSeconds,
-				broadcastDrawTextDetailsRoot
-				// text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				// fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity
+				drawTextDetailsRoot
 			);
 
 			Json::Value inputRoot;

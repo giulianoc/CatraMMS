@@ -4681,11 +4681,17 @@ void API::changeLiveProxyPlaylist(
 						string userAgent;
 						string otherInputOptions;
 
+						field = "drawTextDetails";
+						Json::Value drawTextDetailsRoot;
+						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+
 						broadcastDefaultStreamInputRoot =
 							_mmsEngineDBFacade->getStreamInputRoot(
 							workspace, broadcasterIngestionJobKey,
 							broadcastDefaultConfigurationLabel,
-							maxWidth, userAgent, otherInputOptions);
+							maxWidth, userAgent, otherInputOptions,
+							drawTextDetailsRoot);
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{
@@ -4785,10 +4791,15 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
+						field = "drawTextDetails";
+						Json::Value drawTextDetailsRoot;
+						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
 						broadcastDefaultVodInputRoot
 							= _mmsEngineDBFacade->getVodInputRoot(
-							vodContentType, sources);
+							vodContentType, sources, drawTextDetailsRoot);
 					}
 					else if (broadcastDefaultMediaType == "Countdown")
 					{
@@ -4863,6 +4874,21 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
+						field = "drawTextDetails";
+						Json::Value drawTextDetailsRoot;
+						if (!JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						{
+							string errorMessage = __FILEREF__ + "Countdown has to have drawTextDetails"
+								+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+								+ ", broadcastDefaultPlaylistItemRoot: " + JSONUtils::toString(broadcastDefaultPlaylistItemRoot)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+
+						/*
 						// string textPosition_X_InPixel = "(video_width-text_width)/2";
 						// string textPosition_Y_InPixel = "(video_height-text_height)/2";
 						string fontType = "OpenSans-ExtraBold.ttf";
@@ -4873,38 +4899,39 @@ void API::changeLiveProxyPlaylist(
 						string boxColor;
 						int boxPercentageOpacity = -1;
 
-						Json::Value broadcastDrawTextDetailsRoot;
+						Json::Value drawTextDetailsRoot;
 						{
 							field = "text";
-							broadcastDrawTextDetailsRoot[field] = broadcastDefaultText;
+							drawTextDetailsRoot[field] = broadcastDefaultText;
 
 							field = "textPosition_X_InPixel";
-							broadcastDrawTextDetailsRoot[field] = broadcastDefaultTextPosition_X_InPixel;
+							drawTextDetailsRoot[field] = broadcastDefaultTextPosition_X_InPixel;
 
 							field = "textPosition_Y_InPixel";
-							broadcastDrawTextDetailsRoot[field] = broadcastDefaultTextPosition_Y_InPixel;
+							drawTextDetailsRoot[field] = broadcastDefaultTextPosition_Y_InPixel;
 
 							field = "fontType";
-							broadcastDrawTextDetailsRoot[field] = fontType;
+							drawTextDetailsRoot[field] = fontType;
 
 							field = "fontSize";
-							broadcastDrawTextDetailsRoot[field] = fontSize;
+							drawTextDetailsRoot[field] = fontSize;
 
 							field = "fontColor";
-							broadcastDrawTextDetailsRoot[field] = fontColor;
+							drawTextDetailsRoot[field] = fontColor;
 
 							field = "textPercentageOpacity";
-							broadcastDrawTextDetailsRoot[field] = textPercentageOpacity;
+							drawTextDetailsRoot[field] = textPercentageOpacity;
 
 							field = "boxEnable";
-							broadcastDrawTextDetailsRoot[field] = boxEnable;
+							drawTextDetailsRoot[field] = boxEnable;
 
 							field = "boxColor";
-							broadcastDrawTextDetailsRoot[field] = boxColor;
+							drawTextDetailsRoot[field] = boxColor;
 
 							field = "boxPercentageOpacity";
-							broadcastDrawTextDetailsRoot[field] = boxPercentageOpacity;
+							drawTextDetailsRoot[field] = boxPercentageOpacity;
 						}
+						*/
 
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
 						broadcastDefaultCountdownInputRoot
@@ -4912,7 +4939,7 @@ void API::changeLiveProxyPlaylist(
 							sourcePhysicalPathName, sourcePhysicalDeliveryURL,
 							broadcastDefaultPhysicalPathKey,
 							videoDurationInMilliSeconds,
-							broadcastDrawTextDetailsRoot
+							drawTextDetailsRoot
 						);
 					}
 					else if (broadcastDefaultMediaType == "Direct URL")
@@ -4921,8 +4948,13 @@ void API::changeLiveProxyPlaylist(
 						string broadcastDefaultURL =
 							JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
+						field = "drawTextDetails";
+						Json::Value drawTextDetailsRoot;
+						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+
 						broadcastDefaultDirectURLInputRoot =
-							_mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL);
+							_mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, drawTextDetailsRoot);
 					}
 					else
 					{

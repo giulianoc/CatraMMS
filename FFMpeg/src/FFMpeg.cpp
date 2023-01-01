@@ -10373,6 +10373,7 @@ void FFMpeg::liveProxy2(
 		string endlessPlaylistListPathName;
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
+		Json::Value inputDrawTextDetailsRoot;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10382,11 +10383,12 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string, int, int64_t> inputDetails = liveProxyInput(
+			tuple<long, string, string, int, int64_t, Json::Value> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
-				endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart) = inputDetails;
+				endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
+				inputDrawTextDetailsRoot) = inputDetails;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -10439,7 +10441,7 @@ void FFMpeg::liveProxy2(
 			);
 			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
-				currentInputRoot,
+				inputDrawTextDetailsRoot,
 				streamingDurationInSeconds,
 				outputsRoot, ffmpegOutputArgumentList);
 
@@ -11197,7 +11199,7 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
+tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
@@ -11206,6 +11208,7 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	string endlessPlaylistListPathName;
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
+	Json::Value inputDrawTextDetailsRoot = Json::nullValue;
 
 
 	// "inputRoot": {
@@ -11668,6 +11671,9 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
+
+		if (JSONUtils::isMetadataPresent(streamInputRoot, "drawTextDetails"))
+			inputDrawTextDetailsRoot = streamInputRoot["drawTextDetails"];
 	}
 	//	"directURLInput": { "url": "" },
 	else if (JSONUtils::isMetadataPresent(inputRoot, "directURLInput"))
@@ -11737,6 +11743,9 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
+
+		if (JSONUtils::isMetadataPresent(streamInputRoot, "drawTextDetails"))
+			inputDrawTextDetailsRoot = streamInputRoot["drawTextDetails"];
 	}
 	//	"vodInput": { "vodContentType": "", "sources": [{"sourcePhysicalPathName": "..."}],
 	//		"otherInputOptions": "" },
@@ -11995,6 +12004,9 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
 			}
 		}
+
+		if (JSONUtils::isMetadataPresent(vodInputRoot, "drawTextDetails"))
+			inputDrawTextDetailsRoot = vodInputRoot["drawTextDetails"];
 	}
 	//	"countdownInput": { "mmsSourceVideoAssetPathName": "", "videoDurationInMilliSeconds": 123, "text": "", "textPosition_X_InPixel": "", "textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor": "", "boxPercentageOpacity": 20 },
 	else if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
@@ -12107,6 +12119,19 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 			// ffmpegInputArgumentList.push_back("-vf");
 			// ffmpegInputArgumentList.push_back(ffmpegDrawTextFilter);
 		}
+
+		if (!JSONUtils::isMetadataPresent(countdownInputRoot, "drawTextDetails"))
+		{
+			string errorMessage = __FILEREF__ + "Countdown. drawTextDetails has to be present"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", countdownInputRoot: " + JSONUtils::toString(countdownInputRoot)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		inputDrawTextDetailsRoot = countdownInputRoot["drawTextDetails"];
 	}
 	else
 	{
@@ -12120,103 +12145,96 @@ tuple<long, string, string, int, int64_t> FFMpeg::liveProxyInput(
 	}
 
 	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
-		endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart);
+		endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
+		inputDrawTextDetailsRoot);
 }
 
 void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
-	Json::Value inputRoot,
+	Json::Value inputDrawTextDetailsRoot,
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
 {
-	// 2022-09-12: next if è usato solo nel caso di broadcastDrawTextDetails.
-	//		Infatti, in genere i parametri del 'draw text' vengono inizializzati
-	//		all'interno di outputRoot.
-	//		Nel caso del Broadcast (Live Channel), outputRoot è comune a tutta la playlist,
-	//		per cui non possiamo utilizzare outputRoot altrimenti avremmo il draw text
-	//		anche per gli altri item della playlist quali LiveProxy, VODProxy, ...
-	//		Per questo motivo:
-	//			1. vngono aggiunti questi parametri in forma eccezionale per il Broadcast
-	//			2. questi parametri saranno gestiti qui
+	// 2023-01-01: 
+	//		In genere i parametri del 'draw text' vengono inizializzati all'interno di outputRoot.
+	//		Nel caso di un Broadcast (Live Channel), inputsRoot rappresenta l'intera playlist del live channel
+	//		(dalle ore A alle ora B contenuto 1, dalle ora C alle ore D contentuto 2, ...).
+	//		mentre  outputRoot è comune a tutta la playlist,
+	//		Nello scenario in cui serve un drawTextDetails solamente per un inputRoot, non è possibile
+	//		utilizzare outputRoot altrimenti avremmo il draw text anche per gli altri item della playlist.
+	//		Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root,
 	string ffmpegDrawTextFilter;
-	if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
+	if (inputDrawTextDetailsRoot != Json::nullValue)
 	{
-		Json::Value countdownInputRoot = inputRoot["countdownInput"];
-
-		if (JSONUtils::isMetadataPresent(countdownInputRoot, "broadcastDrawTextDetails"))
+		string field = "text";
+		if (!JSONUtils::isMetadataPresent(inputDrawTextDetailsRoot, field))
 		{
-			Json::Value broadcastDrawTextDetailsRoot = countdownInputRoot["broadcastDrawTextDetails"];
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field;
+			_logger->error(errorMessage);
 
-			string field = "text";
-			if (!JSONUtils::isMetadataPresent(broadcastDrawTextDetailsRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string text = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			int reloadAtFrameInterval = -1;
-			field = "reloadAtFrameInterval";
-			reloadAtFrameInterval = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
-
-			string textPosition_X_InPixel = "";
-			field = "textPosition_X_InPixel";
-			textPosition_X_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			string textPosition_Y_InPixel = "";
-			field = "textPosition_Y_InPixel";
-			textPosition_Y_InPixel = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			string fontType = "";
-			field = "fontType";
-			fontType = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			int fontSize = -1;
-			field = "fontSize";
-			fontSize = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
-
-			string fontColor = "";
-			field = "fontColor";
-			fontColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			int textPercentageOpacity = -1;
-			field = "textPercentageOpacity";
-			textPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
-
-			int shadowx = 0;
-			field = "shadowx";
-			shadowx = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
-
-			int shadowy = 0;
-			field = "shadowy";
-			shadowy = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
-
-			bool boxEnable = false;
-			field = "boxEnable";
-			boxEnable = JSONUtils::asBool(broadcastDrawTextDetailsRoot, field, false);
-
-			string boxColor = "";
-			field = "boxColor";
-			boxColor = JSONUtils::asString(broadcastDrawTextDetailsRoot, field, "");
-
-			int boxPercentageOpacity = -1;
-			field = "boxPercentageOpacity";
-			boxPercentageOpacity = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, -1);
-
-			field = "boxBorderW";
-			int boxBorderW = JSONUtils::asInt(broadcastDrawTextDetailsRoot, field, 0);
-
-			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
-				text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
-				fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
-				boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
-				streamingDurationInSeconds);
+			throw runtime_error(errorMessage);
 		}
+		string text = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		int reloadAtFrameInterval = -1;
+		field = "reloadAtFrameInterval";
+		reloadAtFrameInterval = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
+
+		string textPosition_X_InPixel = "";
+		field = "textPosition_X_InPixel";
+		textPosition_X_InPixel = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		string textPosition_Y_InPixel = "";
+		field = "textPosition_Y_InPixel";
+		textPosition_Y_InPixel = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		string fontType = "";
+		field = "fontType";
+		fontType = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		int fontSize = -1;
+		field = "fontSize";
+		fontSize = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
+
+		string fontColor = "";
+		field = "fontColor";
+		fontColor = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		int textPercentageOpacity = -1;
+		field = "textPercentageOpacity";
+		textPercentageOpacity = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
+
+		int shadowx = 0;
+		field = "shadowx";
+		shadowx = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
+
+		int shadowy = 0;
+		field = "shadowy";
+		shadowy = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
+
+		bool boxEnable = false;
+		field = "boxEnable";
+		boxEnable = JSONUtils::asBool(inputDrawTextDetailsRoot, field, false);
+
+		string boxColor = "";
+		field = "boxColor";
+		boxColor = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
+
+		int boxPercentageOpacity = -1;
+		field = "boxPercentageOpacity";
+		boxPercentageOpacity = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
+
+		field = "boxBorderW";
+		int boxBorderW = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
+
+		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
+			text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
+			fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
+			boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
+			streamingDurationInSeconds);
 	}
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
