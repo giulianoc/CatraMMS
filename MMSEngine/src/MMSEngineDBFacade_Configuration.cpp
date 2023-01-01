@@ -7658,7 +7658,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		field = "url";
 		streamInputRoot[field] = liveURL;
 
-		field = "drawTextDetailsRoot";
+		field = "drawTextDetails";
 		streamInputRoot[field] = drawTextDetailsRoot;
 
 		if (maxWidth != -1)
@@ -7802,7 +7802,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 		field = "sources";
 		vodInputRoot[field] = sourcesRoot;
 
-		field = "drawTextDetailsRoot";
+		field = "drawTextDetails";
 		vodInputRoot[field] = drawTextDetailsRoot;
 	}
     catch(runtime_error e)
@@ -7851,38 +7851,6 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 
 		field = "drawTextDetails";
 		countdownInputRoot[field] = drawTextDetailsRoot;
-
-		/*
-		field = "text";
-		countdownInputRoot[field] = text;
-
-		field = "textPosition_X_InPixel";
-		countdownInputRoot[field] = textPosition_X_InPixel;
-
-		field = "textPosition_Y_InPixel";
-		countdownInputRoot[field] = textPosition_Y_InPixel;
-
-		field = "fontType";
-		countdownInputRoot[field] = fontType;
-
-		field = "fontSize";
-		countdownInputRoot[field] = fontSize;
-
-		field = "fontColor";
-		countdownInputRoot[field] = fontColor;
-
-		field = "textPercentageOpacity";
-		countdownInputRoot[field] = textPercentageOpacity;
-
-		field = "boxEnable";
-		countdownInputRoot[field] = boxEnable;
-
-		field = "boxColor";
-		countdownInputRoot[field] = boxColor;
-
-		field = "boxPercentageOpacity";
-		countdownInputRoot[field] = boxPercentageOpacity;
-		*/
 	}
     catch(runtime_error e)
     {
@@ -7915,7 +7883,7 @@ Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
 		string field = "url";
 		directURLInputRoot[field] = url;
 
-		field = "drawTextDetailsRoot";
+		field = "drawTextDetails";
 		directURLInputRoot[field] = drawTextDetailsRoot;
 	}
     catch(runtime_error e)

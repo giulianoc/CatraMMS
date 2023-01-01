@@ -12231,7 +12231,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		int boxBorderW = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
 
 		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
-			text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
+			"", text, reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
 			fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
 			boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
 			streamingDurationInSeconds);
