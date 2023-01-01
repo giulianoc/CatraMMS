@@ -2802,6 +2802,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		else if (textPosition_X_InPixel == "loopLeftToRight_fast")
 			ffmpegTextPosition_X_InPixel = "mod(10 * t\\, w + text_w) - text_w";
 
+		// 15 and 30 sono stati decisi usando un video 1920x1080
 		else if (textPosition_X_InPixel == "rightToLeft_slow")
 			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
 		else if (textPosition_X_InPixel == "rightToLeft_fast")
@@ -2809,8 +2810,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 		else if (textPosition_X_InPixel == "loopRightToLeft_slow")
 			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
 		else if (textPosition_X_InPixel == "loopRightToLeft_fast")
-			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
-			// ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";	// 15 was calculated with a video of 1920x1080
+			ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
 		else
 		{
 			ffmpegTextPosition_X_InPixel = 
