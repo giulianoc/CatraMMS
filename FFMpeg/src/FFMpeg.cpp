@@ -2357,23 +2357,6 @@ void FFMpeg::overlayTextOnVideo(
 
         {
 			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
-			int reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, "reloadAtFrameInterval", -1);
-			string textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot,
-				"textPosition_X_InPixel", "");
-			string textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot,
-				"textPosition_Y_InPixel", "");
-			string fontType = JSONUtils::asString(drawTextDetailsRoot, "fontType", "");
-			int fontSize = JSONUtils::asInt(drawTextDetailsRoot, "fontSize", -1);
-			string fontColor = JSONUtils::asString(drawTextDetailsRoot, "fontColor", "");
-			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
-				"textPercentageOpacity", -1);
-			int shadowX = JSONUtils::asInt(drawTextDetailsRoot, "shadowX", 0);
-			int shadowY = JSONUtils::asInt(drawTextDetailsRoot, "shadowY", 0);
-			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, "boxEnable", false);
-			string boxColor = JSONUtils::asString(drawTextDetailsRoot, "boxColor", "");
-			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot,
-				"boxPercentageOpacity", -1);
-			int boxBorderW = JSONUtils::asInt(drawTextDetailsRoot, "boxBorderW", 0);
 
 			{
 				textTemporaryFileName =
@@ -2391,14 +2374,22 @@ void FFMpeg::overlayTextOnVideo(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", textTemporaryFileName: " + textTemporaryFileName
-				+ ", text: " + text
 			);
 
+			string ffmpegDrawTextFilter;
+			{
+				Json::Value filterRoot = drawTextDetailsRoot;
+				filterRoot["type"] = "drawtext";
+				filterRoot["textFilePathName"] = textTemporaryFileName;
+				ffmpegDrawTextFilter = getFilter(filterRoot, -1);
+			}
+			/*
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				"", textTemporaryFileName, reloadAtFrameInterval,
 				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowX, shadowY,
 				boxEnable, boxColor, boxPercentageOpacity, boxBorderW, -1);
+			*/
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
@@ -2674,6 +2665,7 @@ void FFMpeg::overlayTextOnVideo(
     }
 }
 
+/*
 string FFMpeg::getDrawTextVideoFilterDescription(
 	int64_t ingestionJobKey,
 	string text,				// text or textFilePathName has to be filled
@@ -2774,16 +2766,6 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 			}
 		}
 
-		/*
-		* -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
-		fontcolor=yellow:fontsize=45:x=100:y=65:
-		text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
-		%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
-		%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
-		%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
-
-		* 5447324 is the countdown duration expressed in seconds
-		*/
 		string ffmpegTextPosition_X_InPixel;
 		if (textPosition_X_InPixel == "left")
 			ffmpegTextPosition_X_InPixel = 20;
@@ -2930,6 +2912,7 @@ string FFMpeg::getDrawTextVideoFilterDescription(
 
 	return ffmpegDrawTextFilter;
 }
+*/
 
 void FFMpeg::videoSpeed(
         string mmsSourceVideoAssetPathName,
@@ -6568,14 +6551,47 @@ void FFMpeg::generateFramesToIngest(
     string videoFilterParameters;
     if (videoFilter == "PeriodicFrame")
     {
-        videoFilterParameters = "-vf fps=1/" + to_string(periodInSeconds) + " ";
+		string filter;
+		{
+			Json::Value filterRoot;
+			filterRoot["type"] = "fps";
+			filterRoot["framesNumber"] = 1;
+			filterRoot["periodInSeconds"] = periodInSeconds;
+			filter = getFilter(filterRoot, -1);
+		}
+
+		// videoFilterParameters = "-vf fps=1/" + to_string(periodInSeconds) + " ";
+        videoFilterParameters = "-vf " + videoFilter + " ";
     }
     else if (videoFilter == "All-I-Frames")
     {
         if (mjpeg)
-            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' ";
+		{
+			string filter;
+			{
+				Json::Value filterRoot;
+				filterRoot["type"] = "select";
+				filterRoot["frameType"] = "i-frame";
+				filter = getFilter(filterRoot, -1);
+			}
+
+			// videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' ";
+            videoFilterParameters = "-vf " + filter + " ";
+		}
         else
-            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -fps_mode vfr ";
+		{
+			string filter;
+			{
+				Json::Value filterRoot;
+				filterRoot["type"] = "select";
+				filterRoot["frameType"] = "i-frame";
+				filterRoot["fpsMode"] = "vfr";
+				filter = getFilter(filterRoot, -1);
+			}
+
+			// videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -fps_mode vfr ";
+            videoFilterParameters = "-vf " + filter + " ";
+		}
     }
     
     /*
@@ -12168,73 +12184,19 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 	string ffmpegDrawTextFilter;
 	if (inputDrawTextDetailsRoot != Json::nullValue)
 	{
-		string field = "text";
-		if (!JSONUtils::isMetadataPresent(inputDrawTextDetailsRoot, field))
+		string ffmpegDrawTextFilter;
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
+			Json::Value filterRoot = inputDrawTextDetailsRoot;
+			filterRoot["type"] = "drawtext";
+			ffmpegDrawTextFilter = getFilter(filterRoot, streamingDurationInSeconds);
 		}
-		string text = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		int reloadAtFrameInterval = -1;
-		field = "reloadAtFrameInterval";
-		reloadAtFrameInterval = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
-
-		string textPosition_X_InPixel = "";
-		field = "textPosition_X_InPixel";
-		textPosition_X_InPixel = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		string textPosition_Y_InPixel = "";
-		field = "textPosition_Y_InPixel";
-		textPosition_Y_InPixel = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		string fontType = "";
-		field = "fontType";
-		fontType = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		int fontSize = -1;
-		field = "fontSize";
-		fontSize = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
-
-		string fontColor = "";
-		field = "fontColor";
-		fontColor = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		int textPercentageOpacity = -1;
-		field = "textPercentageOpacity";
-		textPercentageOpacity = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
-
-		int shadowx = 0;
-		field = "shadowx";
-		shadowx = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
-
-		int shadowy = 0;
-		field = "shadowy";
-		shadowy = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
-
-		bool boxEnable = false;
-		field = "boxEnable";
-		boxEnable = JSONUtils::asBool(inputDrawTextDetailsRoot, field, false);
-
-		string boxColor = "";
-		field = "boxColor";
-		boxColor = JSONUtils::asString(inputDrawTextDetailsRoot, field, "");
-
-		int boxPercentageOpacity = -1;
-		field = "boxPercentageOpacity";
-		boxPercentageOpacity = JSONUtils::asInt(inputDrawTextDetailsRoot, field, -1);
-
-		field = "boxBorderW";
-		int boxBorderW = JSONUtils::asInt(inputDrawTextDetailsRoot, field, 0);
-
+		/*
 		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 			text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
 			fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
 			boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
 			streamingDurationInSeconds);
+		*/
 	}
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -12264,16 +12226,7 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string field = "drawTextDetails";
 			Json::Value drawTextDetailsRoot = outputRoot[field];
 
-			field = "text";
-			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string text = JSONUtils::asString(drawTextDetailsRoot, field, "");
+			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
 
 			string textTemporaryFileName;
 			{
@@ -12290,63 +12243,21 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				of.flush();
 			}
 
-			int reloadAtFrameInterval = -1;
-			field = "reloadAtFrameInterval";
-			reloadAtFrameInterval = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
-
-			string textPosition_X_InPixel = "";
-			field = "textPosition_X_InPixel";
-			textPosition_X_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
-
-			string textPosition_Y_InPixel = "";
-			field = "textPosition_Y_InPixel";
-			textPosition_Y_InPixel = JSONUtils::asString(drawTextDetailsRoot, field, "");
-
-			string fontType = "";
-			field = "fontType";
-			fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
-
-			int fontSize = -1;
-			field = "fontSize";
-			fontSize = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
-
-			string fontColor = "";
-			field = "fontColor";
-			fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
-
-			int textPercentageOpacity = -1;
-			field = "textPercentageOpacity";
-			textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
-
-			int shadowx = 0;
-			field = "shadowx";
-			shadowx = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
-
-			int shadowy = 0;
-			field = "shadowy";
-			shadowy = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
-
-			bool boxEnable = false;
-			field = "boxEnable";
-			boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, false);
-
-			string boxColor = "";
-			field = "boxColor";
-			boxColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
-
-			int boxPercentageOpacity = -1;
-			field = "boxPercentageOpacity";
-			boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, -1);
-
-			field = "boxBorderW";
-			int boxBorderW = JSONUtils::asInt(drawTextDetailsRoot, field, 0);
-
+			string ffmpegDrawTextFilter;
+			{
+				Json::Value filterRoot = drawTextDetailsRoot;
+				filterRoot["type"] = "drawtext";
+				filterRoot["textFilePathName"] = textTemporaryFileName;
+				ffmpegDrawTextFilter = getFilter(filterRoot, streamingDurationInSeconds);
+			}
+			/*
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
 				"", textTemporaryFileName, reloadAtFrameInterval,
 				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, shadowx, shadowy,
 				boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
 				streamingDurationInSeconds);
+			*/
 		}
 
 		/*
@@ -15158,6 +15069,287 @@ string FFMpeg::getFilter(
 	else if (type == "ametadata")
 	{
 		filter = ("ametadata=mode=print");
+	}
+	else if (type == "fps")	// framerate
+	{
+		int framesNumber = JSONUtils::asInt(filterRoot, "framesNumber", 25);
+		int periodInSeconds = JSONUtils::asInt(filterRoot, "periodInSeconds", 1);
+
+		filter = "fps=" + to_string(framesNumber) + "/" + to_string(periodInSeconds);
+	}
+	else if (type == "select")	// select frames to pass in output
+	{
+		string frameType = JSONUtils::asString(filterRoot, "frameType", "i-frame");
+
+		// es: vfr
+		string fpsMode = JSONUtils::asString(filterRoot, "fpsMode", "");
+
+		if (frameType == "i-frame")
+			filter = "select='eq(pict_type,PICT_TYPE_I)'";
+		else if (frameType == "scene")
+		{
+			// double between 0 and 1. 0.5: 50% of changes
+			double changePercentage = JSONUtils::asDouble(filterRoot, "changePercentage", 0.5);
+
+			filter = "select='eq(scene," + to_string(changePercentage) + ")'";
+		}
+		else
+		{
+			string errorMessage = string("filterRoot->frameType is unknown");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (fpsMode != "")
+			filter += (" -fps_mode " + fpsMode);
+	}
+	else if (type == "drawtext")
+	{
+		string text = JSONUtils::asString(filterRoot, "text", "");
+		string textFilePathName = JSONUtils::asString(filterRoot, "textFilePathName", "");
+		int reloadAtFrameInterval = JSONUtils::asInt(filterRoot, "reloadAtFrameInterval", -1);
+		string textPosition_X_InPixel = JSONUtils::asString(filterRoot, "textPosition_X_InPixel", "");
+		string textPosition_Y_InPixel = JSONUtils::asString(filterRoot, "textPosition_Y_InPixel", "");
+		string fontType = JSONUtils::asString(filterRoot, "fontType", "");
+		int fontSize = JSONUtils::asInt(filterRoot, "fontSize", -1);
+		string fontColor = JSONUtils::asString(filterRoot, "fontColor", "");
+		int textPercentageOpacity = JSONUtils::asInt(filterRoot, "textPercentageOpacity", -1);
+		int shadowX = JSONUtils::asInt(filterRoot, "shadowX", 0);
+		int shadowY = JSONUtils::asInt(filterRoot, "shadowY", 0);
+		bool boxEnable = JSONUtils::asBool(filterRoot, "boxEnable", false);
+		string boxColor = JSONUtils::asString(filterRoot, "boxColor", "");
+		int boxPercentageOpacity = JSONUtils::asInt(filterRoot, "boxPercentageOpacity", -1);
+		int boxBorderW = JSONUtils::asInt(filterRoot, "boxBorderW", 0);
+
+		{
+			// management of the text, many processing is in case of a countdown
+			string ffmpegText = text;
+			if (streamingDurationInSeconds != -1)
+			{
+				// see https://ffmpeg.org/ffmpeg-filters.html
+				// see https://ffmpeg.org/ffmpeg-utils.html
+				//
+				// expr_int_format, eif
+				//	Evaluate the expression’s value and output as formatted integer.
+				//	The first argument is the expression to be evaluated, just as for the expr function.
+				//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
+				//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
+				//
+
+				if (textFilePathName != "")
+				{
+					ifstream ifPathFileName(textFilePathName);
+					if (ifPathFileName)
+					{
+						// get size/length of file:
+						ifPathFileName.seekg (0, ifPathFileName.end);
+						int fileSize = ifPathFileName.tellg();
+						ifPathFileName.seekg (0, ifPathFileName.beg);
+
+						char* buffer = new char [fileSize];
+						ifPathFileName.read (buffer, fileSize);
+						if (ifPathFileName)
+						{
+							// all characters read successfully
+							ffmpegText.assign(buffer, fileSize);                                                 
+						}
+						else
+						{
+							// error: only is.gcount() could be read";
+							ffmpegText.assign(buffer, ifPathFileName.gcount());
+						}
+						ifPathFileName.close();
+						delete[] buffer;
+					}
+					else
+					{
+						_logger->error(__FILEREF__ + "ffmpeg: drawtext file cannot be read"
+							+ ", textFilePathName: " + textFilePathName
+						);
+					}
+				}
+
+				string escape = "\\";
+				if (textFilePathName != "")
+					escape = "";	// in case of file, there is no need of escape
+
+				{
+					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("cents_counter"), "%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}");
+					ffmpegText = regex_replace(ffmpegText,
+						regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+				}
+
+				if (textFilePathName != "")
+				{
+					ofstream of(textFilePathName, ofstream::trunc);
+					of << ffmpegText;
+					of.flush();
+				}
+			}
+
+			/*
+			* -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
+			fontcolor=yellow:fontsize=45:x=100:y=65:
+			text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
+			%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
+			%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
+			%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
+
+			* 5447324 is the countdown duration expressed in seconds
+			*/
+			string ffmpegTextPosition_X_InPixel;
+			if (textPosition_X_InPixel == "left")
+				ffmpegTextPosition_X_InPixel = 20;
+			else if (textPosition_X_InPixel == "center")
+				ffmpegTextPosition_X_InPixel = "(w - text_w)/2";
+			else if (textPosition_X_InPixel == "right")
+				ffmpegTextPosition_X_InPixel = "w - (text_w + 20)";
+
+			// t (timestamp): 0, 1, 2, ...
+			else if (textPosition_X_InPixel == "leftToRight_slow")
+				ffmpegTextPosition_X_InPixel = "(5 * t) - text_w";
+			else if (textPosition_X_InPixel == "leftToRight_false")
+				ffmpegTextPosition_X_InPixel = "(10 * t) - text_w";
+			else if (textPosition_X_InPixel == "loopLeftToRight_slow")
+				ffmpegTextPosition_X_InPixel = "mod(5 * t\\, w + text_w) - text_w";
+			else if (textPosition_X_InPixel == "loopLeftToRight_fast")
+				ffmpegTextPosition_X_InPixel = "mod(10 * t\\, w + text_w) - text_w";
+
+			// 15 and 30 sono stati decisi usando un video 1920x1080
+			else if (textPosition_X_InPixel == "rightToLeft_slow")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
+			else if (textPosition_X_InPixel == "rightToLeft_fast")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * t)";
+			else if (textPosition_X_InPixel == "loopRightToLeft_slow")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_fast")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
+			else
+			{
+				ffmpegTextPosition_X_InPixel = 
+					regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
+				ffmpegTextPosition_X_InPixel = 
+					regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
+				ffmpegTextPosition_X_InPixel = 
+					regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
+				ffmpegTextPosition_X_InPixel = 
+					regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
+			}
+
+			string ffmpegTextPosition_Y_InPixel;
+			if (textPosition_Y_InPixel == "below")
+				ffmpegTextPosition_Y_InPixel = "h - (text_h + 20)";
+			else if (textPosition_Y_InPixel == "center")
+				ffmpegTextPosition_Y_InPixel = "(h - text_h)/2";
+			else if (textPosition_Y_InPixel == "high")
+				ffmpegTextPosition_Y_InPixel = "20";
+
+			// t (timestamp): 0, 1, 2, ...
+			else if (textPosition_Y_InPixel == "bottomToTop_slow")
+				ffmpegTextPosition_Y_InPixel = "h - (t * 50)";
+			else if (textPosition_Y_InPixel == "bottomToTop_false")
+				ffmpegTextPosition_Y_InPixel = "h - (t * 100)";
+			else if (textPosition_Y_InPixel == "loopBottomToTop_slow")
+				ffmpegTextPosition_Y_InPixel = "h - mod(t * 50\\, h)";
+			else if (textPosition_Y_InPixel == "loopBottomToTop_fast")
+				ffmpegTextPosition_Y_InPixel = "h - mod(t * 100\\, h)";
+
+			else if (textPosition_Y_InPixel == "topToBottom_slow")
+				ffmpegTextPosition_Y_InPixel = "t * 50";
+			else if (textPosition_Y_InPixel == "topToBottom_fast")
+				ffmpegTextPosition_Y_InPixel = "t * 100";
+			else if (textPosition_Y_InPixel == "loopTopToBottom_slow")
+				ffmpegTextPosition_Y_InPixel = "mod(t * 50\\, h)";
+			else if (textPosition_Y_InPixel == "loopTopToBottom_fast")
+				ffmpegTextPosition_Y_InPixel = "mod(t * 100\\, h)";
+			else
+			{
+				ffmpegTextPosition_Y_InPixel = 
+					regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
+				ffmpegTextPosition_Y_InPixel = 
+					regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
+				ffmpegTextPosition_Y_InPixel = 
+					regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
+				ffmpegTextPosition_Y_InPixel = 
+					regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
+			}
+
+			if (textFilePathName != "")
+			{
+				filter = string("drawtext=textfile='") + textFilePathName + "'";
+				if (reloadAtFrameInterval > 0)
+					filter += (":reload=" + to_string(reloadAtFrameInterval));
+			}
+			else
+				filter = string("drawtext=text='") + ffmpegText + "'";
+			if (textPosition_X_InPixel != "")
+				filter += (":x=" + ffmpegTextPosition_X_InPixel);
+			if (textPosition_Y_InPixel != "")
+				filter += (":y=" + ffmpegTextPosition_Y_InPixel);               
+			if (fontType != "")
+				filter += (":fontfile='" + _ffmpegTtfFontDir + "/" + fontType + "'");
+			if (fontSize != -1)
+				filter += (":fontsize=" + to_string(fontSize));
+			if (fontColor != "")
+			{
+				filter += (":fontcolor=" + fontColor);                
+				if (textPercentageOpacity != -1)
+				{
+					char opacity[64];
+
+					sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
+
+					filter += ("@" + string(opacity));                
+				}
+			}
+			filter += (":shadowx=" + to_string(shadowX));
+			filter += (":shadowy=" + to_string(shadowY));
+			if (boxEnable)
+			{
+				filter += (":box=1");
+
+				if (boxColor != "")
+				{
+					filter += (":boxcolor=" + boxColor);                
+					if (boxPercentageOpacity != -1)
+					{
+						char opacity[64];
+
+						sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
+
+						filter += ("@" + string(opacity));                
+					}
+				}
+				if (boxBorderW != -1)
+					filter += (":boxborderw=" + to_string(boxBorderW));                
+			}
+		}
+
+		_logger->info(__FILEREF__ + "getDrawTextVideoFilterDescription"
+			+ ", text: " + text
+			+ ", textPosition_X_InPixel: " + textPosition_X_InPixel
+			+ ", textPosition_Y_InPixel: " + textPosition_Y_InPixel
+			+ ", fontType: " + fontType
+			+ ", fontSize: " + to_string(fontSize)
+			+ ", fontColor: " + fontColor
+			+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+			+ ", boxEnable: " + to_string(boxEnable)
+			+ ", boxColor: " + boxColor
+			+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+			+ ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+			+ ", filter: " + filter
+		);
 	}
 	else
 	{

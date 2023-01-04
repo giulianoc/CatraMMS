@@ -539,6 +539,7 @@ private:
 	string			_incrontabBinary;
 
 
+	/*
 	string getDrawTextVideoFilterDescription(
 		int64_t ingestionJobKey,
 		string text,
@@ -558,6 +559,7 @@ private:
 		int boxBorderW,
 		int64_t streamingDurationInSeconds
 	);
+	*/
 
 	void setStatus(
 		int64_t ingestionJobKey,

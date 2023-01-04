@@ -150,6 +150,10 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
+		#serve per eliminare i file temporanei generati a causa di p:fileUpload non terminati.
+		#Quelli che terminano vengono automaticamente eliminati.
+		find /opt/catramms/tomcat/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete
+
 		commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 3 ]

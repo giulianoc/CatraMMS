@@ -377,6 +377,7 @@ create-directory()
 
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 		mkdir /mnt/logs/tomcat-gui
+		mkdir /mnt/logs/tomcatWorkDir
 	fi
 	if [ "$moduleName" == "api" ]; then
 		mkdir /mnt/logs/mmsAPI
@@ -617,6 +618,12 @@ install-mms-packages()
 
 		rm -rf /opt/catramms/tomcat/logs
 		ln -s /var/catramms/logs/tomcat-gui /opt/catramms/tomcat/logs
+
+		#/opt/catramms/tomcat/work viene anche usato da tomcat per salvare i chunks
+		#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
+		#in /var/catramms/logs/tomcatWorkDir
+		rm -rf /opt/catramms/tomcat/work
+		ln -s /var/catramms/logs/tomcatWorkDir /opt/catramms/tomcat/work
 
 		echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
 
