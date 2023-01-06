@@ -1956,8 +1956,8 @@ string MMSCURL::httpPostPutFileByFormData(
 			// string acceptHeader = "Accept: */*";
 			// header.push_back(acceptHeader);
 
-			// string contentLengthHeader = "Content-Length: " + to_string(postSize);
-			// header.push_back(contentLengthHeader);
+			string contentLengthHeader = "Content-Length: " + to_string(postSize);
+			header.push_back(contentLengthHeader);
 
 			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);

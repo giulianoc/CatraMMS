@@ -25605,8 +25605,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
                     + ":" + to_string(_facebookGraphAPIPort)
                     + facebookURI;
 
-				// string mediaContentType = string("video") + "/" + fileFormat;                    
-				string mediaContentType = "application/octet-stream";                    
+				string mediaContentType = string("video") + "/" + fileFormat;                    
+				// string mediaContentType = "application/octet-stream";                    
 
 				vector<pair<string, string>> formData;
 				formData.push_back(make_pair("access_token", facebookPageToken));
