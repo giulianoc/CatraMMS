@@ -1953,8 +1953,8 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			list<string> header;
 
-			// string acceptHeader = "Accept: */*";
-			// header.push_back(acceptHeader);
+			string acceptHeader = "Accept: */*";
+			header.push_back(acceptHeader);
 
 			string contentLengthHeader = "Content-Length: " + to_string(postSize);
 			header.push_back(contentLengthHeader);
