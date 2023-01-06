@@ -1945,11 +1945,14 @@ string MMSCURL::httpPostPutFileByFormData(
 			int64_t postSize;
 			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				postSize = (contentRangeEnd_Excluded - contentRangeStart)
-					+ curlUploadFormData.formData.size()
-					+ curlUploadFormData.endOfFormData.size();
+					// + curlUploadFormData.formData.size()
+					// + curlUploadFormData.endOfFormData.size()
+				;
 			else
-				postSize = fileSizeInBytes + curlUploadFormData.formData.size()
-					+ curlUploadFormData.endOfFormData.size();
+				postSize = fileSizeInBytes
+					// + curlUploadFormData.formData.size()
+					// + curlUploadFormData.endOfFormData.size()
+				;
 			request.setOpt(new curlpp::options::PostFieldSizeLarge(postSize));
 
 			// Setting the URL to retrive.
