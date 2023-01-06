@@ -24763,6 +24763,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
     }
 }
 
+/*
 size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     MMSEngineProcessor::CurlUploadFacebookData* curlUploadData = (MMSEngineProcessor::CurlUploadFacebookData*) f;
@@ -24920,15 +24921,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
             fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
         }
         
-        /*
-            curl \
-                -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
-                -F "access_token=XXXXXXXXX" \
-                -F "upload_phase=start" \
-                -F "file_size=152043520"
-
-                {"upload_session_id":"1564747013773438","video_id":"1564747010440105","start_offset":"0","end_offset":"52428800"}
-        */
         string uploadSessionId;
         string videoId;
         int64_t startOffset;
@@ -25070,15 +25062,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
         
         while (startOffset < endOffset)
         {
-            /*
-                curl \
-                    -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
-                    -F "access_token=XXXXXXX" \
-                    -F "upload_phase=transfer" \
-                    -F “start_offset=0" \
-                    -F "upload_session_id=1564747013773438" \
-                    -F "video_file_chunk=@chunk1.mp4"
-            */
             // transfer
             {
                 string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
@@ -25268,15 +25251,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
             }
         }
         
-        /*
-            curl \
-                -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
-                -F "access_token=XXXXXXXX" \
-                -F "upload_phase=finish" \
-                -F "upload_session_id=1564747013773438" 
-
-            {"success":true}
-        */
         // finish: pubblica il video e mettilo in coda per la codifica asincrona
         bool success;
         {
@@ -25474,6 +25448,319 @@ void MMSEngineProcessor::postVideoOnFacebook(
         throw runtime_error(errorMessage);
     }
 }
+*/
+
+void MMSEngineProcessor::postVideoOnFacebook(
+        string mmsAssetPathName, int64_t sizeInBytes,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+        string facebookNodeId, string facebookConfigurationLabel
+        )
+{
+            
+    string facebookURL;
+    string sResponse;
+    
+    try
+    {
+        _logger->info(__FILEREF__ + "postVideoOnFacebook"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", sizeInBytes: " + to_string(sizeInBytes)
+            + ", facebookNodeId: " + facebookNodeId
+            + ", facebookConfigurationLabel: " + facebookConfigurationLabel
+        );
+        
+        string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+                workspace->_workspaceKey, facebookConfigurationLabel);            
+        
+        string fileFormat;
+        {
+            size_t extensionIndex = mmsAssetPathName.find_last_of(".");
+            if (extensionIndex == string::npos)
+            {
+                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in mmsAssetPathName"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
+        }
+        
+        /*
+            curl \
+                -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
+                -F "access_token=XXXXXXXXX" \
+                -F "upload_phase=start" \
+                -F "file_size=152043520"
+
+                {"upload_session_id":"1564747013773438","video_id":"1564747010440105","start_offset":"0","end_offset":"52428800"}
+        */
+        string uploadSessionId;
+        string videoId;
+        int64_t startOffset;
+        int64_t endOffset;
+        // start
+        {
+            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+
+            facebookURL = _facebookGraphAPIProtocol
+                + "://"
+                + _facebookGraphAPIHostName
+                + ":" + to_string(_facebookGraphAPIPort)
+                + facebookURI;
+
+			vector<pair<string, string>> formData;
+			formData.push_back(make_pair("access_token", facebookPageToken));
+			formData.push_back(make_pair("upload_phase", "start"));
+			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
+
+			Json::Value facebookResponseRoot = MMSCURL::httpPostFormDataAndGetJson(
+				_logger,
+				ingestionJobKey,
+				facebookURL,
+				formData,
+				_facebookGraphAPITimeoutInSeconds
+			);
+
+            string field = "upload_session_id";
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
+                        + ", Field: " + field
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            uploadSessionId = JSONUtils::asString(facebookResponseRoot, field, "");
+
+            field = "video_id";
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
+                        + ", Field: " + field
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            videoId = JSONUtils::asString(facebookResponseRoot, field, "");
+            
+            field = "start_offset";
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
+                        + ", Field: " + field
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+            startOffset = stoll(sStartOffset);
+            
+            field = "end_offset";
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
+                        + ", Field: " + field
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+            endOffset = stoll(sEndOffset);
+        }
+        
+        while (startOffset < endOffset)
+        {
+            /*
+                curl \
+                    -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
+                    -F "access_token=XXXXXXX" \
+                    -F "upload_phase=transfer" \
+                    -F “start_offset=0" \
+                    -F "upload_session_id=1564747013773438" \
+                    -F "video_file_chunk=@chunk1.mp4"
+            */
+            // transfer
+            {
+                string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+
+                facebookURL = _facebookGraphAPIProtocol
+                    + "://"
+                    + _facebookGraphAPIHostName
+                    + ":" + to_string(_facebookGraphAPIPort)
+                    + facebookURI;
+
+				string mediaContentType = string("video") + "/" + fileFormat;                    
+
+				vector<pair<string, string>> formData;
+				formData.push_back(make_pair("access_token", facebookPageToken));
+				formData.push_back(make_pair("upload_phase", "transfer"));
+				formData.push_back(make_pair("start_offset", to_string(startOffset)));
+				formData.push_back(make_pair("upload_session_id", uploadSessionId));
+
+				Json::Value facebookResponseRoot = MMSCURL::httpPostFileByFormData(
+					_logger,
+					ingestionJobKey,
+					facebookURL,
+					formData,
+					_facebookGraphAPITimeoutInSeconds,
+					mmsAssetPathName,
+					sizeInBytes,
+					mediaContentType,
+					1,	// maxRetryNumber
+					15,	// secondsToWaitBeforeToRetry
+					startOffset,
+					endOffset
+				);
+
+                string field = "start_offset";
+                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", Field: " + field
+                            + ", sResponse: " + sResponse
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+                startOffset = stoll(sStartOffset);
+
+                field = "end_offset";
+                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", Field: " + field
+                            + ", sResponse: " + sResponse
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+                endOffset = stoll(sEndOffset);
+            }
+        }
+        
+        /*
+            curl \
+                -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
+                -F "access_token=XXXXXXXX" \
+                -F "upload_phase=finish" \
+                -F "upload_session_id=1564747013773438" 
+
+            {"success":true}
+        */
+        // finish: pubblica il video e mettilo in coda per la codifica asincrona
+        bool success;
+        {
+            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+            
+            facebookURL = _facebookGraphAPIProtocol
+                + "://"
+                + _facebookGraphAPIHostName
+                + ":" + to_string(_facebookGraphAPIPort)
+                + facebookURI;
+
+			vector<pair<string, string>> formData;
+			formData.push_back(make_pair("access_token", facebookPageToken));
+			formData.push_back(make_pair("upload_phase", "finish"));
+			formData.push_back(make_pair("upload_session_id", uploadSessionId));
+
+			Json::Value facebookResponseRoot = MMSCURL::httpPostFormDataAndGetJson(
+				_logger,
+				ingestionJobKey,
+				facebookURL,
+				formData,
+				_facebookGraphAPITimeoutInSeconds
+			);
+
+            string field = "success";
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            success = JSONUtils::asBool(facebookResponseRoot, field, false);
+
+            if (!success)
+            {
+                string errorMessage = __FILEREF__ + "Post Video on Facebook failed"
+                        + ", Field: " + field
+                        + ", success: " + to_string(success)
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }        
+    }
+    catch (curlpp::LogicError & e) 
+    {
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (LogicError)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", sResponse: " + sResponse
+        ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch (curlpp::RuntimeError & e) 
+    {
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (RuntimeError)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", sResponse: " + sResponse
+        ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch (runtime_error e)
+    {
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (runtime_error)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", sResponse: " + sResponse
+        ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch (exception e)
+    {
+		string errorMessage = __FILEREF__ + "Post video on Facebook failed (exception)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", sResponse: " + sResponse
+        ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 
 size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {

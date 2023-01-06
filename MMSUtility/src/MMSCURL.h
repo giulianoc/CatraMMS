@@ -17,6 +17,7 @@
 #include "spdlog/spdlog.h"
 #include "json/json.h"
 #include <fstream>
+#include <vector>
 
 using namespace std;
 
@@ -55,6 +56,20 @@ public:
 
 		int64_t		lastByteSent;
 		int64_t		upToByte_Excluded;
+	};
+
+	struct CurlUploadFormData {
+		string		loggerName;
+		ifstream	mediaSourceFileStream;
+
+		int64_t		lastByteSent;
+		int64_t		upToByte_Excluded;
+
+		bool		formDataSent;
+		string		formData;
+
+		bool		endOfFormDataSent;
+		string		endOfFormData;
 	};
 
 	static string httpGet(
@@ -204,6 +219,106 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
+	static string httpPostFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
+	);
+
+	static string httpPutFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
+	);
+
+	static Json::Value httpPostFormDataAndGetJson(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
+	);
+
+	static Json::Value httpPutFormDataAndGetJson(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
+	);
+
+	static string httpPostFileByFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		string mediaContentType,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
+	);
+
+	static string httpPutFileByFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		string mediaContentType,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
+	);
+
+	static Json::Value httpPostFileByFormDataAndGetJson(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		string mediaContentType,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
+	);
+
+	static Json::Value httpPutFileByFormDataAndGetJson(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		long timeoutInSeconds,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		string mediaContentType,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15,
+		int64_t contentRangeStart = -1,
+		int64_t contentRangeEnd_Excluded = -1
+	);
+
 	static void downloadFile(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
@@ -244,6 +359,32 @@ private:
 		int64_t contentRangeEnd_Excluded
 	);
 
+	static string httpPostPutFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		string requestType,	// POST or PUT
+		long timeoutInSeconds,
+		int maxRetryNumber,
+		int secondsToWaitBeforeToRetry
+	);
+
+	static string httpPostPutFileByFormData(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		vector<pair<string, string>> formData,
+		string requestType,	// POST or PUT
+		long timeoutInSeconds,
+		string pathFileName,
+		int64_t fileSizeInBytes,
+		string mediaContentType,
+		int maxRetryNumber,
+		int secondsToWaitBeforeToRetry,
+		int64_t contentRangeStart,
+		int64_t contentRangeEnd_Excluded
+	);
 };
 
 #endif

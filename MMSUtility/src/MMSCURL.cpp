@@ -374,6 +374,242 @@ string MMSCURL::httpPostFileSplittingInChunks(
 	return lastHttpReturn;
 }
 
+string MMSCURL::httpPostFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string requestType = "POST";
+
+	return MMSCURL::httpPostPutFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		requestType,
+		timeoutInSeconds,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry
+	);
+}
+
+string MMSCURL::httpPutFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string requestType = "PUT";
+
+	return MMSCURL::httpPostPutFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		requestType,
+		timeoutInSeconds,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry
+	);
+}
+
+Json::Value MMSCURL::httpPostFormDataAndGetJson(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string response = MMSCURL::httpPostFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		timeoutInSeconds,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry
+	);
+
+	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
+Json::Value MMSCURL::httpPutFormDataAndGetJson(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string response = MMSCURL::httpPutFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		timeoutInSeconds,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry
+	);
+
+	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
+string MMSCURL::httpPostFileByFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	string mediaContentType,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry,
+	int64_t contentRangeStart,
+	int64_t contentRangeEnd_Excluded
+)
+{
+	string requestType = "POST";
+
+	return MMSCURL::httpPostPutFileByFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		requestType,
+		timeoutInSeconds,
+		pathFileName,
+		fileSizeInBytes,
+		mediaContentType,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry,
+		contentRangeStart,
+		contentRangeEnd_Excluded
+	);
+}
+
+string MMSCURL::httpPutFileByFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	string mediaContentType,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry,
+	int64_t contentRangeStart,
+	int64_t contentRangeEnd_Excluded
+)
+{
+	string requestType = "PUT";
+
+	return MMSCURL::httpPostPutFileByFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		requestType,
+		timeoutInSeconds,
+		pathFileName,
+		fileSizeInBytes,
+		mediaContentType,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry,
+		contentRangeStart,
+		contentRangeEnd_Excluded
+	);
+}
+
+Json::Value MMSCURL::httpPostFileByFormDataAndGetJson(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	string mediaContentType,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry,
+	int64_t contentRangeStart,
+	int64_t contentRangeEnd_Excluded
+)
+{
+	string response = MMSCURL::httpPostFileByFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		timeoutInSeconds,
+		pathFileName,
+		fileSizeInBytes,
+		mediaContentType,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry,
+		contentRangeStart,
+		contentRangeEnd_Excluded
+	);
+
+	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
+Json::Value MMSCURL::httpPutFileByFormDataAndGetJson(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	long timeoutInSeconds,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	string mediaContentType,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry,
+	int64_t contentRangeStart,
+	int64_t contentRangeEnd_Excluded
+)
+{
+	string response = MMSCURL::httpPutFileByFormData(
+		logger,
+		ingestionJobKey,
+		url,
+		formData,
+		timeoutInSeconds,
+		pathFileName,
+		fileSizeInBytes,
+		mediaContentType,
+		maxRetryNumber,
+		secondsToWaitBeforeToRetry,
+		contentRangeStart,
+		contentRangeEnd_Excluded
+	);
+
+	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+
+	return jsonRoot;
+}
+
 size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
 	MMSCURL::CurlDownloadData* curlDownloadData = (MMSCURL::CurlDownloadData*) f;
@@ -463,6 +699,125 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 			curlUploadData->upToByte_Excluded - currentFilePosition);
 
     int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
+    
+	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
+    return charsRead;        
+};
+
+size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
+{
+	MMSCURL::CurlUploadFormData* curlUploadFormData = (MMSCURL::CurlUploadFormData*) f;
+
+    auto logger = spdlog::get(curlUploadFormData->loggerName);
+
+    int64_t currentFilePosition = curlUploadFormData->mediaSourceFileStream.tellg();
+
+	/*
+    logger->info(__FILEREF__ + "curlUploadCallback"
+        + ", currentFilePosition: " + to_string(currentFilePosition)
+        + ", size: " + to_string(size)
+        + ", nmemb: " + to_string(nmemb)
+        + ", curlUploadFormData->fileSizeInBytes: " + to_string(curlUploadFormData->fileSizeInBytes)
+    );
+	*/
+
+	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
+	if (curlUploadFormData->endOfFormDataSent && currentFilePosition == curlUploadFormData->upToByte_Excluded)
+		return 0;
+
+    if (!curlUploadFormData->formDataSent)
+    {
+        if (curlUploadFormData->formData.size() > size * nmemb)
+        {
+            logger->error(__FILEREF__ + "Not enougth memory!!!"
+				+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
+				+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
+				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
+				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
+				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
+				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
+				+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
+				+ ", size * nmemb: " + to_string(size * nmemb)
+            );
+
+            return CURL_READFUNC_ABORT;
+        }
+        
+        strcpy(ptr, curlUploadFormData->formData.c_str());
+        
+        curlUploadFormData->formDataSent = true;
+
+        logger->info(__FILEREF__ + "First read"
+			+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
+			+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
+			+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
+			+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
+			+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
+			+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
+			+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
+        );
+        
+        return curlUploadFormData->formData.size();
+    }
+    else if (currentFilePosition == curlUploadFormData->upToByte_Excluded)
+    {
+        if (!curlUploadFormData->endOfFormDataSent)
+        {
+            if (curlUploadFormData->endOfFormData.size() > size * nmemb)
+            {
+                logger->error(__FILEREF__ + "Not enougth memory!!!"
+					+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
+					+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
+					+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
+					+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
+					+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
+					+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
+					+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
+					+ ", size * nmemb: " + to_string(size * nmemb)
+                );
+
+                return CURL_READFUNC_ABORT;
+            }
+
+            strcpy(ptr, curlUploadFormData->endOfFormData.c_str());
+
+            curlUploadFormData->endOfFormDataSent = true;
+
+            logger->info(__FILEREF__ + "Last read"
+				+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
+				+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
+				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
+				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
+				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
+				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
+				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
+            );
+
+            return curlUploadFormData->endOfFormData.size();
+        }
+        else
+        {
+            logger->error(__FILEREF__ + "This scenario should never happen"
+				+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
+				+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
+				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
+				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
+				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
+				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
+				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
+            );
+
+            return CURL_READFUNC_ABORT;
+        }
+    }
+
+    if(currentFilePosition + (size * nmemb) <= curlUploadFormData->upToByte_Excluded)
+        curlUploadFormData->mediaSourceFileStream.read(ptr, size * nmemb);
+    else
+        curlUploadFormData->mediaSourceFileStream.read(ptr,
+			curlUploadFormData->upToByte_Excluded - currentFilePosition);
+
+    int64_t charsRead = curlUploadFormData->mediaSourceFileStream.gcount();
     
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
     return charsRead;        
@@ -984,7 +1339,6 @@ string MMSCURL::httpPostPutFile(
 	int64_t contentRangeEnd_Excluded
 )
 {
-
 	string sResponse;
 	int retryNumber = 0;
 
@@ -1098,6 +1452,541 @@ string MMSCURL::httpPostPutFile(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
 			(curlUploadData.mediaSourceFileStream).close();
+
+			sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+				sResponse.pop_back();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode == 201)
+			{
+				string message = __FILEREF__ + "httpPostPutFile success"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", responseCode: " + to_string(responseCode) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+				;
+				logger->info(message);
+			}
+			else
+			{
+				string message = __FILEREF__ + "httpPostPutFile failed, wrong return status"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+					+ ", responseCode: " + to_string(responseCode)
+				;
+				logger->error(message);
+
+				throw runtime_error(message);
+			}
+
+			// return sResponse;
+			break;
+		}
+		catch (curlpp::LogicError & e) 
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed (LogicError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+            
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (curlpp::RuntimeError & e) 
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed (RuntimeError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (runtime_error e)
+		{
+			if (responseInitialized
+				&& response.str().find("502 Bad Gateway") != string::npos)
+			{
+				logger->error(__FILEREF__ + "Server is not reachable, is it down?"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", requestType: " + requestType
+					+ ", url: " + url 
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw ServerNotReachable();
+			}
+			else
+			{
+				logger->error(__FILEREF__ + "httpPostPutFile failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", requestType: " + requestType
+					+ ", url: " + url
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw e;
+			}
+		}
+		catch (exception e)
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw e;
+		}
+	}
+
+	return sResponse;
+}
+
+string MMSCURL::httpPostPutFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	string requestType,	// POST or PUT
+	long timeoutInSeconds,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string sResponse;
+	int retryNumber = 0;
+
+	while (retryNumber < maxRetryNumber)
+	{
+		retryNumber++;
+
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			// we could apply md5 to utc time
+			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
+
+			string endOfLine = "\r\n";
+
+			// fill in formData
+			string sFormData;
+			for(pair<string, string> data: formData)
+			{
+				sFormData += ("--" + boundary + endOfLine);
+				sFormData += ("Content-Disposition: form-data; name=\""
+					+ data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
+			}
+			sFormData += ("--" + boundary + "--" + endOfLine + endOfLine);
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			list<string> headers;
+			headers.push_back("Content-Type: multipart/form-data; boundary=\"" + boundary + "\"");
+
+			request.setOpt(new curlpp::options::Url(url));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+
+			string httpsPrefix("https");
+			if (url.size() >= httpsPrefix.size()
+				&& 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			{
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+			}
+
+			request.setOpt(new curlpp::options::HttpHeader(headers));
+
+			request.setOpt(new curlpp::options::CustomRequest(requestType));
+			request.setOpt(new curlpp::options::PostFields(sFormData));
+			request.setOpt(new curlpp::options::PostFieldSize(sFormData.length()));
+
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			logger->info(__FILEREF__ + "httpPostPutFile (" + requestType + ")"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url
+			);
+			responseInitialized = true;
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+			request.perform();
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+
+			sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+				sResponse.pop_back();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode == 201)
+			{
+				string message = __FILEREF__ + "httpPostPutFile success"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", responseCode: " + to_string(responseCode) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+				;
+				logger->info(message);
+			}
+			else
+			{
+				string message = __FILEREF__ + "httpPostPutFile failed, wrong return status"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+					+ ", responseCode: " + to_string(responseCode)
+				;
+				logger->error(message);
+
+				throw runtime_error(message);
+			}
+
+			// return sResponse;
+			break;
+		}
+		catch (curlpp::LogicError & e) 
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed (LogicError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+            
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (curlpp::RuntimeError & e) 
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed (RuntimeError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (runtime_error e)
+		{
+			if (responseInitialized
+				&& response.str().find("502 Bad Gateway") != string::npos)
+			{
+				logger->error(__FILEREF__ + "Server is not reachable, is it down?"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", requestType: " + requestType
+					+ ", url: " + url 
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw ServerNotReachable();
+			}
+			else
+			{
+				logger->error(__FILEREF__ + "httpPostPutFile failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", requestType: " + requestType
+					+ ", url: " + url
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw e;
+			}
+		}
+		catch (exception e)
+		{
+			logger->error(__FILEREF__ + "httpPostPutFile failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", requestType: " + requestType
+				+ ", url: " + url
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw e;
+		}
+	}
+
+	return sResponse;
+}
+
+string MMSCURL::httpPostPutFileByFormData(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	vector<pair<string, string>> formData,
+	string requestType,	// POST or PUT
+	long timeoutInSeconds,
+	string pathFileName,
+	int64_t fileSizeInBytes,
+	string mediaContentType,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry,
+	int64_t contentRangeStart,
+	int64_t contentRangeEnd_Excluded
+)
+{
+
+	string sResponse;
+	int retryNumber = 0;
+
+	while (retryNumber < maxRetryNumber)
+	{
+		retryNumber++;
+
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			CurlUploadFormData curlUploadFormData;
+			curlUploadFormData.loggerName = logger->name();
+			curlUploadFormData.mediaSourceFileStream.open(pathFileName, ios::binary);
+			if (!curlUploadFormData.mediaSourceFileStream)
+			{
+				string message = __FILEREF__ + "open file failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", pathFileName: " + pathFileName
+				;
+				logger->error(message);
+
+				throw runtime_error(message);
+			}
+			if (contentRangeStart > 0)
+				curlUploadFormData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
+			curlUploadFormData.lastByteSent = -1;
+			if (contentRangeEnd_Excluded > 0)
+				curlUploadFormData.upToByte_Excluded = contentRangeEnd_Excluded;
+			else
+				curlUploadFormData.upToByte_Excluded = fileSizeInBytes;
+			curlUploadFormData.formDataSent = false;
+			curlUploadFormData.endOfFormDataSent = false;
+
+			// we could apply md5 to utc time
+			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
+
+			string endOfLine = "\r\n";
+
+			// fill in formData
+			{
+				for(pair<string, string> data: formData)
+				{
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
+					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\""
+						+ data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
+				}
+
+				if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
+				{
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
+					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\""
+						+ endOfLine + "Content-Type: " + mediaContentType
+						+ "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
+						+ endOfLine + endOfLine);
+				}
+				else
+				{
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
+					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"source\""
+						+ endOfLine + "Content-Type: " + mediaContentType
+						+ "Content-Length: " + (to_string(fileSizeInBytes))
+						+ endOfLine + endOfLine);
+				}
+			}
+			curlUploadFormData.endOfFormData = endOfLine + "--" + boundary + "--" + endOfLine + endOfLine;
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			{
+				curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadFormDataCallback);
+				curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadFormData);
+				request.setOpt(curlUploadCallbackFunction);
+				request.setOpt(curlUploadDataData);
+
+				bool upload = true;
+				request.setOpt(new curlpp::options::Upload(upload));
+			}
+
+			list<string> header;
+			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
+			header.push_back(contentTypeHeader);
+
+			request.setOpt(new curlpp::options::CustomRequest(requestType));
+			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
+				request.setOpt(new curlpp::options::PostFieldSizeLarge(
+					contentRangeEnd_Excluded - contentRangeStart));
+			else
+				request.setOpt(new curlpp::options::PostFieldSizeLarge(fileSizeInBytes));
+
+			// Setting the URL to retrive.
+			request.setOpt(new curlpp::options::Url(url));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+
+			string httpsPrefix("https");
+			if (url.size() >= httpsPrefix.size()
+				&& 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			{
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+			}
+
+			request.setOpt(new curlpp::options::HttpHeader(header));
+
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			logger->info(__FILEREF__ + "httpPostPutFile (" + requestType + ")"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url
+				+ ", pathFileName: " + pathFileName
+			);
+			responseInitialized = true;
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+			request.perform();
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+
+			(curlUploadFormData.mediaSourceFileStream).close();
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
