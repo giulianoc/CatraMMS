@@ -1682,6 +1682,7 @@ string MMSCURL::httpPostPutFormData(
 			logger->info(__FILEREF__ + "httpPostPutFile (" + requestType + ")"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
+				+ ", sFormData: " + sFormData
 			);
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -1701,6 +1702,7 @@ string MMSCURL::httpPostPutFormData(
 					+ ", responseCode: " + to_string(responseCode) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sFormData: " + sFormData
 					+ ", sResponse: " + sResponse
 				;
 				logger->info(message);
@@ -1980,6 +1982,7 @@ string MMSCURL::httpPostPutFileByFormData(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", pathFileName: " + pathFileName
+				+ ", sFormData: " + sFormData
 			);
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -1994,13 +1997,14 @@ string MMSCURL::httpPostPutFileByFormData(
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 201)
+			if (responseCode == 200 || responseCode == 201)
 			{
 				string message = __FILEREF__ + "httpPostPutFile success"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", responseCode: " + to_string(responseCode) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sFormData: " + sFormData
 					+ ", sResponse: " + sResponse
 				;
 				logger->info(message);
@@ -2011,6 +2015,7 @@ string MMSCURL::httpPostPutFileByFormData(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sFormData: " + sFormData
 					+ ", sResponse: " + sResponse
 					+ ", responseCode: " + to_string(responseCode)
 				;
