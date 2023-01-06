@@ -1908,7 +1908,7 @@ string MMSCURL::httpPostPutFileByFormData(
 				if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				{
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
-					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\"; filename=\"xaa\""
+					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\""
 						+ endOfLine + "Content-Type: " + mediaContentType
 						+ endOfLine + "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
 						+ endOfLine + endOfLine);
@@ -1953,11 +1953,11 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			list<string> header;
 
-			string acceptHeader = "Accept: */*";
-			header.push_back(acceptHeader);
+			// string acceptHeader = "Accept: */*";
+			// header.push_back(acceptHeader);
 
-			string contentLengthHeader = "Content-Length: " + to_string(postSize);
-			header.push_back(contentLengthHeader);
+			// string contentLengthHeader = "Content-Length: " + to_string(postSize);
+			// header.push_back(contentLengthHeader);
 
 			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);

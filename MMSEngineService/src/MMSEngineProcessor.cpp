@@ -25614,7 +25614,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				formData.push_back(make_pair("start_offset", to_string(startOffset)));
 				formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
-				Json::Value facebookResponseRoot = MMSCURL::httpPostFileByFormData(
+				Json::Value facebookResponseRoot = MMSCURL::httpPostFileByFormDataAndGetJson(
 					_logger,
 					ingestionJobKey,
 					facebookURL,
@@ -25633,9 +25633,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
                 if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + field
-                            + ", sResponse: " + sResponse
-                            ;
+						+ ", Field: " + field
+						+ ", facebookResponseRoot: " + JSONUtils::toString(facebookResponseRoot)
+					;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
