@@ -1910,7 +1910,7 @@ string MMSCURL::httpPostPutFileByFormData(
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\""
 						+ endOfLine + "Content-Type: " + mediaContentType
-						// + "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
+						+ endOfLine + "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
 						+ endOfLine + endOfLine);
 				}
 				else
@@ -1918,7 +1918,7 @@ string MMSCURL::httpPostPutFileByFormData(
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"source\""
 						+ endOfLine + "Content-Type: " + mediaContentType
-						// + "Content-Length: " + (to_string(fileSizeInBytes))
+						+ endOfLine + "Content-Length: " + (to_string(fileSizeInBytes))
 						+ endOfLine + endOfLine);
 				}
 			}
