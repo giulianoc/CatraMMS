@@ -25492,6 +25492,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
         }
         
         /*
+			details: https://developers.facebook.com/docs/video-api/guides/publishing/
+
             curl \
                 -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
                 -F "access_token=XXXXXXXXX" \

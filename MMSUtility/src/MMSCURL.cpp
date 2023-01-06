@@ -712,15 +712,6 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t currentFilePosition = curlUploadFormData->mediaSourceFileStream.tellg();
 
-	/*
-    logger->info(__FILEREF__ + "curlUploadCallback"
-        + ", currentFilePosition: " + to_string(currentFilePosition)
-        + ", size: " + to_string(size)
-        + ", nmemb: " + to_string(nmemb)
-        + ", curlUploadFormData->fileSizeInBytes: " + to_string(curlUploadFormData->fileSizeInBytes)
-    );
-	*/
-
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
 	if (curlUploadFormData->endOfFormDataSent && currentFilePosition == curlUploadFormData->upToByte_Excluded)
 		return 0;
@@ -750,10 +741,6 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
         logger->info(__FILEREF__ + "First read"
 			+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
 			+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
-			+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
-			+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
-			+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
-			+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
 			+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
         );
         
@@ -784,12 +771,8 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
             curlUploadFormData->endOfFormDataSent = true;
 
             logger->info(__FILEREF__ + "Last read"
-				+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
-				+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
 				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
 				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
-				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
-				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
 				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
             );
 
@@ -819,6 +802,11 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t charsRead = curlUploadFormData->mediaSourceFileStream.gcount();
     
+    logger->info(__FILEREF__ + "curlUploadFormDataCallback"
+        + ", currentFilePosition: " + to_string(currentFilePosition)
+        + ", charsRead: " + to_string(charsRead)
+    );
+
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
     return charsRead;        
 };
@@ -1918,7 +1906,7 @@ string MMSCURL::httpPostPutFileByFormData(
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\""
 						+ endOfLine + "Content-Type: " + mediaContentType
-						+ "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
+						// + "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
 						+ endOfLine + endOfLine);
 				}
 				else
@@ -1926,7 +1914,7 @@ string MMSCURL::httpPostPutFileByFormData(
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"source\""
 						+ endOfLine + "Content-Type: " + mediaContentType
-						+ "Content-Length: " + (to_string(fileSizeInBytes))
+						// + "Content-Length: " + (to_string(fileSizeInBytes))
 						+ endOfLine + endOfLine);
 				}
 			}
@@ -1952,9 +1940,16 @@ string MMSCURL::httpPostPutFileByFormData(
 			request.setOpt(new curlpp::options::CustomRequest(requestType));
 			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				request.setOpt(new curlpp::options::PostFieldSizeLarge(
-					contentRangeEnd_Excluded - contentRangeStart));
+					(contentRangeEnd_Excluded - contentRangeStart)
+					+ curlUploadFormData.formData.size()
+					+ curlUploadFormData.endOfFormData.size()
+				));
 			else
-				request.setOpt(new curlpp::options::PostFieldSizeLarge(fileSizeInBytes));
+				request.setOpt(new curlpp::options::PostFieldSizeLarge(
+					fileSizeInBytes
+					+ curlUploadFormData.formData.size()
+					+ curlUploadFormData.endOfFormData.size()
+				));
 
 			// Setting the URL to retrive.
 			request.setOpt(new curlpp::options::Url(url));
