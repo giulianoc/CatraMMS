@@ -700,7 +700,7 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
     
-	curlUploadData->bytesSent += charsRead;
+	curlUploadData->payloadBytesSent += charsRead;
 
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
     return charsRead;        
@@ -739,12 +739,13 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
         
         curlUploadFormData->formDataSent = true;
 
-		curlUploadFormData->bytesSent += curlUploadFormData->formData.size();
+		// this is not payload
+		// curlUploadFormData->payloadBytesSent += curlUploadFormData->formData.size();
 
-        logger->info(__FILEREF__ + "First read"
-			+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
-			+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
-        );
+        // logger->info(__FILEREF__ + "First read"
+		// 	+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
+		// 	+ ", curlUploadFormData->payloadBytesSent: " + to_string(curlUploadFormData->payloadBytesSent)
+        // );
         
         return curlUploadFormData->formData.size();
     }
@@ -771,12 +772,13 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
             curlUploadFormData->endOfFormDataSent = true;
 
-			curlUploadFormData->bytesSent += curlUploadFormData->endOfFormData.size();
+			// this is not payload
+			// curlUploadFormData->payloadBytesSent += curlUploadFormData->endOfFormData.size();
 
-            logger->info(__FILEREF__ + "Last read"
-				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
-				+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
-            );
+            // logger->info(__FILEREF__ + "Last read"
+			// 	+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
+			// 	+ ", curlUploadFormData->payloadBytesSent: " + to_string(curlUploadFormData->payloadBytesSent)
+            // );
 
             return curlUploadFormData->endOfFormData.size();
         }
@@ -803,13 +805,13 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t charsRead = curlUploadFormData->mediaSourceFileStream.gcount();
     
-	curlUploadFormData->bytesSent += charsRead;
+	curlUploadFormData->payloadBytesSent += charsRead;
 
-    logger->info(__FILEREF__ + "curlUploadFormDataCallback"
-        + ", currentFilePosition: " + to_string(currentFilePosition)
-        + ", charsRead: " + to_string(charsRead)
-		+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
-    );
+    // logger->info(__FILEREF__ + "curlUploadFormDataCallback"
+    //     + ", currentFilePosition: " + to_string(currentFilePosition)
+    //     + ", charsRead: " + to_string(charsRead)
+	// 	+ ", curlUploadFormData->payloadBytesSent: " + to_string(curlUploadFormData->payloadBytesSent)
+    // );
 
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
     return charsRead;        
@@ -1357,7 +1359,7 @@ string MMSCURL::httpPostPutFile(
 			}
 			if (contentRangeStart > 0)
 				curlUploadData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
-			curlUploadData.bytesSent = 0;
+			curlUploadData.payloadBytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadData.upToByte_Excluded = contentRangeEnd_Excluded;
 			else
@@ -1883,7 +1885,7 @@ string MMSCURL::httpPostPutFileByFormData(
 			}
 			if (contentRangeStart > 0)
 				curlUploadFormData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
-			curlUploadFormData.bytesSent = 0;
+			curlUploadFormData.payloadBytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadFormData.upToByte_Excluded = contentRangeEnd_Excluded;
 			else
@@ -1955,11 +1957,11 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			list<string> header;
 
-			string acceptHeader = "Accept: */*";
-			header.push_back(acceptHeader);
+			// string acceptHeader = "Accept: */*";
+			// header.push_back(acceptHeader);
 
-			string contentLengthHeader = "Content-Length: " + to_string(postSize);
-			header.push_back(contentLengthHeader);
+			// string contentLengthHeader = "Content-Length: " + to_string(postSize);
+			// header.push_back(contentLengthHeader);
 
 			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);
@@ -2014,8 +2016,9 @@ string MMSCURL::httpPostPutFileByFormData(
 					+ ", responseCode: " + to_string(responseCode) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
-					+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
+					// + ", curlUploadFormData.formData: " + curlUploadFormData.formData
+					// + ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
+					+ ", curlUploadFormData.payloadBytesSent: " + to_string(curlUploadFormData.payloadBytesSent)
 					+ ", sResponse: " + sResponse
 				;
 				logger->info(message);

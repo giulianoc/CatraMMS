@@ -54,7 +54,7 @@ public:
 		string		loggerName;
 		ifstream	mediaSourceFileStream;
 
-		int64_t		bytesSent;
+		int64_t		payloadBytesSent;
 		int64_t		upToByte_Excluded;
 	};
 
@@ -62,7 +62,7 @@ public:
 		string		loggerName;
 		ifstream	mediaSourceFileStream;
 
-		int64_t		bytesSent;
+		int64_t		payloadBytesSent;
 		int64_t		upToByte_Excluded;
 
 		bool		formDataSent;
