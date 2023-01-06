@@ -1982,7 +1982,8 @@ string MMSCURL::httpPostPutFileByFormData(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", pathFileName: " + pathFileName
-				+ ", sFormData: " + sFormData
+				+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
+				+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 			);
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -2004,7 +2005,8 @@ string MMSCURL::httpPostPutFileByFormData(
 					+ ", responseCode: " + to_string(responseCode) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sFormData: " + sFormData
+					+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
+					+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 					+ ", sResponse: " + sResponse
 				;
 				logger->info(message);
@@ -2015,7 +2017,8 @@ string MMSCURL::httpPostPutFileByFormData(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sFormData: " + sFormData
+					+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
+					+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 					+ ", sResponse: " + sResponse
 					+ ", responseCode: " + to_string(responseCode)
 				;
