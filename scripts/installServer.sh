@@ -678,6 +678,7 @@ install-mms-packages()
 		echo "copiare catramms.war in /opt/catramms/tomcat/webapps"
 		echo "far partire tomcat in modo che crea la directory catramms"
 		echo "ln -s /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomcat/conf/catramms.properties"
+		echo "cp /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/favicon.ico /opt/catramms/tomcat/webapps/ROOT/"
 	fi
 
 	if [ "$moduleName" != "integration" ]; then

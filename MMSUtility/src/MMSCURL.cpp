@@ -1694,7 +1694,7 @@ string MMSCURL::httpPostPutFormData(
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 201)
+			if (responseCode == 200 || responseCode == 201)
 			{
 				string message = __FILEREF__ + "httpPostPutFile success"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
