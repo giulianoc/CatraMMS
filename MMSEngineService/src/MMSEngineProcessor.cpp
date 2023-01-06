@@ -25584,7 +25584,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
             endOffset = stoll(sEndOffset);
         }
         
-        while (startOffset < endOffset)
+		int64_t chunkSize = 1000000;
+        while (startOffset < sizeInBytes)
         {
             /*
                 curl \
@@ -25625,7 +25626,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 					1,	// maxRetryNumber
 					15,	// secondsToWaitBeforeToRetry
 					startOffset,
-					endOffset
+					startOffset + chunkSize >= sizeInBytes ? sizeInBytes : startOffset + chunkSize
 				);
 
                 string field = "start_offset";
