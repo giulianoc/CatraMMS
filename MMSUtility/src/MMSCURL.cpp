@@ -1908,7 +1908,9 @@ string MMSCURL::httpPostPutFileByFormData(
 				if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				{
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
-					curlUploadFormData.formData += ("Content-Disposition: form-data; name=\"video_file_chunk\""
+					curlUploadFormData.formData +=
+						("Content-Disposition: form-data; name=\"video_file_chunk\"; filename=\""
+							+ to_string(contentRangeStart) + "\""
 						+ endOfLine + "Content-Type: " + mediaContentType
 						+ endOfLine + "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart))
 						+ endOfLine + endOfLine);
