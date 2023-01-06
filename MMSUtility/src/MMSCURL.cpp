@@ -1894,7 +1894,7 @@ string MMSCURL::httpPostPutFileByFormData(
 			// we could apply md5 to utc time
 			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
 
-			string endOfLine = "\n";
+			string endOfLine = "\r\n";
 
 			// fill in formData
 			{
