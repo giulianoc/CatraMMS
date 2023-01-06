@@ -24766,9 +24766,17 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     MMSEngineProcessor::CurlUploadFacebookData* curlUploadData = (MMSEngineProcessor::CurlUploadFacebookData*) f;
-    
+
     auto logger = spdlog::get("mmsEngineService");
 
+	int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
+
+	if (curlUploadData->bodyLastPartSent && currentFilePosition == curlUploadData->endOffset)
+	{
+		// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
+
+		return 0;
+	}
 
     if (!curlUploadData->bodyFirstPartSent)
     {
@@ -24803,9 +24811,11 @@ size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, v
              + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
         );
         
+		curlUploadData->mediaSourceFileStream.seekg(curlUploadData->currentOffset, ios::beg);
+
         return curlUploadData->bodyFirstPart.size();
     }
-    else if (curlUploadData->currentOffset == curlUploadData->endOffset)
+    else if (currentFilePosition == curlUploadData->endOffset)
     {
         if (!curlUploadData->bodyLastPartSent)
         {
@@ -24858,16 +24868,15 @@ size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, v
         }
     }
 
-    if(curlUploadData->currentOffset + (size * nmemb) <= curlUploadData->endOffset)
+    if(currentFilePosition + (size * nmemb) <= curlUploadData->endOffset)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
     else
-        curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->endOffset - curlUploadData->currentOffset);
+        curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->endOffset - currentFilePosition);
 
     int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
     
-    curlUploadData->currentOffset += charsRead;
 
-    return charsRead;        
+    return charsRead;
 };
 
 void MMSEngineProcessor::postVideoOnFacebook(
@@ -24954,7 +24963,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
                     ;
 
             list<string> header;
-            string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
+			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
             header.push_back(contentTypeHeader);
 
             curlpp::Cleanup cleaner;
@@ -24968,52 +24977,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
             if (_facebookGraphAPIProtocol == "https")
             {
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-    //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-    //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                // equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                // request.setOpt(sslCert);
-
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                // if(pPassphrase)
-                //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
                 // disconnect if we can't validate server's cert
                 bool bSslVerifyPeer = false;
                 curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -25023,7 +24986,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
                 request.setOpt(sslVerifyHost);
 
                 // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
             }
             request.setOpt(new curlpp::options::HttpHeader(header));
 
