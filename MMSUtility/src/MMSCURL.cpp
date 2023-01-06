@@ -700,6 +700,8 @@ size_t curlUploadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
     
+	curlUploadData->bytesSent += charsRead;
+
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
     return charsRead;        
 };
@@ -726,7 +728,6 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
 				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
 				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
-				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
 				+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
 				+ ", size * nmemb: " + to_string(size * nmemb)
             );
@@ -738,10 +739,11 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
         
         curlUploadFormData->formDataSent = true;
 
+		curlUploadFormData->bytesSent += curlUploadFormData->formData.size();
+
         logger->info(__FILEREF__ + "First read"
-			+ ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent)
-			+ ", curlUploadFormData->formData: " + curlUploadFormData->formData
 			+ ", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size())
+			+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
         );
         
         return curlUploadFormData->formData.size();
@@ -758,7 +760,6 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 					+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
 					+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
 					+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
-					+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
 					+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
 					+ ", size * nmemb: " + to_string(size * nmemb)
                 );
@@ -770,10 +771,11 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
             curlUploadFormData->endOfFormDataSent = true;
 
+			curlUploadFormData->bytesSent += curlUploadFormData->endOfFormData.size();
+
             logger->info(__FILEREF__ + "Last read"
-				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
-				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
 				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
+				+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
             );
 
             return curlUploadFormData->endOfFormData.size();
@@ -786,7 +788,6 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 				+ ", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent)
 				+ ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData
 				+ ", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded)
-				+ ", curlUploadFormData->lastByteSent: " + to_string(curlUploadFormData->lastByteSent)
 				+ ", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
             );
 
@@ -802,9 +803,12 @@ size_t curlUploadFormDataCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     int64_t charsRead = curlUploadFormData->mediaSourceFileStream.gcount();
     
+	curlUploadFormData->bytesSent += charsRead;
+
     logger->info(__FILEREF__ + "curlUploadFormDataCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
         + ", charsRead: " + to_string(charsRead)
+		+ ", curlUploadFormData->bytesSent: " + to_string(curlUploadFormData->bytesSent)
     );
 
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
@@ -1353,7 +1357,7 @@ string MMSCURL::httpPostPutFile(
 			}
 			if (contentRangeStart > 0)
 				curlUploadData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
-			curlUploadData.lastByteSent = -1;
+			curlUploadData.bytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadData.upToByte_Excluded = contentRangeEnd_Excluded;
 			else
@@ -1879,7 +1883,7 @@ string MMSCURL::httpPostPutFileByFormData(
 			}
 			if (contentRangeStart > 0)
 				curlUploadFormData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
-			curlUploadFormData.lastByteSent = -1;
+			curlUploadFormData.bytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadFormData.upToByte_Excluded = contentRangeEnd_Excluded;
 			else
@@ -1938,18 +1942,15 @@ string MMSCURL::httpPostPutFileByFormData(
 			header.push_back(contentTypeHeader);
 
 			request.setOpt(new curlpp::options::CustomRequest(requestType));
+			int64_t postSize;
 			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
-				request.setOpt(new curlpp::options::PostFieldSizeLarge(
-					(contentRangeEnd_Excluded - contentRangeStart)
+				postSize = (contentRangeEnd_Excluded - contentRangeStart)
 					+ curlUploadFormData.formData.size()
-					+ curlUploadFormData.endOfFormData.size()
-				));
+					+ curlUploadFormData.endOfFormData.size();
 			else
-				request.setOpt(new curlpp::options::PostFieldSizeLarge(
-					fileSizeInBytes
-					+ curlUploadFormData.formData.size()
-					+ curlUploadFormData.endOfFormData.size()
-				));
+				postSize = fileSizeInBytes + curlUploadFormData.formData.size()
+					+ curlUploadFormData.endOfFormData.size();
+			request.setOpt(new curlpp::options::PostFieldSizeLarge(postSize));
 
 			// Setting the URL to retrive.
 			request.setOpt(new curlpp::options::Url(url));
@@ -1977,6 +1978,7 @@ string MMSCURL::httpPostPutFileByFormData(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", pathFileName: " + pathFileName
+				+ ", postSize: " + to_string(postSize)
 				+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
 				+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 			);
