@@ -1910,6 +1910,7 @@ string MMSCURL::httpPostPutFileByFormData(
 				if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				{
 					curlUploadFormData.formData += ("--" + boundary + endOfLine);
+					// 2023-01-06: il caricamento del video su facebook fallisce senza il campo filename
 					curlUploadFormData.formData +=
 						("Content-Disposition: form-data; name=\"video_file_chunk\"; filename=\""
 							+ to_string(contentRangeStart) + "\""
