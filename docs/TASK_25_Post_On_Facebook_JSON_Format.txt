@@ -42,8 +42,8 @@
 		// mandatory, one of the MMS Facebook Configuration label 
 		"ConfigurationLabel": "My Facebook Conf",
 
-		// mandatory. page_id || user_id || event_id || group_id
-		"NodeId": "YYYY",
+		// mandatory. page_id (user_id? event_id? group_id?)
+		"PageId": "YYYY",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

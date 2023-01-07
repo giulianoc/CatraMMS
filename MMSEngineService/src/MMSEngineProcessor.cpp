@@ -10455,7 +10455,7 @@ void MMSEngineProcessor::postOnFacebookThread(
         }
 
         string facebookConfigurationLabel;
-        string facebookNodeId;
+        string facebookPageId;
         {
             string field = "ConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10469,7 +10469,7 @@ void MMSEngineProcessor::postOnFacebookThread(
             }
             facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "NodeId";
+            field = "PageId";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10479,7 +10479,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
                 throw runtime_error(errorMessage);
             }
-            facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
+            facebookPageId = JSONUtils::asString(parametersRoot, field, "");
         }
         
 		int dependencyIndex = 0;
@@ -10554,7 +10554,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				{
 					postVideoOnFacebook(mmsAssetPathName, 
 						sizeInBytes, ingestionJobKey, workspace,
-						facebookNodeId, facebookConfigurationLabel);
+						facebookPageId, facebookConfigurationLabel);
 				}
 				else // if (contentType == ContentType::Audio)
 				{
@@ -17329,7 +17329,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		string nodeId;
+		string pageId;
 		string facebookConfigurationLabel;
 		string title;
 		string description;
@@ -17340,7 +17340,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string configurationLabel;
 		Json::Value referencesRoot;
         {
-            string field = "nodeId";
+            string field = "pageId";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17350,7 +17350,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            nodeId = JSONUtils::asString(parametersRoot, field, "");
+            pageId = JSONUtils::asString(parametersRoot, field, "");
 
             field = "facebookConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -17450,9 +17450,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		// 1. get codeToken from the configuration
 		// 2. call facebook API
 		// 3. the response will have the access token to be used
-		string facebookAccessToken = getFacebookAccessTokenByConfigurationLabel(
-			ingestionJobKey,
-			workspace, facebookConfigurationLabel);
+		string facebookPageToken = getFacebookPageToken(ingestionJobKey,
+			workspace, facebookConfigurationLabel, pageId);
 
 		string facebookURL;
 		Json::Value responseRoot;
@@ -17477,12 +17476,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				+ "://"
 				+ _facebookGraphAPIHostName
 				+ ":" + to_string(_facebookGraphAPIPort)
-				+ regex_replace(_facebookGraphAPILiveVideosURI, regex("__NODEID__"), nodeId)
+				+ regex_replace(_facebookGraphAPILiveVideosURI, regex("__NODEID__"), pageId)
 				+ "?status=SCHEDULED_UNPUBLISHED"
 				+ "&planned_start_time=" + to_string(utcScheduleStartTimeInSeconds)
 				+ "&title=" + curlpp::escape(title)
 				+ (description != "" ? ("&description=" + curlpp::escape(description)) : "")
-				+ "&access_token=" + curlpp::escape(facebookAccessToken)
+				+ "&access_token=" + curlpp::escape(facebookPageToken)
 			;
 
 			vector<string> otherHeaders;
@@ -17668,7 +17667,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				Json::Value vodProxyParametersRoot;
 				{
 					string field = "Label";
-					proxyLabel = "Proxy MediaItem to YouTube (" + facebookConfigurationLabel + ")";
+					proxyLabel = "Proxy MediaItem to Facebook (" + facebookConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
 					field = "Type";
@@ -24612,7 +24611,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 void MMSEngineProcessor::postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string facebookNodeId, string facebookConfigurationLabel
+        string facebookPageId, string facebookConfigurationLabel
         )
 {
             
@@ -24626,15 +24625,14 @@ void MMSEngineProcessor::postVideoOnFacebook(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
-            + ", facebookNodeId: " + facebookNodeId
+            + ", facebookPageId: " + facebookPageId
             + ", facebookConfigurationLabel: " + facebookConfigurationLabel
         );
         
-        // string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+        // string facebookPageToken = _mmsEngineDBFacade->getFacebookPageToken(
         //         workspace->_workspaceKey, facebookConfigurationLabel);            
-		string facebookAccessToken = getFacebookAccessTokenByConfigurationLabel(
-			ingestionJobKey,
-			workspace, facebookConfigurationLabel);
+		string facebookPageToken = getFacebookPageToken(ingestionJobKey,
+			workspace, facebookConfigurationLabel, facebookPageId);
 
         
         string fileFormat;
@@ -24671,7 +24669,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
         int64_t endOffset;
         // start
         {
-            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookPageId + "/videos";
 
             facebookURL = _facebookGraphAPIProtocol
                 + "://"
@@ -24680,7 +24678,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
                 + facebookURI;
 
 			vector<pair<string, string>> formData;
-			formData.push_back(make_pair("access_token", facebookAccessToken));
+			formData.push_back(make_pair("access_token", facebookPageToken));
 			formData.push_back(make_pair("upload_phase", "start"));
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
@@ -24760,7 +24758,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
             */
             // transfer
             {
-                string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+                string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookPageId + "/videos";
 
                 facebookURL = _facebookGraphAPIProtocol
                     + "://"
@@ -24771,7 +24769,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				string mediaContentType = string("video") + "/" + fileFormat;                    
 
 				vector<pair<string, string>> formData;
-				formData.push_back(make_pair("access_token", facebookAccessToken));
+				formData.push_back(make_pair("access_token", facebookPageToken));
 				formData.push_back(make_pair("upload_phase", "transfer"));
 				formData.push_back(make_pair("start_offset", to_string(startOffset)));
 				formData.push_back(make_pair("upload_session_id", uploadSessionId));
@@ -24833,7 +24831,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
         // finish: pubblica il video e mettilo in coda per la codifica asincrona
         bool success;
         {
-            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
+            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookPageId + "/videos";
             
             facebookURL = _facebookGraphAPIProtocol
                 + "://"
@@ -24842,7 +24840,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
                 + facebookURI;
 
 			vector<pair<string, string>> formData;
-			formData.push_back(make_pair("access_token", facebookAccessToken));
+			formData.push_back(make_pair("access_token", facebookPageToken));
 			formData.push_back(make_pair("upload_phase", "finish"));
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
@@ -25667,34 +25665,29 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     }
 }
 
-string MMSEngineProcessor::getFacebookAccessTokenByConfigurationLabel(
-	int64_t ingestionJobKey,
-    shared_ptr<Workspace> workspace, string facebookConfigurationLabel)
+string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
+    shared_ptr<Workspace> workspace, string facebookConfigurationLabel,
+	string facebookPageId)
 {
     string facebookURL;
 	Json::Value responseRoot;
     
     try
     {
-		string codeToken = _mmsEngineDBFacade->getFacebookUserAccessTokenByConfigurationLabel(
+		string userAccessToken = _mmsEngineDBFacade->getFacebookUserAccessTokenByConfigurationLabel(
 			workspace->_workspaceKey, facebookConfigurationLabel);
 
-		// GET https://graph.facebook.com/v15.0/oauth/access_token?
-		//	client_id={app-id}
-		//	&redirect_uri={redirect-uri}
-		//	&client_secret={app-secret}
-		//	&code={code-parameter}
+		// curl -i -X GET "https://graph.facebook.com/PAGE-ID?
+		// fields=access_token&
+		// access_token=USER-ACCESS-TOKEN"
 
         facebookURL = _facebookGraphAPIProtocol
             + "://"
             + _facebookGraphAPIHostName
             + ":" + to_string(_facebookGraphAPIPort)
-			+ "/" + _facebookGraphAPIVersion
-            + _facebookGraphAPIAccessTokenURI
-			+ "?client_id=" + _facebookGraphAPIClientId
-			+ "&client_secret=" + _facebookGraphAPIClientSecret
-			+ "&redirect_uri=" + curlpp::escape(_facebookGraphAPIRedirectURL)
-			+ "&code=" + curlpp::escape(codeToken)
+			+ "/" + facebookPageId
+			+ "?fields=access_token"
+			+ "&access_token=" + curlpp::escape(userAccessToken)
 		;
 
 		Json::Value responseRoot = MMSCURL::httpGetJson(
@@ -25708,9 +25701,8 @@ string MMSEngineProcessor::getFacebookAccessTokenByConfigurationLabel(
 
 		/*
 		{
-		"access_token": {access-token}, 
-		"token_type": {type},
-		"expires_in":  {seconds-til-expiration}
+		"access_token":"PAGE-ACCESS-TOKEN",
+		"id":"PAGE-ID"              
 		}
 		*/
 

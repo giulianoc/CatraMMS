@@ -525,7 +525,7 @@ private:
     void postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string facebookNodeId, string facebookConfigurationLabel
+        string facebookPageId, string facebookConfigurationLabel
         );
 
     void postVideoOnYouTube(
@@ -539,9 +539,9 @@ private:
 		int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
 
-	string getFacebookAccessTokenByConfigurationLabel(
-		int64_t ingestionJobKey,
-		shared_ptr<Workspace> workspace, string facebookConfigurationLabel);
+	string getFacebookPageToken(int64_t ingestionJobKey,
+		shared_ptr<Workspace> workspace, string facebookConfigurationLabel,
+		string facebookPageId);
 
 	tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 		string, int64_t, string, string, bool> processDependencyInfo(
