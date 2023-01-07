@@ -708,6 +708,7 @@ public:
         IntroOutroOverlay		= 30,
         VODProxy				= 31,
         YouTubeLiveBroadcast	= 32,
+        FacebookLiveBroadcast	= 33,
 
         EmailNotification       = 60,
         MediaCrossReference		= 61,
@@ -788,6 +789,8 @@ public:
 				return "VOD-Proxy";
 			case IngestionType::YouTubeLiveBroadcast:
 				return "YouTube-Live-Broadcast";
+			case IngestionType::FacebookLiveBroadcast:
+				return "Facebook-Live-Broadcast";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -881,6 +884,8 @@ public:
             return IngestionType::VODProxy;
         else if (lowerCase == "youtube-live-broadcast")
             return IngestionType::YouTubeLiveBroadcast;
+        else if (lowerCase == "facebook-live-broadcast")
+            return IngestionType::FacebookLiveBroadcast;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

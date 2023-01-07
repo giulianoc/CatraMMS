@@ -44,6 +44,8 @@ public:
 
     bool isYouTubeLiveBroadcastSourceTypeValid(string sourceType);
 
+    bool isFacebookLiveBroadcastSourceTypeValid(string sourceType);
+
 	bool isYouTubePrivacyStatusValid(string privacyStatus);
 
 	bool isYouTubeTokenTypeValid(string tokenType);
@@ -196,6 +198,11 @@ public:
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
 
     void validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
+
+    void validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
         bool validateDependenciesToo,
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);

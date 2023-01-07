@@ -1014,6 +1014,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
+    else if (type == "Facebook-Live-Broadcast")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            string sTaskRoot = JSONUtils::toString(taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateFacebookLiveBroadcastMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
+    }
     else if (type == "VOD-Proxy")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::VODProxy;
@@ -1289,6 +1310,11 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
     else if (ingestionType == MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
     {
         validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot, 
+			validateDependenciesToo, dependencies);
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast)
+    {
+        validateFacebookLiveBroadcastMetadata(workspaceKey, label, parametersRoot, 
 			validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
@@ -4356,6 +4382,189 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 	}
 }
 
+void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
+{
+
+	string sourceType;
+    string field = "sourceType";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+		sourceType = JSONUtils::asString(parametersRoot, field, "");
+
+        if (!isFacebookLiveBroadcastSourceTypeValid(sourceType))
+        {
+            string errorMessage = string("Unknown sourceType")
+                + ", sourceType: " + sourceType
+                + ", label: " + label
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+	if (sourceType == "Live")
+	{
+		field = "configurationLabel";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
+          
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	else // if (sourceType == "MediaItem")
+	{
+		// References is optional because in case of dependency managed automatically
+		// by MMS (i.e.: onSuccess)
+		field = "references";
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
+			Json::Value referencesRoot = parametersRoot[field];
+			if (referencesRoot.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			*/
+
+			bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+			bool encodingProfileFieldsToBeManaged = false;
+			fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+				priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+				encodingProfileFieldsToBeManaged);
+			if (validateDependenciesToo)
+			{
+				if (dependencies.size() != 1)
+				{
+					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast"
+                        + ", dependencies.size: " + to_string(dependencies.size())
+                        + ", label: " + label
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					int64_t key;
+					MMSEngineDBFacade::ContentType referenceContentType;
+					Validator::DependencyType dependencyType;
+					bool stopIfReferenceProcessingError;
+
+					tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+						= dependencies[0];
+
+					if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                        && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+					{
+						string errorMessage = __FILEREF__
+							+ "reference... does not refer a video-audio content"
+                            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+							+ ", referenceMediaItemKey: " + to_string(key)
+							+ ", referenceContentType: "
+								+ MMSEngineDBFacade::toString(referenceContentType)
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+	}
+
+    field = "schedule";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
+        
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	{
+		Json::Value proxyPeriodRoot = parametersRoot[field];
+
+		time_t utcProxyPeriodStart = -1;
+		time_t utcProxyPeriodEnd = -1;
+
+		field = "start";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
+			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+		}
+
+		field = "end";
+		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		{
+			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
+			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+		}
+
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
+			&& utcProxyPeriodStart >= utcProxyPeriodEnd)
+		{
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
+
+			string errorMessage = __FILEREF__
+				+ "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    field = "processingStartingFrom";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
+	}
+}
+
 void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
 	bool validateDependenciesToo,
@@ -6369,6 +6578,22 @@ bool Validator::isCutTypeValid(string cutType)
 }
 
 bool Validator::isYouTubeLiveBroadcastSourceTypeValid(string sourceType)
+{
+    vector<string> validSourceTypes = {
+        "Live",
+        "MediaItem"
+    };
+
+    for (string validSourceType: validSourceTypes)
+    {
+        if (sourceType == validSourceType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isFacebookLiveBroadcastSourceTypeValid(string sourceType)
 {
     vector<string> validSourceTypes = {
         "Live",

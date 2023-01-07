@@ -676,6 +676,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -685,8 +686,9 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			apiKey,
 			workflowMetadata,
 			"application/json",	// contentType
+			otherHeaders,
 			3	// maxRetries
-		);
+		).second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}

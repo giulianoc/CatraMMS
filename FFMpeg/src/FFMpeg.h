@@ -609,6 +609,13 @@ private:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		string directoryToBeMonitored);
+
+	int progressDownloadCallback(
+		int64_t ingestionJobKey,
+		chrono::system_clock::time_point& lastTimeProgressUpdate, 
+		double& lastPercentageUpdated,
+		double dltotal, double dlnow,
+		double ultotal, double ulnow);
 };
 
 #endif

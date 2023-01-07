@@ -126,10 +126,16 @@ private:
     string                  _emailFrom;
     
     string                  _facebookGraphAPIProtocol;
-    string                  _facebookGraphAPIHostName;
+	string					_facebookGraphAPIHostName;
+	string					_facebookGraphAPIVideoHostName;
     int                     _facebookGraphAPIPort;
     string                  _facebookGraphAPIVersion;
     long                    _facebookGraphAPITimeoutInSeconds;
+	string					_facebookGraphAPIClientId;
+	string					_facebookGraphAPIClientSecret;
+	string					_facebookGraphAPIRedirectURL;
+	string					_facebookGraphAPIAccessTokenURI;
+	string					_facebookGraphAPILiveVideosURI;
 
     string                  _youTubeDataAPIProtocol;
     string                  _youTubeDataAPIHostName;
@@ -308,6 +314,13 @@ private:
         Json::Value parametersRoot);
 
 	void youTubeLiveBroadcastThread(
+		shared_ptr<long> processorsThreadsNumber,
+		int64_t ingestionJobKey,
+		string ingestionJobLabel,
+		shared_ptr<Workspace> workspace,
+		Json::Value parametersRoot);
+
+	void facebookLiveBroadcastThread(
 		shared_ptr<long> processorsThreadsNumber,
 		int64_t ingestionJobKey,
 		string ingestionJobLabel,
@@ -525,6 +538,10 @@ private:
 	string getYouTubeAccessTokenByConfigurationLabel(
 		int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
+
+	string getFacebookAccessTokenByConfigurationLabel(
+		int64_t ingestionJobKey,
+		shared_ptr<Workspace> workspace, string facebookConfigurationLabel);
 
 	tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 		string, int64_t, string, string, bool> processDependencyInfo(

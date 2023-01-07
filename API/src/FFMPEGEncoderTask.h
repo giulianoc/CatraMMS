@@ -51,6 +51,13 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			string mmsWorkflowIngestionURL,
 			string mmsBinaryIngestionURL);
 
+		int progressDownloadCallback(
+			int64_t ingestionJobKey,
+			chrono::system_clock::time_point& lastTimeProgressUpdate, 
+			double& lastPercentageUpdated,
+			double dltotal, double dlnow,
+			double ultotal, double ulnow);
+
 	protected:
 		shared_ptr<FFMPEGEncoderBase::Encoding>	_encoding;
 		int64_t				_encodingJobKey;

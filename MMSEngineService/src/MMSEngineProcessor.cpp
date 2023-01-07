@@ -142,6 +142,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName
     );
+    _facebookGraphAPIVideoHostName           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "videoHostName", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName
+    );
     _facebookGraphAPIPort               = JSONUtils::asInt(_configuration["FacebookGraphAPI"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort)
@@ -153,6 +157,26 @@ MMSEngineProcessor::MMSEngineProcessor(
     _facebookGraphAPITimeoutInSeconds   = JSONUtils::asInt(_configuration["FacebookGraphAPI"], "timeout", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds)
+    );
+    _facebookGraphAPIClientId           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "clientId", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId
+    );
+    _facebookGraphAPIClientSecret           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "clientSecret", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret
+    );
+    _facebookGraphAPIRedirectURL           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "redirectURL", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL
+    );
+    _facebookGraphAPIAccessTokenURI           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "accessTokenURI", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI
+    );
+    _facebookGraphAPILiveVideosURI           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "liveVideosURI", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI
     );
 
     _youTubeDataAPIProtocol           = JSONUtils::asString(_configuration["YouTubeDataAPI"], "protocol", "");
@@ -4335,8 +4359,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType ==
-							MMSEngineDBFacade::IngestionType::PostOnYouTube)
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnYouTube)
                         {
                             // mediaItemKeysDependency is present because checked
 							// by _mmsEngineDBFacade->getIngestionsToBeManaged
@@ -4795,8 +4818,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType ==
-							MMSEngineDBFacade::IngestionType::LiveProxy)
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
                         {
                             try
                             {
@@ -5356,8 +5378,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								throw runtime_error(errorMessage);
 							}
 						}
-                        else if (ingestionType ==
-							MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
                         {
 							try
 							{
@@ -5459,6 +5480,151 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch(exception e)
 							{
 								_logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+						}
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast)
+                        {
+							try
+							{
+								/* 2021-02-19: check on threads is already done
+								 * in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming
+								 *		the thread limit
+								 */
+								int maxAdditionalProcessorThreads =
+									getMaxAdditionalProcessorThreads();
+								if (_processorsThreadsNumber.use_count() >
+									_processorThreads + maxAdditionalProcessorThreads)
+								{
+									_logger->warn(__FILEREF__
+										+ "Not enough available threads to manage facebookLiveBroadcastThread, activity is postponed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", _processorsThreadsNumber.use_count(): "
+											+ to_string(_processorsThreadsNumber.use_count())
+										+ ", _processorThreads + maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + maxAdditionalProcessorThreads)
+									);
+
+									string errorMessage = "";
+									string processorMMS = "";
+
+									_logger->info(__FILEREF__ + "Update IngestionJob"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: "
+											+ MMSEngineDBFacade::toString(ingestionStatus)
+										+ ", errorMessage: " + errorMessage
+										+ ", processorMMS: " + processorMMS
+									);                            
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										ingestionStatus, 
+										errorMessage,
+										processorMMS
+									);
+								}
+								else
+								{
+									thread facebookLiveBroadcastThread(
+										&MMSEngineProcessor::facebookLiveBroadcastThread, this, 
+										_processorsThreadsNumber,
+										ingestionJobKey, ingestionJobLabel,
+										workspace,
+										parametersRoot
+									);
+									facebookLiveBroadcastThread.detach();
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", exception: " + e.what()
@@ -15009,6 +15175,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -15017,105 +15184,9 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json" // contentType
-		);
-
-		/*
-		{
-			string mmsAPIURL =
-				_mmsAPIProtocol
-				+ "://"
-				+ _mmsAPIHostname + ":"
-				+ to_string(_mmsAPIPort)
-				+ "/catramms/"
-				+ _mmsAPIVersion
-				+ _mmsAPIIngestionURI
-            ;
-
-			list<string> header;
-
-			header.push_back("Content-Type: application/json");
-			{
-				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-				string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-				header.push_back(basicAuthorization);
-			}
-
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			// Setting the URL to retrive.
-			request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-			// timeout consistent with nginx configuration (fastcgi_read_timeout)
-			request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-			if (_mmsAPIProtocol == "https")
-			{
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-               
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-               
-				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-			}
-
-			request.setOpt(new curlpp::options::HttpHeader(header));
-			request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-			request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-			ostringstream response;
-
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			_logger->info(__FILEREF__ + "Ingesting CutLive workflow"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", mmsAPIURL: " + mmsAPIURL
-				+ ", workflowMetadata: " + workflowMetadata
-			);
-			chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-			request.perform();
-			chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-			string sResponse = response.str();
-			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-				sResponse.pop_back();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 201)
-			{
-				string message = __FILEREF__ + "Ingested CutLive workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					+ ", sResponse: " + sResponse
-					;
-				_logger->info(message);
-			}
-			else
-			{
-				string message = __FILEREF__ + "Ingested CutLive workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					+ ", sResponse: " + sResponse
-					+ ", responseCode: " + to_string(responseCode)
-					;
-				_logger->error(message);
-
-				throw runtime_error(message);
-			}
-		}
-		*/
+			"application/json", // contentType
+			otherHeaders
+		).second;
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16036,6 +16107,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -16044,105 +16116,9 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json" // contentType
-		);
-
-		/*
-		{
-			string mmsAPIURL =
-				_mmsAPIProtocol
-				+ "://"
-				+ _mmsAPIHostname + ":"
-				+ to_string(_mmsAPIPort)
-				+ "/catramms/"
-				+ _mmsAPIVersion
-				+ _mmsAPIIngestionURI
-            ;
-
-			list<string> header;
-
-			header.push_back("Content-Type: application/json");
-			{
-				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-				string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-				header.push_back(basicAuthorization);
-			}
-
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			// Setting the URL to retrive.
-			request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-			// timeout consistent with nginx configuration (fastcgi_read_timeout)
-			request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-			if (_mmsAPIProtocol == "https")
-			{
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-               
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-               
-				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-			}
-
-			request.setOpt(new curlpp::options::HttpHeader(header));
-			request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-			request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-			ostringstream response;
-
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			_logger->info(__FILEREF__ + "Ingesting CutLive workflow"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", mmsAPIURL: " + mmsAPIURL
-				+ ", workflowMetadata: " + workflowMetadata
-			);
-			chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-			request.perform();
-			chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-			string sResponse = response.str();
-			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-				sResponse.pop_back();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 201)
-			{
-				string message = __FILEREF__ + "Ingested CutLive workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					+ ", sResponse: " + sResponse
-					;
-				_logger->info(message);
-			}
-			else
-			{
-				string message = __FILEREF__ + "Ingested CutLive workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", sResponse: " + sResponse
-					+ ", responseCode: " + to_string(responseCode)
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					;
-				_logger->error(message);
-
-				throw runtime_error(message);
-			}
-		}
-		*/
+			"application/json", // contentType
+			otherHeaders
+		).second;
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16518,8 +16494,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				body = JSONUtils::toString(bodyRoot);
 			}
 
-			list<string> headerList;
-
+			vector<string> headerList;
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
@@ -16529,138 +16504,18 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				header = "Accept: application/json";
 				headerList.push_back(header);
-
-				header = "Content-Type: application/json";
-				headerList.push_back(header);
-			}                    
-
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			request.setOpt(new curlpp::options::PostFields(body));
-			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-			request.setOpt(new curlpp::options::Url(youTubeURL));
-			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-			if (_youTubeDataAPIProtocol == "https")
-			{
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				// equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				// request.setOpt(sslCert);
-
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				// if(pPassphrase)
-				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-
-				// request.setOpt(new curlpp::options::SslEngineDefault());
-			}
-           
-			for (string headerMessage: headerList)
-				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
-			request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-			ostringstream response;
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			// store response headers in the response
-			// You simply have to set next option to prefix the header to the normal body output. 
-			request.setOpt(new curlpp::options::Header(true)); 
-           
-			_logger->info(__FILEREF__ + "Calling youTube (live broadcast)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
-			);
-			request.perform();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-
-			_logger->info(__FILEREF__ + "Called youTube (live broadcast)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", responseCode: " + to_string(responseCode)
-			);
-
-			if (responseCode != 200)
-			{
-				string errorMessage = __FILEREF__ + "youTube (live broadcast) failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
 			}
 
-			string sCompleteResponse = response.str();
-			size_t beginOfBodyIndex;
-			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "youTube response is wrong (live broadcast)"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-					+ ", sCompleteResponse: " + sCompleteResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
-			_logger->info(__FILEREF__ + "Called youTube (live broadcast)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				// + ", body: " + body
-				+ ", responseCode: " + to_string(responseCode)
-				+ ", sCompleteResponse: " + sCompleteResponse
-				// + ", sResponse: " + sResponse
+			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+				_logger,
+				ingestionJobKey,
+				youTubeURL,
+				_youTubeDataAPITimeoutInSeconds,
+				"",
+				"",
+				body,
+				"application/json", // contentType
+				headerList
 			);
 
 			/* sResponse:
@@ -16738,8 +16593,6 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 			}
 			*/
-
-			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
 			string field = "id";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -16859,8 +16712,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				body = JSONUtils::toString(bodyRoot);
 			}
 
-			list<string> headerList;
-
+			vector<string> headerList;
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
@@ -16870,138 +16722,18 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				header = "Accept: application/json";
 				headerList.push_back(header);
-
-				header = "Content-Type: application/json";
-				headerList.push_back(header);
 			}                    
 
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			request.setOpt(new curlpp::options::PostFields(body));
-			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-			request.setOpt(new curlpp::options::Url(youTubeURL));
-			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-			if (_youTubeDataAPIProtocol == "https")
-			{
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				// equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				// request.setOpt(sslCert);
-
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				// if(pPassphrase)
-				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-
-				// request.setOpt(new curlpp::options::SslEngineDefault());
-			}
-           
-			for (string headerMessage: headerList)
-				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
-			request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-			ostringstream response;
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			// store response headers in the response
-			// You simply have to set next option to prefix the header to the normal body output. 
-			request.setOpt(new curlpp::options::Header(true)); 
-           
-			_logger->info(__FILEREF__ + "Calling youTube (live stream)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
-			);
-			request.perform();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-
-			_logger->info(__FILEREF__ + "Called youTube (live stream)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", responseCode: " + to_string(responseCode)
-			);
-
-			if (responseCode != 200)
-			{
-				string errorMessage = __FILEREF__ + "youTube (live stream) failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string sCompleteResponse = response.str();
-			size_t beginOfBodyIndex;
-			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "youTube response is wrong (live stream)"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-					+ ", sCompleteResponse: " + sCompleteResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
-			_logger->info(__FILEREF__ + "Called youTube (live stream)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				// + ", body: " + body
-				+ ", responseCode: " + to_string(responseCode)
-				+ ", sCompleteResponse: " + sCompleteResponse
-				// + ", sResponse: " + sResponse
+			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+				_logger,
+				ingestionJobKey,
+				youTubeURL,
+				_youTubeDataAPITimeoutInSeconds,
+				"",
+				"",
+				body,
+				"application/json", // contentType
+				headerList
 			);
 
 			/* sResponse:
@@ -17055,8 +16787,6 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 			}
 			*/
-
-			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
 			string field = "id";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -17179,152 +16909,27 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				+ ":" + to_string(_youTubeDataAPIPort)
 				+ youTubeDataAPILiveBroadcastBindURI;
 
-			list<string> headerList;
-
+			vector<string> headerList;
 			{
 				string header = "Authorization: Bearer " + youTubeAccessToken;
 				headerList.push_back(header);
 
-                // header = "Content-Length: " + to_string(body.length());
-                // headerList.push_back(header);
-
 				header = "Accept: application/json";
 				headerList.push_back(header);
-
-				// header = "Content-Type: application/json";
-				// headerList.push_back(header);
 			}                    
 
 			string body;
 
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			request.setOpt(new curlpp::options::PostFields(body));
-			request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-			request.setOpt(new curlpp::options::Url(youTubeURL));
-			request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-			if (_youTubeDataAPIProtocol == "https")
-			{
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				// equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				// request.setOpt(sslCert);
-
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				// if(pPassphrase)
-				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-
-				// request.setOpt(new curlpp::options::SslEngineDefault());
-			}
-           
-			for (string headerMessage: headerList)
-				_logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
-			request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-			ostringstream response;
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			// store response headers in the response
-			// You simply have to set next option to prefix the header to the normal body output. 
-			request.setOpt(new curlpp::options::Header(true)); 
-           
-			_logger->info(__FILEREF__ + "Calling youTube (live broadcast bind)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				// + ", body: " + body
-			);
-			request.perform();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-			string sCompleteResponse = response.str();
-
-			_logger->info(__FILEREF__ + "Called youTube (live broadcast bind)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", responseCode: " + to_string(responseCode)
-				+ ", sCompleteResponse: " + sCompleteResponse
-			);
-
-			if (responseCode != 200)
-			{
-				string errorMessage = __FILEREF__ + "youTube (live broadcast bind) failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			size_t beginOfBodyIndex;
-			if ((beginOfBodyIndex = sCompleteResponse.find("\r\n\r\n")) == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "youTube response is wrong (live broadcast bind)"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", youTubeURL: " + youTubeURL
-					+ ", responseCode: " + to_string(responseCode)
-					+ ", sCompleteResponse: " + sCompleteResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sResponse = sCompleteResponse.substr(beginOfBodyIndex + 4);
-			_logger->info(__FILEREF__ + "Called youTube (live broadcast bind)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				// + ", body: " + body
-				+ ", responseCode: " + to_string(responseCode)
-				+ ", sCompleteResponse: " + sCompleteResponse
-				// + ", sResponse: " + sResponse
+			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+				_logger,
+				ingestionJobKey,
+				youTubeURL,
+				_youTubeDataAPITimeoutInSeconds,
+				"",
+				"",
+				body,
+				"", // contentType
+				headerList
 			);
 
 			/* sResponse:
@@ -17380,8 +16985,6 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			}
 			*/
-
-			Json::Value responseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 		}
 		catch(runtime_error e)
 		{
@@ -17606,6 +17209,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
+		vector<string> otherHeaders;
 		MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -17614,150 +17218,9 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
-			"application/json" // contentType
+			"application/json", // contentType
+			otherHeaders
 		);
-
-		/*
-		{
-			string mmsAPIURL =
-				_mmsAPIProtocol
-				+ "://"
-				+ _mmsAPIHostname + ":"
-				+ to_string(_mmsAPIPort)
-				+ "/catramms/"
-				+ _mmsAPIVersion
-				+ _mmsAPIIngestionURI
-            ;
-
-			list<string> header;
-
-			header.push_back("Content-Type: application/json");
-			{
-				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-				string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
-				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-				header.push_back(basicAuthorization);
-			}
-
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
-			// Setting the URL to retrive.
-			request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-			// timeout consistent with nginx configuration (fastcgi_read_timeout)
-			request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
-
-			if (_mmsAPIProtocol == "https")
-			{
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-				// typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-				// typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-				// typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				// equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				// request.setOpt(sslCert);
-
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				// if(pPassphrase)
-				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-               
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-
-				// request.setOpt(new curlpp::options::SslEngineDefault());
-			}
-
-			request.setOpt(new curlpp::options::HttpHeader(header));
-			request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-			request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-			ostringstream response;
-
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			_logger->info(__FILEREF__ + "Ingesting YouTube Live Broadcast workflow"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", mmsAPIURL: " + mmsAPIURL
-				+ ", workflowMetadata: " + workflowMetadata
-			);
-			chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
-			request.perform();
-			chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
-
-			string sResponse = response.str();
-			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-				sResponse.pop_back();
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 201)
-			{
-				string message = __FILEREF__ + "Ingested CutLive workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					+ ", sResponse: " + sResponse
-					;
-				_logger->info(message);
-			}
-			else
-			{
-				string message = __FILEREF__ + "Ingested YouTube Live Broadcast workflow response"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
-					+ ", workflowMetadata: " + workflowMetadata
-					+ ", sResponse: " + sResponse
-					+ ", responseCode: " + to_string(responseCode)
-					;
-				_logger->error(message);
-
-				throw runtime_error(message);
-			}
-		}
-		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17812,6 +17275,540 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+}
+
+void MMSEngineProcessor::facebookLiveBroadcastThread(
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	string ingestionJobLabel,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot
+)
+{
+    try
+    {
+		_logger->info(__FILEREF__ + "facebookLiveBroadcastThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
+		string nodeId;
+		string facebookConfigurationLabel;
+		string title;
+		string description;
+
+		int64_t utcScheduleStartTimeInSeconds;
+		string sourceType;
+		// configurationLabel or referencesRoot has to be present
+		string configurationLabel;
+		Json::Value referencesRoot;
+        {
+            string field = "nodeId";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            nodeId = JSONUtils::asString(parametersRoot, field, "");
+
+            field = "facebookConfigurationLabel";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+
+            field = "title";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            title = JSONUtils::asString(parametersRoot, field, "");
+
+            field = "description";
+			description = JSONUtils::asString(parametersRoot, field, "");
+
+            field = "schedule";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			Json::Value scheduleRoot = parametersRoot[field];
+
+            field = "start";
+            if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			string scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
+			utcScheduleStartTimeInSeconds = DateTime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
+
+            field = "sourceType";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            sourceType = JSONUtils::asString(parametersRoot, field, "");
+
+			if (sourceType == "Live")
+			{
+				field = "configurationLabel";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			}
+			else // if (sourceType == "MediaItem")
+			{
+				field = "references";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				referencesRoot = parametersRoot[field];
+			}
+        }
+
+		// 1. get codeToken from the configuration
+		// 2. call facebook API
+		// 3. the response will have the access token to be used
+		string facebookAccessToken = getFacebookAccessTokenByConfigurationLabel(
+			ingestionJobKey,
+			workspace, facebookConfigurationLabel);
+
+		string facebookURL;
+		Json::Value responseRoot;
+		string rtmpURL;
+		try
+		{
+			/*
+				curl -i -X POST \
+					"https://graph.facebook.com/{page-id}/live_videos
+					?status=LIVE_NOW
+					&title=Today%27s%20Page%20Live%20Video
+					&description=This%20is%20the%20live%20video%20for%20the%20Page%20for%20today
+					&access_token=EAAC..."
+
+				curl -i -X POST \
+					"https://graph.facebook.com/{page-id}/live_videos
+					?status=SCHEDULED_UNPUBLISHED
+					&planned_start_time=1541539800
+					&access_token={access-token}"
+			*/
+			facebookURL = _facebookGraphAPIProtocol
+				+ "://"
+				+ _facebookGraphAPIHostName
+				+ ":" + to_string(_facebookGraphAPIPort)
+				+ regex_replace(_facebookGraphAPILiveVideosURI, regex("__NODEID__"), nodeId)
+				+ "?status=SCHEDULED_UNPUBLISHED"
+				+ "&planned_start_time=" + to_string(utcScheduleStartTimeInSeconds)
+				+ "&title=" + curlpp::escape(title)
+				+ (description != "" ? ("&description=" + curlpp::escape(description)) : "")
+				+ "&access_token=" + curlpp::escape(facebookAccessToken)
+			;
+
+			vector<string> otherHeaders;
+			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+				_logger,
+				ingestionJobKey,
+				facebookURL,
+				_mmsAPITimeoutInSeconds,
+				"",
+				"",
+				"",
+				"",
+				otherHeaders
+			);
+
+			/*
+				{
+				"id": "1953020644813108",
+				"stream_url": "rtmp://rtmp-api.facebook...",
+				"secure_stream_url":"rtmps://rtmp-api.facebook..."
+				}
+			*/
+
+			string field = "secure_stream_url";
+			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field
+					+ ", response: " + JSONUtils::toString(responseRoot)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			rtmpURL = JSONUtils::asString(responseRoot, field, "");
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("Facebook live broadcast management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", facebookURL: " + facebookURL
+				+ ", response: " + JSONUtils::toString(responseRoot)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string("Facebook live broadcast management failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", facebookURL: " + facebookURL
+				+ ", response: " + JSONUtils::toString(responseRoot)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest..."
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
+
+		Json::Value facebookLiveBroadcastOnSuccess = Json::nullValue;
+		Json::Value facebookLiveBroadcastOnError = Json::nullValue;
+		Json::Value facebookLiveBroadcastOnComplete = Json::nullValue;
+		int64_t userKey;
+		string apiKey;
+		{
+			string field = "internalMMS";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::Value internalMMSRoot = parametersRoot[field];
+
+				field = "credentials";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value credentialsRoot = internalMMSRoot[field];
+
+					field = "userKey";
+					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+
+					field = "apiKey";
+					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+				}
+
+				field = "events";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					Json::Value eventsRoot = internalMMSRoot[field];
+
+					field = "OnSuccess";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						facebookLiveBroadcastOnSuccess = eventsRoot[field];
+
+					field = "OnError";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						facebookLiveBroadcastOnError = eventsRoot[field];
+
+					field = "OnComplete";
+					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						facebookLiveBroadcastOnComplete = eventsRoot[field];
+				}
+			}
+		}
+
+		// create workflow to ingest
+		string workflowMetadata;
+		{
+			string proxyLabel;
+			Json::Value proxyRoot;
+
+			if (sourceType == "Live")
+			{
+				Json::Value liveProxyParametersRoot;
+				{
+					string field = "Label";
+					proxyLabel = "Proxy " + configurationLabel
+						+ " to Facebook (" + facebookConfigurationLabel + ")";
+					proxyRoot[field] = proxyLabel;
+
+					field = "Type";
+					proxyRoot[field] = "Live-Proxy";
+
+					liveProxyParametersRoot = parametersRoot;
+					{
+						Json::Value removed;
+						field = "facebookConfigurationLabel";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "title";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "description";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "sourceType";
+						liveProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "internalMMS";
+						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+							liveProxyParametersRoot.removeMember(field, &removed);
+					}
+
+					bool timePeriod = true;
+					field = "TimePeriod";
+					liveProxyParametersRoot[field] = timePeriod;
+
+					Json::Value outputsRoot(Json::arrayValue);
+					{
+						Json::Value outputRoot;
+
+						field = "OutputType";
+						outputRoot[field] = "RTMP_Stream";
+
+						field = "RtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						outputsRoot.append(outputRoot);
+					}
+					field = "Outputs";
+					liveProxyParametersRoot[field] = outputsRoot;
+				}
+				string field = "Parameters";
+				proxyRoot[field] = liveProxyParametersRoot;
+			}
+			else // if (sourceType == "MediaItem")
+			{
+				Json::Value vodProxyParametersRoot;
+				{
+					string field = "Label";
+					proxyLabel = "Proxy MediaItem to YouTube (" + facebookConfigurationLabel + ")";
+					proxyRoot[field] = proxyLabel;
+
+					field = "Type";
+					proxyRoot[field] = "VOD-Proxy";
+
+					vodProxyParametersRoot = parametersRoot;
+					{
+						Json::Value removed;
+						field = "facebookConfigurationLabel";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "title";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "description";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "sourceType";
+						vodProxyParametersRoot.removeMember(field, &removed);
+					}
+					{
+						Json::Value removed;
+						field = "internalMMS";
+						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+							vodProxyParametersRoot.removeMember(field, &removed);
+					}
+
+					field = "references";
+					vodProxyParametersRoot[field] = referencesRoot;
+
+					bool timePeriod = true;
+					field = "TimePeriod";
+					vodProxyParametersRoot[field] = timePeriod;
+
+					Json::Value outputsRoot(Json::arrayValue);
+					{
+						Json::Value outputRoot;
+
+						field = "OutputType";
+						outputRoot[field] = "RTMP_Stream";
+
+						field = "RtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						outputsRoot.append(outputRoot);
+					}
+					field = "Outputs";
+					vodProxyParametersRoot[field] = outputsRoot;
+				}
+				string field = "Parameters";
+				proxyRoot[field] = vodProxyParametersRoot;
+			}
+
+			Json::Value workflowRoot;
+			{
+				string field = "Label";
+				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
+
+				field = "Type";
+				workflowRoot[field] = "Workflow";
+
+				field = "Task";
+				workflowRoot[field] = proxyRoot;
+			}
+
+			workflowMetadata = JSONUtils::toString(workflowRoot);
+		}
+
+		vector<string> otherHeaders;
+		MMSCURL::httpPostString(
+			_logger,
+			ingestionJobKey,
+			_mmsWorkflowIngestionURL,
+			_mmsAPITimeoutInSeconds,
+			to_string(userKey),
+			apiKey,
+			workflowMetadata,
+			"application/json", // contentType
+			otherHeaders
+		);
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
+	}
+	catch(runtime_error e)
+	{
+        _logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -24127,47 +24124,6 @@ RESUMING FILE TRANSFERS
 					request.perform();
                 
 					(curlDownloadData.mediaSourceFileStream).close();
-
-					/*
-					string localPathFileName = curlDownloadData.destBinaryPathName
-                        + ".new";
-					if (curlDownloadData.currentChunkNumber >= 2)
-					{
-						try
-						{
-							bool removeSrcFileAfterConcat = true;
-
-							_logger->info(__FILEREF__ + "Concat file"
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-								+ ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-							);
-
-							FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("Error to concat file")
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-									+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);            
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("Error to concat file")
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);            
-						}
-					}
-					*/
 				}
 				else
 				{
@@ -24175,7 +24131,7 @@ RESUMING FILE TRANSFERS
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					);
-                
+
 					// FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb+");
 					long long fileSize;
 					{
@@ -24606,113 +24562,27 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-        string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
-                + ftpServer 
-                + ":" + to_string(ftpPort) 
-                + ftpRemoteDirectory;
-        
-        if (ftpRemoteDirectory.size() == 0 || ftpRemoteDirectory.back() != '/')
-            ftpUrl  += "/";
-
-        if (ftpRemoteFileName == "")
-            ftpUrl  += fileName;
-        else
-            ftpUrl += ftpRemoteFileName;
-
-        _logger->info(__FILEREF__ + "FTP Uploading"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", sizeInBytes: " + to_string(sizeInBytes)
-            + ", ftpUrl: " + ftpUrl
-        );
-
-        ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
-        // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
-
-        // 1. PORT-mode FTP (Active) - NO Firewall friendly
-        //  - FTP client: Sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
-        //  - FTP client: Sends a data request (PORT command) to the FTP server. The FTP client includes in the PORT command the data port number 
-        //      it opened to receive data. In this example, the FTP client has opened TCP port 6001 to receive the data.
-        //  - FTP server opens a new inbound connection to the FTP client on the port indicated by the FTP client in the PORT command. 
-        //      The FTP server source port is TCP port 20. In this example, the FTP server sends data from its own TCP port 20 to the FTP client’s TCP port 6001.
-        //  In this conversation, two connections were established: an outbound connection initiated by the FTP client and an inbound connection established by the FTP server.
-        // 2. PASV-mode FTP (Passive) - Firewall friendly
-        //  - FTP client sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
-        //  - FTP client sends a PASV command requesting that the FTP server open a port number that the FTP client can connect to establish the data channel.
-        //      FTP serve sends over the command channel the TCP port number that the FTP client can initiate a connection to establish the data channel (i.e.: 7000)
-        //  - FTP client opens a new connection from its own response port TCP 6001 to the FTP server’s data channel 7000. Data transfer takes place through this channel.
-        
-        // Active/Passive... see the next URL, section 'FTP Peculiarities We Need'
-        // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
-
-        // https://curl.haxx.se/libcurl/c/ftpupload.html
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
-
-        request.setOpt(new curlpp::options::Url(ftpUrl));
-        request.setOpt(new curlpp::options::Verbose(false)); 
-        request.setOpt(new curlpp::options::Upload(true)); 
-        
-		// which timeout we have to use here???
-		// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
-
-        request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
-        request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t) sizeInBytes));
-        
-        
-        bool bFtpUseEpsv = false;
-        curlpp::OptionTrait<bool, CURLOPT_FTP_USE_EPSV> ftpUseEpsv(bFtpUseEpsv);
-        request.setOpt(ftpUseEpsv);
-
-        // curl will default to binary transfer mode for FTP, 
-        // and you ask for ascii mode instead with -B, --use-ascii or 
-        // by making sure the URL ends with ;type=A.
-        
-        // timeout (CURLOPT_FTP_RESPONSE_TIMEOUT)
-        
-        bool bCreatingMissingDir = true;
-        curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
-        request.setOpt(creatingMissingDir);
-
-        string ftpsPrefix("ftps");
-        if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
-        {
-            /* Next statements is in case we want ftp protocol to use SSL or TLS
-             * google CURLOPT_FTPSSLAUTH and CURLOPT_FTP_SSL
-
-            // disconnect if we can't validate server's cert
-            bool bSslVerifyPeer = false;
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-            request.setOpt(sslVerifyPeer);
-
-            curlpp::OptionTrait<curl_ftpssl, CURLOPT_FTP_SSL> ftpSsl(CURLFTPSSL_TRY);
-            request.setOpt(ftpSsl);
-
-            curlpp::OptionTrait<curl_ftpauth, CURLOPT_FTPSSLAUTH> ftpSslAuth(CURLFTPAUTH_TLS);
-            request.setOpt(ftpSslAuth);
-             */
-        }
-
-        // FTP progress works only in case of FTP Passive
         chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
         double lastPercentageUpdated = -1.0;
         bool uploadingStoppedByUser = false;
         curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressUploadCallback, this,
                 ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
                 placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
-        request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
-        request.setOpt(new curlpp::options::NoProgress(0L));
+		MMSCURL::ftpFile(
+			_logger,
+			ingestionJobKey,
+			mmsAssetPathName,
+			fileName,
+			sizeInBytes,
+			ftpServer,
+			ftpPort,
+			ftpUserName,
+			ftpPassword,
+			ftpRemoteDirectory,
+			ftpRemoteFileName,
+			functor
+		);
 
-        _logger->info(__FILEREF__ + "FTP Uploading media file"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", sizeInBytes: " + to_string(sizeInBytes)
-        );
-        request.perform();
-
-		// FTP-Delivery just forward the MIK to the next Task
 		{
 			_logger->info(__FILEREF__ + "addIngestionJobOutput"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24724,30 +24594,6 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
 				mediaItemKey, physicalPathKey, liveRecordingIngestionJobKey);
 		}
-    }
-    catch (curlpp::LogicError & e) 
-    {
-        string errorMessage = __FILEREF__ + "Download failed (LogicError)"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", mmsAssetPathName: " + mmsAssetPathName 
-            + ", exception: " + e.what()
-        ;
-		_logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-	}
-    catch (curlpp::RuntimeError & e) 
-    {
-        string errorMessage = __FILEREF__ + "Download failed (RuntimeError)"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-            + ", mmsAssetPathName: " + mmsAssetPathName 
-            + ", exception: " + e.what()
-        ;
-		_logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
     }
     catch (exception e)
     {
@@ -24763,123 +24609,6 @@ void MMSEngineProcessor::ftpUploadMediaSource(
     }
 }
 
-/*
-size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, void *f)
-{
-    MMSEngineProcessor::CurlUploadFacebookData* curlUploadData = (MMSEngineProcessor::CurlUploadFacebookData*) f;
-
-    auto logger = spdlog::get("mmsEngineService");
-
-	int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
-
-	if (curlUploadData->bodyLastPartSent && currentFilePosition == curlUploadData->endOffset)
-	{
-		// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
-
-		return 0;
-	}
-
-    if (!curlUploadData->bodyFirstPartSent)
-    {
-        if (curlUploadData->bodyFirstPart.size() > size * nmemb)
-        {
-            logger->error(__FILEREF__ + "Not enougth memory!!!"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-                + ", curlUploadData->bodyFirstPart.size(): " + to_string(curlUploadData->bodyFirstPart.size())
-                + ", size * nmemb: " + to_string(size * nmemb)
-            );
-
-            return CURL_READFUNC_ABORT;
-        }
-        
-        strcpy(ptr, curlUploadData->bodyFirstPart.c_str());
-        
-        curlUploadData->bodyFirstPartSent = true;
-
-        logger->info(__FILEREF__ + "First read"
-             + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-             + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-             + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-             + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-             + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-             + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-             + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-        );
-        
-		curlUploadData->mediaSourceFileStream.seekg(curlUploadData->currentOffset, ios::beg);
-
-        return curlUploadData->bodyFirstPart.size();
-    }
-    else if (currentFilePosition == curlUploadData->endOffset)
-    {
-        if (!curlUploadData->bodyLastPartSent)
-        {
-            if (curlUploadData->bodyLastPart.size() > size * nmemb)
-            {
-                logger->error(__FILEREF__ + "Not enougth memory!!!"
-                    + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                    + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                    + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                    + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                    + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                    + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                    + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-                    + ", curlUploadData->bodyLastPart.size(): " + to_string(curlUploadData->bodyLastPart.size())
-                    + ", size * nmemb: " + to_string(size * nmemb)
-                );
-
-                return CURL_READFUNC_ABORT;
-            }
-
-            strcpy(ptr, curlUploadData->bodyLastPart.c_str());
-
-            curlUploadData->bodyLastPartSent = true;
-
-            logger->info(__FILEREF__ + "Last read"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-            );
-
-            return curlUploadData->bodyLastPart.size();
-        }
-        else
-        {
-            logger->error(__FILEREF__ + "This scenario should never happen because Content-Length was set"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-            );
-
-            return CURL_READFUNC_ABORT;
-        }
-    }
-
-    if(currentFilePosition + (size * nmemb) <= curlUploadData->endOffset)
-        curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
-    else
-        curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->endOffset - currentFilePosition);
-
-    int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
-    
-
-    return charsRead;
-};
-
 void MMSEngineProcessor::postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
@@ -24901,578 +24630,12 @@ void MMSEngineProcessor::postVideoOnFacebook(
             + ", facebookConfigurationLabel: " + facebookConfigurationLabel
         );
         
-        string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
-                workspace->_workspaceKey, facebookConfigurationLabel);            
-        
-        string fileFormat;
-        {
-            size_t extensionIndex = mmsAssetPathName.find_last_of(".");
-            if (extensionIndex == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in mmsAssetPathName"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                ;
-                _logger->error(errorMessage);
+        // string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+        //         workspace->_workspaceKey, facebookConfigurationLabel);            
+		string facebookAccessToken = getFacebookAccessTokenByConfigurationLabel(
+			ingestionJobKey,
+			workspace, facebookConfigurationLabel);
 
-                throw runtime_error(errorMessage);
-            }
-            fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
-        }
-        
-        string uploadSessionId;
-        string videoId;
-        int64_t startOffset;
-        int64_t endOffset;
-        // start
-        {
-            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
-            
-            facebookURL = _facebookGraphAPIProtocol
-                + "://"
-                + _facebookGraphAPIHostName
-                + ":" + to_string(_facebookGraphAPIPort)
-                + facebookURI;
-            
-            // we could apply md5 to utc time
-            string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
-            string endOfLine = "\r\n";
-            string body =
-                    "--" + boundary + endOfLine                    
-                    + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
-                    + facebookPageToken + endOfLine
-                    
-                    + "--" + boundary + endOfLine
-                    + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
-                    + "start" + endOfLine
-                    
-                    + "--" + boundary + endOfLine
-                    + "Content-Disposition: form-data; name=\"file_size\"" + endOfLine + endOfLine
-                    + to_string(sizeInBytes) + endOfLine
-
-                    + "--" + boundary + "--" + endOfLine + endOfLine
-                    ;
-
-            list<string> header;
-			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
-            header.push_back(contentTypeHeader);
-
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
-
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-            request.setOpt(new curlpp::options::Url(facebookURL));
-            request.setOpt(new curlpp::options::Timeout(_facebookGraphAPITimeoutInSeconds));
-
-            if (_facebookGraphAPIProtocol == "https")
-            {
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
-
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
-
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-            }
-            request.setOpt(new curlpp::options::HttpHeader(header));
-
-            ostringstream response;
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            _logger->info(__FILEREF__ + "Calling facebook"
-                    + ", facebookURL: " + facebookURL
-                    + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
-                    + ", _facebookGraphAPIHostName: " + _facebookGraphAPIHostName
-                    + ", _facebookGraphAPIPort: " + to_string(_facebookGraphAPIPort)
-                    + ", facebookURI: " + facebookURI
-                    + ", contentTypeHeader: " + contentTypeHeader
-                    + ", body: " + body
-            );
-            request.perform();
-
-            sResponse = response.str();
-            _logger->info(__FILEREF__ + "Called facebook"
-                    + ", facebookURL: " + facebookURL
-                    + ", contentTypeHeader: " + contentTypeHeader
-                    + ", body: " + body
-                    + ", sResponse: " + sResponse
-            );
-            
-            Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
-            
-            string field = "upload_session_id";
-            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
-                        + ", Field: " + field
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            uploadSessionId = JSONUtils::asString(facebookResponseRoot, field, "");
-
-            field = "video_id";
-            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
-                        + ", Field: " + field
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            videoId = JSONUtils::asString(facebookResponseRoot, field, "");
-            
-            field = "start_offset";
-            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
-                        + ", Field: " + field
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
-            startOffset = stoll(sStartOffset);
-            
-            field = "end_offset";
-            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
-                        + ", Field: " + field
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
-            endOffset = stoll(sEndOffset);
-        }
-        
-        while (startOffset < endOffset)
-        {
-            // transfer
-            {
-                string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
-
-                facebookURL = _facebookGraphAPIProtocol
-                    + "://"
-                    + _facebookGraphAPIHostName
-                    + ":" + to_string(_facebookGraphAPIPort)
-                    + facebookURI;
-
-                string mediaContentType = string("video") + "/" + fileFormat;                    
-                
-                // we could apply md5 to utc time
-                string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
-                string endOfLine = "\r\n";
-                string bodyFirstPart =
-                        "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
-                        + facebookPageToken + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
-                        + "transfer" + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"start_offset\"" + endOfLine + endOfLine
-                        + to_string(startOffset) + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
-                        + uploadSessionId + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"video_file_chunk\"" + endOfLine
-                        + "Content-Type: " + mediaContentType
-                        + "Content-Length: " + (to_string(endOffset - startOffset)) + endOfLine + endOfLine
-                        ;
-
-                string bodyLastPart =
-                        endOfLine + "--" + boundary + "--" + endOfLine + endOfLine
-                        ;
-
-                list<string> header;
-                string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
-                header.push_back(contentTypeHeader);
-
-                curlpp::Cleanup cleaner;
-                curlpp::Easy request;
-
-                CurlUploadFacebookData curlUploadData;
-                {
-                    curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
-
-                    curlUploadData.bodyFirstPartSent    = false;
-                    curlUploadData.bodyFirstPart        = bodyFirstPart;
-                    
-                    curlUploadData.bodyLastPartSent     = false;
-                    curlUploadData.bodyLastPart         = bodyLastPart;
-
-                    curlUploadData.currentOffset        = startOffset;
-
-                    curlUploadData.startOffset          = startOffset;
-                    curlUploadData.endOffset            = endOffset;
-
-                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnFacebookCallback);
-                    curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
-                    request.setOpt(curlUploadCallbackFunction);
-                    request.setOpt(curlUploadDataData);
-
-                    bool upload = true;
-                    request.setOpt(new curlpp::options::Upload(upload));
-                }
-
-                request.setOpt(new curlpp::options::Url(facebookURL));
-                request.setOpt(new curlpp::options::Timeout(_facebookGraphAPITimeoutInSeconds));
-
-                if (_facebookGraphAPIProtocol == "https")
-                {
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-        //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-        //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-
-
-                    // cert is stored PEM coded in file... 
-                    // since PEM is default, we needn't set it for PEM 
-                    // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                    // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                    // equest.setOpt(sslCertType);
-
-                    // set the cert for client authentication
-                    // "testcert.pem"
-                    // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                    // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                    // request.setOpt(sslCert);
-
-                    // sorry, for engine we must set the passphrase
-                    //   (if the key has one...)
-                    // const char *pPassphrase = NULL;
-                    // if(pPassphrase)
-                    //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                    // if we use a key stored in a crypto engine,
-                    //   we must set the key type to "ENG"
-                    // pKeyType  = "PEM";
-                    // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                    // set the private key (file or ID in engine)
-                    // pKeyName  = "testkey.pem";
-                    // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                    // set the file with the certs vaildating the server
-                    // *pCACertFile = "cacert.pem";
-                    // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-                    // disconnect if we can't validate server's cert
-                    bool bSslVerifyPeer = false;
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                    request.setOpt(sslVerifyPeer);
-
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                    request.setOpt(sslVerifyHost);
-
-                    // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-                }
-                request.setOpt(new curlpp::options::HttpHeader(header));
-
-                ostringstream response;
-                request.setOpt(new curlpp::options::WriteStream(&response));
-
-                _logger->info(__FILEREF__ + "Calling facebook"
-                        + ", facebookURL: " + facebookURL
-                        + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
-                        + ", _facebookGraphAPIHostName: " + _facebookGraphAPIHostName
-                        + ", _facebookGraphAPIPort: " + to_string(_facebookGraphAPIPort)
-                        + ", facebookURI: " + facebookURI
-                        + ", bodyFirstPart: " + bodyFirstPart
-                );
-                request.perform();
-
-                sResponse = response.str();
-                _logger->info(__FILEREF__ + "Called facebook"
-                        + ", facebookURL: " + facebookURL
-                        + ", bodyFirstPart: " + bodyFirstPart
-                        + ", sResponse: " + sResponse
-                );
-
-                Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
-
-                string field = "start_offset";
-                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + field
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
-                startOffset = stoll(sStartOffset);
-
-                field = "end_offset";
-                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + field
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
-                endOffset = stoll(sEndOffset);
-            }
-        }
-        
-        // finish: pubblica il video e mettilo in coda per la codifica asincrona
-        bool success;
-        {
-            string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
-            
-            facebookURL = _facebookGraphAPIProtocol
-                + "://"
-                + _facebookGraphAPIHostName
-                + ":" + to_string(_facebookGraphAPIPort)
-                + facebookURI;
-            
-            // we could apply md5 to utc time
-            string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
-            string endOfLine = "\r\n";
-            string body =
-                    "--" + boundary + endOfLine                    
-                    + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
-                    + facebookPageToken + endOfLine
-                    
-                    + "--" + boundary + endOfLine                    
-                    + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
-                    + "finish" + endOfLine
-                    
-                    + "--" + boundary + endOfLine                    
-                    + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
-                    + uploadSessionId + endOfLine
-
-                    + "--" + boundary + "--" + endOfLine + endOfLine
-                    ;
-
-            list<string> header;
-            string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
-            header.push_back(contentTypeHeader);
-
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
-
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-            request.setOpt(new curlpp::options::Url(facebookURL));
-            request.setOpt(new curlpp::options::Timeout(_facebookGraphAPITimeoutInSeconds));
-
-            if (_facebookGraphAPIProtocol == "https")
-            {
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-    //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-    //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-
-
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                // equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                // request.setOpt(sslCert);
-
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                // if(pPassphrase)
-                //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
-
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
-
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-            }
-            request.setOpt(new curlpp::options::HttpHeader(header));
-
-            ostringstream response;
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            _logger->info(__FILEREF__ + "Calling facebook"
-                    + ", facebookURL: " + facebookURL
-                    + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
-                    + ", _facebookGraphAPIHostName: " + _facebookGraphAPIHostName
-                    + ", _facebookGraphAPIPort: " + to_string(_facebookGraphAPIPort)
-                    + ", facebookURI: " + facebookURI
-                    + ", body: " + body
-            );
-            request.perform();
-
-            sResponse = response.str();
-            _logger->info(__FILEREF__ + "Called facebook"
-                    + ", facebookURL: " + facebookURL
-                    + ", body: " + body
-                    + ", sResponse: " + sResponse
-            );
-            
-            Json::Value facebookResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
-
-            string field = "success";
-            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            success = JSONUtils::asBool(facebookResponseRoot, field, false);
-
-            if (!success)
-            {
-                string errorMessage = __FILEREF__ + "Post Video on Facebook failed"
-                        + ", Field: " + field
-                        + ", success: " + to_string(success)
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }        
-    }
-    catch (curlpp::LogicError & e) 
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (LogicError)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch (curlpp::RuntimeError & e) 
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (RuntimeError)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch (runtime_error e)
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (runtime_error)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch (exception e)
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (exception)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-*/
-
-void MMSEngineProcessor::postVideoOnFacebook(
-        string mmsAssetPathName, int64_t sizeInBytes,
-        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string facebookNodeId, string facebookConfigurationLabel
-        )
-{
-            
-    string facebookURL;
-    string sResponse;
-    
-    try
-    {
-        _logger->info(__FILEREF__ + "postVideoOnFacebook"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", sizeInBytes: " + to_string(sizeInBytes)
-            + ", facebookNodeId: " + facebookNodeId
-            + ", facebookConfigurationLabel: " + facebookConfigurationLabel
-        );
-        
-        string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
-                workspace->_workspaceKey, facebookConfigurationLabel);            
         
         string fileFormat;
         {
@@ -25512,12 +24675,12 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
             facebookURL = _facebookGraphAPIProtocol
                 + "://"
-                + _facebookGraphAPIHostName
+                + _facebookGraphAPIVideoHostName
                 + ":" + to_string(_facebookGraphAPIPort)
                 + facebookURI;
 
 			vector<pair<string, string>> formData;
-			formData.push_back(make_pair("access_token", facebookPageToken));
+			formData.push_back(make_pair("access_token", facebookAccessToken));
 			formData.push_back(make_pair("upload_phase", "start"));
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
@@ -25601,15 +24764,14 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
                 facebookURL = _facebookGraphAPIProtocol
                     + "://"
-                    + _facebookGraphAPIHostName
+                    + _facebookGraphAPIVideoHostName
                     + ":" + to_string(_facebookGraphAPIPort)
                     + facebookURI;
 
 				string mediaContentType = string("video") + "/" + fileFormat;                    
-				// string mediaContentType = "application/octet-stream";                    
 
 				vector<pair<string, string>> formData;
-				formData.push_back(make_pair("access_token", facebookPageToken));
+				formData.push_back(make_pair("access_token", facebookAccessToken));
 				formData.push_back(make_pair("upload_phase", "transfer"));
 				formData.push_back(make_pair("start_offset", to_string(startOffset)));
 				formData.push_back(make_pair("upload_session_id", uploadSessionId));
@@ -25675,12 +24837,12 @@ void MMSEngineProcessor::postVideoOnFacebook(
             
             facebookURL = _facebookGraphAPIProtocol
                 + "://"
-                + _facebookGraphAPIHostName
+                + _facebookGraphAPIVideoHostName
                 + ":" + to_string(_facebookGraphAPIPort)
                 + facebookURI;
 
 			vector<pair<string, string>> formData;
-			formData.push_back(make_pair("access_token", facebookPageToken));
+			formData.push_back(make_pair("access_token", facebookAccessToken));
 			formData.push_back(make_pair("upload_phase", "finish"));
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
@@ -25717,28 +24879,6 @@ void MMSEngineProcessor::postVideoOnFacebook(
                 throw runtime_error(errorMessage);
             }
         }        
-    }
-    catch (curlpp::LogicError & e) 
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (LogicError)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch (curlpp::RuntimeError & e) 
-    {
-		string errorMessage = __FILEREF__ + "Post video on Facebook failed (RuntimeError)"
-            + ", facebookURL: " + facebookURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
     }
     catch (runtime_error e)
     {
@@ -25925,8 +25065,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				body = JSONUtils::toString(bodyRoot);
             }
 
-            list<string> headerList;
-
+            vector<string> headerList;
             {
                 string header = "Authorization: Bearer " + youTubeAccessToken;
                 headerList.push_back(header);
@@ -25934,9 +25073,6 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 header = "Content-Length: " + to_string(body.length());
                 headerList.push_back(header);
                 
-                header = "Content-Type: application/json; charset=UTF-8";
-                headerList.push_back(header);
-
                 header = "X-Upload-Content-Length: " + to_string(sizeInBytes);
                 headerList.push_back(header);
                 
@@ -25944,115 +25080,30 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 headerList.push_back(header);
             }                    
 
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
-
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-            request.setOpt(new curlpp::options::Url(youTubeURL));
-            request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-            if (_youTubeDataAPIProtocol == "https")
-            {
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-    //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-    //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-    //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-
-
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                // equest.setOpt(sslCertType);
-
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                // request.setOpt(sslCert);
-
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                // if(pPassphrase)
-                //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
-
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
-
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-            }
-            
-            for (string headerMessage: headerList)
-                _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
-            request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-            ostringstream response;
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            // store response headers in the response
-            // You simply have to set next option to prefix the header to the normal body output. 
-            request.setOpt(new curlpp::options::Header(true)); 
-            
-            _logger->info(__FILEREF__ + "Calling youTube (first call)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", youTubeURL: " + youTubeURL
-				+ ", body: " + body
+			pair<string, string> responseDetails = MMSCURL::httpPostString(
+				_logger,
+				ingestionJobKey,
+				youTubeURL,
+				_youTubeDataAPITimeoutInSeconds,
+				"",
+				"",
+				body,
+				"application/json; charset=UTF-8", // contentType
+				headerList
 			);
-            request.perform();
 
-            long responseCode = curlpp::infos::ResponseCode::get(request);
+			string sHeaderResponse;
+			string sBodyResponse;
 
-            sResponse = response.str();
-            _logger->info(__FILEREF__ + "Called youTube (first call)"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", youTubeURL: " + youTubeURL
-                + ", body: " + body
-                + ", responseCode: " + to_string(responseCode)
-                + ", sResponse: " + sResponse
-            );
-            
-            if (responseCode != 200 ||
-				(sResponse.find("Location: ") == string::npos &&
-				 sResponse.find("location: ") == string::npos)
-			)
+			tie(sHeaderResponse, sBodyResponse) = responseDetails;
+
+            if (sHeaderResponse.find("Location: ") == string::npos &&
+				 sHeaderResponse.find("location: ") == string::npos)
             {
-                string errorMessage = __FILEREF__ + "youTube (first call) failed"
+                string errorMessage = __FILEREF__ + "'Location' response header is not present"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", youTubeURL: " + youTubeURL
-                    + ", body: " + body
-                    + ", responseCode: " + to_string(responseCode)
-                    + ", sResponse: " + sResponse
+                    + ", sHeaderResponse: " + sHeaderResponse
                 ;
                 _logger->error(errorMessage);
 
@@ -26077,17 +25128,17 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
              */
             
-            int locationStartIndex = sResponse.find("Location: ");
+            int locationStartIndex = sHeaderResponse.find("Location: ");
 			if (locationStartIndex == string::npos)
-				locationStartIndex = sResponse.find("location: ");
+				locationStartIndex = sHeaderResponse.find("location: ");
             locationStartIndex += string("Location: ").length();
-            int locationEndIndex = sResponse.find("\r", locationStartIndex);
+            int locationEndIndex = sHeaderResponse.find("\r", locationStartIndex);
             if (locationEndIndex == string::npos)
-                locationEndIndex = sResponse.find("\n", locationStartIndex);
+                locationEndIndex = sHeaderResponse.find("\n", locationStartIndex);
             if (locationEndIndex == string::npos)
-                youTubeUploadURL = sResponse.substr(locationStartIndex);
+                youTubeUploadURL = sHeaderResponse.substr(locationStartIndex);
             else
-                youTubeUploadURL = sResponse.substr(locationStartIndex,
+                youTubeUploadURL = sHeaderResponse.substr(locationStartIndex,
 					locationEndIndex - locationStartIndex);
         }
 
@@ -26546,120 +25597,29 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 			+ "&refresh_token=" + youTubeRefreshToken
 			+ "&grant_type=refresh_token";
 
+		/*
         list<string> headerList;
-
         {
-            /*
-            header = "Content-Length: " + to_string(body.length());
-            headerList.push_back(header);
-            */
+            // header = "Content-Length: " + to_string(body.length());
+            // headerList.push_back(header);
 
             string header = "Content-Type: application/x-www-form-urlencoded";
             headerList.push_back(header);
         }
+		*/
 
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
-
-        request.setOpt(new curlpp::options::PostFields(body));
-        request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-        request.setOpt(new curlpp::options::Url(youTubeURL));
-        request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-        if (_youTubeDataAPIProtocol == "https")
-        {
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-//                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-//                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-
-            // cert is stored PEM coded in file...
-            // since PEM is default, we needn't set it for PEM
-            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-            // equest.setOpt(sslCertType);
-
-            // set the cert for client authentication
-            // "testcert.pem"
-            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-            // request.setOpt(sslCert);
-
-            // sorry, for engine we must set the passphrase
-            //   (if the key has one...)
-            // const char *pPassphrase = NULL;
-            // if(pPassphrase)
-            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-            // if we use a key stored in a crypto engine,
-            //   we must set the key type to "ENG"
-            // pKeyType  = "PEM";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-            // set the private key (file or ID in engine)
-            // pKeyName  = "testkey.pem";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-            // set the file with the certs vaildating the server
-            // *pCACertFile = "cacert.pem";
-            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-            // disconnect if we can't validate server's cert
-            bool bSslVerifyPeer = false;
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-            request.setOpt(sslVerifyPeer);
-
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-            request.setOpt(sslVerifyHost);
-
-            // request.setOpt(new curlpp::options::SslEngineDefault());
-
-        }
-        request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-        ostringstream response;
-        request.setOpt(new curlpp::options::WriteStream(&response));
-
-        _logger->info(__FILEREF__ + "Calling youTube refresh token"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", youTubeURL: " + youTubeURL
-			+ ", body: " + body
+		vector<string> otherHeaders;
+		Json::Value youTubeResponseRoot = MMSCURL::httpPostStringAndGetJson(
+			_logger,
+			ingestionJobKey,
+			youTubeURL,
+			_youTubeDataAPITimeoutInSeconds,
+			"",
+			"",
+			body,
+			"application/x-www-form-urlencoded", // contentType
+			otherHeaders
 		);
-        request.perform();
-
-        long responseCode = curlpp::infos::ResponseCode::get(request);
-
-        sResponse = response.str();
-        _logger->info(__FILEREF__ + "Called youTube refresh token"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", youTubeURL: " + youTubeURL
-			+ ", body: " + body
-			+ ", responseCode: " + to_string(responseCode)
-			+ ", sResponse: " + sResponse
-        );
-
-        if (responseCode != 200)
-        {
-            string errorMessage = __FILEREF__ + "YouTube refresh token failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", responseCode: " + to_string(responseCode);
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value youTubeResponseRoot = JSONUtils::toJson(ingestionJobKey, -1, sResponse);
 
         /*
             {
@@ -26707,6 +25667,89 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
     }
 }
 
+string MMSEngineProcessor::getFacebookAccessTokenByConfigurationLabel(
+	int64_t ingestionJobKey,
+    shared_ptr<Workspace> workspace, string facebookConfigurationLabel)
+{
+    string facebookURL;
+	Json::Value responseRoot;
+    
+    try
+    {
+		string codeToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+			workspace->_workspaceKey, facebookConfigurationLabel);
+
+		// GET https://graph.facebook.com/v15.0/oauth/access_token?
+		//	client_id={app-id}
+		//	&redirect_uri={redirect-uri}
+		//	&client_secret={app-secret}
+		//	&code={code-parameter}
+
+        facebookURL = _facebookGraphAPIProtocol
+            + "://"
+            + _facebookGraphAPIHostName
+            + ":" + to_string(_facebookGraphAPIPort)
+            + _facebookGraphAPIAccessTokenURI
+			+ "?client_id=" + _facebookGraphAPIClientId
+			+ "&client_secret=" + _facebookGraphAPIClientSecret
+			+ "&redirect_uri=" + curlpp::escape(_facebookGraphAPIRedirectURL)
+			+ "&code=" + curlpp::escape(codeToken)
+		;
+
+		Json::Value responseRoot = MMSCURL::httpGetJson(
+			_logger,
+			ingestionJobKey,
+			facebookURL,
+			_mmsAPITimeoutInSeconds,
+			"",
+			""
+		);
+
+		/*
+		{
+		"access_token": {access-token}, 
+		"token_type": {type},
+		"expires_in":  {seconds-til-expiration}
+		}
+		*/
+
+        string field = "access_token";
+        if (!JSONUtils::isMetadataPresent(responseRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        return JSONUtils::asString(responseRoot, field, "");
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("facebook access token failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", facebookURL: " + facebookURL
+            + ", response: " + JSONUtils::toString(responseRoot)
+            + ", e.what(): " + e.what()
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("facebook access token failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", facebookURL: " + facebookURL
+            + ", response: " + JSONUtils::toString(responseRoot)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void MMSEngineProcessor::userHttpCallback(
 	int64_t ingestionJobKey, string httpProtocol, string httpHostName,
 	int httpPort, string httpURI, string httpURLParameters,
@@ -26721,255 +25764,110 @@ void MMSEngineProcessor::userHttpCallback(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 	);
 
-	string errorMessage;
+	string userURL;
 
-	int currentRetries = 0;
-	bool callbackSuccessful = false;
-	while (!callbackSuccessful && currentRetries < maxRetries)
+	try
 	{
-		currentRetries++;
+		_logger->info(__FILEREF__ + "userHttpCallback"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", httpProtocol: " + httpProtocol
+			+ ", httpHostName: " + httpHostName
+			+ ", httpPort: " + to_string(httpPort)
+			+ ", httpURI: " + httpURI
+			+ ", maxRetries: " + to_string(maxRetries)
+		);
 
-		string userURL;
+		userURL = httpProtocol
+			+ "://"
+			+ httpHostName
+			+ ":"
+			+ to_string(httpPort)
+			+ httpURI
+			+ httpURLParameters;
 
-		try
+		vector<string> otherHeaders;
+		for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size();
+			++userHeaderIndex)
 		{
-			errorMessage = "";
+			string userHeader = JSONUtils::asString(userHeadersRoot[userHeaderIndex]);
 
-			_logger->info(__FILEREF__ + "userHttpCallback"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", httpProtocol: " + httpProtocol
-				+ ", httpHostName: " + httpHostName
-				+ ", httpPort: " + to_string(httpPort)
-				+ ", httpURI: " + httpURI
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-			);
+			otherHeaders.push_back(userHeader);
+		}
 
-			userURL = httpProtocol
-                + "://"
-                + httpHostName
-                + ":"
-                + to_string(httpPort)
-                + httpURI
-                + httpURLParameters;
-
-			/*
-			string data;
-			if (callbackMedatada != Json::nullValue)
-			{
-				data = JSONUtils::toString(callbackMedatada);
-			}
-			*/
-
-			list<string> header;
-
-			if ((httpMethod == "POST" || httpMethod == "PUT") && data != "")
-				header.push_back("Content-Type: application/json");
-
-			if (userName != "" && password != "")
-			{
-				string userPasswordEncoded = Convert::base64_encode(userName + ":" + password);
-				string basicAuthorization = string("Authorization: Basic ")
-					+ userPasswordEncoded;            
-
-				header.push_back(basicAuthorization);
-			}
-
-			for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size();
-				++userHeaderIndex)
-			{
-				string userHeader = JSONUtils::asString(userHeadersRoot[userHeaderIndex]);
-
-				header.push_back(userHeader);
-			}
-
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
-
+		if (httpMethod == "PUT")
+		{
+			string contentType;
 			if (data != "")
-			{
-				// 2021-02: we do not have a requirement to send data in case of GET
-				/*
-				if (httpMethod == "GET")
-				{
-					if (httpURLParameters == "")
-						userURL += "?";
-					else
-						userURL += "&";
-					userURL += ("data=" + curlpp::escape(data));
-				}
-				else
-				*/
-				if (httpMethod == "POST" || httpMethod == "PUT")
-				{
-					request.setOpt(new curlpp::options::PostFields(data));
-					request.setOpt(new curlpp::options::PostFieldSize(data.length()));
-				}
-			}
+				contentType = "application/json";
 
-			request.setOpt(new curlpp::options::Url(userURL));
-			if (httpMethod == "PUT")
-				request.setOpt(new curlpp::options::CustomRequest("PUT"));
-			request.setOpt(new curlpp::options::Timeout(callbackTimeoutInSeconds));
-
-			if (httpProtocol == "https")
-			{
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-//                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-//                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-
-
-				// cert is stored PEM coded in file... 
-				// since PEM is default, we needn't set it for PEM 
-				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-				// equest.setOpt(sslCertType);
-
-				// set the cert for client authentication
-				// "testcert.pem"
-				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-				// request.setOpt(sslCert);
-
-				// sorry, for engine we must set the passphrase
-				//   (if the key has one...)
-				// const char *pPassphrase = NULL;
-				// if(pPassphrase)
-				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-				// if we use a key stored in a crypto engine,
-				//   we must set the key type to "ENG"
-				// pKeyType  = "PEM";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-				// set the private key (file or ID in engine)
-				// pKeyName  = "testkey.pem";
-				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-				// set the file with the certs vaildating the server
-				// *pCACertFile = "cacert.pem";
-				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-				// disconnect if we can't validate server's cert
-				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
-
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
-
-				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-			}
-			request.setOpt(new curlpp::options::HttpHeader(header));
-
-			ostringstream response;
-			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			_logger->info(__FILEREF__ + "Calling user callback"
-                + ", userURL: " + userURL
-                + ", httpProtocol: " + httpProtocol
-                + ", httpHostName: " + httpHostName
-                + ", httpPort: " + to_string(httpPort)
-                + ", httpURI: " + httpURI
-                + ", httpURLParameters: " + httpURLParameters
-                + ", httpProtocol: " + httpProtocol
-                + ", data: " + data
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
+			MMSCURL::httpPutString(
+				_logger,
+				ingestionJobKey,
+				userURL,
+				callbackTimeoutInSeconds,
+				userName,
+				password,
+				data,
+				contentType,
+				otherHeaders,
+				maxRetries
 			);
-			request.perform();
-
-			string sResponse = response.str();
-			_logger->info(__FILEREF__ + "Called user callback"
-                + ", userURL: " + userURL
-                + ", data: " + data
-                + ", sResponse: " + sResponse
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-			);        
-
-			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode != 200)
-			{
-				errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
-					+ ", userURL: " + userURL
-					+ ", responseCode: " + to_string(responseCode)
-					+ ", data: " + data
-					+ ", sResponse: " + sResponse
-					+ ", currentRetries: " + to_string(currentRetries)
-					+ ", maxRetries: " + to_string(maxRetries)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			callbackSuccessful = true;
 		}
-		catch (curlpp::LogicError & e) 
+		else if (httpMethod == "POST")
 		{
-			errorMessage = __FILEREF__ + "User Callback URL failed (LogicError)"
-				+ ", userURL: " + userURL
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-				+ ", exception: " + e.what()
-			;
-			_logger->error(errorMessage);
+			string contentType;
+			if (data != "")
+				contentType = "application/json";
 
-			// throw runtime_error(errorMessage);
+			MMSCURL::httpPostString(
+				_logger,
+				ingestionJobKey,
+				userURL,
+				callbackTimeoutInSeconds,
+				userName,
+				password,
+				data,
+				contentType,
+				otherHeaders,
+				maxRetries
+			);
 		}
-		catch (curlpp::RuntimeError & e) 
+		else // if (httpMethod == "GET")
 		{
-			errorMessage = __FILEREF__ + "User Callback URL failed (RuntimeError)"
-				+ ", userURL: " + userURL
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-				+ ", exception: " + e.what()
-			;
-			_logger->error(errorMessage);
-
-			// throw runtime_error(errorMessage);
-		}
-		catch (runtime_error e)
-		{
-			errorMessage = __FILEREF__ + "User Callback URL failed (runtime_error)"
-				+ ", userURL: " + userURL
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-				+ ", exception: " + e.what()
-			;
-			_logger->error(errorMessage);
-
-			// throw runtime_error(errorMessage);
-		}
-		catch (exception e)
-		{
-			errorMessage = __FILEREF__ + "User Callback URL failed (exception)"
-				+ ", userURL: " + userURL
-				+ ", currentRetries: " + to_string(currentRetries)
-				+ ", maxRetries: " + to_string(maxRetries)
-				+ ", exception: " + e.what()
-			;
-			_logger->error(errorMessage);
-
-			// throw runtime_error(errorMessage);
+			MMSCURL::httpGet(
+				_logger,
+				ingestionJobKey,
+				userURL,
+				callbackTimeoutInSeconds,
+				userName,
+				password,
+				maxRetries
+			);
 		}
 	}
+	catch (runtime_error e)
+	{
+		string errorMessage = __FILEREF__ + "User Callback URL failed (runtime_error)"
+			+ ", userURL: " + userURL
+			+ ", maxRetries: " + to_string(maxRetries)
+			+ ", exception: " + e.what()
+		;
+		_logger->error(errorMessage);
 
-	if (!callbackSuccessful)
 		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = __FILEREF__ + "User Callback URL failed (exception)"
+			+ ", userURL: " + userURL
+			+ ", maxRetries: " + to_string(maxRetries)
+			+ ", exception: " + e.what()
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void MMSEngineProcessor::moveMediaSourceFileThread(

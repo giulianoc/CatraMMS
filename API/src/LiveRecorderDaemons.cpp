@@ -1549,6 +1549,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -1558,8 +1559,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			apiKey,
 			workflowMetadata,
 			"application/json",	// contentType
+			otherHeaders,
 			3 // maxRetryNumber
-		);
+		).second;
 	}
 	catch (runtime_error e)
 	{
@@ -1652,6 +1654,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			ingestionJobKey,
@@ -1661,8 +1664,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			apiKey,
 			workflowMetadata,
 			"application/json",	// contentType
+			otherHeaders,
 			3 // maxRetryNumber
-		);
+		).second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -2870,6 +2874,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	int64_t addContentIngestionJobKey = -1;
 	try
 	{
+		vector<string> otherHeaders;
 		string sResponse = MMSCURL::httpPostString(
 			_logger,
 			liveRecorderIngestionJobKey,
@@ -2879,8 +2884,9 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			liveRecorderApiKey,
 			workflowMetadata,
 			"application/json",	// contentType
+			otherHeaders,
 			3 // maxRetryNumber
-		);
+		).second;
 
 		if (externalEncoder)
 		{

@@ -11977,11 +11977,17 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 						}
 						else
 						{
+							chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+							double lastPercentageUpdated = -1.0;
+							curlpp::types::ProgressFunctionFunctor functor = bind(&FFMpeg::progressDownloadCallback, this,
+								ingestionJobKey, lastProgressUpdate, lastPercentageUpdated,
+								placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
 							MMSCURL::downloadFile(
 								_logger,
 								ingestionJobKey,
 								sourcePhysicalReference,
-								destBinaryPathName
+								destBinaryPathName,
+								functor
 							);
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method
@@ -15627,5 +15633,56 @@ void FFMpeg::removeFromIncrontab(
 		;
 		_logger->error(errorMessage);
 	}
+}
+
+int FFMpeg::progressDownloadCallback(
+	int64_t ingestionJobKey,
+	chrono::system_clock::time_point& lastTimeProgressUpdate, 
+	double& lastPercentageUpdated,
+	double dltotal, double dlnow,
+	double ultotal, double ulnow)
+{
+
+	int progressUpdatePeriodInSeconds = 15;
+
+    chrono::system_clock::time_point now = chrono::system_clock::now();
+            
+    if (dltotal != 0 &&
+            (dltotal == dlnow 
+            || now - lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
+    {
+        double progress = (dlnow / dltotal) * 100;
+        // int downloadingPercentage = floorf(progress * 100) / 100;
+        // this is to have one decimal in the percentage
+        double downloadingPercentage = ((double) ((int) (progress * 10))) / 10;
+
+        _logger->info(__FILEREF__ + "Download still running"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", downloadingPercentage: " + to_string(downloadingPercentage)
+            + ", dltotal: " + to_string(dltotal)
+            + ", dlnow: " + to_string(dlnow)
+            + ", ultotal: " + to_string(ultotal)
+            + ", ulnow: " + to_string(ulnow)
+        );
+        
+        lastTimeProgressUpdate = now;
+
+        if (lastPercentageUpdated != downloadingPercentage)
+        {
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", downloadingPercentage: " + to_string(downloadingPercentage)
+            );                            
+            // downloadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
+            //     ingestionJobKey, downloadingPercentage);
+
+            lastPercentageUpdated = downloadingPercentage;
+        }
+
+        // if (downloadingStoppedByUser)
+        //     return 1;   // stop downloading
+    }
+
+    return 0;
 }
 

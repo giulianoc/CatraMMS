@@ -54,7 +54,7 @@ Json::Value MMSCURL::httpGetJson(
 	return jsonRoot;
 }
 
-string MMSCURL::httpPostString(
+pair<string, string> MMSCURL::httpPostString(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -63,6 +63,7 @@ string MMSCURL::httpPostString(
 	string basicAuthenticationPassword,
 	string body,
 	string contentType,	// i.e.: application/json
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
@@ -79,6 +80,7 @@ string MMSCURL::httpPostString(
 		basicAuthenticationPassword,
 		body,
 		contentType,	// i.e.: application/json
+		otherHeaders,
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry
 	);
@@ -93,13 +95,14 @@ string MMSCURL::httpPutString(
 	string basicAuthenticationPassword,
 	string body,
 	string contentType,	// i.e.: application/json
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "PUT";
 
-	return MMSCURL::httpPostPutString(
+	pair<string, string> responseDetails = MMSCURL::httpPostPutString(
 		logger,
 		ingestionJobKey,
 		url,
@@ -109,9 +112,12 @@ string MMSCURL::httpPutString(
 		basicAuthenticationPassword,
 		body,
 		contentType,	// i.e.: application/json
+		otherHeaders,
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry
 	);
+
+	return responseDetails.second;
 }
 
 Json::Value MMSCURL::httpPostStringAndGetJson(
@@ -123,6 +129,7 @@ Json::Value MMSCURL::httpPostStringAndGetJson(
 	string basicAuthenticationPassword,
 	string body,
 	string contentType,	// i.e.: application/json
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
@@ -136,9 +143,10 @@ Json::Value MMSCURL::httpPostStringAndGetJson(
 		basicAuthenticationPassword,
 		body,
 		contentType,
+		otherHeaders,
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry
-	);
+	).second;
 
 	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
 
@@ -154,6 +162,7 @@ Json::Value MMSCURL::httpPutStringAndGetJson(
 	string basicAuthenticationPassword,
 	string body,
 	string contentType,	// i.e.: application/json
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
@@ -167,6 +176,7 @@ Json::Value MMSCURL::httpPutStringAndGetJson(
 		basicAuthenticationPassword,
 		body,
 		contentType,
+		otherHeaders,
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry
 	);
@@ -843,7 +853,6 @@ string MMSCURL::httpGet(
 			curlpp::Easy request;
 
 			list<string> header;
-
 			{
 				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":"
 					+ basicAuthenticationPassword);
@@ -932,6 +941,10 @@ string MMSCURL::httpGet(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
 
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -1090,7 +1103,7 @@ string MMSCURL::httpGet(
 	return sResponse;
 }
 
-string MMSCURL::httpPostPutString(
+pair<string, string> MMSCURL::httpPostPutString(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -1100,11 +1113,13 @@ string MMSCURL::httpPostPutString(
 	string basicAuthenticationPassword,
 	string body,
 	string contentType,	// i.e.: application/json
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
 {
-	string sResponse;
+	string sHeaderResponse;
+	string sBodyResponse;
 	int retryNumber = 0;
 
 	while (retryNumber < maxRetryNumber)
@@ -1119,8 +1134,9 @@ string MMSCURL::httpPostPutString(
 			curlpp::Easy request;
 
 			list<string> headers;
-
-			headers.push_back(string("Content-Type: ") + contentType);
+			if (contentType != "")
+				headers.push_back(string("Content-Type: ") + contentType);
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
 			{
 				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
 				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser
@@ -1129,6 +1145,7 @@ string MMSCURL::httpPostPutString(
 
 				headers.push_back(basicAuthorization);
 			}
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
 			request.setOpt(new curlpp::options::Url(url));
 
@@ -1160,34 +1177,26 @@ string MMSCURL::httpPostPutString(
 				+ ", url: " + url
 				+ ", body: " + body
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			request.setOpt(new curlpp::options::Header(true));                                                
+
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
-			sResponse = response.str();
-			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-				sResponse.pop_back();
+			string sHeaderAndBodyResponse = response.str();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
-			if (responseCode == 200 || responseCode == 201)
-			{
-				string message = __FILEREF__ + "httpPostPutString"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
-						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sResponse: " + sResponse
-				;
-				logger->info(message);
-			}
-			else
+			if (responseCode != 200 && responseCode != 201)
 			{
 				string message = __FILEREF__ + "httpPostPutString failed, wrong return status"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sResponse: " + sResponse
+					+ ", sBodyResponse: " + sBodyResponse
 					+ ", responseCode: " + to_string(responseCode)
 				;
 				logger->error(message);
@@ -1195,7 +1204,35 @@ string MMSCURL::httpPostPutString(
 				throw runtime_error(message);
 			}
 
-			// return sResponse;
+			{
+				string message = __FILEREF__ + "httpPostPutString success"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse
+				;
+				logger->info(message);
+			}
+
+			size_t beginOfHeaderBodySeparatorIndex;
+			if ((beginOfHeaderBodySeparatorIndex = sHeaderAndBodyResponse.find("\r\n\r\n")) == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "response is wrong"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", url: " + url
+					+ ", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse
+				;
+				logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sHeaderResponse = sHeaderAndBodyResponse.substr(0, beginOfHeaderBodySeparatorIndex);                                       
+			sBodyResponse = sHeaderAndBodyResponse.substr(beginOfHeaderBodySeparatorIndex + 4);                                       
+
+			// LF and CR create problems to the json parser...
+			while (sBodyResponse.size() > 0 && (sBodyResponse.back() == 10 || sBodyResponse.back() == 13))
+				sBodyResponse.pop_back();
+
 			break;
 		}
 		catch (curlpp::LogicError & e) 
@@ -1314,7 +1351,7 @@ string MMSCURL::httpPostPutString(
 		}
 	}
 
-	return sResponse;
+	return make_pair(sHeaderResponse, sBodyResponse);
 }
 
 string MMSCURL::httpPostPutFile(
@@ -1440,6 +1477,11 @@ string MMSCURL::httpPostPutFile(
 				+ ", contentLengthOrRangeHeader: " + contentLengthOrRangeHeader
 				+ ", pathFileName: " + pathFileName
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
+
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
@@ -1678,6 +1720,11 @@ string MMSCURL::httpPostPutFormData(
 				+ ", url: " + url
 				+ ", sFormData: " + sFormData
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
+
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
@@ -1958,12 +2005,6 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			list<string> header;
 
-			// string acceptHeader = "Accept: */*";
-			// header.push_back(acceptHeader);
-
-			// string contentLengthHeader = "Content-Length: " + to_string(postSize);
-			// header.push_back(contentLengthHeader);
-
 			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);
 
@@ -1997,6 +2038,11 @@ string MMSCURL::httpPostPutFileByFormData(
 				+ ", curlUploadFormData.formData: " + curlUploadFormData.formData
 				+ ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
+
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
@@ -2172,12 +2218,15 @@ void MMSCURL::downloadFile(
 	int64_t ingestionJobKey,
 	string url,
 	string destBinaryPathName,
+	curlpp::types::ProgressFunctionFunctor functor,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
 {
 	int retryNumber = 0;
 
+	// Ci sarebbe la possibilità di fare un resume in caso di errore, guarda l'implementazione
+	// in MMSEngineProcessor.cpp. Quella implementazione si dovrebbe anche spostare in questa lib
 	while (retryNumber < maxRetryNumber)
 	{
 		retryNumber++;
@@ -2234,14 +2283,19 @@ void MMSCURL::downloadFile(
 			// curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
 			// 	ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
 			// 	placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
-			// request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
-			// request.setOpt(new curlpp::options::NoProgress(0L));
+			request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+			request.setOpt(new curlpp::options::NoProgress(0L));
 
 			logger->info(__FILEREF__ + "Downloading media file"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", destBinaryPathName: " + destBinaryPathName
 			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
+
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
@@ -2342,3 +2396,166 @@ void MMSCURL::downloadFile(
 	}
 }
 
+void MMSCURL::ftpFile(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string filePathName,
+	string fileName,
+	int64_t sizeInBytes,
+	string ftpServer,
+	int ftpPort,
+	string ftpUserName,
+	string ftpPassword,
+	string ftpRemoteDirectory,
+	string ftpRemoteFileName,
+	curlpp::types::ProgressFunctionFunctor functor
+)
+{
+
+    // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
+
+    try 
+    {
+		logger->info(__FILEREF__ + "ftpFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
+
+		string ftpUrl = "ftp://" + ftpUserName + ":" + ftpPassword + "@" 
+			+ ftpServer 
+			+ ":" + to_string(ftpPort) 
+			+ ftpRemoteDirectory;
+
+		if (ftpRemoteDirectory.size() == 0 || ftpRemoteDirectory.back() != '/')
+			ftpUrl  += "/";
+
+		if (ftpRemoteFileName == "")
+			ftpUrl  += fileName;
+		else
+			ftpUrl += ftpRemoteFileName;
+
+		logger->info(__FILEREF__ + "FTP Uploading"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", filePathName: " + filePathName
+			+ ", sizeInBytes: " + to_string(sizeInBytes)
+			+ ", ftpUrl: " + ftpUrl
+		);
+
+		ifstream mmsAssetStream(filePathName, ifstream::binary);
+        // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
+
+        // 1. PORT-mode FTP (Active) - NO Firewall friendly
+        //  - FTP client: Sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
+        //  - FTP client: Sends a data request (PORT command) to the FTP server. The FTP client includes in the PORT command the data port number 
+        //      it opened to receive data. In this example, the FTP client has opened TCP port 6001 to receive the data.
+        //  - FTP server opens a new inbound connection to the FTP client on the port indicated by the FTP client in the PORT command. 
+        //      The FTP server source port is TCP port 20. In this example, the FTP server sends data from its own TCP port 20 to the FTP client’s TCP port 6001.
+        //  In this conversation, two connections were established: an outbound connection initiated by the FTP client and an inbound connection established by the FTP server.
+        // 2. PASV-mode FTP (Passive) - Firewall friendly
+        //  - FTP client sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
+        //  - FTP client sends a PASV command requesting that the FTP server open a port number that the FTP client can connect to establish the data channel.
+        //      FTP serve sends over the command channel the TCP port number that the FTP client can initiate a connection to establish the data channel (i.e.: 7000)
+        //  - FTP client opens a new connection from its own response port TCP 6001 to the FTP server’s data channel 7000. Data transfer takes place through this channel.
+        
+        // Active/Passive... see the next URL, section 'FTP Peculiarities We Need'
+        // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
+
+        // https://curl.haxx.se/libcurl/c/ftpupload.html
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        request.setOpt(new curlpp::options::Url(ftpUrl));
+        request.setOpt(new curlpp::options::Verbose(false)); 
+        request.setOpt(new curlpp::options::Upload(true)); 
+        
+		// which timeout we have to use here???
+		// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
+        request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
+        request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t) sizeInBytes));
+
+        bool bFtpUseEpsv = false;
+        curlpp::OptionTrait<bool, CURLOPT_FTP_USE_EPSV> ftpUseEpsv(bFtpUseEpsv);
+        request.setOpt(ftpUseEpsv);
+
+        // curl will default to binary transfer mode for FTP, 
+        // and you ask for ascii mode instead with -B, --use-ascii or 
+        // by making sure the URL ends with ;type=A.
+        
+        // timeout (CURLOPT_FTP_RESPONSE_TIMEOUT)
+
+        bool bCreatingMissingDir = true;
+        curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
+        request.setOpt(creatingMissingDir);
+
+        string ftpsPrefix("ftps");
+        if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
+        {
+            /* Next statements is in case we want ftp protocol to use SSL or TLS
+             * google CURLOPT_FTPSSLAUTH and CURLOPT_FTP_SSL
+
+            // disconnect if we can't validate server's cert
+            bool bSslVerifyPeer = false;
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+            request.setOpt(sslVerifyPeer);
+
+            curlpp::OptionTrait<curl_ftpssl, CURLOPT_FTP_SSL> ftpSsl(CURLFTPSSL_TRY);
+            request.setOpt(ftpSsl);
+
+            curlpp::OptionTrait<curl_ftpauth, CURLOPT_FTPSSLAUTH> ftpSslAuth(CURLFTPAUTH_TLS);
+            request.setOpt(ftpSslAuth);
+             */
+        }
+
+        // FTP progress works only in case of FTP Passive
+        // chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+        // double lastPercentageUpdated = -1.0;
+        // bool uploadingStoppedByUser = false;
+        // curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressUploadCallback, this,
+		// 	ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
+		// 	placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+		{
+			request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+			request.setOpt(new curlpp::options::NoProgress(0L));
+		}
+
+        logger->info(__FILEREF__ + "FTP Uploading media file"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", filePathName: " + filePathName
+            + ", sizeInBytes: " + to_string(sizeInBytes)
+        );
+        request.perform();
+    }
+    catch (curlpp::LogicError & e) 
+    {
+        string errorMessage = __FILEREF__ + "Download failed (LogicError)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", filePathName: " + filePathName 
+            + ", exception: " + e.what()
+        ;
+		logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+	}
+    catch (curlpp::RuntimeError & e) 
+    {
+        string errorMessage = __FILEREF__ + "Download failed (RuntimeError)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", filePathName: " + filePathName 
+            + ", exception: " + e.what()
+        ;
+		logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch (exception e)
+    {
+        string errorMessage = __FILEREF__ + "Download failed (exception)"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", filePathName: " + filePathName 
+            + ", exception: " + e.what()
+        ;
+		logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}

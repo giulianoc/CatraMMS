@@ -16,6 +16,11 @@
 
 #include "spdlog/spdlog.h"
 #include "json/json.h"
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
 #include <fstream>
 #include <vector>
 
@@ -94,7 +99,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static string httpPostString(
+	static pair<string, string> httpPostString(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -103,6 +108,7 @@ public:
 		string basicAuthenticationPassword,
 		string body,
 		string contentType,	// i.e.: application/json
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
@@ -116,6 +122,7 @@ public:
 		string basicAuthenticationPassword,
 		string body,
 		string contentType,	// i.e.: application/json
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
@@ -129,6 +136,7 @@ public:
 		string basicAuthenticationPassword,
 		string body,
 		string contentType,	// i.e.: application/json
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
@@ -142,6 +150,7 @@ public:
 		string basicAuthenticationPassword,
 		string body,
 		string contentType,	// i.e.: application/json
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
@@ -324,12 +333,28 @@ public:
 		int64_t ingestionJobKey,
 		string url,
 		string destBinaryPathName,
+		curlpp::types::ProgressFunctionFunctor functor,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
+	static void ftpFile(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string filePathName,
+		string fileName,
+		int64_t sizeInBytes,
+		string ftpServer,
+		int ftpPort,
+		string ftpUserName,
+		string ftpPassword,
+		string ftpRemoteDirectory,
+		string ftpRemoteFileName,
+		curlpp::types::ProgressFunctionFunctor functor
+	);
+
 private:
-	static string httpPostPutString(
+	static pair<string, string> httpPostPutString(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -339,6 +364,7 @@ private:
 		string basicAuthenticationPassword,
 		string body,
 		string contentType,	// i.e.: application/json
+		vector<string> otherHeaders,
 		int maxRetryNumber,
 		int secondsToWaitBeforeToRetry
 	);
