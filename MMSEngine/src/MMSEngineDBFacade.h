@@ -2102,13 +2102,13 @@ public:
     int64_t addFacebookConf(
         int64_t workspaceKey,
         string label,
-        string pageToken);
+        string userAccessToken);
 
     void modifyFacebookConf(
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string pageToken);
+        string userAccessToken);
 
     void removeFacebookConf(
         int64_t workspaceKey,
@@ -2117,7 +2117,7 @@ public:
     Json::Value getFacebookConfList (
         int64_t workspaceKey);
 
-    string getFacebookPageTokenByConfigurationLabel(
+    string getFacebookUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
     Json::Value addStream(

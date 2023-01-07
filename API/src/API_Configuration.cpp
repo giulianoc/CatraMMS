@@ -556,7 +556,7 @@ void API::addFacebookConf(
     try
     {
         string label;
-        string pageToken;
+        string userAccessToken;
         
         try
         {
@@ -573,7 +573,7 @@ void API::addFacebookConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "PageToken";
+            field = "UserAccessToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -582,7 +582,7 @@ void API::addFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            pageToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -608,7 +608,7 @@ void API::addFacebookConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addFacebookConf(
-                workspace->_workspaceKey, label, pageToken);
+                workspace->_workspaceKey, label, userAccessToken);
 
             sResponse = (
                     string("{ ") 
@@ -685,7 +685,7 @@ void API::modifyFacebookConf(
     try
     {
         string label;
-        string pageToken;
+        string userAccessToken;
         
         try
         {
@@ -702,7 +702,7 @@ void API::modifyFacebookConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "PageToken";
+            field = "UserAccessToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -711,7 +711,7 @@ void API::modifyFacebookConf(
 
                 throw runtime_error(errorMessage);
             }    
-            pageToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -750,7 +750,7 @@ void API::modifyFacebookConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyFacebookConf(
-                confKey, workspace->_workspaceKey, label, pageToken);
+                confKey, workspace->_workspaceKey, label, userAccessToken);
 
             sResponse = (
                     string("{ ") 

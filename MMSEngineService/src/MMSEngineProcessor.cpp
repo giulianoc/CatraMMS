@@ -25676,7 +25676,7 @@ string MMSEngineProcessor::getFacebookAccessTokenByConfigurationLabel(
     
     try
     {
-		string codeToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+		string codeToken = _mmsEngineDBFacade->getFacebookUserAccessTokenByConfigurationLabel(
 			workspace->_workspaceKey, facebookConfigurationLabel);
 
 		// GET https://graph.facebook.com/v15.0/oauth/access_token?

@@ -845,7 +845,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 int64_t MMSEngineDBFacade::addFacebookConf(
     int64_t workspaceKey,
     string label,
-    string pageToken)
+    string userAccessToken)
 {
     string      lastSQLCommand;
     int64_t     confKey;
@@ -863,14 +863,14 @@ int64_t MMSEngineDBFacade::addFacebookConf(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_Facebook(workspaceKey, label, pageToken) values ("
-                "?, ?, ?)";
+                "insert into MMS_Conf_Facebook(workspaceKey, label, modificationDate, userAccessToken) "
+				"values (?, ?, NOW(), ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, pageToken);
+            preparedStatement->setString(queryParameterIndex++, userAccessToken);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -878,7 +878,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", pageToken: " + pageToken
+				+ ", userAccessToken: " + userAccessToken
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -958,7 +958,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
     int64_t confKey,
     int64_t workspaceKey,
     string label,
-    string pageToken)
+    string userAccessToken)
 {
     string      lastSQLCommand;
     
@@ -975,12 +975,13 @@ void MMSEngineDBFacade::modifyFacebookConf(
         
         {
             lastSQLCommand = 
-                "update MMS_Conf_Facebook set label = ?, pageToken = ? where confKey = ? and workspaceKey = ?";
+                "update MMS_Conf_Facebook set label = ?, userAccessToken = ?, modificationDate = NOW() "
+				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, pageToken);
+            preparedStatement->setString(queryParameterIndex++, userAccessToken);
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -989,7 +990,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label: " + label
-				+ ", pageToken: " + pageToken
+				+ ", userAccessToken: " + userAccessToken
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -1262,8 +1263,10 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 
         Json::Value facebookRoot(Json::arrayValue);
         {                    
-            lastSQLCommand = 
-                string ("select confKey, label, pageToken from MMS_Conf_Facebook ") 
+            lastSQLCommand =
+                string ("select confKey, label, userAccessToken, ")
+				+ "DATE_FORMAT(convert_tz(modificationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as modificationDate "
+                + "from MMS_Conf_Facebook "
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1288,8 +1291,11 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
                 field = "label";
                 facebookConfRoot[field] = static_cast<string>(resultSet->getString("label"));
 
-                field = "pageToken";
-                facebookConfRoot[field] = static_cast<string>(resultSet->getString("pageToken"));
+				field = "modificationDate";
+				facebookConfRoot[field] = static_cast<string>(resultSet->getString("modificationDate"));
+
+                field = "userAccessToken";
+                facebookConfRoot[field] = static_cast<string>(resultSet->getString("userAccessToken"));
 
                 facebookRoot.append(facebookConfRoot);
             }
@@ -1369,12 +1375,12 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
     return facebookConfListRoot;
 }
 
-string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
+string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(
     int64_t workspaceKey, string facebookConfigurationLabel
 )
 {
     string      lastSQLCommand;
-    string      facebookPageToken;
+    string      facebookUserAccessToken;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -1382,7 +1388,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
 
     try
     {        
-        _logger->info(__FILEREF__ + "getFacebookPageTokenByConfigurationLabel"
+        _logger->info(__FILEREF__ + "getFacebookUserAccessTokenByConfigurationLabel"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", facebookConfigurationLabel: " + facebookConfigurationLabel
         );
@@ -1394,7 +1400,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
         
         {
             lastSQLCommand = 
-                string("select pageToken from MMS_Conf_Facebook where workspaceKey = ? and label = ?");
+                string("select userAccessToken from MMS_Conf_Facebook where workspaceKey = ? and label = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1422,7 +1428,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
                 throw runtime_error(errorMessage);
             }
 
-            facebookPageToken = resultSet->getString("pageToken");
+            facebookUserAccessToken = resultSet->getString("userAccessToken");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -1490,7 +1496,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
         throw e;
     } 
     
-    return facebookPageToken;
+    return facebookUserAccessToken;
 }
 
 Json::Value MMSEngineDBFacade::addStream(
