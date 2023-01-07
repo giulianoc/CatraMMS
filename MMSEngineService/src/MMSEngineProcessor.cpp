@@ -25689,6 +25689,7 @@ string MMSEngineProcessor::getFacebookAccessTokenByConfigurationLabel(
             + "://"
             + _facebookGraphAPIHostName
             + ":" + to_string(_facebookGraphAPIPort)
+			+ "/" + _facebookGraphAPIVersion
             + _facebookGraphAPIAccessTokenURI
 			+ "?client_id=" + _facebookGraphAPIClientId
 			+ "&client_secret=" + _facebookGraphAPIClientSecret
