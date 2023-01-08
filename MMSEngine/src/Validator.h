@@ -44,6 +44,8 @@ public:
 
 	bool isFacebookNodeTypeValid(string nodeType);
 
+	bool isFacebookLiveTypeValid(string nodeType);
+
     bool isYouTubeLiveBroadcastSourceTypeValid(string sourceType);
 
     bool isFacebookLiveBroadcastSourceTypeValid(string sourceType);

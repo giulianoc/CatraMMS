@@ -17347,6 +17347,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string facebookNodeId;
 		string title;
 		string description;
+		string facebookLiveType;
 
 		Json::Value scheduleRoot;
 		int64_t utcScheduleStartTimeInSeconds;
@@ -17378,6 +17379,18 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
                 throw runtime_error(errorMessage);
             }
             facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
+
+            field = "facebookLiveType";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            facebookLiveType = JSONUtils::asString(parametersRoot, field, "");
 
             field = "facebookConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -17513,13 +17526,23 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				+ "://"
 				+ _facebookGraphAPIHostName
 				+ ":" + to_string(_facebookGraphAPIPort)
+				+ "/" + _facebookGraphAPIVersion
 				+ regex_replace(_facebookGraphAPILiveVideosURI, regex("__NODEID__"), facebookNodeId)
-				+ "?status=SCHEDULED_UNPUBLISHED"
-				+ "&planned_start_time=" + to_string(utcScheduleStartTimeInSeconds)
-				+ "&title=" + curlpp::escape(title)
+				+ "?title=" + curlpp::escape(title)
 				+ (description != "" ? ("&description=" + curlpp::escape(description)) : "")
 				+ "&access_token=" + curlpp::escape(facebookToken)
 			;
+			if (facebookLiveType == "LiveNow")
+			{
+				facebookURL += "&status=LIVE_NOW";
+				utcScheduleStartTimeInSeconds = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			}
+			else
+			{
+				facebookURL +=
+					(string("&status=SCHEDULED_UNPUBLISHED")
+					+ "&planned_start_time=" + to_string(utcScheduleStartTimeInSeconds));
+			}
 
 			_logger->info(__FILEREF__ + "create a Live Video object"
 				+ ", facebookURL: " + facebookURL
@@ -17687,12 +17710,20 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							liveProxyParametersRoot.removeMember(field, &removed);
 					}
 
-					bool timePeriod = true;
-					field = "TimePeriod";
-					liveProxyParametersRoot[field] = timePeriod;
+					{
+						bool timePeriod = true;
+						field = "TimePeriod";
+						liveProxyParametersRoot[field] = timePeriod;
 
-					field = "schedule";
-					liveProxyParametersRoot[field] = scheduleRoot;
+						if (facebookLiveType == "LiveNow")
+						{
+							field = "start";
+							scheduleRoot[field] = utcScheduleStartTimeInSeconds;
+						}
+
+						field = "schedule";
+						liveProxyParametersRoot[field] = scheduleRoot;
+					}
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
@@ -17760,12 +17791,20 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					field = "References";
 					vodProxyParametersRoot[field] = referencesRoot;
 
-					bool timePeriod = true;
-					field = "TimePeriod";
-					vodProxyParametersRoot[field] = timePeriod;
+					{
+						bool timePeriod = true;
+						field = "TimePeriod";
+						vodProxyParametersRoot[field] = timePeriod;
 
-					field = "schedule";
-					vodProxyParametersRoot[field] = scheduleRoot;
+						if (facebookLiveType == "LiveNow")
+						{
+							field = "start";
+							scheduleRoot[field] = utcScheduleStartTimeInSeconds;
+						}
+
+						field = "schedule";
+						vodProxyParametersRoot[field] = scheduleRoot;
+					}
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
@@ -25755,6 +25794,7 @@ string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
             + "://"
             + _facebookGraphAPIHostName
             + ":" + to_string(_facebookGraphAPIPort)
+			+ "/" + _facebookGraphAPIVersion
 			+ "/" + facebookPageId
 			+ "?fields=access_token"
 			+ "&access_token=" + curlpp::escape(userAccessToken)

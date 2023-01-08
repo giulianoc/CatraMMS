@@ -4402,6 +4402,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 {
 
     vector<string> mandatoryFields = {
+		"facebookLiveType",	// LiveNow or LiveScheduled
 		"facebookNodeType",	// Page, User, Event or Group
         "facebookNodeId"
     };
@@ -4421,6 +4422,16 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
             throw runtime_error(errorMessage);
         }
     }
+	if (!isFacebookLiveTypeValid(JSONUtils::asString(parametersRoot, "facebookLiveType")))
+	{
+		string errorMessage = __FILEREF__ + "FacebookLiveType is not valid"
+			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
 		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
@@ -6633,6 +6644,22 @@ bool Validator::isFacebookNodeTypeValid(string nodeType)
     for (string validNodeType: validNodeTypes)
     {
         if (validNodeType == nodeType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isFacebookLiveTypeValid(string liveType)
+{
+    vector<string> validLiveTypes = {
+        "LiveNow",
+        "LiveScheduled"
+    };
+
+    for (string validLiveType: validLiveTypes)
+    {
+        if (validLiveType == liveType) 
             return true;
     }
     

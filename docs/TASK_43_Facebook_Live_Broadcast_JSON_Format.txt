@@ -53,6 +53,9 @@
 		// a specific encoders pool has to be used
 		"encodersPool": "",
 
+		// mandatory. It could be: LiveNow, LiveScheduled
+		"facebookLiveType": "LiveNow",
+
 		// mandatory: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"facebookSchedule": {
