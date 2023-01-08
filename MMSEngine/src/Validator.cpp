@@ -4540,7 +4540,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 		}
 	}
 
-    field = "schedule";
+    field = "facebookSchedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);

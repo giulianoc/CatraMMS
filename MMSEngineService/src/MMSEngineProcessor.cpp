@@ -17348,6 +17348,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string title;
 		string description;
 
+		Json::Value scheduleRoot;
 		int64_t utcScheduleStartTimeInSeconds;
 		string sourceType;
 		// configurationLabel or referencesRoot has to be present
@@ -17405,7 +17406,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
             field = "description";
 			description = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "schedule";
+            field = "facebookSchedule";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17415,7 +17416,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-			Json::Value scheduleRoot = parametersRoot[field];
+			scheduleRoot = parametersRoot[field];
 
             field = "start";
             if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
@@ -17679,10 +17680,19 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "facebookSchedule";
+						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+							liveProxyParametersRoot.removeMember(field, &removed);
+					}
 
 					bool timePeriod = true;
 					field = "TimePeriod";
 					liveProxyParametersRoot[field] = timePeriod;
+
+					field = "schedule";
+					liveProxyParametersRoot[field] = scheduleRoot;
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
@@ -17740,13 +17750,22 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "facebookSchedule";
+						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+							vodProxyParametersRoot.removeMember(field, &removed);
+					}
 
-					field = "references";
+					field = "References";
 					vodProxyParametersRoot[field] = referencesRoot;
 
 					bool timePeriod = true;
 					field = "TimePeriod";
 					vodProxyParametersRoot[field] = timePeriod;
+
+					field = "schedule";
+					vodProxyParametersRoot[field] = scheduleRoot;
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{

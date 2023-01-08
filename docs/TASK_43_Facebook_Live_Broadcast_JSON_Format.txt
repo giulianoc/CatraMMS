@@ -55,7 +55,7 @@
 
 		// mandatory: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
-		"schedule": {
+		"facebookSchedule": {
 			"start": "2019-01-21T12:30:00Z",
 			"end": "2019-01-21T13:30:00Z"
 		},
