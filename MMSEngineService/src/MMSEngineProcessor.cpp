@@ -16247,6 +16247,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		bool youTubeLiveBroadcastMadeForKids;
 		string youTubeLiveBroadcastLatencyPreference;
 
+		Json::Value scheduleRoot;
 		string scheduleStartTimeInSeconds;
 		string scheduleEndTimeInSeconds;
 		string sourceType;
@@ -16290,7 +16291,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
             field = "LatencyPreference";
 			youTubeLiveBroadcastLatencyPreference = JSONUtils::asString(parametersRoot, field, "normal");
 
-            field = "schedule";
+            field = "youTubeSchedule";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -16300,7 +16301,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-			Json::Value scheduleRoot = parametersRoot[field];
+			scheduleRoot = parametersRoot[field];
 
             field = "start";
             if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
@@ -17119,10 +17120,21 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "youTubeSchedule";
+						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+							liveProxyParametersRoot.removeMember(field, &removed);
+					}
 
-					bool timePeriod = true;
-					field = "TimePeriod";
-					liveProxyParametersRoot[field] = timePeriod;
+					{
+						bool timePeriod = true;
+						field = "TimePeriod";
+						liveProxyParametersRoot[field] = timePeriod;
+
+						field = "schedule";
+						liveProxyParametersRoot[field] = scheduleRoot;
+					}
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
@@ -17180,13 +17192,24 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.removeMember(field, &removed);
 					}
+					{
+						Json::Value removed;
+						field = "youTubeSchedule";
+						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+							vodProxyParametersRoot.removeMember(field, &removed);
+					}
+
+					{
+						bool timePeriod = true;
+						field = "TimePeriod";
+						vodProxyParametersRoot[field] = timePeriod;
+
+						field = "schedule";
+						vodProxyParametersRoot[field] = scheduleRoot;
+					}
 
 					field = "References";
 					vodProxyParametersRoot[field] = referencesRoot;
-
-					bool timePeriod = true;
-					field = "TimePeriod";
-					vodProxyParametersRoot[field] = timePeriod;
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{

@@ -4325,7 +4325,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 		}
 	}
 
-    field = "schedule";
+    field = "youTubeSchedule";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
