@@ -10455,7 +10455,7 @@ void MMSEngineProcessor::postOnFacebookThread(
         }
 
         string facebookConfigurationLabel;
-        string facebookDestination;
+        string facebookNodeType;
         string facebookNodeId;
         {
             string field = "configurationLabel";
@@ -10470,7 +10470,7 @@ void MMSEngineProcessor::postOnFacebookThread(
             }
             facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "facebookDestination";
+            field = "facebookNodeType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10480,7 +10480,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
                 throw runtime_error(errorMessage);
             }
-            facebookDestination = JSONUtils::asString(parametersRoot, field, "");
+            facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
 
             field = "facebookNodeId";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10567,7 +10567,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				{
 					postVideoOnFacebook(mmsAssetPathName, 
 						sizeInBytes, ingestionJobKey, workspace,
-						facebookConfigurationLabel, facebookDestination, facebookNodeId);
+						facebookConfigurationLabel, facebookNodeType, facebookNodeId);
 				}
 				else // if (contentType == ContentType::Audio)
 				{
@@ -17343,7 +17343,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		);
 
 		string facebookConfigurationLabel;
-		string facebookDestination;
+		string facebookNodeType;
 		string facebookNodeId;
 		string title;
 		string description;
@@ -17354,7 +17354,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string configurationLabel;
 		Json::Value referencesRoot;
         {
-            string field = "facebookDestination";
+            string field = "facebookNodeType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17364,7 +17364,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
                 throw runtime_error(errorMessage);
             }
-            facebookDestination = JSONUtils::asString(parametersRoot, field, "");
+            facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
 
             field = "facebookNodeId";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -17474,10 +17474,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
         }
 
 		string facebookToken;
-		if (facebookDestination == "Page")
+		if (facebookNodeType == "Page")
 			facebookToken = getFacebookPageToken(ingestionJobKey,
 				workspace, facebookConfigurationLabel, facebookNodeId);
-		else // if (facebookDestination == "User")
+		else // if (facebookNodeType == "User")
 			facebookToken = _mmsEngineDBFacade->getFacebookUserAccessTokenByConfigurationLabel(
 				workspace->_workspaceKey, facebookConfigurationLabel);
 		/* 2023-01-08: capire se bisogna recuperare un altro tipo di token

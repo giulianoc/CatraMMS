@@ -43,7 +43,7 @@
 		"configurationLabel": "My Facebook Conf",
 
 		// mandatory. It could be: Page, User, Event or Group
-		"facebookDestination": "Page",
+		"facebookNodeType": "Page",
 
 		// mandatory. itentifier of the destination specified in 'facebookDestination'
 		"facebookNodeId": "YYYY",

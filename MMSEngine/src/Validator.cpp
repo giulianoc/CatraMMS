@@ -3365,8 +3365,8 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 		dependencies)
 {
     vector<string> mandatoryFields = {
-		"facebookDestination",	// Page, User, Event or Group
-        "nodeId",
+		"facebookNodeType",	// Page, User, Event or Group
+        "facebookNodeId",
         "configurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
@@ -3385,6 +3385,17 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
             throw runtime_error(errorMessage);
         }
     }
+
+	if (isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
+	{
+		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
+			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
@@ -4391,8 +4402,8 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 {
 
     vector<string> mandatoryFields = {
-		"facebookDestination",	// Page, User, Event or Group
-        "nodeId"
+		"facebookNodeType",	// Page, User, Event or Group
+        "facebookNodeId"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -4410,6 +4421,17 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
             throw runtime_error(errorMessage);
         }
     }
+	if (isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
+	{
+		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
+			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
 
 	string sourceType;
     string field = "sourceType";
@@ -6593,6 +6615,24 @@ bool Validator::isCutTypeValid(string cutType)
     for (string validCutType: validCutTypes)
     {
         if (cutType == validCutType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isFacebookNodeTypeValid(string nodeType)
+{
+    vector<string> validNodeTypes = {
+        "Page",
+        "User",
+        "Event",
+        "Group"
+    };
+
+    for (string validNodeType: validNodeTypes)
+    {
+        if (validNodeType == nodeType) 
             return true;
     }
     

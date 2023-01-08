@@ -42,6 +42,8 @@ public:
 
     bool isCutTypeValid(string cutType);
 
+	bool isFacebookNodeTypeValid(string nodeType);
+
     bool isYouTubeLiveBroadcastSourceTypeValid(string sourceType);
 
     bool isFacebookLiveBroadcastSourceTypeValid(string sourceType);
