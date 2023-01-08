@@ -17520,6 +17520,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				+ "&access_token=" + curlpp::escape(facebookToken)
 			;
 
+			_logger->info(__FILEREF__ + "create a Live Video object"
+				+ ", facebookURL: " + facebookURL
+			);
+
 			vector<string> otherHeaders;
 			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger,
@@ -25736,6 +25740,10 @@ string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
 			+ "?fields=access_token"
 			+ "&access_token=" + curlpp::escape(userAccessToken)
 		;
+
+		_logger->info(__FILEREF__ + "Retrieve page token"
+			+ ", facebookURL: " + facebookURL
+		);
 
 		Json::Value responseRoot = MMSCURL::httpGetJson(
 			_logger,
