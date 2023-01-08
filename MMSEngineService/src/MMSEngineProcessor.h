@@ -525,7 +525,7 @@ private:
     void postVideoOnFacebook(
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string facebookPageId, string facebookConfigurationLabel
+        string facebookConfigurationLabel, string facebookDestination, string facebookNodeId
         );
 
     void postVideoOnYouTube(

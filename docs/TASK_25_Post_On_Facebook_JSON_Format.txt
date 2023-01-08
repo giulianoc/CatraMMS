@@ -40,10 +40,13 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory, one of the MMS Facebook Configuration label 
-		"ConfigurationLabel": "My Facebook Conf",
+		"configurationLabel": "My Facebook Conf",
 
-		// mandatory. page_id (user_id? event_id? group_id?)
-		"PageId": "YYYY",
+		// mandatory. It could be: Page, User, Event or Group
+		"facebookDestination": "Page",
+
+		// mandatory. itentifier of the destination specified in 'facebookDestination'
+		"facebookNodeId": "YYYY",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

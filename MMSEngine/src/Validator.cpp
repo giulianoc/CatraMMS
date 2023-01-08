@@ -3365,8 +3365,9 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 		dependencies)
 {
     vector<string> mandatoryFields = {
-        "PageId",   // page_id || user_id || event_id || group_id
-        "ConfigurationLabel"
+		"facebookDestination",	// Page, User, Event or Group
+        "nodeId",
+        "configurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -4389,6 +4390,27 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 		dependencies)
 {
 
+    vector<string> mandatoryFields = {
+		"facebookDestination",	// Page, User, Event or Group
+        "nodeId"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string sParametersRoot = JSONUtils::toString(parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
 	string sourceType;
     string field = "sourceType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -4428,7 +4450,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 	{
 		// References is optional because in case of dependency managed automatically
 		// by MMS (i.e.: onSuccess)
-		field = "references";
+		field = "References";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
