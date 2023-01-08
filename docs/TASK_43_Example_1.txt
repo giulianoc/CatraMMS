@@ -1,0 +1,9 @@
+"Task": {
+	"Label"="My Facebook Live Broadcast",
+
+	"Type": "Facebook-Live-Broadcast",
+
+	"Parameters": {
+		"ConfigurationLabel": "my live proxy"
+	}
+}
