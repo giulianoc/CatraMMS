@@ -5395,7 +5395,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									_processorThreads + maxAdditionalProcessorThreads)
 								{
 									_logger->warn(__FILEREF__
-										+ "Not enough available threads to manage liveCutThread, activity is postponed"
+										+ "Not enough available threads to manage YouTubeLiveBroadcast, activity is postponed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", _processorsThreadsNumber.use_count(): "
@@ -17535,7 +17535,6 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (facebookLiveType == "LiveNow")
 			{
 				facebookURL += "&status=LIVE_NOW";
-				utcScheduleStartTimeInSeconds = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			}
 			else
 			{
@@ -17612,6 +17611,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		_logger->info(__FILEREF__ + "Preparing workflow to ingest..."
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", rtmpURL: " + rtmpURL
 		);
 
 		Json::Value facebookLiveBroadcastOnSuccess = Json::nullValue;
@@ -17717,8 +17717,27 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 						if (facebookLiveType == "LiveNow")
 						{
+							string sNow;
+							{
+								tm          tmDateTime;
+								char        strDateTime [64];
+
+								chrono::system_clock::time_point now = chrono::system_clock::now();
+								time_t utcNow  = chrono::system_clock::to_time_t(now);
+
+								gmtime_r (&utcNow, &tmDateTime);
+								sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+									tmDateTime. tm_year + 1900,
+									tmDateTime. tm_mon + 1,
+									tmDateTime. tm_mday,
+									tmDateTime. tm_hour,
+									tmDateTime. tm_min,
+									tmDateTime. tm_sec);
+								sNow = strDateTime;
+							}
+
 							field = "start";
-							scheduleRoot[field] = utcScheduleStartTimeInSeconds;
+							scheduleRoot[field] = sNow;
 						}
 
 						field = "schedule";
