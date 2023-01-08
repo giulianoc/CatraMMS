@@ -3386,7 +3386,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
         }
     }
 
-	if (isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
+	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
 		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
 			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
@@ -4421,7 +4421,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
             throw runtime_error(errorMessage);
         }
     }
-	if (isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
+	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
 		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
 			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
