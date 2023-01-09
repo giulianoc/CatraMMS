@@ -1214,7 +1214,14 @@ pair<string, string> MMSCURL::httpPostPutString(
 				logger->info(message);
 			}
 
-			/*
+			// 2023-01-09: eventuali HTTP/1.1 100 Continue\r\n\r\n vengono scartati
+			string prefix ("HTTP/1.1 100 Continue\r\n\r\n");
+			while (sHeaderAndBodyResponse.size() >= prefix.size()
+				&& 0 == sHeaderAndBodyResponse.compare(0, prefix.size(), prefix))
+			{
+				sHeaderAndBodyResponse = sHeaderAndBodyResponse.substr(prefix.size());
+			}
+
 			size_t beginOfHeaderBodySeparatorIndex;
 			if ((beginOfHeaderBodySeparatorIndex = sHeaderAndBodyResponse.find("\r\n\r\n")) == string::npos)
 			{
@@ -1229,9 +1236,6 @@ pair<string, string> MMSCURL::httpPostPutString(
 			}
 			sHeaderResponse = sHeaderAndBodyResponse.substr(0, beginOfHeaderBodySeparatorIndex);                                       
 			sBodyResponse = sHeaderAndBodyResponse.substr(beginOfHeaderBodySeparatorIndex + 4);                                       
-			*/
-			sHeaderResponse = "";
-			sBodyResponse = sHeaderAndBodyResponse;
 
 			// LF and CR create problems to the json parser...
 			while (sBodyResponse.size() > 0 && (sBodyResponse.back() == 10 || sBodyResponse.back() == 13))
