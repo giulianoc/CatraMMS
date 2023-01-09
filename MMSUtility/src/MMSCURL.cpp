@@ -1241,6 +1241,15 @@ pair<string, string> MMSCURL::httpPostPutString(
 			while (sBodyResponse.size() > 0 && (sBodyResponse.back() == 10 || sBodyResponse.back() == 13))
 				sBodyResponse.pop_back();
 
+			{
+				string message = __FILEREF__ + "httpPostPutString success test"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", sHeaderResponse: " + sHeaderResponse
+					+ ", sBodyResponse: " + sBodyResponse
+				;
+				logger->info(message);
+			}
+
 			break;
 		}
 		catch (curlpp::LogicError & e) 
