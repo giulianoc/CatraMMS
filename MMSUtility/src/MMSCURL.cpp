@@ -1180,7 +1180,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 
 			// store response headers in the response                                                         
 			// You simply have to set next option to prefix the header to the normal body output.             
-			// request.setOpt(new curlpp::options::Header(true));                                                
+			request.setOpt(new curlpp::options::Header(true));                                                
 
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
