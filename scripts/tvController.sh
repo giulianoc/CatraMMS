@@ -258,6 +258,10 @@ do
 	#fileExtension is 'changed'
 
 	if [ $isProcessRunning -eq 1 ]; then
+		if [ $debug -eq 1 ]; then
+			echo "$(date): There are changes to $configurationFileName" >> $debugFilename
+		fi
+
 		if [ -s $pidProcessPathName ]; then
 
 			if [ $debug -eq 1 ]; then

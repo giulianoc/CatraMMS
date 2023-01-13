@@ -3,12 +3,14 @@
 	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
 
 	#it is the same in nginx.conf of LoadBalancer
-	client_max_body_size 2G;
+	client_max_body_size 10G;
 
 	#1. POST http://mms-binary.restream.ovh/catramms/v1/binary/1991788 goes through:
 	#	#2, #3, #4, #5, #7 (fcgi: /catramms/binary/authorization --> add monitoring with progressId...)
 	#2. once the upload is finished, /catramms/uploadedBinary?version=v1&method=uploadedBinary&ingestionJobKey=1989409&X-Progress-ID=1601367441.975 is called, it goes through:
 	#	#1, #7
+	#Nginx carica i file uploadati temporaneamente in (client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository).
+	#Il metodo uploadedBinary si preoccupa di gestire il file caricato da nginx
 
 	#1
 	location /catramms {
