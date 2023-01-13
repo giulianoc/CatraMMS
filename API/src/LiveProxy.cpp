@@ -167,6 +167,14 @@ void LiveProxy::encodeContent(
 
 				if (tvMulticastIP == "")
 				{
+					*_tvChannelPort_CurrentOffset = getFreeTvChannelPortOffset(
+						_tvChannelsPortsMutex, *_tvChannelPort_CurrentOffset);
+
+					tvMulticastIP = "239.255.1.1";
+					tvMulticastPort = to_string(*_tvChannelPort_CurrentOffset
+						+ _tvChannelPort_Start);
+
+					/*
 					lock_guard<mutex> locker(*_tvChannelsPortsMutex);
 
 					tvMulticastIP = "239.255.1.1";
@@ -175,6 +183,7 @@ void LiveProxy::encodeContent(
 
 					*_tvChannelPort_CurrentOffset = (*_tvChannelPort_CurrentOffset + 1)
 						% _tvChannelPort_MaxNumberOfOffsets;
+					*/
 				}
 
 				// overrun_nonfatal=1 prevents ffmpeg from exiting,

@@ -880,6 +880,83 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 	return localDestAssetPathName;
 }
 
+long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
+	mutex* tvChannelsPortsMutex,
+	long tvChannelPort_CurrentOffset
+)
+{
+	lock_guard<mutex> locker(*tvChannelsPortsMutex);
+
+	long localTvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
+	bool portAlreadyUsed;
+	long attemptNumber = 0;
+	do
+	{
+		attemptNumber++;
+
+		localTvChannelPort_CurrentOffset = (localTvChannelPort_CurrentOffset + 1) % _tvChannelPort_MaxNumberOfOffsets;
+
+		long freeTvChannelPort = localTvChannelPort_CurrentOffset + _tvChannelPort_Start;
+
+		portAlreadyUsed = false;
+
+		if (FileIO::directoryExisting(_tvChannelConfigurationDirectory))
+		{
+			// check if this port is already used
+
+			FileIO::DirectoryEntryType_t detDirectoryEntryType;
+			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (_tvChannelConfigurationDirectory);
+
+			bool scanDirectoryFinished = false;
+			while (!scanDirectoryFinished)
+			{
+				string directoryEntry;
+				try
+				{
+					string directoryEntry = FileIO::readDirectory (directory, &detDirectoryEntryType);
+
+					_logger->info(__FILEREF__ + "FileIO::readDirectory"
+						+ ", directoryEntry: " + directoryEntry
+						+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
+					);
+
+					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+						continue;
+
+					string sFile;
+					{
+						std::ifstream medatataFile(_tvChannelConfigurationDirectory + directoryEntry);                                                         
+						std::stringstream buffer;                                                                             
+						buffer << medatataFile.rdbuf();                                                                       
+						sFile = buffer.str();
+					}
+
+					// example of line inside the file: 239.255.1.1:8025 1 3006 1059,1159
+					string portToLookFor = ":" + to_string(freeTvChannelPort);
+					if (sFile.find(portToLookFor) != string::npos)
+					{
+						_logger->info(__FILEREF__ + "Port is already used"
+							+ ", portToLookFor: " + portToLookFor
+						);
+						portAlreadyUsed = true;
+
+						break;
+					}
+				}
+				catch (...)
+				{
+					string errorMessage = __FILEREF__ + "getFreeTvChannelPort failed"
+					;
+					_logger->error(errorMessage);
+				}
+			}
+		}
+	}
+	while(portAlreadyUsed && attemptNumber < _tvChannelPort_MaxNumberOfOffsets);
+
+	return localTvChannelPort_CurrentOffset;
+}
+
 void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,

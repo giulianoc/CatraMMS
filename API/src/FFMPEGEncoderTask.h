@@ -110,6 +110,10 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			string sourcePhysicalDeliveryURL,
 			string destAssetPathName);
 
+		long getFreeTvChannelPortOffset(
+			mutex* tvChannelsPortsMutex,
+			long tvChannelPort_CurrentOffset);
+
 		void createOrUpdateTVDvbLastConfigurationFile(
 			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
