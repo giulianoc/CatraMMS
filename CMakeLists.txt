@@ -28,7 +28,7 @@ project(
 	CatraMMS
 )
 
-SET(CMAKE_CXX_FLAGS "-std=c++14")
+SET(CMAKE_CXX_FLAGS "-std=c++17")
 
 #this is to generate a compilation database (for the YCM vim plugin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

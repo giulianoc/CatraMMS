@@ -3,6 +3,8 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include <sstream>
+#include <filesystem>
+#include <fstream>
 #include "catralibraries/FileIO.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
@@ -900,32 +902,28 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
 
 		portAlreadyUsed = false;
 
-		if (FileIO::directoryExisting(_tvChannelConfigurationDirectory))
+		try
 		{
-			// check if this port is already used
-
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (_tvChannelConfigurationDirectory);
-
-			bool scanDirectoryFinished = false;
-			while (!scanDirectoryFinished)
+			const filesystem::path tvChannelConfigurationDirectory (_tvChannelConfigurationDirectory);
+			if (filesystem::exists(tvChannelConfigurationDirectory)
+				&& filesystem::is_directory(tvChannelConfigurationDirectory))
 			{
-				string directoryEntry;
-				try
-				{
-					string directoryEntry = FileIO::readDirectory (directory, &detDirectoryEntryType);
+				// check if this port is already used
 
-					_logger->info(__FILEREF__ + "FileIO::readDirectory"
-						+ ", directoryEntry: " + directoryEntry
-						+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
+				for(const auto& directoryEntry: filesystem::directory_iterator(tvChannelConfigurationDirectory))
+				{
+					auto fileName = directoryEntry.path().filename();
+
+					_logger->info(__FILEREF__ + "read directory"
+						+ ", fileName: " + fileName.string()
 					);
 
-					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-						continue;
+					if (!filesystem::is_regular_file(directoryEntry.status()))
+						break;
 
 					string sFile;
 					{
-						std::ifstream medatataFile(_tvChannelConfigurationDirectory + directoryEntry);                                                         
+						ifstream medatataFile(tvChannelConfigurationDirectory / fileName);                                                         
 						std::stringstream buffer;                                                                             
 						buffer << medatataFile.rdbuf();                                                                       
 						sFile = buffer.str();
@@ -943,13 +941,16 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
 						break;
 					}
 				}
-				catch (...)
-				{
-					string errorMessage = __FILEREF__ + "getFreeTvChannelPort failed"
-					;
-					_logger->error(errorMessage);
-				}
 			}
+		}
+		catch(filesystem::filesystem_error& e)
+		{
+			string errorMessage = __FILEREF__ + "file system error"
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 	}
 	while(portAlreadyUsed && attemptNumber < _tvChannelPort_MaxNumberOfOffsets);
