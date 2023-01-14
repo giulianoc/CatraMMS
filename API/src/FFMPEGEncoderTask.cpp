@@ -933,7 +933,7 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
 					string portToLookFor = ":" + to_string(freeTvChannelPort);
 					if (sFile.find(portToLookFor) != string::npos)
 					{
-						_logger->info(__FILEREF__ + "Port is already used"
+						_logger->info(__FILEREF__ + "getFreeTvChannelPortOffset. Port is already used"
 							+ ", portToLookFor: " + portToLookFor
 						);
 						portAlreadyUsed = true;
@@ -954,6 +954,12 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
 		}
 	}
 	while(portAlreadyUsed && attemptNumber < _tvChannelPort_MaxNumberOfOffsets);
+
+	_logger->info(__FILEREF__ + "getFreeTvChannelPortOffset"
+		+ ", portAlreadyUsed: " + to_string(portAlreadyUsed)
+		+ ", tvChannelPort_CurrentOffset: " + to_string(tvChannelPort_CurrentOffset)
+		+ ", localTvChannelPort_CurrentOffset: " + to_string(localTvChannelPort_CurrentOffset)
+	);
 
 	return localTvChannelPort_CurrentOffset;
 }
