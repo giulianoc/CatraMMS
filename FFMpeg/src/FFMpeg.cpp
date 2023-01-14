@@ -9370,9 +9370,14 @@ void FFMpeg::liveRecorder(
 				// genera un errore.
 				// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
 				// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
+				// 2023-01-15
+				// Il problema 'sopra' che, a seguito del codec mp2 veniva generato un errore,
+				// è stato risolto aggiungendo un encoding in uscita.
+				// Per questo motivo sotto viene commentato
 				if (streamSourceType == "IP_PUSH"
 					|| streamSourceType == "IP_PULL" || streamSourceType == "TV")
 				{
+					/*
 					vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
 					vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
 
@@ -9417,6 +9422,7 @@ void FFMpeg::liveRecorder(
 					}
 
 					if (aacFilterToBeAdded)
+					*/
 					{
 						ffmpegArgumentList.push_back("-bsf:a");
 						ffmpegArgumentList.push_back("aac_adtstoasc");
@@ -12724,7 +12730,12 @@ void FFMpeg::liveProxyOutput(
 			// genera un errore.
 			// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
 			// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
+			// 2023-01-15
+			// Il problema 'sopra' che, a seguito del codec mp2 veniva generato un errore,
+			// è stato risolto aggiungendo un encoding in uscita.
+			// Per questo motivo sotto viene commentato
 			{
+				/*
 				bool aacFilterToBeAdded = true;
 				for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
 				{
@@ -12750,6 +12761,7 @@ void FFMpeg::liveProxyOutput(
 				}
 
 				if (aacFilterToBeAdded)
+				*/
 				{
 					ffmpegOutputArgumentList.push_back("-bsf:a");
 					ffmpegOutputArgumentList.push_back("aac_adtstoasc");
