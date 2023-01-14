@@ -9363,8 +9363,64 @@ void FFMpeg::liveRecorder(
 
 				FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
-				ffmpegArgumentList.push_back("-bsf:a");
-				ffmpegArgumentList.push_back("aac_adtstoasc");
+				// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
+				// it will generate an error
+				// Since docs says: "Please note that it is auto-inserted for MP4A-LATM and MOV/MP4 and related formats"
+				// let's try to remove it
+				if (streamSourceType == "IP_PUSH"
+					|| streamSourceType == "IP_PULL" || streamSourceType == "TV")
+				{
+					vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
+					vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
+
+					try
+					{
+						getMediaInfo(ingestionJobKey, false, liveURL, inputVideoTracks, inputAudioTracks);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+
+					bool aacCodec = false;
+					for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
+					{
+						// trackIndex, audioDurationInMilliSeconds, audioCodecName,
+						// audioSampleRate, audioChannels, audioBitRate, language));
+						string audioCodecName;
+
+						tie(ignore, ignore, audioCodecName, ignore, ignore, ignore, ignore) = inputAudioTrack;
+
+						string audioCodecNameLowerCase;
+						audioCodecNameLowerCase.resize(audioCodecName.size());
+						transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
+							[](unsigned char c){return tolower(c); } );
+						if (audioCodecNameLowerCase.find("aac") != string::npos
+							|| audioCodecNameLowerCase.find("eac3") != string::npos)
+							aacCodec = true;
+
+						_logger->info(__FILEREF__ + "aac check"
+							+ ", audioCodecName: " + audioCodecName
+							+ ", aacCodec: " + to_string(aacCodec)
+						);
+					}
+
+					/*
+					if (aacCodec)
+					{
+						ffmpegOutputArgumentList.push_back("-bsf:a");
+						ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+					}
+					*/
+				}
+
 				// 2020-08-13: commented bacause -c:v copy is already present
 				// ffmpegArgumentList.push_back("-vcodec");
 				// ffmpegArgumentList.push_back("copy");
@@ -12661,6 +12717,8 @@ void FFMpeg::liveProxyOutput(
 
 			// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
 			// it will generate an error
+			// Since docs says: "Please note that it is auto-inserted for MP4A-LATM and MOV/MP4 and related formats"
+			// let's try to remove it
 			{
 				bool aacCodec = false;
 				for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
@@ -12675,7 +12733,8 @@ void FFMpeg::liveProxyOutput(
 					audioCodecNameLowerCase.resize(audioCodecName.size());
 					transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
-					if (audioCodecNameLowerCase.find("aac") != string::npos)
+					if (audioCodecNameLowerCase.find("aac") != string::npos
+						|| audioCodecNameLowerCase.find("eac3") != string::npos)
 						aacCodec = true;
 
 					_logger->info(__FILEREF__ + "aac check"
@@ -12684,8 +12743,13 @@ void FFMpeg::liveProxyOutput(
 					);
 				}
 
-				ffmpegOutputArgumentList.push_back("-bsf:a");
-				ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+				/*
+				if (aacCodec)
+				{
+					ffmpegOutputArgumentList.push_back("-bsf:a");
+					ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+				}
+				*/
 			}
 
 			// 2020-08-13: commented bacause -c:v copy is already present
