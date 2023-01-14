@@ -9363,10 +9363,13 @@ void FFMpeg::liveRecorder(
 
 				FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
+				// 2023-01-14
 				// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
 				// it will generate an error
-				// Since docs says: "Please note that it is auto-inserted for MP4A-LATM and MOV/MP4 and related formats"
-				// let's try to remove it
+				// Questo filtro è sempre stato aggiunto. Ora abbiamo il caso di un codec audio mp2 che
+				// genera un errore.
+				// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
+				// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
 				if (streamSourceType == "IP_PUSH"
 					|| streamSourceType == "IP_PULL" || streamSourceType == "TV")
 				{
@@ -9389,7 +9392,7 @@ void FFMpeg::liveRecorder(
 						// throw e;
 					}
 
-					bool aacCodec = false;
+					bool aacFilterToBeAdded = true;
 					for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
 					{
 						// trackIndex, audioDurationInMilliSeconds, audioCodecName,
@@ -9402,23 +9405,22 @@ void FFMpeg::liveRecorder(
 						audioCodecNameLowerCase.resize(audioCodecName.size());
 						transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
-						if (audioCodecNameLowerCase.find("aac") != string::npos
-							|| audioCodecNameLowerCase.find("eac3") != string::npos)
-							aacCodec = true;
+
+						if (audioCodecNameLowerCase.find("mp2") != string::npos
+						)
+							aacFilterToBeAdded = false;
 
 						_logger->info(__FILEREF__ + "aac check"
 							+ ", audioCodecName: " + audioCodecName
-							+ ", aacCodec: " + to_string(aacCodec)
+							+ ", aacFilterToBeAdded: " + to_string(aacFilterToBeAdded)
 						);
 					}
 
-					/*
-					if (aacCodec)
+					if (aacFilterToBeAdded)
 					{
-						ffmpegOutputArgumentList.push_back("-bsf:a");
-						ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+						ffmpegArgumentList.push_back("-bsf:a");
+						ffmpegArgumentList.push_back("aac_adtstoasc");
 					}
-					*/
 				}
 
 				// 2020-08-13: commented bacause -c:v copy is already present
@@ -12715,12 +12717,15 @@ void FFMpeg::liveProxyOutput(
 				rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 			}
 
+			// 2023-01-14
 			// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
 			// it will generate an error
-			// Since docs says: "Please note that it is auto-inserted for MP4A-LATM and MOV/MP4 and related formats"
-			// let's try to remove it
+			// Questo filtro è sempre stato aggiunto. Ora abbiamo il caso di un codec audio mp2 che
+			// genera un errore.
+			// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
+			// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
 			{
-				bool aacCodec = false;
+				bool aacFilterToBeAdded = true;
 				for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
 				{
 					// trackIndex, audioDurationInMilliSeconds, audioCodecName,
@@ -12733,23 +12738,22 @@ void FFMpeg::liveProxyOutput(
 					audioCodecNameLowerCase.resize(audioCodecName.size());
 					transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
-					if (audioCodecNameLowerCase.find("aac") != string::npos
-						|| audioCodecNameLowerCase.find("eac3") != string::npos)
-						aacCodec = true;
+
+					if (audioCodecNameLowerCase.find("mp2") != string::npos
+					)
+						aacFilterToBeAdded = false;
 
 					_logger->info(__FILEREF__ + "aac check"
 						+ ", audioCodecName: " + audioCodecName
-						+ ", aacCodec: " + to_string(aacCodec)
+						+ ", aacFilterToBeAdded: " + to_string(aacFilterToBeAdded)
 					);
 				}
 
-				/*
-				if (aacCodec)
+				if (aacFilterToBeAdded)
 				{
 					ffmpegOutputArgumentList.push_back("-bsf:a");
 					ffmpegOutputArgumentList.push_back("aac_adtstoasc");
 				}
-				*/
 			}
 
 			// 2020-08-13: commented bacause -c:v copy is already present
