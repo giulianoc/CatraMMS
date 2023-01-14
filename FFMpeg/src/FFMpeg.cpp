@@ -10390,6 +10390,8 @@ void FFMpeg::liveProxy2(
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
 		Json::Value inputDrawTextDetailsRoot;
+		vector<tuple<int, string, string, string, string, int, int>> inputVideoTracks;
+		vector<tuple<int, string, string, string, int, bool>> inputAudioTracks;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10399,12 +10401,15 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string, int, int64_t, Json::Value> inputDetails = liveProxyInput(
+			tuple<long, string, string, int, int64_t, Json::Value,
+				vector<tuple<int, string, string, string, string, int, int>>,
+				vector<tuple<int, string, string, string, int, bool>>
+				> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
 				endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-				inputDrawTextDetailsRoot) = inputDetails;
+				inputDrawTextDetailsRoot, inputVideoTracks, inputAudioTracks) = inputDetails;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -10458,6 +10463,7 @@ void FFMpeg::liveProxy2(
 			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
 				inputDrawTextDetailsRoot,
+				inputVideoTracks, inputAudioTracks,
 				streamingDurationInSeconds,
 				outputsRoot, ffmpegOutputArgumentList);
 
@@ -11215,9 +11221,13 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
-	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
-	Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
+tuple<long, string, string, int, int64_t, Json::Value,
+	vector<tuple<int, string, string, string, string, int, int>>,
+	vector<tuple<int, string, string, string, int, bool>>
+	>
+	FFMpeg::liveProxyInput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
+		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
@@ -11225,6 +11235,8 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
 	Json::Value inputDrawTextDetailsRoot = Json::nullValue;
+	vector<tuple<int, string, string, string, string, int, int>> videoTracks;
+	vector<tuple<int, string, string, string, int, bool>> audioTracks;
 
 
 	// "inputRoot": {
@@ -11331,6 +11343,34 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 			+ ", streamSourceType: " + streamSourceType
 		);
 
+		if (streamSourceType == "IP_PULL"
+			|| streamSourceType == "IP_PUSH"
+			|| streamSourceType == "TV")
+		{
+			try
+			{
+				getLiveStreamingInfo(
+					url,
+					userAgent,
+					ingestionJobKey,
+					encodingJobKey,
+					videoTracks,
+					audioTracks
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// throw e;
+			}
+		}
+
 		if (streamSourceType == "IP_PULL" && maxWidth != -1)
 		{
 			try
@@ -11339,18 +11379,6 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", maxWidth: " + to_string(maxWidth)
-				);
-
-				vector<tuple<int, string, string, string, string, int, int>>	videoTracks;
-				vector<tuple<int, string, string, string, int, bool>>			audioTracks;
-
-				getLiveStreamingInfo(
-					url,
-					userAgent,
-					ingestionJobKey,
-					encodingJobKey,
-					videoTracks,
-					audioTracks
 				);
 
 				int currentVideoWidth = -1;
@@ -11701,7 +11729,7 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 		field = "url";
 		url = JSONUtils::asString(streamInputRoot, field, "");
 
-		_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
+		_logger->info(__FILEREF__ + "liveProxy, url"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", timePeriod: " + to_string(timePeriod)
@@ -11709,6 +11737,31 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 			+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
 			+ ", url: " + url
 		);
+
+		{
+			try
+			{
+				getLiveStreamingInfo(
+					url,
+					"",
+					ingestionJobKey,
+					encodingJobKey,
+					videoTracks,
+					audioTracks
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// throw e;
+			}
+		}
 
 		time_t utcNow;
 		{
@@ -12168,13 +12221,16 @@ tuple<long, string, string, int, int64_t, Json::Value> FFMpeg::liveProxyInput(
 
 	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
 		endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-		inputDrawTextDetailsRoot);
+		inputDrawTextDetailsRoot, videoTracks, audioTracks);
 }
 
-void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
+void FFMpeg::liveProxyOutput(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
 	Json::Value inputDrawTextDetailsRoot,
+	vector<tuple<int, string, string, string, string, int, int>>& inputVideoTracks,
+	vector<tuple<int, string, string, string, int, bool>>& inputAudioTracks,
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
@@ -12605,8 +12661,38 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 				rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 			}
 
-			ffmpegOutputArgumentList.push_back("-bsf:a");
-			ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+			// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
+			// it will generate an error
+			{
+				bool aacCodec = false;
+				for(tuple<int, string, string, string, int, bool> inputAudioTrack: inputAudioTracks)
+				{
+					// int audioProgramId;
+					// string audioStreamId;
+					// string audioStreamDescription;
+					string audioCodec;
+					// int audioSamplingRate;
+					// bool audioStereo;
+
+					tie(ignore, ignore, ignore, audioCodec, ignore, ignore) = inputAudioTrack;
+
+					string audioCodecLowerCase;
+					audioCodecLowerCase.resize(audioCodec.size());
+					transform(audioCodec.begin(), audioCodec.end(), audioCodecLowerCase.begin(),
+							[](unsigned char c){return tolower(c); } );
+					if (audioCodecLowerCase.find("aac") != string::npos)
+						aacCodec = true;
+
+					_logger->info(__FILEREF__ + "aac check"
+						+ ", audioCodec: " + audioCodec
+						+ ", aacCodec: " + to_string(aacCodec)
+					);
+				}
+
+				ffmpegOutputArgumentList.push_back("-bsf:a");
+				ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+			}
+
 			// 2020-08-13: commented bacause -c:v copy is already present
 			// ffmpegArgumentList.push_back("-vcodec");
 			// ffmpegArgumentList.push_back("copy");
@@ -12648,7 +12734,6 @@ void FFMpeg::liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		}
 	}
 }
-
 
 void FFMpeg::liveGrid(
 	int64_t ingestionJobKey,

@@ -945,7 +945,7 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(
 		}
 		catch(filesystem::filesystem_error& e)
 		{
-			string errorMessage = __FILEREF__ + "file system error"
+			string errorMessage = __FILEREF__ + "getFreeTvChannelPortOffset. File system error"
 				+ ", e.what(): " + e.what()
 			;
 			_logger->error(errorMessage);
