@@ -10390,8 +10390,8 @@ void FFMpeg::liveProxy2(
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
 		Json::Value inputDrawTextDetailsRoot;
-		vector<tuple<int, string, string, string, string, int, int>> inputVideoTracks;
-		vector<tuple<int, string, string, string, int, bool>> inputAudioTracks;
+		vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
+		vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10402,8 +10402,8 @@ void FFMpeg::liveProxy2(
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
 			tuple<long, string, string, int, int64_t, Json::Value,
-				vector<tuple<int, string, string, string, string, int, int>>,
-				vector<tuple<int, string, string, string, int, bool>>
+				vector<tuple<int, int64_t, string, string, int, int, string, long>>,
+				vector<tuple<int, int64_t, string, long, int, long, string>>
 				> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
@@ -11222,8 +11222,8 @@ int FFMpeg::getNextLiveProxyInput(
 }
 
 tuple<long, string, string, int, int64_t, Json::Value,
-	vector<tuple<int, string, string, string, string, int, int>>,
-	vector<tuple<int, string, string, string, int, bool>>
+	vector<tuple<int, int64_t, string, string, int, int, string, long>>,
+	vector<tuple<int, int64_t, string, long, int, long, string>>
 	>
 	FFMpeg::liveProxyInput(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
@@ -11235,8 +11235,8 @@ tuple<long, string, string, int, int64_t, Json::Value,
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
 	Json::Value inputDrawTextDetailsRoot = Json::nullValue;
-	vector<tuple<int, string, string, string, string, int, int>> videoTracks;
-	vector<tuple<int, string, string, string, int, bool>> audioTracks;
+	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
 
 	// "inputRoot": {
@@ -11349,18 +11349,11 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		{
 			try
 			{
-				getLiveStreamingInfo(
-					url,
-					userAgent,
-					ingestionJobKey,
-					encodingJobKey,
-					videoTracks,
-					audioTracks
-				);
+				getMediaInfo(ingestionJobKey, false, url, videoTracks, audioTracks);
 			}
 			catch(runtime_error e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo failed"
+				string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", e.what(): " + e.what()
@@ -11375,6 +11368,18 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		{
 			try
 			{
+				vector<tuple<int, string, string, string, string, int, int>> liveVideoTracks;
+				vector<tuple<int, string, string, string, int, bool>> liveAudioTracks;
+
+				getLiveStreamingInfo(
+					url,
+					userAgent,
+					ingestionJobKey,
+					encodingJobKey,
+					liveVideoTracks,
+					liveAudioTracks
+				);
+
 				_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -11385,7 +11390,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 				string selectedVideoStreamId;
 				string selectedAudioStreamId;
 				for(tuple<int, string, string, string, string, int, int> videoTrack:
-					videoTracks)
+					liveVideoTracks)
 				{
 					int videoProgramId;
 					string videoStreamId;
@@ -11404,7 +11409,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 					)
 					{
 						// look an audio belonging to the same Program
-						for (tuple<int, string, string, string, int, bool> audioTrack: audioTracks)
+						for (tuple<int, string, string, string, int, bool> audioTrack: liveAudioTracks)
 						{
 							int audioProgramId;
 							string audioStreamId;
@@ -11741,18 +11746,11 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		{
 			try
 			{
-				getLiveStreamingInfo(
-					url,
-					"",
-					ingestionJobKey,
-					encodingJobKey,
-					videoTracks,
-					audioTracks
-				);
+				getMediaInfo(ingestionJobKey, false, url, videoTracks, audioTracks);
 			}
 			catch(runtime_error e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo failed"
+				string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", e.what(): " + e.what()
@@ -12229,8 +12227,8 @@ void FFMpeg::liveProxyOutput(
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
 	Json::Value inputDrawTextDetailsRoot,
-	vector<tuple<int, string, string, string, string, int, int>>& inputVideoTracks,
-	vector<tuple<int, string, string, string, int, bool>>& inputAudioTracks,
+	vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
+	vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
@@ -12665,26 +12663,23 @@ void FFMpeg::liveProxyOutput(
 			// it will generate an error
 			{
 				bool aacCodec = false;
-				for(tuple<int, string, string, string, int, bool> inputAudioTrack: inputAudioTracks)
+				for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
 				{
-					// int audioProgramId;
-					// string audioStreamId;
-					// string audioStreamDescription;
-					string audioCodec;
-					// int audioSamplingRate;
-					// bool audioStereo;
+					// trackIndex, audioDurationInMilliSeconds, audioCodecName,
+					// audioSampleRate, audioChannels, audioBitRate, language));
+					string audioCodecName;
 
-					tie(ignore, ignore, ignore, audioCodec, ignore, ignore) = inputAudioTrack;
+					tie(ignore, ignore, audioCodecName, ignore, ignore, ignore, ignore) = inputAudioTrack;
 
-					string audioCodecLowerCase;
-					audioCodecLowerCase.resize(audioCodec.size());
-					transform(audioCodec.begin(), audioCodec.end(), audioCodecLowerCase.begin(),
+					string audioCodecNameLowerCase;
+					audioCodecNameLowerCase.resize(audioCodecName.size());
+					transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
-					if (audioCodecLowerCase.find("aac") != string::npos)
+					if (audioCodecNameLowerCase.find("aac") != string::npos)
 						aacCodec = true;
 
 					_logger->info(__FILEREF__ + "aac check"
-						+ ", audioCodec: " + audioCodec
+						+ ", audioCodecName: " + audioCodecName
 						+ ", aacCodec: " + to_string(aacCodec)
 					);
 				}
