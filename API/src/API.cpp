@@ -2069,7 +2069,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     else if (method == "facebookConfList")
     {
         facebookConfList(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, workspace);
+			request, workspace, queryParameters);
     }
     else if (method == "addStream")
     {

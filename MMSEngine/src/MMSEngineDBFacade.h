@@ -2115,7 +2115,7 @@ public:
         int64_t confKey);
 
     Json::Value getFacebookConfList (
-        int64_t workspaceKey);
+        int64_t workspaceKey, int64_t confKey, string label);
 
     string getFacebookUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);

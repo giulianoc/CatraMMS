@@ -901,8 +901,9 @@ void API::removeFacebookConf(
 
 void API::facebookConfList(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace)
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
 {
     string api = "facebookConfList";
 
@@ -911,14 +912,41 @@ void API::facebookConfList(
 
     try
     {
+        int64_t confKey = -1;
+        auto confKeyIt = queryParameters.find("confKey");
+        if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
         {
-            
-            Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
-                    workspace->_workspaceKey);
+            confKey = stoll(confKeyIt->second);
+            if (confKey == 0)
+                confKey = -1;
+        }
 
-            string responseBody = JSONUtils::toString(facebookConfListRoot);
-            
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+		string label;
+		if (confKey == -1)
+		{
+			auto labelIt = queryParameters.find("label");
+			if (labelIt != queryParameters.end() && labelIt->second != "")
+			{
+				label = labelIt->second;
+
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				//	That  because if we have really a + char (%2B into the string), and we do the replace
+				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				string plus = "\\+";
+				string plusDecoded = " ";
+				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+				label = curlpp::unescape(firstDecoding);
+			}
+		}
+
+        {
+			Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
+				workspace->_workspaceKey, confKey, label);
+
+			string responseBody = JSONUtils::toString(facebookConfListRoot);
+
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
         }
     }

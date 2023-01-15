@@ -1193,13 +1193,13 @@ void MMSEngineDBFacade::removeFacebookConf(
 }
 
 Json::Value MMSEngineDBFacade::getFacebookConfList (
-        int64_t workspaceKey
+	int64_t workspaceKey, int64_t confKey, string label
 )
 {
-    string      lastSQLCommand;
-    Json::Value facebookConfListRoot;
-    
-    shared_ptr<MySQLConnection> conn = nullptr;
+	string      lastSQLCommand;
+	Json::Value facebookConfListRoot;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
 
@@ -1209,6 +1209,8 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
         
         _logger->info(__FILEREF__ + "getFacebookConfList"
             + ", workspaceKey: " + to_string(workspaceKey)
+            + ", confKey: " + to_string(confKey)
+            + ", label: " + label
         );
         
         conn = connectionPool->borrow();	
@@ -1219,16 +1221,30 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
         {
             Json::Value requestParametersRoot;
             
-            {
-                field = "workspaceKey";
-                requestParametersRoot[field] = workspaceKey;
-            }
-            
+			{
+				field = "workspaceKey";
+				requestParametersRoot[field] = workspaceKey;
+			}
+
+			{
+				field = "confKey";
+				requestParametersRoot[field] = confKey;
+			}
+
+			{
+				field = "label";
+				requestParametersRoot[field] = label;
+			}
+
             field = "requestParameters";
             facebookConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = string ("where workspaceKey = ? ");
+		string sqlWhere = string ("where workspaceKey = ? ");
+		if (confKey != -1)
+			sqlWhere += "and confKey = ? ";
+		else if (label != "")
+			sqlWhere += "and label = ? ";
         
         Json::Value responseRoot;
         {
@@ -1239,11 +1255,17 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1272,11 +1294,17 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"

@@ -550,7 +550,7 @@ private:
     void facebookConfList(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
-        shared_ptr<Workspace> workspace);
+        shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters);
 
     void addStream(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
