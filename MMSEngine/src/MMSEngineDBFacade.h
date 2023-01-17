@@ -2119,7 +2119,28 @@ public:
 
     string getFacebookUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
-    
+
+    int64_t addTwitchConf(
+        int64_t workspaceKey,
+        string label,
+        string userAccessToken);
+
+    void modifyTwitchConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string userAccessToken);
+
+    void removeTwitchConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getTwitchConfList (
+        int64_t workspaceKey, int64_t confKey, string label);
+
+    string getTwitchUserAccessTokenByConfigurationLabel(
+        int64_t workspaceKey, string twitchConfigurationLabel);
+
     Json::Value addStream(
         int64_t workspaceKey,
         string label,

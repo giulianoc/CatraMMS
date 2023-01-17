@@ -195,6 +195,19 @@
 		}
 
 		if ($request_method = POST) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?$ /api?version=$1&method=addTwitchConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=modifyTwitchConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=removeTwitchConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?([0-9]*)/?$ /api?version=$1&method=twitchConfList&confKey=$2 last;
+		}
+
+		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?$ /api?version=$1&method=addStream last;
 		}
 		if ($request_method = PUT) {

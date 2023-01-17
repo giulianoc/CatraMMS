@@ -2071,6 +2071,62 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         facebookConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "addTwitchConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyTwitchConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifyTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeTwitchConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
+    else if (method == "twitchConfList")
+    {
+        twitchConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addStream")
     {
         if (!admin && !editConfiguration)

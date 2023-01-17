@@ -552,6 +552,31 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters);
 
+    void addTwitchConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyTwitchConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeTwitchConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void twitchConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters);
+
     void addStream(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

@@ -2393,35 +2393,64 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
         
-        try
-        {
-            lastSQLCommand = 
-                "create table if not exists MMS_Conf_Facebook ("
-                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "workspaceKey               BIGINT UNSIGNED NOT NULL,"
-                    "label                      VARCHAR (128) NOT NULL,"
+		try
+		{
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_Facebook ("
+					"confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey               BIGINT UNSIGNED NOT NULL,"
+					"label                      VARCHAR (128) NOT NULL,"
 					"modificationDate			DATETIME NOT NULL,"
-                    "userAccessToken			VARCHAR (256) NOT NULL,"
-                    "constraint MMS_Conf_Facebook_PK PRIMARY KEY (confKey), "
-                    "constraint MMS_Conf_Facebook_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label)) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
+					"userAccessToken			VARCHAR (256) NOT NULL,"
+					"constraint MMS_Conf_Facebook_PK PRIMARY KEY (confKey), "
+					"constraint MMS_Conf_Facebook_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade, "
+					"UNIQUE (workspaceKey, label)) "
+					"ENGINE=InnoDB";
+			statement->execute(lastSQLCommand);
+		}
+		catch(sql::SQLException se)
+		{
+			if (isRealDBError(se.what()))
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+				);
 
-                throw se;
-            }
-        }
-        
+				throw se;
+			}
+		}
+
+		try
+		{
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_Twitch ("
+					"confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey               BIGINT UNSIGNED NOT NULL,"
+					"label                      VARCHAR (128) NOT NULL,"
+					"modificationDate			DATETIME NOT NULL,"
+					"userAccessToken			VARCHAR (256) NOT NULL,"
+					"constraint MMS_Conf_Twitch_PK PRIMARY KEY (confKey), "
+					"constraint MMS_Conf_Twitch_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade, "
+					"UNIQUE (workspaceKey, label)) "
+					"ENGINE=InnoDB";
+			statement->execute(lastSQLCommand);
+		}
+		catch(sql::SQLException se)
+		{
+			if (isRealDBError(se.what()))
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+				);
+
+				throw se;
+			}
+		}
+
         try
         {
             string channelDataDefinition;
