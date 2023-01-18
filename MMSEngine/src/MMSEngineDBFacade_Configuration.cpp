@@ -1530,7 +1530,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(
 int64_t MMSEngineDBFacade::addTwitchConf(
     int64_t workspaceKey,
     string label,
-    string userAccessToken)
+    string refreshToken)
 {
     string      lastSQLCommand;
     int64_t     confKey;
@@ -1548,14 +1548,14 @@ int64_t MMSEngineDBFacade::addTwitchConf(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_Twitch(workspaceKey, label, modificationDate, userAccessToken) "
+                "insert into MMS_Conf_Twitch(workspaceKey, label, modificationDate, refreshToken) "
 				"values (?, ?, NOW(), ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, userAccessToken);
+            preparedStatement->setString(queryParameterIndex++, refreshToken);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -1563,7 +1563,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", userAccessToken: " + userAccessToken
+				+ ", refreshToken: " + refreshToken
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1643,7 +1643,7 @@ void MMSEngineDBFacade::modifyTwitchConf(
     int64_t confKey,
     int64_t workspaceKey,
     string label,
-    string userAccessToken)
+    string refreshToken)
 {
     string      lastSQLCommand;
     
@@ -1660,13 +1660,13 @@ void MMSEngineDBFacade::modifyTwitchConf(
         
         {
             lastSQLCommand = 
-                "update MMS_Conf_Twitch set label = ?, userAccessToken = ?, modificationDate = NOW() "
+                "update MMS_Conf_Twitch set label = ?, refreshToken = ?, modificationDate = NOW() "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, userAccessToken);
+            preparedStatement->setString(queryParameterIndex++, refreshToken);
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -1675,7 +1675,7 @@ void MMSEngineDBFacade::modifyTwitchConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label: " + label
-				+ ", userAccessToken: " + userAccessToken
+				+ ", refreshToken: " + refreshToken
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -1971,7 +1971,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
         Json::Value twitchRoot(Json::arrayValue);
         {                    
             lastSQLCommand =
-                string ("select confKey, label, userAccessToken, ")
+                string ("select confKey, label, refreshToken, ")
 				+ "DATE_FORMAT(convert_tz(modificationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as modificationDate "
                 + "from MMS_Conf_Twitch "
                 + sqlWhere;
@@ -2007,8 +2007,8 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 				field = "modificationDate";
 				twitchConfRoot[field] = static_cast<string>(resultSet->getString("modificationDate"));
 
-                field = "userAccessToken";
-                twitchConfRoot[field] = static_cast<string>(resultSet->getString("userAccessToken"));
+                field = "refreshToken";
+                twitchConfRoot[field] = static_cast<string>(resultSet->getString("refreshToken"));
 
                 twitchRoot.append(twitchConfRoot);
             }
@@ -2093,7 +2093,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
 )
 {
     string      lastSQLCommand;
-    string      twitchUserAccessToken;
+    string      twitchRefreshToken;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2113,7 +2113,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
         
         {
             lastSQLCommand = 
-                string("select userAccessToken from MMS_Conf_Twitch where workspaceKey = ? and label = ?");
+                string("select refreshToken from MMS_Conf_Twitch where workspaceKey = ? and label = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2141,7 +2141,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
                 throw runtime_error(errorMessage);
             }
 
-            twitchUserAccessToken = resultSet->getString("userAccessToken");
+            twitchRefreshToken = resultSet->getString("refreshToken");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -2209,7 +2209,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
         throw e;
     } 
     
-    return twitchUserAccessToken;
+    return twitchRefreshToken;
 }
 
 Json::Value MMSEngineDBFacade::addStream(

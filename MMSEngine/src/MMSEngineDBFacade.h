@@ -2123,13 +2123,13 @@ public:
     int64_t addTwitchConf(
         int64_t workspaceKey,
         string label,
-        string userAccessToken);
+        string refreshToken);
 
     void modifyTwitchConf(
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string userAccessToken);
+        string refreshToken);
 
     void removeTwitchConf(
         int64_t workspaceKey,
