@@ -2430,7 +2430,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"workspaceKey               BIGINT UNSIGNED NOT NULL,"
 					"label                      VARCHAR (128) NOT NULL,"
 					"modificationDate			DATETIME NOT NULL,"
-					"userAccessToken			VARCHAR (256) NOT NULL,"
+					"refreshToken				VARCHAR (256) NOT NULL,"
 					"constraint MMS_Conf_Twitch_PK PRIMARY KEY (confKey), "
 					"constraint MMS_Conf_Twitch_FK foreign key (workspaceKey) "
 						"references MMS_Workspace (workspaceKey) on delete cascade, "
