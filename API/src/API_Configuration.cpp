@@ -997,7 +997,7 @@ void API::addTwitchConf(
     try
     {
         string label;
-        string userAccessToken;
+        string refreshToken;
         
         try
         {
@@ -1014,7 +1014,7 @@ void API::addTwitchConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "UserAccessToken";
+            field = "RefreshToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1023,7 +1023,7 @@ void API::addTwitchConf(
 
                 throw runtime_error(errorMessage);
             }    
-            userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -1049,7 +1049,7 @@ void API::addTwitchConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addTwitchConf(
-                workspace->_workspaceKey, label, userAccessToken);
+                workspace->_workspaceKey, label, refreshToken);
 
             sResponse = (
                     string("{ ") 
@@ -1126,7 +1126,7 @@ void API::modifyTwitchConf(
     try
     {
         string label;
-        string userAccessToken;
+        string refreshToken;
         
         try
         {
@@ -1143,7 +1143,7 @@ void API::modifyTwitchConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "UserAccessToken";
+            field = "RefreshToken";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1152,7 +1152,7 @@ void API::modifyTwitchConf(
 
                 throw runtime_error(errorMessage);
             }    
-            userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -1191,7 +1191,7 @@ void API::modifyTwitchConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyTwitchConf(
-                confKey, workspace->_workspaceKey, label, userAccessToken);
+                confKey, workspace->_workspaceKey, label, refreshToken);
 
             sResponse = (
                     string("{ ") 
