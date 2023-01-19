@@ -2215,7 +2215,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
 int64_t MMSEngineDBFacade::addTiktokConf(
     int64_t workspaceKey,
     string label,
-    string accessToken)
+    string token)
 {
     string      lastSQLCommand;
     int64_t     confKey;
@@ -2233,14 +2233,14 @@ int64_t MMSEngineDBFacade::addTiktokConf(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_Tiktok(workspaceKey, label, modificationDate, accessToken) "
+                "insert into MMS_Conf_Tiktok(workspaceKey, label, modificationDate, token) "
 				"values (?, ?, NOW(), ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, accessToken);
+            preparedStatement->setString(queryParameterIndex++, token);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -2248,7 +2248,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", accessToken: " + accessToken
+				+ ", token: " + token
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2328,7 +2328,7 @@ void MMSEngineDBFacade::modifyTiktokConf(
     int64_t confKey,
     int64_t workspaceKey,
     string label,
-    string accessToken)
+    string token)
 {
     string      lastSQLCommand;
     
@@ -2345,13 +2345,13 @@ void MMSEngineDBFacade::modifyTiktokConf(
         
         {
             lastSQLCommand = 
-                "update MMS_Conf_Tiktok set label = ?, accessToken = ?, modificationDate = NOW() "
+                "update MMS_Conf_Tiktok set label = ?, token = ?, modificationDate = NOW() "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, accessToken);
+            preparedStatement->setString(queryParameterIndex++, token);
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -2360,7 +2360,7 @@ void MMSEngineDBFacade::modifyTiktokConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label: " + label
-				+ ", accessToken: " + accessToken
+				+ ", token: " + token
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -2656,7 +2656,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
         Json::Value tiktokRoot(Json::arrayValue);
         {                    
             lastSQLCommand =
-                string ("select confKey, label, accessToken, ")
+                string ("select confKey, label, token, ")
 				+ "DATE_FORMAT(convert_tz(modificationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as modificationDate "
                 + "from MMS_Conf_Tiktok "
                 + sqlWhere;
@@ -2692,8 +2692,8 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 				field = "modificationDate";
 				tiktokConfRoot[field] = static_cast<string>(resultSet->getString("modificationDate"));
 
-                field = "accessToken";
-                tiktokConfRoot[field] = static_cast<string>(resultSet->getString("accessToken"));
+                field = "token";
+                tiktokConfRoot[field] = static_cast<string>(resultSet->getString("token"));
 
                 tiktokRoot.append(tiktokConfRoot);
             }
@@ -2773,12 +2773,12 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
     return tiktokConfListRoot;
 }
 
-string MMSEngineDBFacade::getTiktokAccessTokenByConfigurationLabel(
+string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(
     int64_t workspaceKey, string tiktokConfigurationLabel
 )
 {
     string      lastSQLCommand;
-    string      tiktokAccessToken;
+    string      tiktokToken;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2786,7 +2786,7 @@ string MMSEngineDBFacade::getTiktokAccessTokenByConfigurationLabel(
 
     try
     {        
-        _logger->info(__FILEREF__ + "getTiktokAccessTokenByConfigurationLabel"
+        _logger->info(__FILEREF__ + "getTiktokTokenByConfigurationLabel"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", tiktokConfigurationLabel: " + tiktokConfigurationLabel
         );
@@ -2798,7 +2798,7 @@ string MMSEngineDBFacade::getTiktokAccessTokenByConfigurationLabel(
         
         {
             lastSQLCommand = 
-                string("select accessToken from MMS_Conf_Tiktok where workspaceKey = ? and label = ?");
+                string("select token from MMS_Conf_Tiktok where workspaceKey = ? and label = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2826,7 +2826,7 @@ string MMSEngineDBFacade::getTiktokAccessTokenByConfigurationLabel(
                 throw runtime_error(errorMessage);
             }
 
-            tiktokAccessToken = resultSet->getString("accessToken");
+            tiktokToken = resultSet->getString("token");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -2894,7 +2894,7 @@ string MMSEngineDBFacade::getTiktokAccessTokenByConfigurationLabel(
         throw e;
     } 
     
-    return tiktokAccessToken;
+    return tiktokToken;
 }
 
 Json::Value MMSEngineDBFacade::addStream(

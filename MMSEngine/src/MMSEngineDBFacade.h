@@ -2144,13 +2144,13 @@ public:
     int64_t addTiktokConf(
         int64_t workspaceKey,
         string label,
-        string accessToken);
+        string token);
 
     void modifyTiktokConf(
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string accessToken);
+        string token);
 
     void removeTiktokConf(
         int64_t workspaceKey,
@@ -2159,8 +2159,8 @@ public:
     Json::Value getTiktokConfList (
         int64_t workspaceKey, int64_t confKey, string label);
 
-    string getTiktokAccessTokenByConfigurationLabel(
-        int64_t workspaceKey, string twitchConfigurationLabel);
+    string getTiktokTokenByConfigurationLabel(
+        int64_t workspaceKey, string tiktokConfigurationLabel);
 
     Json::Value addStream(
         int64_t workspaceKey,

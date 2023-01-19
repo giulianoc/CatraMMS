@@ -1438,7 +1438,7 @@ void API::addTiktokConf(
     try
     {
         string label;
-        string accessToken;
+        string token;
         
         try
         {
@@ -1455,7 +1455,7 @@ void API::addTiktokConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "AccessToken";
+            field = "Token";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1464,7 +1464,7 @@ void API::addTiktokConf(
 
                 throw runtime_error(errorMessage);
             }    
-            accessToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            token = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -1490,7 +1490,7 @@ void API::addTiktokConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addTiktokConf(
-                workspace->_workspaceKey, label, accessToken);
+                workspace->_workspaceKey, label, token);
 
             sResponse = (
                     string("{ ") 
@@ -1567,7 +1567,7 @@ void API::modifyTiktokConf(
     try
     {
         string label;
-        string accessToken;
+        string token;
         
         try
         {
@@ -1584,7 +1584,7 @@ void API::modifyTiktokConf(
             }    
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
-            field = "AccessToken";
+            field = "Token";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1593,7 +1593,7 @@ void API::modifyTiktokConf(
 
                 throw runtime_error(errorMessage);
             }    
-            accessToken = JSONUtils::asString(requestBodyRoot, field, "");            
+            token = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -1632,7 +1632,7 @@ void API::modifyTiktokConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyTiktokConf(
-                confKey, workspace->_workspaceKey, label, accessToken);
+                confKey, workspace->_workspaceKey, label, token);
 
             sResponse = (
                     string("{ ") 

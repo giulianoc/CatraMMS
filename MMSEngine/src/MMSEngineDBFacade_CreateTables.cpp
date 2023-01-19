@@ -2459,7 +2459,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"workspaceKey               BIGINT UNSIGNED NOT NULL,"
 					"label                      VARCHAR (128) NOT NULL,"
 					"modificationDate			DATETIME NOT NULL,"
-					"accessToken				VARCHAR (256) NOT NULL,"
+					"token						VARCHAR (256) NOT NULL,"
 					"constraint MMS_Conf_Tiktok_PK PRIMARY KEY (confKey), "
 					"constraint MMS_Conf_Tiktok_FK foreign key (workspaceKey) "
 						"references MMS_Workspace (workspaceKey) on delete cascade, "
