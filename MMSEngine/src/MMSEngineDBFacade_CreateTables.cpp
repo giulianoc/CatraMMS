@@ -2451,6 +2451,35 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			}
 		}
 
+		try
+		{
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_Tiktok ("
+					"confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey               BIGINT UNSIGNED NOT NULL,"
+					"label                      VARCHAR (128) NOT NULL,"
+					"modificationDate			DATETIME NOT NULL,"
+					"accessToken				VARCHAR (256) NOT NULL,"
+					"constraint MMS_Conf_Tiktok_PK PRIMARY KEY (confKey), "
+					"constraint MMS_Conf_Tiktok_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade, "
+					"UNIQUE (workspaceKey, label)) "
+					"ENGINE=InnoDB";
+			statement->execute(lastSQLCommand);
+		}
+		catch(sql::SQLException se)
+		{
+			if (isRealDBError(se.what()))
+			{
+				_logger->error(__FILEREF__ + "SQL exception"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", se.what(): " + se.what()
+				);
+
+				throw se;
+			}
+		}
+
         try
         {
             string channelDataDefinition;

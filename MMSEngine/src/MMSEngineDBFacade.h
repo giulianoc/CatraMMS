@@ -2141,6 +2141,27 @@ public:
     string getTwitchUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string twitchConfigurationLabel);
 
+    int64_t addTiktokConf(
+        int64_t workspaceKey,
+        string label,
+        string accessToken);
+
+    void modifyTiktokConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string accessToken);
+
+    void removeTiktokConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getTiktokConfList (
+        int64_t workspaceKey, int64_t confKey, string label);
+
+    string getTiktokAccessTokenByConfigurationLabel(
+        int64_t workspaceKey, string twitchConfigurationLabel);
+
     Json::Value addStream(
         int64_t workspaceKey,
         string label,
