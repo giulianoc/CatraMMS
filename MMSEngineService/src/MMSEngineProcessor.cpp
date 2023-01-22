@@ -6023,7 +6023,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		return;	// return because it is a thread
     }
 
-	string binaryPathName;
+	fs::path binaryPathName;
 	string externalStorageRelativePathName;
     try
     {
@@ -6049,7 +6049,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				// 2. here, handleLocalAssetIngestionEventThread (when the IngestionRepository file name
 				//		is built "consistent" with the above step no. 1)
 				// 3. handleLocalAssetIngestionEventThread (when the MMS file name is generated)
-				binaryPathName += ".mp4";
+				binaryPathName /= ".mp4";
 			}
 		}
 		else
@@ -6073,9 +6073,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				throw runtime_error(errorMessage);
 			}
 			externalStorageRelativePathName = mediaSourceURL.substr(externalStoragePrefix.length());
-			binaryPathName = _mmsStorage->getMMSRootRepository()
-				+"ExternalStorage_" + localAssetIngestionEvent.getWorkspace()->_directoryName
-				+ externalStorageRelativePathName;
+			binaryPathName = _mmsStorage->getMMSRootRepository() /
+				("ExternalStorage_" + localAssetIngestionEvent.getWorkspace()->_directoryName);
+			binaryPathName /= externalStorageRelativePathName;
 		}
     }
     catch(runtime_error e)
@@ -6172,7 +6172,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	_logger->info(__FILEREF__ + "binaryPathName"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-		+ ", binaryPathName: " + binaryPathName);
+		+ ", binaryPathName: " + binaryPathName.string()
+	);
 
     string      metadataFileContent;
     Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -6236,10 +6237,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6311,10 +6312,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6436,10 +6437,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6511,10 +6512,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6542,7 +6543,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         validateMediaSourceFile(
                 localAssetIngestionEvent.getIngestionJobKey(),
-                binaryPathName, mediaFileFormat,
+                binaryPathName.string(), mediaFileFormat,
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -6594,10 +6595,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6669,10 +6670,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-					+ ", binaryPathName: " + binaryPathName
+					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				FileIO::remove(binaryPathName);
+				fs::remove(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6700,7 +6701,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	string mmsAssetPathName;
 	string relativePathToBeUsed;
 	long mmsPartitionUsed;
-	FileIO::DirectoryEntryType_t sourceFileType;
+	// FileIO::DirectoryEntryType_t sourceFileType;
 	try
 	{
 		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
@@ -6734,21 +6735,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				mediaSourceFileName,
 				relativePathToBeUsed,
 				&mmsPartitionIndexUsed,
-				&sourceFileType,
+				// &sourceFileType,
 				deliveryRepositoriesToo,
 				localAssetIngestionEvent.getWorkspace()->_territories
             );
 			mmsPartitionUsed = mmsPartitionIndexUsed;
 
 			// if (mediaFileFormat == "m3u8")
-			if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+			if (fs::is_directory(binaryPathName))
 			{
 				relativePathToBeUsed += (mediaSourceFileName + "/");
 			}
 		}
 		else
 		{
-			mmsAssetPathName = binaryPathName;
+			mmsAssetPathName = binaryPathName.string();
 			mmsPartitionUsed = -1;
 
 			size_t fileNameIndex = externalStorageRelativePathName.find_last_of("/");
@@ -6809,27 +6810,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", binaryPathName: " + binaryPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName.string()
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(binaryPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", binaryPathName: " + binaryPathName
-					);
-
-					FileIO::remove(binaryPathName);
-				}
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6893,27 +6880,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", binaryPathName: " + binaryPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName.string()
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(binaryPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", binaryPathName: " + binaryPathName
-					);
-
-					FileIO::remove(binaryPathName);
-				}
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -7022,27 +6995,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove directory"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7107,27 +7066,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7256,27 +7201,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7340,27 +7271,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7451,27 +7368,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7537,27 +7440,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7623,27 +7512,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7709,27 +7584,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7794,27 +7655,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-					if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-					{
-						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
 
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-					}
-					else
-					{
-						_logger->info(__FILEREF__ + "Remove file"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-							+ ", mmsAssetPathName: " + mmsAssetPathName
-						);
-
-						FileIO::remove(mmsAssetPathName);
-					}
+					fs::remove_all(mmsAssetPathName);
 				}
 				catch(runtime_error e)
 				{
@@ -7883,27 +7730,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					FileIO::remove(mmsAssetPathName);
-				}
+				fs::remove_all(mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -8237,29 +8070,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(
+						localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					FileIO::remove(mmsAssetPathName);
-				}
+				fs::remove_all(mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -8334,29 +8152,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(
+						localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					FileIO::remove(mmsAssetPathName);
-				}
+				fs::remove_all(mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -8429,29 +8232,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(
+						localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					FileIO::remove(mmsAssetPathName);
-				}
+				fs::remove_all(mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -8523,29 +8311,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			try
 			{
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(
+						localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
 
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Remove file"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(
-							localAssetIngestionEvent.getIngestionJobKey())
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					FileIO::remove(mmsAssetPathName);
-				}
+				fs::remove_all(mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -11289,7 +11062,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					string mmsChangeFileFormatAssetPathName;
 					unsigned long mmsPartitionIndexUsed;
-					FileIO::DirectoryEntryType_t sourceFileType;
+					// FileIO::DirectoryEntryType_t sourceFileType;
 					try
 					{
 						bool deliveryRepositoriesToo = true;
@@ -11302,7 +11075,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							relativePath,
 
 							&mmsPartitionIndexUsed, // OUT
-							&sourceFileType,
+							// &sourceFileType,
 
 							deliveryRepositoriesToo,
 							workspace->_territories
@@ -11482,34 +11255,18 @@ void MMSEngineProcessor::changeFileFormatThread(
 							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 						);
 
-						if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+						if (fs::exists(mmsChangeFileFormatAssetPathName))
 						{
-							if (FileIO::directoryExisting(mmsChangeFileFormatAssetPathName))
-							{
-								_logger->info(__FILEREF__ + "Remove directory"
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
-								);
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
+							);
 
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(mmsChangeFileFormatAssetPathName, bRemoveRecursively);
-							}
+							fs::remove_all(mmsChangeFileFormatAssetPathName);
 						}
-						else
-						{
-							if (FileIO::fileExisting(mmsChangeFileFormatAssetPathName))
-							{
-								_logger->info(__FILEREF__ + "Remove"
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
-								);
 
-								FileIO::remove(mmsChangeFileFormatAssetPathName);
-							}
-
-							throw e;
-						}
+						throw e;
 					}
 				}
 			}
@@ -19002,7 +18759,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 			+  targetFileFormat;
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -19020,15 +18777,14 @@ void MMSEngineProcessor::manageSlideShowTask(
 				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 				removeLinuxPathIfExist);
 
-			encodedNFSStagingAssetPathName =
-				_mmsStorage->getWorkspaceIngestionRepository(workspace)
-				+ "/" + encodedFileName;
+			encodedNFSStagingAssetPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace)
+				/ encodedFileName;
 		}
 
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
 			encodingProfileKey, encodingProfileDetailsRoot, targetFileFormat,
 			imagesRoot, audiosRoot, shortestAudioDurationInSeconds,
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
@@ -20261,7 +20017,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			}
 
 			string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-			string encodedNFSStagingAssetPathName;
+			fs::path encodedNFSStagingAssetPathName;
 			{
 				bool removeLinuxPathIfExist = false;
 				bool neededForTranscoder = true;
@@ -20280,8 +20036,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					removeLinuxPathIfExist);
 
 				encodedNFSStagingAssetPathName =
-					_mmsStorage->getWorkspaceIngestionRepository(workspace)
-					+ "/" + encodedFileName;
+					_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 			}
 
 			_mmsEngineDBFacade->addEncoding_CutFrameAccurate(workspace, ingestionJobKey,
@@ -20290,7 +20045,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
 				endTimeInSeconds,
 				encodingProfileKey, encodingProfileDetailsRoot,
-				encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+				encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 				_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 				encodingPriority,
 				newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs);
@@ -20905,7 +20660,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			+  sourceFileExtension;     
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -20924,8 +20679,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 				removeLinuxPathIfExist);
 
 			encodedNFSStagingAssetPathName =
-				_mmsStorage->getWorkspaceIngestionRepository(workspace)
-				+ "/" + encodedFileName;
+				_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 		}
 
 // 2021-08-26: si dovrebbe cambiare l'implementazione:
@@ -20936,7 +20690,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			sourceAssetPathName, sourceDurationInMilliSeconds, sourceFileExtension,
 			sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
 			encodingProfileKey, encodingProfileDetailsRoot,
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
@@ -21146,7 +20900,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			+  mainSourceFileExtension;     
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -21165,8 +20919,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 				removeLinuxPathIfExist);
 
 			encodedNFSStagingAssetPathName =
-				_mmsStorage->getWorkspaceIngestionRepository(workspace)
-				+ "/" + encodedFileName;
+				_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 		}
 
 		_mmsEngineDBFacade->addEncoding_PictureInPictureJob (workspace, ingestionJobKey,
@@ -21178,7 +20931,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			overlaySourcePhysicalDeliveryURL, overlaySourceTranscoderStagingAssetPathName,
 			soundOfMain,
 			encodingProfileKey, encodingProfileDetailsRoot,
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
@@ -21345,7 +21098,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			+  mainSourceFileExtension;     
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -21364,8 +21117,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 				removeLinuxPathIfExist);
 
 			encodedNFSStagingAssetPathName =
-				_mmsStorage->getWorkspaceIngestionRepository(workspace)
-				+ "/" + encodedFileName;
+				_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 		}
 
 		_mmsEngineDBFacade->addEncoding_IntroOutroOverlayJob (workspace, ingestionJobKey,
@@ -21383,7 +21135,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			outroSourceFileExtension, outroSourceDurationInMilliSeconds,
 			outroSourcePhysicalDeliveryURL, outroSourceTranscoderStagingAssetPathName,
 
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName,
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 
 			encodingPriority);
@@ -21581,7 +21333,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			+  sourceVideoFileExtension;
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -21599,8 +21351,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 				removeLinuxPathIfExist);
 
-			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-			encodedNFSStagingAssetPathName = workspaceIngestionRepository + "/" + encodedFileName;
+			fs::path workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+			encodedNFSStagingAssetPathName = workspaceIngestionRepository / encodedFileName;
 		}
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
@@ -21611,7 +21363,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			mmsSourceImageAssetPathName, sourceImagePhysicalDeliveryURL,
 			sourceVideoTranscoderStagingAssetPathName,
 			encodedTranscoderStagingAssetPathName,
-			encodedNFSStagingAssetPathName,
+			encodedNFSStagingAssetPathName.string(),
 			encodingPriority,
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
@@ -21728,7 +21480,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			+  sourceFileExtension;     
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
-		string encodedNFSStagingAssetPathName;
+		fs::path encodedNFSStagingAssetPathName;
 		{
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = true;
@@ -21747,8 +21499,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 				removeLinuxPathIfExist);
 
 			encodedNFSStagingAssetPathName =
-				_mmsStorage->getWorkspaceIngestionRepository(workspace)
-				+ "/" + encodedFileName;
+				_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 		}
 
 		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
@@ -21764,7 +21515,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			sourceFileExtension,
 
 			sourceTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName,	
-			encodedNFSStagingAssetPathName,
+			encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
     catch(runtime_error e)

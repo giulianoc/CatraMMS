@@ -1958,7 +1958,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			string encodedFileName;
 			string mmsAssetPathName;
 			unsigned long mmsPartitionIndexUsed;
-			FileIO::DirectoryEntryType_t sourceFileType;
+			// FileIO::DirectoryEntryType_t sourceFileType;
 			try
 			{
 				size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -1983,7 +1983,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					sourceRelativePath,
 	
 					&mmsPartitionIndexUsed, // OUT
-					&sourceFileType,
+					// &sourceFileType,
 
 					deliveryRepositoriesToo,
 					_encodingItem->_workspace->_territories
@@ -2169,6 +2169,11 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 				);
 
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				fs::remove_all(mmsAssetPathName);
+				/*
 				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
 				{
 					_logger->info(__FILEREF__ + "Remove directory"
@@ -2188,6 +2193,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					);
 					FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
 				}
+				*/
 
 				throw e;
 			}
@@ -2686,7 +2692,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
-	FileIO::DirectoryEntryType_t sourceFileType;
+	// FileIO::DirectoryEntryType_t sourceFileType;
     try
     {
         size_t fileNameIndex = encodedNFSStagingAssetPathName.find_last_of("/");
@@ -2714,7 +2720,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             sourceRelativePath,
 
             &mmsPartitionIndexUsed, // OUT
-			&sourceFileType,
+			// &sourceFileType,
 
             deliveryRepositoriesToo,
             _encodingItem->_workspace->_territories
@@ -2839,7 +2845,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     {
         unsigned long long mmsAssetSizeInBytes;
         {
-            if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            if (fs::is_directory(mmsAssetPathName))
             {
                 mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
             }
@@ -2924,6 +2930,12 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 			+ ", e.what(): " + e.what()
         );
 
+		_logger->info(__FILEREF__ + "remove"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", mmsAssetPathName: " + mmsAssetPathName
+		);
+		fs::remove_all(mmsAssetPathName);
+		/*
 		// file in case of .3gp content OR directory in case of IPhone content
 		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
 		{
@@ -2948,6 +2960,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 				FileIO::remove(mmsAssetPathName);
 			}
 		}
+		*/
 
         throw e;
     }
@@ -2961,28 +2974,13 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
         );
 
 		// file in case of .3gp content OR directory in case of IPhone content
-		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+		if (fs::exists(mmsAssetPathName))
 		{
-			if (FileIO::directoryExisting(mmsAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "removeDirectory"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-			}
-		}
-		else if (sourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-		{
-			if (FileIO::fileExisting(mmsAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "remove"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
-			}
+			_logger->info(__FILEREF__ + "remove"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			fs::remove_all(mmsAssetPathName);
 		}
 
         throw e;

@@ -882,10 +882,10 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 	return newCurrentFreeSizeInBytes;
 }
 
-string MMSEngineDBFacade::getPartitionPathName(int partitionKey)
+fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 {
 	string		lastSQLCommand;
-	string		partitionPathName;
+	fs::path	partitionPathName;
 
 
 	shared_ptr<MySQLConnection> conn = nullptr;

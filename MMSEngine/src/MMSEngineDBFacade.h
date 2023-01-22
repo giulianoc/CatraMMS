@@ -17,11 +17,13 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <filesystem>
 #include "spdlog/spdlog.h"
 #include "Workspace.h"
 #include "json/json.h"
 #include "catralibraries/MySQLConnection.h"
 
+namespace fs = std::filesystem;
 
 
 #ifndef __FILEREF__
@@ -2537,7 +2539,7 @@ public:
 	pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(
 		int64_t ullFSEntrySizeInBytes);
 
-	string getPartitionPathName(int partitionKey);
+	fs::path getPartitionPathName(int partitionKey);
 
 	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, int64_t ullFSEntrySizeInBytes);
 

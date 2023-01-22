@@ -31,10 +31,8 @@ MMSStorage::MMSStorage(
 
 		_storage = JSONUtils::asString(configuration["storage"], "path", "");
 		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", storage->path: " + _storage
+			+ ", storage->path: " + _storage.string()
 		);
-		if (_storage.size() > 0 && _storage.back() != '/')
-			_storage.push_back('/');
 
 		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
 		_logger->info(__FILEREF__ + "Configuration item"
@@ -85,136 +83,107 @@ void MMSStorage::createDirectories(
 		}
 		*/
 
-		string storage = JSONUtils::asString(configuration["storage"], "path", "");
+		fs::path storage = JSONUtils::asString(configuration["storage"], "path", "");
 		logger->info(__FILEREF__ + "Configuration item"
-			+ ", storage->path: " + storage
+			+ ", storage->path: " + storage.string()
 		);
-		if (storage.size() > 0 && storage.back() != '/')
-			storage.push_back('/');
-
-		// string ingestionRootRepository = MMSStorage::getIngestionRootRepository(storage);
-		// string mmsRootRepository = MMSStorage::getMMSRootRepository(storage);
-		// _downloadRootRepository = _storage + "DownloadRepository/";
-		// _streamingRootRepository = _storage + "StreamingRepository/";
-
-		// string stagingRootRepository = storage + "MMSWorkingAreaRepository/Staging/";
-		// string transcoderStagingRootRepository = storage + "MMSTranscoderWorkingAreaRepository/Staging/";
-		// _deliveryFreeRootRepository = _storage + "MMSRepository-free/";
-
-		// string liveRootRepository = storage + "MMSRepository/" + MMSStorage::getDirectoryForLiveContents() + "/";
-
-		// string ffmpegArea = storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
-    
-		// string nginxArea = storage + "MMSWorkingAreaRepository/nginx/";
-
-		// _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
-
-		bool noErrorIfExists = true;
-		bool recursive = true;
-		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", ingestionRootRepository: " + MMSStorage::getIngestionRootRepository(storage)
-		);
-		FileIO::createDirectory(MMSStorage::getIngestionRootRepository(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage)
+			+ ", ingestionRootRepository: " + MMSStorage::getIngestionRootRepository(storage).string()
 		);
-		FileIO::createDirectory(MMSStorage::getMMSRootRepository(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getIngestionRootRepository(storage));
+		fs::permissions(MMSStorage::getIngestionRootRepository(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
+
+		logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
+		);
+		fs::create_directories(MMSStorage::getMMSRootRepository(storage));
+		fs::permissions(MMSStorage::getMMSRootRepository(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		// create MMS_0000 in case it does not exist (first running of MMS)
 		{
-			string MMS_0000Path = MMSStorage::getMMSRootRepository(storage) + "MMS_0000";
+			fs::path MMS_0000Path = MMSStorage::getMMSRootRepository(storage) / "MMS_0000";
 
 
 			logger->info(__FILEREF__ + "Creating directory (if needed)"
-				+ ", MMS_0000 Path: " + MMS_0000Path
+				+ ", MMS_0000 Path: " + MMS_0000Path.string()
 			);
-			FileIO::createDirectory(MMS_0000Path,
-                S_IRUSR | S_IWUSR | S_IXUSR |
-                S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			fs::create_directories(MMS_0000Path);
+			fs::permissions(MMS_0000Path,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+				| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+				| fs::perms::others_exec,
+				fs::perm_options::replace);
 		}
 
-		/*
-		_logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", _downloadRootRepository: " + _downloadRootRepository
+		logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", stagingRootRepository: " + MMSStorage::getStagingRootRepository(storage).string()
 		);
-		FileIO::createDirectory(_downloadRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-
-		_logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", _streamingRootRepository: " + _streamingRootRepository
-		);
-		FileIO::createDirectory(_streamingRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-		*/
-
-		/*
-		_logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", _profilesRootRepository: " + _profilesRootRepository
-		);
-		FileIO::createDirectory(_profilesRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-		*/
+		fs::create_directories(MMSStorage::getStagingRootRepository(storage));
+		fs::permissions(MMSStorage::getStagingRootRepository(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", stagingRootRepository: " + MMSStorage::getStagingRootRepository(storage)
+			+ ", transcoderStagingRootRepository: " + MMSStorage::getTranscoderStagingRootRepository(storage).string()
 		);
-		FileIO::createDirectory(MMSStorage::getStagingRootRepository(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getTranscoderStagingRootRepository(storage));
+		fs::permissions(MMSStorage::getTranscoderStagingRootRepository(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", transcoderStagingRootRepository: " + MMSStorage::getTranscoderStagingRootRepository(storage)
+			+ ", liveRootRepository: " + MMSStorage::getLiveRootRepository(storage).string()
 		);
-		FileIO::createDirectory(MMSStorage::getTranscoderStagingRootRepository(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-
-		/*
-		_logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", _deliveryFreeRootRepository: " + _deliveryFreeRootRepository
-		);
-		FileIO::createDirectory(_deliveryFreeRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-		*/
-		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", liveRootRepository: " + MMSStorage::getLiveRootRepository(storage) 
-		);
-		FileIO::createDirectory(MMSStorage::getLiveRootRepository(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getLiveRootRepository(storage));
+		fs::permissions(MMSStorage::getLiveRootRepository(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", ffmpegArea: " + getFFMPEGArea(storage)
+			+ ", ffmpegArea: " + getFFMPEGArea(storage).string()
 		);
-		FileIO::createDirectory(getFFMPEGArea(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getFFMPEGArea(storage));
+		fs::permissions(MMSStorage::getFFMPEGArea(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", ffmpegEndlessRecursivePlaylistArea: "
-				+ getFFMPEGEndlessRecursivePlaylistArea(storage)
+				+ getFFMPEGEndlessRecursivePlaylistArea(storage).string()
 		);
-		FileIO::createDirectory(getFFMPEGEndlessRecursivePlaylistArea(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(storage));
+		fs::permissions(MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
 
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
-			+ ", nginxArea: " + getNginxArea(storage)
+			+ ", nginxArea: " + getNginxArea(storage).string()
 		);
-		FileIO::createDirectory(getNginxArea(storage),
-            S_IRUSR | S_IWUSR | S_IXUSR 
-            | S_IRGRP | S_IWGRP | S_IXGRP
-            | S_IROTH | S_IWOTH | S_IXOTH, 
-            noErrorIfExists, recursive);
+		fs::create_directories(MMSStorage::getNginxArea(storage));
+		fs::permissions(MMSStorage::getNginxArea(storage),
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
+			| fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec,
+			fs::perm_options::replace);
 	}
 	catch(runtime_error e)
 	{
@@ -230,29 +199,19 @@ void MMSStorage::createDirectories(
 	}
 }
 
-string MMSStorage::getMMSRootRepository(string storage) {
-    return storage + "MMSRepository/";
+fs::path MMSStorage::getMMSRootRepository(fs::path storage) {
+    return storage / "MMSRepository";
 }
 
-string MMSStorage::getMMSRootRepository() {
+fs::path MMSStorage::getMMSRootRepository() {
     return MMSStorage::getMMSRootRepository(_storage);
 }
 
-/*
-string MMSStorage::getStreamingRootRepository(void) {
-    return _streamingRootRepository;
+fs::path MMSStorage::getIngestionRootRepository(fs::path storage) {
+    return storage / "IngestionRepository" / "users";
 }
 
-string MMSStorage::getDownloadRootRepository(void) {
-    return _downloadRootRepository;
-}
-*/
-
-string MMSStorage::getIngestionRootRepository(string storage) {
-    return storage + "IngestionRepository/users/";
-}
-
-tuple<int64_t, string, int, string, string, int64_t, string>
+tuple<int64_t, fs::path, int, string, string, int64_t, string>
 	MMSStorage::getPhysicalPathDetails(
 		int64_t mediaItemKey, int64_t encodingProfileKey,
 		bool warningIfMissing, bool fromMaster)
@@ -284,7 +243,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
 			+ ", relativePath: " + relativePath
 			+ ", fileName: " + fileName
 		);
-		string physicalPath = getMMSAssetPathName(
+		fs::path physicalPath = getMMSAssetPathName(
 			externalReadOnlyStorage,
 			mmsPartitionNumber,
 			workspace->_directoryName,
@@ -333,7 +292,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     }
 }
 
-tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(
+tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(
 	int64_t physicalPathKey, bool fromMaster)
 {
     try
@@ -361,7 +320,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathD
 			+ ", relativePath: " + relativePath
 			+ ", fileName: " + fileName
 		);
-		string physicalPath = getMMSAssetPathName(
+		fs::path physicalPath = getMMSAssetPathName(
 			externalReadOnlyStorage,
 			mmsPartitionNumber,
 			workspace->_directoryName,
@@ -616,70 +575,48 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
     }
 }
 
-/*
-string MMSStorage::getDeliveryFreeAssetPathName(
-	string workspaceDirectoryName,
-	string liveProxyAssetName,
-	string assetExtension
-)
+fs::path MMSStorage::getLiveDeliveryAssetPathName(
+	string directoryId, string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
 {
+	tuple<fs::path, fs::path, string> liveDeliveryDetails = getLiveDeliveryDetails(
+		directoryId, liveFileExtension, requestWorkspace);
 
-	string deliveryFreeAssetPathName = _deliveryFreeRootRepository
-		+ workspaceDirectoryName + "/" + liveProxyAssetName + "/"
-		+ liveProxyAssetName + assetExtension;
-
-
-    return deliveryFreeAssetPathName;
-}
-*/
-
-string MMSStorage::getLiveDeliveryAssetPathName(
-		string directoryId,
-		string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
-{
-	tuple<string, string, string> liveDeliveryDetails = getLiveDeliveryDetails(
-			directoryId,
-			liveFileExtension, requestWorkspace);
-
-	string deliveryPath;
-	string deliveryPathName;
+	fs::path deliveryPath;
+	fs::path deliveryPathName;
 	string deliveryFileName;
 
 	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
 
-	string deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage)
-		+ deliveryPathName.substr(1);
+	fs::path deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage) / deliveryPathName;
 
 	return deliveryAssetPathName;
 }
 
-string MMSStorage::getLiveDeliveryAssetPath(
+fs::path MMSStorage::getLiveDeliveryAssetPath(
 	string directoryId, shared_ptr<Workspace> requestWorkspace)
 {
 	string liveFileExtension = "xxx";
 
-	tuple<string, string, string> liveDeliveryDetails = getLiveDeliveryDetails(
-		directoryId,
-		liveFileExtension, requestWorkspace);
+	tuple<fs::path, fs::path, string> liveDeliveryDetails = getLiveDeliveryDetails(
+		directoryId, liveFileExtension, requestWorkspace);
 
-	string deliveryPath;
-	string deliveryPathName;
+	fs::path deliveryPath;
+	fs::path deliveryPathName;
 	string deliveryFileName;
 
 	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
 
-	string deliveryAssetPath = MMSStorage::getMMSRootRepository(_storage)
-		+ deliveryPath.substr(1);
+	fs::path deliveryAssetPath = MMSStorage::getMMSRootRepository(_storage) / deliveryPath;
 
 	return deliveryAssetPath;
 }
 
-tuple<string, string, string> MMSStorage::getLiveDeliveryDetails(
+tuple<fs::path, fs::path, string> MMSStorage::getLiveDeliveryDetails(
 		string directoryId, string liveFileExtension,
 		shared_ptr<Workspace> requestWorkspace)
 {
-	string deliveryPath;
-	string deliveryPathName;
+	fs::path deliveryPath;
+	fs::path deliveryPathName;
 	string deliveryFileName;
 
 	try
@@ -688,10 +625,11 @@ tuple<string, string, string> MMSStorage::getLiveDeliveryDetails(
 		{
 			deliveryFileName = directoryId + "." + liveFileExtension;
 
-			deliveryPath = "/" + MMSStorage::getDirectoryForLiveContents()
-				+ "/" + requestWorkspace->_directoryName + "/" + directoryId;
+			deliveryPath = MMSStorage::getDirectoryForLiveContents();
+			deliveryPath /= requestWorkspace->_directoryName;
+			deliveryPath /= directoryId;
 
-			deliveryPathName = deliveryPath + "/" + deliveryFileName;
+			deliveryPathName = deliveryPath / deliveryFileName;
 		}
     }
     catch(runtime_error e)
@@ -719,7 +657,7 @@ tuple<string, string, string> MMSStorage::getLiveDeliveryDetails(
 	return make_tuple(deliveryPathName, deliveryPath, deliveryFileName);
 }
 
-string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
+fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
 {
 	// 2022-12-22: ho dovuto aggiungere questo controllo (noFileSystemAccess) perchè sotto, se la directory non esiste,
 	//	viene creata. Probabilmente questa directory deve essere creata quando viene creato il workspace
@@ -735,56 +673,56 @@ string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspa
 		throw runtime_error(errorMessage);
 	}
 
-    string workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
-    workspaceIngestionDirectory.append(workspace->_directoryName);
+    fs::path workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
+    workspaceIngestionDirectory /= workspace->_directoryName;
     
-    if (!FileIO::directoryExisting(workspaceIngestionDirectory)) 
+    if (!fs::exists(workspaceIngestionDirectory)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
+            + ", workspaceIngestionDirectory: " + workspaceIngestionDirectory.string()
         );
-
-        bool noErrorIfExists = true;
-        bool recursive = true;
-        FileIO::createDirectory(workspaceIngestionDirectory,
-                S_IRUSR | S_IWUSR | S_IXUSR |
-                S_IRGRP | S_IXGRP |
-                S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(workspaceIngestionDirectory);
+		fs::permissions(workspaceIngestionDirectory,
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_exec 
+			| fs::perms::others_read | fs::perms::others_exec,
+			fs::perm_options::replace);
     }
 
     return workspaceIngestionDirectory;
 }
 
-string MMSStorage::getStagingRootRepository(string storage) {
-    return storage + "MMSWorkingAreaRepository/Staging/";
+fs::path MMSStorage::getStagingRootRepository(fs::path storage) {
+    return storage / "MMSWorkingAreaRepository/Staging";
 }
 
-string MMSStorage::getTranscoderStagingRootRepository(string storage) {
-    return storage + "MMSTranscoderWorkingAreaRepository/Staging/";
+fs::path MMSStorage::getTranscoderStagingRootRepository(fs::path storage) {
+    return storage / "MMSTranscoderWorkingAreaRepository/Staging";
 }
 
 string MMSStorage::getDirectoryForLiveContents() {
     return "MMSLive";
 }
 
-string MMSStorage::getLiveRootRepository(string storage) {
-	return storage + "MMSRepository/" + MMSStorage::getDirectoryForLiveContents() + "/";
+fs::path MMSStorage::getLiveRootRepository(fs::path storage) {
+	return storage / "MMSRepository" / MMSStorage::getDirectoryForLiveContents();
 }
 
     
-string MMSStorage::getFFMPEGArea(string storage) {
-	return storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
+fs::path MMSStorage::getFFMPEGArea(fs::path storage) {
+	return storage / "MMSTranscoderWorkingAreaRepository/ffmpeg";
 }
 
-string MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(string storage) {
-	return storage + "MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/";
+fs::path MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(fs::path storage) {
+	return storage / "MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist";
 }
 
-string MMSStorage::getNginxArea(string storage) {
-	return storage + "MMSWorkingAreaRepository/nginx/";
+fs::path MMSStorage::getNginxArea(fs::path storage) {
+	return storage / "MMSWorkingAreaRepository/nginx";
 }
 
-string MMSStorage::getRepository(RepositoryType rtRepositoryType) 
+/*
+fs::path MMSStorage::getRepository(RepositoryType rtRepositoryType) 
 {
 
     switch (rtRepositoryType) 
@@ -793,16 +731,6 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         {
             return MMSStorage::getMMSRootRepository(_storage);
         }
-		/*
-        case RepositoryType::MMSREP_REPOSITORYTYPE_DOWNLOAD:
-        {
-            return _downloadRootRepository;
-        }
-        case RepositoryType::MMSREP_REPOSITORYTYPE_STREAMING:
-        {
-            return _streamingRootRepository;
-        }
-		*/
         case RepositoryType::MMSREP_REPOSITORYTYPE_STAGING:
         {
             return MMSStorage::getStagingRootRepository(_storage);
@@ -822,59 +750,56 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         }
     }
 }
+*/
 
-string MMSStorage::getMMSAssetPathName(
-		bool externalReadOnlyStorage,
-        int partitionKey,
-        string workspaceDirectoryName,
-        string relativePath, // using '/'
-        string fileName)
+fs::path MMSStorage::getMMSAssetPathName(
+	bool externalReadOnlyStorage,
+	int partitionKey,
+	string workspaceDirectoryName,
+	string relativePath, // using '/'
+	string fileName)
 {
-	string assetPathName;
+	fs::path assetPathName;
 
 	if (externalReadOnlyStorage)
 	{
-		assetPathName = MMSStorage::getMMSRootRepository(_storage) + "ExternalStorage_" + workspaceDirectoryName
-			+ relativePath + fileName;
+		assetPathName = MMSStorage::getMMSRootRepository(_storage)
+			/ ("ExternalStorage_" + workspaceDirectoryName)
+			/ relativePath / fileName;
 	}
 	else
 	{
-		string partitionPathName = _mmsEngineDBFacade->getPartitionPathName(partitionKey);
-		assetPathName =
-			partitionPathName
-			+ "/"
-			+ workspaceDirectoryName
-			+ relativePath
-			+ fileName;
+		fs::path partitionPathName = _mmsEngineDBFacade->getPartitionPathName(partitionKey);
+		assetPathName = partitionPathName / workspaceDirectoryName / relativePath / fileName;
 	}
 
     return assetPathName;
 }
 
 
-string MMSStorage::getStagingAssetPathName(
-		// neededForTranscoder=true uses a faster file system i.e. for recording
-		bool neededForTranscoder,
+fs::path MMSStorage::getStagingAssetPathName(
+	// neededForTranscoder=true uses a faster file system i.e. for recording
+	bool neededForTranscoder,
 
-        string workspaceDirectoryName,
-        
-        // it is a prefix of the directory name because I saw two different threads got the same dir name,
-        // even if the directory name generated here contains the datetime including millisecs. 
-        // Same dir name created a problem when the directory was removed by one thread because 
-        // it was still used by the other thread
-        string directoryNamePrefix,
-        string relativePath,
-        string fileName,                // may be empty ("")
-        long long llMediaItemKey,       // used only if fileName is ""
-        long long llPhysicalPathKey,    // used only if fileName is ""
-        bool removeLinuxPathIfExist)
+	string workspaceDirectoryName,
+
+	// it is a prefix of the directory name because I saw two different threads got the same dir name,
+	// even if the directory name generated here contains the datetime including millisecs. 
+	// Same dir name created a problem when the directory was removed by one thread because 
+	// it was still used by the other thread
+	string directoryNamePrefix,
+	string relativePath,
+	string fileName,                // may be empty ("")
+	long long llMediaItemKey,       // used only if fileName is ""
+	long long llPhysicalPathKey,    // used only if fileName is ""
+	bool removeLinuxPathIfExist)
 {
     char pUniqueFileName [256];
     string localFileName;
     tm tmDateTime;
     unsigned long ulMilliSecs;
     char pDateTime [64];
-    string assetPathName;
+    fs::path assetPathName;
 
 
 	if (_noFileSystemAccess)
@@ -928,60 +853,48 @@ string MMSStorage::getStagingAssetPathName(
 			assetPathName = MMSStorage::getTranscoderStagingRootRepository(_storage);
 		else
 			assetPathName = MMSStorage::getStagingRootRepository(_storage);
-        assetPathName
-            .append(workspaceDirectoryName)
-            .append("_")    // .append("/")
-            .append(directoryNamePrefix)
-            .append("_")
-            .append(pDateTime)
-            .append(relativePath);
+        assetPathName	/= workspaceDirectoryName;
+		assetPathName	/= ("_" + directoryNamePrefix + "_" + pDateTime + relativePath);
 
-        if (!FileIO::directoryExisting(assetPathName)) 
+        if (!fs::exists(assetPathName)) 
         {
             _logger->info(__FILEREF__ + "Create directory"
-                + ", assetPathName: " + assetPathName
+                + ", assetPathName: " + assetPathName.string()
             );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(
-                    assetPathName,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			fs::create_directories(assetPathName);
+			fs::permissions(assetPathName,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+				| fs::perms::group_read | fs::perms::group_exec 
+				| fs::perms::others_read | fs::perms::others_exec,
+				fs::perm_options::replace);
         }
     }
 
     {
-        assetPathName.append(localFileName);
+        assetPathName /= localFileName;
 
         if (removeLinuxPathIfExist) 
         {
-            FileIO::DirectoryEntryType_t detSourceFileType;
-
             try 
             {
-                detSourceFileType = FileIO::getDirectoryEntryType(assetPathName);
-
-                if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+                if (fs::is_directory(assetPathName))
                 {
                     _logger->info(__FILEREF__ + "Remove directory"
-                        + ", assetPathName: " + assetPathName
+                        + ", assetPathName: " + assetPathName.string()
                     );
-                    bool removeRecursively = true;
-                    FileIO::removeDirectory(assetPathName, removeRecursively);
+                    fs::remove_all(assetPathName);
                 } 
-                else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+                else if (fs::is_regular_file(assetPathName)) 
                 {
                     _logger->info(__FILEREF__ + "Remove file"
-                        + ", assetPathName: " + assetPathName
+                        + ", assetPathName: " + assetPathName.string()
                     );
-                    FileIO::remove(assetPathName);
+                    fs::remove(assetPathName);
                 } 
                 else 
                 {
 					string errorMessage = string("Unexpected file in staging")                                  
-                            + ", assetPathName: " + assetPathName;
+                            + ", assetPathName: " + assetPathName.string();
 
 					_logger->error(__FILEREF__ + errorMessage);
 
@@ -1010,14 +923,13 @@ string MMSStorage::getStagingAssetPathName(
     return assetPathName;
 }
 
-string MMSStorage::creatingDirsUsingTerritories(
-        unsigned long ulCurrentMMSPartitionIndex,
-        string relativePath,
-        string workspaceDirectoryName,
-        bool deliveryRepositoriesToo,
-        Workspace::TerritoriesHashMap& phmTerritories)
+fs::path MMSStorage::creatingDirsUsingTerritories(
+	unsigned long ulCurrentMMSPartitionIndex,
+	string relativePath,
+	string workspaceDirectoryName,
+	bool deliveryRepositoriesToo,
+	Workspace::TerritoriesHashMap& phmTerritories)
 {
-
     char pMMSPartitionName [64];
 
 
@@ -1031,30 +943,25 @@ string MMSStorage::creatingDirsUsingTerritories(
 		throw runtime_error(errorMessage);
 	}
 
-    sprintf(pMMSPartitionName, "MMS_%04lu/", ulCurrentMMSPartitionIndex);
+    sprintf(pMMSPartitionName, "MMS_%04lu", ulCurrentMMSPartitionIndex);
 
-    string mmsAssetPathName(MMSStorage::getMMSRootRepository(_storage));
-    mmsAssetPathName
-        .append(pMMSPartitionName)
-        .append(workspaceDirectoryName)
-        .append(relativePath);
+    fs::path mmsAssetPathName(MMSStorage::getMMSRootRepository(_storage));
+    mmsAssetPathName /= pMMSPartitionName;
+	mmsAssetPathName /= workspaceDirectoryName;
+	mmsAssetPathName /= relativePath;
 
-    if (!FileIO::directoryExisting(mmsAssetPathName)) 
+    if (!fs::exists(mmsAssetPathName)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", mmsAssetPathName: " + mmsAssetPathName.string()
         );
-
-        bool noErrorIfExists = true;
-        bool recursive = true;
-        FileIO::createDirectory(mmsAssetPathName,
-                S_IRUSR | S_IWUSR | S_IXUSR |
-                S_IRGRP | S_IXGRP |
-                S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(mmsAssetPathName);
+		fs::permissions(mmsAssetPathName,
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec 
+			| fs::perms::group_read | fs::perms::group_exec 
+			| fs::perms::others_read | fs::perms::others_exec,
+			fs::perm_options::replace);
     }
-
-    if (mmsAssetPathName.size() > 0 && mmsAssetPathName.back() != '/')
-        mmsAssetPathName.append("/");
 
 
     return mmsAssetPathName;
@@ -1062,7 +969,6 @@ string MMSStorage::creatingDirsUsingTerritories(
 
 void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 {
-
     try
     {
 		if (_noFileSystemAccess)
@@ -1239,7 +1145,7 @@ void MMSStorage::removePhysicalPathFile(
 	string workspaceDirectoryName,
 	string relativePath,
 	int64_t sizeInBytes
-		)
+)
 {
     try
     {
@@ -1279,62 +1185,30 @@ void MMSStorage::removePhysicalPathFile(
 				+ ", relativePath: " + relativePath
 				+ ", fileName: " + fileName
 			);
-			string mmsAssetPathName = getMMSAssetPathName(
+			fs::path mmsAssetPathName = getMMSAssetPathName(
 				externalReadOnlyStorage,
 				partitionKey,
 				workspaceDirectoryName,
 				relativePath,
 				fileName);
 
-			FileIO::DirectoryEntryType_t detSourceFileType;
-			bool fileExist = true;
-
-			try
+			if (fs::exists(mmsAssetPathName))
 			{
-				detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-			}
-			catch(FileNotExisting fne)
-			{
-				string errorMessage = string("file/directory not present")
-					+ ", mediaItemKey: " + to_string(mediaItemKey)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				;
-      
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				fileExist = false;
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + e.what());
-
-				throw e;
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "...exception");
-
-				throw e;
-			}
-
-			if (fileExist)
-			{
-				if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+				if (fs::is_directory(mmsAssetPathName)) 
 				{
 					try
 					{
 						_logger->info(__FILEREF__ + "Remove directory"
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						);
-						bool removeRecursively = true;
-						FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+						fs::remove_all(mmsAssetPathName);
 					}
 					catch(DirectoryNotExisting dne)
 					{
 						string errorMessage = string("removeDirectory failed. directory not present")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						;
        
 						_logger->warn(__FILEREF__ + errorMessage);
@@ -1344,7 +1218,7 @@ void MMSStorage::removePhysicalPathFile(
 						string errorMessage = string("removeDirectory failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 							+ ", exception: " + e.what()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
@@ -1356,7 +1230,7 @@ void MMSStorage::removePhysicalPathFile(
 						string errorMessage = string("removeDirectory failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 
@@ -1370,22 +1244,22 @@ void MMSStorage::removePhysicalPathFile(
 						+ ", partitionKey: " + to_string(partitionKey)
 						+ ", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
 					);
-				} 
-				else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+				}
+				else if (fs::is_regular_file(mmsAssetPathName)) 
 				{
 					try
 					{
 						_logger->info(__FILEREF__ + "Remove file"
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						);
-						FileIO::remove(mmsAssetPathName);
+						fs::remove(mmsAssetPathName);
 					}
 					catch(FileNotExisting fne)
 					{
 						string errorMessage = string("removefailed, file not present")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						;
        
 						_logger->warn(__FILEREF__ + errorMessage);
@@ -1395,7 +1269,7 @@ void MMSStorage::removePhysicalPathFile(
 						string errorMessage = string("remove failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 							+ ", exception: " + e.what()
 						;
        
@@ -1408,7 +1282,7 @@ void MMSStorage::removePhysicalPathFile(
 						string errorMessage = string("remove failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
 							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						;
        
 						_logger->error(__FILEREF__ + errorMessage);
@@ -1423,11 +1297,10 @@ void MMSStorage::removePhysicalPathFile(
 						+ ", partitionKey: " + to_string(partitionKey)
 						+ ", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
 					);
-				} 
+				}
 				else 
 				{
-					string errorMessage = string("Unexpected directory entry")
-                           + ", detSourceFileType: " + to_string(detSourceFileType);
+					string errorMessage = string("Unexpected directory entry");
 
 					_logger->error(__FILEREF__ + errorMessage);
 
@@ -1462,21 +1335,20 @@ void MMSStorage::removePhysicalPathFile(
 }
 
 
-string MMSStorage::moveAssetInMMSRepository(
+fs::path MMSStorage::moveAssetInMMSRepository(
 	int64_t ingestionJobKey,
-	string sourceAssetPathName,
+	fs::path sourceAssetPathName,
 	string workspaceDirectoryName,
 	string destinationAssetFileName,
 	string relativePath,
 
 	unsigned long *pulMMSPartitionIndexUsed, // OUT
-    FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
+    // FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
 
 	bool deliveryRepositoriesToo,
 	Workspace::TerritoriesHashMap& phmTerritories
 )
 {
-
 	if (_noFileSystemAccess)
 	{
 		string errorMessage = string("no rights to execute this method")
@@ -1488,44 +1360,31 @@ string MMSStorage::moveAssetInMMSRepository(
 	}
 
     if ((relativePath.size() > 0 && relativePath.front() != '/')
-			|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
-    {
+		|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
+	{
 		string errorMessage = string("Wrong argument")                                                          
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", relativePath: " + relativePath;
+			+ ", relativePath: " + relativePath;
 
-        _logger->error(__FILEREF__ + errorMessage);
+		_logger->error(__FILEREF__ + errorMessage);
 
 		throw runtime_error(errorMessage);
     }
 
-    // file in case of .3gp content OR
-    // directory in case of IPhone content
-    *pSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
-
-    if (*pSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-            *pSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
-    {
-        _logger->error(__FILEREF__ + "Wrong directory entry type");
-
-        throw runtime_error("Wrong directory entry type");
-    }
-
-	unsigned long long ullFSEntrySizeInBytes;
-    {
-        if (*pSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+	unsigned long long ullFSEntrySizeInBytes = 0;
+	{
+		if (fs::is_directory(sourceAssetPathName))
+		{
+			// recursive_directory_iterator, by default, does not follow sym links
+			for (fs::directory_entry const& entry: fs::recursive_directory_iterator(sourceAssetPathName))
+			{
+				if (entry.is_regular_file())
+					ullFSEntrySizeInBytes += entry.file_size();
+			}
+        }
+        else if (fs::is_regular_file(sourceAssetPathName))
         {
-            ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(sourceAssetPathName);
-        } 
-        else // if (*pSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
-        {
-            unsigned long ulFileSizeInBytes;
-            bool inCaseOfLinkHasItToBeRead = false;
-
-
-            ulFileSizeInBytes = FileIO::getFileSizeInBytes(sourceAssetPathName, inCaseOfLinkHasItToBeRead);
-
-            ullFSEntrySizeInBytes = ulFileSizeInBytes;
+			ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
         }
 	}
 
@@ -1548,7 +1407,7 @@ string MMSStorage::moveAssetInMMSRepository(
     }
 
     // creating directories and build the bMMSAssetPathName
-    string mmsAssetPathName;
+    fs::path mmsAssetPathName;
     {
         // to create the content provider directory and the
         // territories directories (if not already existing)
@@ -1556,21 +1415,21 @@ string MMSStorage::moveAssetInMMSRepository(
             relativePath, workspaceDirectoryName, deliveryRepositoriesToo,
             phmTerritories);
 
-        mmsAssetPathName.append(destinationAssetFileName);
+        mmsAssetPathName /= destinationAssetFileName;
     }
 
-    _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
+	_logger->info(__FILEREF__ + "Selected MMS Partition for the content"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", workspaceDirectoryName: " + workspaceDirectoryName
-        + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
-        + ", mmsAssetPathName: " + mmsAssetPathName
-        + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
-    );
+		+ ", workspaceDirectoryName: " + workspaceDirectoryName
+		+ ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
+		+ ", mmsAssetPathName: " + mmsAssetPathName.string()
+		+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+	);
 
     // move the file in case of .3gp content OR
     // move the directory in case of IPhone content
     {
-        if (*pSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        if (fs::is_directory(sourceAssetPathName)) 
         {
 			// 2020-04-11: I saw sometimes the below moveDirectory fails because the removeDirectory fails
 			//	And this is because it fails the deletion of files like .nfs0000000103c87546000004d7
@@ -1597,20 +1456,16 @@ string MMSStorage::moveAssetInMMSRepository(
 			*/
             _logger->info(__FILEREF__ + "Copy directory"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
+                + ", from: " + sourceAssetPathName.string()
+                + ", to: " + mmsAssetPathName.string()
             );
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-            FileIO::copyDirectory(sourceAssetPathName,
-                    mmsAssetPathName,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
+			fs::copy(sourceAssetPathName, mmsAssetPathName);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Copy directory statistics"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
+                + ", from: " + sourceAssetPathName.string()
+                + ", to: " + mmsAssetPathName.string()
 				+ ", @MMS COPY statistics@ - elapsed (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
@@ -1619,28 +1474,27 @@ string MMSStorage::moveAssetInMMSRepository(
 			{
 				_logger->info(__FILEREF__ + "Remove directory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName.string()
 				);
-				bool bRemoveRecursively = true;
-				FileIO::removeDirectory(sourceAssetPathName, bRemoveRecursively);
+				fs::remove_all(sourceAssetPathName);
 			}
 			catch(runtime_error e)
 			{
 				// we will not raise an exception, it is a staging directory,
 				// it will be removed by cronjob (see the comment above)
-				_logger->error(__FILEREF__ + "FileIO::removeDirectory failed"
+				_logger->error(__FILEREF__ + "fs::remove_all failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceAssetPathName: " + sourceAssetPathName
+					+ ", sourceAssetPathName: " + sourceAssetPathName.string()
 					+ ", e.what(): " + e.what()
 				);
 			}
         }
-        else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        else // fs::is_regilar_file(sourceAssetPathName)) 
         {
             _logger->info(__FILEREF__ + "Move file"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
+                + ", from: " + sourceAssetPathName.string()
+                + ", to: " + mmsAssetPathName.string()
                 + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
             );
 
@@ -1659,15 +1513,15 @@ string MMSStorage::moveAssetInMMSRepository(
 			try
 			{
 				startPoint = chrono::system_clock::now();
-				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
+				fs::rename(sourceAssetPathName, mmsAssetPathName);
 				endPoint = chrono::system_clock::now();
 			}
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "Move file failed, wait a bit, retrieve again the size and try again"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", from: " + sourceAssetPathName
-					+ ", to: " + mmsAssetPathName
+					+ ", from: " + sourceAssetPathName.string()
+					+ ", to: " + mmsAssetPathName.string()
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 					+ ", _waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 					+ ", e.what: " + e.what()
@@ -1677,38 +1531,26 @@ string MMSStorage::moveAssetInMMSRepository(
 				this_thread::sleep_for(chrono::milliseconds(
 					_waitingNFSSync_maxMillisecondsToWait));
 
-				{
-					unsigned long ulFileSizeInBytes;
-					bool inCaseOfLinkHasItToBeRead = false;
-
-					ulFileSizeInBytes = FileIO::getFileSizeInBytes(
-						sourceAssetPathName, inCaseOfLinkHasItToBeRead);
-
-					ullFSEntrySizeInBytes = ulFileSizeInBytes;
-				}
+				ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
 
 				_logger->info(__FILEREF__ + "Move file again"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", from: " + sourceAssetPathName
-					+ ", to: " + mmsAssetPathName
+					+ ", from: " + sourceAssetPathName.string()
+					+ ", to: " + mmsAssetPathName.string()
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
 
 				startPoint = chrono::system_clock::now();
-				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
+				fs::rename(sourceAssetPathName, mmsAssetPathName);
 				endPoint = chrono::system_clock::now();
 			}
 
-            unsigned long ulDestFileSizeInBytes;
-			{
-				bool inCaseOfLinkHasItToBeRead = false;
-				ulDestFileSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);
-			}
+            unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
 
 			_logger->info(__FILEREF__ + "Move file statistics"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
+                + ", from: " + sourceAssetPathName.string()
+                + ", to: " + mmsAssetPathName.string()
                 + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                 + ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes)
 				+ ", @MMS MOVE statistics@ - elapsed (secs): @"
@@ -1719,8 +1561,8 @@ string MMSStorage::moveAssetInMMSRepository(
 			{
 				string errorMessage = string("Source and destination file have different sizes")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", source: " + sourceAssetPathName
-					+ ", dest: " + mmsAssetPathName
+					+ ", source: " + sourceAssetPathName.string()
+					+ ", dest: " + mmsAssetPathName.string()
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 					+ ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes)
 				;
@@ -1750,30 +1592,28 @@ void MMSStorage::deleteWorkspace(
 	}
 
 	{
-		string workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
-		workspaceIngestionDirectory.append(workspace->_directoryName);
+		fs::path workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
+		workspaceIngestionDirectory /= workspace->_directoryName;
 
-        if (FileIO::directoryExisting(workspaceIngestionDirectory))
+        if (fs::exists(workspaceIngestionDirectory))
         {
 			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
+				+ ", workspaceIngestionDirectory: " + workspaceIngestionDirectory.string()
 			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(workspaceIngestionDirectory, removeRecursively);
+			fs::remove_all(workspaceIngestionDirectory);
         }
 	}
 
 	{
-		string liveRootDirectory = MMSStorage::getLiveRootRepository(_storage);
-		liveRootDirectory.append(workspace->_directoryName);
+		fs::path liveRootDirectory = MMSStorage::getLiveRootRepository(_storage);
+		liveRootDirectory /= workspace->_directoryName;
 
-        if (FileIO::directoryExisting(liveRootDirectory))
+        if (fs::is_directory(liveRootDirectory))
         {
 			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", liveRootDirectory: " + liveRootDirectory
+				+ ", liveRootDirectory: " + liveRootDirectory.string()
 			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(liveRootDirectory, removeRecursively);
+			fs::remove_all(liveRootDirectory);
         }
 	}
 
@@ -1789,7 +1629,7 @@ void MMSStorage::deleteWorkspace(
 
 			tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
 
-			string workspacePathName = getMMSAssetPathName(
+			fs::path workspacePathName = getMMSAssetPathName(
 				false,	// externalReadOnlyStorage
 				partitionKey,
 				workspace->_directoryName,
@@ -1797,15 +1637,21 @@ void MMSStorage::deleteWorkspace(
 				string("")		// fileName
 				);
 
-			if (FileIO::directoryExisting(workspacePathName))
+			if (fs::is_directory(workspacePathName))
 			{
-				int64_t directorySizeInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+				int64_t directorySizeInBytes = 0;
+
+				// recursive_directory_iterator, by default, does not follow sym links
+				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(workspacePathName))
+				{
+					if (entry.is_regular_file())
+						directorySizeInBytes += entry.file_size();
+				}
 
 				_logger->info(__FILEREF__ + "Remove directory"
-					+ ", workspacePathName: " + workspacePathName
+					+ ", workspacePathName: " + workspacePathName.string()
 				);
-				bool removeRecursively = true;
-				FileIO::removeDirectory(workspacePathName, removeRecursively);
+				fs::remove_all(workspacePathName);
 
 				uint64_t newCurrentFreeSizeInBytes =
 					_mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey,
@@ -1821,7 +1667,7 @@ void MMSStorage::deleteWorkspace(
 }
 
 unsigned long MMSStorage::getWorkspaceStorageUsage(
-        string workspaceDirectoryName)
+	string workspaceDirectoryName)
 {
 
     unsigned long ulStorageUsageInMB;
@@ -1854,7 +1700,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 
 		tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
 
-		string workspacePathName = getMMSAssetPathName(
+		fs::path workspacePathName = getMMSAssetPathName(
 			false,	// externalReadOnlyStorage
 			partitionKey,
 			workspaceDirectoryName,
@@ -1862,11 +1708,17 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 			string("")		// fileName
 		);
 
-		if (FileIO::directoryExisting(workspacePathName))
+		if (fs::is_directory(workspacePathName))
 		{
 			try
 			{
-				ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+				ullDirectoryUsageInBytes = 0;
+				// recursive_directory_iterator, by default, does not follow sym links
+				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(workspacePathName))
+				{
+					if (entry.is_regular_file())
+						ullDirectoryUsageInBytes += entry.file_size();
+				}
 			}
 			catch(runtime_error e)
 			{
@@ -1905,17 +1757,17 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 	while (mmsAvailablePartitions) 
 	{
-		string partitionPathName;
+		fs::path partitionPathName;
 		{
 			char pMMSPartitionName [64];
 
 			sprintf(pMMSPartitionName, "MMS_%04d", partitionKey);
 
 			partitionPathName = MMSStorage::getMMSRootRepository(_storage);
-			partitionPathName.append(pMMSPartitionName);
+			partitionPathName /= pMMSPartitionName;
 		}
 
-		if (!FileIO::directoryExisting(partitionPathName))
+		if (!fs::exists(partitionPathName))
 		{
 			mmsAvailablePartitions = false;
 
@@ -1930,15 +1782,14 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-			FileIO::getFileSystemInfo(partitionPathName,
-				&usedInBytes, &availableInBytes, &lPercentUsed);
+			fs::space_info si = fs::space(partitionPathName);
 
-			currentFreeSizeInBytes = availableInBytes;
+			currentFreeSizeInBytes = si.available;
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "refreshPartitionFreeSizes"
 				+ ", partitionKey: " + to_string(partitionKey)
-				+ ", partitionPathName: " + partitionPathName
+				+ ", partitionPathName: " + partitionPathName.string()
 				+ ", currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes)
 				+ ", @MMS statistics@ - elapsed (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
@@ -1958,7 +1809,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 		_logger->info(__FILEREF__ + "addUpdatePartitionInfo"
 			+ ", partitionKey: " + to_string(partitionKey)
-			+ ", partitionPathName: " + partitionPathName
+			+ ", partitionPathName: " + partitionPathName.string()
 			+ ", currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes)
 			+ ", localFreeSpaceToLeaveInMB: " + to_string(localFreeSpaceToLeaveInMB)
 		);
@@ -2085,29 +1936,31 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 
 		// remove tar file
 		{
-			string sourceTarFile = workspaceIngestionRepository + "/"
-				+ to_string(ingestionJobKey)
-				+ "_source"
-				+ ".tar.gz";
+			fs::path sourceTarFile = workspaceIngestionRepository;
+			sourceTarFile /= (to_string(ingestionJobKey) + "_source" + ".tar.gz");
 
 			_logger->info(__FILEREF__ + "Remove file"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceTarFile: " + sourceTarFile
+				+ ", sourceTarFile: " + sourceTarFile.string()
 			);
 
-			FileIO::remove(sourceTarFile);
+			fs::remove(sourceTarFile);
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source
 		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
 		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
 		{
-			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
-			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
+			fs::path sourceDirectory = workspaceIngestionRepository;
+			sourceDirectory /= sourceFileName;
+
+			fs::path destDirectory = workspaceIngestionRepository;
+			destDirectory /= (to_string(ingestionJobKey) + "_source");
+
 			_logger->info(__FILEREF__ + "Start moveDirectory..."
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceDirectory: " + sourceDirectory
-				+ ", destDirectory: " + destDirectory
+				+ ", sourceDirectory: " + sourceDirectory.string()
+				+ ", destDirectory: " + destDirectory.string()
 			);
 			// 2020-05-01: since the remove of the director could fails because of nfs issue,
 			//	better do a copy and then a remove.
@@ -2115,15 +1968,12 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			//	The directory will be removed later by cron job
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				FileIO::copyDirectory(sourceDirectory, destDirectory,
-					S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
-					S_IRGRP | S_IXGRP |                                                                                   
-					S_IROTH | S_IXOTH);
+				fs::copy(sourceDirectory, destDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End copyDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
-					+ ", destDirectory: " + destDirectory
+					+ ", sourceDirectory: " + sourceDirectory.string()
+					+ ", destDirectory: " + destDirectory.string()
 					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
@@ -2131,12 +1981,11 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			try
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				bool removeRecursively = true;
-				FileIO::removeDirectory(sourceDirectory, removeRecursively);
+				fs::remove_all(sourceDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End removeDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
+					+ ", sourceDirectory: " + sourceDirectory.string()
 					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}

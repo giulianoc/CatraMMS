@@ -985,17 +985,16 @@ void API::manageRequestAndResponse(
 
 				string responseBody;
 				{
-					string manifestPathFileName = _mmsStorage->getMMSRootRepository()
-						+ contentURI.substr(1);
+					fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
 
 					_logger->info(__FILEREF__ + "Reading manifest file"
-						+ ", manifestPathFileName: " + manifestPathFileName
+						+ ", manifestPathFileName: " + manifestPathFileName.string()
 					);
 
-					if (!FileIO::isFileExisting (manifestPathFileName.c_str()))
+					if (!fs::exists (manifestPathFileName))
 					{
 						string errorMessage = string("manifest file not existing")
-							+ ", manifestPathFileName: " + manifestPathFileName
+							+ ", manifestPathFileName: " + manifestPathFileName.string()
 							;
 						_logger->error(__FILEREF__ + errorMessage);
 
@@ -1007,11 +1006,11 @@ void API::manageRequestAndResponse(
 					{
 						std::ifstream manifestFile;
 
-						manifestFile.open(manifestPathFileName, ios::in);
+						manifestFile.open(manifestPathFileName.string(), ios::in);
 						if (!manifestFile.is_open())
 						{
 							string errorMessage = string("Not authorized: manifest file not opened")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1151,11 +1150,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         </Period>
 </MPD>
 */
-						xmlDocPtr doc = xmlParseFile(manifestPathFileName.c_str());
+						xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
 						if (doc == NULL)
 						{
 							string errorMessage = string("xmlParseFile failed")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1171,7 +1170,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlFreeDoc(doc);
 
 							string errorMessage = string("xmlXPathNewContext failed")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1186,7 +1185,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlFreeDoc(doc);
 
 							string errorMessage = string("xmlXPathRegisterNs xmlns:xsi")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1201,7 +1200,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlFreeDoc(doc);
 
 							string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1215,7 +1214,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlFreeDoc(doc);
 
 							string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1232,7 +1231,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlFreeDoc(doc);
 
 							string errorMessage = string("xmlXPathEvalExpression failed")
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 							_logger->info(__FILEREF__ + errorMessage);
 
@@ -1241,7 +1240,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
 						xmlNodeSetPtr nodes = xpathObj->nodesetval;
 						_logger->info(__FILEREF__ + "processing mpd manifest file"
-							+ ", manifestPathFileName: " + manifestPathFileName
+							+ ", manifestPathFileName: " + manifestPathFileName.string()
 							+ ", nodesNumber: " + to_string(nodes->nodeNr)
 						);
 						for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
@@ -1252,7 +1251,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 								xmlFreeDoc(doc);
 
 								string errorMessage = string("nodes->nodeTab[nodeIndex] is null")
-									+ ", manifestPathFileName: " + manifestPathFileName
+									+ ", manifestPathFileName: " + manifestPathFileName.string()
 									+ ", nodeIndex: " + to_string(nodeIndex)
 								;
 								_logger->info(__FILEREF__ + errorMessage);
@@ -1273,7 +1272,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 								xmlFreeDoc(doc);
 
 								string errorMessage = string("xmlGetProp failed")
-									+ ", manifestPathFileName: " + manifestPathFileName
+									+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
 								_logger->info(__FILEREF__ + errorMessage);
 
@@ -1331,7 +1330,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							int buffersize;
 							xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
 							_logger->info(__FILEREF__ + "dumping mpd manifest file"
-								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								+ ", buffersize: " + to_string(buffersize)
 							);
 

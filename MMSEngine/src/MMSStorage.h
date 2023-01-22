@@ -38,43 +38,37 @@ public:
 		Json::Value configuration,
 		shared_ptr<spdlog::logger> logger);
 
-    string getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
+    fs::path getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
+
+	static fs::path getMMSRootRepository (fs::path storage);
+    fs::path getMMSRootRepository ();
+
+    static fs::path getIngestionRootRepository (fs::path storage);
     
-    //    const char *getIPhoneAliasForLive (void);
+    static fs::path getStagingRootRepository (fs::path storage);
 
-    static string getMMSRootRepository (string storage);
-    string getMMSRootRepository ();
-
-    // string getStreamingRootRepository (void);
-
-    // string getDownloadRootRepository (void);
-
-    static string getIngestionRootRepository (string storage);
-    
-    static string getStagingRootRepository (string storage);
-
-    static string getTranscoderStagingRootRepository (string storage);
+    static fs::path getTranscoderStagingRootRepository (fs::path storage);
 
 	static string getDirectoryForLiveContents();
 
-	static string getLiveRootRepository(string storage);
+	static fs::path getLiveRootRepository(fs::path storage);
 
-	static string getFFMPEGArea(string storage);
+	static fs::path getFFMPEGArea(fs::path storage);
 
-	static string getFFMPEGEndlessRecursivePlaylistArea(string storage);
+	static fs::path getFFMPEGEndlessRecursivePlaylistArea(fs::path storage);
 
-	static string getNginxArea(string storage);
+	static fs::path getNginxArea(fs::path storage);
 
-    string getErrorRootRepository (void);
+    fs::path getErrorRootRepository (void);
 
-    string getDoneRootRepository (void);
+    fs::path getDoneRootRepository (void);
 
-	tuple<int64_t, string, int, string, string, int64_t, string>
+	tuple<int64_t, fs::path, int, string, string, int64_t, string>
 		getPhysicalPathDetails(
 		int64_t mediaItemKey, int64_t encodingProfileKey,
 		bool warningIfMissing, bool fromMaster);
 
-	tuple<string, int, string, string, int64_t, string> getPhysicalPathDetails(
+	tuple<fs::path, int, string, string, int64_t, string> getPhysicalPathDetails(
 		int64_t physicalPathKey, bool fromMaster);
 
 	tuple<string, int, string, string> getVODDeliveryURI(
@@ -85,15 +79,15 @@ public:
 		int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace);
 
-	string getLiveDeliveryAssetPath(
+	fs::path getLiveDeliveryAssetPath(
 		string directoryId,
 		shared_ptr<Workspace> requestWorkspace);
 
-	string getLiveDeliveryAssetPathName(
+	fs::path getLiveDeliveryAssetPathName(
 		string directoryId,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
-	tuple<string, string, string> getLiveDeliveryDetails(
+	tuple<fs::path, fs::path, string> getLiveDeliveryDetails(
 		string directoryId, string liveFileExtension,
 		shared_ptr<Workspace> requestWorkspace);
 
@@ -115,21 +109,21 @@ public:
 	string workspaceDirectoryName,
 	bool addDateTimeToFileName);
 
-    string moveAssetInMMSRepository (
+    fs::path moveAssetInMMSRepository (
 		int64_t ingestionJobKey,
-        string sourceAssetPathName,
+        fs::path sourceAssetPathName,
         string workspaceDirectoryName,
         string destinationFileName,
         string relativePath,
 
         unsigned long *pulMMSPartitionIndexUsed,	// OUT
-		FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
+		// FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
 
         bool deliveryRepositoriesToo,
         Workspace::TerritoriesHashMap& phmTerritories
     );
 
-    string getMMSAssetPathName (
+    fs::path getMMSAssetPathName (
 		bool externalReadOnlyStorage,
 		int partitionKey,
 		string workspaceDirectoryName,
@@ -141,7 +135,7 @@ public:
     // (file or directory). In this case it is good
     // to clean/remove that path if already existing in order
     // to give to the encoder a clean place where to write
-    string getStagingAssetPathName (
+    fs::path getStagingAssetPathName (
 		// neededForTranscoder=true uses a faster file system i.e. for recording
 		bool neededForTranscoder,
 		string workspaceDirectoryName,
@@ -171,17 +165,7 @@ private:
 
     string                      _hostName;
 
-    string                      _storage;
-    // string                      _mmsRootRepository;
-    // string                      _downloadRootRepository;
-    // string                      _streamingRootRepository;
-    // string                      _stagingRootRepository;
-	// string						_transcoderStagingRootRepository;
-	// string						_deliveryFreeRootRepository;
-	// string						_directoryForLiveContents;
-	// string						_liveRootRepository;
-    // string                      _ingestionRootRepository;
-    // string                      _profilesRootRepository;
+	fs::path					_storage;
 
 	int						_waitingNFSSync_maxMillisecondsToWait;
 	int						_freeSpaceToLeaveInEachPartitionInMB;
@@ -193,9 +177,9 @@ private:
 		string workspaceDirectoryName,
 		bool addDateTimeToFileName);
 
-	string getRepository(RepositoryType rtRepositoryType);
+	// string getRepository(RepositoryType rtRepositoryType);
 
-	string creatingDirsUsingTerritories (
+	fs::path creatingDirsUsingTerritories (
 		unsigned long ulCurrentMMSPartitionIndex,
 		string relativePath,
 		string workspaceDirectoryName,
