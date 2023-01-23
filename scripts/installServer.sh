@@ -262,7 +262,7 @@ install-packages()
 		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
 
-		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, max_connections, sort_buffer_size, binlog_expire_logs_seconds"
+		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, mysqlx-bind-address, max_connections, sort_buffer_size, server-id, skip-name-resolve, log_bin, binlog_expire_logs_seconds"
 
 		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
 
@@ -992,7 +992,7 @@ else
 	echo "in caso di hetzner engine/transcoder ibrido, 1. assegna il server al vSwitch (tramite hetzner WEB page), 2. decidere un nuovo IP e scriverlo nel documento Hetzner Info su google drive, 3. aggiungere la configurazione di un nuovo IP internal in /etc/netplan/01-netcfg.yaml"
 	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
 	echo ""
-	echo "- in case of engine ibrido, cambiare hostname (di default è quello assegnato da hetzner). In caso di engine è importante cambiare il nome dell'hostname perchè viene inserito nel DB. Per cambiare hostname seguire le istruzioni: https://www.cyberciti.biz/faq/ubuntu-20-04-lts-change-hostname-permanently/". In caso di transcoder ibridi, non è essenziale cambiare l'hostname ma è una buona cosa farlo per evitare di lasciare quei nomi strani decisi da hetzner.
+	echo "- in case of engine ibrido, cambiare hostname (di default è quello assegnato da hetzner). In caso di engine è importante cambiare il nome dell'hostname perchè viene inserito nel DB. Per cambiare hostname seguire le istruzioni: https://www.cyberciti.biz/faq/ubuntu-20-04-lts-change-hostname-permanently. In caso di transcoder ibridi, non è essenziale cambiare l'hostname ma è una buona cosa farlo per evitare di lasciare quei nomi strani decisi da hetzner."
 	echo ""
 	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
 	echo ""
