@@ -3353,25 +3353,52 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		int64_t physicalPathKey = -1;
-        int mmsPartitionNumber;
-        bool externalReadOnlyStorage;
-        string relativePath;
-        string fileName;
-        int64_t sizeInBytes;
-        int64_t durationInMilliSeconds = 0;
+		int64_t physicalPathKeyWithEncodingProfile = -1;
+		int64_t physicalPathKeyWithoutEncodingProfile = -1;
+
+        int mmsPartitionNumberWithEncodingProfile;
+        int mmsPartitionNumberWithoutEncodingProfile;
+
+        bool externalReadOnlyStorageWithEncodingProfile;
+        bool externalReadOnlyStorageWithoutEncodingProfile;
+
+        string relativePathWithEncodingProfile;
+        string relativePathWithoutEncodingProfile;
+
+        string fileNameWithEncodingProfile;
+        string fileNameWithoutEncodingProfile;
+
+        int64_t sizeInBytesWithEncodingProfile;
+        int64_t sizeInBytesWithoutEncodingProfile;
+
+        int64_t durationInMilliSecondsWithEncodingProfile = 0;
+        int64_t durationInMilliSecondsWithoutEncodingProfile = 0;
+
+		int64_t maxSizeInBytesWithEncodingProfile = -1;
+		int64_t maxSizeInBytesWithoutEncodingProfile = -1;
+
         {
+			// 2023-01-23: l'ultima modifica fatta permette di inserire 'source content' specificando
+			//	l'encoding profile (questo quando siamo sicuri che sia stato generato
+			//	con uno specifico profilo). In questo nuovo scenario, molti 'source content' hanno specificato
+			//	encodingProfileKey nella tabella MMS_PhysicalPath.
+			//	Per cui viene tolta la condizione
+			//		encodingProfileKey is null
+			//	dalla select e viene cercato il source nel seguente modo:
+			//	- se esiste un 'cource content' avente encodingProfileKey null viene considerato
+			//		questo contenuto come 'source'
+			//	- se non esiste viene cercato il source tra quelli con encodingProfileKey inizializzato
 			lastSQLCommand = string("") +
 				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, "
-				"externalReadOnlyStorage, durationInMilliSeconds "
-				"from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey is null";
+				"externalReadOnlyStorage, durationInMilliSeconds, encodingProfileKey "
+				"from MMS_PhysicalPath where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
-			int64_t maxSizeInBytes = -1;
-			string selectedFileFormat;
+			string selectedFileFormatWithEncodingProfile;
+			string selectedFileFormatWithoutEncodingProfile;
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -3384,53 +3411,97 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 			);
             while (resultSet->next())
             {
-                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
+				int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
 
-                string localFileName = resultSet->getString("fileName");
+				string localFileName = resultSet->getString("fileName");
 				string localFileFormat;
-				size_t extensionIndex = fileName.find_last_of(".");
+				size_t extensionIndex = localFileName.find_last_of(".");
 				if (extensionIndex != string::npos)
-					localFileFormat = fileName.substr(extensionIndex + 1);
+					localFileFormat = localFileName.substr(extensionIndex + 1);
 
-				if (maxSizeInBytes != -1)
+				if (resultSet->isNull("encodingProfileKey"))
 				{
-					// this is the second or third... physicalPath
-					// we are fore sure in the scenario encodingProfileKey == -1
-					// So, in case we have more than one "source" physicalPath, we will select the 'ts' one
-					// We prefer 'ts' because is easy and safe do activities like cut or concat
-					if (selectedFileFormat == "ts")
+					if (maxSizeInBytesWithoutEncodingProfile != -1)
 					{
-						if (localFileFormat == "ts")
+						// this is the second or third... physicalPath
+						// we are fore sure in the scenario encodingProfileKey == -1
+						// So, in case we have more than one "source" physicalPath, we will select the 'ts' one
+						// We prefer 'ts' because is easy and safe do activities like cut or concat
+						if (selectedFileFormatWithoutEncodingProfile == "ts")
 						{
-							if (localSizeInBytes <= maxSizeInBytes)
+							if (localFileFormat == "ts")
+							{
+								if (localSizeInBytes <= maxSizeInBytesWithoutEncodingProfile)
+									continue;
+							}
+							else
+							{
 								continue;
+							}
 						}
 						else
 						{
-							continue;
+							if (localSizeInBytes <= maxSizeInBytesWithoutEncodingProfile)
+								continue;
 						}
 					}
-					else
-					{
-						if (localSizeInBytes <= maxSizeInBytes)
-							continue;
-					}
+
+					physicalPathKeyWithoutEncodingProfile = resultSet->getInt64("physicalPathKey");
+					externalReadOnlyStorageWithoutEncodingProfile = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
+					mmsPartitionNumberWithoutEncodingProfile = resultSet->getInt("partitionNumber");
+					relativePathWithoutEncodingProfile = resultSet->getString("relativePath");
+					fileNameWithoutEncodingProfile = resultSet->getString("fileName");
+					sizeInBytesWithoutEncodingProfile = resultSet->getInt64("sizeInBytes");
+					if (!resultSet->isNull("durationInMilliSeconds"))
+						durationInMilliSecondsWithoutEncodingProfile = resultSet->getInt64("durationInMilliSeconds");
+
+					fileNameWithoutEncodingProfile = localFileName;
+					maxSizeInBytesWithoutEncodingProfile = localSizeInBytes;
+					selectedFileFormatWithoutEncodingProfile = localFileFormat;
 				}
+				else
+				{
+					if (maxSizeInBytesWithEncodingProfile != -1)
+					{
+						// this is the second or third... physicalPath
+						// we are fore sure in the scenario encodingProfileKey == -1
+						// So, in case we have more than one "source" physicalPath, we will select the 'ts' one
+						// We prefer 'ts' because is easy and safe do activities like cut or concat
+						if (selectedFileFormatWithEncodingProfile == "ts")
+						{
+							if (localFileFormat == "ts")
+							{
+								if (localSizeInBytes <= maxSizeInBytesWithEncodingProfile)
+									continue;
+							}
+							else
+							{
+								continue;
+							}
+						}
+						else
+						{
+							if (localSizeInBytes <= maxSizeInBytesWithEncodingProfile)
+								continue;
+						}
+					}
 
-                physicalPathKey = resultSet->getInt64("physicalPathKey");
-                externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
-                mmsPartitionNumber = resultSet->getInt("partitionNumber");
-                relativePath = resultSet->getString("relativePath");
-                fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getInt64("sizeInBytes");
-                if (!resultSet->isNull("durationInMilliSeconds"))
-					durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+					physicalPathKeyWithEncodingProfile = resultSet->getInt64("physicalPathKey");
+					externalReadOnlyStorageWithEncodingProfile = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
+					mmsPartitionNumberWithEncodingProfile = resultSet->getInt("partitionNumber");
+					relativePathWithEncodingProfile = resultSet->getString("relativePath");
+					fileNameWithEncodingProfile = resultSet->getString("fileName");
+					sizeInBytesWithEncodingProfile = resultSet->getInt64("sizeInBytes");
+					if (!resultSet->isNull("durationInMilliSeconds"))
+						durationInMilliSecondsWithEncodingProfile = resultSet->getInt64("durationInMilliSeconds");
 
-				maxSizeInBytes = localSizeInBytes;
-				selectedFileFormat = localFileFormat;
+					fileNameWithEncodingProfile = localFileName;
+					maxSizeInBytesWithEncodingProfile = localSizeInBytes;
+					selectedFileFormatWithEncodingProfile = localFileFormat;
+				}
             }
 
-			if (maxSizeInBytes == -1)
+			if (maxSizeInBytesWithoutEncodingProfile == -1 && maxSizeInBytesWithEncodingProfile == -1)
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey is not found"
                     + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -3442,7 +3513,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
                     _logger->error(errorMessage);
 
                 throw MediaItemKeyNotFound(errorMessage);                    
-            }            
+            }
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -3451,8 +3522,17 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
         connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(physicalPathKey, mmsPartitionNumber, relativePath, fileName,
-			sizeInBytes, externalReadOnlyStorage, durationInMilliSeconds);
+		// senza encoding profile ha priorità rispetto a 'con encoding profile'
+		if (maxSizeInBytesWithoutEncodingProfile != -1)
+			return make_tuple(physicalPathKeyWithoutEncodingProfile, mmsPartitionNumberWithoutEncodingProfile,
+				relativePathWithoutEncodingProfile, fileNameWithoutEncodingProfile,
+				sizeInBytesWithoutEncodingProfile, externalReadOnlyStorageWithoutEncodingProfile,
+				durationInMilliSecondsWithoutEncodingProfile);
+		else
+			return make_tuple(physicalPathKeyWithEncodingProfile, mmsPartitionNumberWithEncodingProfile,
+				relativePathWithEncodingProfile, fileNameWithEncodingProfile,
+				sizeInBytesWithEncodingProfile, externalReadOnlyStorageWithEncodingProfile,
+				durationInMilliSecondsWithEncodingProfile);
     }
     catch(sql::SQLException se)
     {
