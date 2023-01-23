@@ -4708,6 +4708,7 @@ ffmpeg \
 pair<int64_t, long> FFMpeg::getMediaInfo(
 	int64_t ingestionJobKey,
 	bool isMMSAssetPathName,	// false means it is a URL
+	int timeoutInSeconds,		// used only in case of URL
 	string mediaSource,
 	vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 	vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks)
@@ -4767,6 +4768,37 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     string      detailsPathFileName =
             _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".json";
     
+	string timeoutParameter;
+	if (!isMMSAssetPathName)
+	{
+		// 2023-01-23: il parametro timeout di ffprobe dipende dal protocollo della URL
+		//	E' possibile avere le opzioni con il comando "ffprobe -help" cercando per "timeout"
+
+		string mediaSourceLowerCase;
+		mediaSourceLowerCase.resize(mediaSource.size());
+		transform(mediaSource.begin(), mediaSource.end(), mediaSourceLowerCase.begin(),
+			[](unsigned char c){return tolower(c); } );
+
+		// 2023-01-23: udp è stato verificato con udp://@239.255.1.1:8013 (tv dig terr)
+		if (mediaSourceLowerCase.find("udp://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		else if (mediaSourceLowerCase.find("rtmp://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds) + " ";	// secs
+		else if (mediaSourceLowerCase.find("rtmps://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds) + " ";	// secs
+		else if (mediaSourceLowerCase.find("rtp://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		else if (mediaSourceLowerCase.find("srt://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		// 2023-01-23: per http non sono certo che sia timeout con microsecs
+		else if (mediaSourceLowerCase.find("http://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		else if (mediaSourceLowerCase.find("https://") != string::npos)
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		else
+			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+	}
+
     /*
      * ffprobe:
         "-v quiet": Don't output anything else but the desired raw data value
@@ -4779,6 +4811,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     */
     string ffprobeExecuteCommand = 
 		_ffmpegPath + "/ffprobe "
+		+ timeoutParameter
 		// + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
 		+ "-v quiet -print_format json -show_streams -show_format \""
 		+ mediaSource + "\" "
@@ -11413,7 +11446,8 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		{
 			try
 			{
-				getMediaInfo(ingestionJobKey, false, url, videoTracks, audioTracks);
+				int timeoutInSeconds = 20;
+				getMediaInfo(ingestionJobKey, false, timeoutInSeconds, url, videoTracks, audioTracks);
 			}
 			catch(runtime_error e)
 			{
@@ -11810,7 +11844,8 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		{
 			try
 			{
-				getMediaInfo(ingestionJobKey, false, url, videoTracks, audioTracks);
+				int timeoutInSeconds = 20;
+				getMediaInfo(ingestionJobKey, false, timeoutInSeconds, url, videoTracks, audioTracks);
 			}
 			catch(runtime_error e)
 			{

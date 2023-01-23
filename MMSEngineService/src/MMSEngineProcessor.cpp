@@ -7199,14 +7199,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             FFMpeg ffmpeg (_configuration, _logger);
             // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 
+			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = true;
 			if (mediaFileFormat == "m3u8-tar.gz")
 				mediaInfoDetails = ffmpeg.getMediaInfo(localAssetIngestionEvent.getIngestionJobKey(),
-					isMMSAssetPathName, mmsAssetPathName + "/" + m3u8FileName,
+					isMMSAssetPathName, timeoutInSeconds, mmsAssetPathName + "/" + m3u8FileName,
 					videoTracks, audioTracks);
 			else
 				mediaInfoDetails = ffmpeg.getMediaInfo(localAssetIngestionEvent.getIngestionJobKey(),
-					isMMSAssetPathName, mmsAssetPathName, videoTracks, audioTracks);
+					isMMSAssetPathName, timeoutInSeconds, mmsAssetPathName, videoTracks, audioTracks);
 
 			int64_t durationInMilliSeconds = -1;
 			long bitRate = -1;
@@ -11198,10 +11199,11 @@ void MMSEngineProcessor::changeFileFormatThread(
 							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 						);
+						int timeoutInSeconds = 20;
 						bool isMMSAssetPathName = true;
 						FFMpeg ffmpeg (_configuration, _logger);
 						mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
-							isMMSAssetPathName, stagingChangeFileFormatAssetPathName,
+							isMMSAssetPathName, timeoutInSeconds, stagingChangeFileFormatAssetPathName,
 							videoTracks, audioTracks);
 
 						// tie(durationInMilliSeconds, bitRate, 
@@ -19477,10 +19479,11 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
 			);
+			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = true;
 			FFMpeg ffmpeg (_configuration, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey, 
-				isMMSAssetPathName, concatenatedMediaPathName, videoTracks, audioTracks);
+				isMMSAssetPathName, timeoutInSeconds, concatenatedMediaPathName, videoTracks, audioTracks);
 
 			//tie(durationInMilliSeconds, ignore,
 			//	ignore, ignore, ignore, ignore, ignore, ignore,
@@ -22355,6 +22358,7 @@ void MMSEngineProcessor::checkStreamingThread(
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", streamingUrl: " + streamingUrl
 			);
+			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = false;
 			pair<int64_t, long> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>>
@@ -22362,7 +22366,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			FFMpeg ffmpeg (_configuration, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
-				isMMSAssetPathName, streamingUrl,
+				isMMSAssetPathName, timeoutInSeconds, streamingUrl,
 				videoTracks, audioTracks);
 		}
 
