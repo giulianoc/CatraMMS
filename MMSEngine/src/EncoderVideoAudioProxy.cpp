@@ -2413,7 +2413,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 	catch (runtime_error e)
 	{
 		string error = e.what();
-		if (error.find(NoEncodingAvailable().what()) != string::npos)
+		if (error.find(NoEncodingAvailable().what()) != string::npos
+			|| error.find(MaxConcurrentJobsReached().what()) != string::npos)
 		{
 			string errorMessage = string("No Encodings available / MaxConcurrentJobsReached")
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)

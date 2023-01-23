@@ -1194,6 +1194,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 			{
 				string message = __FILEREF__ + "httpPostPutString failed, wrong return status"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", url: " + url
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 					+ ", response.str(): " + response.str()
@@ -1302,10 +1303,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 				&& response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(__FILEREF__ + "Server is not reachable, is it down?"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", url: " + url 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
@@ -1324,10 +1322,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 			else
 			{
 				logger->error(__FILEREF__ + "httpPostPutString failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", url: " + url
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
