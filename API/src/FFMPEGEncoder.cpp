@@ -628,6 +628,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -779,6 +782,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -930,6 +936,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1081,6 +1090,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1232,6 +1244,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1383,6 +1398,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1534,6 +1552,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1685,6 +1706,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();
@@ -1836,6 +1860,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (encodingAlreadyRunning)
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + EncodingIsAlreadyRunning().what();
+				else if (maxEncodingsCapability == 0)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + MaxConcurrentJobsReached().what();
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 						+ ", " + NoEncodingAvailable().what();

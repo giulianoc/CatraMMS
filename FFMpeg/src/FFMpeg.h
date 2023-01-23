@@ -78,6 +78,13 @@ struct NoEncodingAvailable: public exception {
     }; 
 };
 
+struct MaxConcurrentJobsReached: public exception {
+    char const* what() const throw() 
+    {
+        return "Encoder reached the max number of concurrent jobs";
+    }; 
+};
+
 struct EncodingIsAlreadyRunning: public exception {
     char const* what() const throw() 
     {

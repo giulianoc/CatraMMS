@@ -1196,7 +1196,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sBodyResponse: " + sBodyResponse
+					+ ", response.str(): " + response.str()
 					+ ", responseCode: " + to_string(responseCode)
 				;
 				logger->error(message);
