@@ -2419,7 +2419,8 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 	catch (runtime_error e)
 	{
 		string error = e.what();
-		if (error.find(NoEncodingAvailable().what()) != string::npos)
+		if (error.find(NoEncodingAvailable().what()) != string::npos
+			|| error.find(MaxConcurrentJobsReached().what()) != string::npos)
 		{
 			string errorMessage = string("No Encodings available / MaxConcurrentJobsReached")
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2578,6 +2579,8 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     int imageQuality = -1;
     try
     {
+		int timeoutInSeconds = 20;
+
         _logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2590,13 +2593,13 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				isMMSAssetPathName, encodedNFSStagingAssetPathName + "/" + manifestFileName,
+				isMMSAssetPathName, timeoutInSeconds, encodedNFSStagingAssetPathName + "/" + manifestFileName,
 				videoTracks, audioTracks);
 		}
 		else
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
-				isMMSAssetPathName, encodedNFSStagingAssetPathName,
+				isMMSAssetPathName, timeoutInSeconds, encodedNFSStagingAssetPathName,
 				videoTracks, audioTracks);
 		}
 

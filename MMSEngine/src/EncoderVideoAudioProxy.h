@@ -29,13 +29,6 @@
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
-struct MaxConcurrentJobsReached: public exception {
-    char const* what() const throw() 
-    {
-        return "Encoder reached the max number of concurrent jobs";
-    }; 
-};
-
 struct EncoderError: public exception {
     char const* what() const throw() 
     {

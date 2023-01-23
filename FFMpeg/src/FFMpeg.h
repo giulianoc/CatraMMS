@@ -78,6 +78,13 @@ struct NoEncodingAvailable: public exception {
     }; 
 };
 
+struct MaxConcurrentJobsReached: public exception {
+    char const* what() const throw() 
+    {
+        return "Encoder reached the max number of concurrent jobs";
+    }; 
+};
+
 struct EncodingIsAlreadyRunning: public exception {
     char const* what() const throw() 
     {
@@ -190,7 +197,7 @@ public:
 	bool isFrameIncreasing(int maxMilliSecondsToWait);
 
 	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey,
-		bool isMMSAssetPathName, string mediaSource,
+		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 
