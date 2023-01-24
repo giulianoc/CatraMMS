@@ -606,7 +606,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		tomcatVersion=9.0.70
+		tomcatVersion=9.0.71
 		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
@@ -844,16 +844,22 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleName" == "api" ]; then
 		# -> http(nginx) and https(nginx)
-		ufw allow from 10.0.0.0/16 to any port 8088	#mms-api
-		ufw allow from 10.0.0.0/16 to any port 8089	#mms-gui
-		ufw allow from 10.0.0.0/16 to any port 8090	#mms-binary
-		ufw allow from 10.0.0.0/16 to any port 8091	#mms-delivery
-		ufw allow from 10.0.0.0/16 to any port 8092	#mms-delivery-path
-		ufw allow from 10.0.0.0/16 to any port 8093	#mms-delivery-f
+		echo ""
+		echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod) OR 10.1.0.0/16 (test))? "
+		read internalNetwork
+		ufw allow from $internalNetwork to any port 8088        #mms-api
+		ufw allow from $internalNetwork to any port 8089        #mms-gui
+		ufw allow from $internalNetwork to any port 8090        #mms-binary
+		ufw allow from $internalNetwork to any port 8091        #mms-delivery
+		ufw allow from $internalNetwork to any port 8092        #mms-delivery-path
+		ufw allow from $internalNetwork to any port 8093        #mms-delivery-f
 	elif [ "$moduleName" == "engine" ]; then
 		# -> mysql
 		#ufw allow 3306
-		ufw allow from 10.0.0.0/16 to any port 3306
+		echo ""
+		echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod) OR 10.1.0.0/16 (test))? "
+		read internalNetwork
+		ufw allow from $internalNetwork to any port 3306
 	elif [ "$moduleName" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
