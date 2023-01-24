@@ -17,18 +17,14 @@ tarFileName=$moduleName-$version.tar.gz
 echo -n "deploy su mms cloud/test? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "aws-mms-t-api-gui-1"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-176-34-143-242.eu-west-1.compute.amazonaws.com:/opt/catramms
+	echo "hetzner-test-engine-db-1"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@138.201.245.228:/opt/catramms
 	date
 
-
-	echo "aws-mms-t-engine-db-1"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-31-108-235.eu-west-1.compute.amazonaws.com:/opt/catramms
+	echo "hetzner-test-engine-db-2"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@5.75.228.47:/opt/catramms
 	date
 
-	echo "aws-mms-t-transcoder-irl-1"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-54-73-213-29.eu-west-1.compute.amazonaws.com:/opt/catramms
-	date
 fi
 
 echo -n "deploy su cloud production (rel 22)? " 

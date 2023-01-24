@@ -4790,9 +4790,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
 		else if (mediaSourceLowerCase.find("srt://") != string::npos)
 			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
-		// 2023-01-23: per http non sono certo che sia timeout con microsecs
 		else if (mediaSourceLowerCase.find("http://") != string::npos)
 			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
+		// 2023-01-23: https è stato verificato con https://radioitaliatv.akamaized.net/hls/live/2093117/RadioitaliaTV/master.m3u8
 		else if (mediaSourceLowerCase.find("https://") != string::npos)
 			timeoutParameter = "-timeout " + to_string(timeoutInSeconds * 1000000) + " ";	// micro secs
 		else
