@@ -844,9 +844,10 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleName" == "api" ]; then
 		# -> http(nginx) and https(nginx)
-		echo ""
-		echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod) OR 10.1.0.0/16 (test))? "
-		read internalNetwork
+		#echo ""
+		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
+		#read internalNetwork
+		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 8088        #mms-api
 		ufw allow from $internalNetwork to any port 8089        #mms-gui
 		ufw allow from $internalNetwork to any port 8090        #mms-binary
@@ -856,9 +857,10 @@ firewall-rules()
 	elif [ "$moduleName" == "engine" ]; then
 		# -> mysql
 		#ufw allow 3306
-		echo ""
-		echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod) OR 10.1.0.0/16 (test))? "
-		read internalNetwork
+		#echo ""
+		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
+		#read internalNetwork
+		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 3306
 	elif [ "$moduleName" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)

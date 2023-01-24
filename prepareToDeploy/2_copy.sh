@@ -18,15 +18,15 @@ echo -n "deploy su mms cloud/test? "
 read deploy
 if [ "$deploy" == "y" ]; then
 	echo "hetzner-test-api-1"
-	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@49.12.74.56:/opt/catramms
-	date
-
-	echo "hetzner-test-engine-db-1"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@138.201.245.228:/opt/catramms
 	date
 
-	echo "hetzner-test-engine-db-2"
+	echo "hetzner-test-engine-db-1"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@5.75.228.47:/opt/catramms
+	date
+
+	echo "hetzner-test-engine-db-2"
+	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@49.12.74.56:/opt/catramms
 	date
 fi
 
