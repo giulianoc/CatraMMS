@@ -876,7 +876,7 @@ fs::path MMSStorage::getStagingAssetPathName(
     {
         assetPathName /= localFileName;
 
-        if (removeLinuxPathIfExist) 
+        if (removeLinuxPathIfExist && fs::exists(assetPathName)) 
         {
             try 
             {
