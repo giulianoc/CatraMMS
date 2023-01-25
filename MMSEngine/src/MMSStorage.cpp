@@ -946,7 +946,7 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
     sprintf(pMMSPartitionName, "MMS_%04lu", ulCurrentMMSPartitionIndex);
 
     fs::path mmsAssetPathName = MMSStorage::getMMSRootRepository(_storage)
-		/ string(pMMSPartitionName) / workspaceDirectoryName / relativePath;
+		/ string(pMMSPartitionName) / workspaceDirectoryName / relativePath.substr(1);
     // mmsAssetPathName /= pMMSPartitionName;
 	// mmsAssetPathName /= workspaceDirectoryName;
 	// mmsAssetPathName /= relativePath;
@@ -958,7 +958,7 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
             + ", MMSRootRepository: " + MMSStorage::getMMSRootRepository(_storage).string()
             + ", pMMSPartitionName: " + pMMSPartitionName
             + ", workspaceDirectoryName: " + workspaceDirectoryName
-            + ", relativePath: " + relativePath
+            + ", relativePath: " + relativePath.substr(1)
             + ", mmsAssetPathName: " + mmsAssetPathName.string()
         );
 		fs::create_directories(mmsAssetPathName);
