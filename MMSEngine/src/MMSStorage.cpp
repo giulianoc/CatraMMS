@@ -625,7 +625,8 @@ tuple<fs::path, fs::path, string> MMSStorage::getLiveDeliveryDetails(
 		{
 			deliveryFileName = directoryId + "." + liveFileExtension;
 
-			deliveryPath = MMSStorage::getDirectoryForLiveContents();
+			deliveryPath = "/";
+			deliveryPath /= MMSStorage::getDirectoryForLiveContents();
 			deliveryPath /= requestWorkspace->_directoryName;
 			deliveryPath /= directoryId;
 
