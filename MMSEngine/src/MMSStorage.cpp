@@ -765,12 +765,15 @@ fs::path MMSStorage::getMMSAssetPathName(
 	{
 		assetPathName = MMSStorage::getMMSRootRepository(_storage)
 			/ ("ExternalStorage_" + workspaceDirectoryName)
-			/ relativePath / fileName;
+			/ (relativePath.size() > 0 && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
+			/ fileName;
 	}
 	else
 	{
 		fs::path partitionPathName = _mmsEngineDBFacade->getPartitionPathName(partitionKey);
-		assetPathName = partitionPathName / workspaceDirectoryName / relativePath / fileName;
+		assetPathName = partitionPathName / workspaceDirectoryName
+		/ (relativePath.size() > 0 && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
+		/ fileName;
 	}
 
     return assetPathName;
@@ -947,18 +950,10 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 
     fs::path mmsAssetPathName = MMSStorage::getMMSRootRepository(_storage)
 		/ string(pMMSPartitionName) / workspaceDirectoryName / relativePath.substr(1);
-    // mmsAssetPathName /= pMMSPartitionName;
-	// mmsAssetPathName /= workspaceDirectoryName;
-	// mmsAssetPathName /= relativePath;
 
     if (!fs::exists(mmsAssetPathName)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", _storage: " + _storage.string()
-            + ", MMSRootRepository: " + MMSStorage::getMMSRootRepository(_storage).string()
-            + ", pMMSPartitionName: " + pMMSPartitionName
-            + ", workspaceDirectoryName: " + workspaceDirectoryName
-            + ", relativePath: " + relativePath.substr(1)
             + ", mmsAssetPathName: " + mmsAssetPathName.string()
         );
 		fs::create_directories(mmsAssetPathName);
@@ -1514,13 +1509,10 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			 *	and we started to copy/move.
 			 *	I'll increase the delay before to copy again.
 			 */
-			chrono::system_clock::time_point startPoint;
-			chrono::system_clock::time_point endPoint;
+			int64_t moveElapsedInSeconds;
 			try
 			{
-				startPoint = chrono::system_clock::now();
-				fs::rename(sourceAssetPathName, mmsAssetPathName);
-				endPoint = chrono::system_clock::now();
+				moveElapsedInSeconds = move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -1546,9 +1538,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
 
-				startPoint = chrono::system_clock::now();
-				fs::rename(sourceAssetPathName, mmsAssetPathName);
-				endPoint = chrono::system_clock::now();
+				moveElapsedInSeconds = move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 
             unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
@@ -1560,7 +1550,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
                 + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                 + ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes)
 				+ ", @MMS MOVE statistics@ - elapsed (secs): @"
-				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+				+ to_string(moveElapsedInSeconds) + "@"
 			);
 
 			if (ullFSEntrySizeInBytes != ulDestFileSizeInBytes)
@@ -1582,6 +1572,38 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 
 
     return mmsAssetPathName;
+}
+
+int64_t MMSStorage::move(
+	int64_t ingestionJobKey,
+	fs::path source,
+	fs::path dest)
+{
+	chrono::system_clock::time_point startPoint;
+	chrono::system_clock::time_point endPoint;
+	try
+	{
+		startPoint = chrono::system_clock::now();
+		// fs::rename works only if source and destination are on the same file systems
+		fs::rename(source, dest);
+		endPoint = chrono::system_clock::now();
+	}
+	catch(fs::filesystem_error e)
+	{
+		_logger->error(__FILEREF__ + "Move file failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", source: " + source.string()
+			+ ", dest: " + dest.string()
+			+ ", e.what: " + e.what()
+			+ ", code value: " + to_string(e.code().value())
+			+ ", code message: " + e.code().message()
+			+ ", code category: " + e.code().category().name()
+		);
+
+		throw e;
+	}
+
+	return chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
 }
 
 void MMSStorage::deleteWorkspace(

@@ -157,6 +157,11 @@ public:
 		string tarBinaryPathName, string workspaceIngestionRepository,
 		string sourcePathName);
 
+	int64_t move(
+		int64_t ingestionJobKey,
+		fs::path source,
+		fs::path dest);
+
 private:
 	bool						_noFileSystemAccess;
 	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
