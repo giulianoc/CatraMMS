@@ -1590,17 +1590,45 @@ int64_t MMSStorage::move(
 	}
 	catch(fs::filesystem_error e)
 	{
-		_logger->error(__FILEREF__ + "Move file failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", source: " + source.string()
-			+ ", dest: " + dest.string()
-			+ ", e.what: " + e.what()
-			+ ", code value: " + to_string(e.code().value())
-			+ ", code message: " + e.code().message()
-			+ ", code category: " + e.code().category().name()
-		);
+		if (e.code().value() == 18)	// filesystem error: cannot rename: Invalid cross-device link
+		{
+			try
+			{
+				// copy and delete
+				startPoint = chrono::system_clock::now();
+				fs::copy(source, dest);
+				fs::remove_all(source);
+				endPoint = chrono::system_clock::now();
+			}
+			catch(fs::filesystem_error e)
+			{
+				_logger->error(__FILEREF__ + "move (copy and remove) failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", source: " + source.string()
+					+ ", dest: " + dest.string()
+					+ ", e.what: " + e.what()
+					+ ", code value: " + to_string(e.code().value())
+					+ ", code message: " + e.code().message()
+					+ ", code category: " + e.code().category().name()
+				);
 
-		throw e;
+				throw e;
+			}
+		}
+		else
+		{
+			_logger->error(__FILEREF__ + "Move failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", source: " + source.string()
+				+ ", dest: " + dest.string()
+				+ ", e.what: " + e.what()
+				+ ", code value: " + to_string(e.code().value())
+				+ ", code message: " + e.code().message()
+				+ ", code category: " + e.code().category().name()
+			);
+
+			throw e;
+		}
 	}
 
 	return chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
