@@ -954,6 +954,11 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
     if (!fs::exists(mmsAssetPathName)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
+            + ", _storage: " + _storage.string()
+            + ", MMSRootRepository: " + MMSStorage::getMMSRootRepository(_storage).string()
+            + ", pMMSPartitionName: " + pMMSPartitionName
+            + ", workspaceDirectoryName: " + workspaceDirectoryName
+            + ", relativePath: " + relativePath
             + ", mmsAssetPathName: " + mmsAssetPathName.string()
         );
 		fs::create_directories(mmsAssetPathName);
