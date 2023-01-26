@@ -2705,10 +2705,19 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					"tar cfz " + tarGzStagingLiveRecorderVirtualVODPathName
 					+ " -C " + stagingLiveRecorderVirtualVODDirectory
 					+ " " + virtualVODM3u8DirectoryName;
+
+				// sometimes tar return 1 as status and the command fails because, according the tar man pages,
+				// "this exit code means that some files were changed while being archived and
+				//	so the resulting archive does not contain the exact copy of the file set"
+				// I guess this is due because of the copy of the ts files among different file systems
+				// For this reason I added this sleep
+				long secondsToSleep = 5;
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
+					+ ", secondsToSleep: " + to_string(secondsToSleep)
 				);
-this_thread::sleep_for(chrono::seconds(120));
+				this_thread::sleep_for(chrono::seconds(secondsToSleep));
+
 				chrono::system_clock::time_point startTar = chrono::system_clock::now();
 				int executeCommandStatus = ProcessUtility::execute(executeCommand);
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
