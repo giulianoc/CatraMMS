@@ -2711,7 +2711,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				//	so the resulting archive does not contain the exact copy of the file set"
 				// I guess this is due because of the copy of the ts files among different file systems
 				// For this reason I added this sleep
-				long secondsToSleep = 5;
+				long secondsToSleep = 3;
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
 					+ ", secondsToSleep: " + to_string(secondsToSleep)
