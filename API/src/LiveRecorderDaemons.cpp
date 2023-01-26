@@ -2708,6 +2708,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
 				);
+return 0;
 				chrono::system_clock::time_point startTar = chrono::system_clock::now();
 				int executeCommandStatus = ProcessUtility::execute(executeCommand);
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
