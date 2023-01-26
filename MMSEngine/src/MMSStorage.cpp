@@ -587,7 +587,8 @@ fs::path MMSStorage::getLiveDeliveryAssetPathName(
 
 	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
 
-	fs::path deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage) / deliveryPathName;
+	fs::path deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage) /
+		/ (deliveryPathName.size() > 0 && deliveryPathName.front() == '/' ? deliveryPathName.substr(1) : deliveryPathName);
 
 	return deliveryAssetPathName;
 }
@@ -606,7 +607,8 @@ fs::path MMSStorage::getLiveDeliveryAssetPath(
 
 	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
 
-	fs::path deliveryAssetPath = MMSStorage::getMMSRootRepository(_storage) / deliveryPath;
+	fs::path deliveryAssetPath = MMSStorage::getMMSRootRepository(_storage)
+		/ (deliveryPath.size() > 0 && deliveryPath.front() == '/' ? deliveryPath.substr(1) : deliveryPath);
 
 	return deliveryAssetPath;
 }
