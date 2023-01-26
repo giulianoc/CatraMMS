@@ -2708,6 +2708,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
 				);
+this_thread::sleep_for(chrono::seconds(120));
 				chrono::system_clock::time_point startTar = chrono::system_clock::now();
 				int executeCommandStatus = ProcessUtility::execute(executeCommand);
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
@@ -2759,7 +2760,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-/*
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
 			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
@@ -2778,7 +2778,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			bool removeRecursively = true;
 			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
 		}
-*/
 
 		throw runtime_error(errorMessage);
 	}
