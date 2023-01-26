@@ -1476,6 +1476,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
 														}
+														else
+														{
+															_logger->info(__FILEREF__ + "liveRecordingMonitor. chunk to be removed, NOT too old"
+																+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+																+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+																+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+																+ ", lastFileUpdateInSeconds: " + to_string(lastFileUpdateInSeconds) + " seconds ago"
+																+ ", liveProxyChunkRetentionInSeconds: " + to_string(liveProxyChunkRetentionInSeconds)
+															);
+														}
 
 														if (!firstChunkRead
 															|| fileLastModification > lastChunkTimestamp)
