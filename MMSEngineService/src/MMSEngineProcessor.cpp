@@ -6701,7 +6701,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	string mmsAssetPathName;
 	string relativePathToBeUsed;
 	long mmsPartitionUsed;
-	// FileIO::DirectoryEntryType_t sourceFileType;
 	try
 	{
 		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
@@ -6917,35 +6916,23 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		try
 		{
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-				mmsAssetPathName + "/");
-			bool scanDirectoryFinished = false;
-			while (!scanDirectoryFinished)
+			for (fs::directory_entry const& entry: fs::directory_iterator(mmsAssetPathName))
 			{
-				string directoryEntry;
 				try
 				{
-					string directoryEntry = FileIO::readDirectory (directory,
-						&detDirectoryEntryType);
-
-					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+					if (!entry.is_regular_file())
 						continue;
 
 					string m3u8Suffix(".m3u8");
-					if (directoryEntry.size() >= m3u8Suffix.size()
-							&& 0 == directoryEntry.compare(
-								directoryEntry.size()-m3u8Suffix.size(),
+					if (entry.path().filename().string().size() >= m3u8Suffix.size()
+							&& 0 == entry.path().filename().string().compare(
+								entry.path().filename().string().size()-m3u8Suffix.size(),
 								m3u8Suffix.size(), m3u8Suffix))
 					{
-						m3u8FileName = directoryEntry;
+						m3u8FileName = entry.path().filename().string();
 
-						scanDirectoryFinished = true;
+						break;
 					}
-				}
-				catch(DirectoryListFinished e)
-				{
-					scanDirectoryFinished = true;
 				}
 				catch(runtime_error e)
 				{
@@ -6966,8 +6953,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					throw e;
 				}
 			}
-
-			FileIO::closeDirectory (directory);
 
 			if (m3u8FileName == "")
 			{
@@ -7794,12 +7779,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     // int64_t mediaItemKey;
 	try
 	{
-		bool inCaseOfLinkHasItToBeRead = false;
 		unsigned long long sizeInBytes;
 		if (mediaFileFormat == "m3u8-tar.gz")
-			sizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
+		{
+			sizeInBytes = 0;
+			// recursive_directory_iterator, by default, does not follow sym links
+			for (fs::directory_entry const& entry: fs::recursive_directory_iterator(mmsAssetPathName))
+			{
+				if (entry.is_regular_file())
+					sizeInBytes += entry.file_size();
+			}
+		}
 		else
-			sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
+			sizeInBytes = fs::file_size(mmsAssetPathName);   
 
 		int64_t variantOfMediaItemKey = -1;
 		{
@@ -11005,8 +10997,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									_logger->info(__FILEREF__ + "removeDirectory"
 										+ ", directoryPathName: " + directoryPathName
 									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+									fs::remove_all(directoryPathName);
 								}
 							}
 							catch(runtime_error e)
@@ -11043,8 +11034,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									_logger->info(__FILEREF__ + "removeDirectory"
 										+ ", directoryPathName: " + directoryPathName
 									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+									fs::remove_all(directoryPathName);
 								}
 							}
 							catch(runtime_error e)
@@ -11064,7 +11054,6 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					string mmsChangeFileFormatAssetPathName;
 					unsigned long mmsPartitionIndexUsed;
-					// FileIO::DirectoryEntryType_t sourceFileType;
 					try
 					{
 						bool deliveryRepositoriesToo = true;
@@ -11106,8 +11095,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									_logger->info(__FILEREF__ + "removeDirectory"
 										+ ", directoryPathName: " + directoryPathName
 									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+									fs::remove_all(directoryPathName);
 								}
 							}
 							catch(runtime_error e)
@@ -11147,8 +11135,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									_logger->info(__FILEREF__ + "removeDirectory"
 										+ ", directoryPathName: " + directoryPathName
 									);
-									Boolean_t bRemoveRecursively = true;
-									FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+									fs::remove_all(directoryPathName);
 								}
 							}
 							catch(runtime_error e)
@@ -11180,8 +11167,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 								_logger->info(__FILEREF__ + "removeDirectory"
 									+ ", directoryPathName: " + directoryPathName
 								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+								fs::remove_all(directoryPathName);
 							}
 						}
 						catch(runtime_error e)
@@ -11210,9 +11196,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						unsigned long long mmsAssetSizeInBytes;
 						{
-							bool inCaseOfLinkHasItToBeRead = false;
-							mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsChangeFileFormatAssetPathName,
-								inCaseOfLinkHasItToBeRead);   
+							mmsAssetSizeInBytes = fs::file_size(mmsChangeFileFormatAssetPathName);   
 						}
 
 						bool externalReadOnlyStorage = false;
@@ -11638,7 +11622,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", frameAssetPathName: " + frameAssetPathName
 							);
-							FileIO::remove(frameAssetPathName);
+							fs::remove_all(frameAssetPathName);
 						}
 
 						throw e;
@@ -11656,7 +11640,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", frameAssetPathName: " + frameAssetPathName
 							);
-							FileIO::remove(frameAssetPathName);
+							fs::remove_all(frameAssetPathName);
 						}
 
 						throw e;
@@ -17817,7 +17801,7 @@ void MMSEngineProcessor::copyContent(
             + ", localPathName: " + localPathName
         );
 
-        FileIO::copyFile(mmsAssetPathName, localPathName);
+        fs::copy(mmsAssetPathName, localPathName);
     }
     catch (runtime_error& e) 
     {
@@ -17877,27 +17861,16 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
         {
             string generatedFrames_BaseFileName = to_string(multiLocalAssetIngestionEvent.getIngestionJobKey());
 
-            FileIO::DirectoryEntryType_t detDirectoryEntryType;
-            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (workspaceIngestionRepository + "/");
-
-            bool scanDirectoryFinished = false;
-            while (!scanDirectoryFinished)
+			for (fs::directory_entry const& entry: fs::directory_iterator(workspaceIngestionRepository))
             {
-                string directoryEntry;
                 try
                 {
-                    string directoryEntry = FileIO::readDirectory (directory,
-                        &detDirectoryEntryType);
-
-                    if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    if (!entry.is_regular_file())
                         continue;
 
-                    if (directoryEntry.size() >= generatedFrames_BaseFileName.size() && 0 == directoryEntry.compare(0, generatedFrames_BaseFileName.size(), generatedFrames_BaseFileName))
-                        generatedFramesFileNames.push_back(directoryEntry);
-                }
-                catch(DirectoryListFinished e)
-                {
-                    scanDirectoryFinished = true;
+                    if (entry.path().filename().string().size() >= generatedFrames_BaseFileName.size()
+						&& 0 == entry.path().filename().string().compare(0, generatedFrames_BaseFileName.size(), generatedFrames_BaseFileName))
+                        generatedFramesFileNames.push_back(entry.path().filename().string());
                 }
                 catch(runtime_error e)
                 {
@@ -17918,8 +17891,6 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                     throw e;
                 }
             }
-
-            FileIO::closeDirectory (directory);
         }
            
         // we have one ingestion job row and one or more generated frames to be ingested
@@ -17952,7 +17923,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                     + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                     + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 );
-                FileIO::remove(workspaceIngestionBinaryPathName);
+                fs::remove_all(workspaceIngestionBinaryPathName);
             }
             else
             {
@@ -18152,8 +18123,6 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 				);
 		}
 
-        bool exceptionInCaseOfError = false;
-        
         for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
                 it != generatedFramesFileNames.end(); ++it) 
         {
@@ -18164,7 +18133,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                 + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
             );
-            FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
+            fs::remove_all(workspaceIngestionBinaryPathName);
         }
         
         throw e;
@@ -18206,8 +18175,6 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 				);
 		}
 
-        bool exceptionInCaseOfError = false;
-        
         for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
                 it != generatedFramesFileNames.end(); ++it) 
         {
@@ -18218,7 +18185,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                 + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
             );
-            FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
+            fs::remove_all(workspaceIngestionBinaryPathName);
         }
         
         throw e;
@@ -19184,7 +19151,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 + ", concatenatedMediaPathName: " + concatenatedMediaPathName
             );
 
-            FileIO::copyFile(sourcePhysicalPath, concatenatedMediaPathName);
+            fs::copy(sourcePhysicalPath, concatenatedMediaPathName);
         }
         else
         {
@@ -19311,8 +19278,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(concatenatedMediaPathName, exceptionInCaseOfError);
+				fs::remove_all(concatenatedMediaPathName);
 			}
 		}
 
@@ -23487,9 +23453,24 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case it is a directory with segments inside
-		if (!FileIO::directoryExisting(mediaSourcePathName,
-			_waitingNFSSync_maxMillisecondsToWait,
-			_waitingNFSSync_milliSecondsWaitingBetweenChecks))
+		bool dirExists = false;
+		{
+			chrono::system_clock::time_point end = chrono::system_clock::now()                                    
+				+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+			do
+			{
+				if (fs::exists(mediaSourcePathName))
+				{
+					dirExists = true;
+					break;
+				}
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+			}
+			while(chrono::system_clock::now() < end);
+		}
+
+		if (!dirExists)
 		{
 			string errorMessage = __FILEREF__ + "Media Source directory does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23509,9 +23490,23 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 		// FileIO::fileExisting returns false even if the file is there.
 		// This is due because of NFS 
 		// delay to present the file 
-		if (!FileIO::fileExisting(mediaSourcePathName,
-			_waitingNFSSync_maxMillisecondsToWait,
-			_waitingNFSSync_milliSecondsWaitingBetweenChecks))
+		bool fileExists = false;
+		{
+			chrono::system_clock::time_point end = chrono::system_clock::now()
+				+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+			do
+			{
+				if (fs::exists(mediaSourcePathName))
+				{
+					fileExists = true;
+					break;
+				}
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+			}
+			while(chrono::system_clock::now() < end);
+		}
+		if (!fileExists)
 		{
 			string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23601,9 +23596,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	// we just simplify and file size check is not done in case of segments
     if (mediaFileFormat != "m3u8-tar.gz" && fileSizeInBytes != -1)
     {
-        bool inCaseOfLinkHasItToBeRead = false;
-        unsigned long downloadedFileSizeInBytes = 
-            FileIO:: getFileSizeInBytes (mediaSourcePathName, inCaseOfLinkHasItToBeRead);
+        unsigned long downloadedFileSizeInBytes = fs::file_size(mediaSourcePathName);
 
         if (fileSizeInBytes != downloadedFileSizeInBytes)
         {
@@ -25828,9 +25821,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", destBinaryPathName: " + destBinaryPathName
         );
         
-		chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-        FileIO::moveFile(sourcePathName, destBinaryPathName);
-        chrono::system_clock::time_point endMoving = chrono::system_clock::now();
+		int64_t elapsedInSeconds = _mmsStorage->move(ingestionJobKey, sourcePathName, destBinaryPathName);
 
 		if (m3u8TarGzOrM3u8Streaming)
 		{
@@ -25860,7 +25851,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             // + ", movingCompleted: " + to_string(true)
             + ", sourcePathName: " + sourcePathName
             + ", destBinaryPathName: " + destBinaryPathName
-			+ ", @MMS MOVE statistics@ - movingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
+			+ ", @MMS MOVE statistics@ - movingDuration (secs): @" + to_string(elapsedInSeconds) + "@"
         );                            
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
             ingestionJobKey, true);
@@ -26006,7 +25997,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );
 
 		chrono::system_clock::time_point startCoping = chrono::system_clock::now();
-        FileIO::copyFile(sourcePathName, destBinaryPathName);
+        fs::copy(sourcePathName, destBinaryPathName);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
         if (m3u8TarGzOrM3u8Streaming == 1)

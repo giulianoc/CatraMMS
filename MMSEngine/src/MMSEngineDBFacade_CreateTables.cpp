@@ -875,27 +875,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     continue;
                 }
 
-                FileIO::DirectoryEntryType_t detDirectoryEntryType;
-                shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (predefinedProfileDirectoryPath + "/");
-
-                bool scanDirectoryFinished = false;
-                while (!scanDirectoryFinished)
-                {
-                    string directoryEntry;
+				for (fs::directory_entry const& entry: fs::directory_iterator(predefinedProfileDirectoryPath))
+				{
                     try
                     {
-                        string directoryEntry = FileIO::readDirectory (directory,
-                            &detDirectoryEntryType);
-
-                        if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                        if (!entry.is_regular_file())
                             continue;
 
-                        size_t extensionIndex = directoryEntry.find_last_of(".");
-                        if (extensionIndex == string::npos
-                                || directoryEntry.substr(extensionIndex) != ".json")
-                        {
+						if (entry.path().filename().string().find(".json") == string::npos)
+						{
                             string errorMessage = __FILEREF__ + "Wrong filename (encoding profile) extention"
-                                   + ", directoryEntry: " + directoryEntry
+                                   + ", entry.path().filename(): " + entry.path().filename().string()
                             ;
                             _logger->error(errorMessage);
 
@@ -904,14 +894,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                         string jsonProfile;
                         {        
-                            ifstream profileFile(predefinedProfileDirectoryPath + "/" + directoryEntry);
+                            ifstream profileFile(entry.path());
                             stringstream buffer;
                             buffer << profileFile.rdbuf();
 
                             jsonProfile = buffer.str();
 
                             _logger->info(__FILEREF__ + "Reading profile"
-                                + ", profile pathname: " + (predefinedProfileDirectoryPath + "/" + directoryEntry)
+                                + ", profile pathname: " + entry.path().string()
                                 + ", profile: " + jsonProfile
                             );                            
                         }
@@ -924,75 +914,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
 							MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 
-						/*
-						string fileFormatLowerCase;
-						fileFormatLowerCase.resize(fileFormat.size());
-						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-							[](unsigned char c){return tolower(c); } );
-
-						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-						{
-							if (predefinedProfileDirectoryPath.size() >= videoSuffix.size() 
-								&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(), 
-								videoSuffix.size(), videoSuffix))
-							{
-								if (fileFormatLowerCase == "mp4")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "mkv")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "mov")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
-								else if (fileFormatLowerCase == "webm")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								else if (fileFormatLowerCase == "ts")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								else if (fileFormatLowerCase == "mts")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								else if (fileFormatLowerCase == "avi")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-								else
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-							}
-							else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
-									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
-										audioSuffix.size(), audioSuffix))
-							{
-								if (fileFormatLowerCase == "mp4")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "mkv")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
-								else
-								{
-									string errorMessage = __FILEREF__ + "Wrong fileFormat"
-										+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
-										+ ", fileFormat: " + fileFormat
-									;
-									_logger->error(errorMessage);
-
-									continue;
-								}
-							}
-							else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() 
-									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-imageSuffix.size(), 
-										imageSuffix.size(), imageSuffix))
-							{
-								deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
-							}
-							else
-							{
-								string errorMessage = __FILEREF__ + "Wrong predefinedProfileDirectoryPath"
-									+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
-								;
-								_logger->error(errorMessage);
-
-								continue;
-							}
-						}
-						*/
 						_logger->info(__FILEREF__ + "Encoding technology"
 							+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
 							+ ", label: " + label
@@ -1075,10 +996,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             }
                         }
                     }
-                    catch(DirectoryListFinished e)
-                    {
-                        scanDirectoryFinished = true;
-                    }
                     catch(runtime_error e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
@@ -1098,8 +1015,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                         throw e;
                     }
                 }
-
-                FileIO::closeDirectory (directory);
             }
         }
         catch(sql::SQLException se)
@@ -1705,28 +1620,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             {
-                FileIO::DirectoryEntryType_t detDirectoryEntryType;
-                shared_ptr<FileIO::Directory> directory =
-					FileIO::openDirectory(_predefinedWorkflowLibraryDirectoryPath + "/");
-
-                bool scanDirectoryFinished = false;
-                while (!scanDirectoryFinished)
-                {
-                    string directoryEntry;
+				for (fs::directory_entry const& entry: fs::directory_iterator(_predefinedWorkflowLibraryDirectoryPath))
+				{
                     try
                     {
-                        string directoryEntry = FileIO::readDirectory (directory,
-                            &detDirectoryEntryType);
-
-                        if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                        if (!entry.is_regular_file())
                             continue;
 
-                        size_t extensionIndex = directoryEntry.find_last_of(".");
-                        if (extensionIndex == string::npos
-                                || directoryEntry.substr(extensionIndex) != ".json")
-                        {
+						if (entry.path().filename().string().find(".json") == string::npos)
+						{
                             string errorMessage = __FILEREF__ + "Wrong filename (workflow) extention"
-								+ ", directoryEntry: " + directoryEntry
+                                   + ", entry.path().filename(): " + entry.path().filename().string()
                             ;
                             _logger->error(errorMessage);
 
@@ -1735,14 +1639,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						string jsonWorkflow;
                         {        
-                            ifstream profileFile(_predefinedWorkflowLibraryDirectoryPath + "/" + directoryEntry);
+                            ifstream profileFile(entry.path());
                             stringstream buffer;
                             buffer << profileFile.rdbuf();
 
                             jsonWorkflow = buffer.str();
 
                             _logger->info(__FILEREF__ + "Reading workflow"
-                                + ", workflow pathname: " + (_predefinedWorkflowLibraryDirectoryPath + "/" + directoryEntry)
+                                + ", workflow pathname: " + entry.path().string()
                                 + ", workflow: " + jsonWorkflow
                             );
                         }
@@ -1754,10 +1658,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						int64_t workspaceKey = -1;
 						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1,
 							jsonWorkflow, true);
-                    }
-                    catch(DirectoryListFinished e)
-                    {
-                        scanDirectoryFinished = true;
                     }
                     catch(runtime_error e)
                     {
@@ -1778,8 +1678,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                         throw e;
                     }
                 }
-
-                FileIO::closeDirectory (directory);
             }
         }
         catch(sql::SQLException se)

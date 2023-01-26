@@ -4,7 +4,6 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
-#include "catralibraries/FileIO.h"
 
 #include "MMSEngineDBFacade.h"
 #include "AWSSigner.h"
@@ -54,7 +53,7 @@ B. Write a method to create the signature for the signed URL that uses
 		with characters that are valid
 */
 
-	if (!FileIO::fileExisting(privateKeyPEMPathName))
+	if (!fs::exists(privateKeyPEMPathName))
 	{
 		_logger->error(__FILEREF__ + "PEM path name not existing"
 			+ ", privateKeyPEMPathName: " + privateKeyPEMPathName);

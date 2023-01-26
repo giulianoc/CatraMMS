@@ -1131,14 +1131,9 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
-        if (stagingEncodedAssetPathName != "" &&
-				(FileIO::fileExisting(stagingEncodedAssetPathName) || 
-                FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (stagingEncodedAssetPathName != "" && fs::exists(stagingEncodedAssetPathName)
 		)
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(
-				stagingEncodedAssetPathName);
-
             _logger->error(__FILEREF__ + "Remove"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1148,22 +1143,10 @@ void EncoderVideoAudioProxy::operator()()
 
 			try
 			{
-				// file in case of .3gp content OR directory in case of IPhone content
-				if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					Boolean_t bRemoveRecursively = true;
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-					);
-					FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-				}
-				else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-				{
-					_logger->info(__FILEREF__ + "remove"
-						+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-					);
-					FileIO::remove(stagingEncodedAssetPathName);
-				}
+				_logger->info(__FILEREF__ + "remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
+				fs::remove_all(stagingEncodedAssetPathName);
 			}
 			catch(runtime_error er)
 			{
@@ -1245,13 +1228,9 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
-        if (stagingEncodedAssetPathName != "" &&
-				(FileIO::fileExisting(stagingEncodedAssetPathName) || 
-                FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (stagingEncodedAssetPathName != "" && fs::exists(stagingEncodedAssetPathName)
 		)
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->error(__FILEREF__ + "Remove"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1259,22 +1238,10 @@ void EncoderVideoAudioProxy::operator()()
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "removeDirectory"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                );
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                );
-                FileIO::remove(stagingEncodedAssetPathName);
-            }
+			_logger->info(__FILEREF__ + "remove"
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
         }
 
 		try
@@ -1444,9 +1411,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 				// added the check of the file size is zero because in this case the
 				// magick library cause the crash of the xmms engine
 				{
-					bool inCaseOfLinkHasItToBeRead = false;
-					unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-						mmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
+					unsigned long ulFileSize = fs::file_size(mmsSourceAssetPathName);
 					if (ulFileSize == 0)
 					{
 						string errorMessage = __FILEREF__ + "source image file size is zero"
@@ -1507,7 +1472,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 					-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 					removeLinuxPathIfExist);
 
-				FileIO::copyFile (mmsSourceAssetPathName, stagingEncodedAssetPathName);
+				fs::copy(mmsSourceAssetPathName, stagingEncodedAssetPathName);
 			}
 			else
 			{
@@ -1587,8 +1552,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1633,8 +1597,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1763,8 +1726,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1804,8 +1766,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1848,8 +1809,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1892,8 +1852,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1936,8 +1895,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -1958,7 +1916,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			string encodedFileName;
 			string mmsAssetPathName;
 			unsigned long mmsPartitionIndexUsed;
-			// FileIO::DirectoryEntryType_t sourceFileType;
 			try
 			{
 				size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -2012,8 +1969,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -2051,8 +2007,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							fs::remove_all(directoryPathName);
 						}
 					}
 					catch(runtime_error e)
@@ -2083,8 +2038,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						_logger->info(__FILEREF__ + "removeDirectory"
 							+ ", directoryPathName: " + directoryPathName
 						);
-						Boolean_t bRemoveRecursively = true;
-						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+						fs::remove_all(directoryPathName);
 					}
 				}
 				catch(runtime_error e)
@@ -2103,9 +2057,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			{
 				unsigned long long mmsAssetSizeInBytes;
 				{
-					bool inCaseOfLinkHasItToBeRead = false;
-					mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
-						inCaseOfLinkHasItToBeRead);   
+					mmsAssetSizeInBytes = fs::file_size(mmsAssetPathName);   
 				}
 
 				bool externalReadOnlyStorage = false;
@@ -2173,27 +2125,6 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					+ ", mmsAssetPathName: " + mmsAssetPathName
 				);
 				fs::remove_all(mmsAssetPathName);
-				/*
-				if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-				}
-				else
-				{
-					bool exceptionInCaseOfErr = false;
-					_logger->info(__FILEREF__ + "Remove"
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					);
-					FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
-				}
-				*/
 
 				throw e;
 			}
@@ -2632,8 +2563,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 			catch(runtime_error e)
@@ -2673,8 +2603,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 			catch(runtime_error e)
@@ -2695,7 +2624,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
-	// FileIO::DirectoryEntryType_t sourceFileType;
     try
     {
         size_t fileNameIndex = encodedNFSStagingAssetPathName.find_last_of("/");
@@ -2754,8 +2682,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 			catch(runtime_error e)
@@ -2795,8 +2722,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 			catch(runtime_error e)
@@ -2827,8 +2753,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 				_logger->info(__FILEREF__ + "removeDirectory"
 					+ ", directoryPathName: " + directoryPathName
 				);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				fs::remove_all(directoryPathName);
 			}
 		}
 		catch(runtime_error e)
@@ -2850,13 +2775,17 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
         {
             if (fs::is_directory(mmsAssetPathName))
             {
-                mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
+				mmsAssetSizeInBytes = 0;
+				// recursive_directory_iterator, by default, does not follow sym links
+				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(mmsAssetPathName))
+				{
+					if (entry.is_regular_file())
+						mmsAssetSizeInBytes += entry.file_size();
+				}
             }
             else
             {
-                bool inCaseOfLinkHasItToBeRead = false;
-                mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
-                        inCaseOfLinkHasItToBeRead);   
+                mmsAssetSizeInBytes = fs::file_size(mmsAssetPathName);   
             }
         }
 
@@ -2938,32 +2867,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 			+ ", mmsAssetPathName: " + mmsAssetPathName
 		);
 		fs::remove_all(mmsAssetPathName);
-		/*
-		// file in case of .3gp content OR directory in case of IPhone content
-		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-		{
-			if (FileIO::directoryExisting(mmsAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "removeDirectory"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-			}
-		}
-		else if (sourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-		{
-			if (FileIO::fileExisting(mmsAssetPathName))
-			{
-				_logger->info(__FILEREF__ + "remove"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
-			}
-		}
-		*/
 
         throw e;
     }
@@ -4003,8 +3906,24 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
-	if (!FileIO::fileExisting(sourcePhysicalPath,
-		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
+	bool fileExists = false;
+	{
+		chrono::system_clock::time_point end = chrono::system_clock::now()
+			+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+		do
+		{
+			if (fs::exists(sourcePhysicalPath))
+			{
+				fileExists = true;
+				break;
+			}
+
+			this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+		}
+		while(chrono::system_clock::now() < end);
+	}
+
+	if (!fileExists)
 	{
 		string errorMessage = __FILEREF__ + "Media Source file does not exist"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4916,8 +4835,24 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
-	if (!FileIO::fileExisting(sourcePhysicalPath,
-		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
+	bool fileExists = false;
+	{
+		chrono::system_clock::time_point end = chrono::system_clock::now()
+			+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+		do
+		{
+			if (fs::exists(sourcePhysicalPath))
+			{
+				fileExists = true;
+				break;
+			}
+
+			this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+		}
+		while(chrono::system_clock::now() < end);
+	}
+
+	if (!fileExists)
 	{
 		string errorMessage = __FILEREF__ + "Media Source file does not exist"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
