@@ -2765,7 +2765,7 @@ void API::uploadedBinary(
 					{
                         chrono::system_clock::time_point start = chrono::system_clock::now();
 
-						ofstream ofDestination(destBinaryPathName, std::ios_base::binary | std::ios_base::ate);
+						ofstream ofDestination(destBinaryPathName, std::ios_base::binary | std::ios_base::app);
 						ifstream ifSource(sourceBinaryPathFile, std::ios_base::binary);
 
 						ofDestination << ifSource.rdbuf();
