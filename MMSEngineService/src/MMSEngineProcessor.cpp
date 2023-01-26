@@ -6725,6 +6725,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
                 localAssetIngestionEvent.getWorkspace()->_workspaceKey);
         
+			bool isDirectory = fs::is_directory(binaryPathName);
+
 			unsigned long mmsPartitionIndexUsed;
 			bool deliveryRepositoriesToo        = true;
 			mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
@@ -6741,10 +6743,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			mmsPartitionUsed = mmsPartitionIndexUsed;
 
 			// if (mediaFileFormat == "m3u8")
-			if (fs::is_directory(binaryPathName))
-			{
+			if (isDirectory)
 				relativePathToBeUsed += (mediaSourceFileName + "/");
-			}
 		}
 		else
 		{
