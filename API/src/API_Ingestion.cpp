@@ -2720,7 +2720,7 @@ void API::uploadedBinary(
                 
                 if (contentRangeStart != workspaceIngestionBinarySizeInBytes)
                 {
-                    string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
+                    string errorMessage = string("Content-Range. This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
                         + ", workspaceIngestionBinarySizeInBytes (expected): " + to_string(workspaceIngestionBinarySizeInBytes)
@@ -2752,7 +2752,7 @@ void API::uploadedBinary(
                 {
                     // bool removeSrcFileAfterConcat = true;
                     
-					_logger->info(__FILEREF__ + "Concat file"
+					_logger->info(__FILEREF__ + "Content-Range. Concat file"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", destBinaryPathName: " + destBinaryPathName
 						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
@@ -2773,7 +2773,7 @@ void API::uploadedBinary(
 						ofDestination.close();
 						ifSource.close();
 
-						_logger->info(__FILEREF__ + "Concat file elapsed"
+						_logger->info(__FILEREF__ + "Content-Range. Concat file elapsed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", destBinaryPathName: " + destBinaryPathName
 							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
@@ -2788,7 +2788,7 @@ void API::uploadedBinary(
                 }
                 catch(exception e)
                 {
-                    string errorMessage = string("Error to concat file")
+                    string errorMessage = string("Content-Range. Error to concat file")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", destBinaryPathName: " + destBinaryPathName
                         + ", sourceBinaryPathFile: " + sourceBinaryPathFile
@@ -2806,7 +2806,7 @@ void API::uploadedBinary(
                 
                 if (contentRangeStart != 0)
                 {
-                    string errorMessage = string("This is the first chunk of the file and Content-Range start has to be 0")
+                    string errorMessage = string("Content-Range. This is the first chunk of the file and Content-Range start has to be 0")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
                     ;
@@ -2819,7 +2819,7 @@ void API::uploadedBinary(
                 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Moving file"
+                    _logger->info(__FILEREF__ + "Content-Range. Moving file"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                         + ", destBinaryPathName: " + destBinaryPathName
@@ -2829,7 +2829,7 @@ void API::uploadedBinary(
                 }
                 catch(exception e)
                 {
-                    string errorMessage = string("Error to move file")
+                    string errorMessage = string("Content-Range. Error to move file")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                         + ", destBinaryPathName: " + destBinaryPathName
@@ -2867,7 +2867,7 @@ void API::uploadedBinary(
 				}
 
                 bool sourceBinaryTransferred = true;
-                _logger->info(__FILEREF__ + "Update IngestionJob"
+                _logger->info(__FILEREF__ + "Content-Range. Update IngestionJob"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
                 );
@@ -2876,7 +2876,7 @@ void API::uploadedBinary(
             }
 			else
 			{
-				_logger->info(__FILEREF__ + "Update IngestionJob (uploading progress)"
+				_logger->info(__FILEREF__ + "Content-Range. Update IngestionJob (uploading progress)"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", uploadingProgress: " + to_string(uploadingProgress)
 				);
