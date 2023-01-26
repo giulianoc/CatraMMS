@@ -2759,6 +2759,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
+/*
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
 			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
@@ -2777,6 +2778,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			bool removeRecursively = true;
 			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
 		}
+*/
 
 		throw runtime_error(errorMessage);
 	}
