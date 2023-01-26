@@ -3,7 +3,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 
 
 void EncodeContent::encodeContent(
@@ -91,16 +90,17 @@ void EncodeContent::encodeContent(
 					string directoryPathName = sourceAssetPathName.substr(
 						0, endOfDirectoryIndex);
 
-					bool noErrorIfExists = true;
-					bool recursive = true;
 					_logger->info(__FILEREF__ + "Creating directory"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(directoryPathName);
+					fs::permissions(directoryPathName,
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+						| fs::perms::group_read | fs::perms::group_exec
+						| fs::perms::others_read | fs::perms::others_exec,
+						fs::perm_options::replace);
 				}
 			}
 
@@ -137,16 +137,17 @@ void EncodeContent::encodeContent(
 					string directoryPathName = encodedStagingAssetPathName.substr(
 						0, endOfDirectoryIndex);
 
-					bool noErrorIfExists = true;
-					bool recursive = true;
 					_logger->info(__FILEREF__ + "Creating directory"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(directoryPathName);
+					fs::permissions(directoryPathName,
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+						| fs::perms::group_read | fs::perms::group_exec
+						| fs::perms::others_read | fs::perms::others_exec,
+						fs::perm_options::replace);
 				}
 			}
 
@@ -227,8 +228,7 @@ void EncodeContent::encodeContent(
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+				fs::remove_all(sourceAssetPathName);
 			}
 
 			field = "sourceMediaItemKey";
@@ -280,7 +280,7 @@ void EncodeContent::encodeContent(
 	{
 		if (externalEncoder)
 		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
+			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -288,8 +288,7 @@ void EncodeContent::encodeContent(
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+				fs::remove_all(sourceAssetPathName);
 			}
 
 			if (encodedStagingAssetPathName != "")
@@ -302,8 +301,7 @@ void EncodeContent::encodeContent(
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 		}
@@ -335,7 +333,7 @@ void EncodeContent::encodeContent(
     {
 		if (externalEncoder)
 		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
+			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -343,8 +341,7 @@ void EncodeContent::encodeContent(
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+				fs::remove_all(sourceAssetPathName);
 			}
 
 			if (encodedStagingAssetPathName != "")
@@ -357,8 +354,7 @@ void EncodeContent::encodeContent(
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 		}
@@ -391,7 +387,7 @@ void EncodeContent::encodeContent(
     {
 		if (externalEncoder)
 		{
-			if (sourceAssetPathName != "" && FileIO::fileExisting(sourceAssetPathName))
+			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -399,8 +395,7 @@ void EncodeContent::encodeContent(
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+				fs::remove_all(sourceAssetPathName);
 			}
 
 			if (encodedStagingAssetPathName != "")
@@ -413,8 +408,7 @@ void EncodeContent::encodeContent(
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					fs::remove_all(directoryPathName);
 				}
 			}
 		}

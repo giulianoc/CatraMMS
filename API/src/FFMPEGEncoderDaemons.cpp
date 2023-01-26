@@ -258,7 +258,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									string manifestFilePathName =
 										manifestDirectoryPath + "/" + manifestFileName;
 									{
-										if(!FileIO::fileExisting(manifestFilePathName))
+										if(!fs::exists(manifestFilePathName))
 										{
 											liveProxyWorking = false;
 
@@ -488,7 +488,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										try
 										{
-											if (FileIO::directoryExisting(manifestDirectoryPathName))
+											if (fs::exists(manifestDirectoryPathName))
 											{
 												FileIO::DirectoryEntryType_t detDirectoryEntryType;
 												shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
@@ -623,8 +623,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										}
 
 										{
-											bool exceptionInCaseOfError = false;
-
 											for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
 											{
 												try
@@ -633,7 +631,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 														+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-													FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+													fs::remove_all(segmentPathNameToBeRemoved);
 												}
 												catch(runtime_error e)
 												{
@@ -1064,7 +1062,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							// 2022-05-26: in case the file does not exist, try again to make sure
 							//	it really does not exist
-							bool segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
+							bool segmentListFileExistence = fs::exists(segmentListPathName);
 
 							if (!segmentListFileExistence)
 							{
@@ -1081,7 +1079,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
 
-								segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
+								segmentListFileExistence = fs::exists(segmentListPathName);
 							}
 
 							if(!segmentListFileExistence)
@@ -1206,7 +1204,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								string manifestFilePathName =
 									manifestDirectoryPath + "/" + manifestFileName;
 								{
-									if(!FileIO::fileExisting(manifestFilePathName))
+									if(!fs::exists(manifestFilePathName))
 									{
 										liveRecorderWorking = false;
 
@@ -1583,8 +1581,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 
 									{
-										bool exceptionInCaseOfError = false;
-
 										for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
 										{
 											try
@@ -1593,7 +1589,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 													+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-												FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+												fs::remove_all(segmentPathNameToBeRemoved);
 											}
 											catch(runtime_error e)
 											{

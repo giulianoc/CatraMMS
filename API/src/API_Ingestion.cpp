@@ -2777,6 +2777,8 @@ void API::uploadedBinary(
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", destBinaryPathName: " + destBinaryPathName
 							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+							+ ", source file size: " + to_string(fs::file_size(sourceBinaryPathFile))
+							+ ", dest file size: " + to_string(fs::file_size(destBinaryPathName))
 							+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - start).count())
 						);
