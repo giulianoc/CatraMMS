@@ -2640,7 +2640,7 @@ void API::uploadedBinary(
                     + ", destBinaryPathName: " + destBinaryPathName
                 );
 
-                FileIO::moveFile(sourceBinaryPathFile, destBinaryPathName);
+                _mmsStorage->move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
             }
             catch(runtime_error e)
             {
@@ -2704,7 +2704,7 @@ void API::uploadedBinary(
         {
             //  Content-Range is present
             
-            if (FileIO::fileExisting (destBinaryPathName))
+            if (fs::exists(destBinaryPathName))
             {
                 if (contentRangeStart == 0)
                 {
@@ -2715,11 +2715,8 @@ void API::uploadedBinary(
                     osDestStream.close();
                 }
                 
-                bool inCaseOfLinkHasItToBeRead  = false;
-                unsigned long workspaceIngestionBinarySizeInBytes = FileIO::getFileSizeInBytes (
-                    destBinaryPathName, inCaseOfLinkHasItToBeRead);
-                unsigned long binarySizeInBytes = FileIO::getFileSizeInBytes (
-                    sourceBinaryPathFile, inCaseOfLinkHasItToBeRead);
+                unsigned long workspaceIngestionBinarySizeInBytes = fs::file_size(destBinaryPathName);
+                unsigned long binarySizeInBytes = fs::file_size(sourceBinaryPathFile);
                 
                 if (contentRangeStart != workspaceIngestionBinarySizeInBytes)
                 {
@@ -2753,16 +2750,39 @@ void API::uploadedBinary(
                 
                 try
                 {
-                    bool removeSrcFileAfterConcat = true;
+                    // bool removeSrcFileAfterConcat = true;
                     
-                    _logger->info(__FILEREF__ + "Concat file"
+					_logger->info(__FILEREF__ + "Concat file"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", destBinaryPathName: " + destBinaryPathName
-                        + ", sourceBinaryPathFile: " + sourceBinaryPathFile
-                        + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-                    );
+						+ ", destBinaryPathName: " + destBinaryPathName
+						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+						// + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+					);
 
-                    FileIO::concatFile(destBinaryPathName, sourceBinaryPathFile, removeSrcFileAfterConcat);
+                    // FileIO::concatFile(destBinaryPathName, sourceBinaryPathFile, removeSrcFileAfterConcat);
+
+					// concat files, append a file to another
+					{
+                        chrono::system_clock::time_point start = chrono::system_clock::now();
+
+						ofstream ofDestination(destBinaryPathName, std::ios_base::binary | std::ios_base::ate);
+						ifstream ifSource(sourceBinaryPathFile, std::ios_base::binary);
+
+						ofDestination << ifSource.rdbuf();
+
+						ofDestination.close();
+						ifSource.close();
+
+						_logger->info(__FILEREF__ + "Concat file elapsed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", destBinaryPathName: " + destBinaryPathName
+							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+							+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - start).count())
+						);
+					}
+
+					fs::remove_all(sourceBinaryPathFile);
                 }
                 catch(exception e)
                 {
@@ -2803,7 +2823,7 @@ void API::uploadedBinary(
                         + ", destBinaryPathName: " + destBinaryPathName
                     );
 
-                    FileIO::moveFile(sourceBinaryPathFile, destBinaryPathName);
+                    _mmsStorage->move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
                 }
                 catch(exception e)
                 {
@@ -2873,11 +2893,9 @@ void API::uploadedBinary(
             unsigned long fileSize = 0;
             try
             {
-                if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
+                if (fs::exists(workspaceIngestionBinaryPathName))
                 {
-                    bool inCaseOfLinkHasItToBeRead = false;
-                    fileSize = FileIO::getFileSizeInBytes (
-                        workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                    fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                 }
             }
             catch(exception e)
@@ -2905,11 +2923,9 @@ void API::uploadedBinary(
                     unsigned long fileSize = 0;
                     try
                     {
-                        if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
+                        if (fs::exists(workspaceIngestionBinaryPathName))
                         {
-                            bool inCaseOfLinkHasItToBeRead = false;
-                            fileSize = FileIO::getFileSizeInBytes (
-                                workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                            fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                         }
                     }
                     catch(exception e)
@@ -3178,7 +3194,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 				+ ", sourceTarFile: " + sourceTarFile
 			);
 
-			FileIO::remove(sourceTarFile);
+			fs::remove_all(sourceTarFile);
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source
@@ -3196,7 +3212,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 			//  The directory will be removed later by cron job
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				FileIO::copyDirectory(sourceDirectory, destDirectory,
+				fs::copyDirectory(sourceDirectory, destDirectory,
 					S_IRUSR | S_IWUSR | S_IXUSR |
 					S_IRGRP | S_IXGRP |
 					S_IROTH | S_IXOTH);
@@ -3213,7 +3229,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 				bool removeRecursively = true;
-				FileIO::removeDirectory(sourceDirectory, removeRecursively);
+				fs::removeDirectory(sourceDirectory, removeRecursively);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End removeDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
