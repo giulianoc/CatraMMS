@@ -6240,7 +6240,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6315,7 +6315,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6440,7 +6440,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6515,7 +6515,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6598,7 +6598,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -6673,7 +6673,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", binaryPathName: " + binaryPathName.string()
 				);
 
-				fs::remove(binaryPathName);
+				fs::remove_all(binaryPathName);
 			}
 			catch(runtime_error e)
 			{
@@ -25821,7 +25821,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", destBinaryPathName: " + destBinaryPathName
         );
         
-		int64_t elapsedInSeconds = _mmsStorage->move(ingestionJobKey, sourcePathName, destBinaryPathName);
+		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName, _logger);
 
 		if (m3u8TarGzOrM3u8Streaming)
 		{

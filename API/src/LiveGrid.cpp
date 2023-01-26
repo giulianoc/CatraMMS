@@ -3,7 +3,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 
 
 LiveGrid::LiveGrid(
@@ -80,15 +79,14 @@ void LiveGrid::encodeContent(
 		// if (_liveProxyData->_outputType == "HLS") // || _liveProxyData->_outputType == "DASH")
 		{
 			if (_liveProxyData->_liveGridOutputType == "HLS"
-				&& FileIO::directoryExisting(manifestDirectoryPath))
+				&& fs::exists(manifestDirectoryPath))
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", manifestDirectoryPath: " + manifestDirectoryPath
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+					fs::remove_all(manifestDirectoryPath);
 				}
 				catch(runtime_error e)
 				{

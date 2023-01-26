@@ -3,7 +3,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 
 
 void SlideShow::encodeContent(
@@ -93,16 +92,17 @@ void SlideShow::encodeContent(
 							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
 								0, endOfDirectoryIndex);
 
-							bool noErrorIfExists = true;
-							bool recursive = true;
 							_logger->info(__FILEREF__ + "Creating directory"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", directoryPathName: " + directoryPathName
 							);
-							FileIO::createDirectory(directoryPathName,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+							fs::create_directories(directoryPathName);
+							fs::permissions(directoryPathName,
+								fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+								| fs::perms::group_read | fs::perms::group_exec
+								| fs::perms::others_read | fs::perms::others_exec,
+								fs::perm_options::replace);
 						}
 					}
 
@@ -177,16 +177,17 @@ void SlideShow::encodeContent(
 							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(
 								0, endOfDirectoryIndex);
 
-							bool noErrorIfExists = true;
-							bool recursive = true;
 							_logger->info(__FILEREF__ + "Creating directory"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", directoryPathName: " + directoryPathName
 							);
-							FileIO::createDirectory(directoryPathName,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+							fs::create_directories(directoryPathName);
+							fs::permissions(directoryPathName,
+								fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+								| fs::perms::group_read | fs::perms::group_exec
+								| fs::perms::others_read | fs::perms::others_exec,
+								fs::perm_options::replace);
 						}
 					}
 
@@ -229,16 +230,17 @@ void SlideShow::encodeContent(
 					string directoryPathName = encodedStagingAssetPathName.substr(
 						0, endOfDirectoryIndex);
 
-					bool noErrorIfExists = true;
-					bool recursive = true;
 					_logger->info(__FILEREF__ + "Creating directory"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
-					FileIO::createDirectory(directoryPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(directoryPathName);
+					fs::permissions(directoryPathName,
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+						| fs::perms::group_read | fs::perms::group_exec
+						| fs::perms::others_read | fs::perms::others_exec,
+						fs::perm_options::replace);
 				}
 			}
 		}
@@ -281,8 +283,7 @@ void SlideShow::encodeContent(
 					+ ", imagePathName: " + imagePathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(imagePathName, exceptionInCaseOfError);
+				fs::remove_all(imagePathName);
 			}
 
 			for (string audioPathName: audiosPathNames)
@@ -293,8 +294,7 @@ void SlideShow::encodeContent(
 					+ ", audioPathName: " + audioPathName
 				);
 
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(audioPathName, exceptionInCaseOfError);
+				fs::remove_all(audioPathName);
 			}
 
 			field = "targetFileFormat";

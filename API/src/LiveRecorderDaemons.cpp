@@ -4,8 +4,8 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
 #include <sstream>
-#include "catralibraries/FileIO.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
@@ -561,7 +561,7 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
-			if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName))
+			if (!fs::exists(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName))
 			{
 				// it could be the scenario where mmsEngineService is restarted,
 				// the segments list file still contains obsolete filenames
@@ -813,7 +813,7 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 					+ ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
 				);
 
-                FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
+                fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 			}
 			else
 			{
@@ -1104,7 +1104,7 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 							+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
 						);
 
-						if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName))
+						if (!fs::exists(chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName))
 						{
 							// it could be the scenario where mmsEngineService is restarted,
 							// the segments list file still contains obsolete filenames
@@ -1423,7 +1423,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			);
 
 			chrono::system_clock::time_point startCopying = chrono::system_clock::now();
-			FileIO::copyFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
+			fs::copy(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
 			chrono::system_clock::time_point endCopying = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk copied"
@@ -1444,7 +1444,8 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			);
 
 			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-			FileIO::moveFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
+			MMSStorage::move(ingestionJobKey, chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
+				chunksNFSStagingContentsPath, _logger);
 			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Chunk moved"
@@ -1473,8 +1474,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		_logger->info(__FILEREF__ + "remove"
 			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
 		);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 		throw e;
 	}
@@ -1488,8 +1488,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		_logger->info(__FILEREF__ + "remove"
 			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
 		);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 		throw e;
 	}
@@ -1708,10 +1707,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 	// ingest binary
 	try
 	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		int64_t chunkFileSize = FileIO::getFileSizeInBytes(
-			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			inCaseOfLinkHasItToBeRead);
+		int64_t chunkFileSize = fs::file_size(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 		string mmsBinaryIngestionURL;
 		{
@@ -2040,39 +2036,30 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 		);
 
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (chunksTranscoderStagingContentsPath);
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
+		for (fs::directory_entry const& entry: fs::directory_iterator(chunksTranscoderStagingContentsPath))
         {
-            string directoryEntry;
             try
             {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-				_logger->info(__FILEREF__ + "FileIO::readDirectory"
-					+ ", directoryEntry: " + directoryEntry
-					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
+				_logger->info(__FILEREF__ + "readDirectory"
+					+ ", directoryEntry: " + entry.path().string()
 				);
 
 				// next statement is endWith and .lck is used during the move of a file
 				string suffix(".lck");
-				if (directoryEntry.size() >= suffix.size()
-					&& 0 == directoryEntry.compare(directoryEntry.size()-suffix.size(),
+				if (entry.path().filename().string().size() >= suffix.size()
+					&& 0 == entry.path().filename().string().compare(entry.path().filename().string().size()-suffix.size(),
 						suffix.size(), suffix))
 					continue;
 
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                if (!entry.is_regular_file())
                     continue;
 
-                if (directoryEntry.size() >= recordedFileNamePrefix.size()
-						&& directoryEntry.compare(0, recordedFileNamePrefix.size(),
+                if (entry.path().filename().string().size() >= recordedFileNamePrefix.size()
+						&& entry.path().filename().string().compare(0, recordedFileNamePrefix.size(),
 							recordedFileNamePrefix) == 0)
                 {
 					time_t utcFileCreationTime = getMediaLiveRecorderStartTime(
-							ingestionJobKey, encodingJobKey, directoryEntry, segmentDurationInSeconds,
+							ingestionJobKey, encodingJobKey, entry.path().filename().string(), segmentDurationInSeconds,
 							isFirstChunk);
 
 					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
@@ -2082,10 +2069,6 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 						break;
 					}
 				}
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
             }
             catch(runtime_error e)
             {
@@ -2106,8 +2089,6 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
                 throw e;
             }
         }
-
-        FileIO::closeDirectory (directory);
     }
     catch(runtime_error e)
     {
@@ -2276,9 +2257,15 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderEndTime(
 	tm                      tmDateTime;
 
 	time_t utcCurrentRecordedFileLastModificationTime;
+	{
+		chrono::system_clock::time_point fileLastModification =
+			chrono::time_point_cast<chrono::system_clock::duration>(
+				fs::last_write_time(mediaLiveRecorderFileName) - fs::file_time_type::clock::now() + chrono::system_clock::now());
+		utcCurrentRecordedFileLastModificationTime = chrono::system_clock::to_time_t(fileLastModification);
+	}
 
-	FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
-		&utcCurrentRecordedFileLastModificationTime);
+	// FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
+	// 	&utcCurrentRecordedFileLastModificationTime);
 
 	localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
 
@@ -2385,19 +2372,18 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 
 			if (stagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+				&& fs::exists(stagingLiveRecorderVirtualVODPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove directory"
 					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 				);
-				bool removeRecursively = true;
-				FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+				fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 			}
 		}
 
 		string sourceManifestPathFileName = sourceSegmentsDirectoryPathName + "/" +
 			sourceManifestFileName;
-		if (!FileIO::isFileExisting (sourceManifestPathFileName.c_str()))
+		if (!fs::exists(sourceManifestPathFileName.c_str()))
 		{
 			string errorMessage = string("manifest file not existing")
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -2425,7 +2411,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			);
 
 			chrono::system_clock::time_point startCoping = chrono::system_clock::now();
-			FileIO::copyDirectory(sourceSegmentsDirectoryPathName, stagingLiveRecorderVirtualVODPathName,
+			fs::copyDirectory(sourceSegmentsDirectoryPathName, stagingLiveRecorderVirtualVODPathName,
 					S_IRUSR | S_IWUSR | S_IXUSR |                                                                 
                   S_IRGRP | S_IXGRP |                                                                           
                   S_IROTH | S_IXOTH);
@@ -2457,18 +2443,19 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 		// create the destination directory and copy the manifest file
 		{
-			if (!FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+			if (!fs::exists(stagingLiveRecorderVirtualVODPathName))
 			{
-				bool noErrorIfExists = true;
-				bool recursive = true;
 				_logger->info(__FILEREF__ + "Creating directory"
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 				);
-				FileIO::createDirectory(stagingLiveRecorderVirtualVODPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				fs::create_directories(stagingLiveRecorderVirtualVODPathName);
+				fs::permissions(stagingLiveRecorderVirtualVODPathName,
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+					| fs::perms::group_read | fs::perms::group_exec
+					| fs::perms::others_read | fs::perms::others_exec,
+					fs::perm_options::replace);
 			}
 
 			_logger->info(__FILEREF__ + "Coping"
@@ -2477,10 +2464,10 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
 				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
 			);
-			FileIO::copyFile(sourceManifestPathFileName, tmpManifestPathFileName);
+			fs::copy(sourceManifestPathFileName, tmpManifestPathFileName);
 		}
 
-		if (!FileIO::isFileExisting (tmpManifestPathFileName.c_str()))
+		if (!fs::exists (tmpManifestPathFileName.c_str()))
 		{
 			string errorMessage = string("manifest file not existing")
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -2609,7 +2596,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 							+ ", sourceTSPathFileName: " + sourceTSPathFileName
 							+ ", copiedTSPathFileName: " + copiedTSPathFileName
 						);
-						FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
+						fs::copy(sourceTSPathFileName, copiedTSPathFileName);
 					}
 					catch(runtime_error e)
 					{
@@ -2743,8 +2730,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					_logger->info(__FILEREF__ + "Remove directory"
 						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 					);
-					bool removeRecursively = true;
-					FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+					fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 				}
 			}
 			catch(runtime_error e)
@@ -2770,22 +2756,21 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		if (stagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(stagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove directory"
 				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+			fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2799,22 +2784,21 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		if (stagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(stagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove directory"
 				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+			fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2849,12 +2833,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2869,12 +2853,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2916,12 +2900,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2937,12 +2921,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		_logger->error(__FILEREF__ + errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+			&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -2965,10 +2949,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				throw runtime_error(errorMessage);
 			}
 
-			bool inCaseOfLinkHasItToBeRead = false;
-			int64_t chunkFileSize = FileIO::getFileSizeInBytes(
-				tarGzStagingLiveRecorderVirtualVODPathName,
-				inCaseOfLinkHasItToBeRead);
+			int64_t chunkFileSize = fs::file_size(tarGzStagingLiveRecorderVirtualVODPathName);
 
 			mmsBinaryURL =
 				mmsBinaryIngestionURL
@@ -2991,7 +2972,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 		}
 		catch (runtime_error e)
@@ -3004,12 +2985,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+				&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 
 			throw e;
@@ -3024,12 +3005,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+				&& fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 
 			throw e;

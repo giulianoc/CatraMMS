@@ -3,7 +3,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/DateTime.h"
 
@@ -78,15 +77,14 @@ void LiveProxy::encodeContent(
 					string manifestDirectoryPath
 						= JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
-					if (FileIO::directoryExisting(manifestDirectoryPath))
+					if (fs::exists(manifestDirectoryPath))
 					{
 						try
 						{
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+							fs::remove_all(manifestDirectoryPath);
 						}
 						catch(runtime_error e)
 						{

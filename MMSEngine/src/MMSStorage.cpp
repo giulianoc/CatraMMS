@@ -2,7 +2,6 @@
 #include <fstream>
 #include "MMSStorage.h"
 #include "JSONUtils.h"
-#include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/ProcessUtility.h"
@@ -1209,16 +1208,6 @@ void MMSStorage::removePhysicalPathFile(
 						);
 						fs::remove_all(mmsAssetPathName);
 					}
-					catch(DirectoryNotExisting dne)
-					{
-						string errorMessage = string("removeDirectory failed. directory not present")
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
-						;
-       
-						_logger->warn(__FILEREF__ + errorMessage);
-					}
 					catch(runtime_error e)
 					{
 						string errorMessage = string("removeDirectory failed")
@@ -1258,17 +1247,7 @@ void MMSStorage::removePhysicalPathFile(
 						_logger->info(__FILEREF__ + "Remove file"
 							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
 						);
-						fs::remove(mmsAssetPathName);
-					}
-					catch(FileNotExisting fne)
-					{
-						string errorMessage = string("removefailed, file not present")
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", physicalPathKey: " + to_string(physicalPathKey)
-							+ ", mmsAssetPathName: " + mmsAssetPathName.string()
-						;
-       
-						_logger->warn(__FILEREF__ + errorMessage);
+						fs::remove_all(mmsAssetPathName);
 					}
 					catch(runtime_error e)
 					{
@@ -1517,7 +1496,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			int64_t moveElapsedInSeconds;
 			try
 			{
-				moveElapsedInSeconds = move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
+				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
 			}
 			catch(runtime_error e)
 			{
@@ -1543,7 +1522,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
 
-				moveElapsedInSeconds = move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
+				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
 			}
 
             unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
@@ -1582,7 +1561,8 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 int64_t MMSStorage::move(
 	int64_t ingestionJobKey,
 	fs::path source,
-	fs::path dest)
+	fs::path dest,
+	shared_ptr<spdlog::logger> logger)
 {
 	chrono::system_clock::time_point startPoint;
 	chrono::system_clock::time_point endPoint;
@@ -1607,7 +1587,7 @@ int64_t MMSStorage::move(
 			}
 			catch(fs::filesystem_error e)
 			{
-				_logger->error(__FILEREF__ + "move (copy and remove) failed"
+				logger->error(__FILEREF__ + "move (copy and remove) failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", source: " + source.string()
 					+ ", dest: " + dest.string()
@@ -1622,7 +1602,7 @@ int64_t MMSStorage::move(
 		}
 		else
 		{
-			_logger->error(__FILEREF__ + "Move failed"
+			logger->error(__FILEREF__ + "Move failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + source.string()
 				+ ", dest: " + dest.string()
@@ -1785,7 +1765,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 			{
 				ullDirectoryUsageInBytes		= 0;
 
-				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+				_logger->error(__FILEREF__ + "getDirectorySizeInBytes failed"
 					+ ", e.what(): " + e.what()
 				);
 			}

@@ -5,7 +5,6 @@
 #include <sstream>
 #include <filesystem>
 #include <fstream>
-#include "catralibraries/FileIO.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
@@ -218,9 +217,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	int64_t fileSizeInBytes = 0;
 	if (fileFormat != "hls")
 	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		fileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
-			inCaseOfLinkHasItToBeRead);                                                                          
+		fileSizeInBytes = fs::file_size(encodedStagingAssetPathName);                                                                          
 	}
 
 	Json::Value userDataRoot;
@@ -287,7 +284,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		);
 
 		bool exceptionInCaseOfError = false;
-		FileIO::remove(sourceAssetPathName, exceptionInCaseOfError);
+		fs::remove_all(sourceAssetPathName, exceptionInCaseOfError);
 	}
 	*/
 
@@ -300,8 +297,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			_logger->info(__FILEREF__ + "removeDirectory"
 				+ ", directoryPathName: " + directoryPathName
 			);
-			Boolean_t bRemoveRecursively = true;
-			FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+			fs::remove_all(directoryPathName);
 		}
 	}
 
@@ -577,9 +573,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 						throw runtime_error(errorMessage);
 					}
 
-					bool inCaseOfLinkHasItToBeRead = false;
-					localBinaryFileSizeInBytes = FileIO::getFileSizeInBytes (localBinaryPathFileName,
-						inCaseOfLinkHasItToBeRead);                                                                          
+					localBinaryFileSizeInBytes = fs::file_size(localBinaryPathFileName);                                                                          
 				}
 				catch(runtime_error e)
 				{
@@ -616,8 +610,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			_logger->info(__FILEREF__ + "remove"
 				+ ", localBinaryPathFileName: " + localBinaryPathFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+			fs::remove_all(localBinaryPathFileName);
 		}
 	}
 	catch (runtime_error e)
@@ -638,7 +631,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 				+ ", localBinaryPathFileName: " + localBinaryPathFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+			fs::remove_all(localBinaryPathFileName, exceptionInCaseOfError);
 			*/
 		}
 
@@ -662,7 +655,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 				+ ", localBinaryPathFileName: " + localBinaryPathFileName
 			);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
+			fs::remove_all(localBinaryPathFileName, exceptionInCaseOfError);
 			*/
 		}
 
@@ -1022,7 +1015,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 			}
 		}
 
-		if (!FileIO::directoryExisting(_tvChannelConfigurationDirectory))
+		if (!fs::exists(_tvChannelConfigurationDirectory))
 		{
 			_logger->info(__FILEREF__ + "Create directory"
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1030,14 +1023,12 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 				+ ", _tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
 			);
 
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			FileIO::createDirectory(
-				_tvChannelConfigurationDirectory,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IWUSR | S_IXGRP |
-				S_IROTH | S_IWUSR | S_IXOTH,
-				noErrorIfExists, recursive);
+			fs::create_directories(_tvChannelConfigurationDirectory);
+			fs::permissions(_tvChannelConfigurationDirectory,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+				| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec
+				| fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec,
+				fs::perm_options::replace);
 		}
 
 		string dvblastConfigurationPathName =
@@ -1056,9 +1047,9 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		ifstream ifConfigurationFile;
 		bool changedFileFound = false;
-		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
+		if (fs::exists(dvblastConfigurationPathName + ".txt"))
 			ifConfigurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
-		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
+		else if (fs::exists(dvblastConfigurationPathName + ".changed"))
 		{
 			changedFileFound = true;
 			ifConfigurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
@@ -1084,7 +1075,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 					+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
 				);
 
-				FileIO::remove(dvblastConfigurationPathName + ".txt");
+				fs::remove_all(dvblastConfigurationPathName + ".txt");
 			}
 		}
 
@@ -1234,9 +1225,9 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 
 
 		ifstream configurationFile;
-		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
+		if (fs::exists(dvblastConfigurationPathName + ".txt"))
 			configurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
-		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
+		else if (fs::exists(dvblastConfigurationPathName + ".changed"))
 			configurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
 
 		if (configurationFile.is_open())

@@ -6,7 +6,6 @@
 #include <mutex>
 #include <vector>
 #include "spdlog/spdlog.h"
-#include "catralibraries/FileIO.h"
 #include "Workspace.h"
 #include "MMSEngineDBFacade.h"
 
@@ -157,10 +156,11 @@ public:
 		string tarBinaryPathName, string workspaceIngestionRepository,
 		string sourcePathName);
 
-	int64_t move(
+	static int64_t move(
 		int64_t ingestionJobKey,
 		fs::path source,
-		fs::path dest);
+		fs::path dest,
+		shared_ptr<spdlog::logger> logger);
 
 private:
 	bool						_noFileSystemAccess;

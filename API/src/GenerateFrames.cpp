@@ -4,7 +4,6 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 #include "catralibraries/Encrypt.h"
 
 
@@ -89,17 +88,19 @@ void GenerateFrames::encodeContent(
 					sourceTranscoderStagingAssetDirectory = sourceTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);                          
 				}
 
-				if (!FileIO::directoryExisting(sourceTranscoderStagingAssetDirectory))
+				if (!fs::exists(sourceTranscoderStagingAssetDirectory))
 				{
 					bool noErrorIfExists = true;
 					bool recursive = true;
 					_logger->info(__FILEREF__ + "Creating directory"
 						+ ", sourceTranscoderStagingAssetDirectory: " + sourceTranscoderStagingAssetDirectory
 					);
-					FileIO::createDirectory(sourceTranscoderStagingAssetDirectory,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
-						noErrorIfExists, recursive);
+					fs::create_directories(sourceTranscoderStagingAssetDirectory);
+					fs::permissions(sourceTranscoderStagingAssetDirectory,
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+						| fs::perms::group_read | fs::perms::group_exec
+						| fs::perms::others_read | fs::perms::others_exec,
+						fs::perm_options::replace);
 				}
 			}
 
@@ -161,24 +162,18 @@ void GenerateFrames::encodeContent(
 
 		if (externalEncoder)
 		{
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imagesDirectory + "/");
-
 			vector<int64_t> addContentIngestionJobKeys;
 
-			bool scanDirectoryFinished = false;
 			int generatedFrameIndex = 0;
-			while (!scanDirectoryFinished)
+			for (fs::directory_entry const& entry: fs::directory_iterator(imagesDirectory))
 			{
 				try
 				{
-					string generatedFrameFileName = FileIO::readDirectory (directory, &detDirectoryEntryType);
-
-					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+					if (!entry.is_regular_file())
 						continue;
 
-					if (!(generatedFrameFileName.size() >= imageBaseFileName.size()
-						&& 0 == generatedFrameFileName.compare(0, imageBaseFileName.size(), imageBaseFileName)))
+					if (!(entry.path().filename().string().size() >= imageBaseFileName.size()
+						&& 0 == entry.path().filename().string().compare(0, imageBaseFileName.size(), imageBaseFileName)))
 						continue;
 
 					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "Title", "");
@@ -206,16 +201,16 @@ void GenerateFrames::encodeContent(
 					try
 					{
 						{
-							size_t extensionIndex = generatedFrameFileName.find_last_of(".");                             
+							size_t extensionIndex = entry.path().filename().string().find_last_of(".");                             
 							if (extensionIndex == string::npos)                                                   
-							{                                                                                     
+							{
 								string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-									+ ", generatedFrameFileName: " + generatedFrameFileName;
+									+ ", entry.path().filename().string(): " + entry.path().filename().string();
 								_logger->error(errorMessage);
 
 								throw runtime_error(errorMessage);                                                
 							}                                                                                     
-							outputFileFormat = generatedFrameFileName.substr(extensionIndex + 1);                          
+							outputFileFormat = entry.path().filename().string().substr(extensionIndex + 1);                          
 						}
 
 						_logger->info(__FILEREF__ + "ingest Frame"
@@ -223,7 +218,7 @@ void GenerateFrames::encodeContent(
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", generatedFrameFileName: " + entry.path().filename().string()
 							+ ", addContentTitle: " + addContentTitle
 							+ ", outputFileFormat: " + outputFileFormat
 						);
@@ -231,7 +226,7 @@ void GenerateFrames::encodeContent(
 						addContentIngestionJobKeys.push_back(
 							generateFrames_ingestFrame(
 								ingestionJobKey, externalEncoder,
-								imagesDirectory, generatedFrameFileName,
+								imagesDirectory, entry.path().filename().string(),
 								addContentTitle, userDataRoot, outputFileFormat,
 								ingestedParametersRoot, encodingParametersRoot)
 						);
@@ -243,7 +238,7 @@ void GenerateFrames::encodeContent(
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", generatedFrameFileName: " + entry.path().filename().string()
 							+ ", addContentTitle: " + addContentTitle
 							+ ", outputFileFormat: " + outputFileFormat
 							+ ", e.what(): " + e.what()
@@ -258,7 +253,7 @@ void GenerateFrames::encodeContent(
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
-							+ ", generatedFrameFileName: " + generatedFrameFileName
+							+ ", generatedFrameFileName: " + entry.path().filename().string()
 							+ ", addContentTitle: " + addContentTitle
 							+ ", outputFileFormat: " + outputFileFormat
 							+ ", e.what(): " + e.what()
@@ -269,18 +264,12 @@ void GenerateFrames::encodeContent(
 
 					{
 						_logger->info(__FILEREF__ + "remove"
-							+ ", framePathName: " + imagesDirectory + "/" + generatedFrameFileName
+							+ ", framePathName: " + entry.path().string()
 						);
-						bool exceptionInCaseOfError = false;
-						FileIO::remove(imagesDirectory + "/" + generatedFrameFileName,
-							exceptionInCaseOfError);
+						fs::remove_all(entry.path());
 					}
 
 					generatedFrameIndex++;
-				}
-				catch(DirectoryListFinished e)
-				{
-					scanDirectoryFinished = true;
 				}
 				catch(runtime_error e)
 				{
@@ -290,8 +279,6 @@ void GenerateFrames::encodeContent(
 						+ ", e.what(): " + e.what()
 					;
 					_logger->error(errorMessage);
-
-					scanDirectoryFinished = true;
 
 					_completedWithError		= true;
 					_encoding->_errorMessage = errorMessage;
@@ -307,8 +294,6 @@ void GenerateFrames::encodeContent(
 					;
 					_logger->error(errorMessage);
 
-					scanDirectoryFinished = true;
-
 					_completedWithError		= true;
 					_encoding->_errorMessage = errorMessage;
 
@@ -316,15 +301,12 @@ void GenerateFrames::encodeContent(
 				}
 			}
 
-			FileIO::closeDirectory (directory);
-
-			if (FileIO::directoryExisting(imagesDirectory))
+			if (fs::exists(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+				fs::remove_all(imagesDirectory);
 			}
 
 			// wait the addContent to be executed
@@ -501,12 +483,11 @@ void GenerateFrames::encodeContent(
 	{
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+				fs::remove_all(imagesDirectory);
 			}
 		}
 
@@ -537,12 +518,11 @@ void GenerateFrames::encodeContent(
     {
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+				fs::remove_all(imagesDirectory);
 			}
 		}
 
@@ -574,12 +554,11 @@ void GenerateFrames::encodeContent(
     {
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && FileIO::directoryExisting(imagesDirectory))
+			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", imagesDirectory: " + imagesDirectory);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+				fs::remove_all(imagesDirectory);
 			}
 		}
 
@@ -730,10 +709,8 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	// ingest binary
 	try
 	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		int64_t frameFileSize = FileIO::getFileSizeInBytes(
-			imagesDirectory + "/" + generatedFrameFileName,
-			inCaseOfLinkHasItToBeRead);
+		int64_t frameFileSize = fs::file_size(
+			imagesDirectory + "/" + generatedFrameFileName);
 
 		string mmsBinaryIngestionURL;
 		{

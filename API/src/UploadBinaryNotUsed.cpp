@@ -198,11 +198,9 @@ void UploadBinary::getBinaryAndResponse(
             unsigned long fileSize = 0;
             try
             {
-                if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
+                if (fs::exists(workspaceIngestionBinaryPathName))
                 {
-                    bool inCaseOfLinkHasItToBeRead = false;
-                    fileSize = FileIO::getFileSizeInBytes (
-                        workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                    fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                 }
             }
             catch(exception e)
@@ -230,11 +228,9 @@ void UploadBinary::getBinaryAndResponse(
                     unsigned long fileSize = 0;
                     try
                     {
-                        if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
+                        if (fs::exists(workspaceIngestionBinaryPathName))
                         {
-                            bool inCaseOfLinkHasItToBeRead = false;
-                            fileSize = FileIO::getFileSizeInBytes (
-                                workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                            fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                         }
                     }
                     catch(exception e)

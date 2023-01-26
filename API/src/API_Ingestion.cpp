@@ -2640,7 +2640,7 @@ void API::uploadedBinary(
                     + ", destBinaryPathName: " + destBinaryPathName
                 );
 
-                _mmsStorage->move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
+                MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
             }
             catch(runtime_error e)
             {
@@ -2825,7 +2825,7 @@ void API::uploadedBinary(
                         + ", destBinaryPathName: " + destBinaryPathName
                     );
 
-                    _mmsStorage->move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
+                    MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
                 }
                 catch(exception e)
                 {

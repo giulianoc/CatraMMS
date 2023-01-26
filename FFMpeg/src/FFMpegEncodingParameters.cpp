@@ -11,11 +11,12 @@
  * Created on February 18, 2018, 1:27 AM
  */
 #include "FFMpegEncodingParameters.h"
-#include "catralibraries/FileIO.h"
 #include "JSONUtils.h"
 #include <regex>
 #include <fstream>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 
 FFMpegEncodingParameters::FFMpegEncodingParameters(
 	int64_t ingestionJobKey,
@@ -281,14 +282,15 @@ void FFMpegEncodingParameters::applyEncoding(
 							string segmentDirectory = regex_replace(segmentTemplateDirectory,
 								regex(_multiTrackTemplateVariable), to_string(videoHeight));
 
-							bool noErrorIfExists = true;
-							bool recursive = true;
 							_logger->info(__FILEREF__ + "Creating directory"
 								+ ", : " + segmentDirectory
 							);
-							FileIO::createDirectory(segmentDirectory,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+							fs::create_directories(segmentDirectory);
+							fs::permissions(segmentDirectory,
+								fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+								| fs::perms::group_read | fs::perms::group_exec
+								| fs::perms::others_read | fs::perms::others_exec,
+								fs::perm_options::replace);
 						}
 
 						if (_videoTrackIndexToBeUsed >= 0)
@@ -382,14 +384,15 @@ void FFMpegEncodingParameters::applyEncoding(
 							regex_replace(segmentTemplateDirectory,
 								regex(_multiTrackTemplateVariable), to_string(videoHeight));
 
-						bool noErrorIfExists = true;
-						bool recursive = true;
 						_logger->info(__FILEREF__ + "Creating directory"
 							+ ", : " + segmentDirectory
 						);
-						FileIO::createDirectory(segmentDirectory,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+						fs::create_directories(segmentDirectory);
+						fs::permissions(segmentDirectory,
+							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+							| fs::perms::group_read | fs::perms::group_exec
+							| fs::perms::others_read | fs::perms::others_exec,
+							fs::perm_options::replace);
 					}
 
 					if (_videoTrackIndexToBeUsed >= 0)
@@ -2075,34 +2078,20 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
 			+ to_string(_encodingJobKey)
 		;
 
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (_ffmpegTempDir + "/");
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
+		for (fs::directory_entry const& entry: fs::directory_iterator(_ffmpegTempDir))
         {
-            string directoryEntry;
             try
             {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                if (!entry.is_regular_file())
                     continue;
 
-                if (directoryEntry.size() >= prefixPasslogFileName.size()
-					&& directoryEntry.compare(0, prefixPasslogFileName.size(), prefixPasslogFileName) == 0) 
+                if (entry.path().filename().string().size() >= prefixPasslogFileName.size()
+					&& entry.path().filename().string().compare(0, prefixPasslogFileName.size(), prefixPasslogFileName) == 0) 
                 {
-                    bool exceptionInCaseOfError = false;
-                    string pathFileName = _ffmpegTempDir + "/" + directoryEntry;
                     _logger->info(__FILEREF__ + "Remove"
-                        + ", pathFileName: " + pathFileName);
-                    FileIO::remove(pathFileName, exceptionInCaseOfError);
+                        + ", pathFileName: " + entry.path().string());
+                    fs::remove_all(entry.path());
                 }
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
             }
             catch(runtime_error e)
             {
@@ -2123,8 +2112,6 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
                 throw e;
             }
         }
-
-        FileIO::closeDirectory (directory);
     }
     catch(runtime_error e)
     {
@@ -2202,10 +2189,9 @@ void FFMpegEncodingParameters::removeMultiTrackPathNames()
 
 	for (string sourcePathName: sourcesPathName)
 	{
-		bool exceptionInCaseOfError = false;
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", sourcePathName: " + sourcePathName);
-		FileIO::remove(sourcePathName, exceptionInCaseOfError);
+		fs::remove_all(sourcePathName);
 	}
 }
 

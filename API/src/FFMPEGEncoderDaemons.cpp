@@ -5,7 +5,6 @@
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include <sstream>
-#include "catralibraries/FileIO.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
@@ -274,21 +273,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										}
 										else
 										{
-											time_t utcManifestFileLastModificationTime = 0;
+											int64_t lastManifestFileUpdateInSeconds;
+											{
+												chrono::system_clock::time_point fileLastModification =
+													chrono::time_point_cast<chrono::system_clock::duration>(
+														fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() + chrono::system_clock::now());
+												chrono::system_clock::time_point now = chrono::system_clock::now();
 
-											FileIO::getFileTime (manifestFilePathName.c_str(),
-												&utcManifestFileLastModificationTime);
-
-											unsigned long long	ullNow = 0;
-											unsigned long		ulAdditionalMilliSecs;
-											long				lTimeZoneDifferenceInHours;
-
-											DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-												&lTimeZoneDifferenceInHours);
+												lastManifestFileUpdateInSeconds =
+													chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+											}
 
 											long maxLastManifestFileUpdateInSeconds = 30;
 
-											unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
 											if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
 											{
 												liveProxyWorking = false;
@@ -299,6 +296,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 													+ ", manifestFilePathName: " + manifestFilePathName
 													+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
+													+ ", maxLastManifestFileUpdateInSeconds: " + to_string(maxLastManifestFileUpdateInSeconds)
 												);
 
 												localErrorMessage = " restarted because of 'manifest file was not updated'";
@@ -490,46 +488,45 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											if (fs::exists(manifestDirectoryPathName))
 											{
-												FileIO::DirectoryEntryType_t detDirectoryEntryType;
-												shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-													manifestDirectoryPathName + "/");
-
 												// chunks will be removed 10 minutes after the "capacity" of the playlist
 												// long liveProxyChunkRetentionInSeconds =
 												// 	(segmentDurationInSeconds * playlistEntriesNumber)
 												// 	+ 10 * 60;	// 10 minutes
 												long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
 
-												bool scanDirectoryFinished = false;
-												while (!scanDirectoryFinished)
+												for (fs::directory_entry const& entry: fs::directory_iterator(manifestDirectoryPathName))
 												{
-													string directoryEntry;
 													try
 													{
-														string directoryEntry = FileIO::readDirectory (directory,
-														&detDirectoryEntryType);
-
-														if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+														if (!entry.is_regular_file())
 															continue;
 
 														string dashPrefixInitFiles ("init-stream");
 														if (outputType == "DASH" &&
-															directoryEntry.size() >= dashPrefixInitFiles.size()
-																&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
+															entry.path().filename().string().size() >= dashPrefixInitFiles.size()
+																&& 0 == entry.path().filename().string().compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
 														)
 															continue;
 
 														{
-															string segmentPathNameToBeRemoved =
-																manifestDirectoryPathName + "/" + directoryEntry;
+															string segmentPathNameToBeRemoved = entry.path().string();
 
 															chrono::system_clock::time_point fileLastModification =
-																FileIO::getFileTime (segmentPathNameToBeRemoved);
+																chrono::time_point_cast<chrono::system_clock::duration>(
+																	fs::last_write_time(entry) - fs::file_time_type::clock::now() + chrono::system_clock::now());
 															chrono::system_clock::time_point now = chrono::system_clock::now();
 
-															if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-																> liveProxyChunkRetentionInSeconds)
+															int64_t lastFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+															if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 															{
+																_logger->info(__FILEREF__ + "liveProxyMonitor. chunk to be removed, too old"
+																	+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
+																	+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
+																	+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+																	+ ", lastFileUpdateInSeconds: " + to_string(lastFileUpdateInSeconds) + " seconds ago"
+																	+ ", liveProxyChunkRetentionInSeconds: " + to_string(liveProxyChunkRetentionInSeconds)
+																);
+
 																chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
 															}
 
@@ -539,10 +536,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 															firstChunkRead = true;
 														}
-													}
-													catch(DirectoryListFinished e)
-													{
-														scanDirectoryFinished = true;
 													}
 													catch(runtime_error e)
 													{
@@ -569,8 +562,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														// throw e;
 													}
 												}
-
-												FileIO::closeDirectory (directory);
 											}
 										}
 										catch(runtime_error e)
@@ -1097,25 +1088,21 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 							{
-								time_t utcSegmentListFileLastModificationTime;
+								int64_t lastSegmentListFileUpdateInSeconds;
+								{
+									chrono::system_clock::time_point fileLastModification =
+										chrono::time_point_cast<chrono::system_clock::duration>(
+											fs::last_write_time(segmentListPathName) - fs::file_time_type::clock::now() + chrono::system_clock::now());
+									chrono::system_clock::time_point now = chrono::system_clock::now();
 
-								FileIO::getFileTime (segmentListPathName.c_str(),
-									&utcSegmentListFileLastModificationTime);
-
-								unsigned long long	ullNow = 0;
-								unsigned long		ulAdditionalMilliSecs;
-								long				lTimeZoneDifferenceInHours;
-
-								DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-									&lTimeZoneDifferenceInHours);
+									lastSegmentListFileUpdateInSeconds =
+										chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+								}
 
 								long maxLastSegmentListFileUpdateInSeconds
 									= segmentDurationInSeconds * 2;
 
-								unsigned long long lastSegmentListFileUpdateInSeconds
-									= ullNow - utcSegmentListFileLastModificationTime;
-								if (lastSegmentListFileUpdateInSeconds
-									> maxLastSegmentListFileUpdateInSeconds)
+								if (lastSegmentListFileUpdateInSeconds > maxLastSegmentListFileUpdateInSeconds)
 								{
 									liveRecorderWorking = false;
 
@@ -1126,6 +1113,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
 										+ ", segmentListPathName: " + segmentListPathName
 										+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
+										+ ", maxLastSegmentListFileUpdateInSeconds: " + to_string(maxLastSegmentListFileUpdateInSeconds)
 									);
 
 									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
@@ -1220,21 +1208,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									else
 									{
-										time_t utcManifestFileLastModificationTime;
+										int64_t lastManifestFileUpdateInSeconds;
+										{
+											chrono::system_clock::time_point fileLastModification =
+												chrono::time_point_cast<chrono::system_clock::duration>(
+													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() + chrono::system_clock::now());
+											chrono::system_clock::time_point now = chrono::system_clock::now();
 
-										FileIO::getFileTime (manifestFilePathName.c_str(),
-											&utcManifestFileLastModificationTime);
-
-										unsigned long long	ullNow = 0;
-										unsigned long		ulAdditionalMilliSecs;
-										long				lTimeZoneDifferenceInHours;
-
-										DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-											&lTimeZoneDifferenceInHours);
+											lastManifestFileUpdateInSeconds =
+												chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+										}
 
 										long maxLastManifestFileUpdateInSeconds = 45;
 
-										unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
 										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
 										{
 											liveRecorderWorking = false;
@@ -1245,6 +1231,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 												+ ", manifestFilePathName: " + manifestFilePathName
 												+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
+												+ ", maxLastManifestFileUpdateInSeconds: " + to_string(maxLastManifestFileUpdateInSeconds)
 											);
 
 											localErrorMessage = " restarted because of 'manifest file was not updated'";
@@ -1424,12 +1411,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 									try
 									{
-										if (FileIO::directoryExisting(manifestDirectoryPathName))
+										if (fs::exists(manifestDirectoryPathName))
 										{
-											FileIO::DirectoryEntryType_t detDirectoryEntryType;
-											shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-												manifestDirectoryPathName + "/");
-
 											// chunks will be removed 10 minutes after the "capacity" of the playlist
 											// 2022-05-26: it was 10 minutes fixed. This is an error
 											// in case of LiveRecorderVirtualVOD because, in this scenario,
@@ -1458,36 +1441,39 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													+ to_string(liveProxyChunkRetentionInSeconds)
 											);
 
-											bool scanDirectoryFinished = false;
-											while (!scanDirectoryFinished)
+											for (fs::directory_entry const& entry: fs::directory_iterator(manifestDirectoryPathName))
 											{
-												string directoryEntry;
 												try
 												{
-													string directoryEntry = FileIO::readDirectory (directory,
-													&detDirectoryEntryType);
-
-													if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+													if (!entry.is_regular_file())
 														continue;
 
 													string dashPrefixInitFiles ("init-stream");
 													if (outputType == "DASH" &&
-														directoryEntry.size() >= dashPrefixInitFiles.size()
-															&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
+														entry.path().filename().string().size() >= dashPrefixInitFiles.size()
+															&& 0 == entry.path().filename().string().compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
 													)
 														continue;
 
 													{
-														string segmentPathNameToBeRemoved =
-															manifestDirectoryPathName + "/" + directoryEntry;
+														string segmentPathNameToBeRemoved = entry.path();
 
 														chrono::system_clock::time_point fileLastModification =
-															FileIO::getFileTime (segmentPathNameToBeRemoved);
+															chrono::time_point_cast<chrono::system_clock::duration>(
+																fs::last_write_time(entry) - fs::file_time_type::clock::now() + chrono::system_clock::now());
 														chrono::system_clock::time_point now = chrono::system_clock::now();
 
-														if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-															> liveProxyChunkRetentionInSeconds)
+														int64_t lastFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+														if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 														{
+															_logger->info(__FILEREF__ + "liveRecordingMonitor. chunk to be removed, too old"
+																+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
+																+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
+																+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+																+ ", lastFileUpdateInSeconds: " + to_string(lastFileUpdateInSeconds) + " seconds ago"
+																+ ", liveProxyChunkRetentionInSeconds: " + to_string(liveProxyChunkRetentionInSeconds)
+															);
+
 															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
 														}
 
@@ -1497,10 +1483,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 														firstChunkRead = true;
 													}
-												}
-												catch(DirectoryListFinished e)
-												{
-													scanDirectoryFinished = true;
 												}
 												catch(runtime_error e)
 												{
@@ -1527,8 +1509,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													// throw e;
 												}
 											}
-
-											FileIO::closeDirectory (directory);
 										}
 									}
 									catch(runtime_error e)

@@ -3,7 +3,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/FileIO.h"                                                                            
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/DateTime.h"
 
@@ -89,14 +88,14 @@ void LiveRecorder::encodeContent(
 		//	as push, so the chunksNFSStagingContentsPath dir is not used at all
 		//	For this reason the directory check is useless and it is commented
 		/*
-		if (!FileIO::directoryExisting(_liveRecording->_chunksNFSStagingContentsPath))
+		if (!fs::exists(_liveRecording->_chunksNFSStagingContentsPath))
 		{
 			bool noErrorIfExists = true;
 			bool recursive = true;
 			_logger->info(__FILEREF__ + "Creating directory"
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			);
-			FileIO::createDirectory(_liveRecording->_chunksNFSStagingContentsPath,
+			fs::createDirectory(_liveRecording->_chunksNFSStagingContentsPath,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH,
 				noErrorIfExists, recursive);
@@ -329,7 +328,7 @@ void LiveRecorder::encodeContent(
 			}
 		}
 
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -338,10 +337,8 @@ void LiveRecorder::encodeContent(
 				+ ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
@@ -389,7 +386,7 @@ void LiveRecorder::encodeContent(
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
-					if (FileIO::directoryExisting(manifestDirectoryPath))
+					if (fs::exists(manifestDirectoryPath))
 					{
 						try
 						{
@@ -398,9 +395,7 @@ void LiveRecorder::encodeContent(
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath,
-								bRemoveRecursively);
+							fs::remove_all(manifestDirectoryPath);
 						}
 						catch(runtime_error e)
 						{
@@ -520,7 +515,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -528,10 +523,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -552,7 +545,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -560,9 +553,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName, exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		char strDateTime [64];
@@ -617,7 +609,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -625,10 +617,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		char strDateTime [64];
@@ -673,7 +663,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -681,10 +671,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		char strDateTime [64];
@@ -729,7 +717,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -737,10 +725,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		char strDateTime [64];
@@ -785,7 +771,7 @@ void LiveRecorder::encodeContent(
 
 		// here we have the deletion of the segments directory
 		// The monitor directory was removed inside the ffmpeg method
-		if (FileIO::fileExisting(_liveRecording->_chunksTranscoderStagingContentsPath
+		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath
 			+ _liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -793,10 +779,8 @@ void LiveRecorder::encodeContent(
 					+ _liveRecording->_chunksTranscoderStagingContentsPath
 					+ _liveRecording->_segmentListFileName
 			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_liveRecording->_chunksTranscoderStagingContentsPath
-				+ _liveRecording->_segmentListFileName,
-				exceptionInCaseOfError);
+			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath
+				+ _liveRecording->_segmentListFileName);
 		}
 
 		char strDateTime [64];
