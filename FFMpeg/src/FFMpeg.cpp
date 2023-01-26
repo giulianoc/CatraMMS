@@ -13,11 +13,11 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include <filesystem>
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
-#include "catralibraries/FileIO.h"
 #include "catralibraries/StringUtils.h"
 #include "FFMpeg.h"
 
@@ -123,9 +123,7 @@ void FFMpeg::encodeContent(
 			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
 		);
 
-		if (!FileIO::fileExisting(mmsSourceAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceAssetPathName)
-		)
+		if (!fs::exists(mmsSourceAssetPathName))
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -275,9 +273,12 @@ void FFMpeg::encodeContent(
 				_logger->info(__FILEREF__ + "Creating directory (if needed)"
 					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 				);
-				FileIO::createDirectory(encodedStagingAssetPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				fs::create_directories(encodedStagingAssetPathName);                              
+				fs::permissions(encodedStagingAssetPathName,                                      
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+					| fs::perms::group_read | fs::perms::group_exec                          
+					| fs::perms::others_read | fs::perms::others_exec,                                                                         
+					fs::perm_options::replace);
 
 				for (int index = 0; index < audioTracksRoot.size(); index++)
 				{
@@ -291,9 +292,12 @@ void FFMpeg::encodeContent(
 					_logger->info(__FILEREF__ + "Creating directory (if needed)"
 						+ ", audioPathName: " + audioPathName
 					);
-					FileIO::createDirectory(audioPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(audioPathName);                              
+					fs::permissions(audioPathName,                                      
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+						| fs::perms::group_read | fs::perms::group_exec                          
+						| fs::perms::others_read | fs::perms::others_exec,                                                                         
+						fs::perm_options::replace);
 				}
 
 				{
@@ -310,9 +314,12 @@ void FFMpeg::encodeContent(
 					_logger->info(__FILEREF__ + "Creating directory (if needed)"
 						+ ", videoPathName: " + videoPathName
 					);
-					FileIO::createDirectory(videoPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(videoPathName);                              
+					fs::permissions(videoPathName,                                      
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+						| fs::perms::group_read | fs::perms::group_exec                          
+						| fs::perms::others_read | fs::perms::others_exec,                                                                         
+						fs::perm_options::replace);
 				}
 			}
 
@@ -410,12 +417,11 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
 					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -519,12 +525,11 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
                     ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -532,12 +537,11 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				bool exceptionInCaseOfError = false;
 				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+				fs::remove_all(_outputFfmpegPathFileName);
 			}
 			else
             {
@@ -633,10 +637,9 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -644,17 +647,20 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				bool exceptionInCaseOfError = false;
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+				fs::remove_all(_outputFfmpegPathFileName);
 			}
 
 			long long llDirSize = -1;
-			// if (FileIO::fileExisting(encodedStagingAssetPathName))
 			{
-				llDirSize = FileIO::getDirectorySizeInBytes (
-					encodedStagingAssetPathName);
+				llDirSize = 0;
+				// recursive_directory_iterator, by default, does not follow sym links
+				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(encodedStagingAssetPathName))
+				{
+					if (entry.is_regular_file())
+						llDirSize += entry.file_size();
+				}
 			}
 
             _logger->info(__FILEREF__ + "Encoded file generated"
@@ -691,14 +697,15 @@ void FFMpeg::encodeContent(
 			vector<string> ffmpegArgumentList;
 
 			{
-				bool noErrorIfExists = true;
-				bool recursive = true;
 				_logger->info(__FILEREF__ + "Creating directory (if needed)"
 					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 				);
-				FileIO::createDirectory(encodedStagingAssetPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				fs::create_directories(encodedStagingAssetPathName);
+				fs::permissions(encodedStagingAssetPathName,
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+					| fs::perms::group_read | fs::perms::group_exec
+					| fs::perms::others_read | fs::perms::others_exec,
+					fs::perm_options::replace);
 			}
 
             if (_twoPasses)
@@ -797,12 +804,11 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
 					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -906,12 +912,11 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
 					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -919,12 +924,11 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				bool exceptionInCaseOfError = false;
 				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+				fs::remove_all(_outputFfmpegPathFileName);
 
 				ffmpegEncodingParameters.createManifestFile();
 			}
@@ -1023,10 +1027,9 @@ void FFMpeg::encodeContent(
 						;
 					_logger->error(errorMessage);
 
-					bool exceptionInCaseOfError = false;
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -1034,19 +1037,22 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				bool exceptionInCaseOfError = false;
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+				fs::remove_all(_outputFfmpegPathFileName);
 
 				ffmpegEncodingParameters.createManifestFile();
 			}
 
 			long long llDirSize = -1;
-			// if (FileIO::fileExisting(encodedStagingAssetPathName))
 			{
-				llDirSize = FileIO::getDirectorySizeInBytes (
-					encodedStagingAssetPathName);
+				llDirSize = 0;
+				// recursive_directory_iterator, by default, does not follow sym links
+				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(encodedStagingAssetPathName))
+				{
+					if (entry.is_regular_file())
+						llDirSize += entry.file_size();
+				}
 			}
 
             _logger->info(__FILEREF__ + "Encoded file generated"
@@ -1182,12 +1188,11 @@ void FFMpeg::encodeContent(
 						;
                     _logger->error(errorMessage);
 
-                    bool exceptionInCaseOfError = false;
 					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -1291,12 +1296,11 @@ void FFMpeg::encodeContent(
 						;
                     _logger->error(errorMessage);
 
-                    bool exceptionInCaseOfError = false;
 					ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -1304,12 +1308,11 @@ void FFMpeg::encodeContent(
 						throw e;
                 }
 
-                bool exceptionInCaseOfError = false;
 				ffmpegEncodingParameters.removeTwoPassesTemporaryFiles();
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
 
 				vector<string> sourcesPathName;
 				if (ffmpegEncodingParameters.getMultiTrackPathNames(sourcesPathName))
@@ -1439,8 +1442,7 @@ void FFMpeg::encodeContent(
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -1451,7 +1453,7 @@ void FFMpeg::encodeContent(
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
 
 				vector<string> sourcesPathName;
 				if (ffmpegEncodingParameters.getMultiTrackPathNames(sourcesPathName))
@@ -1485,11 +1487,8 @@ void FFMpeg::encodeContent(
             }
 
 			long long llFileSize = -1;
-			// if (FileIO::fileExisting(encodedStagingAssetPathName))
 			{
-				bool inCaseOfLinkHasItToBeRead = false;
-				llFileSize = FileIO::getFileSizeInBytes (
-					encodedStagingAssetPathName, inCaseOfLinkHasItToBeRead);
+				llFileSize = fs::file_size(encodedStagingAssetPathName);
 			}
 
             _logger->info(__FILEREF__ + "Encoded file generated"
@@ -1529,31 +1528,17 @@ void FFMpeg::encodeContent(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(encodedStagingAssetPathName)
-			|| FileIO::directoryExisting(encodedStagingAssetPathName))
+        if (fs::exists(encodedStagingAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                FileIO::remove(encodedStagingAssetPathName);
-            }
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+			fs::remove_all(encodedStagingAssetPathName);
         }
 
         throw e;
@@ -1569,31 +1554,17 @@ void FFMpeg::encodeContent(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(encodedStagingAssetPathName)
-                || FileIO::directoryExisting(encodedStagingAssetPathName))
+        if (fs::exists(encodedStagingAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                FileIO::remove(encodedStagingAssetPathName);
-            }
+            _logger->info(__FILEREF__ + "Remove"
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+            fs::remove_all(encodedStagingAssetPathName);
         }
 
         throw e;
@@ -1608,31 +1579,17 @@ void FFMpeg::encodeContent(
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
 
-        if (FileIO::fileExisting(encodedStagingAssetPathName)
-                || FileIO::directoryExisting(encodedStagingAssetPathName))
+        if (fs::exists(encodedStagingAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(encodedStagingAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(encodedStagingAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
-                FileIO::remove(encodedStagingAssetPathName);
-            }
+            _logger->info(__FILEREF__ + "Remove"
+				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName);
+            fs::remove_all(encodedStagingAssetPathName);
         }
 
         throw e;
@@ -1667,9 +1624,7 @@ void FFMpeg::overlayImageOnVideo(
 
     try
     {
-		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
-		)
+		if (!fs::exists(mmsSourceVideoAssetPathName))       
 		{
 			string errorMessage = string("Source video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1683,7 +1638,7 @@ void FFMpeg::overlayImageOnVideo(
 
 		if (!externalEncoder)
 		{
-			if (!FileIO::fileExisting(mmsSourceImageAssetPathName))
+			if (!fs::exists(mmsSourceImageAssetPathName))
 			{
 				string errorMessage = string("Source image asset path name not existing")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1985,8 +1940,7 @@ void FFMpeg::overlayImageOnVideo(
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -1996,19 +1950,15 @@ void FFMpeg::overlayImageOnVideo(
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
             }
 
-            _logger->info(__FILEREF__ + "Overlayed file generated"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
+            _logger->info(__FILEREF__ + "Overlayed file generated" + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
             if (ulFileSize == 0)
             {
@@ -2039,30 +1989,18 @@ void FFMpeg::overlayImageOnVideo(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2079,11 +2017,8 @@ void FFMpeg::overlayImageOnVideo(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2091,18 +2026,10 @@ void FFMpeg::overlayImageOnVideo(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2118,30 +2045,18 @@ void FFMpeg::overlayImageOnVideo(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2176,9 +2091,7 @@ void FFMpeg::overlayTextOnVideo(
 	string textTemporaryFileName;
     try
     {
-		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
-		)
+		if (!fs::exists(mmsSourceVideoAssetPathName))
 		{
 			string errorMessage = string("Source video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2494,13 +2407,11 @@ void FFMpeg::overlayTextOnVideo(
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", textTemporaryFileName: " + textTemporaryFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+                    fs::remove_all(textTemporaryFileName);
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -2510,13 +2421,11 @@ void FFMpeg::overlayTextOnVideo(
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", textTemporaryFileName: " + textTemporaryFileName);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+				fs::remove_all(textTemporaryFileName);
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
             }
 
             _logger->info(__FILEREF__ + "Drawtext file generated"
@@ -2525,9 +2434,7 @@ void FFMpeg::overlayTextOnVideo(
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
             if (ulFileSize == 0)
             {
@@ -2557,11 +2464,8 @@ void FFMpeg::overlayTextOnVideo(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2569,18 +2473,10 @@ void FFMpeg::overlayTextOnVideo(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2596,11 +2492,8 @@ void FFMpeg::overlayTextOnVideo(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2608,18 +2501,10 @@ void FFMpeg::overlayTextOnVideo(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2634,11 +2519,8 @@ void FFMpeg::overlayTextOnVideo(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2646,18 +2528,10 @@ void FFMpeg::overlayTextOnVideo(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -2942,9 +2816,7 @@ void FFMpeg::videoSpeed(
 
     try
     {
-		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
-		)
+		if (!fs::exists(mmsSourceVideoAssetPathName))
 		{
 			string errorMessage = string("Source video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3375,8 +3247,7 @@ void FFMpeg::videoSpeed(
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -3386,8 +3257,7 @@ void FFMpeg::videoSpeed(
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
             }
 
             _logger->info(__FILEREF__ + "VideoSpeed file generated"
@@ -3396,9 +3266,7 @@ void FFMpeg::videoSpeed(
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
             if (ulFileSize == 0)
             {
@@ -3429,11 +3297,8 @@ void FFMpeg::videoSpeed(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3441,18 +3306,10 @@ void FFMpeg::videoSpeed(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -3468,11 +3325,8 @@ void FFMpeg::videoSpeed(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3480,18 +3334,10 @@ void FFMpeg::videoSpeed(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -3506,11 +3352,8 @@ void FFMpeg::videoSpeed(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3518,18 +3361,10 @@ void FFMpeg::videoSpeed(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -3569,9 +3404,7 @@ void FFMpeg::pictureInPicture(
 
     try
     {
-		if (!FileIO::fileExisting(mmsMainVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsMainVideoAssetPathName)
-		)
+		if (!fs::exists(mmsMainVideoAssetPathName))
 		{
 			string errorMessage = string("Main video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3583,9 +3416,7 @@ void FFMpeg::pictureInPicture(
 			throw runtime_error(errorMessage);
 		}
 
-		if (!FileIO::fileExisting(mmsOverlayVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsOverlayVideoAssetPathName)
-		)
+		if (!fs::exists(mmsOverlayVideoAssetPathName))
 		{
 			string errorMessage = string("Overlay video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3935,8 +3766,7 @@ void FFMpeg::pictureInPicture(
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -3946,8 +3776,7 @@ void FFMpeg::pictureInPicture(
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
             }
 
             _logger->info(__FILEREF__ + "pictureInPicture file generated"
@@ -3956,9 +3785,7 @@ void FFMpeg::pictureInPicture(
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
             if (ulFileSize == 0)
             {
@@ -3989,11 +3816,8 @@ void FFMpeg::pictureInPicture(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4001,18 +3825,10 @@ void FFMpeg::pictureInPicture(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4029,11 +3845,8 @@ void FFMpeg::pictureInPicture(
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4041,18 +3854,10 @@ void FFMpeg::pictureInPicture(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4068,11 +3873,8 @@ void FFMpeg::pictureInPicture(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4080,18 +3882,10 @@ void FFMpeg::pictureInPicture(
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4152,7 +3946,7 @@ void FFMpeg::introOutroOverlay(
 
     try
     {
-		if (!FileIO::fileExisting(introVideoAssetPathName))
+		if (!fs::exists(introVideoAssetPathName))
 		{
 			string errorMessage = string("video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4163,7 +3957,7 @@ void FFMpeg::introOutroOverlay(
 
 			throw runtime_error(errorMessage);
 		}
-		else if (!FileIO::fileExisting(mainVideoAssetPathName))
+		else if (!fs::exists(mainVideoAssetPathName))
 		{
 			string errorMessage = string("video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4174,7 +3968,7 @@ void FFMpeg::introOutroOverlay(
 
 			throw runtime_error(errorMessage);
 		}
-		else if (!FileIO::fileExisting(outroVideoAssetPathName))
+		else if (!fs::exists(outroVideoAssetPathName))
 		{
 			string errorMessage = string("video asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4544,8 +4338,7 @@ ffmpeg \
 
                     _logger->info(__FILEREF__ + "Remove"
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                    fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
@@ -4555,8 +4348,7 @@ ffmpeg \
 
                 _logger->info(__FILEREF__ + "Remove"
                     + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+                fs::remove_all(_outputFfmpegPathFileName);
             }
 
             _logger->info(__FILEREF__ + "introOutroOverlay file generated"
@@ -4565,9 +4357,7 @@ ffmpeg \
 				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
             if (ulFileSize == 0)
             {
@@ -4596,12 +4386,8 @@ ffmpeg \
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType =
-				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4609,18 +4395,10 @@ ffmpeg \
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4635,12 +4413,8 @@ ffmpeg \
             + ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType =
-				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4648,18 +4422,10 @@ ffmpeg \
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4673,12 +4439,8 @@ ffmpeg \
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        if (fs::exists(stagingEncodedAssetPathName))
         {
-            FileIO::DirectoryEntryType_t detSourceFileType =
-				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
             _logger->info(__FILEREF__ + "Remove"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4686,18 +4448,10 @@ ffmpeg \
             );
 
             // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 _logger->info(__FILEREF__ + "Remove"
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-                FileIO::remove(stagingEncodedAssetPathName);
+                fs::remove_all(stagingEncodedAssetPathName);
             }
         }
 
@@ -4735,10 +4489,23 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 	// milli secs to wait in case of nfs delay
 	if (isMMSAssetPathName)
 	{
-		if (!FileIO::fileExisting(mediaSource,
-			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
-			&& !FileIO::directoryExisting(mediaSource)
-		)
+		bool exists = false;                                                                              
+		{                                                                                                     
+			chrono::system_clock::time_point end = chrono::system_clock::now()
+				+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+			do
+			{
+				if (fs::exists(mediaSource))
+				{
+					exists = true;
+					break;
+				}
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+			}
+			while(chrono::system_clock::now() < end);
+		}
+		if (!exists)
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4892,8 +4659,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+        fs::remove_all(detailsPathFileName);
 
         throw e;
     }
@@ -5444,8 +5210,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+        fs::remove_all(detailsPathFileName);
     }
     catch(runtime_error e)
     {
@@ -5458,8 +5223,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+        fs::remove_all(detailsPathFileName);
 
         throw e;
     }
@@ -5474,8 +5238,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+        fs::remove_all(detailsPathFileName);
 
         throw e;
     }
@@ -5607,8 +5370,7 @@ int FFMpeg::probeChannel(
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", outputProbePathFileName: " + outputProbePathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(outputProbePathFileName, exceptionInCaseOfError);
+        fs::remove_all(outputProbePathFileName);
 
         // throw e;
 		return 1;
@@ -5633,9 +5395,23 @@ void FFMpeg::muxAllFiles(
 	for (string sourcePathName: sourcesPathName)
 	{
 		// milli secs to wait in case of nfs delay
-		if (!FileIO::fileExisting(sourcePathName,
-			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
-		)
+		bool exists = false;                                                                              
+		{                                                                                                     
+			chrono::system_clock::time_point end = chrono::system_clock::now()
+				+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+			do
+			{
+				if (fs::exists(sourcePathName))
+				{
+					exists = true;
+					break;
+				}
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+			}
+			while(chrono::system_clock::now() < end);
+		}
+		if (!exists)
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -5833,12 +5609,11 @@ void FFMpeg::getLiveStreamingInfo(
 		;
 		_logger->error(errorMessage);
 
-		if (FileIO::isFileExisting(outputFfmpegPathFileName.c_str()))
+		if (fs::exists(outputFfmpegPathFileName.c_str()))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+			fs::remove_all(outputFfmpegPathFileName);
 		}
 
 		throw e;
@@ -5846,7 +5621,7 @@ void FFMpeg::getLiveStreamingInfo(
 
 	try
 	{
-		if (!FileIO::isFileExisting(outputFfmpegPathFileName.c_str()))
+		if (!fs::exists(outputFfmpegPathFileName.c_str()))
 		{
 			_logger->info(__FILEREF__ + "ffmpeg: ffmpeg status not available"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6250,8 +6025,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+		fs::remove_all(outputFfmpegPathFileName);
 	}
     catch(runtime_error e)
     {
@@ -6264,8 +6038,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+		fs::remove_all(outputFfmpegPathFileName);
 
         throw e;
     }
@@ -6280,8 +6053,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+		fs::remove_all(outputFfmpegPathFileName);
 
         throw e;
     }
@@ -6316,9 +6088,7 @@ void FFMpeg::generateFrameToIngest(
         + ", imageHeight: " + to_string(imageHeight)
     );
 
-	if (!FileIO::fileExisting(mmsAssetPathName)
-		&& !FileIO::directoryExisting(mmsAssetPathName)
-	)
+	if (!fs::exists(mmsAssetPathName))
 	{
 		string errorMessage = string("Asset path name not existing")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6451,8 +6221,7 @@ void FFMpeg::generateFrameToIngest(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
@@ -6462,8 +6231,7 @@ void FFMpeg::generateFrameToIngest(
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+    fs::remove_all(_outputFfmpegPathFileName);
 }
 
 void FFMpeg::generateFramesToIngest(
@@ -6508,9 +6276,7 @@ void FFMpeg::generateFramesToIngest(
         + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
     );
 
-	if (!FileIO::fileExisting(mmsAssetPathName)        
-		&& !FileIO::directoryExisting(mmsAssetPathName)
-	)
+	if (!fs::exists(mmsAssetPathName))
 	{
 		string errorMessage = string("Asset path name not existing")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6522,23 +6288,23 @@ void FFMpeg::generateFramesToIngest(
 		throw runtime_error(errorMessage);
 	}
 
-	if (FileIO::directoryExisting(imagesDirectory))
+	if (fs::exists(imagesDirectory))
 	{
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", imagesDirectory: " + imagesDirectory);
-		Boolean_t bRemoveRecursively = true;
-		FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+		fs::remove_all(imagesDirectory);
 	}
 	{
 		_logger->info(__FILEREF__ + "Create directory"
                + ", imagesDirectory: " + imagesDirectory
            );
-		bool noErrorIfExists = true;
-		bool recursive = true;
-		FileIO::createDirectory(imagesDirectory,
-			S_IRUSR | S_IWUSR | S_IXUSR |
-			S_IRGRP | S_IXGRP |
-			S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		fs::create_directories(imagesDirectory);                              
+		fs::permissions(imagesDirectory,                                      
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+			| fs::perms::group_read | fs::perms::group_exec                          
+			| fs::perms::others_read | fs::perms::others_exec,                                                                         
+			fs::perm_options::replace);
+
 	}
 
 	int iReturnedStatus = 0;
@@ -6745,18 +6511,16 @@ void FFMpeg::generateFramesToIngest(
 			;
         _logger->error(errorMessage);
 
-		if (FileIO::directoryExisting(imagesDirectory))
+		if (fs::exists(imagesDirectory))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", imagesDirectory: " + imagesDirectory);
-			Boolean_t bRemoveRecursively = true;
-			FileIO::removeDirectory(imagesDirectory, bRemoveRecursively);
+			fs::remove_all(imagesDirectory);
 		}
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
@@ -6766,8 +6530,7 @@ void FFMpeg::generateFramesToIngest(
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+    fs::remove_all(_outputFfmpegPathFileName);
 }
 
 void FFMpeg::concat(int64_t ingestionJobKey,
@@ -6801,9 +6564,7 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
 		);
 
-		if (!FileIO::fileExisting(sourcePhysicalPath)        
-			&& !FileIO::directoryExisting(sourcePhysicalPath)
-		)
+		if (!fs::exists(sourcePhysicalPath))
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6944,14 +6705,13 @@ void FFMpeg::concat(int64_t ingestionJobKey,
         ;
         _logger->error(errorMessage);
 
-        bool exceptionInCaseOfError = false;
         _logger->info(__FILEREF__ + "Remove"
             + ", concatenationListPathName: " + concatenationListPathName);
-        FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
+        fs::remove_all(concatenationListPathName);
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
 		// to hide the ffmpeg staff
         errorMessage = __FILEREF__ + "command failed"
@@ -6963,10 +6723,10 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     bool exceptionInCaseOfError = false;
     _logger->info(__FILEREF__ + "Remove"
         + ", concatenationListPathName: " + concatenationListPathName);
-    FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
+    fs::remove_all(concatenationListPathName);
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
 }
 
 // audio and video 
@@ -7004,9 +6764,7 @@ void FFMpeg::cutWithoutEncoding(
 		+ ", cutMediaPathName: " + cutMediaPathName
 		);
 
-	if (!FileIO::fileExisting(sourcePhysicalPath)        
-		&& !FileIO::directoryExisting(sourcePhysicalPath)
-	)
+	if (!fs::exists(sourcePhysicalPath))
 	{
 		string errorMessage = string("Source asset path name not existing")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7172,16 +6930,14 @@ void FFMpeg::cutWithoutEncoding(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
         throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
 }
 
 // only video
@@ -7222,9 +6978,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 	try
 	{
-		if (!FileIO::fileExisting(sourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(sourceVideoAssetPathName)
-		)
+		if (!fs::exists(sourceVideoAssetPathName))
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7534,8 +7288,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+				fs::remove_all(_outputFfmpegPathFileName);
 
 				if (iReturnedStatus == 9)   // 9 means: SIGKILL
 					throw FFMpegEncodingKilledByUser();
@@ -7545,8 +7298,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+			fs::remove_all(_outputFfmpegPathFileName);    
 		}
 	}
 	catch(FFMpegEncodingKilledByUser e)
@@ -7559,11 +7311,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			+ ", e.what(): " + e.what()
 		);
 
-		if (FileIO::fileExisting(stagingEncodedAssetPathName)
-			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7571,18 +7320,10 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
-			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-			}
-			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				FileIO::remove(stagingEncodedAssetPathName);
+				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
 
@@ -7598,11 +7339,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			+ ", e.what(): " + e.what()
 		);
 
-		if (FileIO::fileExisting(stagingEncodedAssetPathName)
-			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7610,18 +7348,10 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
-			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-			}
-			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				FileIO::remove(stagingEncodedAssetPathName);
+				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
 
@@ -7636,11 +7366,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 		);
 
-		if (FileIO::fileExisting(stagingEncodedAssetPathName)
-			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7648,18 +7375,10 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
-			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-			}
-			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				FileIO::remove(stagingEncodedAssetPathName);
+				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
 
@@ -7739,9 +7458,7 @@ void FFMpeg::slideShow(
 			string sourcePhysicalPath = imagesSourcePhysicalPaths[imageIndex];
 			double slideDurationInSeconds;
 
-			if (!FileIO::fileExisting(sourcePhysicalPath)        
-				&& !FileIO::directoryExisting(sourcePhysicalPath)
-			)
+			if (!fs::exists(sourcePhysicalPath))
 			{
 				string errorMessage = string("Source asset path name not existing")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7821,9 +7538,7 @@ void FFMpeg::slideShow(
 		string lastSourcePhysicalPath;
 		for (string sourcePhysicalPath: audiosSourcePhysicalPaths)
 		{
-			if (!FileIO::fileExisting(sourcePhysicalPath)        
-				&& !FileIO::directoryExisting(sourcePhysicalPath)
-			)
+			if (!fs::exists(sourcePhysicalPath))
 			{
 				string errorMessage = string("Source asset path name not existing")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8138,20 +7853,19 @@ void FFMpeg::slideShow(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
-        if (FileIO::isFileExisting(slideshowListImagesPathName.c_str()))
+        if (fs::exists(slideshowListImagesPathName.c_str()))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", slideshowListImagesPathName: " + slideshowListImagesPathName);
-			FileIO::remove(slideshowListImagesPathName, exceptionInCaseOfError);
+			fs::remove_all(slideshowListImagesPathName);
 		}
-        if (FileIO::isFileExisting(slideshowListAudiosPathName.c_str()))
+        if (fs::exists(slideshowListAudiosPathName.c_str()))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
-			FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
+			fs::remove_all(slideshowListAudiosPathName);
 		}
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
@@ -8162,20 +7876,19 @@ void FFMpeg::slideShow(
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
     
-	if (FileIO::isFileExisting(slideshowListImagesPathName.c_str()))
+	if (fs::exists(slideshowListImagesPathName.c_str()))
 	{
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", slideshowListImagesPathName: " + slideshowListImagesPathName);
-		FileIO::remove(slideshowListImagesPathName, exceptionInCaseOfError);
+		fs::remove_all(slideshowListImagesPathName);
 	}
-	if (FileIO::isFileExisting(slideshowListAudiosPathName.c_str()))
+	if (fs::exists(slideshowListAudiosPathName.c_str()))
 	{
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
-		FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
+		fs::remove_all(slideshowListAudiosPathName);
 	}
 }
 
@@ -8197,9 +7910,7 @@ void FFMpeg::extractTrackMediaToIngest(
 		*/
 	);
 
-	if (!FileIO::fileExisting(sourcePhysicalPath)        
-		&& !FileIO::directoryExisting(sourcePhysicalPath)
-	)
+	if (!fs::exists(sourcePhysicalPath))
 	{
 		string errorMessage = string("Source asset path name not existing")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8328,16 +8039,14 @@ void FFMpeg::extractTrackMediaToIngest(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
         throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
 }
 
 void FFMpeg::liveRecorder(
@@ -8452,7 +8161,7 @@ void FFMpeg::liveRecorder(
 		//	1. the encoder returns an error becaise of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (!FileIO::directoryExisting(segmentListPath))
+		if (!fs::exists(segmentListPath))
 		{
 			_logger->warn(__FILEREF__ + "segmentListPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8463,12 +8172,12 @@ void FFMpeg::liveRecorder(
 			_logger->info(__FILEREF__ + "Create directory"
                 + ", segmentListPath: " + segmentListPath
             );
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			FileIO::createDirectory(segmentListPath,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IXGRP |
-				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			fs::create_directories(segmentListPath);                              
+			fs::permissions(segmentListPath,                                      
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+				| fs::perms::group_read | fs::perms::group_exec                          
+				| fs::perms::others_read | fs::perms::others_exec,                                                                         
+				fs::perm_options::replace);
 		}
 
 		{
@@ -9096,17 +8805,17 @@ void FFMpeg::liveRecorder(
 					//	1. the encoder returns an error because of the missing directory
 					//	2. EncoderVideoAudioProxy calls again the encoder
 					// So, for this reason, the below check is done
-					if (!FileIO::directoryExisting(manifestDirectoryPath))
+					if (!fs::exists(manifestDirectoryPath))
 					{
 						_logger->info(__FILEREF__ + "Create directory"
 							+ ", manifestDirectoryPath: " + manifestDirectoryPath
 						);
-						bool noErrorIfExists = true;
-						bool recursive = true;
-						FileIO::createDirectory(manifestDirectoryPath,
-							S_IRUSR | S_IWUSR | S_IXUSR |
-							S_IRGRP | S_IXGRP |
-							S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+						fs::create_directories(manifestDirectoryPath);                              
+						fs::permissions(manifestDirectoryPath,                                      
+							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+							| fs::perms::group_read | fs::perms::group_exec                          
+							| fs::perms::others_read | fs::perms::others_exec,                                                                         
+							fs::perm_options::replace);
 					}
 
 					if (externalEncoder)
@@ -9945,7 +9654,7 @@ void FFMpeg::liveRecorder(
 
 				if (manifestDirectoryPath != "")
 				{
-					if (FileIO::directoryExisting(manifestDirectoryPath))
+					if (fs::exists(manifestDirectoryPath))
 					{
 						try
 						{
@@ -9954,8 +9663,7 @@ void FFMpeg::liveRecorder(
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+							fs::remove_all(manifestDirectoryPath);
 						}
 						catch(runtime_error e)
 						{
@@ -9988,7 +9696,7 @@ void FFMpeg::liveRecorder(
 
 		// if (segmenterType == "streamSegmenter" || segmenterType == "hlsSegmenter")
 		{
-			if (segmentListPath != "" && FileIO::directoryExisting(segmentListPath))
+			if (segmentListPath != "" && fs::exists(segmentListPath))
 			{
 				try
 				{
@@ -9997,8 +9705,7 @@ void FFMpeg::liveRecorder(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", segmentListPath: " + segmentListPath
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+					fs::remove_all(segmentListPath);
 				}
 				catch(runtime_error e)
 				{
@@ -10057,7 +9764,7 @@ void FFMpeg::liveRecorder(
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
 				);
-			FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+			fs::copy(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 
 			throw runtime_error("liveRecording exit before unexpectly");
 		}
@@ -10121,24 +9828,23 @@ void FFMpeg::liveRecorder(
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
 				);
-			FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+			fs::copy(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 		}
 		*/
 
-		bool exceptionInCaseOfError = false;
 		/*
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-		FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+		fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 		*/
 
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", segmentListPathName: " + segmentListPathName);
-		FileIO::remove(segmentListPathName, exceptionInCaseOfError);
+		fs::remove_all(segmentListPathName);
 
 		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
@@ -10155,15 +9861,14 @@ void FFMpeg::liveRecorder(
 
 				if (manifestDirectoryPath != "")
 				{
-					if (FileIO::directoryExisting(manifestDirectoryPath))
+					if (fs::exists(manifestDirectoryPath))
 					{
 						try
 						{
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", manifestDirectoryPath: " + manifestDirectoryPath
 							);
-							Boolean_t bRemoveRecursively = true;
-							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+							fs::remove_all(manifestDirectoryPath);
 						}
 						catch(runtime_error e)
 						{
@@ -10196,15 +9901,14 @@ void FFMpeg::liveRecorder(
 
 		// if (segmenterType == "streamSegmenter" || segmenterType == "hlsSegmenter")
 		{
-			if (segmentListPath != "" && FileIO::directoryExisting(segmentListPath))
+			if (segmentListPath != "" && fs::exists(segmentListPath))
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", segmentListPath: " + segmentListPath
 					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(segmentListPath, bRemoveRecursively);
+					fs::remove_all(segmentListPath);
 				}
 				catch(runtime_error e)
 				{
@@ -10249,7 +9953,7 @@ void FFMpeg::liveRecorder(
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 	*/
 }
 
@@ -10717,7 +10421,7 @@ void FFMpeg::liveProxy2(
 			);
 
 			if (endlessPlaylistListPathName != ""
-				&& FileIO::fileExisting(endlessPlaylistListPathName))
+				&& fs::exists(endlessPlaylistListPathName))
 			{
 				if (externalEncoder)
 				{
@@ -10742,9 +10446,8 @@ void FFMpeg::liveProxy2(
 									+ ", mediaPathName: "
 										+ _ffmpegEndlessRecursivePlaylistDir + "/"
 										+ mediaFileName);
-								bool exceptionInCaseOfError = false;
-								FileIO::remove(_ffmpegEndlessRecursivePlaylistDir + "/"
-									+ mediaFileName, exceptionInCaseOfError);    
+								fs::remove_all(_ffmpegEndlessRecursivePlaylistDir + "/"
+									+ mediaFileName);    
 							}
 						}
 
@@ -10756,8 +10459,7 @@ void FFMpeg::liveProxy2(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", endlessPlaylistListPathName: " + endlessPlaylistListPathName);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
+				fs::remove_all(endlessPlaylistListPathName);    
 				endlessPlaylistListPathName = "";
 			}
 
@@ -10776,16 +10478,14 @@ void FFMpeg::liveProxy2(
 
 					if (manifestDirectoryPath != "")
 					{
-						if (FileIO::directoryExisting(manifestDirectoryPath))
+						if (fs::exists(manifestDirectoryPath))
 						{
 							try
 							{
 								_logger->info(__FILEREF__ + "removeDirectory"
 									+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(manifestDirectoryPath,
-									bRemoveRecursively);
+								fs::remove_all(manifestDirectoryPath);
 							}
 							catch(runtime_error e)
 							{
@@ -10835,12 +10535,11 @@ void FFMpeg::liveProxy2(
 							+ ".overlayText";
 					}
 
-					if (FileIO::fileExisting(textTemporaryFileName))
+					if (fs::exists(textTemporaryFileName))
 					{
 						_logger->info(__FILEREF__ + "Remove"
 							+ ", textTemporaryFileName: " + textTemporaryFileName);
-						bool exceptionInCaseOfError = false;
-						FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+						fs::remove_all(textTemporaryFileName);
 					}
 				}
 			}
@@ -10935,11 +10634,11 @@ void FFMpeg::liveProxy2(
 					+ to_string(currentNumberOfRepeatingSameInput)
 				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 			bool exceptionInCaseOfError = false;
-			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 			*/
 
 			if (endlessPlaylistListPathName != ""
-				&& FileIO::fileExisting(endlessPlaylistListPathName))
+				&& fs::exists(endlessPlaylistListPathName))
 			{
 				if (externalEncoder)
 				{
@@ -10964,9 +10663,8 @@ void FFMpeg::liveProxy2(
 									+ ", mediaPathName: "
 										+ _ffmpegEndlessRecursivePlaylistDir + "/"
 										+ mediaFileName);
-								bool exceptionInCaseOfError = false;
-								FileIO::remove(_ffmpegEndlessRecursivePlaylistDir + "/"
-									+ mediaFileName, exceptionInCaseOfError);    
+								fs::remove_all(_ffmpegEndlessRecursivePlaylistDir + "/"
+									+ mediaFileName);    
 							}
 						}
 
@@ -10978,8 +10676,7 @@ void FFMpeg::liveProxy2(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", endlessPlaylistListPathName: " + endlessPlaylistListPathName);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(endlessPlaylistListPathName, exceptionInCaseOfError);    
+				fs::remove_all(endlessPlaylistListPathName);    
 				endlessPlaylistListPathName = "";
 			}
 
@@ -10998,15 +10695,14 @@ void FFMpeg::liveProxy2(
 
 					if (manifestDirectoryPath != "")
 					{
-						if (FileIO::directoryExisting(manifestDirectoryPath))
+						if (fs::exists(manifestDirectoryPath))
 						{
 							try
 							{
 								_logger->info(__FILEREF__ + "removeDirectory"
 									+ ", manifestDirectoryPath: " + manifestDirectoryPath
 								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+								fs::remove_all(manifestDirectoryPath);
 							}
 							catch(runtime_error e)
 							{
@@ -11056,12 +10752,11 @@ void FFMpeg::liveProxy2(
 							+ ".overlayText";
 					}
 
-					if (FileIO::fileExisting(textTemporaryFileName))
+					if (fs::exists(textTemporaryFileName))
 					{
 						_logger->info(__FILEREF__ + "Remove"
 							+ ", textTemporaryFileName: " + textTemporaryFileName);
-						bool exceptionInCaseOfError = false;
-						FileIO::remove(textTemporaryFileName, exceptionInCaseOfError);
+						fs::remove_all(textTemporaryFileName);
 					}
 				}
 			}
@@ -11233,7 +10928,7 @@ void FFMpeg::liveProxy2(
 				+ to_string(currentNumberOfRepeatingSameInput)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 		bool exceptionInCaseOfError = false;
-		FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+		fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 		*/
 	}
 }
@@ -12216,8 +11911,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(countdownInputRoot, field, -1);
 
 		if (!externalEncoder
-			&& !FileIO::fileExisting(mmsSourceVideoAssetPathName)        
-			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
+			&& !fs::exists(mmsSourceVideoAssetPathName)        
 		)
 		{
 			string errorMessage = string("Source video asset path name not existing")
@@ -12655,7 +12349,7 @@ void FFMpeg::liveProxyOutput(
 			//	1. the encoder returns an error because of the missing directory
 			//	2. EncoderVideoAudioProxy calls again the encoder
 			// So, for this reason, the below check is done
-			if (!FileIO::directoryExisting(manifestDirectoryPath))
+			if (!fs::exists(manifestDirectoryPath))
 			{
 				_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12666,12 +12360,13 @@ void FFMpeg::liveProxyOutput(
 				_logger->info(__FILEREF__ + "Create directory"
 					+ ", manifestDirectoryPath: " + manifestDirectoryPath
 				);
-				bool noErrorIfExists = true;
-				bool recursive = true;
-				FileIO::createDirectory(manifestDirectoryPath,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP |
-					S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				fs::create_directories(manifestDirectoryPath);                              
+				fs::permissions(manifestDirectoryPath,                                      
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+					| fs::perms::group_read | fs::perms::group_exec                          
+					| fs::perms::others_read | fs::perms::others_exec,                                                                         
+					fs::perm_options::replace);
+
 			}
 
 			if (externalEncoder)
@@ -12918,7 +12613,7 @@ void FFMpeg::liveGrid(
 		//	1. the encoder returns an error because of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (outputTypeLowerCase == "hls" && !FileIO::directoryExisting(manifestDirectoryPath))
+		if (outputTypeLowerCase == "hls" && !fs::exists(manifestDirectoryPath))
 		{
 			_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12929,12 +12624,12 @@ void FFMpeg::liveGrid(
 			_logger->info(__FILEREF__ + "Create directory"
                 + ", manifestDirectoryPath: " + manifestDirectoryPath
             );
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			FileIO::createDirectory(manifestDirectoryPath,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IXGRP |
-				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			fs::create_directories(manifestDirectoryPath);                              
+			fs::permissions(manifestDirectoryPath,                                      
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+				| fs::perms::group_read | fs::perms::group_exec                          
+				| fs::perms::others_read | fs::perms::others_exec,                                                                         
+				fs::perm_options::replace);
 		}
 
 		{
@@ -13455,9 +13150,12 @@ void FFMpeg::liveGrid(
 					_logger->info(__FILEREF__ + "Creating directory (if needed)"
 						+ ", audioPathName: " + audioPathName
 					);
-					FileIO::createDirectory(audioPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(audioPathName);                              
+					fs::permissions(audioPathName,                                      
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+						| fs::perms::group_read | fs::perms::group_exec                          
+						| fs::perms::others_read | fs::perms::others_exec,                                                                         
+						fs::perm_options::replace);
 				}
 
 				{
@@ -13469,9 +13167,12 @@ void FFMpeg::liveGrid(
 					_logger->info(__FILEREF__ + "Creating directory (if needed)"
 						+ ", videoPathName: " + videoPathName
 					);
-					FileIO::createDirectory(videoPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+					fs::create_directories(videoPathName);                              
+					fs::permissions(videoPathName,                                      
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+						| fs::perms::group_read | fs::perms::group_exec                          
+						| fs::perms::others_read | fs::perms::others_exec,                                                                         
+						fs::perm_options::replace);
 				}
 			}
 
@@ -13622,7 +13323,7 @@ void FFMpeg::liveGrid(
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 					+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
 					);
-				FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+				fs::copy(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
 			}
 			*/
 		}
@@ -13634,7 +13335,7 @@ void FFMpeg::liveGrid(
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 		*/
 
 		if (outputTypeLowerCase == "hls" && manifestDirectoryPath != "")
@@ -13643,8 +13344,7 @@ void FFMpeg::liveGrid(
 			{
 				_logger->info(__FILEREF__ + "Remove directory"
 					+ ", manifestDirectoryPath: " + manifestDirectoryPath);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+				fs::remove_all(manifestDirectoryPath);
 			}
 			catch(runtime_error e)
 			{
@@ -13686,7 +13386,7 @@ void FFMpeg::liveGrid(
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 	bool exceptionInCaseOfError = false;
-	FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+	fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 	*/
 }
 
@@ -13718,9 +13418,7 @@ void FFMpeg::changeFileFormat(
 
     try
     {
-		if (!FileIO::fileExisting(sourcePhysicalPath)        
-			&& !FileIO::directoryExisting(sourcePhysicalPath)
-		)
+		if (!fs::exists(sourcePhysicalPath))
 		{
 			string errorMessage = string("Source asset path name not existing")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13859,20 +13557,18 @@ void FFMpeg::changeFileFormat(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
         _logger->info(__FILEREF__ + "Remove"
             + ", destinationPathName: " + destinationPathName);
-        FileIO::remove(destinationPathName, exceptionInCaseOfError);
+        fs::remove_all(destinationPathName);
 
         throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
 }
 
 void FFMpeg::streamingToFile(
@@ -14022,20 +13718,18 @@ void FFMpeg::streamingToFile(
 
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+        fs::remove_all(_outputFfmpegPathFileName);
 
         _logger->info(__FILEREF__ + "Remove"
             + ", destinationPathName: " + destinationPathName);
-        FileIO::remove(destinationPathName, exceptionInCaseOfError);
+        fs::remove_all(destinationPathName);
 
         throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    fs::remove_all(_outputFfmpegPathFileName);    
 }
 
 int FFMpeg::getEncodingProgress()
@@ -14057,7 +13751,7 @@ int FFMpeg::getEncodingProgress()
 			return -1;
 		}
 
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        if (!fs::exists(_outputFfmpegPathFileName.c_str()))
         {
             _logger->info(__FILEREF__ + "ffmpeg: Encoding progress not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -14221,7 +13915,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
 		}
 		*/
 
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        if (!fs::exists(_outputFfmpegPathFileName.c_str()))
         {
             _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -14303,7 +13997,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 		}
 		*/
 
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        if (!fs::exists(_outputFfmpegPathFileName.c_str()))
         {
             _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -14405,7 +14099,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 			return frameIncreasing;
 		}
 
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        if (!fs::exists(_outputFfmpegPathFileName.c_str()))
         {
             _logger->info(__FILEREF__ + "isFrameIncreasing: Encoding status not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -14723,7 +14417,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				// ERROR: f2vW_XyTW4o: YouTube said: This live stream recording is not available.
 
 				string lastPartOfFfmpegOutputFile;
-				if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+				if (fs::exists(detailsYouTubeProfilesPath))
 					lastPartOfFfmpegOutputFile = getLastPartOfFile(
 						detailsYouTubeProfilesPath, _charsToBeReadFromFfmpegErrorOutput);
 				else
@@ -14745,7 +14439,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				;
 				throw runtime_error(errorMessage);
 			}
-			else if (!FileIO::fileExisting(detailsYouTubeProfilesPath))
+			else if (!fs::exists(detailsYouTubeProfilesPath))
 			{
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed. no profiles file created"
@@ -14768,7 +14462,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
-				+ ", detailsYouTubeProfilesPath size: " + to_string(FileIO::getFileSizeInBytes(detailsYouTubeProfilesPath, false))
+				+ ", detailsYouTubeProfilesPath size: " + to_string(fs::file_size(detailsYouTubeProfilesPath))
 				+ ", @FFMPEG statistics@ - duration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
 			);
@@ -14781,12 +14475,11 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 			;
 			_logger->error(errorMessage);
 
-			if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+			if (fs::exists(detailsYouTubeProfilesPath))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 
 			throw e;
@@ -14799,12 +14492,11 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 			;
 			_logger->error(errorMessage);
 
-			if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+			if (fs::exists(detailsYouTubeProfilesPath))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 
 			throw e;
@@ -14888,8 +14580,7 @@ format code  extension  resolution note
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			fs::remove_all(detailsYouTubeProfilesPath);
 		}
 
 		if (bestFormatCode != -1)
@@ -14915,12 +14606,11 @@ format code  extension  resolution note
         ;
         _logger->error(errorMessage);
 
-		if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+		if (fs::exists(detailsYouTubeProfilesPath))
 		{
 			_logger->info(__FILEREF__ + "Remove"
 				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			fs::remove_all(detailsYouTubeProfilesPath);
 		}
 
         throw e;
@@ -14933,12 +14623,11 @@ format code  extension  resolution note
         ;
         _logger->error(errorMessage);
 
-		if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+		if (fs::exists(detailsYouTubeProfilesPath))
 		{
 			_logger->info(__FILEREF__ + "Remove"
             + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			fs::remove_all(detailsYouTubeProfilesPath);
 		}
 
         throw e;
@@ -14986,7 +14675,7 @@ format code  extension  resolution note
 				;
 				throw runtime_error(errorMessage);
 			}
-			else if (!FileIO::fileExisting(detailsYouTubeURLPath))
+			else if (!fs::exists(detailsYouTubeURLPath))
 			{
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed. no URL file created"
@@ -15031,8 +14720,7 @@ format code  extension  resolution note
 			{
 				_logger->info(__FILEREF__ + "Remove"
 				+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 		}
 		catch(runtime_error e)
@@ -15043,12 +14731,11 @@ format code  extension  resolution note
 			;
 			_logger->error(errorMessage);
 
-			if (FileIO::fileExisting(detailsYouTubeURLPath))
+			if (fs::exists(detailsYouTubeURLPath))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(detailsYouTubeURLPath, exceptionInCaseOfError);
+				fs::remove_all(detailsYouTubeURLPath);
 			}
 
 			throw e;
@@ -15061,12 +14748,11 @@ format code  extension  resolution note
 			;
 			_logger->error(errorMessage);
 
-			if (FileIO::fileExisting(detailsYouTubeURLPath))
+			if (fs::exists(detailsYouTubeURLPath))
 			{
 				_logger->info(__FILEREF__ + "Remove"
 					+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
-				bool exceptionInCaseOfError = false;
-				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 
 			throw e;
@@ -15579,7 +15265,7 @@ void FFMpeg::addToIncrontab(
 			+ ", directoryToBeMonitored: " + directoryToBeMonitored
 		);
 
-		if (!FileIO::directoryExisting(_incrontabConfigurationDirectory))
+		if (!fs::exists(_incrontabConfigurationDirectory))
 		{
 			_logger->info(__FILEREF__ + "addToIncrontab: create directory"
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15587,14 +15273,12 @@ void FFMpeg::addToIncrontab(
 				+ ", _incrontabConfigurationDirectory: " + _incrontabConfigurationDirectory
 			);
 
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			FileIO::createDirectory(
-				_incrontabConfigurationDirectory,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IWUSR | S_IXGRP |
-				S_IROTH | S_IWUSR | S_IXOTH,
-				noErrorIfExists, recursive);
+			fs::create_directories(_incrontabConfigurationDirectory);                              
+			fs::permissions(_incrontabConfigurationDirectory,                                      
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+				| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec                          
+				| fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec,                                                                         
+				fs::perm_options::replace);
 		}
 
 		string incrontabConfigurationPathName =

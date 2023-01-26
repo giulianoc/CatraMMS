@@ -28,6 +28,7 @@
 #endif
 
 using namespace std;
+namespace fs = std::filesystem;
 
 struct FFMpegEncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
