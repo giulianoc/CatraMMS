@@ -1884,10 +1884,10 @@ void MMSStorage::refreshPartitionsFreeSizes()
 // by both MMSEngineProcessor and API_Ingestion. I needed a library linked by both
 // the components
 void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey,
-		string tarBinaryPathName, string workspaceIngestionRepository,
-		string sourcePathName
-	)
+	int64_t ingestionJobKey,
+	string tarBinaryPathName, string workspaceIngestionRepository,
+	string sourcePathName
+)
 {
 	// tarBinaryPathName like /var/catramms/storage/IngestionRepository/users/2/1449874_source.tar.gz
 	// workspaceIngestionRepository like /var/catramms/storage/IngestionRepository/users/2
@@ -1985,7 +1985,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				+ ", sourceTarFile: " + sourceTarFile.string()
 			);
 
-			fs::remove(sourceTarFile);
+			fs::remove_all(sourceTarFile);
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source

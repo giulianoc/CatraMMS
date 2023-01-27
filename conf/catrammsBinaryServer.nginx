@@ -103,7 +103,14 @@
 	location /api {
 		internal;
 
-		fastcgi_read_timeout 120;
+		#120 seconds andrebbe bene tranne per uno scenario che potrebbe prendere anche 10 minuti.
+		#Lo scenario è il seguente:
+		#	- binary trasferito in chunks
+		#	- il binary è un ***.tar.gz perchè è un HLS
+		#In questo scenario, quando viene trasferito l'ultimo chunk, l'API esegue il tar xvf e,
+		#in caso di file di grandi dimensioni (10GB) potrebbe richiedere diversi minuti
+		#Per questo motivo mettiamo un timeout di 15 minuti (900 secondi)
+		fastcgi_read_timeout 900;
 
 		#the api fastcgi listen to 8010 port (see scripts/mmsApi.sh)
 		fastcgi_pass   127.0.0.1:8010;
