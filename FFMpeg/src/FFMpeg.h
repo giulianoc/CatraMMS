@@ -15,6 +15,7 @@
 #define FFMpeg_h
 
 #include <string>
+#include <filesystem>
 #include <chrono>
 #include "spdlog/spdlog.h"
 #include "json/json.h"
