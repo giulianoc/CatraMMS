@@ -247,7 +247,7 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?([0-9]*)/?$ /api?version=$1&method=sourceTVStreamList&confKey=$2 last;
 		}
 
-
+#AWS
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/aws/channel/?$ /api?version=$1&method=addAWSChannelConf last;
 		}
@@ -259,6 +259,20 @@
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/aws/channel/?$ /api?version=$1&method=awsChannelConfList last;
+		}
+
+#CDN77
+		if ($request_method = POST) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?version=$1&method=addCDN77ChannelConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?version=$1&method=modifyCDN77ChannelConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?version=$1&method=removeCDN77ChannelConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?version=$1&method=cdn77ChannelConfList last;
 		}
 
 #RequestStatistics

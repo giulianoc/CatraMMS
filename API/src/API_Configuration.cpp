@@ -4104,6 +4104,486 @@ void API::awsChannelConfList(
     }
 }
 
+void API::addCDN77ChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "addCDN77ChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string rtmpURL;
+        string resourceURL;
+        string filePath;
+        string secureToken;
+
+        try
+        {
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "rtmpURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "resourceURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            resourceURL = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "filePath";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            filePath = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "secureToken";
+			secureToken = JSONUtils::asString(requestBodyRoot, field, "");            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+/*
+			int64_t confKey = _mmsEngineDBFacade->addCDN77ChannelConf(
+				workspace->_workspaceKey, label, rtmpURL, resourceURL, filePath secureToken);
+
+			sResponse = (
+				string("{ ") 
+				+ "\"confKey\": " + to_string(confKey)
+				+ "}"
+			);            
+*/
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyCDN77ChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyCDN77ChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string rtmpURL;
+        string resourceURL;
+        string filePath;
+        string secureToken;
+
+        try
+        {
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "rtmpURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "resourceURL";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            resourceURL = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "filePath";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            filePath = JSONUtils::asString(requestBodyRoot, field, "");
+
+            field = "secureToken";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            secureToken = JSONUtils::asString(requestBodyRoot, field, "");
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+
+/*
+            _mmsEngineDBFacade->modifyCDN77ChannelConf(
+                confKey, workspace->_workspaceKey,
+				label, rtmpURL, resourceURL, filePath secureToken);
+*/
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeCDN77ChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeCDN77ChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+            
+            // _mmsEngineDBFacade->removeCDN77ChannelConf(
+              //   workspace->_workspaceKey, confKey);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::cdn77ChannelConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace)
+{
+    string api = "cdn77ChannelConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+            Json::Value cdn77ChannelConfListRoot /* = _mmsEngineDBFacade->getCDN77ChannelConfList(
+                    workspace->_workspaceKey) */;
+
+            string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
+            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
 
 void API::addFTPConf(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

@@ -679,6 +679,31 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
+    void addCDN77ChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyCDN77ChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeCDN77ChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void cdn77ChannelConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace);
+
     void addFTPConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

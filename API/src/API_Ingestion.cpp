@@ -2560,14 +2560,6 @@ void API::uploadedBinary(
             }
         }
 
-        _logger->info(__FILEREF__ + "Content-Range details"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", contentRangePresent: " + to_string(contentRangePresent)
-            + ", contentRangeStart: " + to_string(contentRangeStart)
-            + ", contentRangeEnd: " + to_string(contentRangeEnd)
-            + ", contentRangeSize: " + to_string(contentRangeSize)
-        );
-
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         string destBinaryPathName =
 			workspaceIngestionRepository
@@ -2715,15 +2707,33 @@ void API::uploadedBinary(
                     osDestStream.close();
                 }
                 
-                unsigned long workspaceIngestionBinarySizeInBytes = fs::file_size(destBinaryPathName);
-                unsigned long binarySizeInBytes = fs::file_size(sourceBinaryPathFile);
+                unsigned long destBinaryPathNameSizeInBytes = fs::file_size(destBinaryPathName);
+                unsigned long sourceBinaryPathFileSizeInBytes = fs::file_size(sourceBinaryPathFile);
                 
-                if (contentRangeStart != workspaceIngestionBinarySizeInBytes)
+				_logger->info(__FILEREF__ + "Content-Range before concat"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", contentRangeStart: " + to_string(contentRangeStart)
+					+ ", contentRangeEnd: " + to_string(contentRangeEnd)
+					+ ", contentRangeSize: " + to_string(contentRangeSize)
+					+ ", segmentedContent: " + to_string(segmentedContent)
+					+ ", destBinaryPathName: " + destBinaryPathName
+					+ ", destBinaryPathNameSizeInBytes: " + to_string(destBinaryPathNameSizeInBytes)
+					+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+					+ ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
+				);
+
+                if (contentRangeStart != destBinaryPathNameSizeInBytes)
                 {
                     string errorMessage = string("Content-Range. This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
-                        + ", workspaceIngestionBinarySizeInBytes (expected): " + to_string(workspaceIngestionBinarySizeInBytes)
+						+ ", contentRangeEnd: " + to_string(contentRangeEnd)
+						+ ", contentRangeSize: " + to_string(contentRangeSize)
+						+ ", segmentedContent: " + to_string(segmentedContent)
+						+ ", destBinaryPathName: " + destBinaryPathName
+						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                        + ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
+                        + ", destBinaryPathNameSizeInBytes (expected): " + to_string(destBinaryPathNameSizeInBytes)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -2731,40 +2741,16 @@ void API::uploadedBinary(
 
                     throw runtime_error(errorMessage);            
                 }
-                
-                /*
-                if (contentRangeEnd - contentRangeStart + 1 != binarySizeInBytes)
-                {
-                    string errorMessage = string("The size specified by Content-Range start and end is not consistent with the size of the binary ingested")
-                        + ", contentRangeStart: " + to_string(contentRangeStart)
-                        + ", contentRangeEnd: " + to_string(contentRangeEnd)
-                        + ", binarySizeInBytes: " + to_string(binarySizeInBytes)
-                    ;
-                    _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(request, 500, errorMessage);
-
-                    throw runtime_error(errorMessage);            
-                }
-                 */
-                
                 try
                 {
                     // bool removeSrcFileAfterConcat = true;
                     
-					_logger->info(__FILEREF__ + "Content-Range. Concat file"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", destBinaryPathName: " + destBinaryPathName
-						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
-						// + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-					);
-
                     // FileIO::concatFile(destBinaryPathName, sourceBinaryPathFile, removeSrcFileAfterConcat);
 
 					// concat files, append a file to another
+					chrono::system_clock::time_point start = chrono::system_clock::now();
 					{
-                        chrono::system_clock::time_point start = chrono::system_clock::now();
-
 						ofstream ofDestination(destBinaryPathName, std::ios_base::binary | std::ios_base::app);
 						ifstream ifSource(sourceBinaryPathFile, std::ios_base::binary);
 
@@ -2772,17 +2758,21 @@ void API::uploadedBinary(
 
 						ofDestination.close();
 						ifSource.close();
-
-						_logger->info(__FILEREF__ + "Content-Range. Concat file elapsed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", destBinaryPathName: " + destBinaryPathName
-							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
-							+ ", source file size: " + to_string(fs::file_size(sourceBinaryPathFile))
-							+ ", dest file size: " + to_string(fs::file_size(destBinaryPathName))
-							+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - start).count())
-						);
 					}
+
+					_logger->info(__FILEREF__ + "Content-Range after concat"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", contentRangeStart: " + to_string(contentRangeStart)
+						+ ", contentRangeEnd: " + to_string(contentRangeEnd)
+						+ ", contentRangeSize: " + to_string(contentRangeSize)
+						+ ", segmentedContent: " + to_string(segmentedContent)
+						+ ", destBinaryPathName: " + destBinaryPathName
+						+ ", destBinaryPathNameSizeInBytes: " + to_string(fs::file_size(destBinaryPathName))
+						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+						+ ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
+						+ ", concat elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - start).count())
+					);
 
 					fs::remove_all(sourceBinaryPathFile);
                 }
@@ -2803,7 +2793,7 @@ void API::uploadedBinary(
             else
             {
                 // binary file does not exist, so this is the first chunk
-                
+
                 if (contentRangeStart != 0)
                 {
                     string errorMessage = string("Content-Range. This is the first chunk of the file and Content-Range start has to be 0")

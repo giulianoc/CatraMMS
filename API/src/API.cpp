@@ -2294,6 +2294,62 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         awsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace);
     }
+    else if (method == "addCDN77ChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyCDN77ChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifyCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeCDN77ChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
+    else if (method == "cdn77ChannelConfList")
+    {
+        cdn77ChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace);
+    }
     else if (method == "addFTPConf")
     {
         if (!admin && !editConfiguration)
