@@ -2489,15 +2489,16 @@ void API::uploadedBinary(
     try
     {
 this_thread::sleep_for(chrono::seconds(60 * 2));
+sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+	request, "", api, 201, "");
 return;
+
 		if (_noFileSystemAccess)
 		{
 			string errorMessage = string("no rights to execute this method")
 				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
 			;
 			_logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2508,8 +2509,6 @@ return;
             string errorMessage = string("'ingestionJobKey' URI parameter is missing");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
-
             throw runtime_error(errorMessage);            
         }
         int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
@@ -2519,8 +2518,6 @@ return;
         {
             string errorMessage = string("'HTTP_X_FILE' item is missing");
             _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);            
         }
@@ -2555,8 +2552,6 @@ return;
                     + ", contentRange: " + contentRange
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 500, errorMessage);
 
                 throw runtime_error(errorMessage);            
             }
@@ -2603,8 +2598,6 @@ return;
 			;
 			_logger->error(__FILEREF__ + errorMessage);
 
-			sendError(request, 500, errorMessage);
-
 			throw runtime_error(errorMessage);            
 		}
 		catch(exception e)
@@ -2616,8 +2609,6 @@ return;
 				+ ", destBinaryPathName: " + destBinaryPathName
 			;
 			_logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);            
 		}
@@ -2646,8 +2637,6 @@ return;
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
-                sendError(request, 500, errorMessage);
-
                 throw runtime_error(errorMessage);            
             }
             catch(exception e)
@@ -2658,8 +2647,6 @@ return;
                     + ", destBinaryPathName: " + destBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 500, errorMessage);
 
                 throw runtime_error(errorMessage);            
             }
@@ -2739,8 +2726,6 @@ return;
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(request, 500, errorMessage);
-
                     throw runtime_error(errorMessage);            
                 }
 
@@ -2787,8 +2772,6 @@ return;
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(request, 500, errorMessage);
-
                     throw runtime_error(errorMessage);            
                 }
             }
@@ -2803,8 +2786,6 @@ return;
                         + ", contentRangeStart: " + to_string(contentRangeStart)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
-
-                    sendError(request, 500, errorMessage);
 
                     throw runtime_error(errorMessage);            
                 }
@@ -2827,8 +2808,6 @@ return;
                         + ", destBinaryPathName: " + destBinaryPathName
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
-
-                    sendError(request, 500, errorMessage);
 
                     throw runtime_error(errorMessage);            
                 }
