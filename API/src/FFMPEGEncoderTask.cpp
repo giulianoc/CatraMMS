@@ -469,7 +469,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			_logger,
 			ingestionJobKey,
 			mmsWorkflowIngestionURL,
-			_mmsBinaryTimeoutInSeconds,
+			_mmsAPITimeoutInSeconds,
 			to_string(userKey),
 			apiKey,
 			workflowMetadata,
