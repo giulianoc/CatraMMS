@@ -1487,6 +1487,7 @@ string MMSCURL::httpPostPutFile(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", contentLengthOrRangeHeader: " + contentLengthOrRangeHeader
+				+ ", timeoutInSeconds: " + to_string(timeoutInSeconds)
 				+ ", pathFileName: " + pathFileName
 			);
 

@@ -2488,6 +2488,8 @@ void API::uploadedBinary(
 
     try
     {
+this_thread::sleep_for(chrono::seconds(60 * 2));
+return;
 		if (_noFileSystemAccess)
 		{
 			string errorMessage = string("no rights to execute this method")

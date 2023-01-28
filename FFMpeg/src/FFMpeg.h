@@ -548,28 +548,6 @@ private:
 	string			_incrontabBinary;
 
 
-	/*
-	string getDrawTextVideoFilterDescription(
-		int64_t ingestionJobKey,
-		string text,
-		string textFilePathName,
-		int reloadAtFrameInterval,
-		string textPosition_X_InPixel,
-		string textPosition_Y_InPixel,
-		string fontType,
-		int fontSize,
-		string fontColor,
-		int textPercentageOpacity,
-		int shadowX,
-		int shadowY,
-		bool boxEnable,
-		string boxColor,
-		int boxPercentageOpacity,
-		int boxBorderW,
-		int64_t streamingDurationInSeconds
-	);
-	*/
-
 	void setStatus(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey = -1,

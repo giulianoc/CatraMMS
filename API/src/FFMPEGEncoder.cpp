@@ -2463,6 +2463,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", encodingFound: " + to_string(encodingFound)
+			+ (encodingFound ? (", available: " + to_string(selectedEncoding->_available)) : "")
+			+ (encodingFound ? (", childPid: " + to_string(selectedEncoding->_childPid)) : "")
 			+ ", liveProxyFound: " + to_string(liveProxyFound)
 			+ ", liveRecordingFound: " + to_string(liveRecordingFound)
 			+ ", encodingCompleted: " + to_string(encodingCompleted)
