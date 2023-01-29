@@ -3557,11 +3557,13 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// PlayUrl in MMS_IngestionJob per il play del canale
         {
             lastSQLCommand = 
-                string("update MMS_IngestionJob set metaDataContent = ")
-				+ "JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex)
-				+ "].PlayUrl', ?) where ingestionJobKey = ?";
+				string("update MMS_IngestionJob set ")
+				+ "metaDataContent = JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex)
+				+ "].PlayUrl', ?) "
+				"where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));

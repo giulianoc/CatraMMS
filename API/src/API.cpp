@@ -3569,7 +3569,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 			}
 
-			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
+			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
 			_logger->info(__FILEREF__ + "Authorization through path (m3u8)"
 				+ ", contentURI: " + contentURI
@@ -3589,7 +3589,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 				}
 
-				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
 				_logger->info(__FILEREF__ + "Authorization through path (m3u8 2)"
 					+ ", contentURI: " + contentURI
@@ -3622,7 +3622,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			{
 				// check caso 1.
-				string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 					expirationTime);
 
 				_logger->info(__FILEREF__ + "Authorization through path"
@@ -3644,7 +3644,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					}
 
 					// check caso 2.
-					md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+					md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 						expirationTime);
 
 					_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
@@ -3668,7 +3668,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						}
 
 						// check caso 3.
-						string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified,
+						string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 							expirationTime);
 
 						_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
@@ -3697,7 +3697,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		}
 		else
 		{
-			string md5Base64 = _mmsDeliveryAuthorization->getSignedPath(contentURIToBeVerified, expirationTime);
+			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
 			_logger->info(__FILEREF__ + "Authorization through path"
 				+ ", contentURI: " + contentURI
@@ -3750,39 +3750,6 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 	return tokenComingFromURL;
 }
 
-/*
-string API::getSignedPath(string contentURI, time_t expirationTime)
-{
-	string token = to_string(expirationTime) + contentURI;
-	string md5Base64;
-	{
-		unsigned char digest[MD5_DIGEST_LENGTH];
-		MD5((unsigned char*) token.c_str(), token.size(), digest);
-		md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
-
-		transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
-			[](unsigned char c){
-				if (c == '+')
-					return '-';
-				else if (c == '/')
-					return '_';
-				else
-					return (char) c;
-			}
-		);
-	}
-
-	_logger->info(__FILEREF__ + "Authorization through path"
-		+ ", contentURI: " + contentURI
-		+ ", expirationTime: " + to_string(expirationTime)
-		+ ", token: " + token
-		+ ", md5Base64: " + md5Base64
-	);
-
-
-	return md5Base64;
-}
-*/
 
 void API::createDeliveryCDN77Authorization(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
@@ -3879,99 +3846,8 @@ void API::createDeliveryCDN77Authorization(
 			filePath = cdn77DeliveryURL.substr(cdnResourceUrlEnd);
 		}
 
-		string newDeliveryURL;
-		{
-			// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
-			// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
-			// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
-			size_t fileNameStart = filePath.find_last_of("/");
-			if (fileNameStart == string::npos)
-			{
-				string errorMessage = string("filePath format is wrong")
-					+ ", filePath: " + filePath
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string strippedPath = filePath.substr(0, fileNameStart);
-
-			// replace invalid URL query string characters +, =, / with valid characters -, _, ~
-			// $invalidChars = ['+','/'];
-			// $validChars = ['-','_'];
-			// GIU: replace is done below
-
-			// if ($strippedPath[0] != '/') {
-			// 	$strippedPath = '/' . $strippedPath;
-			// }
-			// GIU: our strippedPath already starts with /
-
-			// if ($pos = strpos($strippedPath, '?')) {
-			// 	$filePath = substr($strippedPath, 0, $pos);
-			// }
-			// GIU: our strippedPath does not have ?
-
-			// $hashStr = $strippedPath . $secureToken;
-			string hashStr = strippedPath + cdn77SecureToken;
-
-			// if ($expiryTimestamp) {
-			// 	$hashStr = $expiryTimestamp . $hashStr;
-			// 	$expiryTimestamp = ',' . $expiryTimestamp;
-			// }
-			hashStr = to_string(expireTimestampInSeconds) + hashStr;
-			string sExpiryTimestamp = string(",") + to_string(expireTimestampInSeconds);
-
-			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
-			// return 'http://' . $cdnResourceUrl . '/' .
-			// 	str_replace($invalidChars, $validChars, base64_encode(md5($hashStr, TRUE))) .
-			// 	$expiryTimestamp . $filePath;
-			string md5Base64;
-			{
-				// unsigned char digest[MD5_DIGEST_LENGTH];
-				// MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
-				// md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
-
-				{
-					unsigned char *md5_digest;
-					unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
-
-					EVP_MD_CTX *mdctx;
-
-					// MD5_Init
-					mdctx = EVP_MD_CTX_new();
-					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
-
-					// MD5_Update
-					EVP_DigestUpdate(mdctx, (unsigned char*) hashStr.c_str(), hashStr.size());
-
-					// MD5_Final
-					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
-					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
-
-					md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
-
-					OPENSSL_free(md5_digest);
-
-					EVP_MD_CTX_free(mdctx);
-				}
-
-				// $invalidChars = ['+','/'];
-				// $validChars = ['-','_'];
-				transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
-					[](unsigned char c){
-						if (c == '+')
-							return '-';
-						else if (c == '/')
-							return '_';
-						else
-							return (char) c;
-					}
-				);
-			}
-
-			newDeliveryURL = protocolPart + cdnResourceUrl + "/" + md5Base64
-				+ sExpiryTimestamp + filePath;
-		}
+		string newDeliveryURL = MMSDeliveryAuthorization::getSignedCDN77URL(cdnResourceUrl, filePath,
+			cdn77SecureToken, expireTimestampInSeconds / 60, _logger);
 
 		string responseBody;
 		{

@@ -6849,7 +6849,8 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
         "RTMP_Stream",
-		"AWS_CHANNEL",
+		"CDN_AWS",
+		"CDN_CDN77",
         "UDP_Stream",
         "HLS",
         "DASH"
@@ -7484,7 +7485,10 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 			}
 		}
 	}
-	else if (liveProxyOutputType == "AWS_CHANNEL")
+	else if (liveProxyOutputType == "CDN_AWS")
+	{
+	}
+	else if (liveProxyOutputType == "CDN_CDN77")
 	{
 	}
 	else if (liveProxyOutputType == "UDP_Stream")

@@ -13725,8 +13725,10 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string rtmpPassword;
 		string playUrl;
 		string awsChannelConfigurationLabel;
-		bool awsSignedURL = false;
-		int awsExpirationInMinutes = 1440;	// 1 day
+		bool awsSignedURL;
+		int awsExpirationInMinutes;
+		string cdn77ChannelConfigurationLabel;
+		int cdn77ExpirationInMinutes;
 		string udpUrl;
 		Json::Value drawTextDetailsRoot = Json::nullValue;
 
@@ -13800,7 +13802,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			field = "PlayUrl";
 			playUrl = JSONUtils::asString(outputRoot, field, "");
 		}
-		else if (outputType == "AWS_CHANNEL")
+		else if (outputType == "CDN_AWS")
 		{
 			field = "awsChannelConfigurationLabel";
 			awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
@@ -13809,7 +13811,17 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			awsSignedURL = JSONUtils::asBool(outputRoot, field, false);
 
 			field = "awsExpirationInMinutes";
-			awsExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440);
+			awsExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440);	// 1 day
+		}
+		else if (outputType == "CDN_CDN77")
+		{
+			// it could not exist in case of SHARED CDN77
+			field = "cdn77ChannelConfigurationLabel";
+			cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
+
+			// cdn77ExpirationInMinutes is needed only in case of signed url
+			field = "cdn77ExpirationInMinutes";
+			cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440);	// 1 day
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13955,6 +13967,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "awsExpirationInMinutes";
 		localOutputRoot[field] = awsExpirationInMinutes;
+
+		field = "cdn77ChannelConfigurationLabel";
+		localOutputRoot[field] = cdn77ChannelConfigurationLabel;
+
+		field = "cdn77ExpirationInMinutes";
+		localOutputRoot[field] = cdn77ExpirationInMinutes;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;

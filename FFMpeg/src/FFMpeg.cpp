@@ -8879,7 +8879,9 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(manifestFilePathName);
 				}
 			}
-			else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
+			else if (outputType == "RTMP_Stream"
+				|| outputType == "CDN_AWS"
+				|| outputType == "CDN_CDN77")
 			{
 				// 2022-09-01: scenario: mando un m3u8 multi tracce ricevuto da HWM (serie C)
 				//	verso un rtmp della CDN77, mi fallisce perchè un flv/rtmp non puo' essere
@@ -12426,7 +12428,9 @@ void FFMpeg::liveProxyOutput(
 			}
 			ffmpegOutputArgumentList.push_back(manifestFilePathName);
 		}
-		else if (outputType == "RTMP_Stream" || outputType == "AWS_CHANNEL")
+		else if (outputType == "RTMP_Stream"
+			|| outputType == "CDN_AWS"
+			|| outputType == "CDN_CDN77")
 		{
 			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
 			string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");

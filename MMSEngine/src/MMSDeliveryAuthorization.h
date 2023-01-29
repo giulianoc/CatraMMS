@@ -62,7 +62,14 @@ public:
 		string userId
 	);
 
-	string getSignedPath(string contentURI, time_t expirationTime);
+	string getSignedMMSPath(string contentURI, time_t expirationTime);
+
+	static string getSignedCDN77URL(
+		string resourceURL,	// i.e.: 1234456789.rsc.cdn77.org
+		string filePath,	// /file/playlist/d.m3u8
+		string secureToken,
+		long expirationInMinutes,
+		shared_ptr<spdlog::logger> logger);
 
 private:
 	Json::Value						_configuration;

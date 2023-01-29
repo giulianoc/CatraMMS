@@ -2320,6 +2320,12 @@ public:
 	Json::Value getAWSChannelConfList (
         int64_t workspaceKey);
 
+	tuple<string, string, string, bool> reserveAWSChannel(
+		int64_t workspaceKey, string label, string type,
+		int64_t ingestionJobKey);
+
+	string releaseAWSChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+
 	int64_t addCDN77ChannelConf(
 		int64_t workspaceKey,
 		string label, string rtmpURL, string resourceURL, string filePath,
@@ -2338,14 +2344,11 @@ public:
 	Json::Value getCDN77ChannelConfList (
         int64_t workspaceKey);
 
-	tuple<string, string, string, bool> reserveAWSChannel(
+	tuple<string, string, string, string, string, bool> reserveCDN77Channel(
 		int64_t workspaceKey, string label, string type,
 		int64_t ingestionJobKey);
 
-	// tuple<string, string, string> getAWSChannelByIngestionJobKey(
-	// 	int64_t workspaceKey, int64_t ingestionJobKey);
-
-	string releaseAWSChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+	void releaseCDN77Channel(int64_t workspaceKey, int64_t ingestionJobKey);
 
     int64_t addFTPConf(
         int64_t workspaceKey,

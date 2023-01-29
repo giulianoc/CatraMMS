@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "MMSDeliveryAuthorization.h"
 #include "MMSCURL.h"                                                                                          
 #include "AWSSigner.h"
 #include <fstream>
@@ -5338,7 +5339,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
@@ -5383,10 +5384,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						{
 							_logger->error(__FILEREF__
 								+ "getAWSSignedURL failed"
-								+ ", _ingestionJobKey: " +
-									to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: "
-									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 								+ ", playURL: " + playURL
 							);
 
@@ -5475,6 +5474,125 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					if (!channelAlreadyReserved)
 						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
+				else if (outputType == "CDN_CDN77")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot,
+						"cdn77ChannelConfigurationLabel", "");
+					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot,
+						"cdn77ExpirationInMinutes", 1440);
+
+					string cdn77ChannelType;
+					if (cdn77ChannelConfigurationLabel == "")
+						cdn77ChannelType = "SHARED";
+					else
+						cdn77ChannelType = "DEDICATED";
+
+					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, string, string, bool> cdn77ChannelDetails
+						= _mmsEngineDBFacade->reserveCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey,
+							cdn77ChannelConfigurationLabel, cdn77ChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					string rtmpURL;
+					string resourceURL;
+					string filePath;
+					string secureToken;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved)
+						= cdn77ChannelDetails;
+
+					string playURL;
+					if (secureToken != "")
+					{
+						try
+						{
+							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(
+								resourceURL, filePath, secureToken, cdn77ExpirationInMinutes,
+								_logger);
+						}
+						catch(exception ex)
+						{
+							_logger->error(__FILEREF__
+								+ "getSignedCDN77URL failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+					else
+					{
+						playURL = "https://" + resourceURL + filePath;
+					}
+
+					// update outputsRoot with the new details
+					{
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", cdn77ChannelType: " + cdn77ChannelType 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", resourceURL: " + resourceURL 
+								+ ", filePath: " + filePath 
+								+ ", secureToken: " + secureToken 
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+								+ ", playURL: " + playURL 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveRecorder_through_ffmpeg();
@@ -5496,7 +5614,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					try
 					{
@@ -5506,6 +5624,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							_encodingItem->_ingestionJobKey);
 
 						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "CDN_CDN77")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -5527,7 +5664,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					try
 					{
@@ -5541,6 +5678,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "CDN_CDN77")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -6486,7 +6642,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
@@ -6623,6 +6779,124 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					if (!channelAlreadyReserved)
 						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
+				else if (outputType == "CDN_CDN77")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, "cdn77ChannelConfigurationLabel", "");
+					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot,
+						"cdn77ExpirationInMinutes", 1440);
+
+					string cdn77ChannelType;
+					if (cdn77ChannelConfigurationLabel == "")
+						cdn77ChannelType = "SHARED";
+					else
+						cdn77ChannelType = "DEDICATED";
+
+					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, string, string, bool> cdn77ChannelDetails
+						= _mmsEngineDBFacade->reserveCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey,
+							cdn77ChannelConfigurationLabel, cdn77ChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					string rtmpURL;
+					string resourceURL;
+					string filePath;
+					string secureToken;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved)
+						= cdn77ChannelDetails;
+
+					string playURL;
+					if (secureToken != "")
+					{
+						try
+						{
+							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(
+								resourceURL, filePath, secureToken, cdn77ExpirationInMinutes,
+								_logger);
+						}
+						catch(exception ex)
+						{
+							_logger->error(__FILEREF__
+								+ "getSignedCDN77URL failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+					else
+					{
+						playURL = "https://" + resourceURL + filePath;
+					}
+
+					// update outputsRoot with the new details
+					{
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", cdn77ChannelType: " + cdn77ChannelType 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", resourceURL: " + resourceURL 
+								+ ", filePath: " + filePath 
+								+ ", secureToken: " + secureToken 
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+								+ ", playURL: " + playURL 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
@@ -6644,7 +6918,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					try
 					{
@@ -6665,6 +6939,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						_logger->error(errorMessage);
 					}
 				}
+				else if (outputType == "CDN_CDN77")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseCDN77Channel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
 			}
 		}
 		catch(...)
@@ -6675,7 +6968,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "AWS_CHANNEL")
+				if (outputType == "CDN_AWS")
 				{
 					try
 					{
@@ -6689,6 +6982,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "CDN_CDN77")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseCDN77Channel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 

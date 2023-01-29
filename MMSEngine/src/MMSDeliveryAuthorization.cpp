@@ -18,6 +18,8 @@
 #include "catralibraries/Convert.h"
 // #include <openssl/md5.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/bio.h>
 
 
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
@@ -275,7 +277,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				else
 					uriToBeSigned = deliveryURI;
 			}
-			string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 			deliveryURL = 
 				_deliveryProtocol
@@ -374,7 +376,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			Json::Value outputsRoot = ingestionJobRoot[field];
 
 			// Option 1: OutputType HLS with deliveryCode
-			// Option 2: OutputType RTMP_Stream/AWS_CHANNEL with playURL
+			// Option 2: OutputType RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
 			// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -394,7 +396,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
 				else if (outputType == "RTMP_Stream"
-					|| outputType == "AWS_CHANNEL")
+					|| outputType == "CDN_AWS"
+					|| outputType == "CDN_CDN77"
+				)
 				{
 					field = "PlayUrl";
 					playURL = JSONUtils::asString(outputRoot, field, "");
@@ -466,7 +470,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 
 			if (outputType == "RTMP_Stream"
-				|| outputType == "AWS_CHANNEL")
+				|| outputType == "CDN_AWS"
+				|| outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
 			}
@@ -528,7 +533,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						else
 							uriToBeSigned = deliveryURI;
 					}
-					string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 					deliveryURL = 
 						_deliveryProtocol
@@ -606,7 +611,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				Json::Value outputsRoot = ingestionJobRoot[field];
 
 				// Option 1: OutputType HLS with deliveryCode
-				// Option 2: OutputType RTMP_Stream/AWS_CHANNEL with playURL
+				// Option 2: OutputType RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
 				// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 				{
@@ -625,7 +630,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 					}
 					else if (outputType == "RTMP_Stream"
-						|| outputType == "AWS_CHANNEL")
+						|| outputType == "CDN_AWS"
+						|| outputType == "CDN_CDN77")
 					{
 						field = "PlayUrl";
 						playURL = JSONUtils::asString(outputRoot, field, "");
@@ -746,7 +752,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 
 			if (outputType == "RTMP_Stream"
-				|| outputType == "AWS_CHANNEL")
+				|| outputType == "CDN_AWS"
+				|| outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
 			}
@@ -800,7 +807,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						else
 							uriToBeSigned = deliveryURI;
 					}
-					string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 					deliveryURL = 
 						_deliveryProtocol
@@ -936,7 +943,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					else
 						uriToBeSigned = deliveryURI;
 				}
-				string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 				deliveryURL = 
 					_deliveryProtocol
@@ -969,7 +976,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	return make_pair(deliveryURL, deliveryFileName);
 }
 
-string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirationTime)
+string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expirationTime)
 {
 	string token = to_string(expirationTime) + contentURI;
 	string md5Base64;
@@ -1022,5 +1029,182 @@ string MMSDeliveryAuthorization::getSignedPath(string contentURI, time_t expirat
 
 
 	return md5Base64;
+}
+
+string MMSDeliveryAuthorization::getSignedCDN77URL(
+	string resourceURL,	// i.e.: 1234456789.rsc.cdn77.org
+	string filePath,	// /file/playlist/d.m3u8
+	string secureToken,
+	long expirationInMinutes,
+	shared_ptr<spdlog::logger> logger
+)
+{
+	logger->info(__FILEREF__ + "Received getSignedCDN77URL"
+		+ ", resourceURL: " + resourceURL
+		+ ", filePath: " + filePath
+		+ ", secureToken: " + secureToken
+		+ ", expirationInMinutes: " + to_string(expirationInMinutes)
+	);
+
+    try
+    {
+		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
+		//  This way the link will be available only for the time needed to start the download.
+
+		string signedURL;
+		{
+			// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
+			// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
+			// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
+			size_t fileNameStart = filePath.find_last_of("/");
+			if (fileNameStart == string::npos)
+			{
+				string errorMessage = string("filePath format is wrong")
+					+ ", filePath: " + filePath
+				;
+				logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string strippedPath = filePath.substr(0, fileNameStart);
+
+			// replace invalid URL query string characters +, =, / with valid characters -, _, ~
+			// $invalidChars = ['+','/'];
+			// $validChars = ['-','_'];
+			// GIU: replace is done below
+
+			// if ($strippedPath[0] != '/') {
+			// 	$strippedPath = '/' . $strippedPath;
+			// }
+			// GIU: our strippedPath already starts with /
+
+			// if ($pos = strpos($strippedPath, '?')) {
+			// 	$filePath = substr($strippedPath, 0, $pos);
+			// }
+			// GIU: our strippedPath does not have ?
+
+			// $hashStr = $strippedPath . $secureToken;
+			string hashStr = strippedPath + secureToken;
+
+			// if ($expiryTimestamp) {
+			// 	$hashStr = $expiryTimestamp . $hashStr;
+			// 	$expiryTimestamp = ',' . $expiryTimestamp;
+			// }
+			hashStr = to_string(expirationInMinutes * 60) + hashStr;
+			string sExpiryTimestamp = string(",") + to_string(expirationInMinutes * 60);
+
+			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
+			// return 'http://' . $cdnResourceUrl . '/' .
+			// 	str_replace($invalidChars, $validChars, base64_encode(md5($hashStr, TRUE))) .
+			// 	$expiryTimestamp . $filePath;
+			string md5Base64;
+			{
+				// unsigned char digest[MD5_DIGEST_LENGTH];
+				// MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
+				// md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+
+				{
+					unsigned char *md5_digest;
+					unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
+					EVP_MD_CTX *mdctx;
+
+					// MD5_Init
+					mdctx = EVP_MD_CTX_new();
+					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+					// MD5_Update
+					EVP_DigestUpdate(mdctx, (unsigned char*) hashStr.c_str(), hashStr.size());
+
+					// MD5_Final
+					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+
+					// md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
+					string md5Base64;
+					{
+						BIO *bio, *b64;
+						BUF_MEM *bufferPtr;
+
+						logger->debug(__FILEREF__ + "BIO_new...");
+						b64 = BIO_new(BIO_f_base64());
+						bio = BIO_new(BIO_s_mem());
+
+						logger->debug(__FILEREF__ + "BIO_push...");
+						bio = BIO_push(b64, bio);
+
+						logger->debug(__FILEREF__ + "BIO_write...");
+						BIO_write(bio, md5_digest, md5_digest_len);
+						BIO_flush(bio);
+						BIO_get_mem_ptr(bio, &bufferPtr);
+
+						logger->debug(__FILEREF__ + "BIO_set_close...");
+						BIO_set_close(bio, BIO_NOCLOSE);
+						logger->debug(__FILEREF__ + "BIO_free_all...");
+						BIO_free_all(bio);
+						// _logger->info(__FILEREF__ + "BIO_free...");
+						// BIO_free(b64);	// useless because of BIO_free_all
+
+						logger->debug(__FILEREF__ + "base64Text set...");
+						char* base64Text=(*bufferPtr).data;
+
+						md5Base64 = base64Text;
+
+						BUF_MEM_free(bufferPtr);
+
+						logger->debug(__FILEREF__ + "md5Base64: " + md5Base64);
+					}
+
+					OPENSSL_free(md5_digest);
+
+					EVP_MD_CTX_free(mdctx);
+				}
+
+				// $invalidChars = ['+','/'];
+				// $validChars = ['-','_'];
+				transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+					[](unsigned char c){
+						if (c == '+')
+							return '-';
+						else if (c == '/')
+							return '_';
+						else
+							return (char) c;
+					}
+				);
+			}
+
+			signedURL = "https://" + resourceURL + "/" + md5Base64
+				+ sExpiryTimestamp + filePath;
+		}
+
+		logger->info(__FILEREF__ + "end getSignedCDN77URL"
+			+ ", resourceURL: " + resourceURL
+			+ ", filePath: " + filePath
+			+ ", secureToken: " + secureToken
+			+ ", expirationInMinutes: " + to_string(expirationInMinutes)
+			+ ", signedURL: " + signedURL
+		);
+
+		return signedURL;
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("getSignedCDN77URL failed")
+			+ ", e.what(): " + e.what()
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("getSignedCDN77URL failed")
+			+ ", e.what(): " + e.what()
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
