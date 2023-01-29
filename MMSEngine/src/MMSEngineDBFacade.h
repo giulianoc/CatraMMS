@@ -2320,6 +2320,24 @@ public:
 	Json::Value getAWSChannelConfList (
         int64_t workspaceKey);
 
+	int64_t addCDN77ChannelConf(
+		int64_t workspaceKey,
+		string label, string rtmpURL, string resourceURL, string filePath,
+		string secureToken, string type);
+
+	void modifyCDN77ChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+		string label, string rtmpURL, string resourceURL, string filePath,
+		string secureToken, string type);
+
+	void removeCDN77ChannelConf(
+		int64_t workspaceKey,
+		int64_t confKey);
+
+	Json::Value getCDN77ChannelConfList (
+        int64_t workspaceKey);
+
 	tuple<string, string, string, bool> reserveAWSChannel(
 		int64_t workspaceKey, string label, string type,
 		int64_t ingestionJobKey);

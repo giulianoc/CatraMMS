@@ -7100,6 +7100,593 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
     return awsChannelConfListRoot;
 }
 
+int64_t MMSEngineDBFacade::addCDN77ChannelConf(
+	int64_t workspaceKey,
+	string label, string rtmpURL, string resourceURL, string filePath,
+	string secureToken, string type)
+{
+    string      lastSQLCommand;
+    int64_t     confKey;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "insert into MMS_Conf_CDN77Channel(workspaceKey, label, rtmpURL, "
+				"resourceURL, filePath, secureToken, type, reservedByIngestionJobKey) values ("
+                "?, ?, ?, ?, ?, ?, ?, NULL)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setString(queryParameterIndex++, rtmpURL);
+            preparedStatement->setString(queryParameterIndex++, resourceURL);
+            preparedStatement->setString(queryParameterIndex++, filePath);
+			if (secureToken == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, secureToken);
+            preparedStatement->setString(queryParameterIndex++, type);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", rtmpURL: " + rtmpURL
+				+ ", resourceURL: " + resourceURL
+				+ ", filePath: " + filePath
+				+ ", secureToken: " + secureToken
+				+ ", type: " + type
+				+ ", elapsed (secs): @" + to_string(
+					chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+
+            confKey = getLastInsertId(conn);
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }  
+    
+    return confKey;
+}
+
+void MMSEngineDBFacade::modifyCDN77ChannelConf(
+    int64_t confKey,
+    int64_t workspaceKey,
+	string label, string rtmpURL, string resourceURL, string filePath,
+	string secureToken, string type)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+				"update MMS_Conf_CDN77Channel set label = ?, rtmpURL = ?, resourceURL = ?, "
+				"filePath = ?, secureToken = ?, type = ? "
+				"where confKey = ? and workspaceKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setString(queryParameterIndex++, rtmpURL);
+            preparedStatement->setString(queryParameterIndex++, resourceURL);
+            preparedStatement->setString(queryParameterIndex++, filePath);
+			if (secureToken == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, secureToken);
+            preparedStatement->setString(queryParameterIndex++, type);
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", rtmpURL: " + rtmpURL
+				+ ", resourceURL: " + resourceURL
+				+ ", filePath: " + filePath
+				+ ", secureToken: " + secureToken
+				+ ", type: " + type
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                /*
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", confKey: " + to_string(confKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+                */
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }      
+}
+
+void MMSEngineDBFacade::removeCDN77ChannelConf(
+    int64_t workspaceKey,
+    int64_t confKey)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "delete from MMS_Conf_CDN77Channel where confKey = ? and workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no delete was done"
+                        + ", confKey: " + to_string(confKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+}
+
+Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
+	int64_t workspaceKey)
+{
+    string      lastSQLCommand;
+    Json::Value cdn77ChannelConfListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getCDN77ChannelConfList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+        );
+        
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            {
+                field = "workspaceKey";
+                requestParametersRoot[field] = workspaceKey;
+            }
+            
+            field = "requestParameters";
+            cdn77ChannelConfListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where workspaceKey = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_Conf_CDN77Channel ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (!resultSet->next())
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            field = "numFound";
+            responseRoot[field] = resultSet->getInt64(1);
+        }
+
+        Json::Value cdn77ChannelRoot(Json::arrayValue);
+        {
+            lastSQLCommand = 
+				string ("select confKey, label, rtmpURL, resourceURL, filePath, ")
+				+ "secureToken, type, reservedByIngestionJobKey "
+				+ "from MMS_Conf_CDN77Channel "
+                + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            while (resultSet->next())
+            {
+                Json::Value cdn77ChannelConfRoot;
+
+                field = "confKey";
+                cdn77ChannelConfRoot[field] = resultSet->getInt64("confKey");
+
+                field = "label";
+                cdn77ChannelConfRoot[field] = static_cast<string>(
+					resultSet->getString("label"));
+
+                field = "rtmpURL";
+                cdn77ChannelConfRoot[field] = static_cast<string>(
+					resultSet->getString("rtmpURL"));
+
+                field = "resourceURL";
+                cdn77ChannelConfRoot[field] = static_cast<string>(
+					resultSet->getString("resourceURL"));
+
+                field = "filePath";
+                cdn77ChannelConfRoot[field] = static_cast<string>(
+					resultSet->getString("filePath"));
+
+                field = "secureToken";
+				if (resultSet->isNull("secureToken"))
+					cdn77ChannelConfRoot[field] = Json::nullValue;
+				else
+					cdn77ChannelConfRoot[field] = static_cast<string>(
+						resultSet->getString("secureToken"));
+
+                field = "type";
+                cdn77ChannelConfRoot[field] = static_cast<string>(
+					resultSet->getString("type"));
+
+                field = "reservedByIngestionJobKey";
+				if (resultSet->isNull("reservedByIngestionJobKey"))
+					cdn77ChannelConfRoot[field] = Json::nullValue;
+				else
+					cdn77ChannelConfRoot[field]
+						= resultSet->getInt64("reservedByIngestionJobKey");
+
+                cdn77ChannelRoot.append(cdn77ChannelConfRoot);
+            }
+        }
+
+        field = "cdn77ChannelConf";
+        responseRoot[field] = cdn77ChannelRoot;
+
+        field = "response";
+        cdn77ChannelConfListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return cdn77ChannelConfListRoot;
+}
+
 tuple<string, string, string, bool>
 	MMSEngineDBFacade::reserveAWSChannel(
 	int64_t workspaceKey, string label, string type,

@@ -2488,11 +2488,6 @@ void API::uploadedBinary(
 
     try
     {
-this_thread::sleep_for(chrono::seconds(60 * 2));
-sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-	request, "", api, 201, "");
-return;
-
 		if (_noFileSystemAccess)
 		{
 			string errorMessage = string("no rights to execute this method")
@@ -2619,7 +2614,7 @@ return;
         {
             try
             {
-                _logger->info(__FILEREF__ + "Moving file"
+                _logger->info(__FILEREF__ + "Moving file from nginx area to ingestion user area"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                     + ", destBinaryPathName: " + destBinaryPathName
@@ -2792,7 +2787,7 @@ return;
                 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Content-Range. Moving file"
+					_logger->info(__FILEREF__ + "Content-Range. Moving file from nginx area to ingestion user area"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                         + ", destBinaryPathName: " + destBinaryPathName

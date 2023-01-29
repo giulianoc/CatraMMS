@@ -2532,6 +2532,41 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+		try
+		{
+			// type: SHARED or DEDICATED
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_CDN77Channel ("
+					"confKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"label						VARCHAR (128) NOT NULL,"
+					"rtmpURL					VARCHAR (512) NOT NULL,"
+					"resourceURL				VARCHAR (512) NOT NULL,"
+                    "filePath					VARCHAR (512) NOT NULL,"
+                    "secureToken				VARCHAR (512) NOT NULL,"
+                    "type						VARCHAR (64) NOT NULL,"
+                    "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
+                    "constraint MMS_Conf_CDN77Channel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_CDN77Channel_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label), "
+                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 

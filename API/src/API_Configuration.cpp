@@ -4125,6 +4125,7 @@ void API::addCDN77ChannelConf(
         string resourceURL;
         string filePath;
         string secureToken;
+        string type;
 
         try
         {
@@ -4176,6 +4177,17 @@ void API::addCDN77ChannelConf(
 
             field = "secureToken";
 			secureToken = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
         catch(runtime_error e)
         {
@@ -4200,16 +4212,14 @@ void API::addCDN77ChannelConf(
         string sResponse;
         try
         {
-/*
 			int64_t confKey = _mmsEngineDBFacade->addCDN77ChannelConf(
-				workspace->_workspaceKey, label, rtmpURL, resourceURL, filePath secureToken);
+				workspace->_workspaceKey, label, rtmpURL, resourceURL, filePath, secureToken, type);
 
 			sResponse = (
 				string("{ ") 
 				+ "\"confKey\": " + to_string(confKey)
 				+ "}"
 			);            
-*/
         }
         catch(runtime_error e)
         {
@@ -4284,6 +4294,7 @@ void API::modifyCDN77ChannelConf(
         string resourceURL;
         string filePath;
         string secureToken;
+        string type;
 
         try
         {
@@ -4343,6 +4354,17 @@ void API::modifyCDN77ChannelConf(
                 throw runtime_error(errorMessage);
             }
             secureToken = JSONUtils::asString(requestBodyRoot, field, "");
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            type = JSONUtils::asString(requestBodyRoot, field, "");
         }
         catch(runtime_error e)
         {
@@ -4380,11 +4402,9 @@ void API::modifyCDN77ChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
-/*
             _mmsEngineDBFacade->modifyCDN77ChannelConf(
                 confKey, workspace->_workspaceKey,
-				label, rtmpURL, resourceURL, filePath secureToken);
-*/
+				label, rtmpURL, resourceURL, filePath, secureToken, type);
 
             sResponse = (
                     string("{ ") 
@@ -4474,8 +4494,8 @@ void API::removeCDN77ChannelConf(
             }
             confKey = stoll(confKeyIt->second);
             
-            // _mmsEngineDBFacade->removeCDN77ChannelConf(
-              //   workspace->_workspaceKey, confKey);
+			_mmsEngineDBFacade->removeCDN77ChannelConf(
+				workspace->_workspaceKey, confKey);
 
             sResponse = (
                     string("{ ") 
@@ -4546,8 +4566,8 @@ void API::cdn77ChannelConfList(
     try
     {
         {
-            Json::Value cdn77ChannelConfListRoot /* = _mmsEngineDBFacade->getCDN77ChannelConfList(
-                    workspace->_workspaceKey) */;
+			Json::Value cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(
+				workspace->_workspaceKey);
 
             string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
             
