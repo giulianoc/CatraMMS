@@ -2543,7 +2543,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"rtmpURL					VARCHAR (512) NOT NULL,"
 					"resourceURL				VARCHAR (512) NOT NULL,"
                     "filePath					VARCHAR (512) NOT NULL,"
-                    "secureToken				VARCHAR (512) NOT NULL,"
+                    "secureToken				VARCHAR (512) NULL,"
                     "type						VARCHAR (64) NOT NULL,"
                     "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "constraint MMS_Conf_CDN77Channel_PK PRIMARY KEY (confKey), "
