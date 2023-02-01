@@ -486,6 +486,7 @@ private:
 		unordered_map<string, string> queryParameters,
 		string requestBody);
 
+	/*
 	void createDeliveryCDN77Authorization(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 		FCGX_Request& request,
@@ -493,6 +494,7 @@ private:
 		shared_ptr<Workspace> requestWorkspace,
 		string clientIPAddress,
 		unordered_map<string, string> queryParameters);
+	*/
 
 	int64_t checkDeliveryAuthorizationThroughParameter(
 		string contentURI, string tokenParameter);
@@ -702,7 +704,8 @@ private:
     void cdn77ChannelConfList(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
-        shared_ptr<Workspace> workspace);
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
 
     void addFTPConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

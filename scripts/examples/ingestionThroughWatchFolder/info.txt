@@ -1,0 +1,4 @@
+
+we prepared the incrontab files but we realized incrontab was not working because the watch folders were mounted directories.
+
+So we realized a watch script called by crontab looking for new files

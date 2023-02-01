@@ -162,7 +162,8 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&confKey=$2 last;
+			#2023-02-01: rimossa perchè deve rientrare nella precedente API
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&streamConfKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/bulk/?$ /api?version=$1&method=createBulkOfDeliveryAuthorization last;

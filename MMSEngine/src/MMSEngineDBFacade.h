@@ -2342,7 +2342,10 @@ public:
 		int64_t confKey);
 
 	Json::Value getCDN77ChannelConfList (
-        int64_t workspaceKey);
+        int64_t workspaceKey, int64_t confKey, string label);
+
+	tuple<string, string, string> getCDN77ChannelDetails (
+        int64_t workspaceKey, string label);
 
 	tuple<string, string, string, string, string, bool> reserveCDN77Channel(
 		int64_t workspaceKey, string label, string type,

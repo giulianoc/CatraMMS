@@ -1,0 +1,16 @@
+
+#file containing users allowed to use incron
+/etc/incron.allow
+
+#list incron entries
+incrontab -l
+
+#edit incron
+incrontab -e
+
+#remove incron for the user
+incrontab -r
+
+#set a new incron file
+incrontab <fine name>
+

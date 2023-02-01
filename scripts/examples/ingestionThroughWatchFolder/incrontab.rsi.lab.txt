@@ -1,0 +1,5 @@
+
+/mnt/media-grid/ROSS/CLIPSTORE/WatchFolderRoot/CONTINUITA/MP_ARCHIVIO/AUDIO/ IN_CLOSE_WRITE /home/mms/tools/promoMaterialIngest/promoMaterialIngest.sh $@ $# PROMO_AUDIO
+/mnt/media-grid/ROSS/CLIPSTORE/WatchFolderRoot/CONTINUITA/MP_ARCHIVIO/CLIP/ IN_CLOSE_WRITE /home/mms/tools/promoMaterialIngest/promoMaterialIngest.sh $@ $# PROMO_CLIP
+/mnt/media-grid/ROSS/CLIPSTORE/WatchFolderRoot/CONTINUITA/MP_ARCHIVIO/IMAGE/ IN_CLOSE_WRITE /home/mms/tools/promoMaterialIngest/promoMaterialIngest.sh $@ $# PROMO_IMAGE
+

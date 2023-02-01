@@ -4555,8 +4555,9 @@ void API::removeCDN77ChannelConf(
 
 void API::cdn77ChannelConfList(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace)
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
 {
     string api = "cdn77ChannelConfList";
 
@@ -4565,9 +4566,25 @@ void API::cdn77ChannelConfList(
 
     try
     {
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && labelIt->second != "")
+		{
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = curlpp::unescape(firstDecoding);
+		}
+
         {
 			Json::Value cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(
-				workspace->_workspaceKey);
+				workspace->_workspaceKey, -1, label);
 
             string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
             

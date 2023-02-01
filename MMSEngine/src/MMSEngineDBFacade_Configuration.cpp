@@ -8046,7 +8046,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
-	int64_t workspaceKey)
+	int64_t workspaceKey, int64_t confKey, string label)
 {
     string      lastSQLCommand;
     Json::Value cdn77ChannelConfListRoot;
@@ -8074,13 +8074,23 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
             {
                 field = "workspaceKey";
                 requestParametersRoot[field] = workspaceKey;
+
+                field = "confKey";
+                requestParametersRoot[field] = confKey;
+
+                field = "label";
+                requestParametersRoot[field] = label;
             }
             
             field = "requestParameters";
             cdn77ChannelConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = string ("where workspaceKey = ? ");
+        string sqlWhere = "where workspaceKey = ? ";
+		if (confKey != -1)
+			sqlWhere += "and confKey = ? ";
+		else if (label != "")
+			sqlWhere += "and label = ? ";
         
         Json::Value responseRoot;
         {
@@ -8092,11 +8102,17 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -8126,11 +8142,17 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -8252,6 +8274,156 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
     } 
     
     return cdn77ChannelConfListRoot;
+}
+
+tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
+	int64_t workspaceKey, string label)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getCDN77ChannelDetails"
+            + ", workspaceKey: " + to_string(workspaceKey)
+        );
+        
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string resourceURL;
+		string filePath;
+		string secureToken;
+        {
+            lastSQLCommand = 
+				"select resourceURL, filePath, secureToken "
+				"from MMS_Conf_CDN77Channel "
+                "where workspaceKey = ? and label = ?"
+			;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (!resultSet->next())
+			{
+				string errorMessage = __FILEREF__ + "Configuration label is not found"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw ConfKeyNotFound(errorMessage);                    
+            }
+
+			resourceURL = resultSet->getString("resourceURL");
+			filePath = resultSet->getString("filePath");
+			if (!resultSet->isNull("secureToken"))
+				secureToken = resultSet->getString("secureToken");
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return make_tuple(resourceURL, filePath, secureToken);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(ConfKeyNotFound e)
+    {
+		_logger->error(__FILEREF__ + "ConfKeyNotFound SQL exception"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+		);
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
 }
 
 tuple<string, string, string, string, string, bool>
