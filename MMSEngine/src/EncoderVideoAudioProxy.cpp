@@ -5596,18 +5596,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 			}
 
 			killedByUser = liveRecorder_through_ffmpeg();
-			if (killedByUser)	// KilledByUser
-			{
-				string errorMessage = __FILEREF__ + "Encoding killed by the User"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-					;
-				_logger->warn(errorMessage);
-        
-				throw EncodingKilledByUser();
-			}
-
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
@@ -5654,6 +5642,18 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						_logger->error(errorMessage);
 					}
 				}
+			}
+
+			if (killedByUser)	// KilledByUser
+			{
+				string errorMessage = __FILEREF__ + "Encoding killed by the User"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+					;
+				_logger->warn(errorMessage);
+        
+				throw EncodingKilledByUser();
 			}
 		}
 		catch(...)
@@ -6900,18 +6900,6 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 			}
 
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
-			if (killedByUser)
-			{
-				string errorMessage = __FILEREF__ + "Encoding killed by the User"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-				;
-				_logger->warn(errorMessage);
-
-				throw EncodingKilledByUser();
-			}
-
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
@@ -6958,6 +6946,18 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						_logger->error(errorMessage);
 					}
 				}
+			}
+
+			if (killedByUser)
+			{
+				string errorMessage = __FILEREF__ + "Encoding killed by the User"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+				;
+				_logger->warn(errorMessage);
+
+				throw EncodingKilledByUser();
 			}
 		}
 		catch(...)

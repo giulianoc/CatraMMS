@@ -1039,7 +1039,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 	shared_ptr<spdlog::logger> logger
 )
 {
-	logger->info(__FILEREF__ + "Received getSignedCDN77URL"
+	logger->info(__FILEREF__ + "getSignedCDN77URL"
 		+ ", resourceURL: " + resourceURL
 		+ ", filePath: " + filePath
 		+ ", secureToken: " + secureToken
@@ -1051,37 +1051,43 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
 		//  This way the link will be available only for the time needed to start the download.
 
+		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now())
+			+ (expirationInMinutes * 60);
+
 		string signedURL;
 		{
-			// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
-			// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
-			// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
-			size_t fileNameStart = filePath.find_last_of("/");
-			if (fileNameStart == string::npos)
+			string strippedPath;
 			{
-				string errorMessage = string("filePath format is wrong")
-					+ ", filePath: " + filePath
-				;
-				logger->error(__FILEREF__ + errorMessage);
+				// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
+				// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
+				// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
+				size_t fileNameStart = filePath.find_last_of("/");
+				if (fileNameStart == string::npos)
+				{
+					string errorMessage = string("filePath format is wrong")
+						+ ", filePath: " + filePath
+					;
+					logger->error(__FILEREF__ + errorMessage);
 
-				throw runtime_error(errorMessage);
+					throw runtime_error(errorMessage);
+				}
+				strippedPath = filePath.substr(0, fileNameStart);
+
+				// replace invalid URL query string characters +, =, / with valid characters -, _, ~
+				// $invalidChars = ['+','/'];
+				// $validChars = ['-','_'];
+				// GIU: replace is done below
+
+				// if ($strippedPath[0] != '/') {
+				// 	$strippedPath = '/' . $strippedPath;
+				// }
+				// GIU: our strippedPath already starts with /
+
+				// if ($pos = strpos($strippedPath, '?')) {
+				// 	$filePath = substr($strippedPath, 0, $pos);
+				// }
+				// GIU: our strippedPath does not have ?
 			}
-			string strippedPath = filePath.substr(0, fileNameStart);
-
-			// replace invalid URL query string characters +, =, / with valid characters -, _, ~
-			// $invalidChars = ['+','/'];
-			// $validChars = ['-','_'];
-			// GIU: replace is done below
-
-			// if ($strippedPath[0] != '/') {
-			// 	$strippedPath = '/' . $strippedPath;
-			// }
-			// GIU: our strippedPath already starts with /
-
-			// if ($pos = strpos($strippedPath, '?')) {
-			// 	$filePath = substr($strippedPath, 0, $pos);
-			// }
-			// GIU: our strippedPath does not have ?
 
 			// $hashStr = $strippedPath . $secureToken;
 			string hashStr = strippedPath + secureToken;
@@ -1090,8 +1096,14 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			// 	$hashStr = $expiryTimestamp . $hashStr;
 			// 	$expiryTimestamp = ',' . $expiryTimestamp;
 			// }
-			hashStr = to_string(expirationInMinutes * 60) + hashStr;
-			string sExpiryTimestamp = string(",") + to_string(expirationInMinutes * 60);
+			hashStr = to_string(expiryTimestamp) + hashStr;
+			string sExpiryTimestamp = string(",") + to_string(expiryTimestamp);
+
+			logger->info(__FILEREF__ + "getSignedCDN77URL"
+				+ ", strippedPath: " + strippedPath
+				+ ", hashStr: " + hashStr
+				+ ", sExpiryTimestamp: " + sExpiryTimestamp
+			);
 
 			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
 			// return 'http://' . $cdnResourceUrl . '/' .
@@ -1120,18 +1132,33 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
 					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
 
+					/*
+					{
+						string md5 = string((char *) md5_digest, md5_digest_len);
+
+						logger->info(__FILEREF__ + "getSignedCDN77URL"
+							+ ", hashStr: " + hashStr
+							+ ", md5_digest_len: " + to_string(md5_digest_len)
+							+ ", md5: " + md5
+						);
+					}
+					*/
+
 					// md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
-					string md5Base64;
 					{
 						BIO *bio, *b64;
 						BUF_MEM *bufferPtr;
 
 						logger->debug(__FILEREF__ + "BIO_new...");
 						b64 = BIO_new(BIO_f_base64());
+						// By default there must be a newline at the end of input.
+						// Next flag remove new line at the end
+						BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 						bio = BIO_new(BIO_s_mem());
 
 						logger->debug(__FILEREF__ + "BIO_push...");
 						bio = BIO_push(b64, bio);
+
 
 						logger->debug(__FILEREF__ + "BIO_write...");
 						BIO_write(bio, md5_digest, md5_digest_len);
@@ -1146,19 +1173,27 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 						// BIO_free(b64);	// useless because of BIO_free_all
 
 						logger->debug(__FILEREF__ + "base64Text set...");
-						char* base64Text=(*bufferPtr).data;
+						// char* base64Text=(*bufferPtr).data;
 
-						md5Base64 = base64Text;
+						logger->info(__FILEREF__ + "getSignedCDN77URL"
+							+ ", (*bufferPtr).length: " + to_string((*bufferPtr).length)
+							+ ", (*bufferPtr).data: " + (*bufferPtr).data
+						);
+
+						md5Base64 = string((*bufferPtr).data, (*bufferPtr).length);
 
 						BUF_MEM_free(bufferPtr);
-
-						logger->debug(__FILEREF__ + "md5Base64: " + md5Base64);
 					}
 
 					OPENSSL_free(md5_digest);
 
 					EVP_MD_CTX_free(mdctx);
 				}
+
+				logger->info(__FILEREF__ + "getSignedCDN77URL"
+					+ ", md5Base64: " + md5Base64
+				);
+
 
 				// $invalidChars = ['+','/'];
 				// $validChars = ['-','_'];

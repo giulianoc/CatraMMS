@@ -7128,6 +7128,82 @@ tuple<string, string, string, bool>
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_AWSChannel
+		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
+		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+        {
+			lastSQLCommand = 
+				"select ingestionJobKey  from MMS_IngestionJob where "
+				"status like 'End_%' and ingestionJobKey in ("
+					"select reservedByIngestionJobKey from MMS_Conf_AWSChannel where "
+					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
+				;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			string ingestionJobKeyList;
+            while (resultSet->next())
+			{
+				ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				if (ingestionJobKeyList == "")
+					ingestionJobKeyList = to_string(ingestionJobKey);
+				else
+					ingestionJobKeyList += (", " + to_string(ingestionJobKey));
+			}
+
+			if (ingestionJobKeyList != "")
+			{
+				{
+					string errorMessage = __FILEREF__ + "reserveAWSChannel. "
+						+ "The following AWS channels are reserved but the relative ingestionJobKey is finished,"
+						+ "so they will be reset"
+						+ ", ingestionJobKeyList: " + ingestionJobKeyList
+					;
+					_logger->error(errorMessage);
+				}
+
+				{
+					lastSQLCommand = 
+						"update MMS_Conf_AWSChannel set reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (rowsUpdated == 0)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->error(errorMessage);
+
+						// throw runtime_error(errorMessage);                    
+					}
+				}
+			}
+		}
+
 		autoCommit = false;
 		{
 			lastSQLCommand = 
@@ -7144,6 +7220,7 @@ tuple<string, string, string, bool>
 		int64_t reservedByIngestionJobKey = -1;
 
 		{
+
 			if (label == "")
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
@@ -8204,6 +8281,82 @@ tuple<string, string, string, string, string, bool>
         _logger->debug(__FILEREF__ + "DB connection borrow"
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
         );
+
+		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_CDN77Channel
+		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
+		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+        {
+			lastSQLCommand = 
+				"select ingestionJobKey  from MMS_IngestionJob where "
+				"status like 'End_%' and ingestionJobKey in ("
+					"select reservedByIngestionJobKey from MMS_Conf_CDN77Channel where "
+					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
+				;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			string ingestionJobKeyList;
+            while (resultSet->next())
+			{
+				ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				if (ingestionJobKeyList == "")
+					ingestionJobKeyList = to_string(ingestionJobKey);
+				else
+					ingestionJobKeyList += (", " + to_string(ingestionJobKey));
+			}
+
+			if (ingestionJobKeyList != "")
+			{
+				{
+					string errorMessage = __FILEREF__ + "reserveCDN77Channel. "
+						+ "The following CDN77 channels are reserved but the relative ingestionJobKey is finished,"
+						+ "so they will be reset"
+						+ ", ingestionJobKeyList: " + ingestionJobKeyList
+					;
+					_logger->error(errorMessage);
+				}
+
+				{
+					lastSQLCommand = 
+						"update MMS_Conf_CDN77Channel set reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+					if (rowsUpdated == 0)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->error(errorMessage);
+
+						// throw runtime_error(errorMessage);                    
+					}
+				}
+			}
+		}
 
 		autoCommit = false;
 		{
