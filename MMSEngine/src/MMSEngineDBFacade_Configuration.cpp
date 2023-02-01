@@ -7155,11 +7155,11 @@ tuple<string, string, string, bool>
 			string ingestionJobKeyList;
             while (resultSet->next())
 			{
-				ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				int64_t localIngestionJobKey = resultSet->getInt64("ingestionJobKey");
 				if (ingestionJobKeyList == "")
-					ingestionJobKeyList = to_string(ingestionJobKey);
+					ingestionJobKeyList = to_string(localIngestionJobKey);
 				else
-					ingestionJobKeyList += (", " + to_string(ingestionJobKey));
+					ingestionJobKeyList += (", " + to_string(localIngestionJobKey));
 			}
 
 			if (ingestionJobKeyList != "")
@@ -8309,11 +8309,11 @@ tuple<string, string, string, string, string, bool>
 			string ingestionJobKeyList;
             while (resultSet->next())
 			{
-				ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				int64_t localIngestionJobKey = resultSet->getInt64("ingestionJobKey");
 				if (ingestionJobKeyList == "")
-					ingestionJobKeyList = to_string(ingestionJobKey);
+					ingestionJobKeyList = to_string(localIngestionJobKey);
 				else
-					ingestionJobKeyList += (", " + to_string(ingestionJobKey));
+					ingestionJobKeyList += (", " + to_string(localIngestionJobKey));
 			}
 
 			if (ingestionJobKeyList != "")
