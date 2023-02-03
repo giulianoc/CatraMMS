@@ -8881,7 +8881,9 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "RTMP_Stream"
 				|| outputType == "CDN_AWS"
-				|| outputType == "CDN_CDN77")
+				|| outputType == "CDN_CDN77"
+				|| outputType == "RTMP_Channel"
+			)
 			{
 				// 2022-09-01: scenario: mando un m3u8 multi tracce ricevuto da HWM (serie C)
 				//	verso un rtmp della CDN77, mi fallisce perchè un flv/rtmp non puo' essere
@@ -8899,6 +8901,8 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
 				string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
+				// Once RTMP_Stream is removed, also next rtmpStreamName, rtmpUserName, rtmpPassword
+				// has to be removed
 				string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
 				string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
 				string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");
@@ -12430,9 +12434,13 @@ void FFMpeg::liveProxyOutput(
 		}
 		else if (outputType == "RTMP_Stream"
 			|| outputType == "CDN_AWS"
-			|| outputType == "CDN_CDN77")
+			|| outputType == "CDN_CDN77"
+			|| outputType == "RTMP_Channel"
+		)
 		{
 			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
+			// Once RTMP_Stream is removed, also next rtmpStreamName, rtmpUserName, rtmpPassword
+			// has to be removed
 			string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
 			string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
 			string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");

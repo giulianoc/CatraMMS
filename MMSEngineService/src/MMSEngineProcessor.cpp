@@ -13729,6 +13729,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		int awsExpirationInMinutes;
 		string cdn77ChannelConfigurationLabel;
 		int cdn77ExpirationInMinutes;
+		string rtmpChannelConfigurationLabel;
 		string udpUrl;
 		Json::Value drawTextDetailsRoot = Json::nullValue;
 
@@ -13822,6 +13823,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			// cdn77ExpirationInMinutes is needed only in case of signed url
 			field = "cdn77ExpirationInMinutes";
 			cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440);	// 1 day
+		}
+		else if (outputType == "RTMP_Channel")
+		{
+			// it could not exist in case of SHARED RTMP
+			field = "rtmpChannelConfigurationLabel";
+			rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13973,6 +13980,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "cdn77ExpirationInMinutes";
 		localOutputRoot[field] = cdn77ExpirationInMinutes;
+
+		field = "rtmpChannelConfigurationLabel";
+		localOutputRoot[field] = rtmpChannelConfigurationLabel;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;

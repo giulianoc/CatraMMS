@@ -486,16 +486,6 @@ private:
 		unordered_map<string, string> queryParameters,
 		string requestBody);
 
-	/*
-	void createDeliveryCDN77Authorization(
-		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-		FCGX_Request& request,
-		int64_t userKey,
-		shared_ptr<Workspace> requestWorkspace,
-		string clientIPAddress,
-		unordered_map<string, string> queryParameters);
-	*/
-
 	int64_t checkDeliveryAuthorizationThroughParameter(
 		string contentURI, string tokenParameter);
 

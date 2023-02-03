@@ -5593,6 +5593,109 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						}
 					}
 				}
+				else if (outputType == "RTMP_Channel")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot,
+						"rtmpChannelConfigurationLabel", "");
+
+					string rtmpChannelType;
+					if (rtmpChannelConfigurationLabel == "")
+						rtmpChannelType = "SHARED";
+					else
+						rtmpChannelType = "DEDICATED";
+
+					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails
+						= _mmsEngineDBFacade->reserveRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							rtmpChannelConfigurationLabel, rtmpChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					string rtmpURL;
+					string streamName;
+					string userName;
+					string password;
+					string playURL;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, rtmpURL, streamName, userName, password, playURL,
+						channelAlreadyReserved) = rtmpChannelDetails;
+
+					if (streamName != "")
+					{
+						if (rtmpURL.back() == '/')
+							rtmpURL += streamName;
+						else
+							rtmpURL += ("/" + streamName);
+					}
+					if (userName != "" && password != "")
+					{
+						// rtmp://.....
+						rtmpURL.insert(7, (userName + ":" + password + "@"));
+					}
+
+					// update outputsRoot with the new details
+					{
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", rtmpChannelType: " + rtmpChannelType 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+								+ ", playURL: " + playURL 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveRecorder_through_ffmpeg();
@@ -5634,7 +5737,26 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					}
 					catch(...)
 					{
-						string errorMessage = __FILEREF__ + "releaseAWSChannel failed"
+						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "RTMP_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -5697,6 +5819,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "RTMP_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -6897,6 +7038,109 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						}
 					}
 				}
+				else if (outputType == "RTMP_Channel")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot,
+						"rtmpChannelConfigurationLabel", "");
+
+					string rtmpChannelType;
+					if (rtmpChannelConfigurationLabel == "")
+						rtmpChannelType = "SHARED";
+					else
+						rtmpChannelType = "DEDICATED";
+
+					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails
+						= _mmsEngineDBFacade->reserveRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							rtmpChannelConfigurationLabel, rtmpChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					string rtmpURL;
+					string streamName;
+					string userName;
+					string password;
+					string playURL;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, rtmpURL, streamName, userName, password, playURL,
+						channelAlreadyReserved) = rtmpChannelDetails;
+
+					if (streamName != "")
+					{
+						if (rtmpURL.back() == '/')
+							rtmpURL += streamName;
+						else
+							rtmpURL += ("/" + streamName);
+					}
+					if (userName != "" && password != "")
+					{
+						// rtmp://.....
+						rtmpURL.insert(7, (userName + ":" + password + "@"));
+					}
+
+					// update outputsRoot with the new details
+					{
+						field = "rtmpUrl";
+						outputRoot[field] = rtmpURL;
+
+						field = "playUrl";
+						outputRoot[field] = playURL;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", rtmpChannelType: " + rtmpChannelType 
+								+ ", rtmpURL: " + rtmpURL 
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+								+ ", playURL: " + playURL 
+							);
+
+							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, rtmpURL, playURL);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
@@ -6939,6 +7183,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "RTMP_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseRTMPChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -7001,6 +7264,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "RTMP_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseRTMPChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 

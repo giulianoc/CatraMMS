@@ -9809,7 +9809,7 @@ tuple<string, string, string, string, string, string, bool>
     {
         string field;
         
-		_logger->info(__FILEREF__ + "reserveCDN77Channel"
+		_logger->info(__FILEREF__ + "reserveRTMPChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", label: " + label
 			+ ", type: " + type

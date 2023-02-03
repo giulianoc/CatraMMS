@@ -1687,28 +1687,6 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 		createBulkOfDeliveryAuthorization(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace, clientIPAddress, queryParameters, requestBody);
     }
-	/*
-    else if (method == "createDeliveryCDN77Authorization")
-    {
-        if (!admin && !deliveryAuthorization)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", deliveryAuthorization: " + to_string(deliveryAuthorization)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		string clientIPAddress = getClientIPAddress(requestDetails);
-
-        createDeliveryCDN77Authorization(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, userKey, workspace,
-			clientIPAddress, queryParameters);
-    }
-	*/
     else if (method == "ingestion")
     {
         if (!admin && !ingestWorkflow)
