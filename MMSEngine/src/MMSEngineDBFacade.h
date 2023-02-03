@@ -2353,6 +2353,33 @@ public:
 
 	void releaseCDN77Channel(int64_t workspaceKey, int64_t ingestionJobKey);
 
+	int64_t addRTMPChannelConf(
+		int64_t workspaceKey,
+		string label, string rtmpURL, string streamName, string userName,
+		string password, string playURL, string type);
+
+	void modifyRTMPChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+		string label, string rtmpURL, string streamName, string userName,
+		string password, string playURL, string type);
+
+	void removeRTMPChannelConf(
+		int64_t workspaceKey,
+		int64_t confKey);
+
+	Json::Value getRTMPChannelConfList (
+        int64_t workspaceKey, int64_t confKey, string label);
+
+	tuple<string, string, string, string, string> getRTMPChannelDetails (
+        int64_t workspaceKey, string label);
+
+	tuple<string, string, string, string, string, string, bool> reserveRTMPChannel(
+		int64_t workspaceKey, string label, string type,
+		int64_t ingestionJobKey);
+
+	void releaseRTMPChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+
     int64_t addFTPConf(
         int64_t workspaceKey,
         string label,

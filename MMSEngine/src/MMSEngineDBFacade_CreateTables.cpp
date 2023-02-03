@@ -2567,6 +2567,42 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+		try
+		{
+			// type: SHARED or DEDICATED
+			lastSQLCommand = 
+				"create table if not exists MMS_Conf_RTMPChannel ("
+					"confKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"label						VARCHAR (128) NOT NULL,"
+					"rtmpURL					VARCHAR (512) NOT NULL,"
+					"streamName					VARCHAR (128) NULL,"
+                    "userName					VARCHAR (128) NULL,"
+                    "password					VARCHAR (128) NULL,"
+                    "playURL					VARCHAR (512) NULL,"
+                    "type						VARCHAR (64) NOT NULL,"
+                    "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
+                    "constraint MMS_Conf_RTMPChannel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_RTMPChannel_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label), "
+                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 

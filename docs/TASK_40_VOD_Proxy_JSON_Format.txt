@@ -53,7 +53,7 @@
 		//	At least one Output has to be present
 		"Outputs" = [
 			{
-				// optional, possible values: HLS, DASH, RTMP_Stream, CDN_AWS, CDN_CDN77.
+				// optional, possible values: HLS, DASH, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS and DASH works also in case of an external transcoder
 				// Default: HLS
 				"OutputType": "HLS",
@@ -75,19 +75,6 @@
 
 				// optional, used only in case of HLS, Default: 6
 				"PlaylistEntriesNumber": 6,
-
-				// mandatory only in case of RTMP_Stream
-				"RtmpUrl": "...",
-				// optional only in case of RTMP_Stream
-				"rtmpStreamName": "...",
-				// optional only in case of RTMP_Stream
-				"rtmpUserName": "...",
-				// optional only in case of RTMP_Stream
-				"rtmpPassword": "...",
-
-				// optional only in case of RTMP_Stream. It specifies the url to be used
-				//		to play the stream sent through the rtmp 
-				"PlayUrl": "...",
 
 				// optional, used only in case of CDN_AWS
 				// the configuration label of an AWS Channel defined in MMS.
@@ -113,6 +100,11 @@
 				// it specifies the expiration of the signed URL
 				// Default: 1440 (1 day)
 				"cdn77ExpirationInMinutes": 1440,
+
+				// optional, used only in case of RTMP_Channel
+				// the configuration label of an RTMP Channel defined in MMS.
+				// If not present, a SHARED free RTMP channel is used
+				"rtmpChannelConfigurationLabel": "",
 
 				// optional: It is possible to use this field to specify any other output options.
 				// Examples:

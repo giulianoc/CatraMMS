@@ -707,6 +707,32 @@ private:
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);
 
+    void addRTMPChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyRTMPChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeRTMPChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void rtmpChannelConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
     void addFTPConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

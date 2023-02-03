@@ -2352,6 +2352,62 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         cdn77ChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "addRTMPChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyRTMPChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifyRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeRTMPChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
+    else if (method == "rtmpChannelConfList")
+    {
+        rtmpChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addFTPConf")
     {
         if (!admin && !editConfiguration)
