@@ -13800,7 +13800,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			field = "rtmpPassword";
 			rtmpPassword = JSONUtils::asString(outputRoot, field, "");
 
-			field = "PlayUrl";
+			field = "playUrl";
 			playUrl = JSONUtils::asString(outputRoot, field, "");
 		}
 		else if (outputType == "CDN_AWS")

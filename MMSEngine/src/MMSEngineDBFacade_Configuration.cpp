@@ -8133,9 +8133,11 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
         Json::Value cdn77ChannelRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-				string ("select confKey, label, rtmpURL, resourceURL, filePath, ")
-				+ "secureToken, type, reservedByIngestionJobKey "
-				+ "from MMS_Conf_CDN77Channel "
+				string ("select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, ")
+				+ "cc.secureToken, cc.type, cc.reservedByIngestionJobKey, "
+				+ "JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel') as configurationLabel "
+				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
+				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey"
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -8197,6 +8199,13 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 				else
 					cdn77ChannelConfRoot[field]
 						= resultSet->getInt64("reservedByIngestionJobKey");
+
+                field = "configurationLabel";
+				if (resultSet->isNull("configurationLabel"))
+					cdn77ChannelConfRoot[field] = Json::nullValue;
+				else
+					cdn77ChannelConfRoot[field] = static_cast<string>(
+						resultSet->getString("configurationLabel"));
 
                 cdn77ChannelRoot.append(cdn77ChannelConfRoot);
             }
