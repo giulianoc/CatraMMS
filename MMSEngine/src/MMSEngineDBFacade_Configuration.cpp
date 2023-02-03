@@ -8086,16 +8086,16 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
             cdn77ChannelConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = "where workspaceKey = ? ";
+        string sqlWhere = "where cc.workspaceKey = ? ";
 		if (confKey != -1)
-			sqlWhere += "and confKey = ? ";
+			sqlWhere += "and cc.confKey = ? ";
 		else if (label != "")
-			sqlWhere += "and label = ? ";
+			sqlWhere += "and cc.label = ? ";
         
         Json::Value responseRoot;
         {
             lastSQLCommand = 
-                string("select count(*) from MMS_Conf_CDN77Channel ")
+                string("select count(*) from MMS_Conf_CDN77Channel cc ")
                     + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -8137,7 +8137,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 				+ "cc.secureToken, cc.type, cc.reservedByIngestionJobKey, "
 				+ "JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel') as configurationLabel "
 				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
-				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey"
+				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
