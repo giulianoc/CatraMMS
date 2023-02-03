@@ -8138,7 +8138,9 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 				+ "JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel') as configurationLabel "
 				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
 				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey "
-                + sqlWhere;
+                + sqlWhere
+				+ "order by cc.label "
+			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
