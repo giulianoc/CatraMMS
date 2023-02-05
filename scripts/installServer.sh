@@ -833,6 +833,7 @@ firewall-rules()
 		ufw allow from 52.50.243.155 to any port 8088
 		ufw allow from 34.248.199.119 to any port 8088
 		ufw allow from 52.49.243.7 to any port 8088
+		ufw allow from 63.34.105.227 to any port 8088
 
 		#this allows multicast (terrestrial/satellite solution)
 		#ufw allow out proto udp to 224.0.0.0/3

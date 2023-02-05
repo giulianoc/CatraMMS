@@ -87,6 +87,18 @@ if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-243-155.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
+	echo "aws-mms-engine-db-1"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-2"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-3"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-34-105-227.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
 	echo "aws-mms-transcoder-irl-1"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-18-202-38-18.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
@@ -109,14 +121,6 @@ echo ""
 echo -n "deploy su cibortv (rel 20)? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "aws-mms-engine-db-1"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
-	date
-
-	echo "aws-mms-engine-db-2"
-	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-49-243-7.eu-west-1.compute.amazonaws.com:/opt/catramms
-	date
-
 	echo "aruba-mms-transcoder-1"
 	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
 	date
