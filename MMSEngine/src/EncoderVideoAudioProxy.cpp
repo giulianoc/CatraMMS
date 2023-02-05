@@ -5509,6 +5509,9 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved)
 						= cdn77ChannelDetails;
 
+					if (filePath.size() > 0 && filePath.front() != '/')
+						filePath = "/" + filePath;
+
 					string playURL;
 					if (secureToken != "")
 					{
@@ -5606,7 +5609,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					else
 						rtmpChannelType = "DEDICATED";
 
-					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// reserveRTMPChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta
 					// già attiva, ritornerebbe le stesse info associate
@@ -6954,6 +6957,9 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved)
 						= cdn77ChannelDetails;
 
+					if (filePath.size() > 0 && filePath.front() != '/')
+						filePath = "/" + filePath;
+
 					string playURL;
 					if (secureToken != "")
 					{
@@ -7051,7 +7057,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					else
 						rtmpChannelType = "DEDICATED";
 
-					// reserveCDN77Channel ritorna exception se non ci sono piu canali
+					// reserveRTMPChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta
 					// già attiva, ritornerebbe le stesse info associate
