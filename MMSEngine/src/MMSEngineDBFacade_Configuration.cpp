@@ -8135,7 +8135,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
             lastSQLCommand = 
 				string ("select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, ")
 				+ "cc.secureToken, cc.type, cc.reservedByIngestionJobKey, "
-				+ "JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel') as configurationLabel "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
 				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
@@ -9444,16 +9444,16 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
             rtmpChannelConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = "where workspaceKey = ? ";
+        string sqlWhere = "where rc.workspaceKey = ? ";
 		if (confKey != -1)
-			sqlWhere += "and confKey = ? ";
+			sqlWhere += "and rc.confKey = ? ";
 		else if (label != "")
-			sqlWhere += "and label = ? ";
+			sqlWhere += "and rc.label = ? ";
         
         Json::Value responseRoot;
         {
             lastSQLCommand = 
-                string("select count(*) from MMS_Conf_RTMPChannel ")
+                string("select count(*) from MMS_Conf_RTMPChannel rc ")
                     + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -9491,10 +9491,14 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
         Json::Value rtmpChannelRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-				string ("select confKey, label, rtmpURL, streamName, userName, password, ")
-				+ "playURL, type, reservedByIngestionJobKey "
-				+ "from MMS_Conf_RTMPChannel "
-                + sqlWhere;
+				string ("select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, ")
+				+ "rc.playURL, rc.type, rc.reservedByIngestionJobKey, "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "from MMS_Conf_RTMPChannel rc left join MMS_IngestionJob ij "
+				+ "on rc.reservedByIngestionJobKey = ij.ingestionJobKey "
+                + sqlWhere
+				+ "order by cc.label "
+			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -9568,6 +9572,13 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 				else
 					rtmpChannelConfRoot[field]
 						= resultSet->getInt64("reservedByIngestionJobKey");
+
+                field = "configurationLabel";
+				if (resultSet->isNull("configurationLabel"))
+					rtmpChannelConfRoot[field] = Json::nullValue;
+				else
+					rtmpChannelConfRoot[field] = static_cast<string>(
+						resultSet->getString("configurationLabel"));
 
                 rtmpChannelRoot.append(rtmpChannelConfRoot);
             }
