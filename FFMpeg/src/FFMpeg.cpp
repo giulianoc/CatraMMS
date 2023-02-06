@@ -12043,7 +12043,7 @@ void FFMpeg::liveProxyOutput(
 	string ffmpegDrawTextFilter;
 	if (inputDrawTextDetailsRoot != Json::nullValue)
 	{
-		string ffmpegDrawTextFilter;
+		// string ffmpegDrawTextFilter;
 		{
 			Json::Value filterRoot = inputDrawTextDetailsRoot;
 			filterRoot["type"] = "drawtext";
@@ -12102,7 +12102,7 @@ void FFMpeg::liveProxyOutput(
 				of.flush();
 			}
 
-			string ffmpegDrawTextFilter;
+			// string ffmpegDrawTextFilter;
 			{
 				Json::Value filterRoot = drawTextDetailsRoot;
 				filterRoot["type"] = "drawtext";
