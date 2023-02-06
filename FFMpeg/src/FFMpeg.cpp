@@ -12043,10 +12043,31 @@ void FFMpeg::liveProxyOutput(
 	string ffmpegDrawTextFilter;
 	if (inputDrawTextDetailsRoot != Json::nullValue)
 	{
-		// string ffmpegDrawTextFilter;
 		{
+			string text = JSONUtils::asString(inputDrawTextDetailsRoot, "text", "");
+
+			string textTemporaryFileName;
+			{
+				textTemporaryFileName =
+					_ffmpegTempDir + "/"
+					+ to_string(ingestionJobKey)
+					+ "_"
+					+ to_string(encodingJobKey)
+					+ ".overlayText";
+				ofstream of(textTemporaryFileName, ofstream::trunc);
+				of << text;
+				of.flush();
+			}
+
+			_logger->info(__FILEREF__ + "liveProxyOutput (inputRoot): added text into a temporary file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", textTemporaryFileName: " + textTemporaryFileName
+			);
+
 			Json::Value filterRoot = inputDrawTextDetailsRoot;
 			filterRoot["type"] = "drawtext";
+			filterRoot["textFilePathName"] = textTemporaryFileName;
 			ffmpegDrawTextFilter = getFilter(filterRoot, streamingDurationInSeconds);
 		}
 		/*
