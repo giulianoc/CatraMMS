@@ -102,7 +102,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					"ej.utcScheduleStart_virtual - unix_timestamp() < ? * 60) "
 				"order by ej.typePriority asc, ej.utcScheduleStart_virtual asc, "
 					"ej.encodingPriority desc, ej.creationDate asc, ej.failuresNumber asc "
-				"limit ? offset ? for update skip locked"
+				"limit ? offset ? for update" // skip locked"
 			;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
