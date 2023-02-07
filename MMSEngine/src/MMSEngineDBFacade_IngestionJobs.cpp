@@ -146,6 +146,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				//      At the same time, I had to remove the join because a join would lock everything
 				//      Without join, if the select got i.e. 20 rows, all the other rows are not locked
 				//      and can be got from the other engines
+				// 2023-02-07: added skip locked. Questa opzione è importante perchè evita che la select
+				//	attenda eventuali lock di altri engine. Considera che un lock su una riga causa anche
+				//	il lock di tutte le righe toccate dalla transazione
 				lastSQLCommand = 
 					"select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
 					"ij.metaDataContent, ij.status, ij.ingestionType "
@@ -185,7 +188,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"convert_tz(scheduleStart_virtual,  '+00:00', @@session.time_zone)) - "
 						"UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
-					"limit ? offset ? for update"
+					"limit ? offset ? for update skip locked"
 				;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement (

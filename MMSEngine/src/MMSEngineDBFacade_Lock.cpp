@@ -47,6 +47,8 @@ void MMSEngineDBFacade::setLock(
 			long maxDurationInMinutes;
 			string start;
 			{
+				// 2023-02-07: ora questa procedura non viene piu usata, nel caso si ripristinasse,
+				//	bisognerebbe aggiungere le opzioni di for update: WAIT, SKIP LOCK
 				lastSQLCommand = 
 					"select active, maxDurationInMinutes, owner, "
 					"TIME_TO_SEC(TIMEDIFF(NOW(), start)) as currentLockDuration,"

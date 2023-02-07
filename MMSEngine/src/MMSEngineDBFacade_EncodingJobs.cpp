@@ -88,6 +88,9 @@ void MMSEngineDBFacade::getEncodingJobs(
 			//		At the same time, I had to remove the join because a join would lock everything
 			//		Without join, if the select got i.e. 20 rows, all the other rows are not locked
 			//		and can be got from the other engines
+			// 2023-02-07: added skip locked. Questa opzione è importante perchè evita che la select
+			//	attenda eventuali lock di altri engine. Considera che un lock su una riga causa anche
+			//	il lock di tutte le righe toccate dalla transazione
             lastSQLCommand = 
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
@@ -99,7 +102,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					"ej.utcScheduleStart_virtual - unix_timestamp() < ? * 60) "
 				"order by ej.typePriority asc, ej.utcScheduleStart_virtual asc, "
 					"ej.encodingPriority desc, ej.creationDate asc, ej.failuresNumber asc "
-				"limit ? offset ? for update"
+				"limit ? offset ? for update skip locked"
 			;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1913,7 +1916,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
-    bool autoCommit = true;
+    // bool autoCommit = true;
 
 	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
 
@@ -1924,6 +1927,9 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// 2023-02-07: evitiamo una transazione e il relativo 'for update' per questa attività
+		//		per evitare locks che possono creare problemi
+		/*
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -1933,6 +1939,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
+		*/
         
         EncodingStatus currentEncodingStatus;
         EncodingPriority currentEncodingPriority;
@@ -1940,7 +1947,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             lastSQLCommand = 
                 "select status, encodingPriority from MMS_EncodingJob "
 				// "where encodingJobKey = ?";
-				"where encodingJobKey = ? for update";
+				"where encodingJobKey = ?";		// for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -2049,6 +2056,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
         
+		/*
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -2058,6 +2066,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             statement->execute(lastSQLCommand);
         }
         autoCommit = true;
+		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2080,12 +2089,14 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2136,12 +2147,14 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2191,12 +2204,14 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2244,7 +2259,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
-    bool autoCommit = true;
+    // bool autoCommit = true;
 
 	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
 
@@ -2255,6 +2270,9 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// 2023-02-07: evitiamo una transazione e il relativo 'for update' per questa attività
+		//		per evitare locks che possono creare problemi
+		/*
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -2264,6 +2282,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
+		*/
         
         EncodingStatus currentEncodingStatus;
 		int64_t ingestionJobKey;
@@ -2271,7 +2290,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             lastSQLCommand = 
                 "select status, ingestionJobKey from MMS_EncodingJob "
 				// "where encodingJobKey = ?";
-				"where encodingJobKey = ? for update";
+				"where encodingJobKey = ?";	//for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -2393,6 +2412,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
 
+		/*
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -2402,6 +2422,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             statement->execute(lastSQLCommand);
         }
         autoCommit = true;
+		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2424,12 +2445,14 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2480,12 +2503,14 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2535,12 +2560,14 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
