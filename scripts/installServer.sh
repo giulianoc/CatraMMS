@@ -731,7 +731,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.4125
+	catraMMSVersion=1.0.4775
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -834,6 +834,7 @@ firewall-rules()
 		ufw allow from 34.248.199.119 to any port 8088
 		ufw allow from 52.49.243.7 to any port 8088
 		ufw allow from 63.34.105.227 to any port 8088
+		ufw allow from 52.208.73.64 to any port 8088
 
 		#this allows multicast (terrestrial/satellite solution)
 		#ufw allow out proto udp to 224.0.0.0/3

@@ -9497,7 +9497,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 				+ "from MMS_Conf_RTMPChannel rc left join MMS_IngestionJob ij "
 				+ "on rc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
-				+ "order by cc.label "
+				+ "order by rc.label "
 			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (

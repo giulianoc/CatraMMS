@@ -87,6 +87,10 @@ if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-50-243-155.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
+	echo "aws-mms-api-gui-3"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-48-75-149.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
 	echo "aws-mms-engine-db-1"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
@@ -97,6 +101,10 @@ if [ "$deploy" == "y" ]; then
 
 	echo "aws-mms-engine-db-3"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-34-105-227.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-engine-db-4"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-208-73-64.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-transcoder-irl-1"
