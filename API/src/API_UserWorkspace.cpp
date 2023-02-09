@@ -1184,6 +1184,9 @@ void API::login(
 					field = "ldapEnabled";
 					loginDetailsRoot[field] = _ldapEnabled;
 
+					field = "mmsVersion";
+					loginDetailsRoot[field] = _mmsVersion;
+
 					field = "userKey";
 					userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
             

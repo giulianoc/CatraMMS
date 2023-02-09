@@ -269,6 +269,17 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     );
     try
     {
+		{
+			fs::path versionPathFileName = "/opt/catramms/CatraMMS/version.txt";
+			if (fs::exists(versionPathFileName) && fs::is_regular_file(versionPathFileName))
+			{
+				ifstream f(versionPathFileName);
+				stringstream buffer;
+				buffer << f.rdbuf();
+				_mmsVersion = buffer.str();
+			}
+		}
+
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
     }
     catch(exception e)

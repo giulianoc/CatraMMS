@@ -124,6 +124,8 @@ private:
     string				_ldapBaseDn;
 	string				_ldapDefaultWorkspaceKeys;
 
+    string				_mmsVersion;
+
 	string				_keyPairId;
 	string				_privateKeyPEMPathName;
 	Json::Value			_vodCloudFrontHostNamesRoot;
