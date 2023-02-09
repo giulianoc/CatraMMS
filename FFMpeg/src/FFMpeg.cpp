@@ -6589,6 +6589,29 @@ void FFMpeg::cutWithoutEncoding(
 		// might have some stutter, or black video until the first I-frame is reached.
 		// We are not using this option.
 
+		/* Example:
+			Original video
+				Length of 1:00:00
+				Has a key frame every 10s
+			Desired cut:
+				From 0:01:35 through till the end
+			Attempt #1:
+				Using -ss 0:01:35 -i blah.mp4 -vcodec copy, what results is a file where:
+				audio starts at 0:01:30
+				video also starts at 0:01:30
+				this starts both the audio and the video too early
+			using -i blah.mp4 -ss 0:01:35 -vcodec copy, what results is a file where:
+				audio starts at 0:01:35,
+				but the video is blank/ black for the first 5 seconds,
+				until 0:01:40, when the video starts
+				this starts the audio on time, but the video starts too late
+
+			List timestamps of key frames:
+				ffprobe -v error -select_streams v:0 -skip_frame nokey -show_entries frame=pkt_pts_time -of csv=p=0 input.mp4
+			(https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme)
+		*/
+
+
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
 		if (cutType == "KeyFrameSeeking")	// input seeking
             ffmpegExecuteCommand += (string("-ss ") + to_string(startTimeInSeconds) + " "
@@ -6698,6 +6721,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	// no keyFrameSeeking needs reencoding otherwise the key frame is always used
 	// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
 	// because FFmpeg will re-encode the video and start with an I-frame.
+	// There is an option to encode only a little part of the video,
+	// see https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme
 	int64_t encodingJobKey,
 	Json::Value encodingProfileDetailsRoot,
 	double startTimeInSeconds,
