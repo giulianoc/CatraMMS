@@ -3139,7 +3139,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		addContentParametersRoot[field] = "Live Recorder Task";
 
 		field = "Title";
-		addContentParametersRoot[field] = addContentLabel;
+		addContentParametersRoot[field] = "Virtual VOD: " + addContentLabel;
 
 		field = "UniqueName";
 		addContentParametersRoot[field] = liveRecorderVirtualVODUniqueName;
