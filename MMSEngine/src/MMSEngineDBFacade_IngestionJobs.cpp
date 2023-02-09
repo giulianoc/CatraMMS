@@ -188,7 +188,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"convert_tz(scheduleStart_virtual,  '+00:00', @@session.time_zone)) - "
 						"UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
-					"limit ? offset ? for update"// skip locked"
+					"limit ? offset ? for update skip locked"
 				;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement (
