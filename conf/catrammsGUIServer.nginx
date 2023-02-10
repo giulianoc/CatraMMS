@@ -10,7 +10,10 @@
 	#proxy_cache one;
 
 	location / {
-		limit_req zone=mmsGUILimit burst=20;
+		#Uso una coda "minima" per gestire le richieste contemporanee.
+		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
+		#Nota: parliamo dello stesso IP.
+		limit_req zone=mmsGUILimit burst=10;
 
 		proxy_set_header X-Forwarded-Host $host;
 		proxy_set_header X-Forwarded-Server $host;

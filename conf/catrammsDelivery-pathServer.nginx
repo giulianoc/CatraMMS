@@ -18,7 +18,13 @@
 
 	#1 e poi #5
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
-		limit_req zone=mmsDeliveryLimit burst=20;
+		#Uso una coda abbondante per gestire le richieste contemporanee.
+		#Consideriamo che solo la pagina mediaItems.xhtml genera 50 richieste contemporanee
+		#per il download delle picture (vedi commento in nginx.conf)
+		#Con nodelay le richieste non saranno evase secondo il rate indicato in nginx.conf
+		#ma tutte istantaneamente.
+		#Nota: parliamo dello stesso client IP.
+		limit_req zone=mmsDeliveryLimit burst=100 nodelay;
 
 		auth_request /catramms/delivery/checkAuthorizationThroughPath;
 

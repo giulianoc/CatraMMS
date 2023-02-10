@@ -3,6 +3,9 @@
 	error_log    /var/catramms/logs/nginx/mms-encoder.error.log error;
 
 	location /catramms {
+		#Uso una coda "minima" per gestire le richieste contemporanee.
+		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
+		#Nota: parliamo dello stesso IP.
 		limit_req zone=mmsEncoderLimit burst=20;
 
 		if ($request_method = GET) {

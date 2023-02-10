@@ -5,7 +5,9 @@
 	root /var/catramms/storage/MMSRepository-free/;
 
 	location / {
-		limit_req zone=mmsDeliveryLimit burst=20;
+		#coda molto piccola per le richieste free e senza nodelay
+		#Nota: parliamo dello stesso IP.
+		limit_req zone=mmsDeliveryLimit burst=5;
 
 		if ($http_Origin) {
 			set $origin '$http_Origin';

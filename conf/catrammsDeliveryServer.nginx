@@ -12,7 +12,13 @@
 	#authorization through parameter
 	#next location manages .m3u8 request (authorize request and add token parameter to each line of the manifest)
 	location ~ .(m3u8|mpd)$ {
-		limit_req zone=mmsDeliveryLimit burst=20;
+		#Uso una coda abbondante per gestire le richieste contemporanee.
+		#Consideriamo che solo la pagina mediaItems.xhtml genera 50 richieste contemporanee
+		#per il download delle picture (vedi commento in nginx.conf)
+		#Con nodelay le richieste non saranno evase secondo il rate indicato in nginx.conf
+		#ma tutte istantaneamente.
+		#Nota: parliamo dello stesso client IP.
+		limit_req zone=mmsDeliveryLimit burst=100 nodelay;
 
 		if ($request_method = GET) {
 			#live
@@ -25,7 +31,13 @@
 	#1b
 	#next location manages the other requests: .mp4, .ts (authorize request)
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
-		limit_req zone=mmsDeliveryLimit burst=20;
+		#Uso una coda abbondante per gestire le richieste contemporanee.
+		#Consideriamo che solo la pagina mediaItems.xhtml genera 50 richieste contemporanee
+		#per il download delle picture (vedi commento in nginx.conf)
+		#Con nodelay le richieste non saranno evase secondo il rate indicato in nginx.conf
+		#ma tutte istantaneamente.
+		#Nota: parliamo dello stesso client IP.
+		limit_req zone=mmsDeliveryLimit burst=100 nodelay;
 
 		if ($arg_token) {
 			set $token "$arg_token---$cookie_mmsInfo";
