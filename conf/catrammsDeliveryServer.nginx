@@ -12,6 +12,8 @@
 	#authorization through parameter
 	#next location manages .m3u8 request (authorize request and add token parameter to each line of the manifest)
 	location ~ .(m3u8|mpd)$ {
+		limit_req zone=mmsDeliveryLimit burst=20;
+
 		if ($request_method = GET) {
 			#live
 			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;                 
@@ -23,6 +25,8 @@
 	#1b
 	#next location manages the other requests: .mp4, .ts (authorize request)
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
+		limit_req zone=mmsDeliveryLimit burst=20;
+
 		if ($arg_token) {
 			set $token "$arg_token---$cookie_mmsInfo";
 		}

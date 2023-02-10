@@ -14,6 +14,8 @@
 
 	#1
 	location /catramms {
+		limit_req zone=mmsBinaryLimit burst=20;
+
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
 		}
@@ -26,6 +28,8 @@
 
 	#2
 	location ~ /catramms/([0-9]+.[0-9]+.[0-9]+)/binary {
+		limit_req zone=mmsBinaryLimit burst=20;
+
 		if ($request_method = POST) {
 			set $XProgressID "$msec";
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;

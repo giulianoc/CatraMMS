@@ -7,6 +7,8 @@
 	}
 
 	location /catramms {
+		limit_req zone=mmsAPILimit burst=20;
+
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
 		}

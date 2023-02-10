@@ -18,6 +18,7 @@
 
 	#1 e poi #5
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
+		limit_req zone=mmsDeliveryLimit burst=20;
 
 		auth_request /catramms/delivery/checkAuthorizationThroughPath;
 

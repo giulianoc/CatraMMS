@@ -10,6 +10,8 @@
 	#proxy_cache one;
 
 	location / {
+		limit_req zone=mmsGUILimit burst=20;
+
 		proxy_set_header X-Forwarded-Host $host;
 		proxy_set_header X-Forwarded-Server $host;
         proxy_set_header X-Forwarded-Proto $scheme;
