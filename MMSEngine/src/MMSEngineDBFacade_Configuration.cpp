@@ -9989,13 +9989,13 @@ tuple<string, string, string, string, string, string, bool>
 			reservedLabel = resultSet->getString("label");
 			reservedRtmpURL = resultSet->getString("rtmpURL");
 			if (!resultSet->isNull("streamName"))
-				reservedStreamName = resultSet->getInt64("streamName");
+				reservedStreamName = resultSet->getString("streamName");
 			if (!resultSet->isNull("userName"))
-				reservedUserName = resultSet->getInt64("userName");
+				reservedUserName = resultSet->getString("userName");
 			if (!resultSet->isNull("password"))
-				reservedPassword = resultSet->getInt64("password");
+				reservedPassword = resultSet->getString("password");
 			if (!resultSet->isNull("playURL"))
-				reservedPlayURL = resultSet->getInt64("playURL");
+				reservedPlayURL = resultSet->getString("playURL");
 			if (!resultSet->isNull("reservedByIngestionJobKey"))
 				reservedByIngestionJobKey = resultSet->getInt64("reservedByIngestionJobKey");
 		}

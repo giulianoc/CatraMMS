@@ -601,6 +601,11 @@ install-mms-packages()
 		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
 	fi
 
+	#per evitare errori nginx: 24: Too many open files                                                        
+	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
+	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
+	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
+
 	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
 
 		#api should have GUI as well
