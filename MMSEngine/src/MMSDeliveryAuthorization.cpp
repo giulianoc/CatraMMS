@@ -376,7 +376,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			Json::Value outputsRoot = ingestionJobRoot[field];
 
 			// Option 1: OutputType HLS with deliveryCode
-			// Option 2: OutputType RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
+			// Option 2: OutputType RTMP_Channel/RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
 			// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -395,7 +395,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					field = "DeliveryCode";
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
-				else if (outputType == "RTMP_Stream"
+				else if (outputType == "RTMP_Channel"
+					|| outputType == "RTMP_Stream"
 					|| outputType == "CDN_AWS"
 					|| outputType == "CDN_CDN77"
 				)
@@ -469,7 +470,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 			}
 
-			if (outputType == "RTMP_Stream"
+			if (outputType == "RTMP_Channel"
+				|| outputType == "RTMP_Stream"
 				|| outputType == "CDN_AWS"
 				|| outputType == "CDN_CDN77")
 			{
@@ -611,7 +613,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				Json::Value outputsRoot = ingestionJobRoot[field];
 
 				// Option 1: OutputType HLS with deliveryCode
-				// Option 2: OutputType RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
+				// Option 2: OutputType RTMP_Channel/RTMP_Stream/CDN_AWS/CDN_CDN77 with playURL
 				// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 				{
@@ -629,7 +631,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						field = "DeliveryCode";
 						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 					}
-					else if (outputType == "RTMP_Stream"
+					else if (outputType == "RTMP_Channel"
+						|| outputType == "RTMP_Stream"
 						|| outputType == "CDN_AWS"
 						|| outputType == "CDN_CDN77")
 					{
@@ -751,7 +754,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				outputType = "HLS";
 			}
 
-			if (outputType == "RTMP_Stream"
+			if (outputType == "RTMP_Channel"
+				|| outputType == "RTMP_Stream"
 				|| outputType == "CDN_AWS"
 				|| outputType == "CDN_CDN77")
 			{
