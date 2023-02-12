@@ -4434,7 +4434,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 	}
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
-		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid"
+		string errorMessage = __FILEREF__ + "facebookNodeType is not valid"
 			+ ", parametersRoot: " + JSONUtils::toString(parametersRoot);
 			+ ", label: " + label
 		;

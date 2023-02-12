@@ -37,7 +37,7 @@ bool JSONUtils::isMetadataPresent(Json::Value root, string field, bool firstChar
 				else
 				{
 					string fieldFirstCharUpperCase = field;
-					fieldFirstCharUpperCase = toupper(field[0]);
+					fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 					if (root.isObject() && root.isMember(fieldFirstCharUpperCase) && !root[fieldFirstCharUpperCase].isNull())
 						return true;
@@ -81,7 +81,7 @@ string JSONUtils::asString(Json::Value root, string field, string defaultValue)
 		else
 		{
 			fieldFirstCharUpperCase = field;
-			fieldFirstCharUpperCase = toupper(field[0]);
+			fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 			fieldFirstCharLowerCase = field;
 		}
@@ -116,7 +116,7 @@ int JSONUtils::asInt(Json::Value root, string field, int defaultValue)
 		else
 		{
 			fieldFirstCharUpperCase = field;
-			fieldFirstCharUpperCase = toupper(field[0]);
+			fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 			fieldFirstCharLowerCase = field;
 		}
@@ -161,7 +161,7 @@ int64_t JSONUtils::asInt64(Json::Value root, string field, int64_t defaultValue)
 		else
 		{
 			fieldFirstCharUpperCase = field;
-			fieldFirstCharUpperCase = toupper(field[0]);
+			fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 			fieldFirstCharLowerCase = field;
 		}
@@ -206,7 +206,7 @@ double JSONUtils::asDouble(Json::Value root, string field, double defaultValue)
 		else
 		{
 			fieldFirstCharUpperCase = field;
-			fieldFirstCharUpperCase = toupper(field[0]);
+			fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 			fieldFirstCharLowerCase = field;
 		}
@@ -259,7 +259,7 @@ bool JSONUtils::asBool(Json::Value root, string field, bool defaultValue)
 		else
 		{
 			fieldFirstCharUpperCase = field;
-			fieldFirstCharUpperCase = toupper(field[0]);
+			fieldFirstCharUpperCase[0] = toupper(field[0]);
 
 			fieldFirstCharLowerCase = field;
 		}
