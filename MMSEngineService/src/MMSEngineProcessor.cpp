@@ -10224,7 +10224,7 @@ void MMSEngineProcessor::postOnFacebookThread(
         string facebookNodeType;
         string facebookNodeId;
         {
-            string field = "configurationLabel";
+            string field = "facebookConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

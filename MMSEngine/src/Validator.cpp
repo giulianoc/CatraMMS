@@ -3367,7 +3367,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     vector<string> mandatoryFields = {
 		"facebookNodeType",	// Page, User, Event or Group
         "facebookNodeId",
-        "configurationLabel"
+        "facebookConfigurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {

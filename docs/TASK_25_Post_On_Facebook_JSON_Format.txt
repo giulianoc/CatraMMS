@@ -40,7 +40,7 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory, one of the MMS Facebook Configuration label 
-		"configurationLabel": "My Facebook Conf",
+		"facebookConfigurationLabel": "My Facebook Conf",
 
 		// mandatory. It could be: Page, User, Event or Group
 		"facebookNodeType": "Page",
