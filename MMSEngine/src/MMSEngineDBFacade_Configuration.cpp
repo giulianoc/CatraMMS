@@ -9658,8 +9658,8 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
     return rtmpChannelConfListRoot;
 }
 
-tuple<string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelDetails (
-	int64_t workspaceKey, string label)
+tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelDetails (
+	int64_t workspaceKey, string label, bool warningIfMissing)
 {
     string      lastSQLCommand;
     
@@ -9680,6 +9680,7 @@ tuple<string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelD
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		int64_t confKey;
 		string rtmpURL;
 		string streamName;
 		string userName;
@@ -9687,7 +9688,7 @@ tuple<string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelD
 		string playURL;
         {
             lastSQLCommand = 
-				"select rtmpURL, streamName, userName, password, playURL "
+				"select confKey, rtmpURL, streamName, userName, password, playURL "
 				"from MMS_Conf_RTMPChannel "
                 "where workspaceKey = ? and label = ?"
 			;
@@ -9713,11 +9714,15 @@ tuple<string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelD
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
 				;
-				_logger->error(errorMessage);
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
 				throw ConfKeyNotFound(errorMessage);                    
             }
 
+			confKey = resultSet->getInt64("confKey");
 			rtmpURL = resultSet->getString("rtmpURL");
 			if (!resultSet->isNull("streamName"))
 				streamName = resultSet->getString("streamName");
@@ -9735,7 +9740,7 @@ tuple<string, string, string, string, string> MMSEngineDBFacade::getRTMPChannelD
         connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(rtmpURL, streamName, userName, password, playURL);
+		return make_tuple(confKey, rtmpURL, streamName, userName, password, playURL);
     }
     catch(sql::SQLException se)
     {

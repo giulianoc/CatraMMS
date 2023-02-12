@@ -13719,11 +13719,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			MMSEngineDBFacade::ContentType::Video;
 		string manifestDirectoryPath;
 		string manifestFileName;
-		string rtmpUrl;
-		string rtmpStreamName;
-		string rtmpUserName;
-		string rtmpPassword;
-		string playUrl;
 		string awsChannelConfigurationLabel;
 		bool awsSignedURL;
 		int awsExpirationInMinutes;
@@ -13785,23 +13780,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 				manifestFileName = to_string(deliveryCode) + ".m3u8";
 			}
-		}
-		else if (outputType == "RTMP_Stream")
-		{
-			field = "RtmpUrl";
-			rtmpUrl = JSONUtils::asString(outputRoot, field, "");
-
-			field = "rtmpStreamName";
-			rtmpStreamName = JSONUtils::asString(outputRoot, field, "");
-
-			field = "rtmpUserName";
-			rtmpUserName = JSONUtils::asString(outputRoot, field, "");
-
-			field = "rtmpPassword";
-			rtmpPassword = JSONUtils::asString(outputRoot, field, "");
-
-			field = "playUrl";
-			playUrl = JSONUtils::asString(outputRoot, field, "");
 		}
 		else if (outputType == "CDN_AWS")
 		{
@@ -13950,21 +13928,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "manifestFileName";
 		localOutputRoot[field] = manifestFileName;
-
-		field = "rtmpUrl";
-		localOutputRoot[field] = rtmpUrl;
-
-		field = "rtmpStreamName";
-		localOutputRoot[field] = rtmpStreamName;
-
-		field = "rtmpUserName";
-		localOutputRoot[field] = rtmpUserName;
-
-		field = "rtmpPassword";
-		localOutputRoot[field] = rtmpPassword;
-
-		field = "playUrl";
-		localOutputRoot[field] = playUrl;
 
 		field = "awsChannelConfigurationLabel";
 		localOutputRoot[field] = awsChannelConfigurationLabel;
@@ -16909,13 +16872,33 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
+						// we will create/modify the RTMP_Channel using youTubeConfigurationLabel as his label
+						try
+						{
+							bool warningIfMissing = true;
+							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+								youTubeConfigurationLabel, warningIfMissing);
+
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
+
+							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
+								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+						catch(ConfKeyNotFound e)
+						{
+							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
+								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+
 						Json::Value outputRoot;
 
 						field = "OutputType";
-						outputRoot[field] = "RTMP_Stream";
+						outputRoot[field] = "RTMP_Channel";
 
-						field = "RtmpUrl";
-						outputRoot[field] = rtmpURL;
+						field = "rtmpChannelConfigurationLabel";
+						outputRoot[field] = youTubeConfigurationLabel;
 
 						outputsRoot.append(outputRoot);
 					}
@@ -16984,13 +16967,33 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
+						// we will create/modify the RTMP_Channel using youTubeConfigurationLabel as his label
+						try
+						{
+							bool warningIfMissing = true;
+							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+								youTubeConfigurationLabel, warningIfMissing);
+
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
+
+							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
+								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+						catch(ConfKeyNotFound e)
+						{
+							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
+								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+
 						Json::Value outputRoot;
 
 						field = "OutputType";
-						outputRoot[field] = "RTMP_Stream";
+						outputRoot[field] = "RTMP_Channel";
 
-						field = "RtmpUrl";
-						outputRoot[field] = rtmpURL;
+						field = "rtmpChannelConfigurationLabel";
+						outputRoot[field] = youTubeConfigurationLabel;
 
 						outputsRoot.append(outputRoot);
 					}
@@ -17540,13 +17543,33 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
+						// we will create/modify the RTMP_Channel using facebookConfigurationLabel as his label
+						try
+						{
+							bool warningIfMissing = true;
+							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+								facebookConfigurationLabel, warningIfMissing);
+
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
+
+							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
+								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+						catch(ConfKeyNotFound e)
+						{
+							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
+								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+
 						Json::Value outputRoot;
 
 						field = "OutputType";
-						outputRoot[field] = "RTMP_Stream";
+						outputRoot[field] = "RTMP_Channel";
 
-						field = "RtmpUrl";
-						outputRoot[field] = rtmpURL;
+						field = "rtmpChannelConfigurationLabel";
+						outputRoot[field] = facebookConfigurationLabel;
 
 						outputsRoot.append(outputRoot);
 					}
@@ -17621,13 +17644,33 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					Json::Value outputsRoot(Json::arrayValue);
 					{
+						// we will create/modify the RTMP_Channel using facebookConfigurationLabel as his label
+						try
+						{
+							bool warningIfMissing = true;
+							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+								facebookConfigurationLabel, warningIfMissing);
+
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
+
+							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
+								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+						catch(ConfKeyNotFound e)
+						{
+							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
+								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
+						}
+
 						Json::Value outputRoot;
 
 						field = "OutputType";
-						outputRoot[field] = "RTMP_Stream";
+						outputRoot[field] = "RTMP_Channel";
 
-						field = "RtmpUrl";
-						outputRoot[field] = rtmpURL;
+						field = "rtmpChannelConfigurationLabel";
+						outputRoot[field] = facebookConfigurationLabel;
 
 						outputsRoot.append(outputRoot);
 					}

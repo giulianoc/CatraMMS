@@ -4,8 +4,7 @@
     "Label": "Task label 2",
     "Parameters": {
       "Outputs": [{
-        "OutputType": "RTMP_Stream",
-        "RtmpUrl": "rtmp://aaa/bbb"
+        "OutputType": "RTMP_Channel"
       }],
       "References": [
         {"physicalPathKey": 1630295}

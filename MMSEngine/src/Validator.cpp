@@ -6848,7 +6848,6 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
 bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
-        "RTMP_Stream",
         "RTMP_Channel",
 		"CDN_AWS",
 		"CDN_CDN77",
@@ -7431,7 +7430,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		liveProxyOutputType = JSONUtils::asString(outputRoot, field, "");
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream, UDP_Stream or HLS or DASH)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Channel, UDP_Stream or HLS or DASH)"
 				+ ", Field: " + field
 				+ ", liveProxyOutputType: " + liveProxyOutputType
 				+ ", label: " + label
@@ -7446,28 +7445,6 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 	{
 		vector<string> mandatoryFields = {
 			"DeliveryCode"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-			{
-				string sParametersRoot = JSONUtils::toString(outputRoot);
-           
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	else if (liveProxyOutputType == "RTMP_Stream")
-	{
-		vector<string> mandatoryFields = {
-			"RtmpUrl"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{

@@ -8655,8 +8655,8 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(manifestFilePathName);
 				}
 			}
-			else if (outputType == "RTMP_Stream"
-				|| outputType == "CDN_AWS"
+			else if (
+				outputType == "CDN_AWS"
 				|| outputType == "CDN_CDN77"
 				|| outputType == "RTMP_Channel"
 			)
@@ -8677,11 +8677,6 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(string("0:a:") + to_string(videoTrackIndexToBeUsed));
 
 				string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
-				// Once RTMP_Stream is removed, also next rtmpStreamName, rtmpUserName, rtmpPassword
-				// has to be removed
-				string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
-				string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
-				string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");
 				if (rtmpUrl == "")
 				{
 					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -8692,13 +8687,6 @@ void FFMpeg::liveRecorder(
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
-				}
-				if (rtmpStreamName != "")
-					rtmpUrl += ("/" + rtmpStreamName);
-				if (rtmpUserName != "" && rtmpPassword != "")
-				{
-					// rtmp://.....
-					rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 				}
 
 				// filter to be managed with the others
@@ -12229,19 +12217,13 @@ void FFMpeg::liveProxyOutput(
 			}
 			ffmpegOutputArgumentList.push_back(manifestFilePathName);
 		}
-		else if (outputType == "RTMP_Stream"
-			|| outputType == "CDN_AWS"
+		else if (
+			outputType == "CDN_AWS"
 			|| outputType == "CDN_CDN77"
 			|| outputType == "RTMP_Channel"
 		)
 		{
 			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
-			// Once RTMP_Stream is removed, also next rtmpStreamName, rtmpUserName, rtmpPassword
-			// has to be removed
-			string rtmpStreamName = JSONUtils::asString(outputRoot, "rtmpStreamName", "");
-			string rtmpUserName = JSONUtils::asString(outputRoot, "rtmpUserName", "");
-			string rtmpPassword = JSONUtils::asString(outputRoot, "rtmpPassword", "");
-
 			if (rtmpUrl == "")
 			{
 				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
@@ -12252,14 +12234,6 @@ void FFMpeg::liveProxyOutput(
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
-			}
-
-			if (rtmpStreamName != "")
-				rtmpUrl += ("/" + rtmpStreamName);
-			if (rtmpUserName != "" && rtmpPassword != "")
-			{
-				// rtmp://.....
-				rtmpUrl.insert(7, (rtmpUserName + ":" + rtmpPassword + "@"));
 			}
 
 			// 2023-01-14

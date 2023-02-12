@@ -2371,8 +2371,8 @@ public:
 	Json::Value getRTMPChannelConfList (
         int64_t workspaceKey, int64_t confKey, string label);
 
-	tuple<string, string, string, string, string> getRTMPChannelDetails (
-        int64_t workspaceKey, string label);
+	tuple<int64_t, string, string, string, string, string> getRTMPChannelDetails (
+        int64_t workspaceKey, string label, bool warningIfMissing);
 
 	tuple<string, string, string, string, string, string, bool> reserveRTMPChannel(
 		int64_t workspaceKey, string label, string type,
