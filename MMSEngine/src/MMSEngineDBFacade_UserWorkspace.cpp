@@ -4515,6 +4515,44 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 					// throw runtime_error(errorMessage);
 				}
 			}
+
+			if (expirationDateChanged)
+			{
+				// 2023-02-13: nel caso in cui un admin vuole cambiare la data di scadenza di un workspace,
+				//		questo cambiamento deve avvenire per tutte le chiavi presenti
+				lastSQLCommand =
+					"update MMS_APIKey "
+					"set expirationDate = convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) "
+					"where workspaceKey = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, newExpirationDate);
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newExpirationDate: " + newExpirationDate
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated == 0)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
+						+ ", newExpirationDate: " + newExpirationDate
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->warn(errorMessage);
+
+					// throw runtime_error(errorMessage);
+				}
+			}
         }
 
         {
@@ -4576,7 +4614,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				}
 			}
         }
-        
+
         string flags;
         {
 			if (admin)
@@ -4651,21 +4689,12 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("APPLICATION_RECORDER");
             }
 
-			if (admin && expirationDateChanged)
-				lastSQLCommand =
-					"update MMS_APIKey "
-					"set expirationDate = convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
-					"flags = ? "
-					"where workspaceKey = ? and userKey = ?";
-			else
-				lastSQLCommand =
-					"update MMS_APIKey set flags = ? "
-					"where workspaceKey = ? and userKey = ?";
+			lastSQLCommand =
+				"update MMS_APIKey set flags = ? "
+				"where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			if (admin && expirationDateChanged)
-				preparedStatement->setString(queryParameterIndex++, newExpirationDate);
             preparedStatement->setString(queryParameterIndex++, flags);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
