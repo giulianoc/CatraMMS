@@ -7187,14 +7187,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
-/*
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 					fs::remove_all(mmsAssetPathName);
-*/
+					/*
 					size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
 					if (fileNameIndex == string::npos)
 					{
@@ -7215,7 +7214,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", sourcePathName: " + sourcePathName
 						+ ", destBinaryPathName: " + destBinaryPathName
 					);
-					int64_t elapsedInSeconds = MMSStorage::move(localAssetIngestionEvent.getIngestionJobKey(), mmsAssetPathName, destBinaryPathName, _logger);
+					int64_t elapsedInSeconds = MMSStorage::move(localAssetIngestionEvent.getIngestionJobKey(), sourcePathName, destBinaryPathName, _logger);
+					*/
 				}
 				catch(runtime_error e)
 				{

@@ -67,26 +67,29 @@ void MMSStorage::createDirectories(
 	shared_ptr<spdlog::logger> logger) 
 {
 
+	/* 2022-12-22: controllo non aggiunto perchè è un metodo static
+		E' il chiamante che si deve assicurare che ci sia accesso al file system
+	if (noFileSystemAccess)
+	{
+		string errorMessage = string("no rights to execute this method")
+			+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	*/
+
+	fs::path storage = JSONUtils::asString(configuration["storage"], "path", "");
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->path: " + storage.string()
+	);
+
+	// 2023-02-13: scenario: fs::permissions è fallito, genera un eccezione e la creazione delle
+	//	successive directory è fallita.
+	//	Per evitare questo si aggiungono i try/catch in modo che tutte le directory siano create
 	try
 	{
-		/* 2022-12-22: controllo non aggiunto perchè è un metodo static
-			E' il chiamante che si deve assicurare che ci sia accesso al file system
-		if (noFileSystemAccess)
-		{
-			string errorMessage = string("no rights to execute this method")
-				+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
-			;
-			logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		*/
-
-		fs::path storage = JSONUtils::asString(configuration["storage"], "path", "");
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", storage->path: " + storage.string()
-		);
-
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", ingestionRootRepository: " + MMSStorage::getIngestionRootRepository(storage).string()
 		);
@@ -96,7 +99,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
 		);
@@ -106,7 +124,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		// create MMS_0000 in case it does not exist (first running of MMS)
 		{
 			fs::path MMS_0000Path = MMSStorage::getMMSRootRepository(storage) / "MMS_0000";
@@ -122,7 +155,22 @@ void MMSStorage::createDirectories(
 				| fs::perms::others_exec,
 				fs::perm_options::replace);
 		}
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", stagingRootRepository: " + MMSStorage::getStagingRootRepository(storage).string()
 		);
@@ -132,7 +180,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", transcoderStagingRootRepository: " + MMSStorage::getTranscoderStagingRootRepository(storage).string()
 		);
@@ -142,7 +205,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", liveRootRepository: " + MMSStorage::getLiveRootRepository(storage).string()
 		);
@@ -152,7 +230,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", ffmpegArea: " + getFFMPEGArea(storage).string()
 		);
@@ -162,7 +255,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", ffmpegEndlessRecursivePlaylistArea: "
 				+ getFFMPEGEndlessRecursivePlaylistArea(storage).string()
@@ -173,7 +281,22 @@ void MMSStorage::createDirectories(
 			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec 
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
+	}
+	catch(runtime_error e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 
+	try
+	{
 		logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", nginxArea: " + getNginxArea(storage).string()
 		);
