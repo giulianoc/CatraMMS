@@ -7187,13 +7187,35 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				try
 				{
+/*
 					_logger->info(__FILEREF__ + "Remove"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
-
 					fs::remove_all(mmsAssetPathName);
+*/
+					size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
+					if (fileNameIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__ + "No fileName found in mmsAssetPathName"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string sourcePathName = mmsAssetPathName;
+					string destBinaryPathName = "/var/catramms/storage/MMSWorkingAreaRepository/Staging" + mmsAssetPathName.substr(fileNameIndex);
+					_logger->info(__FILEREF__ + "Moving"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", sourcePathName: " + sourcePathName
+						+ ", destBinaryPathName: " + destBinaryPathName
+					);
+					int64_t elapsedInSeconds = MMSStorage::move(localAssetIngestionEvent.getIngestionJobKey(), mmsAssetPathName, destBinaryPathName, _logger);
 				}
 				catch(runtime_error e)
 				{
