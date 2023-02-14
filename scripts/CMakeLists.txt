@@ -40,6 +40,7 @@ SET (SCRIPTs
 	sqlQueries.txt
 	checkStatistics.sh
 	tvController.sh
+	tvControllerLoop.sh
 	tvController.sh.1
 	deploy.sh
 	installServer.sh
