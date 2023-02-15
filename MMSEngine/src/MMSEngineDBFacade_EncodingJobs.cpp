@@ -3804,8 +3804,10 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
-            preparedStatement->setInt(queryParameterIndex++, segmentDurationInSeconds);
-            preparedStatement->setInt(queryParameterIndex++, playlistEntriesNumber);
+			if (segmentDurationInSeconds != -1)
+				preparedStatement->setInt(queryParameterIndex++, segmentDurationInSeconds);
+			if (playlistEntriesNumber != -1)
+				preparedStatement->setInt(queryParameterIndex++, playlistEntriesNumber);
             preparedStatement->setString(queryParameterIndex++, manifestDirectoryPath);
             preparedStatement->setString(queryParameterIndex++, manifestFileName);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
