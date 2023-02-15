@@ -10822,7 +10822,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
         Json::Value responseRoot;
         {
             lastSQLCommand = 
-                string("select count(*) from MMS_Conf_HLSChannel rc ")
+                string("select count(*) from MMS_Conf_HLSChannel hc ")
                     + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -10863,7 +10863,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 				string ("select hc.confKey, hc.label, hc.deliveryCode, hc.segmentDuration, hc.playlistEntriesNumber, ")
 				+ "hc.type, hc.reservedByIngestionJobKey, "
 				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
-				+ "from MMS_Conf_HLSChannel rc left join MMS_IngestionJob ij "
+				+ "from MMS_Conf_HLSChannel hc left join MMS_IngestionJob ij "
 				+ "on hc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
 				+ "order by hc.label "
