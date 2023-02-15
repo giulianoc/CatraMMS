@@ -3784,11 +3784,17 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
                 string("update MMS_EncodingJob set ")
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].deliveryCode', ?), "
-				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), "
-				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].playlistEntriesNumber', ?), "
-				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+			;
+			if (segmentDurationInSeconds != -1)
+				lastSQLCommand +=
+					"parameters = JSON_SET(parameters, '$.outputsRoot["
+					+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), ";
+			if (playlistEntriesNumber != -1)
+				lastSQLCommand +=
+					"parameters = JSON_SET(parameters, '$.outputsRoot["
+					+ to_string(outputIndex) + "].playlistEntriesNumber', ?), ";
+			lastSQLCommand +=
+				"parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].manifestDirectoryPath', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].manifestFileName', ?) "

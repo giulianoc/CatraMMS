@@ -12095,6 +12095,13 @@ void FFMpeg::liveProxyOutput(
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)
 {
+
+	_logger->info(__FILEREF__ + "Received liveProxyOutput"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", outputsRoot: " + JSONUtils::toString(outputsRoot)
+	);
+
 	// 2023-01-01: 
 	//		In genere i parametri del 'draw text' vengono inizializzati all'interno di outputRoot.
 	//		Nel caso di un Broadcast (Live Channel), inputsRoot rappresenta l'intera playlist del live channel

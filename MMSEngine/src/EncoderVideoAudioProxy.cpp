@@ -5736,11 +5736,19 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						field = "deliveryCode";
 						outputRoot[field] = deliveryCode;
 
-						field = "segmentDurationInSeconds";
-						outputRoot[field] = segmentDurationInSeconds;
+						if (segmentDurationInSeconds > 0)
+						{
+							// if not present, default is decided by the encoder
+							field = "segmentDurationInSeconds";
+							outputRoot[field] = segmentDurationInSeconds;
+						}
 
-						field = "playlistEntriesNumber";
-						outputRoot[field] = playlistEntriesNumber;
+						if (playlistEntriesNumber > 0)
+						{
+							// if not present, default is decided by the encoder
+							field = "playlistEntriesNumber";
+							outputRoot[field] = playlistEntriesNumber;
+						}
 
 						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode), _encodingItem->_workspace);
@@ -7325,11 +7333,19 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						field = "deliveryCode";
 						outputRoot[field] = deliveryCode;
 
-						field = "segmentDurationInSeconds";
-						outputRoot[field] = segmentDuration;
+						if (segmentDuration > 0)
+						{
+							// if not present, default is decided by the encoder
+							field = "segmentDurationInSeconds";
+							outputRoot[field] = segmentDuration;
+						}
 
-						field = "playlistEntriesNumber";
-						outputRoot[field] = playlistEntriesNumber;
+						if (playlistEntriesNumber > 0)
+						{
+							// if not present, default is decided by the encoder
+							field = "playlistEntriesNumber";
+							outputRoot[field] = playlistEntriesNumber;
+						}
 
 						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							to_string(deliveryCode), _encodingItem->_workspace);
