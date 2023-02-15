@@ -3762,7 +3762,8 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 
 void MMSEngineDBFacade::updateOutputHLSDetails (
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber
+	int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber,
+	string manifestDirectoryPath, string manifestFileName
 )
 {
     string      lastSQLCommand;
@@ -3787,6 +3788,10 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].playlistEntriesNumber', ?) "
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+				+ to_string(outputIndex) + "].manifestDirectoryPath', ?) "
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+				+ to_string(outputIndex) + "].manifestFileName', ?) "
 				"where encodingJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3795,6 +3800,8 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
             preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
             preparedStatement->setInt(queryParameterIndex++, segmentDurationInSeconds);
             preparedStatement->setInt(queryParameterIndex++, playlistEntriesNumber);
+            preparedStatement->setString(queryParameterIndex++, manifestDirectoryPath);
+            preparedStatement->setString(queryParameterIndex++, manifestFileName);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3804,6 +3811,8 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				+ ", deliveryCode: " + to_string(deliveryCode)
 				+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 				+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+				+ ", manifestDirectoryPath: " + manifestDirectoryPath
+				+ ", manifestFileName: " + manifestFileName
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3815,6 +3824,8 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 					+ ", deliveryCode: " + to_string(deliveryCode)
 					+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 					+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					+ ", manifestFileName: " + manifestFileName
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", lastSQLCommand: " + lastSQLCommand
@@ -3831,7 +3842,9 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 			+ ", deliveryCode: " + to_string(deliveryCode)
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
-            );
+			+ ", manifestDirectoryPath: " + manifestDirectoryPath
+			+ ", manifestFileName: " + manifestFileName
+		);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

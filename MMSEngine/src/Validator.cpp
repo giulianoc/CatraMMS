@@ -7442,29 +7442,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	if (liveProxyOutputType == "HLS")
-	{
-		vector<string> mandatoryFields = {
-			"DeliveryCode"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
-			{
-				string sParametersRoot = JSONUtils::toString(outputRoot);
-           
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", Field: " + mandatoryField
-					+ ", sParametersRoot: " + sParametersRoot
-					+ ", label: " + label
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	else if (liveProxyOutputType == "CDN_AWS")
+	if (liveProxyOutputType == "CDN_AWS")
 	{
 	}
 	else if (liveProxyOutputType == "CDN_CDN77")

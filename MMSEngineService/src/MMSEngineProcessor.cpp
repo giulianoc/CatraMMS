@@ -13733,15 +13733,10 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		int videoTrackIndexToBeUsed = -1;
 		int audioTrackIndexToBeUsed = -1;
 		Json::Value filtersRoot = Json::nullValue;
-		int64_t deliveryCode;
-		int segmentDurationInSeconds = 0;
-		int playlistEntriesNumber = 0;
 		int64_t encodingProfileKey = -1;
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
 		MMSEngineDBFacade::ContentType encodingProfileContentType =
 			MMSEngineDBFacade::ContentType::Video;
-		string manifestDirectoryPath;
-		string manifestFileName;
 		string awsChannelConfigurationLabel;
 		bool awsSignedURL;
 		int awsExpirationInMinutes;
@@ -13770,43 +13765,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			filtersRoot = outputRoot[field];
 
-		if (outputType == "HLS" || outputType == "DASH")
-		{
-			field = "DeliveryCode";
-			if (!JSONUtils::isMetadataPresent(outputRoot, field))
-			{
-				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			else
-				deliveryCode = outputRoot.get(field, 0).asInt64();
-
-			field = "SegmentDurationInSeconds";
-			segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 10);
-
-			field = "PlaylistEntriesNumber";
-			playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 6);
-
-			string manifestExtension;
-			if (outputType == "HLS")
-				manifestExtension = "m3u8";
-			else if (outputType == "DASH")
-				manifestExtension = "mpd";
-
-			{
-				manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					to_string(deliveryCode),
-					workspace);
-
-				manifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
-		}
-		else if (outputType == "CDN_AWS")
+		if (outputType == "CDN_AWS")
 		{
 			field = "awsChannelConfigurationLabel";
 			awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
@@ -13937,12 +13896,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "filters";
 		localOutputRoot[field] = filtersRoot;
 
-		field = "segmentDurationInSeconds";
-		localOutputRoot[field] = segmentDurationInSeconds;
-
-		field = "playlistEntriesNumber";
-		localOutputRoot[field] = playlistEntriesNumber;
-
 		{
 			field = "encodingProfileKey";
 			localOutputRoot[field] = encodingProfileKey;
@@ -13953,12 +13906,6 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			field = "encodingProfileContentType";
 			outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
 		}
-
-		field = "manifestDirectoryPath";
-		localOutputRoot[field] = manifestDirectoryPath;
-
-		field = "manifestFileName";
-		localOutputRoot[field] = manifestFileName;
 
 		field = "awsChannelConfigurationLabel";
 		localOutputRoot[field] = awsChannelConfigurationLabel;

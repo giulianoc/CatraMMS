@@ -5742,6 +5742,16 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						field = "playlistEntriesNumber";
 						outputRoot[field] = playlistEntriesNumber;
 
+						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+							to_string(deliveryCode), _encodingItem->_workspace);
+						string manifestFileName = to_string(deliveryCode) + ".m3u8";
+
+						field = "manifestDirectoryPath";
+						outputRoot[field] = manifestDirectoryPath;
+
+						field = "manifestFileName";
+						outputRoot[field] = manifestFileName;
+
 						outputsRoot[outputIndex] = outputRoot;
 
 						field = "outputsRoot";
@@ -5766,7 +5776,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							_mmsEngineDBFacade->updateOutputHLSDetails (
 								_encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey,
-								outputIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber);
+								outputIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber,
+								manifestDirectoryPath, manifestFileName);
 						}
 						catch(runtime_error e)
 						{
@@ -7320,6 +7331,16 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						field = "playlistEntriesNumber";
 						outputRoot[field] = playlistEntriesNumber;
 
+						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+							to_string(deliveryCode), _encodingItem->_workspace);
+						string manifestFileName = to_string(deliveryCode) + ".m3u8";
+
+						field = "manifestDirectoryPath";
+						outputRoot[field] = manifestDirectoryPath;
+
+						field = "manifestFileName";
+						outputRoot[field] = manifestFileName;
+
 						outputsRoot[outputIndex] = outputRoot;
 
 						field = "outputsRoot";
@@ -7344,7 +7365,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 							_mmsEngineDBFacade->updateOutputHLSDetails (
 								_encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey,
-								outputIndex, deliveryCode, segmentDuration, playlistEntriesNumber);
+								outputIndex, deliveryCode, segmentDuration, playlistEntriesNumber,
+								manifestDirectoryPath, manifestFileName);
 						}
 						catch(runtime_error e)
 						{
