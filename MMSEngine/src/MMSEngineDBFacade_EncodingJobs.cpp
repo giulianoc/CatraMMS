@@ -3787,9 +3787,9 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].playlistEntriesNumber', ?) "
+				+ to_string(outputIndex) + "].playlistEntriesNumber', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].manifestDirectoryPath', ?) "
+				+ to_string(outputIndex) + "].manifestDirectoryPath', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
 				+ to_string(outputIndex) + "].manifestFileName', ?) "
 				"where encodingJobKey = ?";

@@ -7359,6 +7359,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								+ ", deliveryCode: " + to_string(deliveryCode)
 								+ ", segmentDuration: " + to_string(segmentDuration)
 								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", manifestFileName: " + manifestFileName
 								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
 							);
 
