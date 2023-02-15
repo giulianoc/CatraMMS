@@ -4932,7 +4932,7 @@ void API::modifyRTMPChannelConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -4940,7 +4940,7 @@ void API::modifyRTMPChannelConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -5105,6 +5105,492 @@ void API::rtmpChannelConfList(
 				workspace->_workspaceKey, -1, label);
 
             string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
+            
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::addHLSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters,
+	string requestBody)
+{
+    string api = "addHLSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+		string label;
+		int64_t deliveryCode;
+		int segmentDuration;
+        int playlistEntriesNumber;
+        string type;
+
+        try
+        {
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "deliveryCode";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+
+            field = "segmentDuration";
+			segmentDuration = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+            field = "playlistEntriesNumber";
+			playlistEntriesNumber = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            type = JSONUtils::asString(requestBodyRoot, field, "");            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+			int64_t confKey = _mmsEngineDBFacade->addHLSChannelConf(
+				workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type);
+
+			sResponse = (
+				string("{ ") 
+				+ "\"confKey\": " + to_string(confKey)
+				+ "}"
+			);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyHLSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyHLSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        int64_t deliveryCode;
+        int segmentDuration;
+        int playlistEntriesNumber;
+        string type;
+
+        try
+        {
+            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+
+            string field = "label";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            label = JSONUtils::asString(requestBodyRoot, field, "");
+
+            field = "deliveryCode";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+
+            field = "segmentDuration";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            segmentDuration = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+            field = "playlistEntriesNumber";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            playlistEntriesNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+
+            field = "type";
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            type = JSONUtils::asString(requestBodyRoot, field, "");
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+
+            _mmsEngineDBFacade->modifyHLSChannelConf(
+                confKey, workspace->_workspaceKey,
+				label, deliveryCode, segmentDuration, playlistEntriesNumber, type);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeHLSChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeHLSChannelConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+            
+			_mmsEngineDBFacade->removeHLSChannelConf(
+				workspace->_workspaceKey, confKey);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, "", api, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::hlsChannelConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "hlsChannelConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && labelIt->second != "")
+		{
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = curlpp::unescape(firstDecoding);
+		}
+
+        {
+			Json::Value hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(
+				workspace->_workspaceKey, -1, label);
+
+            string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

@@ -1968,6 +1968,10 @@ public:
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		int outputIndex, string rtmpURL, string playURL);
 
+	void updateOutputHLSDetails (
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber);
+
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 		getEncodingJobDetails (int64_t encodingJobKey, bool fromMaster);
 
@@ -2379,6 +2383,35 @@ public:
 		int64_t ingestionJobKey);
 
 	void releaseRTMPChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+
+	int64_t addHLSChannelConf(
+		int64_t workspaceKey,
+		string label, int64_t deliveryCode, int segmentDuration,
+		int playlistEntriesNumber, string type);
+
+	void modifyHLSChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+		string label, int64_t deliveryCode, int segmentDuration,
+		int playlistEntriesNumber, string type);
+
+	void removeHLSChannelConf(
+		int64_t workspaceKey,
+		int64_t confKey);
+
+	Json::Value getHLSChannelConfList (
+		int64_t workspaceKey, int64_t confKey, string label);
+
+	tuple<int64_t, int64_t, int, int> getHLSChannelDetails (
+		int64_t workspaceKey, string label, bool warningIfMissing);
+
+	tuple<string, int64_t, int, int, bool>
+		reserveHLSChannel(
+		int64_t workspaceKey, string label, string type,
+		int64_t ingestionJobKey);
+
+	void releaseHLSChannel(
+		int64_t workspaceKey, int64_t ingestionJobKey);
 
     int64_t addFTPConf(
         int64_t workspaceKey,

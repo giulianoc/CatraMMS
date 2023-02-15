@@ -2397,6 +2397,62 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         rtmpChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "addHLSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyHLSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifyHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeHLSChannelConf")
+    {
+        if (!admin && !editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
+    else if (method == "hlsChannelConfList")
+    {
+        hlsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addFTPConf")
     {
         if (!admin && !editConfiguration)

@@ -12596,7 +12596,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			Json::Value localOutputRoot;
 
 			field = "outputType";
-			localOutputRoot[field] = string("HLS");
+			// localOutputRoot[field] = string("HLS");
+			localOutputRoot[field] = string("HLS_CHANNEL");
 
 			field = "otherOutputOptions";
 			localOutputRoot[field] = otherOutputOptions;
@@ -13747,12 +13748,14 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string cdn77ChannelConfigurationLabel;
 		int cdn77ExpirationInMinutes;
 		string rtmpChannelConfigurationLabel;
+		string hlsChannelConfigurationLabel;
 		string udpUrl;
 		Json::Value drawTextDetailsRoot = Json::nullValue;
 
 
 		string field = "OutputType";
-		outputType = JSONUtils::asString(outputRoot, field, "HLS");
+		// outputType = JSONUtils::asString(outputRoot, field, "HLS");
+		outputType = JSONUtils::asString(outputRoot, field, "HLS_CHANNEL");
 
 		field = "OtherOutputOptions";
 		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
@@ -13829,6 +13832,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			// it could not exist in case of SHARED RTMP
 			field = "rtmpChannelConfigurationLabel";
 			rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
+		}
+		else if (outputType == "HLS_Channel")
+		{
+			// it could not exist in case of SHARED RTMP
+			field = "hlsChannelConfigurationLabel";
+			hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
 		}
 		else // if (outputType == "UDP_Stream")
 		{
@@ -13968,6 +13977,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "rtmpChannelConfigurationLabel";
 		localOutputRoot[field] = rtmpChannelConfigurationLabel;
+
+		field = "hlsChannelConfigurationLabel";
+		localOutputRoot[field] = hlsChannelConfigurationLabel;
 
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;

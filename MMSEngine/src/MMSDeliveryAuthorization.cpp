@@ -405,6 +405,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (playURL == "")
 						continue;
 				}
+				else if (outputType == "HLS_CHANNEL")
+				{
+					field = "deliveryCode";
+					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
+				}
 
 				outputDeliveryOptions.push_back(
 					make_tuple(outputType, localDeliveryCode, playURL));
@@ -474,6 +479,86 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				|| outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
+			}
+			else if (outputType == "HLS_CHANNEL")
+			{
+				string deliveryURI;
+				string liveFileExtension;
+				// if (outputType == "HLS")
+					liveFileExtension = "m3u8";
+				// else
+				// 	liveFileExtension = "mpd";
+
+				tuple<string, string, string> liveDeliveryDetails
+					= _mmsStorage->getLiveDeliveryDetails(
+					to_string(deliveryCode),
+					liveFileExtension, requestWorkspace);
+				tie(deliveryURI, ignore, deliveryFileName) =
+					liveDeliveryDetails;
+
+				if (deliveryType == "MMS_Token")
+				{
+					int64_t authorizationKey =
+						_mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						-1,	// physicalPathKey,	vod key
+						deliveryCode,		// live key
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughParameter
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+				}
+				else // if (deliveryType == "MMS_SignedToken")
+				{
+					time_t expirationTime = chrono::system_clock::to_time_t(
+						chrono::system_clock::now());
+					expirationTime += ttlInSeconds;
+
+					string uriToBeSigned;
+					{
+						string m3u8Suffix(".m3u8");
+						if (deliveryURI.size() >= m3u8Suffix.size()
+							&& 0 == deliveryURI.compare(deliveryURI.size()
+								- m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						{
+							size_t endPathIndex = deliveryURI.find_last_of("/");
+							if (endPathIndex == string::npos)
+								uriToBeSigned = deliveryURI;
+							else
+								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+						}
+						else
+							uriToBeSigned = deliveryURI;
+					}
+					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughPath
+						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+						+ deliveryURI
+					;
+				}
+				/*
+				else
+				{
+					string errorMessage = string("wrong deliveryType")
+						+ ", deliveryType: " + deliveryType
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				*/
 			}
 			else
 			{
@@ -638,6 +723,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						if (playURL == "")
 							continue;
 					}
+					else if (outputType == "HLS_CHANNEL")
+					{
+						field = "deliveryCode";
+						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
+					}
 
 					outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
 				}
@@ -697,7 +787,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					int64_t localDeliveryCode;
 					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOption;
 
-					if (outputType == "HLS" && localDeliveryCode == deliveryCode)
+					if (outputType == "HLS_CHANNEL" && localDeliveryCode == deliveryCode)
+					{
+						deliveryCodeFound = true;
+
+						break;
+					}
+					else if (outputType == "HLS" && localDeliveryCode == deliveryCode)
 					{
 						deliveryCodeFound = true;
 
@@ -730,7 +826,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					throw runtime_error(errorMessage);
 				}
 				deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
-				outputType = "HLS";
+				// outputType = "HLS";
+				outputType = "HLS_CHANNEL";
 			}
 			else if ((monitorHLS || liveRecorderVirtualVOD) && deliveryCode != -1)	// requested delivery code (it is an input)
 			{
@@ -748,7 +845,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					throw runtime_error(errorMessage);
 				}
 				deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
-				outputType = "HLS";
+				// outputType = "HLS";
+				outputType = "HLS_CHANNEL";
 			}
 
 			if (outputType == "RTMP_Channel"
@@ -757,7 +855,79 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				deliveryURL = playURL;
 			}
-			else
+			else if (outputType == "HLS_CHANNEL")
+			{
+				string deliveryURI;
+				string liveFileExtension = "m3u8";
+				tuple<string, string, string> liveDeliveryDetails
+					= _mmsStorage->getLiveDeliveryDetails(
+					to_string(deliveryCode),
+					liveFileExtension, requestWorkspace);
+				tie(deliveryURI, ignore, deliveryFileName) =
+					liveDeliveryDetails;
+
+				if (deliveryType == "MMS_Token")
+				{
+					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						-1,	// physicalPathKey,
+						deliveryCode,
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughParameter
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+				}
+				else // if (deliveryType == "MMS_SignedToken")
+				{
+					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+					expirationTime += ttlInSeconds;
+
+					string uriToBeSigned;
+					{
+						string m3u8Suffix(".m3u8");
+						if (deliveryURI.size() >= m3u8Suffix.size()
+							&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						{
+							size_t endPathIndex = deliveryURI.find_last_of("/");
+							if (endPathIndex == string::npos)
+								uriToBeSigned = deliveryURI;
+							else
+								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+						}
+						else
+							uriToBeSigned = deliveryURI;
+					}
+					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughPath
+						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+						+ deliveryURI
+					;
+				}
+				/*
+				else
+				{
+					string errorMessage = string("wrong deliveryType")
+						+ ", deliveryType: " + deliveryType
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				*/
+			}
+			else	// HLS
 			{
 				string deliveryURI;
 				string liveFileExtension = "m3u8";

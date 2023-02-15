@@ -5699,6 +5699,98 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						}
 					}
 				}
+				else if (outputType == "HLS_Channel")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot,
+						"hlsChannelConfigurationLabel", "");
+
+					string hlsChannelType;
+					if (hlsChannelConfigurationLabel == "")
+						hlsChannelType = "SHARED";
+					else
+						hlsChannelType = "DEDICATED";
+
+					// reserveHLSChannel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, int64_t, int, int, bool> hlsChannelDetails
+						= _mmsEngineDBFacade->reserveHLSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							hlsChannelConfigurationLabel, hlsChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					int64_t deliveryCode;
+					int segmentDurationInSeconds;
+					int playlistEntriesNumber;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber,
+						channelAlreadyReserved) = hlsChannelDetails;
+
+					// update outputsRoot with the new details
+					{
+						field = "deliveryCode";
+						outputRoot[field] = deliveryCode;
+
+						field = "segmentDurationInSeconds";
+						outputRoot[field] = segmentDurationInSeconds;
+
+						field = "playlistEntriesNumber";
+						outputRoot[field] = playlistEntriesNumber;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", hlsChannelType: " + hlsChannelType 
+								+ ", deliveryCode: " + to_string(deliveryCode)
+								+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+							);
+
+							_mmsEngineDBFacade->updateOutputHLSDetails (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveRecorder_through_ffmpeg();
@@ -5760,6 +5852,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "HLS_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseHLSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseHLSChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -5841,6 +5952,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "HLS_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseHLSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseHLSChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -7147,6 +7277,98 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						}
 					}
 				}
+				else if (outputType == "HLS_Channel")
+				{
+					// RtmpUrl and PlayUrl fields have to be initialized
+
+					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot,
+						"hlsChannelConfigurationLabel", "");
+
+					string hlsChannelType;
+					if (hlsChannelConfigurationLabel == "")
+						hlsChannelType = "SHARED";
+					else
+						hlsChannelType = "DEDICATED";
+
+					// reserveHLSChannel ritorna exception se non ci sono piu canali
+					// liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta
+					// già attiva, ritornerebbe le stesse info associate
+					// a ingestionJobKey (senza exception)
+					tuple<string, int64_t, int, int, bool> hlsChannelDetails
+						= _mmsEngineDBFacade->reserveHLSChannel(
+							_encodingItem->_workspace->_workspaceKey,
+							hlsChannelConfigurationLabel, hlsChannelType,
+							_encodingItem->_ingestionJobKey);
+
+					string reservedLabel;
+					int64_t deliveryCode;
+					int segmentDuration;
+					int playlistEntriesNumber;
+					bool channelAlreadyReserved;
+					tie(reservedLabel, deliveryCode, segmentDuration, playlistEntriesNumber,
+						channelAlreadyReserved) = hlsChannelDetails;
+
+					// update outputsRoot with the new details
+					{
+						field = "deliveryCode";
+						outputRoot[field] = deliveryCode;
+
+						field = "segmentDurationInSeconds";
+						outputRoot[field] = segmentDuration;
+
+						field = "playlistEntriesNumber";
+						outputRoot[field] = playlistEntriesNumber;
+
+						outputsRoot[outputIndex] = outputRoot;
+
+						field = "outputsRoot";
+						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+
+						try
+						{
+							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
+								+ ", reservedLabel: " + reservedLabel 
+								+ ", hlsChannelType: " + hlsChannelType 
+								+ ", deliveryCode: " + to_string(deliveryCode)
+								+ ", segmentDuration: " + to_string(segmentDuration)
+								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+							);
+
+							_mmsEngineDBFacade->updateOutputHLSDetails (
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								outputIndex, deliveryCode, segmentDuration, playlistEntriesNumber);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__
+								+ "updateEncodingJobParameters failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+
+							// throw e;
+						}
+					}
+				}
 			}
 
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
@@ -7208,6 +7430,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "HLS_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseHLSChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseHLSChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
@@ -7289,6 +7530,25 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					catch(...)
 					{
 						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+							;
+						_logger->error(errorMessage);
+					}
+				}
+				else if (outputType == "HLS_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseHLSChannel(
+								_encodingItem->_workspace->_workspaceKey,
+								_encodingItem->_ingestionJobKey);
+					}
+					catch(...)
+					{
+						string errorMessage = __FILEREF__ + "releaseHLSChannel failed"
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 

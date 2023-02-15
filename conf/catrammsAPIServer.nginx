@@ -295,6 +295,20 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?version=$1&method=rtmpChannelConfList last;
 		}
 
+#HLS
+		if ($request_method = POST) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?version=$1&method=addHLSChannelConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?version=$1&method=modifyHLSChannelConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?version=$1&method=removeHLSChannelConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?version=$1&method=hlsChannelConfList last;
+		}
+
 #RequestStatistics
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?version=$1&method=addRequestStatistic last;

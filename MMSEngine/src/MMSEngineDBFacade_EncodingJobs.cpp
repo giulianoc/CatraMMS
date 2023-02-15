@@ -3760,6 +3760,168 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
     }    
 }
 
+void MMSEngineDBFacade::updateOutputHLSDetails (
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber
+)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+    try
+    {
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                string("update MMS_EncodingJob set ")
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+				+ to_string(outputIndex) + "].deliveryCode', ?), "
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+				+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), "
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+				+ to_string(outputIndex) + "].playlistEntriesNumber', ?) "
+				"where encodingJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+            preparedStatement->setInt(queryParameterIndex++, segmentDurationInSeconds);
+            preparedStatement->setInt(queryParameterIndex++, playlistEntriesNumber);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+				+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+					+ ", deliveryCode: " + to_string(deliveryCode)
+					+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+					+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "EncodingJob updated successful"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", deliveryCode: " + to_string(deliveryCode)
+			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+			+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+            );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
 
 tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey, bool fromMaster)
