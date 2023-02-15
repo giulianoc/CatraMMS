@@ -406,7 +406,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (playURL == "")
 						continue;
 				}
-				else if (outputType == "HLS_CHANNEL")
+				else if (outputType == "HLS_Channel")
 				{
 					field = "deliveryCode";
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
@@ -481,7 +481,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				deliveryURL = playURL;
 			}
-			else if (outputType == "HLS_CHANNEL")
+			else if (outputType == "HLS_Channel")
 			{
 				string deliveryURI;
 				string liveFileExtension;
@@ -725,7 +725,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						if (playURL == "")
 							continue;
 					}
-					else if (outputType == "HLS_CHANNEL")
+					else if (outputType == "HLS_Channel")
 					{
 						field = "deliveryCode";
 						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
@@ -789,7 +789,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					int64_t localDeliveryCode;
 					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOption;
 
-					if (outputType == "HLS_CHANNEL" && localDeliveryCode == deliveryCode)
+					if (outputType == "HLS_Channel" && localDeliveryCode == deliveryCode)
 					{
 						deliveryCodeFound = true;
 
@@ -831,7 +831,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
 				// outputType = "HLS";
-				outputType = "HLS_CHANNEL";
+				outputType = "HLS_Channel";
 			}
 			else if ((monitorHLS || liveRecorderVirtualVOD) && deliveryCode != -1)	// requested delivery code (it is an input)
 			{
@@ -850,7 +850,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
 				// outputType = "HLS";
-				outputType = "HLS_CHANNEL";
+				outputType = "HLS_Channel";
 			}
 
 			if (outputType == "RTMP_Channel"
@@ -859,7 +859,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				deliveryURL = playURL;
 			}
-			else if (outputType == "HLS_CHANNEL")
+			else if (outputType == "HLS_Channel")
 			{
 				string deliveryURI;
 				string liveFileExtension = "m3u8";

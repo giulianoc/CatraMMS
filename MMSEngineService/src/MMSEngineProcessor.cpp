@@ -12597,7 +12597,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			field = "outputType";
 			// localOutputRoot[field] = string("HLS");
-			localOutputRoot[field] = string("HLS_CHANNEL");
+			localOutputRoot[field] = string("HLS_Channel");
 
 			field = "otherOutputOptions";
 			localOutputRoot[field] = otherOutputOptions;
@@ -13750,7 +13750,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		string field = "OutputType";
 		// outputType = JSONUtils::asString(outputRoot, field, "HLS");
-		outputType = JSONUtils::asString(outputRoot, field, "HLS_CHANNEL");
+		outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
 		field = "OtherOutputOptions";
 		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");

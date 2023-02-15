@@ -8953,7 +8953,7 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList.push_back("flv");
 				ffmpegArgumentList.push_back(rtmpUrl);
 			}
-			else if (outputType == "HLS_CHANNEL")
+			else if (outputType == "HLS_Channel")
 			{
 				// this is to get all video tracks
 				ffmpegArgumentList.push_back("-map");
@@ -12490,7 +12490,7 @@ void FFMpeg::liveProxyOutput(
 			ffmpegOutputArgumentList.push_back("flv");
 			ffmpegOutputArgumentList.push_back(rtmpUrl);
 		}
-		else if (outputType == "HLS_CHANNEL")
+		else if (outputType == "HLS_Channel")
 		{
 			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 			string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
