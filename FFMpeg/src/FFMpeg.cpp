@@ -8365,7 +8365,8 @@ void FFMpeg::liveRecorder(
 			int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
 			int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
-			if (outputType == "HLS" || outputType == "DASH")
+			// if (outputType == "HLS" || outputType == "DASH")
+			if (outputType == "HLS_Channel")
 			{
 				// this is to get all video tracks
 				ffmpegArgumentList.push_back("-map");
@@ -8597,7 +8598,7 @@ void FFMpeg::liveRecorder(
 					if (externalEncoder)
 						addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
 
-					if (outputType == "HLS")
+					// if (outputType == "HLS")
 					{
 						ffmpegArgumentList.push_back("-hls_flags");
 						ffmpegArgumentList.push_back("append_list");
@@ -8630,6 +8631,7 @@ void FFMpeg::liveRecorder(
 						// ffmpegArgumentList.push_back("-start_number");
 						// ffmpegArgumentList.push_back(to_string(10));
 					}
+					/*
 					else if (outputType == "DASH")
 					{
 						ffmpegArgumentList.push_back("-seg_duration");
@@ -8649,6 +8651,7 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-media_seg_name");
 						ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
 					}
+					*/
 
 					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegArgumentList);
 
@@ -9707,7 +9710,8 @@ void FFMpeg::liveRecorder(
 
 			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-			if (outputType == "HLS" || outputType == "DASH")
+			// if (outputType == "HLS" || outputType == "DASH")
+			if (outputType == "HLS_Channel")
 			{
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
@@ -9914,7 +9918,8 @@ void FFMpeg::liveRecorder(
 
 			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-			if (outputType == "HLS" || outputType == "DASH")
+			// if (outputType == "HLS" || outputType == "DASH")
+			if (outputType == "HLS_Channel")
 			{
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
@@ -10531,7 +10536,8 @@ void FFMpeg::liveProxy2(
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "HLS" || outputType == "DASH")
+				// if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "HLS_Channel")
 				{
 					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
@@ -10748,7 +10754,8 @@ void FFMpeg::liveProxy2(
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "HLS" || outputType == "DASH")
+				// if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "HLS_Channel")
 				{
 					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
@@ -12410,106 +12417,7 @@ void FFMpeg::liveProxyOutput(
 		}
 
 		// output file
-		if (outputType == "HLS" || outputType == "DASH")
-		{
-			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-			string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-			int segmentDurationInSeconds = JSONUtils::asInt(outputRoot,
-				"segmentDurationInSeconds", 10);
-			int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
-
-			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
-
-			_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", manifestDirectoryPath: " + manifestDirectoryPath
-			);
-
-			// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-			// I saw just once that the directory was not created and the liveencoder remains in the loop
-			// where:
-			//	1. the encoder returns an error because of the missing directory
-			//	2. EncoderVideoAudioProxy calls again the encoder
-			// So, for this reason, the below check is done
-			if (!fs::exists(manifestDirectoryPath))
-			{
-				_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath
-				);
-
-				_logger->info(__FILEREF__ + "Create directory"
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath
-				);
-				fs::create_directories(manifestDirectoryPath);                              
-				fs::permissions(manifestDirectoryPath,                                      
-					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
-					| fs::perms::group_read | fs::perms::group_exec                          
-					| fs::perms::others_read | fs::perms::others_exec,                                                                         
-					fs::perm_options::replace);
-
-			}
-
-			if (externalEncoder)
-				addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-			if (outputType == "HLS")
-			{
-				ffmpegOutputArgumentList.push_back("-hls_flags");
-				ffmpegOutputArgumentList.push_back("append_list");
-				ffmpegOutputArgumentList.push_back("-hls_time");
-				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-				ffmpegOutputArgumentList.push_back("-hls_list_size");
-				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-				// Segment files removed from the playlist are deleted after a period of time
-				// equal to the duration of the segment plus the duration of the playlist
-				ffmpegOutputArgumentList.push_back("-hls_flags");
-				ffmpegOutputArgumentList.push_back("delete_segments");
-
-				// Set the number of unreferenced segments to keep on disk
-				// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
-				// to download segments which were recently referenced in the playlist.
-				// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
-				ffmpegOutputArgumentList.push_back("-hls_delete_threshold");
-				ffmpegOutputArgumentList.push_back(to_string(1));
-
-
-				// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
-				// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
-				// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-				// 2020-07-19: commented, if it is needed just test it
-				// ffmpegArgumentList.push_back("-hls_start_number_source");
-				// ffmpegArgumentList.push_back("datetime");
-
-				// 2020-07-19: commented, if it is needed just test it
-				// ffmpegArgumentList.push_back("-start_number");
-				// ffmpegArgumentList.push_back(to_string(10));
-			}
-			else if (outputType == "DASH")
-			{
-				ffmpegOutputArgumentList.push_back("-seg_duration");
-				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-				ffmpegOutputArgumentList.push_back("-window_size");
-				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-				// it is important to specify -init_seg_name because those files
-				// will not be removed in EncoderVideoAudioProxy.cpp
-				ffmpegOutputArgumentList.push_back("-init_seg_name");
-				ffmpegOutputArgumentList.push_back("init-stream$RepresentationID$.$ext$");
-
-				// the only difference with the ffmpeg default is that default is $Number%05d$
-				// We had to change it to $Number%01d$ because otherwise the generated file containing
-				// 00001 00002 ... but the videojs player generates file name like 1 2 ...
-				// and the streaming was not working
-				ffmpegOutputArgumentList.push_back("-media_seg_name");
-				ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
-			}
-			ffmpegOutputArgumentList.push_back(manifestFilePathName);
-		}
-		else if (
+		if (
 			outputType == "CDN_AWS"
 			|| outputType == "CDN_CDN77"
 			|| outputType == "RTMP_Channel"

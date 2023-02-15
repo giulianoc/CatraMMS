@@ -384,7 +384,8 @@ void LiveRecorder::encodeContent(
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 
-				if (outputType == "HLS" || outputType == "DASH")
+				// if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "HLS_Channel")
 				{
 					if (fs::exists(manifestDirectoryPath))
 					{

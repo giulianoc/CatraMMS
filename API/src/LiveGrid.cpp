@@ -60,7 +60,8 @@ void LiveGrid::encodeContent(
 		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
 		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
 
-		_liveProxyData->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "OutputType", "HLS");
+		_liveProxyData->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "OutputType",
+			"HLS_Channel");
 
 		// it is present only in case of outputType == "SRT"
 		string srtURL = JSONUtils::asString(ingestedParametersRoot, "SRT_URL", "");
@@ -78,7 +79,7 @@ void LiveGrid::encodeContent(
 
 		// if (_liveProxyData->_outputType == "HLS") // || _liveProxyData->_outputType == "DASH")
 		{
-			if (_liveProxyData->_liveGridOutputType == "HLS"
+			if (_liveProxyData->_liveGridOutputType == "HLS_Channel"
 				&& fs::exists(manifestDirectoryPath))
 			{
 				try

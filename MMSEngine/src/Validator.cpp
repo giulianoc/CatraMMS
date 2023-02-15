@@ -5738,8 +5738,9 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 			}
 		}
 	}
-	else if (liveGridOutputType == "HLS")
+	else if (liveGridOutputType == "HLS_Channel")
 	{
+		// TO DO
 		vector<string> mandatoryFields = {
 			"DeliveryCode"
 		};
@@ -6852,9 +6853,9 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 		"CDN_AWS",
 		"CDN_CDN77",
         "UDP_Stream",
-        "HLS_Channel",
-        "HLS",
-        "DASH"
+        "HLS_Channel"
+        // "HLS",
+        // "DASH"
     };
 
     for (string outputType: outputTypes)
@@ -6870,7 +6871,7 @@ bool Validator::isLiveGridOutputTypeValid(string liveGridOutputType)
 {
     vector<string> outputTypes = {
         "SRT",
-        "HLS"
+        "HLS_Channel"
     };
 
     for (string outputType: outputTypes)

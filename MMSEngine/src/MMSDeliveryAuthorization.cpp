@@ -388,14 +388,15 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string playURL;
 
 				field = "OutputType";
-				outputType = JSONUtils::asString(outputRoot, field, "HLS");
+				outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
+				/*
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					field = "DeliveryCode";
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
-				else if (outputType == "RTMP_Channel"
+				else */ if (outputType == "RTMP_Channel"
 					|| outputType == "CDN_AWS"
 					|| outputType == "CDN_CDN77"
 				)
@@ -455,7 +456,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					int64_t localDeliveryCode;
 					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOption;
 
-					if (outputType == "HLS" && localDeliveryCode == deliveryCode)
+					if (outputType == "HLS_Channel" && localDeliveryCode == deliveryCode)
 					{
 						deliveryCodeFound = true;
 
@@ -564,7 +565,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				string deliveryURI;
 				string liveFileExtension;
-				if (outputType == "HLS")
+				if (outputType == "HLS_Channel")
 					liveFileExtension = "m3u8";
 				else
 					liveFileExtension = "mpd";
@@ -707,14 +708,15 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string playURL;
 
 					field = "OutputType";
-					outputType = JSONUtils::asString(outputRoot, field, "HLS");
+					outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
+					/*
 					if (outputType == "HLS" || outputType == "DASH")
 					{
 						field = "DeliveryCode";
 						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 					}
-					else if (outputType == "RTMP_Channel"
+					else */ if (outputType == "RTMP_Channel"
 						|| outputType == "CDN_AWS"
 						|| outputType == "CDN_CDN77")
 					{
@@ -793,12 +795,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						break;
 					}
+					/*
 					else if (outputType == "HLS" && localDeliveryCode == deliveryCode)
 					{
 						deliveryCodeFound = true;
 
 						break;
 					}
+					*/
 				}
 
 				if (!deliveryCodeFound)

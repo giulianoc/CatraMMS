@@ -72,7 +72,8 @@ void LiveProxy::encodeContent(
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				if (outputType == "HLS" || outputType == "DASH")
+				// if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "HLS_Channel")
 				{
 					string manifestDirectoryPath
 						= JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");

@@ -245,7 +245,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						if (!liveProxyWorking)
 							break;
 
-						if (outputType == "HLS" || outputType == "DASH")
+						// if (outputType == "HLS" || outputType == "DASH")
+						if (outputType == "HLS_Channel")
 						{
 							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
@@ -439,7 +440,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						if (!liveProxyWorking)
 							break;
 
-						if (outputType == "HLS" || outputType == "DASH")
+						// if (outputType == "HLS" || outputType == "DASH")
+						if (outputType == "HLS_Channel")
 						{
 							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
@@ -1183,7 +1185,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						if (!liveRecorderWorking)
 							break;
 
-						if (outputType == "HLS" || outputType == "DASH")
+						// if (outputType == "HLS" || outputType == "DASH")
+						if (outputType == "HLS_Channel")
 						{
 							try
 							{
@@ -1380,7 +1383,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						if (!liveRecorderWorking)
 							break;
 
-						if (outputType == "HLS" || outputType == "DASH")
+						// if (outputType == "HLS" || outputType == "DASH")
+						if (outputType == "HLS_Channel")
 						{
 							try
 							{

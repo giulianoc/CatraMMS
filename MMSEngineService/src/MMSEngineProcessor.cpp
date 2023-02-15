@@ -14066,9 +14066,9 @@ void MMSEngineProcessor::manageLiveGrid(
 			}
 
             field = "OutputType";
-			string outputType = JSONUtils::asString(parametersRoot, field, "HLS");
+			string outputType = JSONUtils::asString(parametersRoot, field, "HLS_Channel");
 
-			if (outputType == "HLS") // || outputType == "DASH")
+			if (outputType == "HLS_Channel") // || outputType == "DASH")
 			{
 				field = "DeliveryCode";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
