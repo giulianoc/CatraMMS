@@ -146,28 +146,15 @@
 		// Optional. This json array lists all the Outputs the Live-Recorder task has to generate.
 		"Outputs" = [
 			{
-				// optional, possible values: HLS, DASH, RTMP_Channel, CDN_AWS, CDN_CDN77.
-				// HLS and DASH works also in case of an external transcoder
-				// Default: HLS
-				"OutputType": "HLS",
+				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
+				// HLS_Channel works also in case of an external transcoder
+				// Default: HLS_Channel
+				"OutputType": "HLS_Channel",
 
-				// DeliveryCode is used only in case of HLS and DASH
-				//	It identifies this specific delivery. In case for example
-				//	- we have two HLS Outputs or
-				//	- we have the same channel delivered
-				//		as Recording monitor HLS and Live Proxy Output
-				//	In these scenarios, delivery code identifies each delivery.
-				//	Internally the delivery code is used to
-				//		- build the delivery URL (so it is used to build
-				//			the path where the HLS segments are saved)
-				// mandatory only if OutputType is HLS or DASH.
-				"DeliveryCode": 12345,
-
-				// optional, used only in case of HLS, Default: 10
-				"SegmentDurationInSeconds": 10,
-
-				// optional, used only in case of HLS, Default: 6
-				"PlaylistEntriesNumber": 6,
+				// optional, used only in case of HLS_Channel
+				// the configuration label of an HLS Channel defined in MMS.
+				// If not present, a SHARED free HLS channel is used
+				"hlsChannelConfigurationLabel": "",
 
 				// optional, used only in case of CDN_AWS
 				// the configuration label of an AWS Channel defined in MMS.
@@ -194,7 +181,7 @@
 				// Default: 1440 (1 day)
 				"cdn77ExpirationInMinutes": 1440,
 
-				// optional, used only in case of RTM_Channel
+				// optional, used only in case of RTMP_Channel
 				// the configuration label of an RTMP Channel defined in MMS.
 				// If not present, a SHARED free RTMP channel is used
 				"rtmpChannelConfigurationLabel": "",
