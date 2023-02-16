@@ -7259,7 +7259,8 @@ tuple<string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("No ") + type + " AWS Channel found"
+				string errorMessage = __FILEREF__ + "No " + type + " AWS Channel found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
 				;
@@ -8597,7 +8598,8 @@ tuple<string, string, string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("No ") + type + " CDN77 Channel found"
+				string errorMessage = __FILEREF__ + "No " + type + " CDN77 Channel found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
 				;
@@ -9981,7 +9983,8 @@ tuple<string, string, string, string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("No ") + type + " RTMP Channel found"
+				string errorMessage = __FILEREF__ + "No " + type + " RTMP Channel found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
 				;
@@ -11325,7 +11328,8 @@ tuple<string, int64_t, int, int, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("No ") + type + " HLS Channel found"
+				string errorMessage = __FILEREF__ + "No " + type + " HLS Channel found"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
 				;
@@ -11462,7 +11466,7 @@ tuple<string, int64_t, int, int, bool>
         }
 
         throw se;
-    }    
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"

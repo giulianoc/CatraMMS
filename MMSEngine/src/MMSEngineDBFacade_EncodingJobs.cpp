@@ -3763,7 +3763,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 void MMSEngineDBFacade::updateOutputHLSDetails (
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber,
-	string manifestDirectoryPath, string manifestFileName
+	string manifestDirectoryPath, string manifestFileName, string otherOutputOptions
 )
 {
     string      lastSQLCommand;
@@ -3783,21 +3783,23 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
             lastSQLCommand = 
                 string("update MMS_EncodingJob set ")
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].deliveryCode', ?), "
+					+ to_string(outputIndex) + "].deliveryCode', ?), "
 			;
 			if (segmentDurationInSeconds != -1)
 				lastSQLCommand +=
 					"parameters = JSON_SET(parameters, '$.outputsRoot["
-					+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), ";
+						+ to_string(outputIndex) + "].segmentDurationInSeconds', ?), ";
 			if (playlistEntriesNumber != -1)
 				lastSQLCommand +=
 					"parameters = JSON_SET(parameters, '$.outputsRoot["
-					+ to_string(outputIndex) + "].playlistEntriesNumber', ?), ";
+						+ to_string(outputIndex) + "].playlistEntriesNumber', ?), ";
 			lastSQLCommand +=
 				"parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].manifestDirectoryPath', ?), "
+					+ to_string(outputIndex) + "].manifestDirectoryPath', ?), "
 				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
-				+ to_string(outputIndex) + "].manifestFileName', ?) "
+					+ to_string(outputIndex) + "].manifestFileName', ?), "
+				+ "parameters = JSON_SET(parameters, '$.outputsRoot["
+					+ to_string(outputIndex) + "].otherOutputOptions', ?) "
 				"where encodingJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3810,6 +3812,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				preparedStatement->setInt(queryParameterIndex++, playlistEntriesNumber);
             preparedStatement->setString(queryParameterIndex++, manifestDirectoryPath);
             preparedStatement->setString(queryParameterIndex++, manifestFileName);
+            preparedStatement->setString(queryParameterIndex++, otherOutputOptions);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3821,6 +3824,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
 				+ ", manifestDirectoryPath: " + manifestDirectoryPath
 				+ ", manifestFileName: " + manifestFileName
+				+ ", otherOutputOptions: " + otherOutputOptions
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3834,6 +3838,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 					+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
 					+ ", manifestDirectoryPath: " + manifestDirectoryPath
 					+ ", manifestFileName: " + manifestFileName
+					+ ", otherOutputOptions: " + otherOutputOptions
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", lastSQLCommand: " + lastSQLCommand
@@ -3852,6 +3857,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 			+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
 			+ ", manifestDirectoryPath: " + manifestDirectoryPath
 			+ ", manifestFileName: " + manifestFileName
+			+ ", otherOutputOptions: " + otherOutputOptions
 		);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -7205,8 +7211,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 	bool monitorHLS,
 	bool liveRecorderVirtualVOD,
-	string monitorManifestDirectoryPath,
-	string monitorManifestFileName,
+	int monitorVirtualVODOutputRootIndex,
 
 	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
 
@@ -7343,11 +7348,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "liveRecorderVirtualVOD";
 				parametersRoot[field] = liveRecorderVirtualVOD;
 
-				field = "monitorManifestDirectoryPath";
-				parametersRoot[field] = monitorManifestDirectoryPath;
-
-				field = "monitorManifestFileName";
-				parametersRoot[field] = monitorManifestFileName;
+				field = "monitorVirtualVODOutputRootIndex";
+				parametersRoot[field] = monitorVirtualVODOutputRootIndex;
 
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;

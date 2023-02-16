@@ -5333,6 +5333,10 @@ bool EncoderVideoAudioProxy::liveRecorder()
 		bool killedByUser = false;
 		try
 		{
+			field = "monitorVirtualVODOutputRootIndex";
+			int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(_encodingItem->_encodingParametersRoot,
+				field, -1);
+
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				Json::Value outputRoot = outputsRoot[outputIndex];
@@ -5760,6 +5764,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						field = "manifestFileName";
 						outputRoot[field] = manifestFileName;
 
+						field = "otherOutputOptions";
+						string otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
+						if (outputIndex == monitorVirtualVODOutputRootIndex)
+						{
+							// this is the OutputRoot of the monitor or VirtualVOD
+							// E' necessario avere opzioni HLS particolari
+
+							string recordedFileNamePrefix = string("liveRecorder_")
+								+ to_string(_encodingItem->_ingestionJobKey)
+								// + "_" + to_string(_encodingItem->_encodingJobKey)
+							;
+							string segmentFilePathName = manifestDirectoryPath + "/"
+								+ recordedFileNamePrefix + "_%s.ts";
+
+							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
+
+							outputRoot[field] = otherOutputOptions;
+						}
+
 						outputsRoot[outputIndex] = outputRoot;
 
 						field = "outputsRoot";
@@ -5767,7 +5790,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						try
 						{
-							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+							_logger->info(__FILEREF__ + "updateOutputHLSDetails"
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
 								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
@@ -5785,7 +5808,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								_encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey,
 								outputIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber,
-								manifestDirectoryPath, manifestFileName);
+								manifestDirectoryPath, manifestFileName, otherOutputOptions);
 						}
 						catch(runtime_error e)
 						{
@@ -7357,6 +7380,9 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						field = "manifestFileName";
 						outputRoot[field] = manifestFileName;
 
+						field = "otherOutputOptions";
+						string otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
+
 						outputsRoot[outputIndex] = outputRoot;
 
 						field = "outputsRoot";
@@ -7364,7 +7390,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 						try
 						{
-							_logger->info(__FILEREF__ + "updateOutputRtmpAndPlaURL"
+							_logger->info(__FILEREF__ + "updateOutputHLSDetails"
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
 								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
@@ -7384,7 +7410,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								_encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey,
 								outputIndex, deliveryCode, segmentDuration, playlistEntriesNumber,
-								manifestDirectoryPath, manifestFileName);
+								manifestDirectoryPath, manifestFileName, otherOutputOptions);
 						}
 						catch(runtime_error e)
 						{

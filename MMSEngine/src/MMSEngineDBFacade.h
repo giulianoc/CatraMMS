@@ -1801,8 +1801,7 @@ public:
 
 		bool monitorHLS,
 		bool liveRecorderVirtualVOD,
-		string monitorManifestDirectoryPath,
-		string monitorManifestFileName,
+		int monitorVirtualVODOutputRootIndex,
 
 		Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
 
@@ -1971,7 +1970,7 @@ public:
 	void updateOutputHLSDetails (
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds, int playlistEntriesNumber,
-		string manifestDirectoryPath, string manifestFileName);
+		string manifestDirectoryPath, string manifestFileName, string otherOutputOptions);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 		getEncodingJobDetails (int64_t encodingJobKey, bool fromMaster);

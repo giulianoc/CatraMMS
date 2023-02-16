@@ -111,7 +111,7 @@ void LiveRecorder::encodeContent(
 		else
 			_liveRecording->_virtualVODStagingContentsPath =
 				JSONUtils::asString(encodingParametersRoot, "virtualVODStagingContentsPath", "");
-        _liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
+       _liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
 			JSONUtils::asInt64(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
@@ -191,8 +191,7 @@ void LiveRecorder::encodeContent(
 
         _liveRecording->_streamSourceType = JSONUtils::asString(metadataRoot["encodingParametersRoot"],
 			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds =
-			metadataRoot["encodingParametersRoot"]
+		int ipMMSAsServer_listenTimeoutInSeconds = metadataRoot["encodingParametersRoot"]
 			.get("ActAsServerListenTimeout", 300).asInt();
 		int pushListenTimeout = JSONUtils::asInt(
 			metadataRoot["encodingParametersRoot"], "pushListenTimeout", -1);
@@ -310,6 +309,8 @@ void LiveRecorder::encodeContent(
 			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
+		Json::Value outputsRoot = _liveRecording->_encodingParametersRoot["outputsRoot"];
+
 		{
 			bool monitorHLS = JSONUtils::asBool(_liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
@@ -318,13 +319,19 @@ void LiveRecorder::encodeContent(
 
 			if (monitorHLS || _liveRecording->_virtualVOD)
 			{
-				// see the comments in EncoderVideoAudioProxy.cpp
-				_liveRecording->_monitorVirtualVODManifestDirectoryPath =
-					JSONUtils::asString(_liveRecording->_encodingParametersRoot,
-					"monitorManifestDirectoryPath", "");
-				_liveRecording->_monitorVirtualVODManifestFileName =
-					JSONUtils::asString(_liveRecording->_encodingParametersRoot,
-					"monitorManifestFileName", "");
+				// monitorVirtualVODOutputRootIndex has to be initialized in case of monitor/virtualVOD
+				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(
+					_liveRecording->_encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
+
+				if (monitorVirtualVODOutputRootIndex >= 0)
+				{
+					_liveRecording->_monitorVirtualVODManifestDirectoryPath =
+						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
+						"monitorManifestDirectoryPath", "");
+					_liveRecording->_monitorVirtualVODManifestFileName =
+						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
+						"monitorManifestFileName", "");
+				}
 			}
 		}
 
@@ -372,8 +379,6 @@ void LiveRecorder::encodeContent(
 				_liveRecording->_recordingStart = chrono::system_clock::from_time_t(
 					utcRecordingPeriodStart);
 		}
-
-		Json::Value outputsRoot = _liveRecording->_encodingParametersRoot["outputsRoot"];
 
 		// _liveRecording->_liveRecorderOutputRoots.clear();
 		{
