@@ -7,7 +7,7 @@
 
 	"Parameters": {
 
-		"DeliveryCode": 1234,
+		"recordingCode": 1234,
 
 		// mandatory: It specifies the period to be cut, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SS:MMMZ

@@ -593,11 +593,11 @@ void API::mediaItemsList(
 				responseFields = otherInputsRoot[field];
 		}
 
-        int64_t deliveryCode = -1;
-        auto deliveryCodeIt = queryParameters.find("deliveryCode");
-        if (deliveryCodeIt != queryParameters.end() && deliveryCodeIt->second != "")
+        int64_t recordingCode = -1;
+        auto recordingCodeIt = queryParameters.find("recordingCode");
+        if (recordingCodeIt != queryParameters.end() && recordingCodeIt->second != "")
         {
-			deliveryCode = stoll(deliveryCodeIt->second);
+			recordingCode = stoll(recordingCodeIt->second);
         }
 
         string jsonCondition;
@@ -672,7 +672,7 @@ void API::mediaItemsList(
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk,
-				deliveryCode,
+				recordingCode,
 				utcCutPeriodStartTimeInMilliSeconds,
 				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 				jsonCondition,

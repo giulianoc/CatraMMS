@@ -3994,11 +3994,11 @@ void API::ingestionJobsStatus(
         }
 
 		// used in case of live-recorder
-        int64_t deliveryCode = -1;
-        auto deliveryCodeIt = queryParameters.find("deliveryCode");
-        if (deliveryCodeIt != queryParameters.end() && deliveryCodeIt->second != "")
+        int64_t recordingCode = -1;
+        auto recordingCodeIt = queryParameters.find("recordingCode");
+        if (recordingCodeIt != queryParameters.end() && recordingCodeIt->second != "")
         {
-            deliveryCode = stoll(deliveryCodeIt->second);
+            recordingCode = stoll(recordingCodeIt->second);
         }
 
 		// used in case of broadcaster
@@ -4054,7 +4054,7 @@ void API::ingestionJobsStatus(
 				startScheduleDate,
 				ingestionType,
 				configurationLabel, outputChannelLabel,
-				deliveryCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,
+				recordingCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition,
 				asc, status,
 				dependencyInfo, ingestionJobOutputs, fromMaster
 			);

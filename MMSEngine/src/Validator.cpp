@@ -3900,7 +3900,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	{
 		vector<string> mandatoryFields = {
 			"ConfigurationLabel",
-			"DeliveryCode",
+			"recordingCode",
 			"schedule",
 			"SegmentDuration"
 		};
@@ -5805,7 +5805,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
         }
     }
 
-	string field = "DeliveryCode";
+	string field = "recordingCode";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);

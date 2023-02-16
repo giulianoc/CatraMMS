@@ -334,12 +334,12 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 					try
 					{
-						int64_t deliveryCode = JSONUtils::asInt64(
-							copiedLiveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
+						int64_t recordingCode = JSONUtils::asInt64(
+							copiedLiveRecording->_ingestedParametersRoot, "recordingCode", 0);
 						string ingestionJobLabel = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot,
 							"ingestionJobLabel", "");
 						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
-							+ to_string(deliveryCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey)
+							+ to_string(recordingCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ")";
 
 						int64_t userKey;
@@ -406,7 +406,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							copiedLiveRecording->_monitorVirtualVODManifestFileName,
 							copiedLiveRecording->_virtualVODStagingContentsPath,
 
-							deliveryCode,
+							recordingCode,
 							ingestionJobLabel,
 							liveRecorderVirtualVODUniqueName,
 							_liveRecorderVirtualVODRetention,
@@ -662,9 +662,9 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 
 			string uniqueName;
 			{
-				int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
+				int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
 
-				uniqueName = to_string(deliveryCode);
+				uniqueName = to_string(recordingCode);
 				uniqueName += " - ";
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
@@ -688,9 +688,9 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 				else // if (streamSourceType == "IP_PUSH")
 				*/
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					mmsDataRoot["deliveryCode"] = deliveryCode;
+					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
+						"recordingCode", 0);
+					mmsDataRoot["recordingCode"] = recordingCode;
 				}
 				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
 				// mmsDataRoot["main"] = main;
@@ -717,9 +717,9 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 				/*
 				if (streamSourceType == "IP_PUSH")
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					addContentTitle = to_string(deliveryCode);
+					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
+						"recordingCode", 0);
+					addContentTitle = to_string(recordingCode);
 				}
 				else
 				{
@@ -732,9 +732,9 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
 				if (ingestionJobLabel == "")
 				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					addContentTitle = to_string(deliveryCode);
+					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
+						"recordingCode", 0);
+					addContentTitle = to_string(recordingCode);
 				}
 				else
 					addContentTitle = ingestionJobLabel;
@@ -1119,9 +1119,9 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 						{
 							string uniqueName;
 							{
-								int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
+								int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
 
-								uniqueName = to_string(deliveryCode);
+								uniqueName = to_string(recordingCode);
 								uniqueName += " - ";
 								uniqueName += to_string(toBeIngestedSegmentUtcStartTimeInMillisecs);
 							}
@@ -1145,9 +1145,9 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 								else // if (streamSourceType == "IP_PUSH")
 								*/
 								{
-									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-										"DeliveryCode", 0);
-									mmsDataRoot["deliveryCode"] = deliveryCode;
+									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
+										"recordingCode", 0);
+									mmsDataRoot["recordingCode"] = recordingCode;
 								}
 								mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
 								// mmsDataRoot["main"] = main;
@@ -1182,9 +1182,9 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 							{
 								if (ingestionJobLabel == "")
 								{
-									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-										"DeliveryCode", 0);
-									addContentTitle = to_string(deliveryCode);
+									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
+										"recordingCode", 0);
+									addContentTitle = to_string(recordingCode);
 								}
 								else
 									addContentTitle = ingestionJobLabel;
@@ -1947,7 +1947,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
+			int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
 			{
 				Json::Value variableWorkflowRoot;
 
@@ -1955,10 +1955,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
-				variableWorkflowRoot[field] = deliveryCode;
+				variableWorkflowRoot[field] = recordingCode;
 
 				// name of the variable
-				field = "DeliveryCode";
+				field = "recordingCode";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
@@ -2297,7 +2297,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
 	string stagingLiveRecorderVirtualVODPathName,
 
-	int64_t deliveryCode,
+	int64_t recordingCode,
 	string liveRecorderIngestionJobLabel,
 	string liveRecorderVirtualVODUniqueName,
 	string liveRecorderVirtualVODRetention,
@@ -2318,7 +2318,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
         + ", sourceManifestFileName: " + sourceManifestFileName
         + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 
-		+ ", deliveryCode: " + to_string(deliveryCode)
+		+ ", recordingCode: " + to_string(recordingCode)
         + ", liveRecorderIngestionJobLabel: " + liveRecorderIngestionJobLabel
         + ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
         + ", liveRecorderVirtualVODRetention: " + liveRecorderVirtualVODRetention
@@ -2816,7 +2816,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 			utcStartTimeInMilliSecs,
 			utcEndTimeInMilliSecs,
-			deliveryCode,
+			recordingCode,
 			liveRecorderIngestionJobLabel,
 			tarGzStagingLiveRecorderVirtualVODPathName,
 			liveRecorderVirtualVODUniqueName,
@@ -3027,7 +3027,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 	int64_t utcStartTimeInMilliSecs,
 	int64_t utcEndTimeInMilliSecs,
-	int64_t deliveryCode,
+	int64_t recordingCode,
 	string liveRecorderIngestionJobLabel,
 	string tarGzStagingLiveRecorderVirtualVODPathName,
 	string liveRecorderVirtualVODUniqueName,
@@ -3103,8 +3103,8 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			}
 		}
 
-		field = "deliveryCode";
-		mmsDataRoot[field] = deliveryCode;
+		field = "recordingCode";
+		mmsDataRoot[field] = recordingCode;
 
 		Json::Value userDataRoot;
 

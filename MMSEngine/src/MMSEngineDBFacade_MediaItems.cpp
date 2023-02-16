@@ -847,7 +847,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	string endIngestionDate;
 	string title;
 	int liveRecordingChunk = -1;
-	int64_t deliveryCode = -1;
+	int64_t recordingCode = -1;
 	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 	string jsonCondition;
@@ -865,7 +865,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
         // startAndEndIngestionDatePresent,
 		startIngestionDate, endIngestionDate,
         title, liveRecordingChunk,
-		deliveryCode,
+		recordingCode,
 		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		jsonCondition,
 		tagsIn, tagsNotIn,
@@ -1020,7 +1020,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	string endIngestionDate;
 	string title;
 	int liveRecordingChunk = -1;
-	int64_t deliveryCode = -1;
+	int64_t recordingCode = -1;
 	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 	string jsonCondition;
@@ -1038,7 +1038,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
         // startAndEndIngestionDatePresent,
 		startIngestionDate, endIngestionDate,
         title, liveRecordingChunk,
-		deliveryCode,
+		recordingCode,
 		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		jsonCondition,
 		tagsIn, tagsNotIn,
@@ -1060,7 +1060,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         // bool startAndEndIngestionDatePresent,
 		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
-		int64_t deliveryCode,
+		int64_t recordingCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
@@ -1104,7 +1104,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
             + ", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
-            + ", deliveryCode: " + to_string(deliveryCode)
+            + ", recordingCode: " + to_string(recordingCode)
             + ", jsonCondition: " + jsonCondition
             + ", orderBy: " + orderBy
             + ", jsonOrderBy: " + jsonOrderBy
@@ -1210,10 +1210,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = jsonCondition;
             }
 
-            if (deliveryCode != -1)
+            if (recordingCode != -1)
             {
-                field = "deliveryCode";
-                requestParametersRoot[field] = deliveryCode;
+                field = "recordingCode";
+                requestParametersRoot[field] = recordingCode;
             }
 
             if (orderBy != "")
@@ -1327,7 +1327,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk,
-				deliveryCode,
+				recordingCode,
 				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 				jsonCondition,
 				tagsIn, tagsNotIn,
@@ -1353,7 +1353,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					// startAndEndIngestionDatePresent,
 					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
-					deliveryCode,
+					recordingCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
 					orderBy,
@@ -2350,7 +2350,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         // bool startAndEndIngestionDatePresent,
 		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
-		int64_t deliveryCode,
+		int64_t recordingCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		string jsonCondition,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
@@ -2405,8 +2405,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			else if (liveRecordingChunk == 1)
 				sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
-		if (deliveryCode != -1)
-			sqlWhere += ("and mi.deliveryCode_virtual = ? ");
+		if (recordingCode != -1)
+			sqlWhere += ("and mi.recordingCode_virtual = ? ");
 
 		if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 		{
@@ -2467,8 +2467,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
-			if (deliveryCode != -1)
-				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (recordingCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, recordingCode);
 			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 			{
 				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
@@ -2490,7 +2490,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + "%" + title + "%"
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
@@ -2565,8 +2565,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
-			if (deliveryCode != -1)
-				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (recordingCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, recordingCode);
 			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 			{
 				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
@@ -2590,7 +2590,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + "%" + title + "%"
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
@@ -2651,7 +2651,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         // bool startAndEndIngestionDatePresent,
 		string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk,
-		int64_t deliveryCode,
+		int64_t recordingCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 		string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
@@ -2752,8 +2752,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				else if (liveRecordingChunk == 1)
 					sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 			}
-			if (deliveryCode != -1)
-				sqlWhere += ("and mi.deliveryCode_virtual = ? ");
+			if (recordingCode != -1)
+				sqlWhere += ("and mi.recordingCode_virtual = ? ");
 			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 			{
 				// SC: Start Chunk
@@ -2814,8 +2814,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
 			if (title != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
-			if (deliveryCode != -1)
-				preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (recordingCode != -1)
+				preparedStatement->setInt64(queryParameterIndex++, recordingCode);
 			if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 			{
 				preparedStatement->setInt64(queryParameterIndex++, utcCutPeriodStartTimeInMilliSeconds);
@@ -2837,7 +2837,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + title
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 				+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)

@@ -12170,7 +12170,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int captureChannelsNumber = -1;
 		int64_t tvSourceTVConfKey = -1;
 
-		int64_t deliveryCode;
+		int64_t recordingCode;
 
         string recordingPeriodStart;
         string recordingPeriodEnd;
@@ -12364,7 +12364,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = false;
 			}
 
-			field = "DeliveryCode";
+			field = "recordingCode";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12374,7 +12374,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(parametersRoot, field, 0);
+			recordingCode = JSONUtils::asInt64(parametersRoot, field, 0);
 
 			field = "Outputs";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -14157,7 +14157,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 		// string streamSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
-		int64_t deliveryCode;
+		int64_t recordingCode;
         string cutPeriodStartTimeInMilliSeconds;
         string cutPeriodEndTimeInMilliSeconds;
 		int maxWaitingForLastChunkInSeconds = 90;
@@ -14210,7 +14210,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			*/
 
 			// else if (streamSourceType == "IP_PUSH")
-			string field = "DeliveryCode";
+			string field = "recordingCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14221,7 +14221,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
+			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
 			field = "MaxWaitingForLastChunkInSeconds";
 			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
@@ -14386,7 +14386,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					// startAndEndIngestionDatePresent,
 					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
-					deliveryCode,
+					recordingCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
 					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
@@ -14620,7 +14620,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				// + ", streamSourceType: " + streamSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
 				+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
@@ -14868,8 +14868,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 						mmsDataRoot[field] = actAsServerChannelCode;
 					}
 					*/
-					field = "deliveryCode";
-					mmsDataRoot[field] = deliveryCode;
+					field = "recordingCode";
+					mmsDataRoot[field] = recordingCode;
 
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;
@@ -15048,7 +15048,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		// string streamSourceType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
-		int64_t deliveryCode;
+		int64_t recordingCode;
 		int64_t chunkEncodingProfileKey = -1;
 		string chunkEncodingProfileLabel;
         string cutPeriodStartTimeInMilliSeconds;
@@ -15103,7 +15103,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			*/
 
 			// else if (streamSourceType == "IP_PUSH")
-			string field = "DeliveryCode";
+			string field = "recordingCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15114,7 +15114,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
+			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
 			field = "ChunkEncodingProfileKey";
 			chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
@@ -15287,7 +15287,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					// startAndEndIngestionDatePresent,
 					startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk,
-					deliveryCode,
+					recordingCode,
 					utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
 					jsonCondition,
 					tagsIn, tagsNotIn, orderBy, jsonOrderBy,
@@ -15550,7 +15550,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				// + ", streamSourceType: " + streamSourceType
 				// + ", ipConfigurationLabel: " + ipConfigurationLabel
 				// + ", satConfigurationLabel: " + satConfigurationLabel
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
 				+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
@@ -15800,8 +15800,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 						mmsDataRoot[field] = actAsServerChannelCode;
 					}
 					*/
-					field = "deliveryCode";
-					mmsDataRoot[field] = deliveryCode;
+					field = "recordingCode";
+					mmsDataRoot[field] = recordingCode;
 
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;

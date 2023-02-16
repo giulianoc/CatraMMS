@@ -135,7 +135,7 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
 			string stagingLiveRecorderVirtualVODPathName,
 
-			int64_t deliveryCode,
+			int64_t recordingCode,
 			string liveRecorderIngestionJobLabel,
 			string liveRecorderVirtualVODUniqueName,
 			string liveRecorderVirtualVODRetention,
@@ -152,7 +152,7 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 
 			int64_t utcStartTimeInMilliSecs,
 			int64_t utcEndTimeInMilliSecs,
-			int64_t deliveryCode,
+			int64_t recordingCode,
 			string liveRecorderIngestionJobLabel,
 			string tarGzStagingLiveRecorderVirtualVODPathName,
 			string liveRecorderVirtualVODUniqueName,

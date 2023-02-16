@@ -4730,7 +4730,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 	string startIngestionDate, string endIngestionDate,
 	string startScheduleDate,
 	string ingestionType,
-	string configurationLabel, string outputChannelLabel, int64_t deliveryCode,
+	string configurationLabel, string outputChannelLabel, int64_t recordingCode,
 	bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,
        bool asc, string status,
 	bool dependencyInfo,
@@ -4823,10 +4823,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 requestParametersRoot[field] = outputChannelLabel;
             }
 
-            if (deliveryCode != -1)
+            if (recordingCode != -1)
             {
-                field = "deliveryCode";
-                requestParametersRoot[field] = deliveryCode;
+                field = "recordingCode";
+                requestParametersRoot[field] = recordingCode;
             }
 
             {
@@ -4869,8 +4869,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += ("and ij.configurationLabel_virtual = ? ");
         if (outputChannelLabel != "")
             sqlWhere += ("and ij.outputChannelLabel_virtual = ? ");
-        if (deliveryCode != -1)
-            sqlWhere += ("and ij.deliveryCode_virtual = ? ");
+        if (recordingCode != -1)
+            sqlWhere += ("and ij.recordingCode_virtual = ? ");
         if (broadcastIngestionJobKeyNotNull)
             sqlWhere += ("and ij.broadcastIngestionJobKey_virtual is not null ");
         if (jsonParametersCondition != "")
@@ -4913,8 +4913,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, configurationLabel);
 			if (outputChannelLabel != "")
                 preparedStatement->setString(queryParameterIndex++, outputChannelLabel);
-			if (deliveryCode != -1)
-                preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (recordingCode != -1)
+                preparedStatement->setInt64(queryParameterIndex++, recordingCode);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -4941,7 +4941,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", ingestionType: " + ingestionType
 				+ ", configurationLabel: " + configurationLabel
 				+ ", outputChannelLabel: " + outputChannelLabel
-				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (millisecs): @"
 					+ to_string(chrono::duration_cast<chrono::milliseconds>(
@@ -4991,8 +4991,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, configurationLabel);
 			if (outputChannelLabel != "")
                 preparedStatement->setString(queryParameterIndex++, outputChannelLabel);
-			if (deliveryCode != -1)
-                preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+			if (recordingCode != -1)
+                preparedStatement->setInt64(queryParameterIndex++, recordingCode);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

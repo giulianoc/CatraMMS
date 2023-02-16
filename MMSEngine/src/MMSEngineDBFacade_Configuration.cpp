@@ -7221,14 +7221,27 @@ tuple<string, string, string, bool>
 
 		{
 
+			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
+			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			if (label == "")
+			{
+				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
+				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
+				// Poichè solo workspaceKey NON è chiave unica, la select, puo' ritornare piu righe:
+				// quella con ingestionJobKey inizializzato e quelle con ingestionJobKey NULL.
+				// In questo scenario è importante che questo metodo ritorni le informazioni
+				// della riga con ingestionJobKey inizializzato.
+				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
 					"where workspaceKey = ? and type = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
-					"for update";
+					"order by reservedByIngestionJobKey desc limit 1 for update";
+			}
 			else
+			{
+				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
@@ -7236,6 +7249,7 @@ tuple<string, string, string, bool>
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -8560,14 +8574,27 @@ tuple<string, string, string, string, string, bool>
 		int64_t reservedByIngestionJobKey = -1;
 
 		{
+			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
+			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			if (label == "")
+			{
+				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
+				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
+				// Poichè solo workspaceKey NON è chiave unica, la select, puo' ritornare piu righe:
+				// quella con ingestionJobKey inizializzato e quelle con ingestionJobKey NULL.
+				// In questo scenario è importante che questo metodo ritorni le informazioni
+				// della riga con ingestionJobKey inizializzato.
+				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
 					"where workspaceKey = ? and type = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
 					"for update";
+			}
 			else
+			{
+				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
@@ -8575,6 +8602,7 @@ tuple<string, string, string, string, string, bool>
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -9945,14 +9973,27 @@ tuple<string, string, string, string, string, string, bool>
 		int64_t reservedByIngestionJobKey = -1;
 
 		{
+			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
+			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			if (label == "")
+			{
+				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
+				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
+				// Poichè solo workspaceKey NON è chiave unica, la select, puo' ritornare piu righe:
+				// quella con ingestionJobKey inizializzato e quelle con ingestionJobKey NULL.
+				// In questo scenario è importante che questo metodo ritorni le informazioni
+				// della riga con ingestionJobKey inizializzato.
+				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
 					"where workspaceKey = ? and type = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
 					"for update";
+			}
 			else
+			{
+				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
@@ -9960,6 +10001,7 @@ tuple<string, string, string, string, string, string, bool>
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -11290,14 +11332,27 @@ tuple<string, int64_t, int, int, bool>
 		int64_t reservedByIngestionJobKey = -1;
 
 		{
+			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
+			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			if (label == "")
+			{
+				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
+				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
+				// Poichè solo workspaceKey NON è chiave unica, la select, puo' ritornare piu righe:
+				// quella con ingestionJobKey inizializzato e quelle con ingestionJobKey NULL.
+				// In questo scenario è importante che questo metodo ritorni le informazioni
+				// della riga con ingestionJobKey inizializzato.
+				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				lastSQLCommand =
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
 					"where workspaceKey = ? and type = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
 					"for update";
+			}
 			else
+			{
+				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				lastSQLCommand =
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
@@ -11305,6 +11360,7 @@ tuple<string, int64_t, int, int, bool>
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
