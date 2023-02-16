@@ -12516,6 +12516,20 @@ void MMSEngineProcessor::manageLiveRecorder(
 				{
 					monitorVirtualVODOutputRootIndex = outputIndex;
 
+					if (liveRecorderVirtualVOD)
+					{
+						// in case of virtualVOD, we have to override playlistEntriesNumber
+
+						int monitorVirtualVODPlaylistEntriesNumber =
+							(liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
+							virtualVODSegmentDurationInSeconds;
+
+						field = "playlistEntriesNumber";
+						outputRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
+
+						localOutputsRoot[outputIndex] = outputRoot;
+					}
+
 					break;
 				}
 			}
