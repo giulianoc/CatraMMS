@@ -3789,14 +3789,13 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 				string("update MMS_IngestionJob set ")
 				+ "metaDataContent = IF(JSON_EXTRACT(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "]') is null, "
 					+ "JSON_ARRAY_APPEND(metaDataContent, '$.Outputs', "
-						+ "CAST('{\"outputType\": \"HLS_Channel\", \"deliveryCode\": ?}' AS JSON)), "
+						+ "CAST('{\"outputType\": \"HLS_Channel\", \"deliveryCode\": " + to_string(deliveryCode) + "}' AS JSON)), "
 					+ "JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
 					+ ") "
 				"where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
             preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
