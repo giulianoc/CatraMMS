@@ -12505,159 +12505,121 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int monitorVirtualVODOutputRootIndex = -1;
 		if(monitorHLS || liveRecorderVirtualVOD)
 		{
-			string monitorVirtualVODHlsChannelConfigurationLabel;
+			// 2023-02-16: nel caso in cui abbiamo già un HLS_Channel in OutputsRoot
+			//		utilizziamo questo HLS come monitor/virtualVOD
+			for(int outputIndex = 0; outputIndex < localOutputsRoot.size(); outputIndex++)
 			{
-				if (virtualVODHlsChannelConfigurationLabel != "")
-					monitorVirtualVODHlsChannelConfigurationLabel = virtualVODHlsChannelConfigurationLabel;
-				else
-					monitorVirtualVODHlsChannelConfigurationLabel = monitorHlsChannelConfigurationLabel;
-			}
+				Json::Value outputRoot = localOutputsRoot[outputIndex];
+				string outputType = JSONUtils::asString(outputRoot, "OutputType", "");
 
-			int64_t monitorVirtualVODEncodingProfileKey = -1;
-			{
-				if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey != -1)
-					monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
-				else if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey == -1)
-					monitorVirtualVODEncodingProfileKey = monitorEncodingProfileKey;
-				else if (monitorEncodingProfileKey == -1 && virtualVODEncodingProfileKey != -1)
-					monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
-			}
-
-			Json::Value encodingProfileDetailsRoot = Json::nullValue;
-			MMSEngineDBFacade::ContentType encodingProfileContentType =
-				MMSEngineDBFacade::ContentType::Video;
-			if (monitorVirtualVODEncodingProfileKey != -1)
-			{
-				string jsonEncodingProfile;
-
-				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-					workspace->_workspaceKey, monitorVirtualVODEncodingProfileKey);
-				tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) =
-					encodingProfileDetails;
-
-				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
-			}
-
-			/*
-			string monitorManifestDirectoryPath;
-			string monitorManifestFileName;
-			{
-				string manifestExtension;
-				manifestExtension = "m3u8";
-
-				if (streamSourceType == "IP_PULL")
+				if (outputType == "HLS_Channel")
 				{
-					// monitorHLS is true
-					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-						to_string(deliveryCode),
-						workspace);
+					monitorVirtualVODOutputRootIndex = outputIndex;
 
-					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-				}
-				else if (streamSourceType == "TV")
-				{
-					// monitorHLS is true
-					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-						to_string(deliveryCode),
-						workspace);
-
-					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-				}
-				else if (streamSourceType == "IP_PUSH")
-				{
-					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-						to_string(deliveryCode),
-						workspace);
-
-					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-				}
-				else if (streamSourceType == "CaptureLive")
-				{
-					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-						to_string(deliveryCode),
-						workspace);
-
-					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+					break;
 				}
 			}
 
-			string otherOutputOptions;
+			if (monitorVirtualVODOutputRootIndex == -1)
 			{
-				string recordedFileNamePrefix = string("liveRecorder_")
-					+ to_string(ingestionJobKey)
-					// + "_" + to_string(_encodingItem->_encodingJobKey)
-				;
-				string segmentFilePathName = monitorManifestDirectoryPath + "/"
-					+ recordedFileNamePrefix + "_%s." + outputFileFormat;
-
-				otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
-			}
-			*/
-
-			int monitorVirtualVODSegmentDurationInSeconds;
-			{
-				if (liveRecorderVirtualVOD)
-					monitorVirtualVODSegmentDurationInSeconds = virtualVODSegmentDurationInSeconds;
-				else
-					monitorVirtualVODSegmentDurationInSeconds = monitorSegmentDurationInSeconds;
-			}
-
-			int monitorVirtualVODPlaylistEntriesNumber;
-			{
-				if (liveRecorderVirtualVOD)
+				string monitorVirtualVODHlsChannelConfigurationLabel;
 				{
-					monitorVirtualVODPlaylistEntriesNumber = (liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
-						monitorVirtualVODSegmentDurationInSeconds;
+					if (virtualVODHlsChannelConfigurationLabel != "")
+						monitorVirtualVODHlsChannelConfigurationLabel = virtualVODHlsChannelConfigurationLabel;
+					else
+						monitorVirtualVODHlsChannelConfigurationLabel = monitorHlsChannelConfigurationLabel;
 				}
-				else
-					monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
+
+				int64_t monitorVirtualVODEncodingProfileKey = -1;
+				{
+					if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey != -1)
+						monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+					else if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey == -1)
+						monitorVirtualVODEncodingProfileKey = monitorEncodingProfileKey;
+					else if (monitorEncodingProfileKey == -1 && virtualVODEncodingProfileKey != -1)
+						monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+				}
+
+				Json::Value encodingProfileDetailsRoot = Json::nullValue;
+				MMSEngineDBFacade::ContentType encodingProfileContentType =
+					MMSEngineDBFacade::ContentType::Video;
+				if (monitorVirtualVODEncodingProfileKey != -1)
+				{
+					string jsonEncodingProfile;
+
+					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+						workspace->_workspaceKey, monitorVirtualVODEncodingProfileKey);
+					tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) =
+						encodingProfileDetails;
+
+					encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+				}
+
+				int monitorVirtualVODSegmentDurationInSeconds;
+				{
+					if (liveRecorderVirtualVOD)
+						monitorVirtualVODSegmentDurationInSeconds = virtualVODSegmentDurationInSeconds;
+					else
+						monitorVirtualVODSegmentDurationInSeconds = monitorSegmentDurationInSeconds;
+				}
+
+				int monitorVirtualVODPlaylistEntriesNumber;
+				{
+					if (liveRecorderVirtualVOD)
+					{
+						monitorVirtualVODPlaylistEntriesNumber = (liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
+							monitorVirtualVODSegmentDurationInSeconds;
+					}
+					else
+						monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
+				}
+
+				Json::Value localOutputRoot;
+
+				field = "outputType";
+				// localOutputRoot[field] = string("HLS");
+				localOutputRoot[field] = string("HLS_Channel");
+
+				field = "hlsChannelConfigurationLabel";
+				localOutputRoot[field] = monitorVirtualVODHlsChannelConfigurationLabel;
+
+				// next fields will be initialized in EncoderVideoAudioProxy.cpp
+				// when we will know the HLS Channel Configuration Label
+				/*
+				field = "otherOutputOptions";
+				localOutputRoot[field] = otherOutputOptions;
+
+				field = "manifestDirectoryPath";
+				localOutputRoot[field] = monitorManifestDirectoryPath;
+
+				field = "manifestFileName";
+				localOutputRoot[field] = monitorManifestFileName;
+				*/
+
+				field = "filters";
+				localOutputRoot[field] = Json::nullValue;
+
+				field = "segmentDurationInSeconds";
+				localOutputRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				localOutputRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
+
+				{
+					field = "encodingProfileKey";
+					localOutputRoot[field] = monitorVirtualVODEncodingProfileKey;
+
+					field = "encodingProfileDetails";
+					localOutputRoot[field] = encodingProfileDetailsRoot;
+
+					field = "encodingProfileContentType";
+					localOutputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+				}
+
+				localOutputsRoot.append(localOutputRoot);
+				monitorVirtualVODOutputRootIndex = localOutputsRoot.size() - 1;
 			}
-
-			Json::Value localOutputRoot;
-
-			field = "outputType";
-			// localOutputRoot[field] = string("HLS");
-			localOutputRoot[field] = string("HLS_Channel");
-
-			field = "hlsChannelConfigurationLabel";
-			localOutputRoot[field] = monitorVirtualVODHlsChannelConfigurationLabel;
-
-			// next fields will be initialized in EncoderVideoAudioProxy.cpp
-			// when we will know the HLS Channel Configuration Label
-			/*
-			field = "otherOutputOptions";
-			localOutputRoot[field] = otherOutputOptions;
-
-			field = "manifestDirectoryPath";
-			localOutputRoot[field] = monitorManifestDirectoryPath;
-
-			field = "manifestFileName";
-			localOutputRoot[field] = monitorManifestFileName;
-			*/
-
-			field = "filters";
-			localOutputRoot[field] = Json::nullValue;
-
-			field = "segmentDurationInSeconds";
-			localOutputRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
-
-			field = "playlistEntriesNumber";
-			localOutputRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
-
-			{
-				field = "encodingProfileKey";
-				localOutputRoot[field] = monitorVirtualVODEncodingProfileKey;
-
-				field = "encodingProfileDetails";
-				localOutputRoot[field] = encodingProfileDetailsRoot;
-
-				field = "encodingProfileContentType";
-				localOutputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
-			}
-
-			localOutputsRoot.append(localOutputRoot);
-			monitorVirtualVODOutputRootIndex = localOutputsRoot.size() - 1;
 		}
 
 		// the recorder generates the chunks in a local(transcoder) directory
