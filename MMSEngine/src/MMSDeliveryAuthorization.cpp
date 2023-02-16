@@ -360,7 +360,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy
 			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy
-			|| ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
+			|| ingestionType == MMSEngineDBFacade::IngestionType::Countdown
+			|| ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder
+		)
 		{
 			string field = "Outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -686,6 +688,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				_logger->error(__FILEREF__ + errorMessage);
 			}
 		}
+		/*
 		else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 		{
 			// outputType, localDeliveryCode, playURL
@@ -710,13 +713,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					field = "OutputType";
 					outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
-					/*
-					if (outputType == "HLS" || outputType == "DASH")
-					{
-						field = "DeliveryCode";
-						localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
-					}
-					else */ if (outputType == "RTMP_Channel"
+					if (outputType == "RTMP_Channel"
 						|| outputType == "CDN_AWS"
 						|| outputType == "CDN_CDN77")
 					{
@@ -795,14 +792,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						break;
 					}
-					/*
-					else if (outputType == "HLS" && localDeliveryCode == deliveryCode)
-					{
-						deliveryCodeFound = true;
-
-						break;
-					}
-					*/
 				}
 
 				if (!deliveryCodeFound)
@@ -919,17 +908,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						+ deliveryURI
 					;
 				}
-				/*
-				else
-				{
-					string errorMessage = string("wrong deliveryType")
-						+ ", deliveryType: " + deliveryType
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				*/
 			}
 			else	// HLS
 			{
@@ -991,17 +969,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						+ deliveryURI
 					;
 				}
-				/*
-				else
-				{
-					string errorMessage = string("wrong deliveryType")
-						+ ", deliveryType: " + deliveryType
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				*/
 			}
 
 			try
@@ -1054,6 +1021,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				+ ", deliveryURL: " + deliveryURL
 			);
 		}
+		*/
 		else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
 		{
 			string field = "DeliveryCode";

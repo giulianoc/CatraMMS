@@ -3779,6 +3779,51 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// PlayUrl in MMS_IngestionJob per il play del canale
+        {
+			// 2023-02-16: in caso di HLSChannel, non serve aggiornare il campo playURL in MMS_IngestionJob
+			//	ma è sufficiente che ci sia il deliveryCode.
+			//	Nello scenario di LiveRecording e monitor/virtualVOD, Outputs[outputIndex] non esiste.
+			// Per questo motivo abbiamo IF nel SQL
+            lastSQLCommand = 
+				string("update MMS_IngestionJob set ")
+				+ "metaDataContent = IF(JSON_EXTRACT(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "]') is null, "
+					+ "JSON_ARRAY_APPEND(metaDataContent, '$.Outputs', "
+						+ "CAST('{\"outputType\": \"HLS_Channel\", \"deliveryCode\": ?}' AS JSON)), "
+					+ "JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
+					+ ") "
+				"where ingestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+            preparedStatement->setInt64(queryParameterIndex++, deliveryCode);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", deliveryCode: " + to_string(deliveryCode)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+        
         {
             lastSQLCommand = 
                 string("update MMS_EncodingJob set ")
