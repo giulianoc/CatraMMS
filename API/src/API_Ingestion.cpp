@@ -4872,51 +4872,6 @@ void API::changeLiveProxyPlaylist(
 						}
 						drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
 
-						/*
-						// string textPosition_X_InPixel = "(video_width-text_width)/2";
-						// string textPosition_Y_InPixel = "(video_height-text_height)/2";
-						string fontType = "OpenSans-ExtraBold.ttf";
-						int fontSize = 48;
-						string fontColor = "orange";
-						int textPercentageOpacity = 100;
-						bool boxEnable = false;
-						string boxColor;
-						int boxPercentageOpacity = -1;
-
-						Json::Value drawTextDetailsRoot;
-						{
-							field = "text";
-							drawTextDetailsRoot[field] = broadcastDefaultText;
-
-							field = "textPosition_X_InPixel";
-							drawTextDetailsRoot[field] = broadcastDefaultTextPosition_X_InPixel;
-
-							field = "textPosition_Y_InPixel";
-							drawTextDetailsRoot[field] = broadcastDefaultTextPosition_Y_InPixel;
-
-							field = "fontType";
-							drawTextDetailsRoot[field] = fontType;
-
-							field = "fontSize";
-							drawTextDetailsRoot[field] = fontSize;
-
-							field = "fontColor";
-							drawTextDetailsRoot[field] = fontColor;
-
-							field = "textPercentageOpacity";
-							drawTextDetailsRoot[field] = textPercentageOpacity;
-
-							field = "boxEnable";
-							drawTextDetailsRoot[field] = boxEnable;
-
-							field = "boxColor";
-							drawTextDetailsRoot[field] = boxColor;
-
-							field = "boxPercentageOpacity";
-							drawTextDetailsRoot[field] = boxPercentageOpacity;
-						}
-						*/
-
 						// the same json structure is used in MMSEngineProcessor::manageVODProxy
 						broadcastDefaultCountdownInputRoot
 							= _mmsEngineDBFacade->getCountdownInputRoot(
