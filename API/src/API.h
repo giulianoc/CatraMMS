@@ -80,6 +80,7 @@ private:
 
 	string				_sharedEncodersPoolLabel;
 	Json::Value			_sharedEncodersLabel;
+	int					_defaultSharedHLSChannelsNumber;
 
     // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;

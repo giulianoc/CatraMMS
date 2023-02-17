@@ -329,6 +329,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
 	}
 
+    _defaultSharedHLSChannelsNumber = JSONUtils::asInt(_configuration["api"], "defaultSharedHLSChannelsNumber", 1);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+    );
+
     _apiProtocol =  JSONUtils::asString(_configuration["api"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->protocol: " + _apiProtocol

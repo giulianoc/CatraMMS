@@ -185,45 +185,90 @@ void API::registerUser(
 				throw runtime_error(errorMessage);
 			}
 
-			try
+			// workspace initialization
 			{
-				_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
-					+ ", workspaceKey: " + to_string(workspaceKey)
-					+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
-				);
+				try
+				{
+					_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
+					);
 
-				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-					_sharedEncodersPoolLabel, _sharedEncodersLabel);
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+					_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
+						_sharedEncodersPoolLabel, _sharedEncodersLabel);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
 
-				string errorMessage = string("Internal server error: ") + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = string("Internal server error: ") + e.what();
+					_logger->error(__FILEREF__ + errorMessage);
 
-				// 2021-09-30: we do not raise an exception because this association
-				// is not critical for the account
-				// sendError(request, 500, errorMessage);
+					// 2021-09-30: we do not raise an exception because this association
+					// is not critical for the account
+					// sendError(request, 500, errorMessage);
 
-				// throw runtime_error(errorMessage);
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+					// throw runtime_error(errorMessage);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
 
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = string("Internal server error");
+					_logger->error(__FILEREF__ + errorMessage);
 
-				// 2021-09-30: we do not raise an exception because this association
-				// is not critical for the account
-				// sendError(request, 500, errorMessage);
+					// 2021-09-30: we do not raise an exception because this association
+					// is not critical for the account
+					// sendError(request, 500, errorMessage);
 
-				// throw runtime_error(errorMessage);
+					// throw runtime_error(errorMessage);
+				}
+
+				try
+				{
+					_logger->info(__FILEREF__ + "Add some HLS_Channels to the Workspace"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+					);
+
+					for(int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
+						_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
+							hlsChannelIndex + 1, -1, -1, "SHARED");
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error: ") + e.what();
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// 2021-09-30: we do not raise an exception because this association
+					// is not critical for the account
+					// sendError(request, 500, errorMessage);
+
+					// throw runtime_error(errorMessage);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error");
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// 2021-09-30: we do not raise an exception because this association
+					// is not critical for the account
+					// sendError(request, 500, errorMessage);
+
+					// throw runtime_error(errorMessage);
+				}
 			}
 		}
 		else
@@ -484,46 +529,91 @@ void API::createWorkspace(
             throw runtime_error(errorMessage);
         }
 
-		try
+		// workspace initialization
 		{
-			_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
+				);
 
-			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-				_sharedEncodersPoolLabel, _sharedEncodersLabel);
+				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
+					_sharedEncodersPoolLabel, _sharedEncodersLabel);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				string errorMessage = string("Internal server error: ") + e.what();
+				_logger->error(__FILEREF__ + errorMessage);
+
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				string errorMessage = string("Internal server error");
+				_logger->error(__FILEREF__ + errorMessage);
+
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+
+			try
+			{
+				_logger->info(__FILEREF__ + "Add some HLS_Channels to the Workspace"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+				);
+
+				for(int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
+					_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
+						hlsChannelIndex + 1, -1, -1, "SHARED");
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				string errorMessage = string("Internal server error: ") + e.what();
+				_logger->error(__FILEREF__ + errorMessage);
+
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + api + " failed"
+					+ ", e.what(): " + e.what()
+				);
+
+				string errorMessage = string("Internal server error");
+				_logger->error(__FILEREF__ + errorMessage);
+
+				// 2021-09-30: we do not raise an exception because this association
+				// is not critical for the account
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
 		}
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
-
-			// 2021-09-30: we do not raise an exception because this association
-			// is not critical for the account
-            // sendError(request, 500, errorMessage);
-
-            // throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-			// 2021-09-30: we do not raise an exception because this association
-			// is not critical for the account
-            // sendError(request, 500, errorMessage);
-
-            // throw runtime_error(errorMessage);
-        }
 
         try
         {
