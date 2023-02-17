@@ -140,6 +140,8 @@ void EMailSender:: sendEmail(
             recipients = curl_slist_append(recipients, cc.c_str());
         curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
 
+        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
         /* We're using a callback function to specify the payload (the headers and
          * body of the message). You could just use the CURLOPT_READDATA option to
          * specify a FILE pointer to read from. */

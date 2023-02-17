@@ -203,8 +203,8 @@ void API::registerUser(
 						+ ", e.what(): " + e.what()
 					);
 
-					string errorMessage = string("Internal server error: ") + e.what();
-					_logger->error(__FILEREF__ + errorMessage);
+					// string errorMessage = string("Internal server error: ") + e.what();
+					// _logger->error(__FILEREF__ + errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -218,8 +218,8 @@ void API::registerUser(
 						+ ", e.what(): " + e.what()
 					);
 
-					string errorMessage = string("Internal server error");
-					_logger->error(__FILEREF__ + errorMessage);
+					// string errorMessage = string("Internal server error");
+					// _logger->error(__FILEREF__ + errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -245,8 +245,8 @@ void API::registerUser(
 						+ ", e.what(): " + e.what()
 					);
 
-					string errorMessage = string("Internal server error: ") + e.what();
-					_logger->error(__FILEREF__ + errorMessage);
+					// string errorMessage = string("Internal server error: ") + e.what();
+					// _logger->error(__FILEREF__ + errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -260,8 +260,8 @@ void API::registerUser(
 						+ ", e.what(): " + e.what()
 					);
 
-					string errorMessage = string("Internal server error");
-					_logger->error(__FILEREF__ + errorMessage);
+					// string errorMessage = string("Internal server error");
+					// _logger->error(__FILEREF__ + errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -326,7 +326,6 @@ void API::registerUser(
 
 				throw runtime_error(errorMessage);
 			}
-
 		}
 
         try
@@ -347,6 +346,10 @@ void API::registerUser(
 			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
 				+ to_string(userKey)
 				+ "&confirmationCode=" + confirmationCode);
+
+			_logger->info(__FILEREF__ + "Sending confirmation URL by email..."
+				+ ", confirmationURL: " + confirmationURL
+			);
 
             string to = email;
             string subject = "Confirmation code";
