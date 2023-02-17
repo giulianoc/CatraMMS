@@ -6948,7 +6948,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
         Json::Value responseRoot;
         {
             lastSQLCommand = 
-                string("select count(*) from MMS_Conf_AWSChannel ")
+                string("select count(*) from MMS_Conf_AWSChannel ac ")
                     + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
