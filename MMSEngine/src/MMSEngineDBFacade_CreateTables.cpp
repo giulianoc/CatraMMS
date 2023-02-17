@@ -2510,12 +2510,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"rtmpURL					VARCHAR (512) NOT NULL,"
                     "playURL					VARCHAR (512) NOT NULL,"
                     "type						VARCHAR (64) NOT NULL,"
+                    "outputIndex				INT UNSIGNED NULL,"
                     "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "constraint MMS_Conf_AWSChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_AWSChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -2545,12 +2546,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "filePath					VARCHAR (512) NOT NULL,"
                     "secureToken				VARCHAR (512) NULL,"
                     "type						VARCHAR (64) NOT NULL,"
+                    "outputIndex				INT UNSIGNED NULL,"
                     "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "constraint MMS_Conf_CDN77Channel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_CDN77Channel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -2581,12 +2583,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "password					VARCHAR (128) NULL,"
                     "playURL					VARCHAR (512) NULL,"
                     "type						VARCHAR (64) NOT NULL,"
+                    "outputIndex				INT UNSIGNED NULL,"
                     "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "constraint MMS_Conf_RTMPChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_RTMPChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -2615,13 +2618,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"segmentDuration			INT UNSIGNED NULL,"
 					"playlistEntriesNumber		INT UNSIGNED NULL,"
                     "type						VARCHAR (64) NOT NULL,"
+                    "outputIndex				INT UNSIGNED NULL,"
                     "reservedByIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "constraint MMS_Conf_HLSChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_HLSChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label), "
                     "UNIQUE (workspaceKey, deliveryCode), "
-                    "UNIQUE (reservedByIngestionJobKey)) "
+                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

@@ -327,10 +327,10 @@ void LiveRecorder::encodeContent(
 				{
 					_liveRecording->_monitorVirtualVODManifestDirectoryPath =
 						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
-						"monitorManifestDirectoryPath", "");
+						"manifestDirectoryPath", "");
 					_liveRecording->_monitorVirtualVODManifestFileName =
 						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
-						"monitorManifestFileName", "");
+						"manifestFileName", "");
 				}
 			}
 		}

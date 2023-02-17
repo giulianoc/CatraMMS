@@ -2322,13 +2322,13 @@ public:
 		int64_t confKey);
 
 	Json::Value getAWSChannelConfList (
-        int64_t workspaceKey);
+        int64_t workspaceKey, int64_t confKey, string label);
 
 	tuple<string, string, string, bool> reserveAWSChannel(
-		int64_t workspaceKey, string label, string type,
-		int64_t ingestionJobKey);
+		int64_t workspaceKey, string label,
+		int outputIndex, int64_t ingestionJobKey);
 
-	string releaseAWSChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+	string releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 
 	int64_t addCDN77ChannelConf(
 		int64_t workspaceKey,
@@ -2352,10 +2352,10 @@ public:
         int64_t workspaceKey, string label);
 
 	tuple<string, string, string, string, string, bool> reserveCDN77Channel(
-		int64_t workspaceKey, string label, string type,
-		int64_t ingestionJobKey);
+		int64_t workspaceKey, string label,
+		int outputIndex, int64_t ingestionJobKey);
 
-	void releaseCDN77Channel(int64_t workspaceKey, int64_t ingestionJobKey);
+	void releaseCDN77Channel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 
 	int64_t addRTMPChannelConf(
 		int64_t workspaceKey,
@@ -2379,10 +2379,10 @@ public:
         int64_t workspaceKey, string label, bool warningIfMissing);
 
 	tuple<string, string, string, string, string, string, bool> reserveRTMPChannel(
-		int64_t workspaceKey, string label, string type,
-		int64_t ingestionJobKey);
+		int64_t workspaceKey, string label,
+		int outputIndex, int64_t ingestionJobKey);
 
-	void releaseRTMPChannel(int64_t workspaceKey, int64_t ingestionJobKey);
+	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 
 	int64_t addHLSChannelConf(
 		int64_t workspaceKey,
@@ -2405,13 +2405,11 @@ public:
 	tuple<int64_t, int64_t, int, int> getHLSChannelDetails (
 		int64_t workspaceKey, string label, bool warningIfMissing);
 
-	tuple<string, int64_t, int, int, bool>
-		reserveHLSChannel(
-		int64_t workspaceKey, string label, string type,
-		int64_t ingestionJobKey);
+	tuple<string, int64_t, int, int, bool> reserveHLSChannel(
+		int64_t workspaceKey, string label,
+		int outputIndex, int64_t ingestionJobKey);
 
-	void releaseHLSChannel(
-		int64_t workspaceKey, int64_t ingestionJobKey);
+	void releaseHLSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 
     int64_t addFTPConf(
         int64_t workspaceKey,

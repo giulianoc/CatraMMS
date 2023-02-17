@@ -6551,8 +6551,8 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
         {
             lastSQLCommand = 
                 "insert into MMS_Conf_AWSChannel(workspaceKey, label, channelId, "
-				"rtmpURL, playURL, type, reservedByIngestionJobKey) values ("
-                "?, ?, ?, ?, ?, ?, NULL)";
+				"rtmpURL, playURL, type) values ("
+                "?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -6899,7 +6899,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getAWSChannelConfList (
-	int64_t workspaceKey)
+	int64_t workspaceKey, int64_t confKey, string label)
 {
     string      lastSQLCommand;
     Json::Value awsChannelConfListRoot;
@@ -6927,13 +6927,23 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             {
                 field = "workspaceKey";
                 requestParametersRoot[field] = workspaceKey;
+
+                field = "confKey";
+                requestParametersRoot[field] = confKey;
+
+                field = "label";
+                requestParametersRoot[field] = label;
             }
             
             field = "requestParameters";
             awsChannelConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = string ("where workspaceKey = ? ");
+        string sqlWhere = string ("where ac.workspaceKey = ? ");
+		if (confKey != -1)                                                                                    
+			sqlWhere += "and ac.confKey = ? ";                                                                
+		else if (label != "")                                                                                 
+			sqlWhere += "and ac.label = ? ";                                                                  
         
         Json::Value responseRoot;
         {
@@ -6945,11 +6955,17 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -6970,10 +6986,14 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
         Json::Value awsChannelRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-				string ("select confKey, label, channelId, rtmpURL, playURL, ")
-				+ "type, reservedByIngestionJobKey "
-				+ "from MMS_Conf_AWSChannel "
-                + sqlWhere;
+				string ("select ac.confKey, ac.label, ac.channelId, ac.rtmpURL, ac.playURL, ")
+				+ "ac.type, ac.outputIndex, ac.reservedByIngestionJobKey, "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "from MMS_Conf_AWSChannel ac left join MMS_IngestionJob ij "
+				+ "on ac.reservedByIngestionJobKey = ij.ingestionJobKey "
+                + sqlWhere
+				+ "order by ac.label "
+			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -6984,6 +7004,8 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -7015,12 +7037,24 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
                 awsChannelConfRoot[field] = static_cast<string>(
 					resultSet->getString("type"));
 
+                field = "outputIndex";
+				if (resultSet->isNull("outputIndex"))
+					awsChannelConfRoot[field] = Json::nullValue;
+				else
+					awsChannelConfRoot[field] = resultSet->getInt64("outputIndex");
+
                 field = "reservedByIngestionJobKey";
 				if (resultSet->isNull("reservedByIngestionJobKey"))
 					awsChannelConfRoot[field] = Json::nullValue;
 				else
-					awsChannelConfRoot[field]
-						= resultSet->getInt64("reservedByIngestionJobKey");
+					awsChannelConfRoot[field] = resultSet->getInt64("reservedByIngestionJobKey");
+
+                field = "configurationLabel";
+				if (resultSet->isNull("configurationLabel"))
+					awsChannelConfRoot[field] = Json::nullValue;
+				else
+					awsChannelConfRoot[field] = static_cast<string>(
+						resultSet->getString("configurationLabel"));
 
                 awsChannelRoot.append(awsChannelConfRoot);
             }
@@ -7102,8 +7136,8 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 
 tuple<string, string, string, bool>
 	MMSEngineDBFacade::reserveAWSChannel(
-	int64_t workspaceKey, string label, string type,
-	int64_t ingestionJobKey)
+	int64_t workspaceKey, string label,
+	int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -7119,7 +7153,7 @@ tuple<string, string, string, bool>
 		_logger->info(__FILEREF__ + "reserveAWSChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", label: " + label
-			+ ", type: " + type
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -7135,7 +7169,7 @@ tuple<string, string, string, bool>
 			lastSQLCommand = 
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status like 'End_%' and ingestionJobKey in ("
-					"select reservedByIngestionJobKey from MMS_Conf_AWSChannel where "
+					"select distinct reservedByIngestionJobKey from MMS_Conf_AWSChannel where "
 					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
 				;
 
@@ -7175,7 +7209,7 @@ tuple<string, string, string, bool>
 
 				{
 					lastSQLCommand = 
-						"update MMS_Conf_AWSChannel set reservedByIngestionJobKey = NULL "
+						"update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
 
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -7235,8 +7269,8 @@ tuple<string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
-					"where workspaceKey = ? and type = ? "
-					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
+					"where workspaceKey = ? and type = 'SHARED' "
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = ? and reservedByIngestionJobKey = ?))"
 					"order by reservedByIngestionJobKey desc limit 1 for update";
 			}
 			else
@@ -7245,7 +7279,7 @@ tuple<string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
-					"where workspaceKey = ? and type = ? "
+					"where workspaceKey = ? and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -7255,17 +7289,18 @@ tuple<string, string, string, bool>
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, type);
             if (label != "")
 				preparedStatement->setString(queryParameterIndex++, label);
+			else
+				preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", type: " + type
 				+ ", label: " + label
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -7273,7 +7308,7 @@ tuple<string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = __FILEREF__ + "No " + type + " AWS Channel found"
+				string errorMessage = __FILEREF__ + "No AWS Channel found"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
@@ -7292,14 +7327,15 @@ tuple<string, string, string, bool>
 		}
 
 		if (reservedByIngestionJobKey == -1)
-        {
+		{
 			lastSQLCommand = 
-				"update MMS_Conf_AWSChannel set reservedByIngestionJobKey = ? "
+				"update MMS_Conf_AWSChannel set outputIndex = ?, reservedByIngestionJobKey = ? "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, reservedConfKey);
 
@@ -7307,6 +7343,7 @@ tuple<string, string, string, bool>
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", confKey: " + to_string(reservedConfKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -7521,7 +7558,7 @@ tuple<string, string, string, bool>
 }
 
 string MMSEngineDBFacade::releaseAWSChannel(
-	int64_t workspaceKey, int64_t ingestionJobKey)
+	int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -7535,6 +7572,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
         
 		_logger->info(__FILEREF__ + "releaseAWSChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -7549,18 +7587,20 @@ string MMSEngineDBFacade::releaseAWSChannel(
         {
 			lastSQLCommand =
 				"select confKey, channelId from MMS_Conf_AWSChannel " 
-				"where workspaceKey = ? and reservedByIngestionJobKey = ? ";
+				"where workspaceKey = ? and outputIndex = ? and reservedByIngestionJobKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -7583,7 +7623,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
 
         {
 			lastSQLCommand = 
-				"update MMS_Conf_AWSChannel set reservedByIngestionJobKey = NULL "
+				"update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -7704,8 +7744,8 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
         {
             lastSQLCommand = 
                 "insert into MMS_Conf_CDN77Channel(workspaceKey, label, rtmpURL, "
-				"resourceURL, filePath, secureToken, type, reservedByIngestionJobKey) values ("
-                "?, ?, ?, ?, ?, ?, ?, NULL)";
+				"resourceURL, filePath, secureToken, type) values ("
+                "?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -8149,7 +8189,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
         {
             lastSQLCommand = 
 				string ("select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, ")
-				+ "cc.secureToken, cc.type, cc.reservedByIngestionJobKey, "
+				+ "cc.secureToken, cc.type, cc.outputIndex, cc.reservedByIngestionJobKey, "
 				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
 				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey "
@@ -8209,6 +8249,12 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
                 field = "type";
                 cdn77ChannelConfRoot[field] = static_cast<string>(
 					resultSet->getString("type"));
+
+                field = "outputIndex";
+				if (resultSet->isNull("outputIndex"))
+					cdn77ChannelConfRoot[field] = Json::nullValue;
+				else
+					cdn77ChannelConfRoot[field] = resultSet->getInt64("outputIndex");
 
                 field = "reservedByIngestionJobKey";
 				if (resultSet->isNull("reservedByIngestionJobKey"))
@@ -8454,8 +8500,8 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
 
 tuple<string, string, string, string, string, bool>
 	MMSEngineDBFacade::reserveCDN77Channel(
-	int64_t workspaceKey, string label, string type,
-	int64_t ingestionJobKey)
+	int64_t workspaceKey, string label,
+	int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -8471,7 +8517,7 @@ tuple<string, string, string, string, string, bool>
 		_logger->info(__FILEREF__ + "reserveCDN77Channel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", label: " + label
-			+ ", type: " + type
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -8483,11 +8529,13 @@ tuple<string, string, string, string, string, bool>
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_CDN77Channel
 		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
+		// outputIndex (stesso ingestion con ad esempio 2 CDN77)
         {
 			lastSQLCommand = 
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status like 'End_%' and ingestionJobKey in ("
-					"select reservedByIngestionJobKey from MMS_Conf_CDN77Channel where "
+					"select distinct reservedByIngestionJobKey from MMS_Conf_CDN77Channel where "
 					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
 				;
 
@@ -8527,7 +8575,7 @@ tuple<string, string, string, string, string, bool>
 
 				{
 					lastSQLCommand = 
-						"update MMS_Conf_CDN77Channel set reservedByIngestionJobKey = NULL "
+						"update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
 
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -8588,9 +8636,9 @@ tuple<string, string, string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
-					"where workspaceKey = ? and type = ? "
-					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
-					"for update";
+					"where workspaceKey = ? and type = 'SHARED' "
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = ? and reservedByIngestionJobKey = ?))"
+					"order by reservedByIngestionJobKey desc limit 1 for update";
 			}
 			else
 			{
@@ -8598,7 +8646,7 @@ tuple<string, string, string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
-					"where workspaceKey = ? and type = ? "
+					"where workspaceKey = ? and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -8608,17 +8656,18 @@ tuple<string, string, string, string, string, bool>
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, type);
             if (label != "")
 				preparedStatement->setString(queryParameterIndex++, label);
+			else
+				preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", type: " + type
 				+ ", label: " + label
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -8626,7 +8675,7 @@ tuple<string, string, string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = __FILEREF__ + "No " + type + " CDN77 Channel found"
+				string errorMessage = __FILEREF__ + "No CDN77 Channel found"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
@@ -8649,12 +8698,13 @@ tuple<string, string, string, string, string, bool>
 		if (reservedByIngestionJobKey == -1)
         {
 			lastSQLCommand = 
-				"update MMS_Conf_CDN77Channel set reservedByIngestionJobKey = ? "
+				"update MMS_Conf_CDN77Channel set outputIndex = ?, reservedByIngestionJobKey = ? "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, reservedConfKey);
 
@@ -8662,6 +8712,7 @@ tuple<string, string, string, string, string, bool>
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", confKey: " + to_string(reservedConfKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -8876,7 +8927,7 @@ tuple<string, string, string, string, string, bool>
 }
 
 void MMSEngineDBFacade::releaseCDN77Channel(
-	int64_t workspaceKey, int64_t ingestionJobKey)
+	int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -8890,6 +8941,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
         
 		_logger->info(__FILEREF__ + "releaseCDN77Channel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -8904,18 +8956,20 @@ void MMSEngineDBFacade::releaseCDN77Channel(
         {
 			lastSQLCommand =
 				"select confKey from MMS_Conf_CDN77Channel " 
-				"where workspaceKey = ? and reservedByIngestionJobKey = ? ";
+				"where workspaceKey = ? and outputIndex = ? and reservedByIngestionJobKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -8937,7 +8991,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
 
         {
 			lastSQLCommand = 
-				"update MMS_Conf_CDN77Channel set reservedByIngestionJobKey = NULL "
+				"update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -8995,7 +9049,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9055,8 +9109,8 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
         {
             lastSQLCommand = 
                 "insert into MMS_Conf_RTMPChannel(workspaceKey, label, rtmpURL, "
-				"streamName, userName, password, playURL, type, reservedByIngestionJobKey) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, NULL)";
+				"streamName, userName, password, playURL, type) values ("
+                "?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -9130,7 +9184,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9522,7 +9576,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
         {
             lastSQLCommand = 
 				string ("select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, ")
-				+ "rc.playURL, rc.type, rc.reservedByIngestionJobKey, "
+				+ "rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
 				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_RTMPChannel rc left join MMS_IngestionJob ij "
 				+ "on rc.reservedByIngestionJobKey = ij.ingestionJobKey "
@@ -9595,6 +9649,12 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
                 field = "type";
                 rtmpChannelConfRoot[field] = static_cast<string>(
 					resultSet->getString("type"));
+
+                field = "outputIndex";
+				if (resultSet->isNull("outputIndex"))
+					rtmpChannelConfRoot[field] = Json::nullValue;
+				else
+					rtmpChannelConfRoot[field] = resultSet->getInt64("outputIndex");
 
                 field = "reservedByIngestionJobKey";
 				if (resultSet->isNull("reservedByIngestionJobKey"))
@@ -9852,8 +9912,8 @@ tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTM
 
 tuple<string, string, string, string, string, string, bool>
 	MMSEngineDBFacade::reserveRTMPChannel(
-	int64_t workspaceKey, string label, string type,
-	int64_t ingestionJobKey)
+	int64_t workspaceKey, string label,
+	int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -9869,7 +9929,7 @@ tuple<string, string, string, string, string, string, bool>
 		_logger->info(__FILEREF__ + "reserveRTMPChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", label: " + label
-			+ ", type: " + type
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -9881,11 +9941,13 @@ tuple<string, string, string, string, string, string, bool>
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_RTMPChannel
 		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
+		// outputIndex (stesso ingestion con ad esempio 2 RTMP)
         {
 			lastSQLCommand = 
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status like 'End_%' and ingestionJobKey in ("
-					"select reservedByIngestionJobKey from MMS_Conf_RTMPChannel where "
+					"select distinct, reservedByIngestionJobKey from MMS_Conf_RTMPChannel where "
 					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
 				;
 
@@ -9925,7 +9987,7 @@ tuple<string, string, string, string, string, string, bool>
 
 				{
 					lastSQLCommand = 
-						"update MMS_Conf_RTMPChannel set reservedByIngestionJobKey = NULL "
+						"update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
 
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -9987,9 +10049,9 @@ tuple<string, string, string, string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
-					"where workspaceKey = ? and type = ? "
-					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
-					"for update";
+					"where workspaceKey = ? and type = 'SHARED' "
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = ? and reservedByIngestionJobKey = ?))"
+					"order by reservedByIngestionJobKey desc limit 1 for update";
 			}
 			else
 			{
@@ -9997,7 +10059,7 @@ tuple<string, string, string, string, string, string, bool>
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
-					"where workspaceKey = ? and type = ? "
+					"where workspaceKey = ? and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -10007,17 +10069,18 @@ tuple<string, string, string, string, string, string, bool>
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, type);
             if (label != "")
 				preparedStatement->setString(queryParameterIndex++, label);
+			else
+				preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", type: " + type
 				+ ", label: " + label
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -10025,7 +10088,7 @@ tuple<string, string, string, string, string, string, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = __FILEREF__ + "No " + type + " RTMP Channel found"
+				string errorMessage = __FILEREF__ + "No RTMP Channel found"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
@@ -10053,12 +10116,13 @@ tuple<string, string, string, string, string, string, bool>
 		if (reservedByIngestionJobKey == -1)
         {
 			lastSQLCommand = 
-				"update MMS_Conf_RTMPChannel set reservedByIngestionJobKey = ? "
+				"update MMS_Conf_RTMPChannel set outputIndex = ?, reservedByIngestionJobKey = ? "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, reservedConfKey);
 
@@ -10066,6 +10130,7 @@ tuple<string, string, string, string, string, string, bool>
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", confKey: " + to_string(reservedConfKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -10280,7 +10345,7 @@ tuple<string, string, string, string, string, string, bool>
 }
 
 void MMSEngineDBFacade::releaseRTMPChannel(
-	int64_t workspaceKey, int64_t ingestionJobKey)
+	int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -10294,6 +10359,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(
         
 		_logger->info(__FILEREF__ + "releaseRTMPChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -10308,18 +10374,20 @@ void MMSEngineDBFacade::releaseRTMPChannel(
         {
 			lastSQLCommand =
 				"select confKey from MMS_Conf_RTMPChannel " 
-				"where workspaceKey = ? and reservedByIngestionJobKey = ? ";
+				"where workspaceKey = ? and outputIndex = ? and reservedByIngestionJobKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -10341,7 +10409,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(
 
         {
 			lastSQLCommand = 
-				"update MMS_Conf_RTMPChannel set reservedByIngestionJobKey = NULL "
+				"update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -10459,8 +10527,8 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
         {
             lastSQLCommand = 
                 "insert into MMS_Conf_HLSChannel(workspaceKey, label, deliveryCode, "
-				"segmentDuration, playlistEntriesNumber, type, reservedByIngestionJobKey) values ("
-                "?, ?, ?, ?, ?, ?, NULL)";
+				"segmentDuration, playlistEntriesNumber, type) values ("
+                "?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -10906,7 +10974,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
         {
             lastSQLCommand = 
 				string ("select hc.confKey, hc.label, hc.deliveryCode, hc.segmentDuration, hc.playlistEntriesNumber, ")
-				+ "hc.type, hc.reservedByIngestionJobKey, "
+				+ "hc.type, hc.outputIndex, hc.reservedByIngestionJobKey, "
 				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_HLSChannel hc left join MMS_IngestionJob ij "
 				+ "on hc.reservedByIngestionJobKey = ij.ingestionJobKey "
@@ -10962,6 +11030,12 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
                 field = "type";
                 hlsChannelConfRoot[field] = static_cast<string>(
 					resultSet->getString("type"));
+
+                field = "outputIndex";
+				if (resultSet->isNull("outputIndex"))
+					hlsChannelConfRoot[field] = Json::nullValue;
+				else
+					hlsChannelConfRoot[field] = resultSet->getInt64("outputIndex");
 
                 field = "reservedByIngestionJobKey";
 				if (resultSet->isNull("reservedByIngestionJobKey"))
@@ -11213,8 +11287,8 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails (
 
 tuple<string, int64_t, int, int, bool>
 	MMSEngineDBFacade::reserveHLSChannel(
-	int64_t workspaceKey, string label, string type,
-	int64_t ingestionJobKey)
+	int64_t workspaceKey, string label,
+	int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -11230,7 +11304,7 @@ tuple<string, int64_t, int, int, bool>
 		_logger->info(__FILEREF__ + "reserveHLSChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", label: " + label
-			+ ", type: " + type
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -11242,11 +11316,13 @@ tuple<string, int64_t, int, int, bool>
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_RTMPChannel
 		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
+		// outputIndex (stesso ingestion con ad esempio 2 HLS)
         {
 			lastSQLCommand = 
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status like 'End_%' and ingestionJobKey in ("
-					"select reservedByIngestionJobKey from MMS_Conf_HLSChannel where "
+					"select distinct reservedByIngestionJobKey from MMS_Conf_HLSChannel where "
 					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
 				;
 
@@ -11286,7 +11362,7 @@ tuple<string, int64_t, int, int, bool>
 
 				{
 					lastSQLCommand = 
-						"update MMS_Conf_HLSChannel set reservedByIngestionJobKey = NULL "
+						"update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in (" + ingestionJobKeyList + ")";
 
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -11346,9 +11422,9 @@ tuple<string, int64_t, int, int, bool>
 				lastSQLCommand =
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
-					"where workspaceKey = ? and type = ? "
-					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?)"
-					"for update";
+					"where workspaceKey = ? and type = 'SHARED' "
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = ? and reservedByIngestionJobKey = ?))"
+					"order by reservedByIngestionJobKey desc limit 1 for update";
 			}
 			else
 			{
@@ -11356,7 +11432,7 @@ tuple<string, int64_t, int, int, bool>
 				lastSQLCommand =
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
-					"where workspaceKey = ? and type = ? "
+					"where workspaceKey = ? and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -11366,17 +11442,18 @@ tuple<string, int64_t, int, int, bool>
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, type);
             if (label != "")
 				preparedStatement->setString(queryParameterIndex++, label);
+			else
+				preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", type: " + type
 				+ ", label: " + label
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -11384,7 +11461,7 @@ tuple<string, int64_t, int, int, bool>
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = __FILEREF__ + "No " + type + " HLS Channel found"
+				string errorMessage = __FILEREF__ + "No HLS Channel found"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", label: " + label
@@ -11408,12 +11485,13 @@ tuple<string, int64_t, int, int, bool>
 		if (reservedByIngestionJobKey == -1)
         {
 			lastSQLCommand = 
-				"update MMS_Conf_HLSChannel set reservedByIngestionJobKey = ? "
+				"update MMS_Conf_HLSChannel set outputIndex = ?, reservedByIngestionJobKey = ? "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, reservedConfKey);
 
@@ -11421,6 +11499,7 @@ tuple<string, int64_t, int, int, bool>
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", confKey: " + to_string(reservedConfKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -11635,7 +11714,7 @@ tuple<string, int64_t, int, int, bool>
 }
 
 void MMSEngineDBFacade::releaseHLSChannel(
-	int64_t workspaceKey, int64_t ingestionJobKey)
+	int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
     string      lastSQLCommand;
     
@@ -11649,6 +11728,7 @@ void MMSEngineDBFacade::releaseHLSChannel(
         
 		_logger->info(__FILEREF__ + "releaseHLSChannel"
 			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", outputIndex: " + to_string(outputIndex)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
@@ -11663,18 +11743,20 @@ void MMSEngineDBFacade::releaseHLSChannel(
         {
 			lastSQLCommand =
 				"select confKey from MMS_Conf_HLSChannel " 
-				"where workspaceKey = ? and reservedByIngestionJobKey = ? ";
+				"where workspaceKey = ? and outputIndex = ? and reservedByIngestionJobKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setInt(queryParameterIndex++, outputIndex);
 			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", outputIndex: " + to_string(outputIndex)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -11696,7 +11778,7 @@ void MMSEngineDBFacade::releaseHLSChannel(
 
         {
 			lastSQLCommand = 
-				"update MMS_Conf_HLSChannel set reservedByIngestionJobKey = NULL "
+				"update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (

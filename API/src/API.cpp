@@ -2283,7 +2283,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     else if (method == "awsChannelConfList")
     {
         awsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, workspace);
+			request, workspace, queryParameters);
     }
     else if (method == "addCDN77ChannelConf")
     {

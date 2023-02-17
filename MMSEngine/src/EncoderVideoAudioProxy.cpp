@@ -5354,11 +5354,13 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot,
 						"awsExpirationInMinutes", 1440);
 
+					/*
 					string awsChannelType;
 					if (awsChannelConfigurationLabel == "")
 						awsChannelType = "SHARED";
 					else
 						awsChannelType = "DEDICATED";
+					*/
 
 					// reserveAWSChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -5368,8 +5370,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					tuple<string, string, string, bool> awsChannelDetails
 						= _mmsEngineDBFacade->reserveAWSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							awsChannelConfigurationLabel, awsChannelType,
-							_encodingItem->_ingestionJobKey);
+							awsChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string awsChannelId;
 					string rtmpURL;
@@ -5428,7 +5430,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 									+ to_string(_encodingItem->_encodingJobKey) 
 								+ ", awsChannelConfigurationLabel: "
 									+ awsChannelConfigurationLabel 
-								+ ", awsChannelType: " + awsChannelType 
 								+ ", awsChannelId: " + awsChannelId 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", playURL: " + playURL 
@@ -5487,11 +5488,13 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot,
 						"cdn77ExpirationInMinutes", 1440);
 
+					/*
 					string cdn77ChannelType;
 					if (cdn77ChannelConfigurationLabel == "")
 						cdn77ChannelType = "SHARED";
 					else
 						cdn77ChannelType = "DEDICATED";
+					*/
 
 					// reserveCDN77Channel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -5501,8 +5504,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					tuple<string, string, string, string, string, bool> cdn77ChannelDetails
 						= _mmsEngineDBFacade->reserveCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey,
-							cdn77ChannelConfigurationLabel, cdn77ChannelType,
-							_encodingItem->_ingestionJobKey);
+							cdn77ChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					string rtmpURL;
@@ -5563,7 +5566,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", cdn77ChannelType: " + cdn77ChannelType 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", resourceURL: " + resourceURL 
 								+ ", filePath: " + filePath 
@@ -5607,11 +5609,13 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot,
 						"rtmpChannelConfigurationLabel", "");
 
+					/*
 					string rtmpChannelType;
 					if (rtmpChannelConfigurationLabel == "")
 						rtmpChannelType = "SHARED";
 					else
 						rtmpChannelType = "DEDICATED";
+					*/
 
 					// reserveRTMPChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -5621,8 +5625,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails
 						= _mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							rtmpChannelConfigurationLabel, rtmpChannelType,
-							_encodingItem->_ingestionJobKey);
+							rtmpChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					string rtmpURL;
@@ -5669,7 +5673,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", rtmpChannelType: " + rtmpChannelType 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
 								+ ", playURL: " + playURL 
@@ -5710,11 +5713,13 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot,
 						"hlsChannelConfigurationLabel", "");
 
+					/*
 					string hlsChannelType;
 					if (hlsChannelConfigurationLabel == "")
 						hlsChannelType = "SHARED";
 					else
 						hlsChannelType = "DEDICATED";
+					*/
 
 					// reserveHLSChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -5724,8 +5729,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 					tuple<string, int64_t, int, int, bool> hlsChannelDetails
 						= _mmsEngineDBFacade->reserveHLSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							hlsChannelConfigurationLabel, hlsChannelType,
-							_encodingItem->_ingestionJobKey);
+							hlsChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					int64_t deliveryCode;
@@ -5797,7 +5802,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", hlsChannelType: " + hlsChannelType 
 								+ ", deliveryCode: " + to_string(deliveryCode)
 								+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
@@ -5849,7 +5853,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 					}
@@ -5870,7 +5874,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -5889,7 +5893,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -5908,7 +5912,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseHLSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -5949,7 +5953,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 
 						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 					}
@@ -5970,7 +5974,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -5989,7 +5993,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -6008,7 +6012,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseHLSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							_encodingItem->_ingestionJobKey);
+							outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -6969,11 +6973,13 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot,
 						"awsExpirationInMinutes", 1440);
 
+					/*
 					string awsChannelType;
 					if (awsChannelConfigurationLabel == "")
 						awsChannelType = "SHARED";
 					else
 						awsChannelType = "DEDICATED";
+					*/
 
 					// reserveAWSChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -6983,8 +6989,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					tuple<string, string, string, bool> awsChannelDetails
 						= _mmsEngineDBFacade->reserveAWSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							awsChannelConfigurationLabel, awsChannelType,
-							_encodingItem->_ingestionJobKey);
+							awsChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string awsChannelId;
 					string rtmpURL;
@@ -7045,7 +7051,6 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 									+ to_string(_encodingItem->_encodingJobKey) 
 								+ ", awsChannelConfigurationLabel: "
 									+ awsChannelConfigurationLabel 
-								+ ", awsChannelType: " + awsChannelType 
 								+ ", awsChannelId: " + awsChannelId 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", playURL: " + playURL 
@@ -7103,11 +7108,13 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot,
 						"cdn77ExpirationInMinutes", 1440);
 
+					/*
 					string cdn77ChannelType;
 					if (cdn77ChannelConfigurationLabel == "")
 						cdn77ChannelType = "SHARED";
 					else
 						cdn77ChannelType = "DEDICATED";
+					*/
 
 					// reserveCDN77Channel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -7117,8 +7124,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					tuple<string, string, string, string, string, bool> cdn77ChannelDetails
 						= _mmsEngineDBFacade->reserveCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey,
-							cdn77ChannelConfigurationLabel, cdn77ChannelType,
-							_encodingItem->_ingestionJobKey);
+							cdn77ChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					string rtmpURL;
@@ -7179,7 +7186,6 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", cdn77ChannelType: " + cdn77ChannelType 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", resourceURL: " + resourceURL 
 								+ ", filePath: " + filePath 
@@ -7223,11 +7229,13 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot,
 						"rtmpChannelConfigurationLabel", "");
 
+					/*
 					string rtmpChannelType;
 					if (rtmpChannelConfigurationLabel == "")
 						rtmpChannelType = "SHARED";
 					else
 						rtmpChannelType = "DEDICATED";
+					*/
 
 					// reserveRTMPChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -7237,8 +7245,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails
 						= _mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							rtmpChannelConfigurationLabel, rtmpChannelType,
-							_encodingItem->_ingestionJobKey);
+							rtmpChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					string rtmpURL;
@@ -7285,7 +7293,6 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", rtmpChannelType: " + rtmpChannelType 
 								+ ", rtmpURL: " + rtmpURL 
 								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
 								+ ", playURL: " + playURL 
@@ -7326,11 +7333,13 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot,
 						"hlsChannelConfigurationLabel", "");
 
+					/*
 					string hlsChannelType;
 					if (hlsChannelConfigurationLabel == "")
 						hlsChannelType = "SHARED";
 					else
 						hlsChannelType = "DEDICATED";
+					*/
 
 					// reserveHLSChannel ritorna exception se non ci sono piu canali
 					// liberi o quello dedicato è già occupato
@@ -7340,8 +7349,8 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 					tuple<string, int64_t, int, int, bool> hlsChannelDetails
 						= _mmsEngineDBFacade->reserveHLSChannel(
 							_encodingItem->_workspace->_workspaceKey,
-							hlsChannelConfigurationLabel, hlsChannelType,
-							_encodingItem->_ingestionJobKey);
+							hlsChannelConfigurationLabel,
+							outputIndex, _encodingItem->_ingestionJobKey);
 
 					string reservedLabel;
 					int64_t deliveryCode;
@@ -7397,7 +7406,6 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
-								+ ", hlsChannelType: " + hlsChannelType 
 								+ ", deliveryCode: " + to_string(deliveryCode)
 								+ ", segmentDuration: " + to_string(segmentDuration)
 								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
@@ -7451,7 +7459,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 
 						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 					}
@@ -7472,7 +7480,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseCDN77Channel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -7491,7 +7499,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseRTMPChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -7510,7 +7518,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseHLSChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -7551,7 +7559,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						string awsChannelId = _mmsEngineDBFacade->releaseAWSChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 
 						awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 					}
@@ -7572,7 +7580,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseCDN77Channel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -7591,7 +7599,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseRTMPChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
@@ -7610,7 +7618,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						// error in case do not find ingestionJobKey
 						_mmsEngineDBFacade->releaseHLSChannel(
 								_encodingItem->_workspace->_workspaceKey,
-								_encodingItem->_ingestionJobKey);
+								outputIndex, _encodingItem->_ingestionJobKey);
 					}
 					catch(...)
 					{
