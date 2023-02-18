@@ -35,13 +35,9 @@ void EMailSender:: sendEmail(
 	vector<string>& emailBody,
 	bool useMMSCCToo)
 {
-    // curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd   
-    //      --mail-from 'giulianocatrambone@gmail.com' 
-    //      --mail-rcpt 'giulianoc@catrasoftware.it'   
-    //      --upload-file ~/tmp/1.txt 
-    //      --user 'giulianocatrambone@gmail.com:XXXXXXXXXXXXX' 
-    //      --insecure
-    
+	// see: https://everything.curl.dev/usingcurl/smtp
+	// curl --ssl-reqd --url 'smtps://smtppro.zoho.eu:465' --mail-from 'info@catramms-cloud.com' --mail-rcpt 'giulianocatrambone@gmail.com' --upload-file ./email.txt --user 'info@catramms-cloud.com:<write here the password>'
+
     // string emailServerURL = "smtp://smtp.gmail.com:587";
     string emailProtocol = JSONUtils::asString(_configuration["EmailNotification"], "protocol", "");
     string emailServer = JSONUtils::asString(_configuration["EmailNotification"], "server", "");

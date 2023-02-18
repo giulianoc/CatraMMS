@@ -77,6 +77,11 @@ public:
 		string		endOfFormData;
 	};
 
+	struct CurlUploadEmailData {
+		string			loggerName;
+		deque<string>	emailLines;
+	};
+
 	static string httpGet(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
@@ -351,6 +356,20 @@ public:
 		string ftpRemoteDirectory,
 		string ftpRemoteFileName,
 		curlpp::types::ProgressFunctionFunctor functor
+	);
+
+	static void sendEmail(
+		shared_ptr<spdlog::logger> logger,
+		string emailServerURL,	// i.e.: smtps://smtppro.zoho.eu:465
+		string from,	// i.e.: info@catramms-cloud.com
+		string tosCommaSeparated,
+		string ccsCommaSeparated,
+		string subject,
+		vector<string>& emailBody,
+		// 2023-02-18: usiamo 'from' come username perchè, mi è sembrato che ZOHO blocca l'email
+		//	se username e from sono diversi
+		// string userName,	// i.e.: info@catramms-cloud.com
+		string password
 	);
 
 private:

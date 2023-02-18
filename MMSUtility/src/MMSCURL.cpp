@@ -2572,3 +2572,202 @@ void MMSCURL::ftpFile(
         throw runtime_error(errorMessage);
     }
 }
+
+size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
+{
+	MMSCURL::CurlUploadEmailData* curlUploadEmailData = (MMSCURL::CurlUploadEmailData*) f;
+
+    auto logger = spdlog::get(curlUploadEmailData->loggerName);
+
+    if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1))
+    {
+        return 0;
+    }
+ 
+	// Docs: Returning 0 will signal end-of-file to the library and cause it to stop the current transfer
+    if (curlUploadEmailData->emailLines.size() == 0)
+        return 0; // no more lines
+  
+    string emailLine = curlUploadEmailData->emailLines.front();
+    // cout << "emailLine: " << emailLine << endl;
+
+	logger->info(__FILEREF__ + "email line"
+		+ ", emailLine: " + emailLine
+	);
+ 
+    memcpy(ptr, emailLine.c_str(), emailLine.length());
+    curlUploadEmailData->emailLines.pop_front();
+ 
+    return emailLine.length();
+}
+
+void MMSCURL:: sendEmail(
+	shared_ptr<spdlog::logger> logger,
+	string emailServerURL,	// i.e.: smtps://smtppro.zoho.eu:465
+	string from,	// i.e.: info@catramms-cloud.com
+	string tosCommaSeparated,
+	string ccsCommaSeparated,
+	string subject,
+	vector<string>& emailBody,
+	// 2023-02-18: usiamo 'from' come username perchè, mi è sembrato che ZOHO blocca l'email
+	//	se username e from sono diversi
+	// string userName,	// i.e.: info@catramms-cloud.com
+	string password
+)
+{
+	// see: https://everything.curl.dev/usingcurl/smtp
+	// curl --ssl-reqd --url 'smtps://smtppro.zoho.eu:465' --mail-from 'info@catramms-cloud.com' --mail-rcpt 'giulianocatrambone@gmail.com' --upload-file ./email.txt --user 'info@catramms-cloud.com:<write here the password>'
+
+	CurlUploadEmailData curlUploadEmailData;
+	curlUploadEmailData.loggerName = logger->name();
+
+	{
+		// add From
+		curlUploadEmailData.emailLines.push_back(string("From: <") + from + ">" + "\r\n");
+
+		// add To
+		{
+			string addresses;
+
+			stringstream ssAddresses(tosCommaSeparated);
+			string address;	// <email>,<email>,...
+			char delim = ',';
+			while (getline(ssAddresses, address, delim))
+			{
+				if (!address.empty())
+				{
+					if (addresses == "")
+						addresses = string("<") + address + ">";
+					else
+						addresses += (string(", <") + address + ">");
+				}
+			}
+
+			curlUploadEmailData.emailLines.push_back(string("To: ") + addresses + "\r\n");
+		}
+
+		// add Cc
+		if (ccsCommaSeparated != "")
+		{
+			string addresses;
+
+			stringstream ssAddresses(ccsCommaSeparated);
+			string address;	// <email>,<email>,...
+			char delim = ',';
+			while (getline(ssAddresses, address, delim))
+			{
+				if (!address.empty())
+				{
+					if (addresses == "")
+						addresses = string("<") + address + ">";
+					else
+						addresses += (string(", <") + address + ">");
+				}
+			}
+
+			curlUploadEmailData.emailLines.push_back(string("Cc: ") + addresses + "\r\n");
+		}
+
+		curlUploadEmailData.emailLines.push_back(string("Subject: ") + subject + "\r\n");
+		curlUploadEmailData.emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
+		curlUploadEmailData.emailLines.push_back("\r\n");   // empty line to divide headers from body, see RFC5322
+		curlUploadEmailData.emailLines.insert(curlUploadEmailData.emailLines.end(), emailBody.begin(), emailBody.end());
+	}
+
+	CURL *curl;
+	CURLcode res = CURLE_OK;
+
+	curl = curl_easy_init();
+	if (curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
+		if (from != "")
+			curl_easy_setopt(curl, CURLOPT_USERNAME, from.c_str());
+		if (password != "")
+			curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+
+		// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        
+        /* Note that this option isn't strictly required, omitting it will result
+         * in libcurl sending the MAIL FROM command with empty sender data. All
+         * autoresponses should have an empty reverse-path, and should be directed
+         * to the address in the reverse-path which triggered them. Otherwise,
+         * they could cause an endless loop. See RFC 5321 Section 4.5.5 for more
+         * details.
+         */
+		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from.c_str());
+
+        /* Add two recipients, in this particular case they correspond to the
+         * To: and Cc: addressees in the header, but they could be any kind of
+         * recipient. */
+		struct curl_slist *recipients = NULL;
+		{
+			{
+				stringstream ssAddresses(tosCommaSeparated);
+				string address;
+				char delim = ',';
+				while (getline(ssAddresses, address, delim))
+				{
+					if (!address.empty())
+						recipients = curl_slist_append(recipients, address.c_str());
+				}
+			}
+			if (ccsCommaSeparated != "")
+			{
+				stringstream ssAddresses(ccsCommaSeparated);
+				string address;
+				char delim = ',';
+				while (getline(ssAddresses, address, delim))
+				{
+					if (!address.empty())
+						recipients = curl_slist_append(recipients, address.c_str());
+				}
+			}
+
+			curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+		}
+
+		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+        /* We're using a callback function to specify the payload (the headers and
+         * body of the message). You could just use the CURLOPT_READDATA option to
+         * specify a FILE pointer to read from. */
+		curl_easy_setopt(curl, CURLOPT_READFUNCTION, emailPayloadFeed);
+		curl_easy_setopt(curl, CURLOPT_READDATA, &curlUploadEmailData);
+		curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+		// curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
+		/* Send the message */
+		logger->info(__FILEREF__ + "Sending email"
+			+ ", emailServerURL: " + emailServerURL
+			+ ", from: " + from
+			+ ", password: " + password
+			+ ", to: " + tosCommaSeparated
+			+ ", cc: " + ccsCommaSeparated
+			+ ", subject: " + subject
+		);
+		res = curl_easy_perform(curl);
+
+		if(res != CURLE_OK)
+			logger->error(__FILEREF__ + "curl_easy_perform() failed"
+				+ ", curl_easy_strerror(res): " + curl_easy_strerror(res)
+			);
+		else
+			logger->info(__FILEREF__ + "Email sent successful");
+
+		/* Free the list of recipients */
+		curl_slist_free_all(recipients);
+
+		/* curl won't send the QUIT command until you call cleanup, so you should
+         * be able to re-use this connection for additional messages (setting
+         * CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and calling
+         * curl_easy_perform() again. It may not be a good idea to keep the
+         * connection open for a very long time though (more than a few minutes
+         * may result in the server timing out the connection), and you do want to
+         * clean up in the end.
+         */
+		curl_easy_cleanup(curl);
+	}
+}
+

@@ -1,7 +1,9 @@
 
 #include <fstream>
 #include <iostream>
-#include "EMailSender.h"
+#include "MMSCURL.h"
+#include "JSONUtils.h"
+#include "catralibraries/Encrypt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 
@@ -20,7 +22,7 @@ int main (int iArgc, char *pArgv [])
     }
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
-    string emailAddresses = pArgv[2];
+    string tosCommaSeparated = pArgv[2];
 
     auto logger = spdlog::stdout_color_mt("sendEmail");
     spdlog::set_level(spdlog::level::trace);
@@ -29,15 +31,34 @@ int main (int iArgc, char *pArgv [])
 
     try
     {
-        logger->info(__FILEREF__ + "Sending email to " + emailAddresses
+        logger->info(__FILEREF__ + "Sending email to " + tosCommaSeparated
                 );
         
+		string emailURL = JSONUtils::asString(configuration["EmailNotification"], "url", "");
+		string from = JSONUtils::asString(configuration["EmailNotification"], "from", "");
+
+		string password;
+		{
+			string encryptedPassword = JSONUtils::asString(configuration["EmailNotification"], "password", "");
+			password = Encrypt::opensslDecrypt(encryptedPassword);        
+		}
+	
+		string ccsCommaSeparated;
+		string subject = "Test Email";
+
         vector<string> emailBody;
         emailBody.push_back("Test body");
 
-        EMailSender emailSender(logger, configuration);
-		bool useMMSCCToo = true;
-        emailSender.sendEmail(emailAddresses, "Test subject", emailBody, useMMSCCToo);
+		MMSCURL::sendEmail(
+			logger,
+			emailURL,	// i.e.: smtps://smtppro.zoho.eu:465
+			from,	// i.e.: info@catramms-cloud.com
+			tosCommaSeparated,
+			ccsCommaSeparated,
+			subject,
+			emailBody,
+			password
+		);
     }
     catch(...)
     {

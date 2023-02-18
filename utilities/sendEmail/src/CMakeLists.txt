@@ -33,6 +33,8 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
