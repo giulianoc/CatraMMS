@@ -4511,6 +4511,11 @@ void API::changeLiveProxyPlaylist(
 		else
 			switchBehaviour = switchBehaviourIt->second;
 
+		_logger->info(__FILEREF__ + api
+			+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+			+ ", switchBehaviour: " + switchBehaviour
+		);
+
 		// next try/catch initialize the belows parameters using the broadcaster info
 
 		// check of ingestion job and retrieve some fields

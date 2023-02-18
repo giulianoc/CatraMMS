@@ -2855,12 +2855,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			if (lightKill)
 			{
 				// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liverecording e liveProxy
-				_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+				// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM
+				//	SIGTERM now is managed by FFMpeg.cpp too
+				_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 				);
-				ProcessUtility::quitProcess(pidToBeKilled);
+				// ProcessUtility::quitProcess(pidToBeKilled);
+				ProcessUtility::termProcess(pidToBeKilled);
 			}
 			else
 			{
@@ -3026,16 +3029,19 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				try
 				{
 					// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
-					_logger->info(__FILEREF__ + "ProcessUtility::quitProcess"
+					// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM
+					//	SIGTERM now is managed by FFMpeg.cpp too
+					_logger->info(__FILEREF__ + "ProcessUtility::termProcess"
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", selectedLiveProxy->_childPid: " + to_string(selectedLiveProxy->_childPid)
 					);
-					ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
+					// ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
+					ProcessUtility::termProcess(selectedLiveProxy->_childPid);
 				}
 				catch(runtime_error e)
 				{
-					string errorMessage = string("ProcessUtility::kill (quit) Process failed")
+					string errorMessage = string("ProcessUtility::termProcess failed")
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
 						+ ", _childPid: " + to_string(selectedLiveProxy->_childPid)

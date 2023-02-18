@@ -9569,10 +9569,10 @@ void FFMpeg::liveRecorder(
 			}
 		}
 
-		bool sigQuitReceived = true;
-		while(sigQuitReceived)
+		bool sigQuitOrTermReceived = true;
+		while(sigQuitOrTermReceived)
 		{
-			sigQuitReceived = false;
+			sigQuitOrTermReceived = false;
 
 			if (!ffmpegArgumentList.empty())
 				copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -9607,12 +9607,18 @@ void FFMpeg::liveRecorder(
 				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 					_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 				// Exiting normally, received signal 3.
-				if (lastPartOfFfmpegOutputFile.find("signal 3") != string::npos)
+				// 2023-02-18: ho verificato che SIGQUIT non ha funzionato e il processo non si è stoppato,
+				//	mentre ha funzionato SIGTERM, per cui ora sto usando SIGTERM
+				if (lastPartOfFfmpegOutputFile.find("signal 3") != string::npos		// SIGQUIT
+					|| lastPartOfFfmpegOutputFile.find("signal: 3") != string::npos
+					|| lastPartOfFfmpegOutputFile.find("signal 15") != string::npos	// SIGTERM
+					|| lastPartOfFfmpegOutputFile.find("signal: 15") != string::npos
+				)
 				{
-					sigQuitReceived = true;
+					sigQuitOrTermReceived = true;
 
 					string errorMessage = __FILEREF__
-						+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT and is called again"
+						+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT/SIGTERM and is called again"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", iReturnedStatus: " + to_string(iReturnedStatus)
@@ -9649,7 +9655,7 @@ void FFMpeg::liveRecorder(
 							ffmpegArgumentList[streamingDurationIndex] = to_string(localStreamingDuration);
 
 							_logger->info(__FILEREF__
-								+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT, recalculate streaming duration"
+								+ "liveRecorder: ffmpeg execution command failed because received SIGQUIT/SIGTERM, recalculate streaming duration"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", iReturnedStatus: " + to_string(iReturnedStatus)
@@ -9659,11 +9665,11 @@ void FFMpeg::liveRecorder(
 						}
 						else
 						{
-							// exit from loop even if SIGQUIT because time period expired
-							sigQuitReceived = false;
+							// exit from loop even if SIGQUIT/SIGTERM because time period expired
+							sigQuitOrTermReceived = false;
 
 							_logger->info(__FILEREF__
-								+ "liveRecorder: ffmpeg execution command should be called again because received SIGQUIT but utcRecordingPeriod expired"
+								+ "liveRecorder: ffmpeg execution command should be called again because received SIGQUIT/SIGTERM but utcRecordingPeriod expired"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", iReturnedStatus: " + to_string(iReturnedStatus)
@@ -10631,7 +10637,7 @@ void FFMpeg::liveProxy2(
 		{
 			*pChildPid = 0;
 
-			bool stoppedBySigQuit = false;
+			bool stoppedBySigQuitOrTerm = false;
 
 			string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 				_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -10655,13 +10661,20 @@ void FFMpeg::liveProxy2(
 			{
 				// signal: 3 is what the LiveProxy playlist is changed and
 				//		we need to use the new playlist
-				// e.what(): Child has exit abnormally because of an uncaught signal. Terminating signal: 3
-				if (string(e.what()).find("signal: 3") != string::npos)
+				// e.what() is like:
+				//	Child has exit abnormally because of an uncaught signal. Terminating signal: 3
+				// 2023-02-18: ho verificato che SIGQUIT non ha funzionato e il processo non si è stoppato,
+				//	mentre ha funzionato SIGTERM, per cui ora sto usando SIGTERM
+				if (string(e.what()).find("signal 3") != string::npos		// SIGQUIT
+					|| string(e.what()).find("signal: 3") != string::npos
+					|| string(e.what()).find("signal 15") != string::npos	// SIGTERM
+					|| string(e.what()).find("signal: 15") != string::npos
+				)
 				{
-					stoppedBySigQuit = true;
+					stoppedBySigQuitOrTerm = true;
 
 					errorMessage = __FILEREF__
-						+ "ffmpeg execution stopped by SIGQUIT (3): ffmpeg command failed"
+						+ "ffmpeg execution stopped by SIGQUIT/SIGTERM (3/15): ffmpeg command failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -10838,7 +10851,7 @@ void FFMpeg::liveProxy2(
 				throw FFMpegURLForbidden();
 			else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
 				throw FFMpegURLNotFound();
-			else if (!stoppedBySigQuit)
+			else if (!stoppedBySigQuitOrTerm)
 			{
 				// see the comment before 'while'
 				if (
@@ -10941,7 +10954,7 @@ void FFMpeg::liveProxy2(
 					}
 				}
 			}
-			else // if (stoppedBySigQuit)
+			else // if (stoppedBySigQuitOrTerm)
 			{
 				// in case of IP_PUSH the monitor thread, in case the client does not
 				// reconnect istantaneously, kills the process.
@@ -10967,9 +10980,9 @@ void FFMpeg::liveProxy2(
 				// 2022-10-21: this is the scenario where the LiveProxy playlist is changed (signal: 3)
 				//	and we need to use the new playlist
 				//	This is the ffmpeg 'client side'.
-				//	The above condition (!stoppedBySigQuit) is the scenario server side.
+				//	The above condition (!stoppedBySigQuitOrTerm) is the scenario server side.
 				//	This is what happens:
-				//		time A: a new playlist is received by MMS and a SigQuit (signal: 3) is sent
+				//		time A: a new playlist is received by MMS and a SigQuit/SigTerm (signal: 3/15) is sent
 				//			to the ffmpeg client side
 				//		time A + few milliseconds: the ffmpeg client side starts again
 				//			with the new 'input' (1)

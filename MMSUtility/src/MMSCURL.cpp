@@ -2591,9 +2591,9 @@ size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
     string emailLine = curlUploadEmailData->emailLines.front();
     // cout << "emailLine: " << emailLine << endl;
 
-	logger->info(__FILEREF__ + "email line"
-		+ ", emailLine: " + emailLine
-	);
+	// logger->info(__FILEREF__ + "email line"
+	// 	+ ", emailLine: " + emailLine
+	// );
  
     memcpy(ptr, emailLine.c_str(), emailLine.length());
     curlUploadEmailData->emailLines.pop_front();
@@ -2742,7 +2742,7 @@ void MMSCURL:: sendEmail(
 		logger->info(__FILEREF__ + "Sending email"
 			+ ", emailServerURL: " + emailServerURL
 			+ ", from: " + from
-			+ ", password: " + password
+			// + ", password: " + password
 			+ ", to: " + tosCommaSeparated
 			+ ", cc: " + ccsCommaSeparated
 			+ ", subject: " + subject
