@@ -34,13 +34,13 @@ int main (int iArgc, char *pArgv [])
         logger->info(__FILEREF__ + "Sending email to " + tosCommaSeparated
                 );
         
-		string emailURL = JSONUtils::asString(configuration["EmailNotification"], "url", "");
-		string from = JSONUtils::asString(configuration["EmailNotification"], "from", "");
+		string emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
+		string emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
 
-		string password;
+		string emailPassword;
 		{
 			string encryptedPassword = JSONUtils::asString(configuration["EmailNotification"], "password", "");
-			password = Encrypt::opensslDecrypt(encryptedPassword);        
+			emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		}
 	
 		string ccsCommaSeparated;
@@ -51,13 +51,13 @@ int main (int iArgc, char *pArgv [])
 
 		MMSCURL::sendEmail(
 			logger,
-			emailURL,	// i.e.: smtps://smtppro.zoho.eu:465
-			from,	// i.e.: info@catramms-cloud.com
+			emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+			emailUserName,	// i.e.: info@catramms-cloud.com
 			tosCommaSeparated,
 			ccsCommaSeparated,
 			subject,
 			emailBody,
-			password
+			emailPassword
 		);
     }
     catch(...)
