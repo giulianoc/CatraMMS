@@ -118,13 +118,6 @@ private:
     size_t                  _downloadChunkSizeInMegaBytes;
 	int						_timeBeforeToPrepareResourcesInMinutes;
     
-    string                  _emailProtocol;
-    string                  _emailServer;
-    int                     _emailPort;
-    string                  _emailUserName;
-    string                  _emailPassword;
-    string                  _emailFrom;
-    
     string                  _facebookGraphAPIProtocol;
 	string					_facebookGraphAPIHostName;
 	string					_facebookGraphAPIVideoHostName;
@@ -164,6 +157,11 @@ private:
 	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
 	string					_liveRecorderVirtualVODImageLabel;
+
+	string					_emailProviderURL;
+	string					_emailUserName;
+	string					_emailPassword;
+	string					_emailCcsCommaSeparated;
 
 
 	Json::Value getReviewedOutputsRoot(

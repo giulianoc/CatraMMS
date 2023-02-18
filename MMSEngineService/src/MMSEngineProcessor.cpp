@@ -26,7 +26,7 @@
 #include "DBDataRetentionTimes.h"
 #include "ThreadsStatisticTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "EMailSender.h"
+// #include "EMailSender.h"
 #include "Magick++.h"
 // #include <openssl/md5.h>
 #include <openssl/evp.h>                                                                                      
@@ -108,32 +108,28 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
     );
     
-    _emailProtocol                      = JSONUtils::asString(_configuration["EmailNotification"], "protocol", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", EmailNotification->protocol: " + _emailProtocol
-    );
-    _emailServer                        = JSONUtils::asString(_configuration["EmailNotification"], "server", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", EmailNotification->server: " + _emailServer
-    );
-    _emailPort                          = JSONUtils::asInt(_configuration["EmailNotification"], "port", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", EmailNotification->port: " + to_string(_emailPort)
-    );
-    _emailUserName                      = JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", EmailNotification->userName: " + _emailUserName
-    );
+	_emailProviderURL =  JSONUtils::asString(_configuration["EmailNotification"], "providerURL", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->providerURL: " + _emailProviderURL
+	);
+	_emailUserName =  JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->userName: " + _emailUserName
+	);
     string _emailPassword;
     {
-        string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
-        _emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
+		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
+		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", EmailNotification->password: " + encryptedPassword
+			// + ", EmailNotification->password: " + _emailPassword
+		);
     }
-    _emailFrom                          = JSONUtils::asString(_configuration["EmailNotification"], "from", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", EmailNotification->from: " + _emailFrom
-    );
-    
+	_emailCcsCommaSeparated =  JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->cc: " + _emailCcsCommaSeparated
+	);
+
     _facebookGraphAPIProtocol           = JSONUtils::asString(_configuration["FacebookGraphAPI"], "protocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol
@@ -21781,12 +21777,12 @@ void MMSEngineProcessor::emailNotificationThread(
         }
         string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
-		string emailAddresses;
+		string tosCommaSeparated;
 		string subject;
 		string message;
         tuple<string, string, string> email = _mmsEngineDBFacade->getEMailByConfigurationLabel(
 			workspace->_workspaceKey, configurationLabel);            
-        tie(emailAddresses, subject, message) = email;
+        tie(tosCommaSeparated, subject, message) = email;
 
         field = "UserSubstitutions";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -21890,9 +21886,19 @@ void MMSEngineProcessor::emailNotificationThread(
         vector<string> emailBody;
         emailBody.push_back(message);
 
-        EMailSender emailSender(_logger, _configuration);
-		bool useMMSCCToo = false;
-        emailSender.sendEmail(emailAddresses, subject, emailBody, useMMSCCToo);
+		MMSCURL::sendEmail(
+			_logger,
+			_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+			_emailUserName,	// i.e.: info@catramms-cloud.com
+			tosCommaSeparated,
+			_emailCcsCommaSeparated,
+			subject,
+			emailBody,
+			_emailPassword
+		);
+        // EMailSender emailSender(_logger, _configuration);
+		// bool useMMSCCToo = false;
+        // emailSender.sendEmail(emailAddresses, subject, emailBody, useMMSCCToo);
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)

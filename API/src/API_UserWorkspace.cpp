@@ -13,9 +13,10 @@
 
 #include "JSONUtils.h"
 #include "catralibraries/LdapWrapper.h"
-#include "EMailSender.h"
+// #include "EMailSender.h"
 #include "API.h"
 #include <regex>
+#include "MMSCURL.h"
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -351,7 +352,7 @@ void API::registerUser(
 				+ ", confirmationURL: " + confirmationURL
 			);
 
-            string to = email;
+            string tosCommaSeparated = email;
             string subject = "Confirmation code";
             
             vector<string> emailBody;
@@ -366,9 +367,19 @@ void API::registerUser(
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -634,7 +645,7 @@ void API::createWorkspace(
             pair<string, string> emailAddressAndName =
 				_mmsEngineDBFacade->getUserDetails (userKey);
 
-            string to = emailAddressAndName.first;
+            string tosCommaSeparated = emailAddressAndName.first;
             string subject = "Confirmation code";
             
             vector<string> emailBody;
@@ -647,9 +658,19 @@ void API::createWorkspace(
 			emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -866,7 +887,7 @@ void API::shareWorkspace_(
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 					request, "", api, 201, responseBody);
 
-				string to = email;
+				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
             
 				vector<string> emailBody;
@@ -882,9 +903,19 @@ void API::shareWorkspace_(
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
-				EMailSender emailSender(_logger, _configuration);
-				bool useMMSCCToo = true;
-				emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+				MMSCURL::sendEmail(
+					_logger,
+					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	// i.e.: info@catramms-cloud.com
+					tosCommaSeparated,
+					_emailCcsCommaSeparated,
+					subject,
+					emailBody,
+					_emailPassword
+				);
+				// EMailSender emailSender(_logger, _configuration);
+				// bool useMMSCCToo = true;
+				// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 			}
 			else
 			{
@@ -926,7 +957,7 @@ void API::shareWorkspace_(
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 					request, "", api, 201, responseBody);
 
-				string to = email;
+				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
 
 				vector<string> emailBody;
@@ -942,9 +973,19 @@ void API::shareWorkspace_(
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
-				EMailSender emailSender(_logger, _configuration);
-				bool useMMSCCToo = true;
-				emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+				MMSCURL::sendEmail(
+					_logger,
+					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	// i.e.: info@catramms-cloud.com
+					tosCommaSeparated,
+					_emailCcsCommaSeparated,
+					subject,
+					emailBody,
+					_emailPassword
+				);
+				// EMailSender emailSender(_logger, _configuration);
+				// bool useMMSCCToo = true;
+				// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 			}
         }
         catch(runtime_error e)
@@ -1124,7 +1165,7 @@ void API::confirmRegistration(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
 
-            string to = emailAddress;
+            string tosCommaSeparated = emailAddress;
             string subject = "Welcome";
 
 			string loginURL = _guiProtocol + "://" + _guiHostname;
@@ -1142,9 +1183,19 @@ void API::confirmRegistration(
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -2241,7 +2292,7 @@ void API::createTokenToResetPassword(
 			resetPasswordURL += (string("/catramms/login.xhtml?resetPasswordRequested=true")
 				+ "&resetPasswordToken=" + resetPasswordToken);
 
-            string to = email;
+            string tosCommaSeparated = email;
             string subject = "Reset password";
 
 			vector<string> emailBody;
@@ -2254,9 +2305,19 @@ void API::createTokenToResetPassword(
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {
@@ -2410,7 +2471,7 @@ void API::resetPassword(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, "");
 
-            string to = email;
+            string tosCommaSeparated = email;
             string subject = "Reset password";
 
             vector<string> emailBody;
@@ -2420,9 +2481,19 @@ void API::resetPassword(
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
         catch(runtime_error e)
         {

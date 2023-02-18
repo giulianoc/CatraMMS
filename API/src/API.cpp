@@ -13,6 +13,7 @@
 
 #include "JSONUtils.h"
 #include "AWSSigner.h"
+#include "MMSCURL.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -27,7 +28,7 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/LdapWrapper.h"
 #include "Validator.h"
-#include "EMailSender.h"
+// #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
 // #include <openssl/md5.h>
 #include <openssl/evp.h>
@@ -488,6 +489,28 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	_vodCloudFrontHostNamesRoot =  _configuration["aws"]["vodCloudFrontHostNames"];
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", aws->vodCloudFrontHostNames: " + "..."
+	);
+
+	_emailProviderURL =  JSONUtils::asString(_configuration["EmailNotification"], "providerURL", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->providerURL: " + _emailProviderURL
+	);
+	_emailUserName =  JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->userName: " + _emailUserName
+	);
+    string _emailPassword;
+    {
+		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
+		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", EmailNotification->password: " + encryptedPassword
+			// + ", EmailNotification->password: " + _emailPassword
+		);
+    }
+	_emailCcsCommaSeparated =  JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", EmailNotification->cc: " + _emailCcsCommaSeparated
 	);
 
     _fileUploadProgressData     = fileUploadProgressData;
@@ -2757,8 +2780,6 @@ void API::mmsSupport(
 
         try
         {
-            string to = "mms.technical.support@catrasoft.cloud";
-
             vector<string> emailBody;
             emailBody.push_back(string("<p>UserKey: ") + to_string(userKey) + "</p>");
             emailBody.push_back(string("<p>WorkspaceKey: ")
@@ -2769,9 +2790,20 @@ void API::mmsSupport(
             emailBody.push_back(string("<p></p>"));
             emailBody.push_back(string("<p>") + text + "</p>");
 
-            EMailSender emailSender(_logger, _configuration);
-			bool useMMSCCToo = true;
-            emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+            string tosCommaSeparated = "support@catramms-cloud.cloud";
+			MMSCURL::sendEmail(
+				_logger,
+				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	// i.e.: info@catramms-cloud.com
+				tosCommaSeparated,
+				_emailCcsCommaSeparated,
+				subject,
+				emailBody,
+				_emailPassword
+			);
+            // EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 
             string responseBody;
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,

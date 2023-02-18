@@ -131,6 +131,11 @@ private:
 	string				_privateKeyPEMPathName;
 	Json::Value			_vodCloudFrontHostNamesRoot;
 
+	string				_emailProviderURL;
+	string				_emailUserName;
+	string				_emailPassword;
+	string				_emailCcsCommaSeparated;
+
 	bool				_registerUserEnabled;
 
     FileUploadProgressData*     _fileUploadProgressData;
