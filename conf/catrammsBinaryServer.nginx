@@ -19,6 +19,11 @@
 		#Nota: parliamo dello stesso IP.
 		limit_req zone=mmsBinaryLimit burst=10;
 
+		if ($request_method = DELETE) {
+			#moved from API
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
+		}
+
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
 		}
