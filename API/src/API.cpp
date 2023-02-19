@@ -499,13 +499,12 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", EmailNotification->userName: " + _emailUserName
 	);
-    string _emailPassword;
     {
 		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", EmailNotification->password: " + encryptedPassword
-			// + ", EmailNotification->password: " + _emailPassword
+			// + ", _emailPassword: " + _emailPassword
 		);
     }
 	_emailCcsCommaSeparated =  JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
