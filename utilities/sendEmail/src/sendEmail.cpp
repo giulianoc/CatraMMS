@@ -47,7 +47,12 @@ int main (int iArgc, char *pArgv [])
 		string subject = "Test Email";
 
         vector<string> emailBody;
-        emailBody.push_back("Test body");
+        emailBody.push_back("<p>Dear lucia,</p>");
+        emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;the registration has been done successfully</p>");
+        emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>4</b> and the confirmation code <b>202871650</b> to be used to confirm the registration</p>");
+        emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"https://mms-gui-test.catramms-cloud.com/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey=4&confirmationCode=202871650\">here</a> to confirm the registration</b></p>");
+        emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+        emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 		MMSCURL::sendEmail(
 			logger,
