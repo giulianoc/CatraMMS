@@ -72,7 +72,7 @@ time-zone()
 
 install-packages()
 {
-	moduleName=$1
+	moduleType=$1
 
 	read -n 1 -s -r -p "install-packages..."
 	echo ""
@@ -87,7 +87,7 @@ install-packages()
 	echo ""
 	apt -y upgrade
 
-	if [ "$moduleName" == "storage" ]; then
+	if [ "$moduleType" == "storage" ]; then
 
 		#for storage just nfs is enougth
 		apt -y install nfs-kernel-server
@@ -199,7 +199,7 @@ install-packages()
 	apt install -y dvb-tools
 	apt install -y dvblast
 
-	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
 
 		#api should have GUI as well
 
@@ -214,7 +214,7 @@ install-packages()
 		apt install -y openjdk-11-jdk
 	fi
 
-	if [ "$moduleName" == "engine" ]; then
+	if [ "$moduleType" == "engine" ]; then
 
 		#api should have GUI as well
 
@@ -269,7 +269,7 @@ install-packages()
 		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
 	fi
 
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
 		echo ""
 		read -n 1 -s -r -p "install incron..."
 		echo ""
@@ -352,7 +352,7 @@ install-ftpserver()
 
 create-directory()
 {
-	moduleName=$1
+	moduleType=$1
 
 	read -n 1 -s -r -p "create-directory..."
 	echo ""
@@ -362,11 +362,11 @@ create-directory()
 	mkdir /var/catramms
 	mkdir /var/catramms/pids
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		mkdir /var/catramms/storage
 		mkdir /var/catramms/storage/nginxWorkingAreaRepository
 		mkdir /var/catramms/storage/MMSRepository
-		if [ "$moduleName" == "encoder" ]; then
+		if [ "$moduleType" == "encoder" ]; then
 			ln -s /mnt/MMSTranscoderWorkingAreaRepository /var/catramms/storage/MMSTranscoderWorkingAreaRepository
 		else
 			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
@@ -375,20 +375,20 @@ create-directory()
 
 	ln -s /mnt/logs /var/catramms/logs
 
-	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
 		mkdir /mnt/logs/tomcat-gui
 		mkdir /mnt/logs/tomcatWorkDir
 	fi
-	if [ "$moduleName" == "api" ]; then
+	if [ "$moduleType" == "api" ]; then
 		mkdir /mnt/logs/mmsAPI
 	fi
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
 		mkdir /mnt/logs/mmsEncoder
 	fi
-	if [ "$moduleName" == "engine" ]; then
+	if [ "$moduleType" == "engine" ]; then
 		mkdir /mnt/logs/mmsEngineService
 	fi
-	if [ "$moduleName" == "api" -o "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" -o "$moduleName" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
 		mkdir /mnt/logs/nginx
 	fi
 	chown -R mms:mms /mnt/logs
@@ -396,7 +396,7 @@ create-directory()
 	mkdir /mnt/mmsStorage
 	mkdir /mnt/mmsRepository0000
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		mkdir /mnt/mmsRepository0000
 		chown mms:mms /mnt/mmsRepository0000
 	fi
@@ -433,14 +433,14 @@ create-directory()
 		mkdir /mnt/mmsStorage/commonConfiguration
 	fi
 
-	if [ "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "externalEncoder" ]; then
 		chown mms:mms /mnt/mmsStorage/IngestionRepository
 		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
 		chown mms:mms /mnt/mmsStorage/MMSRepository-free
 		chown mms:mms /mnt/mmsStorage/MMSLive
 	fi
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
 
 		ln -s /mnt/mmsStorage/IngestionRepository /var/catramms/storage
@@ -456,7 +456,7 @@ create-directory()
 		ln -s /var/catramms/storage /home/mms
 	fi
 
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
 		if [ ! -d "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist" ];
 		then
 			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
@@ -488,7 +488,7 @@ create-directory()
 
 adds-to-bashrc()
 {
-	moduleName=$1
+	moduleType=$1
 
 	read -n 1 -s -r -p "adds-to-bashrc..."
 	echo ""
@@ -498,7 +498,7 @@ adds-to-bashrc()
 	echo -n "serverName for the 'bash prompt' (i.e. engine-db-1): "
 	read serverName
 
-	if [ "$moduleName" != "storage" ]; then
+	if [ "$moduleType" != "storage" ]; then
 		echo "export PATH=\$PATH:~mms" >> /home/mms/.bashrc
 		echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
 		echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
@@ -515,14 +515,14 @@ adds-to-bashrc()
 
 install-mms-packages()
 {
-	moduleName=$1
+	moduleType=$1
 
 	architecture=ubuntu-22.04
 
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -531,7 +531,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
 		imageMagickVersion=7.1.0
@@ -548,7 +548,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		package=curlpp
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -595,7 +595,7 @@ install-mms-packages()
 
 	mkdir /opt/catramms/nginx/conf/sites-enabled
 
-	if [ "$moduleName" == "load-balancer" ]; then
+	if [ "$moduleType" == "load-balancer" ]; then
 		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
 	else
 		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
@@ -606,7 +606,7 @@ install-mms-packages()
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
 
-	if [ "$moduleName" == "api" -o "$moduleName" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
 
 		#api should have GUI as well
 
@@ -686,7 +686,7 @@ install-mms-packages()
 		echo "cp /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/favicon.ico /opt/catramms/tomcat/webapps/ROOT/"
 	fi
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		package=opencv
 		read -n 1 -s -r -p "Downloading $package..."
 		echo ""
@@ -695,7 +695,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		#Only in case we have to download it again, AS mms user
 		#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
 		#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
@@ -717,7 +717,7 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" != "integration" ]; then
+	if [ "$moduleType" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
 		catraLibrariesVersion=1.0.1640
@@ -757,7 +757,7 @@ install-mms-packages()
 	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
 	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
 
-	if [ "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "externalEncoder" ]; then
 		echo ""
 		echo -n "Type the AWS Access Key Id: "
 		read awsAccessKeyId
@@ -773,8 +773,8 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
-		if [ "$moduleName" == "externalEncoder" ]; then
+	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+		if [ "$moduleType" == "externalEncoder" ]; then
 			packageName=externalEncoderMmsConf
 		else
 			packageName=encoderMmsConf
@@ -787,7 +787,7 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
-	if [ "$moduleName" == "engine" ]; then
+	if [ "$moduleType" == "engine" ]; then
 		packageName=engineMmsConf
 		echo ""
 		package=$packageName
@@ -797,7 +797,7 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
-	if [ "$moduleName" == "api" ]; then
+	if [ "$moduleType" == "api" ]; then
 		packageName=apiMmsConf
 		echo ""
 		package=$packageName
@@ -813,7 +813,7 @@ install-mms-packages()
 
 firewall-rules()
 {
-	moduleName=$1
+	moduleType=$1
 
 	read -n 1 -s -r -p "firewall-rules..."
 	echo ""
@@ -826,13 +826,13 @@ firewall-rules()
 	#ufw allow ssh
 	ufw allow 9255
 
-	if [ "$moduleName" == "encoder" ]; then
+	if [ "$moduleType" == "encoder" ]; then
 		#api and engine -> transcoder(nginx)
 		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
-	elif [ "$moduleName" == "externalEncoder" ]; then
+	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (aws api 1, 2, aws engine 1, 2
 		ufw allow from 63.35.35.24 to any port 8088
 		ufw allow from 52.50.243.155 to any port 8088
@@ -849,7 +849,7 @@ firewall-rules()
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
-	elif [ "$moduleName" == "api" ]; then
+	elif [ "$moduleType" == "api" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
@@ -861,7 +861,7 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8091        #mms-delivery
 		ufw allow from $internalNetwork to any port 8092        #mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093        #mms-delivery-f
-	elif [ "$moduleName" == "engine" ]; then
+	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql
 		#ufw allow 3306
 		#echo ""
@@ -869,12 +869,12 @@ firewall-rules()
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 3306
-	elif [ "$moduleName" == "load-balancer" ]; then
+	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
 		ufw allow 443
 		ufw allow 8088
-	elif [ "$moduleName" == "storage" ]; then
+	elif [ "$moduleType" == "storage" ]; then
 		ufw allow from 10.0.0.0/16 to any port nfs
 		#ufw allow 111
 		ufw allow from 10.0.0.0/16 to any port 111
@@ -927,12 +927,12 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi
 
-moduleName=$1
+moduleType=$1
 
 #LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE
 
@@ -964,10 +964,10 @@ echo ""
 ssh-port
 mms-account-creation
 time-zone
-install-packages $moduleName
+install-packages $moduleType
 
-adds-to-bashrc $moduleName
-if [ "$moduleName" == "storage" ]; then
+adds-to-bashrc $moduleType
+if [ "$moduleType" == "storage" ]; then
 
 	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
 	echo "- open /etc/default/nfs-kernel-server"
@@ -976,10 +976,10 @@ if [ "$moduleName" == "storage" ]; then
 	echo "- Restart NFSd with sudo systemctl restart nfs-kernel-server"
 else
 	echo ""
-	create-directory $moduleName
-	install-mms-packages $moduleName
+	create-directory $moduleType
+	install-mms-packages $moduleType
 fi
-firewall-rules $moduleName
+firewall-rules $moduleType
 
 read -n 1 -s -r -p "verificare ~/mms/conf/*"
 echo ""
@@ -993,7 +993,7 @@ read -n 1 -s -r -p "remove ssh key from /home/ubuntu/.ssh/authorized_keys"
 echo ""
 echo ""
 
-if [ "$moduleName" == "storage" ]; then
+if [ "$moduleType" == "storage" ]; then
 
 	echo "- fdisk and mkfs to format the disks"
 	echo "- mkdir /mnt/MMSRepository/MMS_XXXX"
@@ -1023,7 +1023,7 @@ else
 	echo ""
 fi
 
-if [ "$moduleName" == "encoder" -o "$moduleName" == "externalEncoder" ]; then
+if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
 	echo "add the new hostname in every /etc/hosts of every api and engine servers"
 fi
 
