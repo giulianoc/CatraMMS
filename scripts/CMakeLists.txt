@@ -45,7 +45,7 @@ SET (SCRIPTs
 	deploy.sh
 	installServer.sh
 	getIngestionsToBeManaged.sh
-	servicesStatusLoop.sh
+	loopServicesStatus.sh
 	servicesStatus.sh
 )
 

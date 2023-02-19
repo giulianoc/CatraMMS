@@ -16,9 +16,13 @@ moduleType=$1
 
 while [ 1 -eq 1 ]
 do
+	before=$(date +%s)
 	/opt/catramms/CatraMMS/scripts/servicesStatus.sh $moduleType
+	after=$(date +%s)
 
-	echo "sleeping 30 secs" >> $debugFilename
+	elapsed=$((after-before))
+
+	echo "elapsed: $elapsed secs, sleeping 30 secs" >> $debugFilename
 	sleep 30
 done
 
