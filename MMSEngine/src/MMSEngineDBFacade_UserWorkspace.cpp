@@ -3159,6 +3159,10 @@ void MMSEngineDBFacade::deleteWorkspace(
             {
 				if (resultSet->getInt64(1) == 0)
 				{
+					_logger->info(__FILEREF__ + "The user does not have any other Workspace, it will be removed"
+						+ ", userKey: " + to_string(userKey)
+					);
+
 					// in all the tables depending from User we have 'on delete cascade'
 					// So all should be removed automatically from DB
 					lastSQLCommand = 

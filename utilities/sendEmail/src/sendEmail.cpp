@@ -14,15 +14,16 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 3)
+    if (iArgc != 4)
     {
-        std::cerr << "Usage: " << pArgv[0] << " config-path-name destination-email-addresses (comma separated)" << endl;
+        std::cerr << "Usage: " << pArgv[0] << " config-path-name destination-email-addresses (comma separated) cc-email-addresses (comma separated)" << endl;
         
         return 1;
     }
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
     string tosCommaSeparated = pArgv[2];
+    string ccsCommaSeparated = pArgv[3];
 
     auto logger = spdlog::stdout_color_mt("sendEmail");
     spdlog::set_level(spdlog::level::trace);
@@ -43,7 +44,6 @@ int main (int iArgc, char *pArgv [])
 			emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		}
 	
-		string ccsCommaSeparated;
 		string subject = "Test Email";
 
         vector<string> emailBody;

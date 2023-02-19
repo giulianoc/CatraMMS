@@ -2672,6 +2672,15 @@ void MMSCURL:: sendEmail(
 		curlUploadEmailData.emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
 		curlUploadEmailData.emailLines.push_back("\r\n");   // empty line to divide headers from body, see RFC5322
 		curlUploadEmailData.emailLines.insert(curlUploadEmailData.emailLines.end(), emailBody.begin(), emailBody.end());
+
+		{
+			string body;
+			for(string emailLine: curlUploadEmailData.emailLines)
+				body += emailLine;
+			logger->info(__FILEREF__ + "Sending email"
+				+ ", body: " + body
+			);
+		}
 	}
 
 	CURL *curl;
