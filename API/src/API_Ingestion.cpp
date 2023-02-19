@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "MMSCURL.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include <fstream>
@@ -3287,6 +3288,21 @@ void API::fileUploadProgressCheck()
                     + ", hostHeader: " + hostHeader
                 );
 
+				vector<string> otherHeaders;
+                otherHeaders.push_back(progressIdHeader);
+                otherHeaders.push_back(hostHeader);	// important for the nginx virtual host
+				int curlTimeoutInSeconds = 120;
+				Json::Value uploadProgressResponse = MMSCURL::httpGetJson(
+					_logger,
+					itr->_ingestionJobKey,
+					progressURL,
+					curlTimeoutInSeconds,
+					"",
+					"",
+					otherHeaders
+				);
+
+				/*
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
                 ostringstream response;
@@ -3319,10 +3335,11 @@ void API::fileUploadProgressCheck()
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", sResponse: " + sResponse
                 );
+				*/
 
                 try
                 {
-                    Json::Value uploadProgressResponse = JSONUtils::toJson(-1, -1, sResponse);
+                    // Json::Value uploadProgressResponse = JSONUtils::toJson(-1, -1, sResponse);
 
                     // { "state" : "uploading", "received" : 731195032, "size" : 745871360 }
                     // At the end: { "state" : "done" }
@@ -3529,7 +3546,7 @@ void API::fileUploadProgressCheck()
                 catch(...)
                 {
                     string errorMessage = string("response Body json is not well format")
-                            + ", sResponse: " + sResponse
+                            // + ", sResponse: " + sResponse
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -5656,6 +5673,20 @@ void API::changeLiveProxyPlaylist(
 						+ "?switchBehaviour=" + switchBehaviour
 					;
 
+					vector<string> otherHeaders;
+					Json::Value encoderResponse = MMSCURL::httpPutStringAndGetJson(
+						_logger,
+						broadcastIngestionJobKey,
+						ffmpegEncoderURL,
+						_ffmpegEncoderTimeoutInSeconds,
+						_ffmpegEncoderUser,
+						_ffmpegEncoderPassword,
+						newPlaylist,
+						"application/json", // contentType
+						otherHeaders
+					);
+
+					/*
 					list<string> header;
 
 					{
@@ -5739,6 +5770,7 @@ void API::changeLiveProxyPlaylist(
 
 						throw runtime_error(errorMessage);
 					}
+					*/
 				}
 			}
 			else

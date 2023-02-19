@@ -89,6 +89,7 @@ public:
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);
@@ -100,6 +101,19 @@ public:
 		long timeoutInSeconds,
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
+		vector<string> otherHeaders,
+		int maxRetryNumber = 1,
+		int secondsToWaitBeforeToRetry = 15
+	);
+
+	static string httpDelete(
+		shared_ptr<spdlog::logger> logger,
+		int64_t ingestionJobKey,
+		string url,
+		long timeoutInSeconds,
+		string basicAuthenticationUser,
+		string basicAuthenticationPassword,
+		vector<string> otherHeaders,
 		int maxRetryNumber = 1,
 		int secondsToWaitBeforeToRetry = 15
 	);

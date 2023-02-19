@@ -331,6 +331,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				+ "?ingestionJobOutputs=false"
 			;
 
+			vector<string> otherHeaders;
 			Json::Value ingestionRoot = MMSCURL::httpGetJson(
 				_logger,
 				ingestionJobKey,
@@ -338,6 +339,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				_mmsAPITimeoutInSeconds,
 				to_string(userKey),
 				apiKey,
+				otherHeaders,
 				3 // maxRetryNumber
 			);
 

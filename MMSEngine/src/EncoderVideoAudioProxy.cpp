@@ -9007,7 +9007,7 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 	int pid;
     
     string ffmpegEncoderURL;
-    ostringstream response;
+    // ostringstream response;
 	bool responseInitialized = false;
     try
     {
@@ -9018,6 +9018,18 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 			+ "/" + to_string(_encodingItem->_encodingJobKey)
         ;
 
+		vector<string> otherHeaders;
+		Json::Value encodeStatusResponse = MMSCURL::httpGetJson(
+			_logger,
+			_encodingItem->_ingestionJobKey,
+			ffmpegEncoderURL,
+			_ffmpegEncoderTimeoutInSeconds,
+			_ffmpegEncoderUser,
+			_ffmpegEncoderPassword,
+			otherHeaders
+		);
+
+		/*
         list<string> header;
 
         {
@@ -9042,58 +9054,6 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
         {
-            /*
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-             */
-
-
-            /*
-            // cert is stored PEM coded in file... 
-            // since PEM is default, we needn't set it for PEM 
-            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-            equest.setOpt(sslCertType);
-
-            // set the cert for client authentication
-            // "testcert.pem"
-            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-            curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-            request.setOpt(sslCert);
-             */
-
-            /*
-            // sorry, for engine we must set the passphrase
-            //   (if the key has one...)
-            // const char *pPassphrase = NULL;
-            if(pPassphrase)
-              curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-            // if we use a key stored in a crypto engine,
-            //   we must set the key type to "ENG"
-            // pKeyType  = "PEM";
-            curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-            // set the private key (file or ID in engine)
-            // pKeyName  = "testkey.pem";
-            curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-            // set the file with the certs vaildating the server
-            // *pCACertFile = "cacert.pem";
-            curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-            */
-
             // disconnect if we can't validate server's cert
             bool bSslVerifyPeer = false;
             curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -9132,10 +9092,11 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
                 + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(
 					chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()) + "@"
         );
+		*/
 
         try
         {
-            Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
+            // Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 			string field = "completedWithError";
 			completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
@@ -9165,65 +9126,36 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
         {
             string errorMessage = string("getEncodingStatus. Response Body json is not well format")
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", sResponse: " + sResponse
+                    // + ", sResponse: " + sResponse
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
         }
     }
-    catch (curlpp::LogicError & e) 
+    catch (ServerNotReachable e)
     {
-        _logger->error(__FILEREF__ + "Status URL failed (LogicError)"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-            + ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
-        );
+		_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
 
-        throw e;
-    }
-    catch (curlpp::RuntimeError & e) 
-    { 
-        string errorMessage = string("Status URL failed (RuntimeError)")
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-            + ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
-        ;
-
-        _logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
+		throw EncoderNotReachable();
     }
     catch (runtime_error e)
     {
-		if (response.str().find("502 Bad Gateway") != string::npos)
-		{
-			_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
+		_logger->error(__FILEREF__ + "Status URL failed (exception)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
 
-			throw EncoderNotReachable();
-		}
-		else
-		{
-			_logger->error(__FILEREF__ + "Status URL failed (exception)"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-				+ ", exception: " + e.what()
-				+ ", response.str(): " + (responseInitialized ? response.str() : "")
-			);
-
-			throw e;
-		}
+		throw e;
     }
     catch (exception e)
     {
@@ -9232,7 +9164,7 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			// + ", response.str(): " + (responseInitialized ? response.str() : "")
         );
 
         throw e;

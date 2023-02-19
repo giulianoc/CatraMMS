@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "MMSCURL.h"
 #include <sstream>
 #include <regex>
 #include <curlpp/cURLpp.hpp>
@@ -1203,6 +1204,18 @@ void API::killEncodingJob(int64_t encoderKey,
 			+ "?lightKill=" + (lightKill ? "true" : "false")
 		;
 
+		vector<string> otherHeaders;
+		MMSCURL::httpDelete(
+			_logger,
+			ingestionJobKey,
+			ffmpegEncoderURL,
+			_ffmpegEncoderTimeoutInSeconds,
+			_ffmpegEncoderUser,
+			_ffmpegEncoderPassword,
+			otherHeaders
+		);
+
+		/*
 		list<string> header;
 
 		{
@@ -1229,58 +1242,6 @@ void API::killEncodingJob(int64_t encoderKey,
 		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 		{
-			/*
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-			*/
-                                                                                                
-              
-			/*
-			// cert is stored PEM coded in file... 
-			// since PEM is default, we needn't set it for PEM 
-			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-			equest.setOpt(sslCertType);
-
-			// set the cert for client authentication
-			// "testcert.pem"
-			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-			request.setOpt(sslCert);
-			*/
-
-			/*
-			// sorry, for engine we must set the passphrase
-			//   (if the key has one...)
-			// const char *pPassphrase = NULL;
-			if(pPassphrase)
-			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-			// if we use a key stored in a crypto engine,
-			//   we must set the key type to "ENG"
-			// pKeyType  = "PEM";
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-			// set the private key (file or ID in engine)
-			// pKeyName  = "testkey.pem";
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-			// set the file with the certs vaildating the server
-			// *pCACertFile = "cacert.pem";
-			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-			*/
-              
 			// disconnect if we can't validate server's cert
 			bool bSslVerifyPeer = false;
 			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER>
@@ -1336,6 +1297,7 @@ void API::killEncodingJob(int64_t encoderKey,
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 	}
 	catch (curlpp::LogicError & e) 
 	{

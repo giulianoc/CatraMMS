@@ -25618,13 +25618,15 @@ string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
 			+ ", facebookURL: " + facebookURL
 		);
 
+		vector<string> otherHeaders;
 		Json::Value responseRoot = MMSCURL::httpGetJson(
 			_logger,
 			ingestionJobKey,
 			facebookURL,
 			_mmsAPITimeoutInSeconds,
 			"",
-			""
+			"",
+			otherHeaders
 		);
 
 		/*
@@ -25756,6 +25758,7 @@ void MMSEngineProcessor::userHttpCallback(
 		}
 		else // if (httpMethod == "GET")
 		{
+			vector<string> otherHeaders;
 			MMSCURL::httpGet(
 				_logger,
 				ingestionJobKey,
@@ -25763,6 +25766,7 @@ void MMSEngineProcessor::userHttpCallback(
 				callbackTimeoutInSeconds,
 				userName,
 				password,
+				otherHeaders,
 				maxRetries
 			);
 		}

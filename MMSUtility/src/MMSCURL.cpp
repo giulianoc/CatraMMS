@@ -35,6 +35,7 @@ Json::Value MMSCURL::httpGetJson(
 	long timeoutInSeconds,
 	string basicAuthenticationUser,
 	string basicAuthenticationPassword,
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
@@ -46,6 +47,7 @@ Json::Value MMSCURL::httpGetJson(
 		timeoutInSeconds,
 		basicAuthenticationUser,
 		basicAuthenticationPassword,
+		otherHeaders,
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry);
 
@@ -834,6 +836,7 @@ string MMSCURL::httpGet(
 	long timeoutInSeconds,
 	string basicAuthenticationUser,
 	string basicAuthenticationPassword,
+	vector<string> otherHeaders,
 	int maxRetryNumber,
 	int secondsToWaitBeforeToRetry
 )
@@ -852,14 +855,16 @@ string MMSCURL::httpGet(
 			curlpp::Cleanup cleaner;
 			curlpp::Easy request;
 
-			list<string> header;
+			list<string> headers;
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
 			{
 				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":"
 					+ basicAuthenticationPassword);
 				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
-				header.push_back(basicAuthorization);
+				headers.push_back(basicAuthorization);
 			}
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
 			request.setOpt(new curlpp::options::Url(url));
 
@@ -933,7 +938,7 @@ string MMSCURL::httpGet(
 				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
 			}
 
-			request.setOpt(new curlpp::options::HttpHeader(header));
+			request.setOpt(new curlpp::options::HttpHeader(headers));
 
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -1079,6 +1084,286 @@ string MMSCURL::httpGet(
 		catch (exception e)
 		{
 				logger->error(__FILEREF__ + "httpGet failed (exception)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw e;
+		}
+	}
+
+	return sResponse;
+}
+
+string MMSCURL::httpDelete(
+	shared_ptr<spdlog::logger> logger,
+	int64_t ingestionJobKey,
+	string url,
+	long timeoutInSeconds,
+	string basicAuthenticationUser,
+	string basicAuthenticationPassword,
+	vector<string> otherHeaders,
+	int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
+)
+{
+	string sResponse;
+	int retryNumber = 0;
+
+	while (retryNumber < maxRetryNumber)
+	{
+		retryNumber++;
+
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			list<string> headers;
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
+			{
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":"
+					+ basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+				headers.push_back(basicAuthorization);
+			}
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
+
+			request.setOpt(new curlpp::options::Url(url));
+			request.setOpt(new curlpp::options::CustomRequest("DELETE"));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+
+			string httpsPrefix("https");
+			if (url.size() >= httpsPrefix.size()
+				&& 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			{
+				/*
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+				typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+				typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+				typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+				typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+				*/
+
+
+				/*
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				request.setOpt(sslCert);
+				*/
+
+				/*
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				if(pPassphrase)
+					curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+				*/
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+			}
+
+			request.setOpt(new curlpp::options::HttpHeader(headers));
+
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			logger->info(__FILEREF__ + "HTTP GET"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url
+			);
+
+			// store response headers in the response                                                         
+			// You simply have to set next option to prefix the header to the normal body output.             
+			// request.setOpt(new curlpp::options::Header(true));                                                
+
+			responseInitialized = true;
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+			request.perform();
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+
+			sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+				sResponse.pop_back();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode == 200)
+			{
+				string message = __FILEREF__ + "httpDelete"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+				;
+				logger->info(message);
+			}
+			else
+			{
+				string message = __FILEREF__ + "httpDelete failed, wrong return status"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
+						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+					+ ", sResponse: " + sResponse
+					+ ", responseCode: " + to_string(responseCode)
+				;
+				logger->error(message);
+
+				throw runtime_error(message);
+			}
+
+			// return sResponse;
+			break;
+		}
+		catch (curlpp::LogicError & e) 
+		{
+			logger->error(__FILEREF__ + "httpDelete failed (LogicError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (curlpp::RuntimeError & e) 
+		{ 
+			logger->error(__FILEREF__ + "httpDelete failed (RuntimeError)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", url: " + url 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			if (retryNumber < maxRetryNumber)
+			{
+				logger->info(__FILEREF__ + "sleep before trying again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", retryNumber: " + to_string(retryNumber)
+					+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+					+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (runtime_error e)
+		{
+			if (responseInitialized
+				&& response.str().find("502 Bad Gateway") != string::npos)
+			{
+				logger->error(__FILEREF__ + "Server is not reachable, is it down?"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", url: " + url 
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw ServerNotReachable();
+			}
+			else
+			{
+				logger->error(__FILEREF__ + "httpDelete failed (exception)"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", url: " + url 
+					+ ", exception: " + e.what()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
+				);
+
+				if (retryNumber < maxRetryNumber)
+				{
+					logger->info(__FILEREF__ + "sleep before trying again"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", retryNumber: " + to_string(retryNumber)
+						+ ", maxRetryNumber: " + to_string(maxRetryNumber)
+						+ ", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw e;
+			}
+		}
+		catch (exception e)
+		{
+				logger->error(__FILEREF__ + "httpDelete failed (exception)"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url 
 				+ ", exception: " + e.what()
@@ -2739,19 +3024,17 @@ void MMSCURL:: sendEmail(
 		// curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		/* Send the message */
-		logger->info(__FILEREF__ + "Sending email"
-			+ ", emailServerURL: " + emailServerURL
-			+ ", from: " + from
-			+ ", password: " + password
-			+ ", to: " + tosCommaSeparated
-			+ ", cc: " + ccsCommaSeparated
-			+ ", subject: " + subject
-		);
 		{
 			string body;
 			for(string emailLine: curlUploadEmailData.emailLines)
 				body += emailLine;
 			logger->info(__FILEREF__ + "Sending email"
+				+ ", emailServerURL: " + emailServerURL
+				+ ", from: " + from
+				// + ", password: " + password
+				+ ", to: " + tosCommaSeparated
+				+ ", cc: " + ccsCommaSeparated
+				+ ", subject: " + subject
 				+ ", body: " + body
 			);
 		}

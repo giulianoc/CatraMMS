@@ -1653,8 +1653,19 @@ void API::login(
 						+ remoteClientIPAddress
 					;
 
+					vector<string> otherHeaders;
+					Json::Value geoServiceResponse = MMSCURL::httpGetJson(
+						_logger,
+						-1,
+						geoServiceURL,
+						_geoServiceTimeoutInSeconds,
+						"",
+						"",
+						otherHeaders
+					);
 					// list<string> header;
 
+					/*
 					curlpp::Cleanup cleaner;
 					curlpp::Easy request;
 
@@ -1704,10 +1715,11 @@ void API::login(
 							+ to_string(
 								chrono::duration_cast<chrono::seconds>(endGeoService - startGeoService).count()) + "@"
 					);
+					*/
 
 					try
 					{
-						Json::Value geoServiceResponse = JSONUtils::toJson(-1, -1, sResponse);
+						// Json::Value geoServiceResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 						bool geoSuccess;
 						string field = "success";
@@ -1716,7 +1728,7 @@ void API::login(
 						{
 							string errorMessage = __FILEREF__ + "geoService failed"
 								+ ", geoSuccess: " + to_string(geoSuccess)
-								+ ", sResponse: " + sResponse
+								// + ", sResponse: " + sResponse
 							;
 							_logger->error(errorMessage);
 
@@ -1745,7 +1757,7 @@ void API::login(
 					catch(...)
 					{
 						string errorMessage = string("geoService. Response Body json is not well format")
-							+ ", sResponse: " + sResponse
+							// + ", sResponse: " + sResponse
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 
