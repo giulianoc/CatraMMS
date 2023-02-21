@@ -22,7 +22,9 @@ do
 
 	elapsed=$((after-before))
 
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): script elapsed: $elapsed secs, sleeping 30 secs" >> $debugFilename
-	sleep 30
+	secondsToSleep=60
+
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): script elapsed: $elapsed secs, sleeping $secondsToSleep secs" >> $debugFilename
+	sleep $secondsToSleep
 done
 
