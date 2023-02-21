@@ -7,7 +7,7 @@ debug=1
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType <see servicesStatus..sh>" >> $debugFilename
+	echo "usage $0 <moduleType <see servicesStatusAgent.sh>" >> $debugFilename
 
 	exit
 fi
@@ -17,7 +17,7 @@ moduleType=$1
 while [ 1 -eq 1 ]
 do
 	before=$(date +%s)
-	/opt/catramms/CatraMMS/scripts/servicesStatus.sh $moduleType
+	/opt/catramms/CatraMMS/scripts/servicesStatusAgent.sh $moduleType
 	after=$(date +%s)
 
 	elapsed=$((after-before))
