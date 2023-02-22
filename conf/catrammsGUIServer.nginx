@@ -10,10 +10,14 @@
 	#proxy_cache one;
 
 	location / {
+		rewrite .* https://$host/catramms$request_uri redirect;
+	}
+	
+	location /catramms {
 		#Uso una coda "minima" per gestire le richieste contemporanee.
 		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
 		#Nota: parliamo dello stesso IP.
-		limit_req zone=mmsGUILimit burst=20;
+		limit_req zone=mmsGUILimit burst=100 nodelay;
 
 		proxy_set_header X-Forwarded-Host $host;
 		proxy_set_header X-Forwarded-Server $host;

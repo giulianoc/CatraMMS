@@ -31,19 +31,19 @@ getAlarmDescription()
 		"alarm_memory_usage")
 			echo "Memory Usage too high"
 			;;
-		"nginx_rate_gui_limit")
+		"alarm_nginx_rate_gui_limit")
 			echo "Nginx Rate GUI Limit overcome"
 			;;
-		"nginx_rate_api_limit")
+		"alarm_nginx_rate_api_limit")
 			echo "Nginx Rate API Limit overcome"
 			;;
-		"nginx_rate_delivery_limit")
+		"alarm_nginx_rate_delivery_limit")
 			echo "Nginx Rate Delivery Limit overcome"
 			;;
-		"nginx_rate_binary_limit")
+		"alarm_nginx_rate_binary_limit")
 			echo "Nginx Rate Binary Limit overcome"
 			;;
-		"nginx_rate_encoder_limit")
+		"alarm_nginx_rate_encoder_limit")
 			echo "Nginx Rate Encoder Limit overcome"
 			;;
 		*)
@@ -182,7 +182,9 @@ memory_usage()
 
 nginx_rate_encoder_limit()
 {
-	nginxRateLimitCount=$(grep "\"mmsEncoderLimit\"" /var/catramms/logs/nginx/mms-encoder.error.log | wc -l)
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-encoder.error.log | grep "\"mmsEncoderLimit\"" | wc -l)
 
 	if [ $nginxRateLimitCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_encoder_limit, nginx rate Encoder limit is fine: $nginxRateLimitCount" >> $debugFilename
@@ -202,7 +204,9 @@ nginx_rate_encoder_limit()
 
 nginx_rate_binary_limit()
 {
-	nginxRateLimitCount=$(grep "\"mmsBinaryLimit\"" /var/catramms/logs/nginx/mms-binary.error.log | wc -l)
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-binary.error.log | grep "\"mmsBinaryLimit\"" | wc -l)
 
 	if [ $nginxRateLimitCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_binary_limit, nginx rate Binary limit is fine: $nginxRateLimitCount" >> $debugFilename
@@ -222,12 +226,13 @@ nginx_rate_binary_limit()
 
 nginx_rate_delivery_limit()
 {
-	nginxRateLimitCount=$(grep "\"mmsDeliveryLimit\"" /var/catramms/logs/nginx/mms-delivery*.error.log | wc -l)
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-delivery*.error.log | grep "\"mmsDeliveryLimit\"" | wc -l)
 
 	if [ $nginxRateLimitCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_delivery_limit, nginx rate Delivery limit is fine: $nginxRateLimitCount" >> $debugFilename
 
-		alarmNotificationPathFileName="/tmp/alarm_nginx_rate_delivery_limit"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
@@ -235,14 +240,16 @@ nginx_rate_delivery_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_delivery_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_delivery_limit" $alarmNotificationPeriod "${nginxRateLimitCount} times"
 		return 1
 	fi
 }
 
 nginx_rate_api_limit()
 {
-	nginxRateLimitCount=$(grep "\"mmsAPILimit\"" /var/catramms/logs/nginx/mms-api.error.log | wc -l)
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-api.error.log | grep "\"mmsAPILimit\"" | wc -l)
 
 	if [ $nginxRateLimitCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_api_limit, nginx rate API limit is fine: $nginxRateLimitCount" >> $debugFilename
@@ -262,7 +269,9 @@ nginx_rate_api_limit()
 
 nginx_rate_gui_limit()
 {
-	nginxRateLimitCount=$(grep "\"mmsGUILimit\"" /var/catramms/logs/nginx/mms-gui.error.log | wc -l)
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-gui.error.log | grep "\"mmsGUILimit\"" | wc -l)
 
 	if [ $nginxRateLimitCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_gui_limit, nginx rate GUI limit is fine: $nginxRateLimitCount" >> $debugFilename

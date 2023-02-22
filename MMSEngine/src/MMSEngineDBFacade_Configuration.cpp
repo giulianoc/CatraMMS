@@ -19,7 +19,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 
     try
     {
-        conn = connectionPool->borrow();	
+        conn = connectionPool->borrow();
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );

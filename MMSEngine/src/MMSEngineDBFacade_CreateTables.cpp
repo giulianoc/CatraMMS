@@ -11,10 +11,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
     string      lastSQLCommand;
 
-	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = nullptr;
 
     try
     {
+		connectionPool = _masterConnectionPool;
+
         conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

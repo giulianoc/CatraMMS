@@ -9,6 +9,7 @@ then
 	exit
 fi
 
+
 disks_usage
 cpu_usage
 memory_usage
@@ -16,18 +17,26 @@ memory_usage
 while [ -n "$1" ]
 do
 	case "$1" in
-		engine)
+		"engine")
 			sql_slave_off
-		api)
-			nginx_rate_api_limit()
-		gui)
-			nginx_rate_gui_limit()
-		delivery)
-			nginx_rate_binary_limit()
-			nginx_rate_delivery_limit()
-		encoder | externalEncoder)
-			nginx_rate_encoder_limit()
-        *) echo "$1 is not an option";;
+			;;
+		"api")
+			nginx_rate_api_limit
+			;;
+		"gui")
+			nginx_rate_gui_limit
+			;;
+		"delivery")
+			nginx_rate_binary_limit
+			nginx_rate_delivery_limit
+			;;
+		"encoder" | "externalEncoder")
+			nginx_rate_encoder_limit
+			;;
+		"integration")
+			;;
+        *) echo "$1 is not an option" >> $debugFilename
+			;;
 	esac
 	shift
 done
