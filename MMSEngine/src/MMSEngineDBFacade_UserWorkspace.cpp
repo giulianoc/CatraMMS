@@ -3541,189 +3541,331 @@ Json::Value MMSEngineDBFacade::login (
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn = nullptr;
+	// 2023-02-22: in questo metodo viene:
+	//	1. controllato l'utente
+	//	2. aggiornato il campo lastSuccessfulLogin
+	// Poichè si cerca di far funzionare il piu possibile anche in caso di failure del master,
+	// abbiamo separato le due attività, solo l'update viene fatta con connessione al master e,
+	// se quest'ultima fallisce, comunque non viene bloccato il login
+	int64_t userKey = -1;
+	{
+		shared_ptr<MySQLConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+		shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
 
-    try
-    {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
-        {
-			lastSQLCommand = 
-				"select userKey, name, country, "
-				"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
-				"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
-				"from MMS_User where eMailAddress = ? and password = ?";
-			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setString(queryParameterIndex++, eMailAddress);
-			preparedStatement->setString(queryParameterIndex++, password);
-
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", eMailAddress: " + eMailAddress
-				+ ", password: " + password
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+		try
+		{
+			conn = connectionPool->borrow();	
+			_logger->debug(__FILEREF__ + "DB connection borrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
 			);
-            if (resultSet->next())
-            {
-				int64_t userKey = resultSet->getInt64("userKey");
 
-                string field = "userKey";
-                loginDetailsRoot[field] = userKey;
+			{
+				lastSQLCommand = 
+					"select userKey, name, country, "
+					"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
+					"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
+					"from MMS_User where eMailAddress = ? and password = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, eMailAddress);
+				preparedStatement->setString(queryParameterIndex++, password);
 
-                field = "name";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("name"));
-
-                field = "email";
-                loginDetailsRoot[field] = eMailAddress;
-
-                field = "country";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("country"));
-
-                field = "creationDate";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
-
-                field = "expirationDate";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
-
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", eMailAddress: " + eMailAddress
+					+ ", password: " + password
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
 				{
-					lastSQLCommand = 
-						"update MMS_User set lastSuccessfulLogin = NOW() "
-						"where userKey = ?";
+					userKey = resultSet->getInt64("userKey");
 
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setInt64(queryParameterIndex++, userKey);
+					string field = "userKey";
+					loginDetailsRoot[field] = userKey;
 
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", userKey: " + to_string(userKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-					if (rowsUpdated != 1)
+					field = "name";
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("name"));
+
+					field = "email";
+					loginDetailsRoot[field] = eMailAddress;
+
+					field = "country";
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("country"));
+
+					field = "creationDate";
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+
+					field = "expirationDate";
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
+
+					/*
 					{
-						string errorMessage = __FILEREF__ + "no update was done"
-								+ ", userKey: " + to_string(userKey)
-								+ ", rowsUpdated: " + to_string(rowsUpdated)
-								+ ", lastSQLCommand: " + lastSQLCommand
-						;
-						_logger->warn(errorMessage);
+						lastSQLCommand = 
+							"update MMS_User set lastSuccessfulLogin = NOW() "
+							"where userKey = ?";
 
-						// throw runtime_error(errorMessage);
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						int rowsUpdated = preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", userKey: " + to_string(userKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						if (rowsUpdated != 1)
+						{
+							string errorMessage = __FILEREF__ + "no update was done"
+									+ ", userKey: " + to_string(userKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", lastSQLCommand: " + lastSQLCommand
+							;
+							_logger->warn(errorMessage);
+
+							// throw runtime_error(errorMessage);
+						}
 					}
+					*/
 				}
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "email and/or password are wrong"
-                    + ", eMailAddress: " + eMailAddress
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+				else
+				{
+					string errorMessage = __FILEREF__ + "email and/or password are wrong"
+						+ ", eMailAddress: " + eMailAddress
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
 
-                throw LoginFailed();
-            }
-        }
+					throw LoginFailed();
+				}
+			}
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
-        }
+		}
+		catch(sql::SQLException se)
+		{
+			string exceptionMessage(se.what());
 
-        throw se;
-    }
-    catch(LoginFailed e)
-    {        
-        string exceptionMessage(e.what());
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", exceptionMessage: " + exceptionMessage
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
 
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
+			throw se;
+		}
+		catch(LoginFailed e)
+		{        
+			string exceptionMessage(e.what());
+
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", exceptionMessage: " + exceptionMessage
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}
+		catch(runtime_error e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", e.what(): " + e.what()
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}
+		catch(exception e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}
+	}
+
+	{
+		shared_ptr<MySQLConnection> conn = nullptr;
+
+		shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+		try
+		{
+			conn = connectionPool->borrow();
+			_logger->debug(__FILEREF__ + "DB connection borrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+
+			{
+				lastSQLCommand = 
+					"update MMS_User set lastSuccessfulLogin = NOW() "
+					"where userKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
+							+ ", userKey: " + to_string(userKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->warn(errorMessage);
+
+					// throw runtime_error(errorMessage);
+				}
+			}
+
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			connectionPool->unborrow(conn);
 			conn = nullptr;
-        }
+		}
+		catch(sql::SQLException se)
+		{
+			string exceptionMessage(se.what());
 
-        throw e;
-    }
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", exceptionMessage: " + exceptionMessage
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
 
-        throw e;
-    }
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+			// throw se;
+		}
+		catch(LoginFailed e)
+		{        
+			string exceptionMessage(e.what());
 
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", exceptionMessage: " + exceptionMessage
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
 
-        throw e;
-    }
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			// throw e;
+		}
+		catch(runtime_error e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", e.what(): " + e.what()
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			// throw e;
+		}
+		catch(exception e)
+		{        
+			_logger->error(__FILEREF__ + "SQL exception"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+
+			if (conn != nullptr)
+			{
+				_logger->debug(__FILEREF__ + "DB connection unborrow"
+					+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				);
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			// throw e;
+		}
+	}
     
     return loginDetailsRoot;
 }
