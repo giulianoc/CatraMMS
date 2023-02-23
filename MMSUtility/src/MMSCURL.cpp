@@ -1460,6 +1460,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 			logger->info(__FILEREF__ + "httpPostPutString (" + requestType + ")"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
+				+ ", contentType: " + contentType
 				+ ", body: " + body
 			);
 

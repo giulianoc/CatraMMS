@@ -9947,7 +9947,7 @@ tuple<string, string, string, string, string, string, bool>
 			lastSQLCommand = 
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status like 'End_%' and ingestionJobKey in ("
-					"select distinct, reservedByIngestionJobKey from MMS_Conf_RTMPChannel where "
+					"select distinct reservedByIngestionJobKey from MMS_Conf_RTMPChannel where "
 					"workspaceKey = ? and reservedByIngestionJobKey is not null)"
 				;
 
