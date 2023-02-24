@@ -2122,7 +2122,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			fs::path destDirectory = workspaceIngestionRepository;
 			destDirectory /= (to_string(ingestionJobKey) + "_source");
 
-			_logger->info(__FILEREF__ + "Start moveDirectory..."
+			_logger->info(__FILEREF__ + "Start copyDirectory..."
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", sourceDirectory: " + sourceDirectory.string()
 				+ ", destDirectory: " + destDirectory.string()
@@ -2135,6 +2135,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 				fs::copy(sourceDirectory, destDirectory, fs::copy_options::recursive);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+				/*
 				int64_t sourceDirectorySize = 0;
 				int64_t destDirectorySize = 0;
 				{
@@ -2150,12 +2151,13 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 							destDirectorySize += entry.file_size();
 					}
 				}
+				*/
 				_logger->info(__FILEREF__ + "End copyDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory.string()
 					+ ", destDirectory: " + destDirectory.string()
-					+ ", sourceDirectorySize: " + to_string(sourceDirectorySize)
-					+ ", destDirectorySize: " + to_string(destDirectorySize)
+					// + ", sourceDirectorySize: " + to_string(sourceDirectorySize)
+					// + ", destDirectorySize: " + to_string(destDirectorySize)
 					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
