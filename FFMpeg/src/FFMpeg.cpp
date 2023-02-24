@@ -4549,14 +4549,18 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", mediaSource: " + mediaSource
-				+ ", Field: " + field;
+				+ ", Field: " + field
+				+ ", mediaInfo: " + JSONUtils::toString(detailsRoot)
+			;
             _logger->error(errorMessage);
 
 			// to hide the ffmpeg staff
             errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", mediaSource: " + mediaSource
-				+ ", Field: " + field;
+				+ ", Field: " + field
+				+ ", mediaInfo: " + JSONUtils::toString(detailsRoot)
+			;
             throw runtime_error(errorMessage);
         }
         Json::Value streamsRoot = detailsRoot[field];

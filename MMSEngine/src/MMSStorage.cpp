@@ -2050,7 +2050,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "End tar command "
 			+ ", executeCommand: " + executeCommand
-			+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+			+ ", @MMS statistics@ - tarDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endTar - startTar).count()) + "@"
 		);
 		if (executeCommandStatus != 0)
 		{

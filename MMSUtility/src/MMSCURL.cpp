@@ -16,6 +16,7 @@
 #include "catralibraries/Convert.h"
 #include "JSONUtils.h"
 #include <sstream>
+#include <regex>
 
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -367,20 +368,45 @@ string MMSCURL::httpPostFileSplittingInChunks(
 			(chunkIndex + 1) * chunkSize :
 			fileSizeInBytes;
 
-		lastHttpReturn = httpPostFile(
-			logger,
-			ingestionJobKey,
-			url,
-			timeoutInSeconds,
-			basicAuthenticationUser,
-			basicAuthenticationPassword,
-			pathFileName,
-			fileSizeInBytes,
-			maxRetryNumber,
-			secondsToWaitBeforeToRetry,
-			contentRangeStart,
-			contentRangeEnd_Excluded
-		);
+		if (chunkIndex + 1 == chunksNumber && url.find("mms-binary.catramms-cloud.com:443") != string::npos)
+		{
+			// 2023-02-24: a causa del bilanciatore hetzner dove non è possibile
+			//	settare il timeout, facciamo puntare direttamente ad un server senza passare
+			//	dal bilanciatore
+			string tmpURL = regex_replace(url, regex("mms-binary.catramms-cloud.com:443"), "159.69.251.50:8090");
+
+			lastHttpReturn = httpPostFile(
+				logger,
+				ingestionJobKey,
+				tmpURL,
+				timeoutInSeconds,
+				basicAuthenticationUser,
+				basicAuthenticationPassword,
+				pathFileName,
+				fileSizeInBytes,
+				maxRetryNumber,
+				secondsToWaitBeforeToRetry,
+				contentRangeStart,
+				contentRangeEnd_Excluded
+			);
+		}
+		else
+		{
+			lastHttpReturn = httpPostFile(
+				logger,
+				ingestionJobKey,
+				url,
+				timeoutInSeconds,
+				basicAuthenticationUser,
+				basicAuthenticationPassword,
+				pathFileName,
+				fileSizeInBytes,
+				maxRetryNumber,
+				secondsToWaitBeforeToRetry,
+				contentRangeStart,
+				contentRangeEnd_Excluded
+			);
+		}
 	}
 
 	return lastHttpReturn;

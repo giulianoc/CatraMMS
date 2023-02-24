@@ -16071,6 +16071,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				--data '{"snippet":{"title":"Test CiborTV","scheduledStartTime":"2021-11-19T20:00:00.000Z","scheduledEndTime":"2021-11-19T22:00:00.000Z"},"contentDetails":{"enableClosedCaptions":true,"enableContentEncryption":true,"enableDvr":true,"enableEmbed":true,"recordFromStart":true,"startWithSlate":true},"status":{"privacyStatus":"unlisted"}}' \
 				--compressed
 			*/
+			/*
+				2023-02-23: L'account deve essere abilitato a fare live streaming
+					vedi: https://www.youtube.com/watch?v=wnjzdRpOIUA
+			*/
 			youTubeURL = _youTubeDataAPIProtocol
 				+ "://"
 				+ _youTubeDataAPIHostName
