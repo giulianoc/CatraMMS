@@ -17819,7 +17819,7 @@ void MMSEngineProcessor::copyContent(
             + ", localPathName: " + localPathName
         );
 
-        fs::copy(mmsAssetPathName, localPathName);
+        fs::copy(mmsAssetPathName, localPathName, fs::copy_options::recursive);
     }
     catch (runtime_error& e) 
     {
@@ -19169,7 +19169,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 + ", concatenatedMediaPathName: " + concatenatedMediaPathName
             );
 
-            fs::copy(sourcePhysicalPath, concatenatedMediaPathName);
+            fs::copy(sourcePhysicalPath, concatenatedMediaPathName, fs::copy_options::recursive);
         }
         else
         {
@@ -26029,7 +26029,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );
 
 		chrono::system_clock::time_point startCoping = chrono::system_clock::now();
-        fs::copy(sourcePathName, destBinaryPathName);
+        fs::copy(sourcePathName, destBinaryPathName, fs::copy_options::recursive);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
         if (m3u8TarGzOrM3u8Streaming == 1)

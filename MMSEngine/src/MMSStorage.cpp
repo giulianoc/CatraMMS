@@ -1568,7 +1568,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
                 + ", to: " + mmsAssetPathName.string()
             );
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-			fs::copy(sourceAssetPathName, mmsAssetPathName);
+			fs::copy(sourceAssetPathName, mmsAssetPathName, fs::copy_options::recursive);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Copy directory statistics"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1704,7 +1704,7 @@ int64_t MMSStorage::move(
 			{
 				// copy and delete
 				startPoint = chrono::system_clock::now();
-				fs::copy(source, dest);
+				fs::copy(source, dest, fs::copy_options::recursive);
 				fs::remove_all(source);
 				endPoint = chrono::system_clock::now();
 			}
