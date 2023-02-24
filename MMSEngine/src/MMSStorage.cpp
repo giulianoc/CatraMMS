@@ -2032,6 +2032,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		_logger->info(__FILEREF__ + "Received manageTarFileInCaseOfIngestionOfSegments"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", tarBinaryPathName: " + tarBinaryPathName
+			+ ", tarBinary size: " + to_string(fs::file_size(tarBinaryPathName))
 			+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
 			+ ", sourcePathName: " + sourcePathName
 		);
@@ -2134,10 +2135,27 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 				fs::copy(sourceDirectory, destDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+				int64_t sourceDirectorySize = 0;
+				int64_t destDirectorySize = 0;
+				{
+					// recursive_directory_iterator, by default, does not follow sym links
+					for (fs::directory_entry const& entry: fs::recursive_directory_iterator(sourceDirectory))
+					{
+						if (entry.is_regular_file())
+							sourceDirectorySize += entry.file_size();
+					}
+					for (fs::directory_entry const& entry: fs::recursive_directory_iterator(destDirectory))
+					{
+						if (entry.is_regular_file())
+							destDirectorySize += entry.file_size();
+					}
+				}
 				_logger->info(__FILEREF__ + "End copyDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory.string()
 					+ ", destDirectory: " + destDirectory.string()
+					+ ", sourceDirectorySize: " + to_string(sourceDirectorySize)
+					+ ", destDirectorySize: " + to_string(destDirectorySize)
 					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
