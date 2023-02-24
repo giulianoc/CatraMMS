@@ -2133,7 +2133,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			//	The directory will be removed later by cron job
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				fs::copy(sourceDirectory, destDirectory);
+				fs::copy(sourceDirectory, destDirectory, fs::copy_options::recursive);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 				int64_t sourceDirectorySize = 0;
 				int64_t destDirectorySize = 0;
