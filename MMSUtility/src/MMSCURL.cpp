@@ -368,12 +368,12 @@ string MMSCURL::httpPostFileSplittingInChunks(
 			(chunkIndex + 1) * chunkSize :
 			fileSizeInBytes;
 
-		if (chunkIndex + 1 == chunksNumber && url.find("mms-binary.catramms-cloud.com:443") != string::npos)
+		if (chunkIndex + 1 == chunksNumber && url.find("https://mms-binary.catramms-cloud.com:443") != string::npos)
 		{
 			// 2023-02-24: a causa del bilanciatore hetzner dove non è possibile
 			//	settare il timeout, facciamo puntare direttamente ad un server senza passare
 			//	dal bilanciatore
-			string tmpURL = regex_replace(url, regex("mms-binary.catramms-cloud.com:443"), "159.69.251.50:8090");
+			string tmpURL = regex_replace(url, regex("https://mms-binary.catramms-cloud.com:443"), "http://mms-binary-tmp.catramms-cloud.com:8090");
 
 			lastHttpReturn = httpPostFile(
 				logger,
