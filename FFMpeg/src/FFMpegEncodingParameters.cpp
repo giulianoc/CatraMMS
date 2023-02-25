@@ -1559,57 +1559,6 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             }
         }
 
-        // resolution
-		/*
-        {
-            field = "Width";
-            if (!JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            int width = JSONUtils::asInt(videoRoot, field, 0);
-            if (width == -1 && codec == "libx264")
-                width   = -2;     // h264 requires always a even width/height
-        
-            field = "Height";
-            if (!JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            int height = JSONUtils::asInt(videoRoot, field, 0);
-            if (height == -1 && codec == "libx264")
-                height   = -2;     // h264 requires always a even width/height
-
-            ffmpegVideoResolutionParameter =
-                    "-vf scale=" + to_string(width) + ":" + to_string(height) + " "
-            ;
-        }
-		*/
-
-        // bitRate
-		/*
-		videoBitRateInKbps = -1;
-        {
-            field = "KBitRate";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                videoBitRateInKbps = JSONUtils::asInt(videoRoot, field, 0);
-
-                ffmpegVideoBitRateParameter =
-                        "-b:v " + to_string(videoBitRateInKbps) + "k "
-                ;
-            }
-        }
-		*/
-
         // OtherOutputParameters
         {
             field = "OtherOutputParameters";
@@ -1636,36 +1585,6 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             }
 			twoPasses = JSONUtils::JSONUtils::asBool(videoRoot, field, false);
         }
-
-        // maxRate
-		/*
-        {
-            field = "MaxRate";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                int maxRate = JSONUtils::asInt(videoRoot, field, 0);
-
-                ffmpegVideoMaxRateParameter =
-                        "-maxrate " + to_string(maxRate) + "k "
-                ;
-            }
-        }
-		*/
-
-        // bufSize
-		/*
-        {
-            field = "BufSize";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                int bufSize = JSONUtils::asInt(videoRoot, field, 0);
-
-                ffmpegVideoBufSizeParameter =
-                        "-bufsize " + to_string(bufSize) + "k "
-                ;
-            }
-        }
-		*/
 
         // frameRate
         {
