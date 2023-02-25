@@ -277,8 +277,8 @@ void EncoderVideoAudioProxy::operator()()
     
     _logger->info(__FILEREF__ + "Running EncoderVideoAudioProxy..."
         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
         + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
         + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
         + ", _encodingParametersRoot: " + JSONUtils::toString(_encodingItem->_encodingParametersRoot)
         + ", _ingestedParametersRoot: " + JSONUtils::toString(_encodingItem->_ingestedParametersRoot)

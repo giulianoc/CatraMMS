@@ -8,7 +8,7 @@
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
+			// mandatory. One or more References to identify the media file (mediaItemKeys) or
 			// the profile (physicalPathKey) to be POST on Facebook.
 			// In case this task is placed inside an onSuccess event, 
 			// the Reference... item can be omitted.
