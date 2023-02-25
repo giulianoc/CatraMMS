@@ -11743,7 +11743,10 @@ tuple<long, string, string, int, int64_t, Json::Value,
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", Field: " + field;
+						+ ", Field: " + field
+						+ ", externalEncoder: " + to_string(externalEncoder)
+						+ ", sourceRoot: " + JSONUtils::toString(sourceRoot)
+					;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);

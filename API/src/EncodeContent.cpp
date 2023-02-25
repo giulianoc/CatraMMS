@@ -61,7 +61,9 @@ void EncodeContent::encodeContent(
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-				+ ", Field: " + field;
+				+ ", Field: " + field
+				+ ", sourceToBeEncodedRoot: " + JSONUtils::toString(sourceToBeEncodedRoot)
+			;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
