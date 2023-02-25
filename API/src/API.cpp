@@ -1873,7 +1873,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 			request, requestMethod, queryParameters, workspace, // contentLength,
                 requestDetails);
     }
-    else if (method == "addEncodingProfilesSet")
+    else if (method == "addUpdateEncodingProfilesSet")
     {
         if (!admin && !createProfiles)
         {
@@ -1887,7 +1887,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed,
+        addUpdateEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters, requestBody);
     }
     else if (method == "encodingProfilesSetsList")

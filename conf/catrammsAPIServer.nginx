@@ -148,15 +148,15 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/video/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=video last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/audio/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=audio last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/audio/?$ /api?version=$1&method=addEncodingProfile&contentType=audio last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/image/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=image last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/image/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=image last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
 		}
 		if ($request_method = DELETE) {

@@ -1294,10 +1294,10 @@ public:
 	tuple<int64_t, int64_t, string> getEncodingJobDetailsByIngestionJobKey(
 		int64_t ingestionJobKey, bool fromMaster);
 
-    int64_t addEncodingProfilesSet (
+    int64_t addEncodingProfilesSetIfNotAlreadyPresent (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
-        string label);
+        string label, bool removeEncodingProfilesIfPresent);
 
     int64_t addEncodingProfile(
         shared_ptr<MySQLConnection> conn,
@@ -1319,7 +1319,7 @@ public:
     void removeEncodingProfile(
         int64_t workspaceKey, int64_t encodingProfileKey);
 
-    int64_t addEncodingProfileIntoSet(
+    int64_t addEncodingProfileIntoSetIfNotAlreadyPresent(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string label,

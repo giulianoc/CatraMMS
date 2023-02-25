@@ -724,14 +724,14 @@ void API::encodingProfilesList(
     }
 }
 
-void API::addEncodingProfilesSet(
+void API::addUpdateEncodingProfilesSet(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addEncodingProfilesSet";
+    string api = "addUpdateEncodingProfilesSet";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -775,8 +775,9 @@ void API::addEncodingProfilesSet(
             }
             string label = JSONUtils::asString(encodingProfilesSetRoot, field, "");
 
-            int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
-                    workspace->_workspaceKey, contentType, label);
+			bool removeEncodingProfilesIfPresent = true;
+			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(conn,
+				workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent);
 
 			field = "Profiles";
 			Json::Value profilesRoot = encodingProfilesSetRoot[field];
@@ -785,7 +786,7 @@ void API::addEncodingProfilesSet(
             {
                 string profileLabel = JSONUtils::asString(profilesRoot[profileIndex]);
                 
-                int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSet(
+                int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
                         conn, workspace->_workspaceKey, profileLabel,
                         contentType, encodingProfilesSetKey);
 

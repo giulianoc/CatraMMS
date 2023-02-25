@@ -2,10 +2,10 @@
 #include "MMSEngineDBFacade.h"
 #include "JSONUtils.h"
 
-int64_t MMSEngineDBFacade::addEncodingProfilesSet (
+int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
-        string label)
+        string label, bool removeEncodingProfilesIfPresent)
 {
     int64_t     encodingProfilesSetKey;
     
@@ -15,7 +15,8 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
     {
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and contentType = ? and label = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet "
+				"where workspaceKey = ? and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -35,7 +36,27 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
             if (resultSet->next())
             {
                 encodingProfilesSetKey     = resultSet->getInt64("encodingProfilesSetKey");
-            }
+
+				if (removeEncodingProfilesIfPresent)
+				{
+					lastSQLCommand = 
+						"delete from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ?";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+			}
             else
             {
                 lastSQLCommand = 
@@ -60,7 +81,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
 
                 encodingProfilesSetKey = getLastInsertId(conn);
             }
-        }        
+        }
     }
     catch(sql::SQLException se)
     {
@@ -511,7 +532,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
     }    
 }
 
-int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
+int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string label,
@@ -527,7 +548,8 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
     {
         {
             lastSQLCommand = 
-                "select encodingProfileKey from MMS_EncodingProfile where (workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
+                "select encodingProfileKey from MMS_EncodingProfile "
+				"where (workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -565,7 +587,8 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
         {
             {
                 lastSQLCommand = 
-                    "select encodingProfilesSetKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ? and encodingProfileKey = ?";
+                    "select encodingProfilesSetKey from MMS_EncodingProfilesSetMapping "
+					"where encodingProfilesSetKey = ? and encodingProfileKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);

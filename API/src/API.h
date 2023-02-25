@@ -398,7 +398,7 @@ private:
 	// 	string tarBinaryPathName, string workspaceIngestionRepository,
 	// 	string sourcePathName);
 
-    void addEncodingProfilesSet(
+    void addUpdateEncodingProfilesSet(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
