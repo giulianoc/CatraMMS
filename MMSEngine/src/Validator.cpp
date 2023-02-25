@@ -4285,7 +4285,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 				encodingProfileFieldsToBeManaged);
 			if (validateDependenciesToo)
 			{
-				if (dependencies.size() != 1)
+				if (dependencies.size() == 0)
 				{
 					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast"
                         + ", dependencies.size: " + to_string(dependencies.size())
@@ -4302,23 +4302,27 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 					Validator::DependencyType dependencyType;
 					bool stopIfReferenceProcessingError;
 
-					tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-						= dependencies[0];
-
-					if (referenceContentType != MMSEngineDBFacade::ContentType::Video
-                        && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+					for(tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
+						dependency: dependencies)
 					{
-						string errorMessage = __FILEREF__
-							+ "Reference... does not refer a video-audio content"
-                            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-							+ ", referenceMediaItemKey: " + to_string(key)
-							+ ", referenceContentType: "
-								+ MMSEngineDBFacade::toString(referenceContentType)
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
+						tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+							= dependency;
 
-						throw runtime_error(errorMessage);
+						if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+							&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+						{
+							string errorMessage = __FILEREF__
+								+ "Reference... does not refer a video-audio content"
+								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+								+ ", referenceMediaItemKey: " + to_string(key)
+								+ ", referenceContentType: "
+									+ MMSEngineDBFacade::toString(referenceContentType)
+								+ ", label: " + label
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
 					}
 				}
 			}
@@ -4511,7 +4515,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 				encodingProfileFieldsToBeManaged);
 			if (validateDependenciesToo)
 			{
-				if (dependencies.size() != 1)
+				if (dependencies.size() == 0)
 				{
 					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast"
                         + ", dependencies.size: " + to_string(dependencies.size())
@@ -4528,23 +4532,27 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 					Validator::DependencyType dependencyType;
 					bool stopIfReferenceProcessingError;
 
-					tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-						= dependencies[0];
-
-					if (referenceContentType != MMSEngineDBFacade::ContentType::Video
-                        && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+					for(tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
+						dependency: dependencies)
 					{
-						string errorMessage = __FILEREF__
-							+ "reference... does not refer a video-audio content"
-                            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-							+ ", referenceMediaItemKey: " + to_string(key)
-							+ ", referenceContentType: "
-								+ MMSEngineDBFacade::toString(referenceContentType)
-							+ ", label: " + label
-						;
-						_logger->error(errorMessage);
+						tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+							= dependency;
 
-						throw runtime_error(errorMessage);
+						if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+							&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+						{
+							string errorMessage = __FILEREF__
+								+ "reference... does not refer a video-audio content"
+								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+								+ ", referenceMediaItemKey: " + to_string(key)
+								+ ", referenceContentType: "
+									+ MMSEngineDBFacade::toString(referenceContentType)
+								+ ", label: " + label
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
 					}
 				}
 			}

@@ -16860,7 +16860,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				Json::Value vodProxyParametersRoot;
 				{
 					string field = "Label";
-					proxyLabel = "Proxy MediaItem to YouTube (" + youTubeConfigurationLabel + ")";
+					proxyLabel = "VOD-Proxy MediaItem to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
 					field = "Type";
