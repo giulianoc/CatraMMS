@@ -17,6 +17,7 @@ then
 	exit
 fi
 
+echo "" >> $debugFilename
 
 echo "" >> $debugFilename
 disks_usage

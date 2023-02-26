@@ -22,6 +22,7 @@ do
 
 	secondsToSleep=60
 
+	echo "" >> $debugFilename
 	echo "$(date +'%Y/%m/%d %H:%M:%S'): script elapsed: $elapsed secs, sleeping $secondsToSleep secs" >> $debugFilename
 	sleep $secondsToSleep
 done
