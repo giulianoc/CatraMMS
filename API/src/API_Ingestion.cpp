@@ -5201,7 +5201,7 @@ void API::changeLiveProxyPlaylist(
 						int64_t aUtcProxyPeriodStart = JSONUtils::asInt64(aRoot, "utcScheduleStart", -1);
 						int64_t bUtcProxyPeriodStart = JSONUtils::asInt64(bRoot, "utcScheduleStart", -1);
 
-						return aUtcProxyPeriodStart > bUtcProxyPeriodStart;
+						return aUtcProxyPeriodStart < bUtcProxyPeriodStart;
 					}
 				);
 
@@ -5234,7 +5234,7 @@ void API::changeLiveProxyPlaylist(
 						break;
 					}
 				}
-				int leavePastEntriesNumber = 4;
+				int leavePastEntriesNumber = 3;
 				if (currentPlaylistIndex - leavePastEntriesNumber > 0)
 				{
 					_logger->info(__FILEREF__ + "Erase playlist items in the past: "
@@ -5245,7 +5245,7 @@ void API::changeLiveProxyPlaylist(
 					);
 
 					vNewReceivedPlaylist.erase(vNewReceivedPlaylist.begin(),
-						vNewReceivedPlaylist.begin() + (currentPlaylistIndex - leavePastEntriesNumber - 1));
+						vNewReceivedPlaylist.begin() + (currentPlaylistIndex - leavePastEntriesNumber));
 				}
 				else
 				{
@@ -5269,12 +5269,6 @@ void API::changeLiveProxyPlaylist(
 					Json::Value newReceivedPlaylistItemRoot = vNewReceivedPlaylist[
 						newReceivedPlaylistIndex];
 
-					_logger->info(__FILEREF__ + "Processing newReceivedPlaylistRoot"
-						+ ", newReceivedPlaylistRoot: "
-						+ to_string(newReceivedPlaylistIndex) + "/"
-						+ to_string(newReceivedPlaylistRoot.size())
-					);
-
 					// correct values have to be:
 					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd 
 					// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
@@ -5284,6 +5278,19 @@ void API::changeLiveProxyPlaylist(
 					field = "utcScheduleEnd";
 					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
 						field, -1);
+
+					_logger->info(__FILEREF__ + "Processing newReceivedPlaylistRoot"
+						+ ", newReceivedPlaylistRoot: " + to_string(newReceivedPlaylistIndex) + "/"
+							+ to_string(newReceivedPlaylistRoot.size())
+						+ ", utcCurrentBroadcasterStart: "
+							+ to_string(utcCurrentBroadcasterStart)
+							+ " (" + DateTime::utcToUtcString(utcCurrentBroadcasterStart) + ")"
+						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+							+ " (" + DateTime::utcToUtcString(utcProxyPeriodStart) + ")"
+						+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+							+ " (" + DateTime::utcToUtcString(utcProxyPeriodEnd) + ")"
+					);
+
 					if (utcCurrentBroadcasterStart > utcProxyPeriodStart
 						|| utcProxyPeriodStart >= utcProxyPeriodEnd
 						|| utcProxyPeriodEnd > utcBroadcasterEnd)
