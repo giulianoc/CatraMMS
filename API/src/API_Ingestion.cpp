@@ -4978,8 +4978,8 @@ void API::changeLiveProxyPlaylist(
 
 		// check/build the new playlist
 		Json::Value newPlaylistRoot(Json::arrayValue);
-        try
-        {
+		try
+		{
 			Json::Value newReceivedPlaylistRoot = JSONUtils::toJson(-1, -1, requestBody);
 
 			// check the received playlist
@@ -5181,16 +5181,92 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 
+			// 2023-02-26: Probabilmente l'array di Json ricevuto è già ordinato,
+			//		per sicurezza ordiniamo in base al campo start
+			//		Per utilizzare 'sort' inizializziamo un vector
+			vector<Json::Value> vNewReceivedPlaylist;
+			{
+				for (int newReceivedPlaylistIndex = 0;
+					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
+					newReceivedPlaylistIndex++)
+				{
+					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
+						newReceivedPlaylistIndex];
+					vNewReceivedPlaylist.push_back(newReceivedPlaylistItemRoot);
+				}
+
+				sort(vNewReceivedPlaylist.begin(), vNewReceivedPlaylist.end(),
+					[](Json::Value aRoot, Json::Value bRoot)
+					{
+						int64_t aUtcProxyPeriodStart = JSONUtils::asInt64(aRoot, "utcScheduleStart", -1);
+						int64_t bUtcProxyPeriodStart = JSONUtils::asInt64(bRoot, "utcScheduleStart", -1);
+
+						return aUtcProxyPeriodStart > bUtcProxyPeriodStart;
+					}
+				);
+
+				_logger->info(__FILEREF__ + "Sort playlist items"
+					+ ", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size())
+				);
+			}
+			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi precedenti a 'now'
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				time_t utcNow  = chrono::system_clock::to_time_t(now);
+
+				int currentPlaylistIndex = -1;
+				for (int newReceivedPlaylistIndex = 0;
+					newReceivedPlaylistIndex < vNewReceivedPlaylist.size();
+					newReceivedPlaylistIndex++)
+				{
+					Json::Value newReceivedPlaylistItemRoot = vNewReceivedPlaylist[
+						newReceivedPlaylistIndex];
+
+					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
+						"utcScheduleStart", -1);
+					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot,
+						"utcScheduleEnd", -1);
+
+					if (utcProxyPeriodStart <= utcNow && utcNow < utcProxyPeriodEnd)
+					{
+						currentPlaylistIndex = newReceivedPlaylistIndex;
+
+						break;
+					}
+				}
+				int leavePastEntriesNumber = 4;
+				if (currentPlaylistIndex - leavePastEntriesNumber > 0)
+				{
+					_logger->info(__FILEREF__ + "Erase playlist items in the past: "
+						+ to_string(currentPlaylistIndex - leavePastEntriesNumber) + " items"
+						+ ", currentPlaylistIndex: " + to_string(currentPlaylistIndex)
+						+ ", leavePastEntriesNumber: " + to_string(leavePastEntriesNumber)
+						+ ", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size())
+					);
+
+					vNewReceivedPlaylist.erase(vNewReceivedPlaylist.begin(),
+						vNewReceivedPlaylist.begin() + (currentPlaylistIndex - leavePastEntriesNumber - 1));
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "Erase playlist items in the past: nothing"
+						+ ", currentPlaylistIndex: " + to_string(currentPlaylistIndex)
+						+ ", leavePastEntriesNumber: " + to_string(leavePastEntriesNumber)
+						+ ", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size())
+					);
+				}
+			}
+
 			// build the new playlist
 			// add the default media in case of hole filling newPlaylistRoot
 			{
 				int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
 
 				for (int newReceivedPlaylistIndex = 0;
-					newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
+					newReceivedPlaylistIndex < vNewReceivedPlaylist.size();
 					newReceivedPlaylistIndex++)
 				{
-					Json::Value newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[
+					Json::Value newReceivedPlaylistItemRoot = vNewReceivedPlaylist[
 						newReceivedPlaylistIndex];
 
 					_logger->info(__FILEREF__ + "Processing newReceivedPlaylistRoot"
@@ -5330,6 +5406,7 @@ void API::changeLiveProxyPlaylist(
 						// update the end time of the last entry with the start time
 						// of the entry we are adding
 						/* 2021-12-19: non ho capito il controllo sotto!!!
+							Tra l'altro newReceivedPlaylistRoot è ora in un vector
 						if (newPlaylistRoot.size() > 0)
 						{
 							Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
@@ -5350,7 +5427,7 @@ void API::changeLiveProxyPlaylist(
 					utcCurrentBroadcasterStart = utcProxyPeriodEnd;
 				}
 
-				if (newReceivedPlaylistRoot.size() == 0)
+				if (vNewReceivedPlaylist.size() == 0)
 				{
 					// no items inside the playlist
 
@@ -5537,6 +5614,7 @@ void API::changeLiveProxyPlaylist(
 					// update the end time of the last entry with the start time
 					// of the entry we are adding
 					/* 2021-12-19: non ho capito il controllo sotto
+							Tra l'altro newReceivedPlaylistRoot è ora in un vector
 					if (newPlaylistRoot.size() > 0)
 					{
 						Json::Value newLastPlaylistRoot = newReceivedPlaylistRoot[
