@@ -18,37 +18,57 @@ then
 fi
 
 
+echo "" >> $debugFilename
 disks_usage
+
+echo "" >> $debugFilename
 cpu_usage
+
+echo "" >> $debugFilename
 memory_usage
 
 while [ -n "$1" ]
 do
 	case "$1" in
 		"engine")
+			echo "" >> $debugFilename
 			sql_slave_off
+
+			echo "" >> $debugFilename
 			mms_engine_service_running
 			;;
 		"api")
+			echo "" >> $debugFilename
 			nginx_rate_api_limit
 
+			echo "" >> $debugFilename
 			healthCheckURL=$2
 			shift
 			mms_api_service_running $healthCheckURL
+
 			;;
 		"gui")
+			echo "" >> $debugFilename
 			nginx_rate_gui_limit
+
 			;;
 		"delivery")
+			echo "" >> $debugFilename
 			nginx_rate_binary_limit
+
+			echo "" >> $debugFilename
 			nginx_rate_delivery_limit
+
 			;;
 		"encoder" | "externalEncoder")
+			echo "" >> $debugFilename
 			nginx_rate_encoder_limit
 
+			echo "" >> $debugFilename
 			healthCheckURL=$2
 			shift
 			mms_encoder_service_running $healthCheckURL
+
 			;;
 		"integration")
 			;;
