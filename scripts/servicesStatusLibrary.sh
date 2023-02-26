@@ -46,6 +46,15 @@ getAlarmDescription()
 		"alarm_nginx_rate_encoder_limit")
 			echo "Nginx Rate Encoder Limit overcome"
 			;;
+		"alarm_mms_engine_service_running")
+			echo "mms engine service is not running"
+			;;
+		"alarm_mms_api_service_running")
+			echo "mms api service is not running"
+			;;
+		"alarm_mms_encoder_service_running")
+			echo "mms encoder service is not running"
+			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
@@ -286,6 +295,164 @@ nginx_rate_gui_limit()
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
 		notify "$(hostname)" "alarm_nginx_rate_gui_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
 		return 1
+	fi
+}
+
+mms_engine_service_running()
+{
+	pgrep -f mmsEngineService > /dev/null
+	serviceNotRunning=$?
+
+	if [ $serviceNotRunning -eq 1 ]
+	then
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_mms_engine_service_running" $alarmNotificationPeriod "mmsEngineService NOT running"
+
+		#fix management
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_engine_service_running, service is restarted" >> $debugFilename
+
+		~/mmsStopALL.sh
+		sleep 1
+		~/mmsStartALL.sh
+
+		return 1
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_engine_service_running, mmsEngineService is running" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_engine_service_running"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	fi
+}
+
+mms_api_service_running()
+{
+	healthCheckURL=$1
+
+	serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
+	if [ "$serviceStatus" == "" ]
+	then
+		serviceNotRunning=1
+	else
+		serviceNotRunning=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+	fi
+
+	if [ $serviceNotRunning -eq 1 ]
+	then
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_mms_api_service_running" $alarmNotificationPeriod "mms api NOT running"
+
+		#fix management
+		failuresNumberFileName=/tmp/alarm_mms_api_service_running.failuresNumber.txt
+		maxFailuresNumber=2
+		if [ -s $failuresNumberFileName ]
+		then
+			#exist and is not empty
+			failuresNumber=$(cat $failuresNumberFileName)
+
+			if [ $failuresNumber -ge $maxFailuresNumber ]
+			then
+				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, service is restarted" >> $debugFilename
+
+				~/mmsStopALL.sh
+				sleep 1
+				~/mmsStartALL.sh
+
+				rm -f $failuresNumberFileName
+			else
+				failuresNumber=$((failuresNumber+1))
+
+				echo "$failuresNumber" > $failuresNumberFileName
+			fi
+		else
+			#first failure
+
+			echo "1" > $failuresNumberFileName
+		fi
+
+		return 1
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, mms api is running" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_api_service_running"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		#fix management
+		failuresNumberFileName=/tmp/alarm_mms_api_service_running.failuresNumber.txt
+		if [ -f "$failuresNumberFileName" ]; then
+			rm -f $failuresNumberFileName
+		fi
+
+		return 0
+	fi
+}
+
+mms_encoder_service_running()
+{
+	healthCheckURL=$1
+
+	serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
+	if [ "$serviceStatus" == "" ]
+	then
+		serviceNotRunning=1
+	else
+		serviceNotRunning=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+	fi
+
+	if [ $serviceNotRunning -eq 1 ]
+	then
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "mms encoder NOT running"
+
+		#fix management
+		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
+		maxFailuresNumber=2
+		if [ -s $failuresNumberFileName ]
+		then
+			#exist and is not empty
+			failuresNumber=$(cat $failuresNumberFileName)
+
+			if [ $failuresNumber -ge $maxFailuresNumber ]
+			then
+				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, service is restarted" >> $debugFilename
+
+				~/mmsStopALL.sh
+				sleep 1
+				~/mmsStartALL.sh
+
+				rm -f $failuresNumberFileName
+			else
+				failuresNumber=$((failuresNumber+1))
+
+				echo "$failuresNumber" > $failuresNumberFileName
+			fi
+		else
+			#first failure
+
+			echo "1" > $failuresNumberFileName
+		fi
+
+		return 1
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, mms encoder is running" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_encoder_service_running"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		#fix management
+		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
+		if [ -f "$failuresNumberFileName" ]; then
+			rm -f $failuresNumberFileName
+		fi
+
+		return 0
 	fi
 }
 

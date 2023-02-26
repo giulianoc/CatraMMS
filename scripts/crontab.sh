@@ -14,19 +14,16 @@ tenDaysInMinutes=14400
 twentyDaysInMinutes=28800
 sixMonthsInMinutes=259299
 
-if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 -a $# -ne 4 ]
+if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 ]
 then
-	echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [[load-balancer OR engine OR api OR encoder] [<healthCheckURL>]] [<db user> <db password>]" >> /tmp/crontab.log
+	echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [<db user> <db password>]" >> /tmp/crontab.log
 
     exit
 fi
 
 commandIndex=$1
 timeoutInMinutes=$2
-#third parameter could be healthCheckType or dbDetails (depend on commandIndex)
-healthCheckType=$3
 dbDetails=$3
-healthCheckURL=$4
 
 if [ $commandIndex -eq 0 ]
 then
@@ -40,88 +37,7 @@ then
 	else
 		export LD_LIBRARY_PATH=/opt/catramms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/catramms/nginx/sbin/nginx --nginx-server-root /opt/catramms/nginx/conf
 	fi
-elif [ $commandIndex -eq 16 -a "$healthCheckType" != "" ]
-then
-	#mms service health check
-
-	toBeRestartedBecauseEngine=0
-	toBeRestartedBecauseLoadBalancer=0
-	toBeRestartedBecauseAPIOrEncoder=0
-	if [ "$healthCheckType" == "engine" ]
-	then
-		pgrep -f mmsEngineService > /dev/null
-		toBeRestartedBecauseEngine=$?
-	elif [ "$healthCheckType" == "load-balancer" ]
-	then
-		pgrep -f nginx > /dev/null
-		toBeRestartedBecauseLoadBalancer=$?
-	elif [ "$healthCheckURL" != "" ]
-	then
-		serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
-		if [ "$serviceStatus" == "" ]
-		then
-			toBeRestartedBecauseAPIOrEncoder=1
-		else
-			toBeRestartedBecauseAPIOrEncoder=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
-		fi
-
-		failuresNumberFileName=/tmp/failuresNumber.$healthCheckType.txt
-		maxFailuresNumber=2
-		if [ $toBeRestartedBecauseAPIOrEncoder -eq 1 ]
-		then
-			#curl failed, check failuresNumber
-
-			if [ -s $failuresNumberFileName ]
-			then
-				#exist and is not empty
-				failuresNumber=$(cat $failuresNumberFileName)
-
-				if [ $failuresNumber -ge $maxFailuresNumber ]
-				then
-					toBeRestartedBecauseAPIOrEncoder=1
-
-					echo "0" > $failuresNumberFileName
-				else
-					toBeRestartedBecauseAPIOrEncoder=0
-
-					failuresNumber=$((failuresNumber+1))
-
-					echo "$failuresNumber" > $failuresNumberFileName
-				fi
-			else
-				#first failure
-
-				toBeRestartedBecauseAPIOrEncoder=0
-
-				echo "1" > $failuresNumberFileName
-			fi
-		else
-			echo "0" > $failuresNumberFileName
-		fi
-	fi
-
-	if [ $toBeRestartedBecauseEngine -eq 1 -o $toBeRestartedBecauseLoadBalancer -eq 1 -o $toBeRestartedBecauseAPIOrEncoder -eq 1 ]
-	then
-		#restart
-
-		if [ $toBeRestartedBecauseEngine -eq 1 ]
-		then
-			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE ENGINE" >> ~/MMS_RESTART.txt
-		elif [ $toBeRestartedBecauseLoadBalancer -eq 1 ]
-		then
-			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE LOAD BALANCER" >> ~/MMS_RESTART.txt
-		else
-			echo "$(date +'%Y-%m-%d %H:%M:%S') BEGIN MMS SERVICE RESTART BECAUSE API or ENCODER" >> ~/MMS_RESTART.txt
-		fi
-
-		~/mmsStopALL.sh
-		sleep 1
-		~/mmsStartALL.sh
-
-		echo "	$(date +'%Y-%m-%d %H:%M:%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
-	fi
 else
-
 	if [ $commandIndex -eq 1 ]
 	then
 		#first manage catalina.out file size if present
