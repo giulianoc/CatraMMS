@@ -7,7 +7,7 @@ debug=1
 
 if [ $# -eq 0 ]
 then
-	echo "usage $0 <moduleType_1 [moduleType_2] [moduleType_3] (engine or api or delivery or encoder or externalEncoder or storage or integration)>" >> $debugFilename
+	echo "see serviceStatusAgent.sh parameters" >> $debugFilename
 
 	exit
 fi
