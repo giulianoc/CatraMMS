@@ -5301,9 +5301,13 @@ void API::changeLiveProxyPlaylist(
 							+ ", newReceivedPlaylistIndex: " + to_string(newReceivedPlaylistIndex)
 							+ ", utcCurrentBroadcasterStart: "
 								+ to_string(utcCurrentBroadcasterStart)
+								+ " (" + DateTime::utcToUtcString(utcCurrentBroadcasterStart) + ")"
 							+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+								+ " (" + DateTime::utcToUtcString(utcProxyPeriodStart) + ")"
 							+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+								+ " (" + DateTime::utcToUtcString(utcProxyPeriodEnd) + ")"
 							+ ", utcBroadcasterEnd: " + to_string(utcBroadcasterEnd)
+								+ " (" + DateTime::utcToUtcString(utcBroadcasterEnd) + ")"
 						;
 						_logger->error(errorMessage);
 
