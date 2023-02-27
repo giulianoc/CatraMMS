@@ -503,7 +503,6 @@ adds-to-bashrc()
 		echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
 		echo "alias engineLog='vi \$(printLogFileName.sh engine)'" >> /home/mms/.bashrc
 		echo "alias apiLog='vi \$(printLogFileName.sh api)'" >> /home/mms/.bashrc
-		echo "cat ~/MMS_RESTART.txt" >> /home/mms/.bashrc
 	fi
 
 	echo "alias h='history'" >> /home/mms/.bashrc

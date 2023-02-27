@@ -343,7 +343,7 @@ mms_api_service_running()
 	if [ $serviceNotRunning -eq 1 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_api_service_running" $alarmNotificationPeriod ""
+		notify "$(hostname)" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
 
 		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_api_service_running.failuresNumber.txt
@@ -365,12 +365,12 @@ mms_api_service_running()
 			else
 				failuresNumber=$((failuresNumber+1))
 
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, one more failure: $failuresNumber" >> $debugFilename
+				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 				echo "$failuresNumber" > $failuresNumberFileName
 			fi
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, first failure" >> $debugFilename
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, first failure, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 			echo "1" > $failuresNumberFileName
 		fi
@@ -409,7 +409,7 @@ mms_encoder_service_running()
 	if [ $serviceNotRunning -eq 1 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_encoder_service_running" $alarmNotificationPeriod ""
+		notify "$(hostname)" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
 
 		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
@@ -431,12 +431,12 @@ mms_encoder_service_running()
 			else
 				failuresNumber=$((failuresNumber+1))
 
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber" >> $debugFilename
+				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 				echo "$failuresNumber" > $failuresNumberFileName
 			fi
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, first failure" >> $debugFilename
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, first failure, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 			echo "1" > $failuresNumberFileName
 		fi

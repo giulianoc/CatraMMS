@@ -9,11 +9,28 @@
 
 	#proxy_cache one;
 
+	#scenario client url: https://mms-gui.catramms-cloud.com
 	location / {
-		rewrite .* https://$host/catramms$request_uri redirect;
+		rewrite .* https://$host/catramms/ redirect;
 	}
-	
+
+	#scenario client url: https://mms-gui.catramms-cloud.com/catramms
+	#	in questo caso tomcat ritornerebbe una redirect a /catramms/
+	#	nginx quindi ritornerebbe al client la redirect:
+	#		http://mms-gui.catramms-cloud.com:8089/catramms/
+	#	che ovviamente non funziona (sia per http che per la porta 8089)
+	#	Questo perchè il load balancer gira a nginx l'url usando http e 8089
+	#	Quindi anche in questo caso eseguo una redirect senza mandare
+	#	la richiesta a tomcat
 	location /catramms {
+		rewrite .* https://$host/catramms/ redirect;
+	}
+
+	#scenario client url: https://mms-gui.catramms-cloud.com/catramms/....
+	#	questo tipo di url puo essere girata a tomcat perchè, anche il caso
+	#		https://mms-gui.catramms-cloud.com/catramms/
+	#	viene gestito da tomcat con il file index.html
+	location /catramms/ {
 		#Uso una coda "minima" per gestire le richieste contemporanee.
 		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
 		#Nota: parliamo dello stesso IP.
