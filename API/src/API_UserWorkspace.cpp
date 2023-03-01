@@ -2966,8 +2966,8 @@ void API::deleteWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
 
-            _mmsEngineDBFacade->deleteWorkspace(
-                    userKey, workspace->_workspaceKey);
+			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(
+				userKey, workspace->_workspaceKey);
 
             _logger->info(__FILEREF__ + "Workspace from DB deleted"
                 + ", userKey: " + to_string(userKey)
@@ -2978,6 +2978,39 @@ void API::deleteWorkspace(
             
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
+
+			if (usersRemoved.size() > 0)
+			{
+				for(tuple<int64_t, string, string> userDetails: usersRemoved)
+				{
+					string name;
+					string eMailAddress;
+
+					tie(ignore, name, eMailAddress) = userDetails;
+
+					string tosCommaSeparated = eMailAddress;
+					string subject = "Your account was removed";
+
+					vector<string> emailBody;
+					emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name + ") was removed and</p>"));
+					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
+					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"));
+					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+
+					MMSCURL::sendEmail(
+						_logger,
+						_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+						_emailUserName,	// i.e.: info@catramms-cloud.com
+						tosCommaSeparated,
+						_emailCcsCommaSeparated,
+						subject,
+						emailBody,
+						_emailPassword
+					);
+				}
+			}
         }
         catch(runtime_error e)
         {

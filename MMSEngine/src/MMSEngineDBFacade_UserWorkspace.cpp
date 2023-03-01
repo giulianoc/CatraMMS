@@ -3049,7 +3049,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
     }
 }
 
-void MMSEngineDBFacade::deleteWorkspace(
+vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 		int64_t userKey,
 		int64_t workspaceKey)
 {
@@ -3117,34 +3117,16 @@ void MMSEngineDBFacade::deleteWorkspace(
 			throw runtime_error(errorMessage);
 		}
 
-        {
-			// in all the tables depending from Workspace we have 'on delete cascade'
-			// So all should be removed automatically from DB
-            lastSQLCommand = 
-                "delete from MMS_Workspace where workspaceKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-        }
-
-        // if the user does not have any workspace, even the user is removed
+		// 2023-03-01: è necessario eliminare tutti gli user aventi solamente questo workspace
+		//	calcoliamo questi user
+		vector<tuple<int64_t, string, string>> usersToBeRemoved;
         {
             lastSQLCommand = 
-                "select count(*) from MMS_APIKey where userKey = ?";
+                "select userKey, name, eMailAddress from MMS_APIKey where workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -3155,33 +3137,94 @@ void MMSEngineDBFacade::deleteWorkspace(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-            if (resultSet->next())
+            while (resultSet->next())
             {
-				if (resultSet->getInt64(1) == 0)
-				{
-					_logger->info(__FILEREF__ + "The user does not have any other Workspace, it will be removed"
-						+ ", userKey: " + to_string(userKey)
-					);
+                int64_t userKey = resultSet->getInt64("userKey");
+                string name = resultSet->getString("name");
+                string eMailAddress = resultSet->getString("eMailAddress");
 
-					// in all the tables depending from User we have 'on delete cascade'
-					// So all should be removed automatically from DB
-					lastSQLCommand = 
-						"delete from MMS_User where userKey = ?";
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-							conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setInt64(queryParameterIndex++, userKey);
-            
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", userKey: " + to_string(userKey)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
+				lastSQLCommand = 
+					"select count(*) from MMS_APIKey where userKey = ?";
+				shared_ptr<sql::PreparedStatement> countPreparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				countPreparedStatement->setInt64(queryParameterIndex++, userKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> countResultSet (countPreparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", countResultSet->rowsCount: " + to_string(countResultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (countResultSet->next())
+				{
+					if (countResultSet->getInt64(1) == 1)
+					{
+						// it means the user has ONLY the workspace that will be removed
+						// So the user will be removed too
+
+						usersToBeRemoved.push_back(make_tuple(userKey, name, eMailAddress));
+					}
 				}
             }
+        }
+
+        {
+			// in all the tables depending from Workspace we have 'on delete cascade'
+			// So all should be removed automatically from DB
+            lastSQLCommand =
+                "delete from MMS_Workspace where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+        }
+
+        // the users do not have any other workspace will be removed
+		if (usersToBeRemoved.size() > 0)
+        {
+			string sUsers;
+			for(tuple<int64_t, string, string> userDetails: usersToBeRemoved)
+			{
+				int64_t userKey;
+
+				tie(userKey, ignore, ignore) = userDetails;
+
+				if (sUsers == "")
+					sUsers = to_string(userKey);
+				else
+					sUsers += (", " + to_string(userKey));
+			}
+
+			// in all the tables depending from User we have 'on delete cascade'
+			// So all should be removed automatically from DB
+			lastSQLCommand = 
+				"delete from MMS_User where userKey in (" + sUsers + ")";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+          
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -3199,6 +3242,8 @@ void MMSEngineDBFacade::deleteWorkspace(
         );
         connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return usersToBeRemoved;
     }
     catch(sql::SQLException se)
     {

@@ -1195,7 +1195,7 @@ public:
 		bool admin,
         chrono::system_clock::time_point userExpirationDate);
 
-	void deleteWorkspace(int64_t userKey, int64_t workspaceKey);
+	vector<tuple<int64_t, string, string>> deleteWorkspace(int64_t userKey, int64_t workspaceKey);
 
     tuple<string,string,string> confirmRegistration(
 		string confirmationCode, int expirationInDaysWorkspaceDefaultValue);
