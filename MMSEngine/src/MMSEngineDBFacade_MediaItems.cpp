@@ -6072,38 +6072,39 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 }
 
 int64_t MMSEngineDBFacade::parseRetention(string retention)
-
 {
 	int64_t retentionInMinutes = -1;
 
-	if (retention == "0")
+	string localRetention = StringUtils::trim(retention);
+
+	if (localRetention == "0")
 		retentionInMinutes = 0;
-	else if (retention.length() > 1)
+	else if (localRetention.length() > 1)
 	{
-		switch (retention.back())
+		switch (localRetention.back())
 		{
 			case 's':   // seconds
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) / 60;
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) / 60;
 
 				break;
 			case 'm':   // minutes
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1));
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1));
 
 				break;
 			case 'h':   // hours
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * 60;
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 60;
 
 				break;
 			case 'd':   // days
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * 1440;
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 1440;
 
 				break;
 			case 'M':   // month
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * (1440 * 30);
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 30);
 
 				break;
 			case 'y':   // year
-				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * (1440 * 365);
+				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 365);
 
 				break;
 		}

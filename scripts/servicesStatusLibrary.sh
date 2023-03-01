@@ -147,7 +147,7 @@ disks_usage()
 
 cpu_usage()
 {
-	maxCpuUsage=50.0
+	maxCpuUsage=60.0
 
 	cpuUsage=$(cat /proc/stat | grep "cpu " | awk '{ printf("%.2f", 100-(($5*100)/($2+$3+$4+$5+$6+$7+$8+$9+$10))); }')
 	result=$(echo "${cpuUsage}<${maxCpuUsage}" | bc)                                                                   
@@ -431,12 +431,12 @@ mms_encoder_service_running()
 			else
 				failuresNumber=$((failuresNumber+1))
 
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
+				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 				echo "$failuresNumber" > $failuresNumberFileName
 			fi
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, first failure, healthCheckURL: $healthCheckURL" >> $debugFilename
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, first failure, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 			echo "1" > $failuresNumberFileName
 		fi
