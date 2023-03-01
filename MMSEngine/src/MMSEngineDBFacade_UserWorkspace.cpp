@@ -3122,7 +3122,8 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 		vector<tuple<int64_t, string, string>> usersToBeRemoved;
         {
             lastSQLCommand = 
-                "select userKey, name, eMailAddress from MMS_APIKey where workspaceKey = ?";
+				"select u.userKey, u.name, u.eMailAddress from MMS_APIKey ak, MMS_User u "
+				"where ak.userKey = u.userKey and ak.workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
