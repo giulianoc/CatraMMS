@@ -1,6 +1,6 @@
 
 	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
+	error_log    /var/catramms/logs/nginx/mms-binary.error.log error;
 
 	#it is the same in nginx.conf of LoadBalancer
 	client_max_body_size 10G;

@@ -20517,6 +20517,21 @@ void MMSEngineProcessor::manageEncodeTask(
 			}
 		}
 
+		if (sourcesToBeEncodedRoot.size() == 0)
+		{
+			// dependecies.size() > 0 perchè è stato già verificato inizialmente
+			// Se sourcesToBeEncodedRoot.size() == 0 vuol dire che l'encodingProfileKey era già presente
+			//	per il MediaItem
+
+			string errorMessage = __FILEREF__ + "Content profile is already present"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
 			contentType, encodingPriority,
 			encodingProfileKey, encodingProfileDetailsRoot,

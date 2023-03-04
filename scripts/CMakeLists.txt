@@ -39,6 +39,7 @@ SET (SCRIPTs
 	incrontab.sh
 	sqlQueries.txt
 	checkStatistics.sh
+	checkConsistencyFileSystem-Database.sh
 	tvController.sh
 	tvControllerLoop.sh
 	tvController.sh.1

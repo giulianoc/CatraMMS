@@ -1,5 +1,19 @@
 #!/bin/bash
 
+debug=0
+#2021-01-08: it has to be a path in home user otherwise incron does not run the script
+debugFileName=/home/mms/incrontab.log
+
+if [ $# -ne 3 ]
+then
+	if [ $debug -eq 1 ]
+	then
+		echo "$(date): usage $0 <eventName> <channelDirectory> <fileName>" >> $debugFileName
+	fi
+
+	exit
+fi
+
 eventName=$1
 channelDirectory=$2
 fileName=$3
@@ -18,9 +32,6 @@ storageServer=mms-api-2.catramms-cloud.com
 #temporary file: IN_MOVED_FROM --> 1258.m3u8.tmp
 #IN_MOVED_TO --> 1258.m3u8 (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 
-debug=0
-#2021-01-08: it has to be a path in home user otherwise incron does not run the script
-debugFileName=/home/mms/incrontab.log
 
 if [ $debug -eq 1 ]
 then
