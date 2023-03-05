@@ -608,6 +608,11 @@ private:
 		double& lastPercentageUpdated,
 		double dltotal, double dlnow,
 		double ultotal, double ulnow);
+
+	void renameOutputFfmpegPathFileName(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string outputFfmpegPathFileName);
 };
 
 #endif

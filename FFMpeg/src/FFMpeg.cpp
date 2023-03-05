@@ -206,7 +206,7 @@ void FFMpeg::encodeContent(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".encode.log";
 		}
 
 		// special case:
@@ -1813,7 +1813,7 @@ void FFMpeg::overlayImageOnVideo(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".overlayImage.log";
 		}
 
 
@@ -2265,7 +2265,7 @@ void FFMpeg::overlayTextOnVideo(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".overlayText.log";
 		}
 
         {
@@ -2741,7 +2741,7 @@ void FFMpeg::videoSpeed(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".videoSpeed.log";
 		}
 
 
@@ -3356,7 +3356,7 @@ void FFMpeg::pictureInPicture(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".pictureInPicture.log";
 		}
 
 
@@ -3903,7 +3903,7 @@ void FFMpeg::introOutroOverlay(
                 + to_string(_currentEncodingJobKey)
                 + "_"
 				+ sUtcTimestamp
-                + ".ffmpegoutput.log";
+                + ".introOutroOverlay.log";
 		}
 
 
@@ -9811,6 +9811,7 @@ void FFMpeg::liveRecorder(
 		}
 
 		/*
+		// liveRecording exit before unexpectly
 		if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcRecordingPeriodEnd - utcNow - 60))
 		{
 			char		sEndFfmpegCommand [64];
@@ -9915,6 +9916,7 @@ void FFMpeg::liveRecorder(
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 		fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 		*/
+		renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 
 		_logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10032,6 +10034,7 @@ void FFMpeg::liveRecorder(
     bool exceptionInCaseOfError = false;
     fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 	*/
+	renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 }
 
 void FFMpeg::liveProxy2(
@@ -10721,6 +10724,7 @@ void FFMpeg::liveProxy2(
 			bool exceptionInCaseOfError = false;
 			fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 			*/
+			renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 
 			if (endlessPlaylistListPathName != ""
 				&& fs::exists(endlessPlaylistListPathName))
@@ -11016,6 +11020,7 @@ void FFMpeg::liveProxy2(
 		bool exceptionInCaseOfError = false;
 		fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 		*/
+		renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 	}
 }
 
@@ -14997,6 +15002,8 @@ string FFMpeg::getFilter(
 
 	if (type == "blackdetect")
 	{
+		// Viene eseguita la scansione dei fotogrammi con il valore di luminanza indicato da pixel_black_th
+		// lunghi almeno black_min_duration secondi
 		double black_min_duration = JSONUtils::asDouble(filterRoot, "black_min_duration", 2);
 		double pixel_black_th = JSONUtils::asDouble(filterRoot, "pixel_black_th", 0.0);
 
@@ -15674,5 +15681,36 @@ int FFMpeg::progressDownloadCallback(
     }
 
     return 0;
+}
+
+void FFMpeg::renameOutputFfmpegPathFileName(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string outputFfmpegPathFileName
+)
+{
+	char	sNow [64];
+
+	time_t	utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+	tm		tmUtcNow;
+	localtime_r (&utcNow, &tmUtcNow);
+	sprintf (sNow, "%04d-%02d-%02d-%02d-%02d-%02d",
+		tmUtcNow. tm_year + 1900,
+		tmUtcNow. tm_mon + 1,
+		tmUtcNow. tm_mday,
+		tmUtcNow. tm_hour,
+		tmUtcNow. tm_min,
+		tmUtcNow. tm_sec);
+
+	string debugOutputFfmpegPathFileName = outputFfmpegPathFileName + "." + sNow;
+
+	_logger->info(__FILEREF__ + "move"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+		+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+	);
+	// fs::rename works only if source and destination are on the same file systems
+	fs::rename(outputFfmpegPathFileName, debugOutputFfmpegPathFileName);
 }
 
