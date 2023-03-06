@@ -1246,6 +1246,99 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			);
 		}
 	}
+    else if (type == "Face-Recognition")
+    {
+		// In case we will have more than one References,
+		//  we will create a group of tasks and add there the Face-Recognition task
+
+		string referencesField = "References";
+
+		if (parametersSectionPresent
+			&& (JSONUtils::isMetadataPresent(parametersRoot, referencesField)
+				&& parametersRoot[referencesField].size() > 1)
+		)
+		{
+			// we will replace the single Task with a GroupOfTasks where every task
+			// is just for one reference
+
+			Json::Value multiReferencesRoot = parametersRoot[referencesField];
+
+			{
+				Json::Value removed;
+				parametersRoot.removeMember(referencesField, &removed);
+			}
+
+			Json::Value newTasksRoot(Json::arrayValue);
+
+			for(int referenceIndex = 0; referenceIndex < multiReferencesRoot.size(); referenceIndex++)
+			{
+				Json::Value newTaskRoot;
+				string localLabel = taskLabel + " - referenceIndex: " + to_string(referenceIndex);
+					
+				field = "Label";
+				newTaskRoot[field] = localLabel;
+
+				field = "Type";
+				newTaskRoot[field] = "Face-Recognition";
+
+				Json::Value newParametersRoot = parametersRoot;
+
+				{
+					Json::Value newReferencesRoot(Json::arrayValue);
+					newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
+
+					field = "References";
+					newParametersRoot[field] = newReferencesRoot;
+				}
+
+				field = "Parameters";
+				newTaskRoot[field] = newParametersRoot;
+
+				field = "OnSuccess";
+				if (JSONUtils::isMetadataPresent(taskRoot, field))
+					newTaskRoot[field] = taskRoot[field];
+
+				field = "OnError";
+				if (JSONUtils::isMetadataPresent(taskRoot, field))
+					newTaskRoot[field] = taskRoot[field];
+
+				field = "OnComplete";
+				if (JSONUtils::isMetadataPresent(taskRoot, field))
+					newTaskRoot[field] = taskRoot[field];
+        
+				newTasksRoot.append(newTaskRoot);
+			}
+        
+			Json::Value newParametersTasksGroupRoot;
+
+			field = "ExecutionType";
+			newParametersTasksGroupRoot[field] = "parallel";
+
+			field = "Tasks";
+			newParametersTasksGroupRoot[field] = newTasksRoot;
+
+			Json::Value newTasksGroupRoot;
+
+			field = "Type";
+			newTasksGroupRoot[field] = "GroupOfTasks";
+
+			field = "Parameters";
+			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
+        
+			return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
+                dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                /* responseBody, */ responseBodyTasksRoot);
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "No special management for Face-Recognition"
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", taskLabel: " + taskLabel
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
+		}
+	}
     else if (type == "Live-Recorder")
     {
 		// 1. Live-Recorder needs the UserKey/ApiKey for the ingestion of the chunks.
