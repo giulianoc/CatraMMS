@@ -68,7 +68,7 @@
     "References": {
       "Position": 10,
 	  "IsNull": false,
-      "Description": "string representing a json array of References. i.e.: [{\"mediaItemKey\", 123456}]",
+      "Description": "string representing a json array of ONE References. i.e.: [{\"mediaItemKey\", 123456}]",
       "Type": "jsonArray",
       "Value": [ ]
     }
