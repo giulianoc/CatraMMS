@@ -169,7 +169,7 @@ cpu_usage()
 
 memory_usage()
 {
-	maxMemoryUsage=50.0
+	maxMemoryUsage=60.0
 
 	memoryUsage=$(free -m | awk '{if (NR==2)printf("%.2f", $3*100/$2)}')
 	result=$(echo "${memoryUsage}<${maxMemoryUsage}" | bc)                                                                   

@@ -2063,7 +2063,9 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 					if (ingestionJobKeys.size() == 0)
 					{
 						string errorMessage = __FILEREF__ + "The 'label' value is not found"
-                            + ", referenceLabel: " + referenceLabel;
+                            + ", referenceLabel: " + referenceLabel
+							+ ", groupOfTasksRoot: " + JSONUtils::toString(groupOfTasksRoot)
+						;
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
