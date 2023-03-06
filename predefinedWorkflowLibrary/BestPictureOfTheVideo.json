@@ -64,6 +64,13 @@
       "Position": 9,
       "Type": "datetime",
       "Value": ""
+    },
+    "References": {
+      "Position": 10,
+	  "IsNull": false,
+      "Description": "string representing a json array of References. i.e.: [{\"mediaItemKey\", 123456}]",
+      "Type": "jsonArray",
+      "Value": [ ]
     }
   },
   "Label": "Best Picture of the Video",
@@ -168,6 +175,7 @@
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",
 		  "ProcessingStartingFrom": "${ProcessingStartingFrom}",
+		  "References": "${References}",
           "Retention": "${ImageRetention}",
           "Tags": "${ImageTags}",
           "Title": "${Title}",
