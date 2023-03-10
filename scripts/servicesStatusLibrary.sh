@@ -55,6 +55,18 @@ getAlarmDescription()
 		"alarm_mms_encoder_service_running")
 			echo "mms encoder service is not running"
 			;;
+		"alarm_blackdetect")
+			echo "got blackdetect"
+			;;
+		"alarm_blackframe")
+			echo "got blackframe"
+			;;
+		"alarm_freezedetect")
+			echo "got freezedetect"
+			;;
+		"alarm_silencedetect")
+			echo "got silencedetect"
+			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
@@ -456,6 +468,38 @@ mms_encoder_service_running()
 			rm -f $failuresNumberFileName
 		fi
 
+		return 0
+	fi
+}
+
+ffmpeg_filter_detect()
+{
+	filterName=$1
+
+	atLeastOneAlarm=0
+
+	for logFile in /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/*.log
+	do
+		fileName=$(basename $logFile)
+		filterCount=$(grep "$filterName" $logFile | wc -l)
+
+		if [ $filterCount -eq 0 ]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_$filterName_$fileName"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+		else
+			alarmNotificationPeriod=$((60 * 15))		#15 minuti
+			notify "$(hostname)" "alarm_$filterName" $alarmNotificationPeriod "got ${filterCount} times"
+			atLeastOneAlarm=1
+		fi
+	done
+
+	if [ $atLeastOneAlarm -eq 1 ]; then
+		return 1
+	else
 		return 0
 	fi
 }

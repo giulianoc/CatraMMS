@@ -15026,6 +15026,12 @@ string FFMpeg::getFilter(
 		filter = ("freezedetect=noise=" + to_string(noiseInDb)
 			+ "dB:duration=" + to_string(duration));
 	}
+	else if (type == "silencedetect")
+	{
+		double noise = JSONUtils::asDouble(filterRoot, "noise", 0.0001);
+
+		filter = ("silencedetect=noise=" + to_string(noise));
+	}
 	else if (type == "fade")
 	{
 		int duration = JSONUtils::asInt(filterRoot, "duration", 4);
@@ -15054,12 +15060,6 @@ string FFMpeg::getFilter(
 	else if (type == "metadata")
 	{
 		filter = ("metadata=mode=print");
-	}
-	else if (type == "silencedetect")
-	{
-		double noise = JSONUtils::asDouble(filterRoot, "noise", 0.0001);
-
-		filter = ("silencedetect=noise=" + to_string(noise));
 	}
 	else if (type == "volume")
 	{

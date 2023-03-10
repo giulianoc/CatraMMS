@@ -983,8 +983,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 			assetPathName = MMSStorage::getTranscoderStagingRootRepository(_storage);
 		else
 			assetPathName = MMSStorage::getStagingRootRepository(_storage);
-        assetPathName	/= workspaceDirectoryName;
-		assetPathName	/= ("_" + directoryNamePrefix + "_" + pDateTime + relativePath);
+        assetPathName	/= (workspaceDirectoryName + "_" + directoryNamePrefix + "_" + pDateTime + relativePath);
 
         if (!fs::exists(assetPathName)) 
         {

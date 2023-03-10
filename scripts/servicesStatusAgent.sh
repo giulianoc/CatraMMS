@@ -70,6 +70,18 @@ do
 			shift
 			mms_encoder_service_running $healthCheckURL
 
+			echo "" >> $debugFilename
+			ffmpeg_filter_detect blackdetect
+
+			echo "" >> $debugFilename
+			ffmpeg_filter_detect blackframe
+
+			echo "" >> $debugFilename
+			ffmpeg_filter_detect freezedetect
+
+			echo "" >> $debugFilename
+			ffmpeg_filter_detect silencedetect
+
 			;;
 		"integration")
 			;;
