@@ -4019,6 +4019,13 @@ void API::ingestionJobsStatus(
 			label = curlpp::unescape(firstDecoding);
         }
 
+		bool labelLike = true;
+		auto labelLikeIt = queryParameters.find("labelLike");
+		if (labelLikeIt != queryParameters.end() && labelLikeIt->second != "")
+		{
+			labelLike = (labelLikeIt->second == "true" ? true : false);
+		}
+
         string startIngestionDate;
         auto startIngestionDateIt = queryParameters.find("startIngestionDate");
         if (startIngestionDateIt != queryParameters.end())
@@ -4161,7 +4168,7 @@ void API::ingestionJobsStatus(
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
 				workspace, ingestionJobKey,
-				start, rows, label,
+				start, rows, label, labelLike,
 				/* startAndEndIngestionDatePresent, */ startIngestionDate, endIngestionDate,
 				startScheduleDate,
 				ingestionType,

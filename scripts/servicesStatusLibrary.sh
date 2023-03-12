@@ -78,10 +78,11 @@ notify()
 {
 	serverName=$1
 	alarmType=$2
-	alarmNotificationPeriodInSeconds=$3
-	alarmDetails=$4
+	notifyFileName=$3
+	alarmNotificationPeriodInSeconds=$4
+	alarmDetails=$5
 
-	alarmNotificationPathFileName="/tmp/$alarmType"
+	alarmNotificationPathFileName="/tmp/$notifyFileName"
 
 	#controllo se è troppo presto per rimandare l'allarme
 	if [ -f "$alarmNotificationPathFileName" ]; then
@@ -90,7 +91,7 @@ notify()
 		elapsed=$((now-lastNotificationTime))
 		if [ $elapsed -lt $alarmNotificationPeriodInSeconds ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): $alarmType not sent because too early, elapsed: $elapsed secs" >> $debugFilename
-			return
+			return 1
 		fi
 	fi
 
@@ -105,6 +106,8 @@ notify()
 		--data-urlencode "chat_id=${TELEGRAM_GROUPALARMS_ID}" \
 		--data-urlencode "text=${message}" \
 		"https://api.telegram.org/bot${TELEGRAM_GROUPALARMS_BOT_TOKEN}/sendMessage" > /dev/null
+
+	return 0
 }
 
 sql_slave_off()
@@ -128,7 +131,7 @@ sql_slave_off()
 			return 0
 		else
 			alarmNotificationPeriod=$((60 * 15))		#15 minuti
-			notify "$(hostname)" "alarm_sql_slave_off" $alarmNotificationPeriod ""
+			notify "$(hostname)" "alarm_sql_slave_off" "alarm_sql_slave_off" $alarmNotificationPeriod ""
 			return 1
 		fi
 	else
@@ -152,7 +155,7 @@ disks_usage()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 15))		#15 minuti
-		notify "$(hostname)" "alarm_disks_usage" $alarmNotificationPeriod "$alarmsDiskUsage"
+		notify "$(hostname)" "alarm_disks_usage" "alarm_disks_usage" $alarmNotificationPeriod "$alarmsDiskUsage"
 		return 1
 	fi
 }
@@ -174,7 +177,7 @@ cpu_usage()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		notify "$(hostname)" "alarm_cpu_usage" $alarmNotificationPeriod "${cpuUsage}%"
+		notify "$(hostname)" "alarm_cpu_usage" "alarm_cpu_usage" $alarmNotificationPeriod "${cpuUsage}%"
 		return 1
 	fi
 }
@@ -196,7 +199,7 @@ memory_usage()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		notify "$(hostname)" "alarm_memory_usage" $alarmNotificationPeriod "${memoryUsage}%"
+		notify "$(hostname)" "alarm_memory_usage" "alarm_memory_usage" $alarmNotificationPeriod "${memoryUsage}%"
 		return 1
 	fi
 }
@@ -218,7 +221,7 @@ nginx_rate_encoder_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_encoder_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_encoder_limit" "alarm_nginx_rate_encoder_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
 		return 1
 	fi
 }
@@ -240,7 +243,7 @@ nginx_rate_binary_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_binary_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_binary_limit" "alarm_nginx_rate_binary_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
 		return 1
 	fi
 }
@@ -261,7 +264,7 @@ nginx_rate_delivery_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_delivery_limit" $alarmNotificationPeriod "${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_delivery_limit" "alarm_nginx_rate_delivery_limit" $alarmNotificationPeriod "${nginxRateLimitCount} times"
 		return 1
 	fi
 }
@@ -283,7 +286,7 @@ nginx_rate_api_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_api_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_api_limit" "alarm_nginx_rate_api_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
 		return 1
 	fi
 }
@@ -305,7 +308,7 @@ nginx_rate_gui_limit()
 		return 0
 	else
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_gui_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		notify "$(hostname)" "alarm_nginx_rate_gui_limit" "alarm_nginx_rate_gui_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
 		return 1
 	fi
 }
@@ -318,7 +321,7 @@ mms_engine_service_running()
 	if [ $serviceNotRunning -eq 1 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_engine_service_running" $alarmNotificationPeriod ""
+		notify "$(hostname)" "alarm_mms_engine_service_running" "alarm_mms_engine_service_running" $alarmNotificationPeriod ""
 
 		#fix management
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_engine_service_running, service is restarted" >> $debugFilename
@@ -355,7 +358,7 @@ mms_api_service_running()
 	if [ $serviceNotRunning -eq 1 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
+		notify "$(hostname)" "alarm_mms_api_service_running" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
 
 		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_api_service_running.failuresNumber.txt
@@ -421,7 +424,7 @@ mms_encoder_service_running()
 	if [ $serviceNotRunning -eq 1 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
+		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
 
 		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
@@ -476,31 +479,51 @@ ffmpeg_filter_detect()
 {
 	filterName=$1
 
-	atLeastOneAlarm=0
-
 	for logFile in /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/*.log
 	do
 		fileName=$(basename $logFile)
 		filterCount=$(grep "$filterName" $logFile | wc -l)
 
+		alarmNotificationPathFileName="/tmp/alarm_${filterName}_${fileName}"
+		infoPathFileName="${alarmNotificationPathFileName}_info"
 		if [ $filterCount -eq 0 ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
 
-			alarmNotificationPathFileName="/tmp/alarm_$filterName_$fileName"
 			if [ -f "$alarmNotificationPathFileName" ]; then
 				rm -f $alarmNotificationPathFileName
 			fi
+			if [ -f "$infoPathFileName" ]; then
+				rm -f $infoPathFileName
+			fi
 		else
-			alarmNotificationPeriod=$((60 * 15))		#15 minuti
-			notify "$(hostname)" "alarm_$filterName" $alarmNotificationPeriod "got ${filterCount} times"
-			atLeastOneAlarm=1
+			#controllo il contatore precedente per verificare che è aumentato
+			counterIncreased=0
+			if [ -f "$infoPathFileName" ]; then
+				previousFilterCount=$(cat $infoPathFileName)
+				if [ $filterCount -ne $previousFilterCount ]; then
+					counterIncreased=1
+				else
+					echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, previousFilterCount: $previousFilterCount, logFile: $logFile" >> $debugFilename
+				fi
+			else
+				counterIncreased=1
+			fi
+
+			if [ $counterIncreased -eq 1 ]; then
+				alarmNotificationPeriod=$((60 * 15))		#15 minuti
+
+				#fileName: 3267084_118879_2023-03-11-16-50-24.liveProxy.0.log
+				array=(${fileName//_/ })
+				ingestionJobKey=${array[0]}
+
+				notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $logFile, ingestionJobKey: $ingestionJobKey"
+				status=$?
+				if [ $status -eq 0 ]; then
+					#status 0 means alarm was sent
+					echo "$filterCount" > $infoPathFileName
+				fi
+			fi
 		fi
 	done
-
-	if [ $atLeastOneAlarm -eq 1 ]; then
-		return 1
-	else
-		return 0
-	fi
 }
 

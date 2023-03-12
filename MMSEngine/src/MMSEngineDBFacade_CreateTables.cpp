@@ -1529,6 +1529,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
 
         try
         {

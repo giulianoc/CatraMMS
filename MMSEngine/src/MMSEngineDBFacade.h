@@ -1487,7 +1487,7 @@ public:
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-        int start, int rows, string label,
+        int start, int rows, string label, bool labelLike,
         /* bool startAndEndIngestionDatePresent, */ string startIngestionDate, string endIngestionDate,
 		string startScheduleDate,
 		string ingestionType,

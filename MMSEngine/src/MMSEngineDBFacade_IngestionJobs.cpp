@@ -4725,7 +4725,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
 Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-	int start, int rows, string label,
+	int start, int rows, string label, bool labelLike,
 	/* bool startAndEndIngestionDatePresent, */
 	string startIngestionDate, string endIngestionDate,
 	string startScheduleDate,
@@ -4775,6 +4775,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             
             field = "label";
             requestParametersRoot[field] = label;
+            
+            field = "labelLike";
+            requestParametersRoot[field] = labelLike;
             
             field = "status";
             requestParametersRoot[field] = status;
@@ -4852,7 +4855,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         if (ingestionJobKey != -1)
             sqlWhere += ("and ij.ingestionJobKey = ? ");
         if (label != "")
-			sqlWhere += ("and LOWER(ij.label) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
+		{
+			// LOWER was used because the column is using utf8_bin that is case sensitive
+			if (labelLike)
+				sqlWhere += ("and LOWER(ij.label) like LOWER(?) ");
+			else
+				sqlWhere += ("and LOWER(ij.label) = LOWER(?) ");
+		}
 		/*
 		if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
@@ -4893,7 +4902,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			if (label != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+			{
+				if (labelLike)
+					preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+				else
+					preparedStatement->setString(queryParameterIndex++, label);
+			}
 			/*
             if (startAndEndIngestionDatePresent)
             {
@@ -4935,6 +4949,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", label: " + "%" + label + "%"
+				+ ", labelLike: " + to_string(labelLike)
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startScheduleDate: " + startScheduleDate
@@ -4971,7 +4986,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			if (label != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+			{
+				if (labelLike)
+					preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+				else
+					preparedStatement->setString(queryParameterIndex++, label);
+			}
 			/*
             if (startAndEndIngestionDatePresent)
             {
@@ -5010,6 +5030,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", label: " + "%" + label + "%"
+				+ ", labelLike: " + to_string(labelLike)
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startScheduleDate: " + startScheduleDate

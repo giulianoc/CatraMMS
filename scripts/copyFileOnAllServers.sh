@@ -45,9 +45,9 @@ done
 
 
 #aws-integration-1 aws-integration-2 aws-integration-3
-for server in ec2-54-76-8-245.eu-west-1.compute.amazonaws.com ec2-18-202-82-214.eu-west-1.compute.amazonaws.com ec2-54-78-165-54.eu-west-1.compute.amazonaws.com
-do
-	echo "scp -i ~/ssh-keys/aws-hdea-key-integration-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
-	scp -i ~/ssh-keys/aws-hdea-key-integration-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName
-done
+#for server in ec2-54-76-8-245.eu-west-1.compute.amazonaws.com ec2-18-202-82-214.eu-west-1.compute.amazonaws.com ec2-54-78-165-54.eu-west-1.compute.amazonaws.com
+#do
+#	echo "scp -i ~/ssh-keys/aws-hdea-key-integration-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
+#	scp -i ~/ssh-keys/aws-hdea-key-integration-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName
+#done
 
