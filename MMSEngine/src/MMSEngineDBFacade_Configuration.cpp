@@ -13233,7 +13233,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 	string configurationLabel,
 	int maxWidth, string userAgent, string otherInputOptions,
-	Json::Value drawTextDetailsRoot
+	string taskEncodersPoolLabel, Json::Value drawTextDetailsRoot
 )
 {
 	Json::Value streamInputRoot;
@@ -13340,8 +13340,13 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		field = "pushServerName";
 		streamInputRoot[field] = pushServerName;
 
+		// The taskEncodersPoolLabel (parameter of the Task/IngestionJob) overrides the one included
+		// in ChannelConf if present
 		field = "encodersPoolLabel";
-		streamInputRoot[field] = encodersPoolLabel;
+		if (taskEncodersPoolLabel != "")
+			streamInputRoot[field] = taskEncodersPoolLabel;
+		else
+			streamInputRoot[field] = encodersPoolLabel;
 
 		field = "url";
 		streamInputRoot[field] = liveURL;

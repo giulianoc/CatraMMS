@@ -12843,7 +12843,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
-        {
+		string taskEncodersPoolLabel;
+		{
 			{
 				string field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -12875,11 +12876,11 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-            // string field = "EncodersPool";
-            // if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			// 	encodersPoolLabel = parametersRoot.get(field, "").asString();
+            string field = "EncodersPool";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				taskEncodersPoolLabel = parametersRoot.get(field, "").asString();
 
-			string field = "defaultBroadcast";
+			field = "defaultBroadcast";
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
             field = "TimePeriod";
@@ -12983,7 +12984,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else
 		{
-			/* 2023-01-01: normalmente, nel caso di un semplica Task di LiveProxy, il drawTextDetails viene
+			/* 2023-01-01: normalmente, nel caso di un semplice Task di LiveProxy, il drawTextDetails viene
 				inserito all'interno dell'OutputRoot,
 				Nel caso pero' di un Live Channel, per capire il campo broadcastDrawTextDetails,
 				vedi il commento all'interno del metodo java CatraMMSBroadcaster::buildLiveProxyJsonForBroadcast
@@ -12996,7 +12997,8 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			Json::Value streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel,
-				maxWidth, userAgent, otherInputOptions, drawTextDetailsRoot);
+				maxWidth, userAgent, otherInputOptions, taskEncodersPoolLabel,
+				drawTextDetailsRoot);
 
 			Json::Value inputRoot;
 			{

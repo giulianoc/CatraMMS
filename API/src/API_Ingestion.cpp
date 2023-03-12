@@ -4799,7 +4799,7 @@ void API::changeLiveProxyPlaylist(
 							workspace, broadcasterIngestionJobKey,
 							broadcastDefaultConfigurationLabel,
 							maxWidth, userAgent, otherInputOptions,
-							drawTextDetailsRoot);
+							"", drawTextDetailsRoot);
 					}
 					else if (broadcastDefaultMediaType == "Media")
 					{

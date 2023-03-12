@@ -2633,7 +2633,7 @@ public:
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		string configurationLabel,
 		int maxWidth, string userAgent, string otherInputOptions,
-		Json::Value drawTextDetailsRoot);
+		string taskEncodersPoolLabel, Json::Value drawTextDetailsRoot);
 
 	Json::Value getVodInputRoot(
 		MMSEngineDBFacade::ContentType vodContentType,
