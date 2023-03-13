@@ -5909,6 +5909,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEventThread"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+		+ ", ingestionSourceFileName: " + localAssetIngestionEvent.getIngestionSourceFileName()
 		+ ", metadataContent: " + localAssetIngestionEvent.getMetadataContent()
 		+ ", _processorsThreadsNumber.use_count(): "
 			+ to_string(_processorsThreadsNumber.use_count())
@@ -6034,8 +6035,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				.append(localAssetIngestionEvent.getIngestionSourceFileName())
 			;
 
-			binaryPathName = workspaceIngestionBinaryPathName;
-
 			string field = "FileFormat";
 			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 			if (fileFormat == "m3u8-streaming")
@@ -6045,8 +6044,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				// 2. here, handleLocalAssetIngestionEventThread (when the IngestionRepository file name
 				//		is built "consistent" with the above step no. 1)
 				// 3. handleLocalAssetIngestionEventThread (when the MMS file name is generated)
-				binaryPathName /= ".mp4";
+				binaryPathName = workspaceIngestionBinaryPathName + ".mp4";
 			}
+			else
+				binaryPathName = workspaceIngestionBinaryPathName;
 		}
 		else
 		{
