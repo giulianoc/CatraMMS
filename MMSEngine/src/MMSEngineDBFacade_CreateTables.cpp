@@ -557,7 +557,31 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
+
+        try
+        {
+			// 2023-03-18: aggiunto per le performance del metodo MMSEngineDBFacade::addRequestStatistic,
+			//	in particolare per velocizzare
+			//		select requestStatisticKey from MMS_RequestStatistic
+			//		where workspaceKey = ? and requestStatisticKey < ? and userId = ?
+			//		order by requestStatisticKey desc limit 1
+            lastSQLCommand = 
+				"create index MMS_RequestStatistic_idx4 on MMS_RequestStatistic (workspaceKey, userId, requestStatisticKey)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
 
         try
         {
