@@ -67,6 +67,9 @@ getAlarmDescription()
 		"alarm_silencedetect")
 			echo "got silencedetect"
 			;;
+		"alarm_mms_call_api_service")
+			echo "mms call api service not working or too slow"
+			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
@@ -347,15 +350,8 @@ mms_api_service_running()
 {
 	healthCheckURL=$1
 
-	serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
-	if [ "$serviceStatus" == "" ]
-	then
-		serviceNotRunning=1
-	else
-		serviceNotRunning=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
-	fi
-
-	if [ $serviceNotRunning -eq 1 ]
+	httpStatus=$(curl -k --silent --output /dev/null -w "%{http_code}" --max-time 10 "$healthCheckURL")
+	if [ $httpStatus -ne 200 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
 		notify "$(hostname)" "alarm_mms_api_service_running" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
@@ -413,15 +409,8 @@ mms_encoder_service_running()
 {
 	healthCheckURL=$1
 
-	serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
-	if [ "$serviceStatus" == "" ]
-	then
-		serviceNotRunning=1
-	else
-		serviceNotRunning=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
-	fi
-
-	if [ $serviceNotRunning -eq 1 ]
+	httpStatus=$(curl -k --silent --output /dev/null -w "%{http_code}" --max-time 10 "$healthCheckURL")
+	if [ $httpStatus -ne 200 ]
 	then
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
 		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
@@ -525,5 +514,79 @@ ffmpeg_filter_detect()
 			fi
 		fi
 	done
+}
+
+mms_call_api_service()
+{
+	apiURL=$1
+	basicAuthentication=$2
+
+	if [ "$apiURL" = "" -o "$basicAuthentication" = "" ]
+	then	
+		apiURL="https://mms-api.catramms-cloud.com/catramms/1.0.1/mediaItem?start=0&rows=50"
+		basicAuthentication="MTQ6RzNpM0s2bEkxUUdTU1lkVFIxVGQ2QllDMU9EeGZ4a3RoNnI1V1k1ZXpVRHR+ZUd+S2ZmdURGbncxc1ZCNkEzZA=="
+	fi
+
+	maxTime=5
+
+	curlOptions_1="--silent --output /dev/null -w %{http_code} --max-time $maxTime"
+	curlOptions_2="-X GET \"$apiURL\" -H \"accept:: application/json\" -H \"Authorization: Basic $basicAuthentication\""
+
+	start=$(date +%s)
+	httpStatus=$(curl $curlOptions_1 -X 'GET' "$apiURL" -H 'accept:: application/json' -H "Authorization: Basic $basicAuthentication")
+	end=$(date +%s)
+
+	if [ $httpStatus -eq 200 -a $((end-start)) -lt $maxTime ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_call_api_service, mms call api is fine: curl $curlOptions_2" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_call_api_service"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_call_api_service, mms call api failed. httpStatus: $httpStatus, end-start: $((end-start)), curl $curlOptions_2" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 30))		#30 minuti
+		if [ $((end-start)) -ge $maxTime ]; then
+			alarmDetails="mms call api service too slow"
+		else
+			alarmDetails="mms call api service not working"
+		fi
+		notify "$(hostname)" "alarm_mms_call_api_service" "alarm_mms_call_api_service" $alarmNotificationPeriod "$alarmDetails"
+		return 1
+	fi
+}
+
+mms_api_timing_check_service()
+{
+	lastLogTimestampCheckedFile=/tmp/alarm_mms_api_timing_check_service_info
+
+	if [ -f "$lastLogTimestampCheckedFile" ]; then
+		lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
+	else
+		lastLogTimestampChecked=-1
+	fi
+
+	maxAPIDuration=5
+	warningMessage=$(grep "manageRequestAndResponse, _requestIdentifier" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; } { datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2); newLastLogTimestampChecked=mktime(datespec); if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) { datetime=substr($0, 2, 23); method=$4; duration=$8; if (duration > maxAPIDuration) warningMessage=warningMessage""datetime" - "method" - "duration"\n"; } } END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
+
+	if [ "$warningMessage" = "" ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service, mms api timing is fine" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_api_timing_check_service"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		notify "$(hostname)" "alarm_mms_call_api_service" "alarm_mms_call_api_service" $alarmNotificationPeriod "$warningMessage"
+		return 1
+	fi
 }
 
