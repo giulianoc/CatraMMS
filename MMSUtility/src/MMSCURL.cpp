@@ -368,6 +368,9 @@ string MMSCURL::httpPostFileSplittingInChunks(
 			(chunkIndex + 1) * chunkSize :
 			fileSizeInBytes;
 
+		/*
+		Commentato perchè ho fissato il problema. Prima impiegava troppo tempo 
+		a causa del manageTar.... ora non piu
 		if (chunkIndex + 1 == chunksNumber
 			&& url.find("https://mms-binary.") != string::npos
 			&& url.find(":443") != string::npos
@@ -395,6 +398,7 @@ string MMSCURL::httpPostFileSplittingInChunks(
 			);
 		}
 		else
+		*/
 		{
 			lastHttpReturn = httpPostFile(
 				logger,
