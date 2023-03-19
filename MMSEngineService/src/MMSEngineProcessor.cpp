@@ -6046,6 +6046,35 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				// 3. handleLocalAssetIngestionEventThread (when the MMS file name is generated)
 				binaryPathName = workspaceIngestionBinaryPathName + ".mp4";
 			}
+			else if (fileFormat == "m3u8-tar.gz")
+			{
+				// i.e.: /var/catramms/storage/IngestionRepository/users/8/2848783_source.tar.gz
+				string localWorkspaceIngestionBinaryPathName = workspaceIngestionBinaryPathName + ".tar.gz";
+				try
+				{
+					// by a convention, the directory inside the tar file has to be named as 'content'
+                    string localSourceBinaryPathFile = "/content.tar.gz";
+
+					_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(
+						localAssetIngestionEvent.getIngestionJobKey(),
+						localWorkspaceIngestionBinaryPathName,
+						_mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace()),
+						localSourceBinaryPathFile);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", localWorkspaceIngestionBinaryPathName: " + localWorkspaceIngestionBinaryPathName
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				// i.e.: /var/catramms/storage/IngestionRepository/users/8/2848783_source
+				binaryPathName = workspaceIngestionBinaryPathName;
+			}
 			else
 				binaryPathName = workspaceIngestionBinaryPathName;
 		}
@@ -24130,49 +24159,10 @@ RESUMING FILE TRANSFERS
 					request.perform();
                 
 					(curlDownloadData.mediaSourceFileStream).close();
-
-					/*
-					string localPathFileName = curlDownloadData.destBinaryPathName
-                        + ".new";
-					if (curlDownloadData.currentChunkNumber >= 2)
-					{
-						try
-						{
-							bool removeSrcFileAfterConcat = true;
-
-							_logger->info(__FILEREF__ + "Concat file"
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-								+ ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-							);
-
-							FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("Error to concat file")
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-									+ ", e.what(): " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);            
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("Error to concat file")
-								+ ", localPathFileName: " + localPathFileName
-								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);            
-						}
-					}
-					*/
 				}
 
+				/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
+					da MMSEngineProcessor::handleLocalAssetIngestionEventThread
 				if (localM3u8TarGzOrM3u8Streaming == 1)
 				{
 					try
@@ -24197,6 +24187,7 @@ RESUMING FILE TRANSFERS
 						throw runtime_error(errorMessage);
 					}
 				}
+				*/
 
 				downloadingCompleted = true;
 
@@ -25873,6 +25864,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         
 		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName, _logger);
 
+		/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
+			da MMSEngineProcessor::handleLocalAssetIngestionEventThread
 		if (m3u8TarGzOrM3u8Streaming)
 		{
 			try
@@ -25894,6 +25887,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 				throw runtime_error(errorMessage);
 			}
 		}
+		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26050,6 +26044,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         fs::copy(sourcePathName, destBinaryPathName, fs::copy_options::recursive);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
+		/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
+			da MMSEngineProcessor::handleLocalAssetIngestionEventThread
         if (m3u8TarGzOrM3u8Streaming == 1)
 		{
 			try
@@ -26071,6 +26067,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 				throw runtime_error(errorMessage);
 			}
 		}
+		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26169,174 +26166,6 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         return;
     }
 }
-
-/*
-void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey,
-		string tarBinaryPathName, string workspaceIngestionRepository,
-		string sourcePathName
-	)
-{
-	// tarBinaryPathName like /var/catramms/storage/IngestionRepository/users/2/1449874_source.tar.gz
-	// workspaceIngestionRepository like /var/catramms/storage/IngestionRepository/users/2
-	// sourcePathName: /var/catramms/storage/MMSWorkingAreaRepository/Staging/2_1449859_virtualVOD_2022_08_11_12_41_46_0212/1449859_liveRecorderVirtualVOD.tar.gz
-
-	string executeCommand;
-	try
-	{
-		// tar into workspaceIngestion directory
-		//	source will be something like <ingestion key>_source
-		//	destination will be the original directory (that has to be the same name of the tar file name)
-		executeCommand =
-			"tar xfz " + tarBinaryPathName
-			+ " --directory " + workspaceIngestionRepository;
-		_logger->info(__FILEREF__ + "Start tar command "
-			+ ", executeCommand: " + executeCommand
-		);
-		chrono::system_clock::time_point startTar = chrono::system_clock::now();
-		int executeCommandStatus = ProcessUtility::execute(executeCommand);
-		chrono::system_clock::time_point endTar = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "End tar command "
-			+ ", executeCommand: " + executeCommand
-			+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
-		);
-		if (executeCommandStatus != 0)
-		{
-			string errorMessage = string("ProcessUtility::execute failed")
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
-				+ ", executeCommand: " + executeCommand 
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-          
-			throw runtime_error(errorMessage);
-		}
-
-		// sourceFileName is the name of the tar file name that is the same
-		//	of the name of the directory inside the tar file
-		string sourceFileName;
-		{
-			string suffix(".tar.gz");
-			if (!(sourcePathName.size() >= suffix.size()
-				&& 0 == sourcePathName.compare(sourcePathName.size()-suffix.size(), suffix.size(), suffix)))
-			{
-				string errorMessage = __FILEREF__ + "sourcePathName does not end with " + suffix
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourcePathName: " + sourcePathName
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			size_t startFileNameIndex = sourcePathName.find_last_of("/");
-			if (startFileNameIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "sourcePathName bad format"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourcePathName: " + sourcePathName
-					+ ", startFileNameIndex: " + to_string(startFileNameIndex)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceFileName = sourcePathName.substr(startFileNameIndex + 1);
-			sourceFileName = sourceFileName.substr(0, sourceFileName.size() - suffix.size());
-		}
-
-		// remove tar file
-		{
-			string sourceTarFile = workspaceIngestionRepository + "/"
-				+ to_string(ingestionJobKey)
-				+ "_source"
-				+ ".tar.gz";
-
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceTarFile: " + sourceTarFile
-			);
-
-			FileIO::remove(sourceTarFile);
-		}
-
-		// rename directory generated from tar: from user_tar_filename to 1247848_source
-		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
-		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
-		{
-			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
-			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
-			_logger->info(__FILEREF__ + "Start moveDirectory..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceDirectory: " + sourceDirectory
-				+ ", destDirectory: " + destDirectory
-			);
-			// 2020-05-01: since the remove of the director could fails because of nfs issue,
-			//	better do a copy and then a remove.
-			//	In this way, in case the remove fails, we can ignore the error.
-			//	The directory will be removed later by cron job
-			{
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				FileIO::copyDirectory(sourceDirectory, destDirectory,
-					S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
-					S_IRGRP | S_IXGRP |                                                                                   
-					S_IROTH | S_IXOTH);
-				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "End copyDirectory"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
-					+ ", destDirectory: " + destDirectory
-					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
-				);
-			}
-
-			try
-			{
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				bool removeRecursively = true;
-				FileIO::removeDirectory(sourceDirectory, removeRecursively);
-				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "End removeDirectory"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
-					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
-				);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = string("removeDirectory failed")
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", e.what: " + e.what() 
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-         
-				// throw runtime_error(errorMessage);
-			}
-		}
-	}
-	catch(runtime_error e)
-	{
-		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", e.what: " + e.what() 
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-         
-		throw runtime_error(errorMessage);
-	}
-}
-*/
-
 
 int MMSEngineProcessor::progressDownloadCallback(
         int64_t ingestionJobKey,

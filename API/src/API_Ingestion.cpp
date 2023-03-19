@@ -2742,6 +2742,9 @@ void API::uploadedBinary(
                 throw runtime_error(errorMessage);            
             }
 
+			/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
+				da MMSEngineProcessor::handleLocalAssetIngestionEventThread
+				per evitare che questa API impiega minuti a terminare
 			if (segmentedContent)
 			{
 				try
@@ -2763,6 +2766,7 @@ void API::uploadedBinary(
 					throw runtime_error(errorMessage);
 				}
 			}
+			*/
 
             bool sourceBinaryTransferred = true;
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -2906,6 +2910,9 @@ void API::uploadedBinary(
 
             if (contentRangeEnd + 1 == contentRangeSize)
             {
+				/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
+					da MMSEngineProcessor::handleLocalAssetIngestionEventThread
+					per evitare che questa API impiega minuti a terminare
 				if (segmentedContent)
 				{
 					try
@@ -2927,6 +2934,7 @@ void API::uploadedBinary(
 						throw runtime_error(errorMessage);
 					}
 				}
+				*/
 
                 bool sourceBinaryTransferred = true;
                 _logger->info(__FILEREF__ + "Content-Range. Update IngestionJob"
@@ -2980,157 +2988,6 @@ void API::uploadedBinary(
         throw runtime_error(errorMessage);
     }    
 }
-
-/*
-void API::manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey,
-		string tarBinaryPathName, string workspaceIngestionRepository,
-		string sourcePathName)
-{
-	string executeCommand;
-	try
-	{
-		// tar into workspaceIngestion directory
-		//	source will be something like <ingestion key>_source
-		//	destination will be the original directory (that has to be the same name of the tar file name)
-		executeCommand =
-			"tar xfz " + tarBinaryPathName
-			+ " --directory " + workspaceIngestionRepository;
-		_logger->info(__FILEREF__ + "Start tar command "
-			+ ", executeCommand: " + executeCommand
-		);
-		chrono::system_clock::time_point startTar = chrono::system_clock::now();
-		int executeCommandStatus = ProcessUtility::execute(executeCommand);
-		chrono::system_clock::time_point endTar = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "End tar command "
-			+ ", executeCommand: " + executeCommand
-			+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
-		);
-		if (executeCommandStatus != 0)
-		{
-			string errorMessage = string("ProcessUtility::execute failed")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
-				+ ", executeCommand: " + executeCommand 
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-          
-			throw runtime_error(errorMessage);
-		}
-
-		// sourceFileName is the name of the tar file name that is the same
-		//	of the name of the directory inside the tar file
-		string sourceFileName;
-		{
-			string suffix(".tar.gz");
-			if (!(sourcePathName.size() >= suffix.size()
-				&& 0 == sourcePathName.compare(sourcePathName.size()-suffix.size(), suffix.size(), suffix)))
-			{
-				string errorMessage = __FILEREF__ + "sourcePathName does not end with " + suffix
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourcePathName: " + sourcePathName
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			size_t startFileNameIndex = sourcePathName.find_last_of("/");
-			if (startFileNameIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "sourcePathName bad format"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourcePathName: " + sourcePathName
-					+ ", startFileNameIndex: " + to_string(startFileNameIndex)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			sourceFileName = sourcePathName.substr(startFileNameIndex + 1);
-			sourceFileName = sourceFileName.substr(0, sourceFileName.size() - suffix.size());
-		}
-
-		// remove tar file
-		{
-			string sourceTarFile = workspaceIngestionRepository + "/"
-				+ to_string(ingestionJobKey)
-				+ "_source"
-				+ ".tar.gz";
-
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceTarFile: " + sourceTarFile
-			);
-
-			fs::remove_all(sourceTarFile);
-		}
-
-		// rename directory generated from tar: from user_tar_filename to 1247848_source
-		{
-			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
-			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
-			_logger->info(__FILEREF__ + "Start moveDirectory..."
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceDirectory: " + sourceDirectory
-				+ ", destDirectory: " + destDirectory
-			);
-			// 2020-05-01: since the remove of the director could fails because of nfs issue,
-			//  better do a copy and then a remove.
-			//  In this way, in case the remove fails, we can ignore the error.
-			//  The directory will be removed later by cron job
-			{
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				fs::copyDirectory(sourceDirectory, destDirectory,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP |
-					S_IROTH | S_IXOTH);
-				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "End copyDirectory"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
-					+ ", destDirectory: " + destDirectory
-					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
-				);
-			}
-
-			try
-			{
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				bool removeRecursively = true;
-				fs::removeDirectory(sourceDirectory, removeRecursively);
-				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "End removeDirectory"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory
-					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
-				);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = string("removeDirectory failed")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", e.what: " + e.what()
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-         
-				// throw runtime_error(errorMessage);
-			}
-		}
-	}
-	catch(runtime_error e)
-	{
-		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-         
-		throw runtime_error(errorMessage);
-	}
-}
-*/
 
 void API::stopUploadFileProgressThread()
 {
