@@ -6048,28 +6048,59 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 			else if (fileFormat == "m3u8-tar.gz")
 			{
+				// 2023-03-19: come specificato in TASK_01_Add_Content_JSON_Format.txt, in caso di
+				//	fileFormat == "m3u8-tar.gz" ci sono due opzioni:
+				//	1. in case of copy:// or move:// sourceURL, the tar.gz file name will be the same name
+				//		of the internal directory. In questo caso MMSStorage::manageTarFileInCaseOfIngestionOfSegments
+				//		è stato già chiamato dai metodi MMSEngineProcessor::moveMediaSourceFileThread
+				//		e MMSEngineProcessor::copyMediaSourceFileThread. Era importante che i due precedenti
+				//		metodi chiamassero MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè solo
+				//		loro sapevano il nome del file .tar.gz e quindi il nome della directory contenuta
+				//		nel file .tar.gz.
+				//		In questo scenario quindi, MMSStorage::manageTarFileInCaseOfIngestionOfSegments è stato già
+				//		chiamato e workspaceIngestionBinaryPathName è la directory <ingestionJobKey>_source
+				//	2. in caso di <download> o <upload tramite PUSH>, come indicato
+				//		in TASK_01_Add_Content_JSON_Format.txt, il .tar.gz conterrà una directory dal nome
+				//		"content".
+				//		2.1 In caso di <download>, il metodo MMSEngineProcessor::downloadMediaSourceFileThread
+				//			chiama lui stesso MMSStorage::manageTarFileInCaseOfIngestionOfSegments, per cui, anche
+				//			in questo caso, workspaceIngestionBinaryPathName è la directory <ingestionJobKey>_source
+				//		2.2 In caso di <upload tramite PUSH>, abbiamo evitato che API::uploadedBinary
+				//			chiamasse MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè manageTar...
+				//			potrebbe impiegare anche parecchi minuti e l'API non puo' rimanere appesa
+				//			per diversi minuti, avremmo timeout del load balancer e/o dei clients in generale.
+				//			Quindi, solo per questo scenario, chiamiamo qui il metodo MMSStorage::manageTarFileInCaseOfIngestionOfSegments
+				//			Possiamo distinguere questo caso dagli altri perchè, non essendo stato chiamato
+				//			il metodo MMSStorage::manageTarFileInCaseOfIngestionOfSegments, avremmo il file
+				//			<ingestionJobKey>_source.tar.gz e non, come nei casi precedenti,
+				//			la directory <ingestionJobKey>_source.
+
 				// i.e.: /var/catramms/storage/IngestionRepository/users/8/2848783_source.tar.gz
 				string localWorkspaceIngestionBinaryPathName = workspaceIngestionBinaryPathName + ".tar.gz";
-				try
+				if (fs::exists(localWorkspaceIngestionBinaryPathName)
+					&& fs::is_regular_file(localWorkspaceIngestionBinaryPathName))
 				{
-					// by a convention, the directory inside the tar file has to be named as 'content'
-                    string localSourceBinaryPathFile = "/content.tar.gz";
+					// caso 2.2 sopra
+					try
+					{
+						string localSourceBinaryPathFile = "/content.tar.gz";
 
-					_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(
-						localAssetIngestionEvent.getIngestionJobKey(),
-						localWorkspaceIngestionBinaryPathName,
-						_mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace()),
-						localSourceBinaryPathFile);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-						+ ", localWorkspaceIngestionBinaryPathName: " + localWorkspaceIngestionBinaryPathName
-					;
-					_logger->error(__FILEREF__ + errorMessage);
+						_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(
+							localAssetIngestionEvent.getIngestionJobKey(),
+							localWorkspaceIngestionBinaryPathName,
+							_mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace()),
+							localSourceBinaryPathFile);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+							+ ", localWorkspaceIngestionBinaryPathName: " + localWorkspaceIngestionBinaryPathName
+						;
+						_logger->error(__FILEREF__ + errorMessage);
 
-					throw runtime_error(errorMessage);
+						throw runtime_error(errorMessage);
+					}
 				}
 
 				// i.e.: /var/catramms/storage/IngestionRepository/users/8/2848783_source
@@ -24161,8 +24192,6 @@ RESUMING FILE TRANSFERS
 					(curlDownloadData.mediaSourceFileStream).close();
 				}
 
-				/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
-					da MMSEngineProcessor::handleLocalAssetIngestionEventThread
 				if (localM3u8TarGzOrM3u8Streaming == 1)
 				{
 					try
@@ -24187,7 +24216,6 @@ RESUMING FILE TRANSFERS
 						throw runtime_error(errorMessage);
 					}
 				}
-				*/
 
 				downloadingCompleted = true;
 
@@ -25864,8 +25892,6 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         
 		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName, _logger);
 
-		/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
-			da MMSEngineProcessor::handleLocalAssetIngestionEventThread
 		if (m3u8TarGzOrM3u8Streaming)
 		{
 			try
@@ -25887,7 +25913,6 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 				throw runtime_error(errorMessage);
 			}
 		}
-		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26044,8 +26069,6 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         fs::copy(sourcePathName, destBinaryPathName, fs::copy_options::recursive);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
-		/* 2023-03-19: manageTarFileInCaseOfIngestionOfSegments viene fatto
-			da MMSEngineProcessor::handleLocalAssetIngestionEventThread
         if (m3u8TarGzOrM3u8Streaming == 1)
 		{
 			try
@@ -26067,7 +26090,6 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 				throw runtime_error(errorMessage);
 			}
 		}
-		*/
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
