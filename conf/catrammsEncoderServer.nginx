@@ -15,46 +15,41 @@
 			rewrite ^/catramms/(v[0-9]+)/encoder/info/?$ /encoder?version=$1&method=info last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/?$ /encoder?version=$1&method=overlayImageOnVideo&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=overlayImageOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayTextOnVideo/([0-9]+)/?$ /encoder?version=$1&method=overlayTextOnVideo&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/overlayTextOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=overlayTextOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/?$ /encoder?version=$1&method=generateFrames&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=generateFrames&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/?$ /encoder?version=$1&method=slideShow&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=slideShow&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&ingestionJobKey=$2&encodingJobKey=$3 last;
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&encodingJobKey=$2 last;
 		}
-#		if ($request_method = POST) {
-#			rewrite ^/catramms/(v[0-9]+)/encoder/vodProxy/([0-9]+)/?$ /encoder?version=$1&method=vodProxy&encodingJobKey=$2 last;
-#		}
-#		if ($request_method = POST) {
-#			rewrite ^/catramms/(v[0-9]+)/encoder/awaitingTheBeginning/([0-9]+)/?$ /encoder?version=$1&method=awaitingTheBeginning&encodingJobKey=$2 last;
-#		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/?$ /encoder?version=$1&method=pictureInPicture&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=pictureInPicture&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/introOutroOverlay/([0-9]+)/?$ /encoder?version=$1&method=introOutroOverlay&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/introOutroOverlay/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=introOutroOverlay&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/cutFrameAccurate/([0-9]+)/?$ /encoder?version=$1&method=cutFrameAccurate&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/cutFrameAccurate/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=cutFrameAccurate&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;

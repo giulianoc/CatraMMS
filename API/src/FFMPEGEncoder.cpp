@@ -582,6 +582,19 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodeContent")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+			_logger->error(__FILEREF__ + "The 'ingestionJobKey' parameter is not found");
+
+			string errorMessage = string("Internal server error");
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -659,6 +672,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -679,11 +693,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating encodeContent thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this,
-					selectedEncoding, encodingJobKey, requestBody);
+					selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				encodeContentThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -694,6 +709,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "encodeContentThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -711,6 +727,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -722,6 +739,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "encodeContentThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -737,6 +755,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "cutFrameAccurate")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -748,7 +778,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
+
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -813,6 +843,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -837,7 +868,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", requestBody: " + requestBody
 				);
 				thread cutFrameAccurateThread(&FFMPEGEncoder::cutFrameAccurateThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				cutFrameAccurateThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -848,6 +879,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -865,6 +897,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -876,6 +909,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -891,6 +925,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "overlayImageOnVideo")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -967,6 +1013,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -987,11 +1034,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating overlayImageOnVideo thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideoThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				overlayImageOnVideoThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1002,6 +1050,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1019,6 +1068,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1030,6 +1080,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1045,6 +1096,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "overlayTextOnVideo")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1121,6 +1184,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1145,7 +1209,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", requestBody: " + requestBody
 				);
 				thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideoThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				overlayTextOnVideoThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1156,6 +1220,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1173,6 +1238,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1184,6 +1250,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1199,6 +1266,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "generateFrames")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1275,6 +1354,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1295,11 +1375,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating generateFrames thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread generateFramesThread(&FFMPEGEncoder::generateFramesThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				generateFramesThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1310,6 +1391,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "generateFrames failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1327,6 +1409,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1338,6 +1421,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "generateFramesThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1353,6 +1437,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "slideShow")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1429,6 +1525,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1449,11 +1546,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating slideShow thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread slideShowThread(&FFMPEGEncoder::slideShowThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				slideShowThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1464,6 +1562,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "slideShow failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1481,6 +1580,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1492,6 +1592,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "slideShowThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1507,6 +1608,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "videoSpeed")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1583,6 +1696,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1603,11 +1717,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating videoSpeed thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread videoSpeedThread(&FFMPEGEncoder::videoSpeedThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				videoSpeedThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1618,6 +1733,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "videoSpeedThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1635,6 +1751,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1646,6 +1763,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "sendSuccess failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1661,6 +1779,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "pictureInPicture")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1737,6 +1867,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1757,11 +1888,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating pictureInPicture thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread pictureInPictureThread(&FFMPEGEncoder::pictureInPictureThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				pictureInPictureThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1772,6 +1904,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "pictureInPictureThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1789,6 +1922,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1800,6 +1934,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "sendSuccess failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1815,6 +1950,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "introOutroOverlay")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -1891,6 +2038,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", seconds since the last request: "
 							+ to_string(chrono::duration_cast<chrono::seconds>(
@@ -1911,11 +2059,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating introOutroOverlay thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread introOutroOverlayThread(&FFMPEGEncoder::introOutroOverlayThread,
-					this, selectedEncoding, encodingJobKey, requestBody);
+					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
 				introOutroOverlayThread.detach();
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -1926,6 +2075,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "introOutroOverlayThread failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -1941,8 +2091,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 
         try
-        {            
+        {
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -1954,6 +2105,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "sendSuccess failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1969,6 +2121,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "liveRecorder")
     {
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2075,7 +2239,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", requestBody: " + requestBody
 				);
 				thread liveRecorderThread(&FFMPEGEncoder::liveRecorderThread,
-					this, selectedLiveRecording, encodingJobKey, requestBody);
+					this, selectedLiveRecording, ingestionJobKey, encodingJobKey, requestBody);
 				liveRecorderThread.detach();
 
 				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -2086,6 +2250,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_childPid = 0;	// not running
 
 				_logger->error(__FILEREF__ + "liveRecorder failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -2103,6 +2268,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -2114,6 +2280,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "liveRecorderThread failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -2133,6 +2300,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		// || method == "countdown"
 	)
     {
+		int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt != queryParameters.end())
+			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
         {
@@ -2182,6 +2354,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
 					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
@@ -2237,11 +2410,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (method == "liveProxy")
 				{
 					_logger->info(__FILEREF__ + "Creating liveProxy thread"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 						+ ", requestBody: " + requestBody
 					);
 					thread liveProxyThread(&FFMPEGEncoder::liveProxyThread,
-						this, selectedLiveProxy, encodingJobKey, requestBody);
+						this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
 					liveProxyThread.detach();
 				}
 				/*
@@ -2259,11 +2433,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				else if (method == "liveGrid")
 				{
 					_logger->info(__FILEREF__ + "Creating liveGrid thread"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 						+ ", requestBody: " + requestBody
 					);
 					thread liveGridThread(&FFMPEGEncoder::liveGridThread,
-						this, selectedLiveProxy, encodingJobKey, requestBody);
+						this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
 					liveGridThread.detach();
 				}
 				/*
@@ -2288,6 +2463,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				_logger->error(__FILEREF__ + "liveProxyThread failed"
 					+ ", method: " + method
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -2305,6 +2481,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
 			Json::Value responseBodyRoot;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
 
@@ -2317,6 +2494,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         {
             _logger->error(__FILEREF__ + "liveProxy/vodProxy/liveGrid/awaitingTheBeginning Thread failed"
                 + ", method: " + method
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -3313,12 +3491,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 void FFMPEGEncoder::encodeContentThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		EncodeContent encodeContent(encoding, encodingJobKey,                                    
+		EncodeContent encodeContent(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		encodeContent.encodeContent(requestBody);
     }
@@ -3354,12 +3533,13 @@ void FFMPEGEncoder::encodeContentThread(
 void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		OverlayImageOnVideo overlayImageOnVideo(encoding, encodingJobKey,                                    
+		OverlayImageOnVideo overlayImageOnVideo(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		overlayImageOnVideo.encodeContent(requestBody);
     }
@@ -3390,12 +3570,13 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 void FFMPEGEncoder::overlayTextOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		OverlayTextOnVideo overlayTextOnVideo(encoding, encodingJobKey,                                    
+		OverlayTextOnVideo overlayTextOnVideo(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		overlayTextOnVideo.encodeContent(requestBody);
     }
@@ -3426,12 +3607,13 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 void FFMPEGEncoder::generateFramesThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		GenerateFrames generateFrames(encoding, encodingJobKey,                                    
+		GenerateFrames generateFrames(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		generateFrames.encodeContent(requestBody);
     }
@@ -3451,12 +3633,13 @@ void FFMPEGEncoder::generateFramesThread(
 
 void FFMPEGEncoder::slideShowThread(
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string requestBody)
 {
     try
     {
-		SlideShow slideShow(encoding, encodingJobKey,                                    
+		SlideShow slideShow(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		slideShow.encodeContent(requestBody);
     }
@@ -3477,12 +3660,13 @@ void FFMPEGEncoder::slideShowThread(
 void FFMPEGEncoder::videoSpeedThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		VideoSpeed videoSpeed(encoding, encodingJobKey,                                    
+		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		videoSpeed.encodeContent(requestBody);
     }
@@ -3513,12 +3697,13 @@ void FFMPEGEncoder::videoSpeedThread(
 void FFMPEGEncoder::pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		PictureInPicture pictureInPicture(encoding, encodingJobKey,                                    
+		PictureInPicture pictureInPicture(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		pictureInPicture.encodeContent(requestBody);
     }
@@ -3549,12 +3734,13 @@ void FFMPEGEncoder::pictureInPictureThread(
 void FFMPEGEncoder::introOutroOverlayThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		IntroOutroOverlay introOutroOverlay(encoding, encodingJobKey,                                    
+		IntroOutroOverlay introOutroOverlay(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		introOutroOverlay.encodeContent(requestBody);
     }
@@ -3585,12 +3771,13 @@ void FFMPEGEncoder::introOutroOverlayThread(
 void FFMPEGEncoder::cutFrameAccurateThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody)
 {
     try
     {
-		CutFrameAccurate cutFrameAccurate(encoding, encodingJobKey,                                    
+		CutFrameAccurate cutFrameAccurate(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		cutFrameAccurate.encodeContent(requestBody);
     }
@@ -3621,12 +3808,13 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 void FFMPEGEncoder::liveRecorderThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string requestBody)
 {
     try
     {
-		LiveRecorder liveRecorder(liveRecording, encodingJobKey,                                    
+		LiveRecorder liveRecorder(liveRecording, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger,
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
 		liveRecorder.encodeContent(requestBody);
@@ -3673,3038 +3861,16 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 }
 
-/*
-void FFMPEGEncoder::liveRecorderChunksIngestionThread()
-{
-
-	while(!_liveRecorderChunksIngestionThreadShutdown)
-	{
-		try
-		{
-			chrono::system_clock::time_point startAllChannelsIngestionChunks = chrono::system_clock::now();
-
-			lock_guard<mutex> locker(*_liveRecordingMutex);
-
-			for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
-			{
-				if (liveRecording->_childPid != 0)	// running
-				{
-					_logger->info(__FILEREF__ + "liveRecorder_processSegmenterOutput ..."
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", liveRecording->_segmenterType: " + liveRecording->_segmenterType
-					);
-
-					chrono::system_clock::time_point startSingleChannelIngestionChunks = chrono::system_clock::now();
-
-					try
-					{
-						if (liveRecording->_encodingParametersRoot != Json::nullValue)
-						{
-							int segmentDurationInSeconds;
-							string outputFileFormat;
-							{
-								string field = "SegmentDuration";
-								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
-
-								field = "OutputFileFormat";
-								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
-							}
-
-							pair<string, int> lastRecordedAssetInfo;
-
-							if (liveRecording->_segmenterType == "streamSegmenter")
-							{
-								lastRecordedAssetInfo = liveRecorder_processStreamSegmenterOutput(
-									liveRecording->_ingestionJobKey,
-									liveRecording->_encodingJobKey,
-									liveRecording->_streamSourceType,
-									liveRecording->_externalEncoder,
-									segmentDurationInSeconds, outputFileFormat,                                                                              
-									liveRecording->_encodingParametersRoot,
-									liveRecording->_ingestedParametersRoot,
-
-									liveRecording->_chunksTranscoderStagingContentsPath,
-									liveRecording->_chunksNFSStagingContentsPath,
-									liveRecording->_segmentListFileName,
-									liveRecording->_recordedFileNamePrefix,
-									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
-							}
-							else // if (liveRecording->_segmenterType == "hlsSegmenter")
-							{
-								lastRecordedAssetInfo = liveRecorder_processHLSSegmenterOutput(
-									liveRecording->_ingestionJobKey,
-									liveRecording->_encodingJobKey,
-									liveRecording->_streamSourceType,
-									liveRecording->_externalEncoder,
-									segmentDurationInSeconds, outputFileFormat,                                                                              
-									liveRecording->_encodingParametersRoot,
-									liveRecording->_ingestedParametersRoot,
-
-									liveRecording->_chunksTranscoderStagingContentsPath,
-									liveRecording->_chunksNFSStagingContentsPath,
-									liveRecording->_segmentListFileName,
-									liveRecording->_recordedFileNamePrefix,
-									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
-							}
-
-							liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
-							liveRecording->_lastRecordedAssetDurationInSeconds	= lastRecordedAssetInfo.second;
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveRecorder_processSegmenterOutput failed")
-							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveRecorder_processSegmenterOutput failed")
-							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-
-					_logger->info(__FILEREF__ + "Single Channel Ingestion Chunks"
-						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", @MMS statistics@ - elapsed time: @" + to_string(
-							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-								- startSingleChannelIngestionChunks).count()
-						) + "@"
-					);
-				}
-			}
-
-			_logger->info(__FILEREF__ + "All Channels Ingestion Chunks"
-				+ ", @MMS statistics@ - elapsed time: @" + to_string(
-					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-						- startAllChannelsIngestionChunks).count()
-				) + "@"
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("liveRecorderChunksIngestion failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("liveRecorderChunksIngestion failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-
-		this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
-	}
-}
-
-void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
-{
-	_liveRecorderChunksIngestionThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
-}
-
-void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
-{
-
-	while(!_liveRecorderVirtualVODIngestionThreadShutdown)
-	{
-		int virtualVODsNumber = 0;
-
-		try
-		{
-			// this is to have a copy of LiveRecording
-			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> copiedRunningLiveRecordingCapability;
-
-			// this is to have access to running and _proxyStart
-			//	to check if it is changed. In case the process is killed, it will access
-			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> sourceLiveRecordingCapability;
-
-			chrono::system_clock::time_point startClone = chrono::system_clock::now();
-			// to avoid to maintain the lock too much time
-			// we will clone the proxies for monitoring check
-			int liveRecordingVirtualVODCounter = 0;
-			{
-				lock_guard<mutex> locker(*_liveRecordingMutex);
-
-				int liveRecordingNotVirtualVODCounter = 0;
-
-				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
-				{
-					if (liveRecording->_childPid != 0 && liveRecording->_virtualVOD
-						&& startClone > liveRecording->_recordingStart)
-					{
-						liveRecordingVirtualVODCounter++;
-
-						copiedRunningLiveRecordingCapability.push_back(
-							liveRecording->cloneForMonitorAndVirtualVOD());
-						sourceLiveRecordingCapability.push_back(
-                            liveRecording);
-					}
-					else
-					{
-						liveRecordingNotVirtualVODCounter++;
-					}
-				}
-				_logger->info(__FILEREF__ + "virtualVOD, numbers"
-					+ ", total LiveRecording: " + to_string(liveRecordingVirtualVODCounter
-						+ liveRecordingNotVirtualVODCounter)
-					+ ", liveRecordingVirtualVODCounter: " + to_string(liveRecordingVirtualVODCounter)
-					+ ", liveRecordingNotVirtualVODCounter: " + to_string(liveRecordingNotVirtualVODCounter)
-				);
-			}
-			_logger->info(__FILEREF__ + "virtualVOD clone"
-				+ ", copiedRunningLiveRecordingCapability.size: " + to_string(copiedRunningLiveRecordingCapability.size())
-				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
-			);
-
-			chrono::system_clock::time_point startAllChannelsVirtualVOD = chrono::system_clock::now();
-
-			for (int liveRecordingIndex = 0;
-				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
-				liveRecordingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording
-					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording
-					= sourceLiveRecordingCapability[liveRecordingIndex];
-
-				_logger->info(__FILEREF__ + "virtualVOD"
-					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-				);
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "virtualVOD. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): "
-							+ to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): "
-							+ to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				{
-					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
-
-					virtualVODsNumber++;
-
-					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD ..."
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", externalEncoder: " + to_string(copiedLiveRecording->_externalEncoder)
-						+ ", childPid: " + to_string(copiedLiveRecording->_childPid)
-						+ ", virtualVOD: " + to_string(copiedLiveRecording->_virtualVOD)
-						+ ", virtualVODsNumber: " + to_string(virtualVODsNumber)
-						+ ", monitorVirtualVODManifestDirectoryPath: "
-							+ copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath
-						+ ", monitorVirtualVODManifestFileName: "
-							+ copiedLiveRecording->_monitorVirtualVODManifestFileName
-						+ ", virtualVODStagingContentsPath: "
-							+ copiedLiveRecording->_virtualVODStagingContentsPath
-					);
-
-					long segmentsNumber = 0;
-
-					try
-					{
-						int64_t deliveryCode = JSONUtils::asInt64(
-							copiedLiveRecording->_ingestedParametersRoot, "DeliveryCode", 0);
-						string ingestionJobLabel = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot,
-							"ingestionJobLabel", "");
-						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
-							+ to_string(deliveryCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ")";
-
-						int64_t userKey;
-						string apiKey;
-						{
-							string field = "internalMMS";
-							if (JSONUtils::isMetadataPresent(copiedLiveRecording->_ingestedParametersRoot, field))
-							{
-								Json::Value internalMMSRoot = copiedLiveRecording->_ingestedParametersRoot[field];
-
-								field = "credentials";
-								if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-								{
-									Json::Value credentialsRoot = internalMMSRoot[field];
-
-									field = "userKey";
-									userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-									field = "apiKey";
-									string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-									apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-								}
-							}
-						}
-
-						string mmsWorkflowIngestionURL;
-						string mmsBinaryIngestionURL;
-						{
-							string field = "mmsWorkflowIngestionURL";
-							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot,
-								field))
-							{
-								string errorMessage = __FILEREF__ + "Field is not present or it is null"
-									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", Field: " + field;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-							mmsWorkflowIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
-
-							field = "mmsBinaryIngestionURL";
-							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot,
-								field))
-							{
-								string errorMessage = __FILEREF__ + "Field is not present or it is null"
-									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", Field: " + field;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-							mmsBinaryIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
-						}
-
-						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
-							copiedLiveRecording->_ingestionJobKey,
-							copiedLiveRecording->_encodingJobKey,
-							copiedLiveRecording->_externalEncoder,
-
-							copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath,
-							copiedLiveRecording->_monitorVirtualVODManifestFileName,
-							copiedLiveRecording->_virtualVODStagingContentsPath,
-
-							deliveryCode,
-							ingestionJobLabel,
-							liveRecorderVirtualVODUniqueName,
-							_liveRecorderVirtualVODRetention,
-							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey,
-							userKey,
-							apiKey,
-							mmsWorkflowIngestionURL,
-							mmsBinaryIngestionURL);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
-							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
-							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-
-					_logger->info(__FILEREF__ + "Single Channel Virtual VOD"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", segmentsNumber: " + to_string(segmentsNumber)
-						+ ", @MMS statistics@ - elapsed time (secs): @" + to_string(
-							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-								- startSingleChannelVirtualVOD).count()
-						) + "@"
-					);
-				}
-			}
-
-			_logger->info(__FILEREF__ + "All Channels Virtual VOD"
-				+ ", @MMS statistics@ - elapsed time: @" + to_string(
-					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
-						- startAllChannelsVirtualVOD).count()
-				) + "@"
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-
-		if (virtualVODsNumber < 5)
-			this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds * 2));
-		else
-			this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
-	}
-}
-
-void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
-{
-	_liveRecorderVirtualVODIngestionThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
-}
-
-pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string streamSourceType,
-	bool externalEncoder,
-	int segmentDurationInSeconds, string outputFileFormat,
-	Json::Value encodingParametersRoot,
-	Json::Value ingestedParametersRoot,
-	string chunksTranscoderStagingContentsPath,
-	string chunksNFSStagingContentsPath,
-	string segmentListFileName,
-	string recordedFileNamePrefix,
-	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
-{
-
-	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
-	// the same lastRecordedAssetFileName has to be returned
-	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
-	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
-    try
-    {
-		_logger->info(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			// + ", highAvailability: " + to_string(highAvailability)
-			// + ", main: " + to_string(main)
-			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-			+ ", outputFileFormat: " + outputFileFormat
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
-			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-			+ ", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
-		);
-
-		ifstream segmentList(chunksTranscoderStagingContentsPath + segmentListFileName);
-		if (!segmentList)
-        {
-            string errorMessage = __FILEREF__ + "No segment list file found yet"
-				+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-				+ ", segmentListFileName: " + segmentListFileName
-				+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
-            _logger->warn(errorMessage);
-
-			return make_pair(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds);
-            // throw runtime_error(errorMessage);
-        }
-
-		bool reachedNextFileToProcess = false;
-		string currentRecordedAssetFileName;
-		while(getline(segmentList, currentRecordedAssetFileName))
-		{
-			if (!reachedNextFileToProcess)
-			{
-				if (lastRecordedAssetFileName == "")
-				{
-					reachedNextFileToProcess = true;
-				}
-				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
-				{
-					reachedNextFileToProcess = true;
-
-					continue;
-				}
-				else
-				{
-					continue;
-				}
-			}
-
-			_logger->info(__FILEREF__ + "processing LiveRecorder file"
-				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
-
-			if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName))
-			{
-				// it could be the scenario where mmsEngineService is restarted,
-				// the segments list file still contains obsolete filenames
-				_logger->error(__FILEREF__ + "file not existing"
-						", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				);
-
-				continue;
-			}
-
-			bool isFirstChunk = (lastRecordedAssetFileName == "");
-
-			time_t utcCurrentRecordedFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds,
-				isFirstChunk);
-
-			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
-					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
-					chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
-					segmentDurationInSeconds, isFirstChunk);
-			_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-					+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
-					+ ", ingestionRowToBeUpdatedAsSuccess: " + to_string(ingestionRowToBeUpdatedAsSuccess));
-
-			newLastRecordedAssetFileName = currentRecordedAssetFileName;
-			newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
-
-			time_t utcCurrentRecordedFileLastModificationTime =
-				utcCurrentRecordedFileCreationTime + newLastRecordedAssetDurationInSeconds;
-
-			string uniqueName;
-			{
-				int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
-
-				uniqueName = to_string(deliveryCode);
-				uniqueName += " - ";
-				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
-			}
-
-			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
-
-			// UserData
-			Json::Value userDataRoot;
-			{
-				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-					userDataRoot = ingestedParametersRoot["UserData"];
-
-				Json::Value mmsDataRoot;
-				mmsDataRoot["dataType"] = "liveRecordingChunk";
-				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					mmsDataRoot["deliveryCode"] = deliveryCode;
-				}
-				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-				// mmsDataRoot["main"] = main;
-				mmsDataRoot["main"] = true;
-				// if (!highAvailability)
-				{
-					bool validated = true;
-					mmsDataRoot["validated"] = validated;
-				}
-				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
-				mmsDataRoot["utcPreviousChunkStartTime"] =
-					(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
-				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
-				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
-
-				mmsDataRoot["uniqueName"] = uniqueName;
-
-				userDataRoot["mmsData"] = mmsDataRoot;
-			}
-
-			// Title
-			string addContentTitle;
-			{
-				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
-				if (ingestionJobLabel == "")
-				{
-					int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-						"DeliveryCode", 0);
-					addContentTitle = to_string(deliveryCode);
-				}
-				else
-					addContentTitle = ingestionJobLabel;
-
-				addContentTitle += " - ";
-
-				{
-					tm		tmDateTime;
-					char	strCurrentRecordedFileTime [64];
-
-					// from utc to local time
-					localtime_r (&utcCurrentRecordedFileCreationTime, &tmDateTime);
-
-					sprintf (strCurrentRecordedFileTime,
-						"%02d:%02d:%02d",
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-
-					addContentTitle += strCurrentRecordedFileTime;	// local time
-				}
-
-				addContentTitle += " - ";
-
-				{
-					tm		tmDateTime;
-					char	strCurrentRecordedFileTime [64];
-
-					// from utc to local time
-					localtime_r (&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
-
-					sprintf (strCurrentRecordedFileTime,
-						"%02d:%02d:%02d",
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-
-					addContentTitle += strCurrentRecordedFileTime;	// local time
-				}
-
-				// if (!main)
-				// 	addContentTitle += " (BCK)";
-			}
-
-			if (isFirstChunk)
-			{
-				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-					+ ", title: " + addContentTitle
-				);
-
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				);
-
-                FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
-			}
-			else
-			{
-				try
-				{
-					_logger->info(__FILEREF__ + "ingest Recorded media"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-						+ ", addContentTitle: " + addContentTitle
-					);
-
-					if (externalEncoder)
-						liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
-							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
-							addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-							ingestedParametersRoot, encodingParametersRoot);
-					else
-						liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-							chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
-							chunksNFSStagingContentsPath,
-							addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-							ingestedParametersRoot, encodingParametersRoot,
-							false);
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", externalEncoder: " + to_string(externalEncoder)
-						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-						+ ", addContentTitle: " + addContentTitle
-						+ ", outputFileFormat: " + outputFileFormat
-						+ ", e.what(): " + e.what()
-					);
-
-					// throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", externalEncoder: " + to_string(externalEncoder)
-						+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-						+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-						+ ", addContentTitle: " + addContentTitle
-						+ ", outputFileFormat: " + outputFileFormat
-					);
-                
-					// throw e;
-				}
-			}
-		}
-
-		if (reachedNextFileToProcess == false)
-		{
-			// this scenario should never happens, we have only one option when mmEngineService
-			// is restarted, the new LiveRecorder is not started and the segments list file
-			// contains still old files. So newLastRecordedAssetFileName is initialized
-			// with the old file that will never be found once LiveRecorder starts and reset
-			// the segment list file
-			// In this scenario, we will reset newLastRecordedAssetFileName
-			newLastRecordedAssetFileName	= "";
-		}
-	}
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-            + ", e.what(): " + e.what()
-        );
-                
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-        );
-                
-        throw e;
-    }
-
-	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
-}
-
-pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string streamSourceType,
-	bool externalEncoder,
-	int segmentDurationInSeconds, string outputFileFormat,
-	Json::Value encodingParametersRoot,
-	Json::Value ingestedParametersRoot,
-	string chunksTranscoderStagingContentsPath,
-	string chunksNFSStagingContentsPath,
-	string segmentListFileName,
-	string recordedFileNamePrefix,
-	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
-{
-
-	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
-	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
-
-    try
-    {
-		_logger->info(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			// + ", highAvailability: " + to_string(highAvailability)
-			// + ", main: " + to_string(main)
-			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-			+ ", outputFileFormat: " + outputFileFormat
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
-			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-			+ ", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
-		);
-
-		double toBeIngestedSegmentDuration = -1.0;
-		int64_t toBeIngestedSegmentUtcStartTimeInMillisecs = -1;
-		string toBeIngestedSegmentFileName;
-		{
-			double currentSegmentDuration = -1.0;
-			int64_t currentSegmentUtcStartTimeInMillisecs = -1;
-			string currentSegmentFileName;
-
-			bool toBeIngested = false;
-
-			_logger->info(__FILEREF__ + "Reading manifest"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", chunksTranscoderStagingContentsPath + segmentListFileName: " + chunksTranscoderStagingContentsPath + segmentListFileName
-			);
-
-			ifstream segmentList;
-			segmentList.open(chunksTranscoderStagingContentsPath + segmentListFileName, ifstream::in);
-			if (!segmentList)
-			{
-				string errorMessage = __FILEREF__ + "No segment list file found yet"
-					+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-					+ ", segmentListFileName: " + segmentListFileName
-					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
-				_logger->warn(errorMessage);
-
-				return make_pair(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds);
-				// throw runtime_error(errorMessage);
-			}
-
-			int ingestionNumber = 0;
-			string manifestLine;
-			while(getline(segmentList, manifestLine))
-			{
-				_logger->info(__FILEREF__ + "Reading manifest line"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestLine: " + manifestLine
-					+ ", toBeIngested: " + to_string(toBeIngested)
-					+ ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration)
-					+ ", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
-					+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-					+ ", currentSegmentDuration: " + to_string(currentSegmentDuration)
-					+ ", currentSegmentUtcStartTimeInMillisecs: " + to_string(currentSegmentUtcStartTimeInMillisecs)
-					+ ", currentSegmentFileName: " + currentSegmentFileName
-					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
-				);
-
-				// #EXTINF:14.640000,
-				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
-				// <segment file name>
-
-				if (manifestLine.size() == 0)
-					continue;
-
-				string durationPrefix ("#EXTINF:");
-				string dateTimePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
-				if (manifestLine.size() >= durationPrefix.size()
-					&& 0 == manifestLine.compare(0, durationPrefix.size(), durationPrefix))
-				{
-					size_t endOfSegmentDuration = manifestLine.find(",");
-					if (endOfSegmentDuration == string::npos)
-					{
-						string errorMessage = string("wrong manifest line format")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", manifestLine: " + manifestLine
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					if (toBeIngested)
-						toBeIngestedSegmentDuration = stod(manifestLine.substr(durationPrefix.size(),
-							endOfSegmentDuration - durationPrefix.size()));
-					else
-						currentSegmentDuration = stod(manifestLine.substr(durationPrefix.size(),
-							endOfSegmentDuration - durationPrefix.size()));
-				}
-				else if (manifestLine.size() >= dateTimePrefix.size() && 0 == manifestLine.compare(0, dateTimePrefix.size(),
-					dateTimePrefix))
-				{
-					if (toBeIngested)
-						toBeIngestedSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(
-							manifestLine.substr(dateTimePrefix.size()));
-					else
-						currentSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(
-							manifestLine.substr(dateTimePrefix.size()));
-				}
-				else if (manifestLine[0] != '#')
-				{
-					if (toBeIngested)
-						toBeIngestedSegmentFileName = manifestLine;
-					else
-						currentSegmentFileName = manifestLine;
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "manifest line not used by our algorithm"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", manifestLine: " + manifestLine
-					);
-
-					continue;
-				}
-
-				if (
-					// case 1: we are in the toBeIngested status (part of the playlist after the last ingested segment)
-					//	and we are all the details of the new ingested segment
-					(
-						toBeIngested
-						&& toBeIngestedSegmentDuration != -1.0
-						&& toBeIngestedSegmentUtcStartTimeInMillisecs != -1
-						&& toBeIngestedSegmentFileName != ""
-					)
-					||
-					// case 2: we are NOT in the toBeIngested status
-					//	but we just started to ingest (lastRecordedAssetFileName == "")
-					//	and we have all the details of the ingested segment
-					(
-						!toBeIngested
-						&& currentSegmentDuration != -1.0
-						&& currentSegmentUtcStartTimeInMillisecs != -1
-						&& currentSegmentFileName != ""
-						&& lastRecordedAssetFileName == ""
-					)
-				)
-				{
-					// if we are in case 2, let's initialize variables like we are in case 1
-					if (!toBeIngested)
-					{
-						toBeIngestedSegmentDuration = currentSegmentDuration;
-						toBeIngestedSegmentUtcStartTimeInMillisecs = currentSegmentUtcStartTimeInMillisecs;
-						toBeIngestedSegmentFileName = currentSegmentFileName;
-
-						toBeIngested = true;
-					}
-
-					// ingest the asset and initilize
-					// newLastRecordedAssetFileName and newLastRecordedAssetDurationInSeconds
-					{
-						int64_t toBeIngestedSegmentUtcEndTimeInMillisecs =
-							toBeIngestedSegmentUtcStartTimeInMillisecs + (toBeIngestedSegmentDuration * 1000);
-
-						_logger->info(__FILEREF__ + "processing LiveRecorder file"
-							+ ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration)
-							+ ", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
-							+ ", toBeIngestedSegmentUtcEndTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcEndTimeInMillisecs)
-							+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-						);
-
-						if (!FileIO::fileExisting(chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName))
-						{
-							// it could be the scenario where mmsEngineService is restarted,
-							// the segments list file still contains obsolete filenames
-							_logger->error(__FILEREF__ + "file not existing"
-								", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName
-							);
-
-							return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
-						}
-
-						// initialize metadata and ingest the asset
-						{
-							string uniqueName;
-							{
-								int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
-
-								uniqueName = to_string(deliveryCode);
-								uniqueName += " - ";
-								uniqueName += to_string(toBeIngestedSegmentUtcStartTimeInMillisecs);
-							}
-
-							string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
-
-							// UserData
-							Json::Value userDataRoot;
-							{
-								if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-									userDataRoot = ingestedParametersRoot["UserData"];
-
-								Json::Value mmsDataRoot;
-								mmsDataRoot["dataType"] = "liveRecordingChunk";
-								{
-									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-										"DeliveryCode", 0);
-									mmsDataRoot["deliveryCode"] = deliveryCode;
-								}
-								mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-								// mmsDataRoot["main"] = main;
-								mmsDataRoot["main"] = true;
-								// if (!highAvailability)
-								{
-									bool validated = true;
-									mmsDataRoot["validated"] = validated;
-								}
-								mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
-								mmsDataRoot["utcChunkStartTime"] =
-									(int64_t) (toBeIngestedSegmentUtcStartTimeInMillisecs / 1000);
-								mmsDataRoot["utcStartTimeInMilliSecs"] =
-									toBeIngestedSegmentUtcStartTimeInMillisecs;
-
-								mmsDataRoot["utcChunkEndTime"] =
-									(int64_t) (toBeIngestedSegmentUtcEndTimeInMillisecs / 1000);
-								mmsDataRoot["utcEndTimeInMilliSecs"] =
-									toBeIngestedSegmentUtcEndTimeInMillisecs;
-
-								mmsDataRoot["uniqueName"] = uniqueName;
-
-								userDataRoot["mmsData"] = mmsDataRoot;
-							}
-
-							// Title
-							string addContentTitle;
-							{
-								if (ingestionJobLabel == "")
-								{
-									int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot,
-										"DeliveryCode", 0);
-									addContentTitle = to_string(deliveryCode);
-								}
-								else
-									addContentTitle = ingestionJobLabel;
-
-								addContentTitle += " - ";
-
-								{
-									tm		tmDateTime;
-									char	strCurrentRecordedFileTime [64];
-
-									time_t toBeIngestedSegmentUtcStartTimeInSeconds =
-										toBeIngestedSegmentUtcStartTimeInMillisecs / 1000;
-									int toBeIngestedSegmentMilliSecs = toBeIngestedSegmentUtcStartTimeInMillisecs % 1000;
-
-									// from utc to local time
-									localtime_r (&toBeIngestedSegmentUtcStartTimeInSeconds, &tmDateTime);
-
-									sprintf (strCurrentRecordedFileTime,
-										"%02d:%02d:%02d.%03d",
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec,
-										toBeIngestedSegmentMilliSecs
-										);
-
-									addContentTitle += strCurrentRecordedFileTime;	// local time
-								}
-
-								addContentTitle += " - ";
-
-								{
-									tm		tmDateTime;
-									char	strCurrentRecordedFileTime [64];
-
-									time_t toBeIngestedSegmentUtcEndTimeInSeconds =
-										toBeIngestedSegmentUtcEndTimeInMillisecs / 1000;
-									int toBeIngestedSegmentMilliSecs = toBeIngestedSegmentUtcEndTimeInMillisecs % 1000;
-
-									// from utc to local time
-									localtime_r (&toBeIngestedSegmentUtcEndTimeInSeconds, &tmDateTime);
-
-									sprintf (strCurrentRecordedFileTime,
-										"%02d:%02d:%02d.%03d",
-										tmDateTime. tm_hour,
-										tmDateTime. tm_min,
-										tmDateTime. tm_sec,
-										toBeIngestedSegmentMilliSecs);
-
-									addContentTitle += strCurrentRecordedFileTime;	// local time
-								}
-
-								// if (!main)
-								// 	addContentTitle += " (BCK)";
-							}
-
-							{
-								try
-								{
-									_logger->info(__FILEREF__ + "ingest Recorded media"
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-										+ ", addContentTitle: " + addContentTitle
-									);
-
-									if (externalEncoder)
-										liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(ingestionJobKey,
-											chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName,
-											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-											ingestedParametersRoot, encodingParametersRoot);
-									else
-										liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(ingestionJobKey,
-											chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName,
-											chunksNFSStagingContentsPath,
-											addContentTitle, uniqueName, userDataRoot, outputFileFormat,
-											ingestedParametersRoot, encodingParametersRoot,
-											true);
-								}
-								catch(runtime_error e)
-								{
-									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", externalEncoder: " + to_string(externalEncoder)
-										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-										+ ", addContentTitle: " + addContentTitle
-										+ ", outputFileFormat: " + outputFileFormat
-										+ ", e.what(): " + e.what()
-									);
-
-									// throw e;
-								}
-								catch(exception e)
-								{
-									_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
-										+ ", encodingJobKey: " + to_string(encodingJobKey)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", externalEncoder: " + to_string(externalEncoder)
-										+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-										+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-										+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-										+ ", addContentTitle: " + addContentTitle
-										+ ", outputFileFormat: " + outputFileFormat
-									);
-                
-									// throw e;
-								}
-							}
-						}
-
-						newLastRecordedAssetFileName = toBeIngestedSegmentFileName;
-						newLastRecordedAssetDurationInSeconds = toBeIngestedSegmentDuration;
-					}
-
-					ingestionNumber++;
-
-					toBeIngestedSegmentDuration = -1.0;
-					toBeIngestedSegmentUtcStartTimeInMillisecs = -1;
-					toBeIngestedSegmentFileName = "";
-				}
-				else if (lastRecordedAssetFileName == currentSegmentFileName)
-				{
-					toBeIngested = true;
-				}
-			}
-
-			// Scenario:
-			//	we have lastRecordedAssetFileName with a filename that does not exist into the playlist
-			// This is a scenario that should never happen but, in case it happens, we have to manage otherwise
-			// no chunks will be ingested
-			// lastRecordedAssetFileName has got from playlist in the previous liveRecorder_processHLSSegmenterOutput call
-			if (lastRecordedAssetFileName != ""
-				&& !toBeIngested					// file name does not exist into the playlist
-			)
-			{
-				// 2022-08-12: this scenario happens when the 'monitorin' kills the recording process,
-				//	so the playlist is reset and start from scratch.
-
-				_logger->warn(__FILEREF__ + "Filename not found: probable the playlist was reset (may be because of a kill of the monitor process)"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", toBeIngested: " + to_string(toBeIngested)
-					+ ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration)
-					+ ", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
-					+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
-					+ ", currentSegmentDuration: " + to_string(currentSegmentDuration)
-					+ ", currentSegmentUtcStartTimeInMillisecs: " + to_string(currentSegmentUtcStartTimeInMillisecs)
-					+ ", currentSegmentFileName: " + currentSegmentFileName
-					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
-				);
-
-				newLastRecordedAssetFileName = "";
-				newLastRecordedAssetDurationInSeconds = 0.0;
-			}
-		}
-	}
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-            + ", e.what(): " + e.what()
-        );
-                
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput failed"
-            + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath
-			+ ", segmentListFileName: " + segmentListFileName
-        );
-                
-        throw e;
-    }
-
-	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
-}
-
-void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
-	int64_t ingestionJobKey,
-	string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
-	string chunksNFSStagingContentsPath,
-	string addContentTitle,
-	string uniqueName,
-	// bool highAvailability,
-	Json::Value userDataRoot,
-	string fileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot,
-	bool copy)
-{
-	try
-	{
-		// moving chunk from transcoder staging path to shared staging path.
-		// This is done because the AddContent task has a move://... url
-		if (copy)
-		{
-			_logger->info(__FILEREF__ + "Chunk copying"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + chunksNFSStagingContentsPath
-			);
-
-			chrono::system_clock::time_point startCopying = chrono::system_clock::now();
-			FileIO::copyFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
-			chrono::system_clock::time_point endCopying = chrono::system_clock::now();
-
-			_logger->info(__FILEREF__ + "Chunk copied"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + chunksNFSStagingContentsPath
-				+ ", @MMS COPY statistics@ - copyingDuration (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(endCopying - startCopying).count()) + "@"
-			);
-		}
-		else
-		{
-			_logger->info(__FILEREF__ + "Chunk moving"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
-				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + chunksNFSStagingContentsPath
-			);
-
-			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-			FileIO::moveFile(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
-			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
-
-			_logger->info(__FILEREF__ + "Chunk moved"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
-				+ ", dest: " + chunksNFSStagingContentsPath
-				+ ", @MMS MOVE statistics@ - movingDuration (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
-			);
-		}
-	}
-	catch (runtime_error e)
-	{
-		string errorMessage = e.what();
-		_logger->error(__FILEREF__ + "Coping/Moving of the chunk failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", exception: " + errorMessage
-		);
-		if (errorMessage.find(string("errno: 28")) != string::npos)
-			_logger->error(__FILEREF__ + "No space left on storage"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", exception: " + errorMessage
-			);
-
-
-		_logger->info(__FILEREF__ + "remove"
-			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
-		);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", exception: " + e.what()
-		);
-
-		_logger->info(__FILEREF__ + "remove"
-			+ ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName 
-		);
-		bool exceptionInCaseOfError = false;
-		FileIO::remove(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
-
-		throw e;
-	}
-
-	string mmsWorkflowIngestionURL;
-	string workflowMetadata;
-	try
-	{
-		workflowMetadata = liveRecorder_buildChunkIngestionWorkflow(
-			ingestionJobKey,
-			false,	// externalEncoder,
-			currentRecordedAssetFileName,
-			chunksNFSStagingContentsPath,
-			addContentTitle,
-			uniqueName,
-			userDataRoot,
-			fileFormat,
-			ingestedParametersRoot,
-			encodingParametersRoot
-		);
-
-		int64_t userKey;
-		string apiKey;
-		{
-			string field = "internalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
-
-					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
-			}
-		}
-
-		{
-			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sResponse = MMSCURL::httpPostString(
-			_logger,
-			ingestionJobKey,
-			mmsWorkflowIngestionURL,
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			3 // maxRetryNumber
-		);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-}
-
-void FFMPEGEncoder::liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
-	int64_t ingestionJobKey,
-	string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
-	string addContentTitle,
-	string uniqueName,
-	Json::Value userDataRoot,
-	string fileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot)
-{
-	string workflowMetadata;
-	int64_t userKey;
-	string apiKey;
-	int64_t addContentIngestionJobKey = -1;
-	string mmsWorkflowIngestionURL;
-	// create the workflow and ingest it
-	try
-	{
-		workflowMetadata = liveRecorder_buildChunkIngestionWorkflow(
-			ingestionJobKey,
-			true,	// externalEncoder,
-			"",	// currentRecordedAssetFileName,
-			"",	// chunksNFSStagingContentsPath,
-			addContentTitle,
-			uniqueName,
-			userDataRoot,
-			fileFormat,
-			ingestedParametersRoot,
-			encodingParametersRoot
-		);
-
-		{
-			string field = "internalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
-
-					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
-			}
-		}
-
-		{
-			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		string sResponse = MMSCURL::httpPostString(
-			_logger,
-			ingestionJobKey,
-			mmsWorkflowIngestionURL,
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			3 // maxRetryNumber
-		);
-
-		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-
-	if (addContentIngestionJobKey == -1)
-	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	string mmsBinaryURL;
-	// ingest binary
-	try
-	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		int64_t chunkFileSize = FileIO::getFileSizeInBytes(
-			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			inCaseOfLinkHasItToBeRead);
-
-		string mmsBinaryIngestionURL;
-		{
-			string field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-		}
-
-		mmsBinaryURL =
-			mmsBinaryIngestionURL
-			+ "/" + to_string(addContentIngestionJobKey)
-		;
-
-		string sResponse = MMSCURL::httpPostFile(
-			_logger,
-			ingestionJobKey,
-			mmsBinaryURL,
-			_mmsBinaryTimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			chunkFileSize,
-			3 // maxRetryNumber
-		);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-}
-
-string FFMPEGEncoder::liveRecorder_buildChunkIngestionWorkflow(
-	int64_t ingestionJobKey,
-	bool externalEncoder,
-	string currentRecordedAssetFileName,
-	string chunksNFSStagingContentsPath,
-	string addContentTitle,
-	string uniqueName,
-	Json::Value userDataRoot,
-	string fileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot
-)
-{
-	string workflowMetadata;
-	try
-	{
-		Json::Value mmsDataRoot = userDataRoot["mmsData"];
-		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
-		int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
-		int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
-
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = to_string(utcChunkStartTime);
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		{
-			field = "internalMMS";
-    		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					Json::Value eventsRoot = internalMMSRoot[field];
-
-					field = "OnSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "OnError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "OnComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-				}
-			}
-		}
-
-		Json::Value addContentParametersRoot = ingestedParametersRoot;
-		// if (internalMMSRootPresent)
-		{
-			Json::Value removed;
-			field = "internalMMS";
-			addContentParametersRoot.removeMember(field, &removed);
-		}
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = fileFormat;
-
-		if (!externalEncoder)
-		{
-			string sourceURL = string("move") + "://" + chunksNFSStagingContentsPath + currentRecordedAssetFileName;
-			field = "SourceURL";
-			addContentParametersRoot[field] = sourceURL;
-		}
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Live Recorder Task";
-
-		field = "Title";
-		addContentParametersRoot[field] = addContentTitle;
-
-		field = "UserData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		// if (!highAvailability)
-		{
-			// in case of no high availability, we can set just now the UniqueName for this content
-			// in case of high availability, the unique name will be set only of the selected content
-			//		choosing between main and bqckup
-			field = "UniqueName";
-			addContentParametersRoot[field] = uniqueName;
-		}
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = addContentTitle;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		{
-			Json::Value variablesWorkflowRoot;
-
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = utcChunkStartTime;
-
-				// name of the variable
-				field = "CurrentUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			char	currentUtcChunkStartTime_HHMISS [64];
-			{
-				tm		tmDateTime;
-
-				// from utc to local time
-				localtime_r (&utcChunkStartTime, &tmDateTime);
-
-				sprintf (currentUtcChunkStartTime_HHMISS,
-					"%02d:%02d:%02d",
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-			}
-			// field = "CurrentUtcChunkStartTime_HHMISS";
-			// variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "Value";
-				variableWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
-
-				// name of the variable
-				field = "CurrentUtcChunkStartTime_HHMISS";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			// field = "PreviousUtcChunkStartTime";
-			// variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = utcPreviousChunkStartTime;
-
-				// name of the variable
-				field = "PreviousUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			int64_t deliveryCode = JSONUtils::asInt64(ingestedParametersRoot, "DeliveryCode", 0);
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "Value";
-				variableWorkflowRoot[field] = deliveryCode;
-
-				// name of the variable
-				field = "DeliveryCode";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
-			{
-				Json::Value variableWorkflowRoot;
-
-				field = "Type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "Value";
-				variableWorkflowRoot[field] = ingestionJobLabel;
-
-				// name of the variable
-				field = "IngestionJobLabel";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
-			}
-
-			field = "Variables";
-			workflowRoot[field] = variablesWorkflowRoot;
-		}
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		workflowMetadata = JSONUtils::toString(workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", " + addContentTitle + ", "
-				+ currentRecordedAssetFileName
-				+ ", prev: " + to_string(utcPreviousChunkStartTime)
-				+ ", from: " + to_string(utcChunkStartTime)
-				+ ", to: " + to_string(utcChunkEndTime)
-		);
-
-		return workflowMetadata;
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "buildRecordedMediaWorkflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "buildRecordedMediaWorkflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-}
-
-bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	time_t utcCurrentRecordedFileCreationTime, string chunksTranscoderStagingContentsPath,
-	string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk)
-{
-	bool isLastLiveRecorderFile = true;
-
-    try
-    {
-		_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
-			+ ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath
-			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
-			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-		);
-
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (chunksTranscoderStagingContentsPath);
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
-        {
-            string directoryEntry;
-            try
-            {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-				_logger->info(__FILEREF__ + "FileIO::readDirectory"
-					+ ", directoryEntry: " + directoryEntry
-					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
-				);
-
-				// next statement is endWith and .lck is used during the move of a file
-				string suffix(".lck");
-				if (directoryEntry.size() >= suffix.size()
-					&& 0 == directoryEntry.compare(directoryEntry.size()-suffix.size(),
-						suffix.size(), suffix))
-					continue;
-
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    continue;
-
-                if (directoryEntry.size() >= recordedFileNamePrefix.size()
-						&& directoryEntry.compare(0, recordedFileNamePrefix.size(),
-							recordedFileNamePrefix) == 0)
-                {
-					time_t utcFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-							ingestionJobKey, encodingJobKey, directoryEntry, segmentDurationInSeconds,
-							isFirstChunk);
-
-					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
-					{
-						isLastLiveRecorderFile = false;
-
-						break;
-					}
-				}
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-        }
-
-        FileIO::closeDirectory (directory);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile failed"
-            + ", e.what(): " + e.what()
-        );
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile failed");
-    }
-
-	return isLastLiveRecorderFile;
-}
-
-time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string mediaLiveRecorderFileName, int segmentDurationInSeconds,
-	bool isFirstChunk)
-{
-	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
-	// liveRecorder_<ingestionJobKey>_<FFMPEGEncoderBase::encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
-
-	_logger->info(__FILEREF__ + "Received liveRecorder_getMediaLiveRecorderStartTime"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-		+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-		+ ", isFirstChunk: " + to_string(isFirstChunk)
-	);
-
-	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
-	if (mediaLiveRecorderFileName.length() < 20 ||
-		   endIndex == string::npos)
-	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format"
-			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-			;
-			_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	size_t beginUTCIndex = mediaLiveRecorderFileName.find_last_of("_");
-	if (mediaLiveRecorderFileName.length() < 20 ||
-		   beginUTCIndex == string::npos)
-	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format"
-			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-			;
-			_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	time_t utcMediaLiveRecorderStartTime = stol(mediaLiveRecorderFileName.substr(beginUTCIndex + 1,
-				endIndex - beginUTCIndex + 1));
-
-	{
-		// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-		// For this reason, utcMediaLiveRecorderStartTime is fixed.
-		// From the other side the first generated file is the only one where we can have seconds
-		// different from 0, anyway here this is not possible because we discard the first chunk
-		// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
-		//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
-		int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
-		if (!isFirstChunk && seconds % segmentDurationInSeconds != 0)
-		{
-			int halfSegmentDurationInSeconds = segmentDurationInSeconds / 2;
-
-			// scenario: segmentDurationInSeconds is 10 and seconds = 29
-			//	Before to compare seconds with halfSegmentDurationInSeconds
-			//	(the check compare the seconds between 0 and 10)
-			//	we have to redure 29 to 9
-			if (seconds > segmentDurationInSeconds)
-			{
-				int factorToBeReduced = seconds / segmentDurationInSeconds;
-				seconds -= (factorToBeReduced * segmentDurationInSeconds);
-			}
-
-			if (seconds <= halfSegmentDurationInSeconds)
-			{
-				_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-					+ ", seconds: " + to_string(seconds)
-				);
-				utcMediaLiveRecorderStartTime -= seconds;
-			}
-			else if (seconds > halfSegmentDurationInSeconds && seconds < segmentDurationInSeconds)
-			{
-				_logger->warn(__FILEREF__ + "Wrong seconds (start time), increase it"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-					+ ", seconds: " + to_string(seconds)
-				);
-				utcMediaLiveRecorderStartTime += (segmentDurationInSeconds - seconds);
-			}
-		}
-	}
-
-	return utcMediaLiveRecorderStartTime;
-}
-
-time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
-	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string mediaLiveRecorderFileName)
-{
-	tm                      tmDateTime;
-
-	time_t utcCurrentRecordedFileLastModificationTime;
-
-	FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
-		&utcCurrentRecordedFileLastModificationTime);
-
-	localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
-
-	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-	// For this reason, 0 is set
-	if (tmDateTime.tm_sec != 0)
-	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(tmDateTime.tm_sec)
-				);
-		tmDateTime.tm_sec = 0;
-	}
-
-	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
-
-	return utcCurrentRecordedFileLastModificationTime;
-}
-
-long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
-	int64_t liveRecorderIngestionJobKey,
-	int64_t liveRecorderEncodingJobKey,
-	bool externalEncoder,
-
-	string sourceSegmentsDirectoryPathName,
-	string sourceManifestFileName,
-	// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
-	string stagingLiveRecorderVirtualVODPathName,
-
-	int64_t deliveryCode,
-	string liveRecorderIngestionJobLabel,
-	string liveRecorderVirtualVODUniqueName,
-	string liveRecorderVirtualVODRetention,
-	int64_t liveRecorderVirtualVODImageMediaItemKey,
-	int64_t liveRecorderUserKey,
-	string liveRecorderApiKey,
-	string mmsWorkflowIngestionURL,
-	string mmsBinaryIngestionURL
-)
-{
-
-    _logger->info(__FILEREF__ + "Received liveRecorder_buildAndIngestVirtualVOD"
-		+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-		+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-		+ ", externalEncoder: " + to_string(externalEncoder)
-
-        + ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
-        + ", sourceManifestFileName: " + sourceManifestFileName
-        + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-
-		+ ", deliveryCode: " + to_string(deliveryCode)
-        + ", liveRecorderIngestionJobLabel: " + liveRecorderIngestionJobLabel
-        + ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
-        + ", liveRecorderVirtualVODRetention: " + liveRecorderVirtualVODRetention
-		+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
-		+ ", liveRecorderUserKey: " + to_string(liveRecorderUserKey)
-        + ", liveRecorderApiKey: " + liveRecorderApiKey
-        + ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-        + ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
-    );
-
-	long segmentsNumber = 0;
-
-	// let's build the live recorder virtual VOD
-	// - copy current manifest and TS files
-	// - calculate start end time of the virtual VOD
-	// - add end line to manifest
-	// - create tar gz
-	// - remove directory
-	int64_t utcStartTimeInMilliSecs = -1;
-	int64_t utcEndTimeInMilliSecs = -1;
-
-	string virtualVODM3u8DirectoryName;
-	string tarGzStagingLiveRecorderVirtualVODPathName;
-	try
-	{
-		{
-			// virtualVODM3u8DirectoryName = to_string(liveRecorderIngestionJobKey)
-			// 	+ "_liveRecorderVirtualVOD"
-			// ;
-			{
-				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
-				if (endOfPathIndex == string::npos)
-				{
-					string errorMessage = string("No stagingLiveRecorderVirtualVODPathName found")
-						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-          
-					throw runtime_error(errorMessage);
-				}
-				// stagingLiveRecorderVirtualVODPathName is initialized in EncoderVideoAudioProxy.cpp
-				// and virtualVODM3u8DirectoryName will be the name of the directory of the m3u8 of the Virtual VOD
-				// In case of externalEncoder, since PUSH is used, virtualVODM3u8DirectoryName has to be 'content'
-				// (see the Add-Content Task documentation). For this reason, in EncoderVideoAudioProxy.cpp,
-				// 'content' is used
-				virtualVODM3u8DirectoryName =
-					stagingLiveRecorderVirtualVODPathName.substr(endOfPathIndex + 1);
-			}
-
-
-			if (stagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove directory"
-					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-				);
-				bool removeRecursively = true;
-				FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
-			}
-		}
-
-		string sourceManifestPathFileName = sourceSegmentsDirectoryPathName + "/" +
-			sourceManifestFileName;
-		if (!FileIO::isFileExisting (sourceManifestPathFileName.c_str()))
-		{
-			string errorMessage = string("manifest file not existing")
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		// 2021-05-30: it is not a good idea to copy all the directory (manifest and ts files) because
-		//	ffmpeg is not accurate to remove the obsolete ts files, so we will have the manifest files
-		//	having for example 300 ts references but the directory contains thousands of ts files.
-		//	So we will copy only the manifest file and ONLY the ts files referenced into the manifest file
-
-		// 2022-05-26: non dovrebbe accadere ma, a volte, capita che il file ts non esiste, perchè eliminato
-		//	da ffmpeg, ma risiede ancora nel manifest. Per evitare quindi che la generazione del virtualVOD
-		//	si blocchi, consideriamo come se il manifest avesse solamente i segmenti successivi
-		//	La copia quindi del manifest originale viene fatta su un file temporaneo e gestiamo
-		//	noi il manifest "definitivo"
-		// 2022-05-27: Probabilmente era il crontab che rimuoveva i segmenti e causava il problema
-		//	descritto sopra. Per cui, fissato il retention del crontab, mantenere la playlist originale
-		//	probabilmente va bene. Ormai lasciamo cosi visto che funziona ed è piu robusto nel caso in cui
-		//	un segmento venisse eliminato
-
-		string tmpManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
-			sourceManifestFileName + ".tmp";
-		string destManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
-			sourceManifestFileName;
-
-		// create the destination directory and copy the manifest file
-		{
-			if (!FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
-			{
-				bool noErrorIfExists = true;
-				bool recursive = true;
-				_logger->info(__FILEREF__ + "Creating directory"
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-				);
-				FileIO::createDirectory(stagingLiveRecorderVirtualVODPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-			}
-
-			_logger->info(__FILEREF__ + "Coping"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
-				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
-			);
-			FileIO::copyFile(sourceManifestPathFileName, tmpManifestPathFileName);
-		}
-
-		if (!FileIO::isFileExisting (tmpManifestPathFileName.c_str()))
-		{
-			string errorMessage = string("manifest file not existing")
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		ofstream ofManifestFile(destManifestPathFileName, ofstream::trunc);
-
-		// read start time of the first segment
-		// read start time and duration of the last segment
-		// copy ts file into the directory
-		double firstSegmentDuration = -1.0;
-		int64_t firstSegmentUtcStartTimeInMillisecs = -1;
-		double lastSegmentDuration = -1.0;
-		int64_t lastSegmentUtcStartTimeInMillisecs = -1;
-		{
-			_logger->info(__FILEREF__ + "Reading copied manifest file"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
-			);
-
-			ifstream ifManifestFile(tmpManifestPathFileName);
-			if (!ifManifestFile.is_open())
-			{
-				string errorMessage = string("Not authorized: manifest file not opened")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string firstPartOfManifest;
-			string manifestLine;
-			{
-				while(getline(ifManifestFile, manifestLine))
-				{
-					// #EXTM3U
-					// #EXT-X-VERSION:3
-					// #EXT-X-TARGETDURATION:19
-					// #EXT-X-MEDIA-SEQUENCE:0
-					// #EXTINF:10.000000,
-					// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
-					// liveRecorder_760504_1653579715.ts
-					// ...
-
-					string extInfPrefix ("#EXTINF:");
-					string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
-					if (manifestLine.size() >= extInfPrefix.size()
-						&& 0 == manifestLine.compare(0, extInfPrefix.size(), extInfPrefix))
-					{
-						break;
-					}
-					else if (manifestLine.size() >= programDatePrefix.size()
-						&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
-						break;
-					else if (manifestLine[0] != '#')
-					{
-						break;
-					}
-					else
-					{
-						firstPartOfManifest += (manifestLine + "\n");
-					}
-				}
-			}
-
-			ofManifestFile << firstPartOfManifest;
-
-			segmentsNumber = 0;
-			do
-			{
-				// #EXTM3U
-				// #EXT-X-VERSION:3
-				// #EXT-X-TARGETDURATION:19
-				// #EXT-X-MEDIA-SEQUENCE:0
-				// #EXTINF:10.000000,
-				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
-				// liveRecorder_760504_1653579715.ts
-				// ...
-
-				string extInfPrefix ("#EXTINF:");
-				string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
-				if (manifestLine.size() >= extInfPrefix.size()
-					&& 0 == manifestLine.compare(0, extInfPrefix.size(), extInfPrefix))
-				{
-					size_t endOfSegmentDuration = manifestLine.find(",");
-					if (endOfSegmentDuration == string::npos)
-					{
-						string errorMessage = string("wrong manifest line format")
-							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-							+ ", manifestLine: " + manifestLine
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					lastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
-						endOfSegmentDuration - extInfPrefix.size()));
-				}
-				else if (manifestLine.size() >= programDatePrefix.size()
-					&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
-					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
-				else if (manifestLine != "" && manifestLine[0] != '#')
-				{
-					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" +
-						manifestLine;
-					string copiedTSPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
-						manifestLine;
-
-					try
-					{
-						_logger->info(__FILEREF__ + "Coping"
-							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-							+ ", sourceTSPathFileName: " + sourceTSPathFileName
-							+ ", copiedTSPathFileName: " + copiedTSPathFileName
-						);
-						FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage =
-							string("copyFile failed, previous segments of the manifest will be omitted")
-							+ ", sourceTSPathFileName: " + sourceTSPathFileName
-							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-							+ ", e.what: " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						ofManifestFile.close();
-
-						ofManifestFile.open(destManifestPathFileName, ofstream::trunc);
-						ofManifestFile << firstPartOfManifest;
-
-						firstSegmentDuration = -1.0;
-						firstSegmentUtcStartTimeInMillisecs = -1;
-						lastSegmentDuration = -1.0;
-						lastSegmentUtcStartTimeInMillisecs = -1;
-
-						segmentsNumber = 0;
-
-						continue;
-					}
-
-					segmentsNumber++;
-				}
-
-				if (firstSegmentDuration == -1.0 && firstSegmentUtcStartTimeInMillisecs == -1
-					&& lastSegmentDuration != -1.0 && lastSegmentUtcStartTimeInMillisecs != -1)
-				{
-					firstSegmentDuration = lastSegmentDuration;
-					firstSegmentUtcStartTimeInMillisecs = lastSegmentUtcStartTimeInMillisecs;
-				}
-
-				ofManifestFile << manifestLine << endl;
-			}
-			while(getline(ifManifestFile, manifestLine));
-		}
-		utcStartTimeInMilliSecs = firstSegmentUtcStartTimeInMillisecs;
-		utcEndTimeInMilliSecs = lastSegmentUtcStartTimeInMillisecs + (lastSegmentDuration * 1000);
-
-		// add end list to manifest file
-		{
-			_logger->info(__FILEREF__ + "Add end manifest line to copied manifest file"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", tmpManifestPathFileName: " + tmpManifestPathFileName
-			);
-
-			// string endLine = "\n";
-			ofManifestFile << endl << "#EXT-X-ENDLIST" << endl;
-			ofManifestFile.close();
-		}
-
-		if (segmentsNumber == 0)
-		{
-			string errorMessage = string("No segments found")
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName 
-				+ ", destManifestPathFileName: " + destManifestPathFileName 
-			;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		{
-			string executeCommand;
-			try
-			{
-				tarGzStagingLiveRecorderVirtualVODPathName = stagingLiveRecorderVirtualVODPathName + ".tar.gz";
-
-				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
-				if (endOfPathIndex == string::npos)
-				{
-					string errorMessage = string("No stagingLiveRecorderVirtualVODDirectory found")
-						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-          
-					throw runtime_error(errorMessage);
-				}
-				string stagingLiveRecorderVirtualVODDirectory =
-					stagingLiveRecorderVirtualVODPathName.substr(0, endOfPathIndex);
-
-				executeCommand =
-					"tar cfz " + tarGzStagingLiveRecorderVirtualVODPathName
-					+ " -C " + stagingLiveRecorderVirtualVODDirectory
-					+ " " + virtualVODM3u8DirectoryName;
-				_logger->info(__FILEREF__ + "Start tar command "
-					+ ", executeCommand: " + executeCommand
-				);
-				chrono::system_clock::time_point startTar = chrono::system_clock::now();
-				int executeCommandStatus = ProcessUtility::execute(executeCommand);
-				chrono::system_clock::time_point endTar = chrono::system_clock::now();
-				_logger->info(__FILEREF__ + "End tar command "
-					+ ", executeCommand: " + executeCommand
-					+ ", @MMS statistics@ - tarDuration (millisecs): @"
-						+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
-				);
-				if (executeCommandStatus != 0)
-				{
-					string errorMessage = string("ProcessUtility::execute failed")
-						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-						+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
-						+ ", executeCommand: " + executeCommand 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-          
-					throw runtime_error(errorMessage);
-				}
-
-				{
-					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-					);
-					bool removeRecursively = true;
-					FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = string("tar command failed")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", executeCommand: " + executeCommand 
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-         
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	catch(runtime_error e)
-	{
-		string errorMessage = string("build the live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		if (stagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch(exception e)
-	{
-		string errorMessage = string("build the live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		if (stagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-
-
-	// build workflow
-	string workflowMetadata;
-	try
-	{
-		workflowMetadata = liveRecorder_buildVirtualVODIngestionWorkflow(
-			liveRecorderIngestionJobKey,
-			liveRecorderEncodingJobKey,
-			externalEncoder,
-
-			utcStartTimeInMilliSecs,
-			utcEndTimeInMilliSecs,
-			deliveryCode,
-			liveRecorderIngestionJobLabel,
-			tarGzStagingLiveRecorderVirtualVODPathName,
-			liveRecorderVirtualVODUniqueName,
-			liveRecorderVirtualVODRetention,
-			liveRecorderVirtualVODImageMediaItemKey);
-	}
-	catch (runtime_error e)
-	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch (exception e)
-	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-
-	// ingest the Live Recorder VOD
-	int64_t addContentIngestionJobKey = -1;
-	try
-	{
-		string sResponse = MMSCURL::httpPostString(
-			_logger,
-			liveRecorderIngestionJobKey,
-			mmsWorkflowIngestionURL,
-			_mmsAPITimeoutInSeconds,
-			to_string(liveRecorderUserKey),
-			liveRecorderApiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			3 // maxRetryNumber
-		);
-
-		if (externalEncoder)
-		{
-			addContentIngestionJobKey = getAddContentIngestionJobKey(
-				liveRecorderIngestionJobKey, sResponse);
-		}
-	}
-	catch (runtime_error e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-	catch (exception e)
-	{
-		string errorMessage = string("ingest live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-			);
-			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-		}
-
-		throw runtime_error(errorMessage);
-	}
-
-	if (externalEncoder)
-	{
-		string mmsBinaryURL;
-		// ingest binary
-		try
-		{
-			if (addContentIngestionJobKey == -1)
-			{
-				string errorMessage =
-					string("Ingested URL failed, addContentIngestionJobKey is not valid")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			bool inCaseOfLinkHasItToBeRead = false;
-			int64_t chunkFileSize = FileIO::getFileSizeInBytes(
-				tarGzStagingLiveRecorderVirtualVODPathName,
-				inCaseOfLinkHasItToBeRead);
-
-			mmsBinaryURL =
-				mmsBinaryIngestionURL
-				+ "/" + to_string(addContentIngestionJobKey)
-			;
-
-			string sResponse = MMSCURL::httpPostFileSplittingInChunks(
-				_logger,
-				liveRecorderIngestionJobKey,
-				mmsBinaryURL,
-				_mmsBinaryTimeoutInSeconds,
-				to_string(liveRecorderUserKey),
-				liveRecorderApiKey,
-				tarGzStagingLiveRecorderVirtualVODPathName,
-				chunkFileSize,
-				3 // maxRetryNumber
-			);
-
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-			}
-		}
-		catch (runtime_error e)
-		{
-			_logger->error(__FILEREF__ + "Ingestion binary failed"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", mmsBinaryURL: " + mmsBinaryURL
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", exception: " + e.what()
-			);
-
-			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-			}
-
-			throw e;
-		}
-		catch (exception e)
-		{
-			_logger->error(__FILEREF__ + "Ingestion binary failed"
-				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", mmsBinaryURL: " + mmsBinaryURL
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", exception: " + e.what()
-			);
-
-			if (tarGzStagingLiveRecorderVirtualVODPathName != ""
-				&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
-			{
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
-				);
-				FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
-			}
-
-			throw e;
-		}
-	}
-
-	return segmentsNumber;
-}
-
-long FFMPEGEncoder::getAddContentIngestionJobKey(
-	int64_t ingestionJobKey,
-	string ingestionResponse
-)
-{
-	try
-	{
-		int64_t addContentIngestionJobKey;
-
-        Json::Value ingestionResponseRoot = JSONUtils::toJson(
-			ingestionJobKey, -1, ingestionResponse);
-
-		string field = "tasks";
-		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
-		{
-			string errorMessage = __FILEREF__
-				"ingestion workflow. Response Body json is not well format"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", ingestionResponse: " + ingestionResponse
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value tasksRoot = ingestionResponseRoot[field];
-
-		for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
-		{
-			Json::Value ingestionJobRoot = tasksRoot[taskIndex];
-
-			field = "type";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-			{
-				string errorMessage = __FILEREF__
-					"ingestion workflow. Response Body json is not well format"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ingestionResponse: " + ingestionResponse
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string type = JSONUtils::asString(ingestionJobRoot, field, "");
-
-			if (type == "Add-Content")
-			{
-				field = "ingestionJobKey";
-				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-				{
-					string errorMessage = __FILEREF__
-						"ingestion workflow. Response Body json is not well format"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ingestionResponse: " + ingestionResponse
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				addContentIngestionJobKey = JSONUtils::asInt64(ingestionJobRoot, field, -1);
-
-				break;
-			}
-		}
-
-		return addContentIngestionJobKey;
-	}
-	catch(...)
-	{
-		string errorMessage =
-			string("ingestion workflow. Response Body json is not well format")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", ingestionResponse: " + ingestionResponse
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-
-string FFMPEGEncoder::liveRecorder_buildVirtualVODIngestionWorkflow(
-	int64_t liveRecorderIngestionJobKey,
-	int64_t liveRecorderEncodingJobKey,
-	bool externalEncoder,
-
-	int64_t utcStartTimeInMilliSecs,
-	int64_t utcEndTimeInMilliSecs,
-	int64_t deliveryCode,
-	string liveRecorderIngestionJobLabel,
-	string tarGzStagingLiveRecorderVirtualVODPathName,
-	string liveRecorderVirtualVODUniqueName,
-	string liveRecorderVirtualVODRetention,
-	int64_t liveRecorderVirtualVODImageMediaItemKey
-)
-{
-	string workflowMetadata;
-
-	try
-	{
-		// {
-        // 	"Label": "<workflow label>",
-        // 	"Type": "Workflow",
-        //	"Task": {
-        //        "Label": "<task label 1>",
-        //        "Type": "Add-Content"
-        //        "Parameters": {
-        //                "FileFormat": "m3u8",
-        //                "Ingester": "Giuliano",
-        //                "SourceURL": "move:///abc...."
-        //        },
-        //	}
-		// }
-		Json::Value mmsDataRoot;
-
-		// 2020-04-28: set it to liveRecordingChunk to avoid to be visible into the GUI (view MediaItems).
-		//	This is because this MediaItem is not completed yet
-		string field = "dataType";
-		mmsDataRoot[field] = "liveRecordingVOD";
-
-		field = "utcStartTimeInMilliSecs";
-		mmsDataRoot[field] = utcStartTimeInMilliSecs;
-
-		field = "utcEndTimeInMilliSecs";
-		mmsDataRoot[field] = utcEndTimeInMilliSecs;
-
-		string sUtcEndTimeForContentTitle;
-		{
-			char    utcEndTime_str [64];
-			tm      tmDateTime;
-
-
-			time_t utcEndTimeInSeconds = utcEndTimeInMilliSecs / 1000;
-
-			// from utc to local time
-			localtime_r (&utcEndTimeInSeconds, &tmDateTime);
-
-			{
-				sprintf (utcEndTime_str,
-					"%04d-%02d-%02d %02d:%02d:%02d",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1,
-					tmDateTime. tm_mday,
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-				string sUtcEndTime = utcEndTime_str;
-
-				field = "utcEndTime_str";
-				mmsDataRoot[field] = sUtcEndTime;
-			}
-
-			{
-				sprintf (utcEndTime_str,
-					"%02d:%02d:%02d",
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-				sUtcEndTimeForContentTitle = utcEndTime_str;
-			}
-		}
-
-		field = "deliveryCode";
-		mmsDataRoot[field] = deliveryCode;
-
-		Json::Value userDataRoot;
-
-		field = "mmsData";
-		userDataRoot[field] = mmsDataRoot;
-
-		Json::Value addContentRoot;
-
-		string addContentLabel = liveRecorderIngestionJobLabel;
-			// + " V-VOD (up to " + sUtcEndTimeForContentTitle + ")";
-
-		field = "Label";
-		addContentRoot[field] = addContentLabel;
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		Json::Value addContentParametersRoot;
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = "m3u8-tar.gz";
-
-		if (!externalEncoder)
-		{
-			// 2021-05-30: changed from copy to move with the idea to have better performance
-			string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
-			field = "SourceURL";
-			addContentParametersRoot[field] = sourceURL;
-		}
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Live Recorder Task";
-
-		field = "Title";
-		addContentParametersRoot[field] = addContentLabel;
-
-		field = "UniqueName";
-		addContentParametersRoot[field] = liveRecorderVirtualVODUniqueName;
-
-		field = "AllowUniqueNameOverride";
-		addContentParametersRoot[field] = true;
-
-		field = "Retention";
-		addContentParametersRoot[field] = liveRecorderVirtualVODRetention;
-
-		field = "UserData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		if (liveRecorderVirtualVODImageMediaItemKey != -1)
-		{
-			try
-			{
-				Json::Value crossReferenceRoot;
-
-				field = "Type";
-				crossReferenceRoot[field] = "VideoOfImage";
-
-				field = "MediaItemKey";
-				crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
-
-				field = "CrossReference";
-				addContentParametersRoot[field] = crossReferenceRoot;
-			}
-			catch (MediaItemKeyNotFound e)
-			{
-				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
-					+ ", e.what: " + e.what()
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-			}
-			catch (runtime_error e)
-			{
-				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
-					+ ", e.what: " + e.what()
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-			}
-			catch (exception e)
-			{
-				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
-					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-			}
-		}
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = addContentLabel + " (virtual VOD)";
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		workflowMetadata = JSONUtils::toString(workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Live Recorder VOD Workflow metadata generated"
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", " + addContentLabel + ", "
-		);
-
-		return workflowMetadata;
-	}
-	catch (runtime_error e)
-	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (exception e)
-	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed")
-			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
-			+ ", e.what: " + e.what()
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-*/
-
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string requestBody)
 {
     try
     {
-		LiveProxy liveProxy(liveProxyData, encodingJobKey,
+		LiveProxy liveProxy(liveProxyData, ingestionJobKey, encodingJobKey,
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger,
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
 		liveProxy.encodeContent(requestBody);
@@ -6754,12 +3920,13 @@ void FFMPEGEncoder::liveProxyThread(
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string requestBody)
 {
     try
     {
-		LiveGrid liveGrid(liveProxyData, encodingJobKey,
+		LiveGrid liveGrid(liveProxyData, ingestionJobKey, encodingJobKey,
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		liveGrid.encodeContent(requestBody);
     }
@@ -6805,1828 +3972,6 @@ void FFMPEGEncoder::liveGridThread(
     }
 }
 
-/*
-void FFMPEGEncoder::monitorThread()
-{
-
-	while(!_monitorThreadShutdown)
-	{
-		// proxy
-		try
-		{
-			// this is to have a copy of LiveProxyAndGrid
-			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
-
-			// this is to have access to running and _proxyStart
-			//	to check if it is changed. In case the process is killed, it will access
-			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> sourceLiveProxiesCapability;
-
-			chrono::system_clock::time_point startClone = chrono::system_clock::now();
-			// to avoid to maintain the lock too much time
-			// we will clone the proxies for monitoring check
-			int liveProxyAndGridRunningCounter = 0;
-			{
-				lock_guard<mutex> locker(*_liveProxyMutex);
-
-				int liveProxyAndGridNotRunningCounter = 0;
-
-				for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
-				{
-					if (liveProxy->_childPid != 0)	// running
-					{
-						liveProxyAndGridRunningCounter++;
-
-						copiedRunningLiveProxiesCapability.push_back(
-							liveProxy->cloneForMonitor());
-						sourceLiveProxiesCapability.push_back(
-                            liveProxy);
-					}
-					else
-					{
-						liveProxyAndGridNotRunningCounter++;
-					}
-				}
-				_logger->info(__FILEREF__ + "liveProxyMonitor, numbers"
-					+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
-					+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
-					+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
-				);
-			}
-			_logger->info(__FILEREF__ + "liveProxyMonitor clone"
-				+ ", copiedRunningLiveProxiesCapability.size: " + to_string(copiedRunningLiveProxiesCapability.size())
-				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
-			);
-
-			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
-
-			for (int liveProxyIndex = 0;
-				liveProxyIndex < copiedRunningLiveProxiesCapability.size();
-				liveProxyIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> copiedLiveProxy
-					= copiedRunningLiveProxiesCapability[liveProxyIndex];
-				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> sourceLiveProxy
-					= sourceLiveProxiesCapability[liveProxyIndex];
-
-				// this is just for logging
-				string configurationLabel;
-				if (copiedLiveProxy->_inputsRoot.size() > 0)
-				{
-					Json::Value inputRoot = copiedLiveProxy->_inputsRoot[0];
-					string field = "streamInput";
-					if (JSONUtils::isMetadataPresent(inputRoot, field))
-					{
-						Json::Value streamInputRoot = inputRoot[field];
-						field = "configurationLabel";
-						configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
-					}
-				}
-
-				_logger->info(__FILEREF__ + "liveProxyMonitor start"
-					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-					+ ", configurationLabel: " + configurationLabel
-					+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-					+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): "
-						+ to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-					+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): "
-						+ to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-				);
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-
-				bool liveProxyWorking = true;
-				string localErrorMessage;
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				{
-					// copiedLiveProxy->_proxyStart could be a bit in the future
-					int64_t liveProxyLiveTimeInMinutes;
-					if (now > copiedLiveProxy->_proxyStart)
-						liveProxyLiveTimeInMinutes = chrono::duration_cast<
-							chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
-					else	// it will be negative
-						liveProxyLiveTimeInMinutes = chrono::duration_cast<
-							chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
-
-					// checks are done after 3 minutes LiveProxy started,
-					// in order to be sure the manifest file was already created
-					if (liveProxyLiveTimeInMinutes <= 3)
-					{
-						_logger->info(__FILEREF__
-							+ "liveProxyMonitor. Checks are not done because too early"
-							+ ", ingestionJobKey: "
-								+ to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: "
-								+ to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", liveProxyLiveTimeInMinutes: "
-								+ to_string(liveProxyLiveTimeInMinutes)
-						);
-
-						continue;
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// First health check
-				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-				//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
-				bool rtmpOutputFound = false;
-				if (liveProxyWorking)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor manifest check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-					);
-
-					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
-						outputIndex++)
-					{
-						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
-
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-
-						if (!liveProxyWorking)
-							break;
-
-						if (outputType == "HLS" || outputType == "DASH")
-						{
-							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-
-							try
-							{
-								// First health check (HLS/DASH) looking the manifests path name timestamp
-								{
-									string manifestFilePathName =
-										manifestDirectoryPath + "/" + manifestFileName;
-									{
-										if(!FileIO::fileExisting(manifestFilePathName))
-										{
-											liveProxyWorking = false;
-
-											_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file does not exist"
-												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-												+ ", manifestFilePathName: " + manifestFilePathName
-											);
-
-											localErrorMessage = " restarted because of 'manifest file is missing'";
-
-											break;
-										}
-										else
-										{
-											time_t utcManifestFileLastModificationTime = 0;
-
-											FileIO::getFileTime (manifestFilePathName.c_str(),
-												&utcManifestFileLastModificationTime);
-
-											unsigned long long	ullNow = 0;
-											unsigned long		ulAdditionalMilliSecs;
-											long				lTimeZoneDifferenceInHours;
-
-											DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-												&lTimeZoneDifferenceInHours);
-
-											long maxLastManifestFileUpdateInSeconds = 30;
-
-											unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
-											if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
-											{
-												liveProxyWorking = false;
-
-												_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file was not updated "
-													+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
-													+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-													+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-													+ ", manifestFilePathName: " + manifestFilePathName
-													+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
-												);
-
-												localErrorMessage = " restarted because of 'manifest file was not updated'";
-
-												break;
-											}
-										}
-									}
-								}
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
-									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-							catch(exception e)
-							{
-								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
-									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-						}
-						else	// rtmp (Proxy) or SRT (Grid)
-						{
-							rtmpOutputFound = true;
-						}
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (liveProxyWorking && rtmpOutputFound)
-				{
-					try
-					{
-						_logger->info(__FILEREF__ + "liveProxyMonitor nonMonotonousDTSInOutputLog check"
-							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", configurationLabel: " + configurationLabel
-						);
-
-						// First health check (rtmp), looks the log and check there is no message like
-						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-						//	This message causes proxy not working
-						if (sourceLiveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
-						{
-							liveProxyWorking = false;
-
-							_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
-								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-							);
-
-							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// Second health 
-				//		HLS/DASH:	kill if segments were not generated
-				//					frame increasing check
-				//					it is also implemented the retention of segments too old (10 minutes)
-				//						This is already implemented by the HLS parameters (into the ffmpeg command)
-				//						We do it for the DASH option and in case ffmpeg does not work
-				//		rtmp(Proxy)/SRT(Grid):		frame increasing check
-				if (liveProxyWorking)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor segments check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-					);
-
-					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
-						outputIndex++)
-					{
-						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
-
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-
-						if (!liveProxyWorking)
-							break;
-
-						if (outputType == "HLS" || outputType == "DASH")
-						{
-							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-
-							try
-							{
-								{
-									string manifestFilePathName =
-										manifestDirectoryPath + "/" + manifestFileName;
-									{
-										vector<string>	chunksTooOldToBeRemoved;
-										bool chunksWereNotGenerated = false;
-
-										string manifestDirectoryPathName;
-										{
-											size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
-											if (manifestFilePathIndex == string::npos)
-											{
-												string errorMessage = __FILEREF__ + "liveProxyMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
-													+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-													+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-													+ ", manifestFilePathName: " + manifestFilePathName;
-												_logger->error(errorMessage);
-
-												throw runtime_error(errorMessage);
-											}
-											manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
-										}
-
-										chrono::system_clock::time_point lastChunkTimestamp = copiedLiveProxy->_proxyStart;
-										bool firstChunkRead = false;
-
-										try
-										{
-											if (FileIO::directoryExisting(manifestDirectoryPathName))
-											{
-												FileIO::DirectoryEntryType_t detDirectoryEntryType;
-												shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-													manifestDirectoryPathName + "/");
-
-												// chunks will be removed 10 minutes after the "capacity" of the playlist
-												// long liveProxyChunkRetentionInSeconds =
-												// 	(segmentDurationInSeconds * playlistEntriesNumber)
-												// 	+ 10 * 60;	// 10 minutes
-												long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
-
-												bool scanDirectoryFinished = false;
-												while (!scanDirectoryFinished)
-												{
-													string directoryEntry;
-													try
-													{
-														string directoryEntry = FileIO::readDirectory (directory,
-														&detDirectoryEntryType);
-
-														if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-															continue;
-
-														string dashPrefixInitFiles ("init-stream");
-														if (outputType == "DASH" &&
-															directoryEntry.size() >= dashPrefixInitFiles.size()
-																&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
-														)
-															continue;
-
-														{
-															string segmentPathNameToBeRemoved =
-																manifestDirectoryPathName + "/" + directoryEntry;
-
-															chrono::system_clock::time_point fileLastModification =
-																FileIO::getFileTime (segmentPathNameToBeRemoved);
-															chrono::system_clock::time_point now = chrono::system_clock::now();
-
-															if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-																> liveProxyChunkRetentionInSeconds)
-															{
-																chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
-															}
-
-															if (!firstChunkRead
-																|| fileLastModification > lastChunkTimestamp)
-																lastChunkTimestamp = fileLastModification;
-
-															firstChunkRead = true;
-														}
-													}
-													catch(DirectoryListFinished e)
-													{
-														scanDirectoryFinished = true;
-													}
-													catch(runtime_error e)
-													{
-														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
-															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-															+ ", e.what(): " + e.what()
-														;
-														_logger->error(errorMessage);
-
-														// throw e;
-													}
-													catch(exception e)
-													{
-														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
-															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-															+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-															+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-															+ ", e.what(): " + e.what()
-														;
-														_logger->error(errorMessage);
-
-														// throw e;
-													}
-												}
-
-												FileIO::closeDirectory (directory);
-											}
-										}
-										catch(runtime_error e)
-										{
-											_logger->error(__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed"
-												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-												+ ", e.what(): " + e.what()
-											);
-										}
-										catch(...)
-										{
-											_logger->error(__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed"
-												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-												+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-											);
-										}
-				
-										if (!firstChunkRead
-											|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
-										{
-											// if we are here, it means the ffmpeg command is not generating the ts files
-
-											_logger->error(__FILEREF__ + "liveProxyMonitor. Chunks were not generated"
-												+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-												+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-												+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-												+ ", firstChunkRead: " + to_string(firstChunkRead)
-											);
-
-											chunksWereNotGenerated = true;
-
-											liveProxyWorking = false;
-											localErrorMessage = " restarted because of 'no segments were generated'";
-
-											_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
-												+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-												+ ", manifestFilePathName: " + manifestFilePathName
-												// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-												+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-											);
-
-
-											// we killed the process, we do not care to remove the too old segments
-											// since we will remove the entore directory
-											break;
-										}
-
-										{
-											bool exceptionInCaseOfError = false;
-
-											for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
-											{
-												try
-												{
-													_logger->info(__FILEREF__ + "liveProxyMonitor. Remove chunk because too old"
-														+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-														+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-													FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-												}
-												catch(runtime_error e)
-												{
-													_logger->error(__FILEREF__ + "liveProxyMonitor. remove failed"
-														+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-														+ ", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
-														+ ", e.what(): " + e.what()
-													);
-												}
-											}
-										}
-									}
-								}
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
-									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-							catch(exception e)
-							{
-								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
-									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-									+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-						}
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (liveProxyWorking) // && rtmpOutputFound)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor isFrameIncreasing check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-					);
-
-					try
-					{
-						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(maxMilliSecondsToWait))
-						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
-								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-								+ ", configurationLabel: " + configurationLabel
-								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-							);
-
-							liveProxyWorking = false;
-
-							localErrorMessage = " restarted because of 'frame is not increasing'";
-						}
-					}
-					catch(FFMpegEncodingStatusNotAvailable e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->warn(__FILEREF__ + errorMessage);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (liveProxyWorking) // && rtmpOutputFound)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor forbiddenErrorInOutputLog check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-					);
-
-					try
-					{
-						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
-						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
-								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-							);
-
-							liveProxyWorking = false;
-							localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
-						}
-					}
-					catch(FFMpegEncodingStatusNotAvailable e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->warn(__FILEREF__ + errorMessage);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", configurationLabel: " + configurationLabel
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
-							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", configurationLabel: " + configurationLabel
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (sourceLiveProxy->_childPid == 0 ||
-					copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
-				{
-					_logger->info(__FILEREF__ + "liveProxyMonitor. LiveProxy changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid)
-						+ ", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count())
-						+ ", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (!liveProxyWorking)
-				{
-					_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quitProcess. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to be started again"
-						+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
-						+ ", localErrorMessage: " + localErrorMessage
-						// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-						+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-					);
-
-					try
-					{
-						// 2021-12-14: switched from quit to kill because it seems
-						//		ffmpeg didn't terminate (in case of quit) when he was
-						//		failing. May be because it could not finish his sample/frame
-						//		to process. The result is that the channels were not restarted.
-						//		This is an ipothesys, not 100% sure
-						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
-						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
-						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
-						ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
-						{
-							char strDateTime [64];
-							{
-								time_t utcTime = chrono::system_clock::to_time_t(
-									chrono::system_clock::now());
-								tm tmDateTime;
-								localtime_r (&utcTime, &tmDateTime);
-								sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-									tmDateTime. tm_year + 1900,
-									tmDateTime. tm_mon + 1,
-									tmDateTime. tm_mday,
-									tmDateTime. tm_hour,
-									tmDateTime. tm_min,
-									tmDateTime. tm_sec);
-							}
-							sourceLiveProxy->_errorMessage = string(strDateTime) + " "
-								// + liveProxy->_channelLabel
-								+ localErrorMessage;
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string("liveProxyMonitor. ProcessUtility::kill/quit Process failed")
-							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-							+ ", configurationLabel: " + configurationLabel
-							+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-							+ ", e.what(): " + e.what()
-								;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				_logger->info(__FILEREF__ + "liveProxyMonitor "
-					+ to_string(liveProxyIndex) + "/" + to_string(liveProxyAndGridRunningCounter)
-					+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
-					+ ", configurationLabel: " + configurationLabel
-					+ ", @MMS statistics@ - elapsed time: @" + to_string(
-						chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - now).count()) + "@"
-				);
-			}
-			_logger->info(__FILEREF__ + "liveProxyMonitor"
-				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
-				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("liveProxyMonitor failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("liveProxyMonitor failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-
-		// recording
-		try
-		{
-			// this is to have a copy of LiveRecording
-			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> copiedRunningLiveRecordingCapability;
-
-			// this is to have access to running and _proxyStart
-			//	to check if it is changed. In case the process is killed, it will access
-			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> sourceLiveRecordingCapability;
-
-			chrono::system_clock::time_point startClone = chrono::system_clock::now();
-			// to avoid to maintain the lock too much time
-			// we will clone the proxies for monitoring check
-			int liveRecordingRunningCounter = 0;
-			{
-				lock_guard<mutex> locker(*_liveRecordingMutex);
-
-				int liveRecordingNotRunningCounter = 0;
-
-				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording: *_liveRecordingsCapability)
-				{
-					if (liveRecording->_childPid != 0 && liveRecording->_monitoringEnabled)
-					{
-						liveRecordingRunningCounter++;
-
-						copiedRunningLiveRecordingCapability.push_back(
-							liveRecording->cloneForMonitorAndVirtualVOD());
-						sourceLiveRecordingCapability.push_back(
-                            liveRecording);
-					}
-					else
-					{
-						liveRecordingNotRunningCounter++;
-					}
-				}
-				_logger->info(__FILEREF__ + "liveRecordingMonitor, numbers"
-					+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter
-						+ liveRecordingNotRunningCounter)
-					+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
-					+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
-				);
-			}
-			_logger->info(__FILEREF__ + "liveRecordingMonitor clone"
-				+ ", copiedRunningLiveRecordingCapability.size: " + to_string(copiedRunningLiveRecordingCapability.size())
-				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
-			);
-
-			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
-
-			for (int liveRecordingIndex = 0;
-				liveRecordingIndex < copiedRunningLiveRecordingCapability.size();
-				liveRecordingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording
-					= copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording
-					= sourceLiveRecordingCapability[liveRecordingIndex];
-
-				_logger->info(__FILEREF__ + "liveRecordingMonitor"
-					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-				);
-
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-
-				bool liveRecorderWorking = true;
-				string localErrorMessage;
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// copiedLiveRecording->_recordingStart could be a bit in the future
-				int64_t liveRecordingLiveTimeInMinutes;
-				if (now > copiedLiveRecording->_recordingStart)
-					liveRecordingLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(
-						now - copiedLiveRecording->_recordingStart).count();
-				else
-					liveRecordingLiveTimeInMinutes = 0;
-
-				string field = "SegmentDuration";
-				int segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_ingestedParametersRoot, field, -1);
-
-				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
-				// in order to be sure the file was already created
-				if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. Checks are not done because too early"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", liveRecordingLiveTimeInMinutes: "
-							+ to_string(liveRecordingLiveTimeInMinutes)
-						+ ", (segmentDurationInSeconds / 60) + 5: "
-							+ to_string((segmentDurationInSeconds / 60) + 5)
-					);
-
-					continue;
-				}
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// First health check
-				//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
-				if (liveRecorderWorking)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. liveRecorder.list check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-					);
-
-					try
-					{
-						// looking the manifests path name timestamp
-
-						string segmentListPathName = copiedLiveRecording->_chunksTranscoderStagingContentsPath
-							+ copiedLiveRecording->_segmentListFileName;
-
-						{
-							// 2022-05-26: in case the file does not exist, try again to make sure
-							//	it really does not exist
-							bool segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
-
-							if (!segmentListFileExistence)
-							{
-								int sleepTimeInSeconds = 5;
-
-								_logger->warn(__FILEREF__
-									+ "liveRecordingMonitor. Segment list file does not exist, let's check again"
-									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-									+ ", segmentListPathName: " + segmentListPathName
-									+ ", sleepTimeInSeconds: " + to_string(sleepTimeInSeconds)
-								);
-
-								this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
-
-								segmentListFileExistence = FileIO::fileExisting(segmentListPathName);
-							}
-
-							if(!segmentListFileExistence)
-							{
-								liveRecorderWorking = false;
-
-								_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist"
-									+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-									+ ", segmentListPathName: " + segmentListPathName
-								);
-
-								localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-							}
-							else
-							{
-								time_t utcSegmentListFileLastModificationTime;
-
-								FileIO::getFileTime (segmentListPathName.c_str(),
-									&utcSegmentListFileLastModificationTime);
-
-								unsigned long long	ullNow = 0;
-								unsigned long		ulAdditionalMilliSecs;
-								long				lTimeZoneDifferenceInHours;
-
-								DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-									&lTimeZoneDifferenceInHours);
-
-								long maxLastSegmentListFileUpdateInSeconds
-									= segmentDurationInSeconds * 2;
-
-								unsigned long long lastSegmentListFileUpdateInSeconds
-									= ullNow - utcSegmentListFileLastModificationTime;
-								if (lastSegmentListFileUpdateInSeconds
-									> maxLastSegmentListFileUpdateInSeconds)
-								{
-									liveRecorderWorking = false;
-
-									_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file was not updated "
-										+ "in the last " + to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds"
-										+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-										+ ", segmentListPathName: " + segmentListPathName
-										+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
-									);
-
-									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-								}
-							}
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveRecordingMonitor on path name failed")
-							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveRecordingMonitor on path name failed")
-							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// Second health check
-				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-				//		rtmp(Proxy):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
-				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
-				bool rtmpOutputFound = false;
-				if (liveRecorderWorking)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. manifest check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-					);
-
-					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
-					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-					{
-						Json::Value outputRoot = outputsRoot[outputIndex];
-
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-
-						if (!liveRecorderWorking)
-							break;
-
-						if (outputType == "HLS" || outputType == "DASH")
-						{
-							try
-							{
-								// First health check (HLS/DASH) looking the manifests path name timestamp
-
-								string manifestFilePathName =
-									manifestDirectoryPath + "/" + manifestFileName;
-								{
-									if(!FileIO::fileExisting(manifestFilePathName))
-									{
-										liveRecorderWorking = false;
-
-										_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file does not exist"
-											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-											+ ", manifestFilePathName: " + manifestFilePathName
-										);
-
-										localErrorMessage = " restarted because of 'manifest file is missing'";
-
-										break;
-									}
-									else
-									{
-										time_t utcManifestFileLastModificationTime;
-
-										FileIO::getFileTime (manifestFilePathName.c_str(),
-											&utcManifestFileLastModificationTime);
-
-										unsigned long long	ullNow = 0;
-										unsigned long		ulAdditionalMilliSecs;
-										long				lTimeZoneDifferenceInHours;
-
-										DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
-											&lTimeZoneDifferenceInHours);
-
-										long maxLastManifestFileUpdateInSeconds = 45;
-
-										unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
-										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
-										{
-											liveRecorderWorking = false;
-
-											_logger->error(__FILEREF__ + "liveRecorderMonitor. Manifest file was not updated "
-												+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
-												+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-												+ ", manifestFilePathName: " + manifestFilePathName
-												+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
-											);
-
-											localErrorMessage = " restarted because of 'manifest file was not updated'";
-
-											break;
-										}
-									}
-								}
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
-									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-							catch(exception e)
-							{
-								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
-									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-						}
-						else	// rtmp (Proxy) 
-						{
-							rtmpOutputFound = true;
-						}
-					}
-				}
-
-				if (sourceLiveRecording->_childPid == 0||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (liveRecorderWorking && rtmpOutputFound)
-				{
-					try
-					{
-						_logger->info(__FILEREF__ + "liveRecordingMonitor. nonMonotonousDTSInOutputLog check"
-							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						);
-
-						// First health check (rtmp), looks the log and check there is no message like
-						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-						//	This message causes proxy not working
-						if (sourceLiveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
-						{
-							liveRecorderWorking = false;
-
-							_logger->error(__FILEREF__ + "liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveRecorder (ffmpeg) is killed in order to be started again"
-								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-								+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
-							);
-
-							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
-							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
-							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				// Thirth health 
-				//		HLS/DASH:	kill if segments were not generated
-				//					frame increasing check
-				//					it is also implemented the retention of segments too old (10 minutes)
-				//						This is already implemented by the HLS parameters (into the ffmpeg command)
-				//						We do it for the DASH option and in case ffmpeg does not work
-				//		rtmp(Proxy):		frame increasing check
-				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
-				if (liveRecorderWorking)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. segment check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-					);
-
-					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
-					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-					{
-						Json::Value outputRoot = outputsRoot[outputIndex];
-
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-						int outputPlaylistEntriesNumber = JSONUtils::asInt(outputRoot,
-							"playlistEntriesNumber", 10);
-						int outputSegmentDurationInSeconds = JSONUtils::asInt(outputRoot,
-							"segmentDurationInSeconds", 10);
-
-						if (!liveRecorderWorking)
-							break;
-
-						if (outputType == "HLS" || outputType == "DASH")
-						{
-							try
-							{
-								string manifestFilePathName =
-									manifestDirectoryPath + "/" + manifestFileName;
-								{
-									vector<string>	chunksTooOldToBeRemoved;
-									bool chunksWereNotGenerated = false;
-
-									string manifestDirectoryPathName;
-									{
-										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
-										if (manifestFilePathIndex == string::npos)
-										{
-											string errorMessage = __FILEREF__ + "liveRecordingMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
-												+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-												+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-												+ ", manifestFilePathName: " + manifestFilePathName;
-											_logger->error(errorMessage);
-
-											throw runtime_error(errorMessage);
-										}
-										manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
-									}
-
-									chrono::system_clock::time_point lastChunkTimestamp = copiedLiveRecording->_recordingStart;
-									bool firstChunkRead = false;
-
-									try
-									{
-										if (FileIO::directoryExisting(manifestDirectoryPathName))
-										{
-											FileIO::DirectoryEntryType_t detDirectoryEntryType;
-											shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-												manifestDirectoryPathName + "/");
-
-											// chunks will be removed 10 minutes after the "capacity" of the playlist
-											// 2022-05-26: it was 10 minutes fixed. This is an error
-											// in case of LiveRecorderVirtualVOD because, in this scenario,
-											// the segments have to be present according
-											// LiveRecorderVirtualVODMaxDuration (otherwise we will have an error
-											// during the building of the VirtualVOD (segments not found).
-											// For this reason the retention has to consider segment duration
-											// and playlistEntriesNumber
-											// long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
-											long liveProxyChunkRetentionInSeconds =
-												(outputSegmentDurationInSeconds * outputPlaylistEntriesNumber)
-												+ (10 * 60);	// 10 minutes
-											_logger->info(__FILEREF__
-												+ "liveRecordingMonitor. segment check"
-												+ ", ingestionJobKey: " + to_string(
-													copiedLiveRecording->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(
-													copiedLiveRecording->_encodingJobKey)
-												+ ", channelLabel: "
-													+ copiedLiveRecording->_channelLabel
-												+ ", outputSegmentDurationInSeconds: "
-													+ to_string(outputSegmentDurationInSeconds)
-												+ ", outputPlaylistEntriesNumber: "
-													+ to_string(outputPlaylistEntriesNumber)
-												+ ", liveProxyChunkRetentionInSeconds: "
-													+ to_string(liveProxyChunkRetentionInSeconds)
-											);
-
-											bool scanDirectoryFinished = false;
-											while (!scanDirectoryFinished)
-											{
-												string directoryEntry;
-												try
-												{
-													string directoryEntry = FileIO::readDirectory (directory,
-													&detDirectoryEntryType);
-
-													if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-														continue;
-
-													string dashPrefixInitFiles ("init-stream");
-													if (outputType == "DASH" &&
-														directoryEntry.size() >= dashPrefixInitFiles.size()
-															&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
-													)
-														continue;
-
-													{
-														string segmentPathNameToBeRemoved =
-															manifestDirectoryPathName + "/" + directoryEntry;
-
-														chrono::system_clock::time_point fileLastModification =
-															FileIO::getFileTime (segmentPathNameToBeRemoved);
-														chrono::system_clock::time_point now = chrono::system_clock::now();
-
-														if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-															> liveProxyChunkRetentionInSeconds)
-														{
-															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
-														}
-
-														if (!firstChunkRead
-															|| fileLastModification > lastChunkTimestamp)
-															lastChunkTimestamp = fileLastModification;
-
-														firstChunkRead = true;
-													}
-												}
-												catch(DirectoryListFinished e)
-												{
-													scanDirectoryFinished = true;
-												}
-												catch(runtime_error e)
-												{
-													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
-														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-														+ ", e.what(): " + e.what()
-													;
-													_logger->error(errorMessage);
-
-													// throw e;
-												}
-												catch(exception e)
-												{
-													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
-														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-														+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-														+ ", e.what(): " + e.what()
-													;
-													_logger->error(errorMessage);
-
-													// throw e;
-												}
-											}
-
-											FileIO::closeDirectory (directory);
-										}
-									}
-									catch(runtime_error e)
-									{
-										_logger->error(__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed"
-											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-											+ ", e.what(): " + e.what()
-										);
-									}
-									catch(...)
-									{
-										_logger->error(__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed"
-											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-											+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-										);
-									}
-			
-									if (!firstChunkRead
-										|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
-									{
-										// if we are here, it means the ffmpeg command is not generating the ts files
-
-										_logger->error(__FILEREF__ + "liveRecorderMonitor. Chunks were not generated"
-											+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-											+ ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-											+ ", firstChunkRead: " + to_string(firstChunkRead)
-										);
-
-										chunksWereNotGenerated = true;
-
-										liveRecorderWorking = false;
-										localErrorMessage = " restarted because of 'no segments were generated'";
-
-										_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor. Live Recorder is not working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-											+ ", manifestFilePathName: " + manifestFilePathName
-											+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-											+ ", liveRecorder->_childPid: " + to_string(copiedLiveRecording->_childPid)
-										);
-
-
-										// we killed the process, we do not care to remove the too old segments
-										// since we will remove the entore directory
-										break;
-									}
-
-									{
-										bool exceptionInCaseOfError = false;
-
-										for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
-										{
-											try
-											{
-												_logger->info(__FILEREF__ + "liveRecorderMonitor. Remove chunk because too old"
-													+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-													+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-												FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-											}
-											catch(runtime_error e)
-											{
-												_logger->error(__FILEREF__ + "liveRecordingMonitor. remove failed"
-													+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-													+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
-													+ ", e.what(): " + e.what()
-												);
-											}
-										}
-									}
-								}
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
-									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-							catch(exception e)
-							{
-								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
-									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-
-								_logger->error(__FILEREF__ + errorMessage);
-							}
-						}
-					}
-				}
-
-				if (sourceLiveRecording->_childPid == 0 ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid)
-						+ ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count())
-						+ ", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " + to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
-					);
-
-					continue;
-				}
-
-				if (liveRecorderWorking && copiedLiveRecording->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
-				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. isFrameIncreasing check"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-					);
-
-					try
-					{
-						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(
-							maxMilliSecondsToWait))
-						{
-							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
-								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-								+ ", _childPid: " + to_string(copiedLiveRecording->_childPid)
-							);
-
-							liveRecorderWorking = false;
-
-							localErrorMessage = " restarted because of 'frame is not increasing'";
-						}
-					}
-					catch(FFMpegEncodingStatusNotAvailable e)
-					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
-							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->warn(__FILEREF__ + errorMessage);
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
-							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
-							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				if (!liveRecorderWorking)
-				{
-					_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quitProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
-						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-						+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
-						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-						+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
-					);
-
-					try
-					{
-						// 2021-12-14: switched from quit to kill because it seems
-						//		ffmpeg didn't terminate (in case of quit) when he was
-						//		failing. May be because it could not finish his sample/frame
-						//		to process. The result is that the channels were not restarted.
-						//		This is an ipothesys, not 100% sure
-						// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liverecording
-						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
-						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
-						ProcessUtility::quitProcess(sourceLiveRecording->_childPid);
-						{
-							char strDateTime [64];
-							{
-								time_t utcTime = chrono::system_clock::to_time_t(
-									chrono::system_clock::now());
-								tm tmDateTime;
-								localtime_r (&utcTime, &tmDateTime);
-								sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-									tmDateTime. tm_year + 1900,
-									tmDateTime. tm_mon + 1,
-									tmDateTime. tm_mday,
-									tmDateTime. tm_hour,
-									tmDateTime. tm_min,
-									tmDateTime. tm_sec);
-							}
-							sourceLiveRecording->_errorMessage = string(strDateTime) + " "
-								+ sourceLiveRecording->_channelLabel +
-								localErrorMessage;
-						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string("liveRecordingMonitor. ProcessUtility::kill/quit Process failed")
-							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-							+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-							+ ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
-							+ ", e.what(): " + e.what()
-								;
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-				}
-
-				_logger->info(__FILEREF__ + "liveRecordingMonitor "
-					+ to_string(liveRecordingIndex) + "/" + to_string(liveRecordingRunningCounter)
-					+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
-					+ ", channelLabel: " + copiedLiveRecording->_channelLabel
-					+ ", @MMS statistics@ - elapsed time: @" + to_string(
-						chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - now).count()
-					) + "@"
-				);
-			}
-			_logger->info(__FILEREF__ + "liveRecordingMonitor"
-				+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
-				+ ", @MMS statistics@ - elapsed (millisecs): " + to_string(chrono::duration_cast<
-					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
-			);
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("liveRecordingMonitor failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("liveRecordingMonitor failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-
-		this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
-	}
-}
-
-void FFMPEGEncoder::stopMonitorThread()
-{
-
-	_monitorThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
-}
-
-void FFMPEGEncoder::cpuUsageThread()
-{
-
-	int64_t counter = 0;
-
-	while(!_cpuUsageThreadShutdown)
-	{
-		this_thread::sleep_for(chrono::milliseconds(200));
-
-		try
-		{
-			lock_guard<mutex> locker(*_cpuUsageMutex);
-
-			_cpuUsage->pop_back();
-			_cpuUsage->push_front(_getCpuUsage.getCpuUsage());
-			// *_cpuUsage = _getCpuUsage.getCpuUsage();
-
-			if (++counter % 100 == 0)
-			{
-				string lastCPUUsage;
-				for(int cpuUsage: *_cpuUsage)
-					lastCPUUsage += (to_string(cpuUsage) + " ");
-
-				_logger->info(__FILEREF__ + "cpuUsageThread"
-					+ ", lastCPUUsage: " + lastCPUUsage
-				);
-			}
-		}
-		catch(runtime_error e)
-		{
-			string errorMessage = string ("cpuUsage thread failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-		catch(exception e)
-		{
-			string errorMessage = string ("cpuUsage thread failed")
-				+ ", e.what(): " + e.what()
-			;
-
-			_logger->error(__FILEREF__ + errorMessage);
-		}
-	}
-}
-
-void FFMPEGEncoder::stopCPUUsageThread()
-{
-
-	_cpuUsageThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(1));
-}
-*/
-
-
-/*
-void FFMPEGEncoder::addEncodingCompleted(
-        int64_t encodingJobKey, bool completedWithError,
-		string errorMessage,
-		bool killedByUser, bool urlForbidden, bool urlNotFound)
-{
-	lock_guard<mutex> locker(*_encodingCompletedMutex);
-
-	shared_ptr<FFMPEGEncoderBase::EncodingCompleted> encodingCompleted = make_shared<FFMPEGEncoderBase::EncodingCompleted>();
-
-	encodingCompleted->_encodingJobKey		= encodingJobKey;
-	encodingCompleted->_completedWithError	= completedWithError;
-	encodingCompleted->_errorMessage		= errorMessage;
-	encodingCompleted->_killedByUser		= killedByUser;
-	encodingCompleted->_urlForbidden		= urlForbidden;
-	encodingCompleted->_urlNotFound			= urlNotFound;
-	encodingCompleted->_timestamp			= chrono::system_clock::now();
-
-	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
-
-	_logger->info(__FILEREF__ + "addEncodingCompleted"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
-			);
-}
-
-void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
-{
-
-	lock_guard<mutex> locker(*_encodingCompletedMutex);
-
-	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it =
-		_encodingCompletedMap->find(encodingJobKey);
-	if (it != _encodingCompletedMap->end())
-	{
-		_encodingCompletedMap->erase(it);
-
-		_logger->info(__FILEREF__ + "removeEncodingCompletedIfPresent"
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
-			);
-	}
-}
-*/
-
 void FFMPEGEncoder::encodingCompletedRetention()
 {
 
@@ -8651,343 +3996,6 @@ void FFMPEGEncoder::encodingCompletedRetention()
 			+ to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 	);
 }
-
-/*
-void FFMPEGEncoder::createOrUpdateTVDvbLastConfigurationFile(
-	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
-	string multicastIP,
-	string multicastPort,
-	string tvType,
-	int64_t tvServiceId,
-	int64_t tvFrequency,
-	int64_t tvSymbolRate,
-	int64_t tvBandwidthInMhz,
-	string tvModulation,
-	int tvVideoPid,
-	int tvAudioItalianPid,
-	bool toBeAdded
-)
-{
-	try
-	{
-		_logger->info(__FILEREF__ + "Received createOrUpdateTVDvbLastConfigurationFile"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", multicastIP: " + multicastIP
-			+ ", multicastPort: " + multicastPort
-			+ ", tvType: " + tvType
-			+ ", tvServiceId: " + to_string(tvServiceId)
-			+ ", tvFrequency: " + to_string(tvFrequency)
-			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
-			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
-			+ ", tvModulation: " + tvModulation
-			+ ", tvVideoPid: " + to_string(tvVideoPid)
-			+ ", tvAudioItalianPid: " + to_string(tvAudioItalianPid)
-			+ ", toBeAdded: " + to_string(toBeAdded)
-		);
-
-		string localModulation;
-
-		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-		if (tvModulation != "")
-		{
-			if (tvModulation == "PSK/8")
-				localModulation = "psk_8";
-			else if (tvModulation == "QAM/64")
-				localModulation = "QAM_64";
-			else if (tvModulation == "QPSK")
-				localModulation = "qpsk";
-			else
-			{
-				string errorMessage = __FILEREF__ + "unknown modulation"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", tvModulation: " + tvModulation
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		if (!FileIO::directoryExisting(_tvChannelConfigurationDirectory))
-		{
-			_logger->info(__FILEREF__ + "Create directory"
-				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(encodingJobKey)
-				+ ", _tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
-			);
-
-			bool noErrorIfExists = true;
-			bool recursive = true;
-			FileIO::createDirectory(
-				_tvChannelConfigurationDirectory,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IWUSR | S_IXGRP |
-				S_IROTH | S_IWUSR | S_IXOTH,
-				noErrorIfExists, recursive);
-		}
-
-		string dvblastConfigurationPathName =
-			_tvChannelConfigurationDirectory
-			+ "/" + to_string(tvFrequency)
-		;
-		if (tvSymbolRate < 0)
-			dvblastConfigurationPathName += "-";
-		else
-			dvblastConfigurationPathName += (string("-") + to_string(tvSymbolRate));
-		if (tvBandwidthInMhz < 0)
-			dvblastConfigurationPathName += "-";
-		else
-			dvblastConfigurationPathName += (string("-") + to_string(tvBandwidthInMhz));
-		dvblastConfigurationPathName += (string("-") + localModulation);
-
-		ifstream ifConfigurationFile;
-		bool changedFileFound = false;
-		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
-			ifConfigurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
-		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
-		{
-			changedFileFound = true;
-			ifConfigurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
-		}
-
-		vector<string> vConfiguration;
-		if (ifConfigurationFile.is_open())
-        {
-			string configuration;
-            while(getline(ifConfigurationFile, configuration))
-			{
-				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
-
-				if (trimmedConfiguration.size() > 10)
-					vConfiguration.push_back(trimmedConfiguration);
-			}
-            ifConfigurationFile.close();
-			if (!changedFileFound)	// .txt found
-			{
-				_logger->info(__FILEREF__ + "Remove dvblast configuration file to create the new one"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
-				);
-
-				FileIO::remove(dvblastConfigurationPathName + ".txt");
-			}
-		}
-
-		string newConfiguration =
-			multicastIP + ":" + multicastPort 
-			+ " 1 "
-			+ to_string(tvServiceId)
-			+ " "
-			+ to_string(tvVideoPid) + "," + to_string(tvAudioItalianPid)
-		;
-
-		_logger->info(__FILEREF__ + "Creation dvblast configuration file"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
-		);
-
-		ofstream ofConfigurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
-		if (!ofConfigurationFile)
-		{
-			string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		bool configurationAlreadyPresent = false;
-		bool wroteFirstLine = false;
-		for(string configuration: vConfiguration)
-		{
-			if (toBeAdded)
-			{
-				if (newConfiguration == configuration)
-					configurationAlreadyPresent = true;
-
-				if (wroteFirstLine)
-					ofConfigurationFile << endl;
-				ofConfigurationFile << configuration;
-				wroteFirstLine = true;
-			}
-			else
-			{
-				if (newConfiguration != configuration)
-				{
-					if (wroteFirstLine)
-						ofConfigurationFile << endl;
-					ofConfigurationFile << configuration;
-					wroteFirstLine = true;
-				}
-			}
-		}
-
-		if (toBeAdded)
-		{
-			// added only if not already present
-			if (!configurationAlreadyPresent)
-			{
-				if (wroteFirstLine)
-					ofConfigurationFile << endl;
-				ofConfigurationFile << newConfiguration;
-				wroteFirstLine = true;
-			}
-		}
-
-		ofConfigurationFile << endl;
-	}
-	catch (...)
-	{
-		// make sure do not raise an exception to the calling method to avoid
-		// to interrupt "closure" encoding procedure
-		string errorMessage = __FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-		;
-		_logger->error(errorMessage);
-	}
-}
-
-pair<string, string> FFMPEGEncoder::getTVMulticastFromDvblastConfigurationFile(
-	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
-	string tvType,
-	int64_t tvServiceId,
-	int64_t tvFrequency,
-	int64_t tvSymbolRate,
-	int64_t tvBandwidthInMhz,
-	string tvModulation
-)
-{
-	string multicastIP;
-	string multicastPort;
-
-	try
-	{
-		_logger->info(__FILEREF__ + "Received getTVMulticastFromDvblastConfigurationFile"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", tvType: " + tvType
-			+ ", tvServiceId: " + to_string(tvServiceId)
-			+ ", tvFrequency: " + to_string(tvFrequency)
-			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
-			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
-			+ ", tvModulation: " + tvModulation
-		);
-
-		string localModulation;
-
-		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-		if (tvModulation != "")
-		{
-			if (tvModulation == "PSK/8")
-				localModulation = "psk_8";
-			else if (tvModulation == "QAM/64")
-				localModulation = "QAM_64";
-			else if (tvModulation == "QPSK")
-				localModulation = "qpsk";
-			else
-			{
-				string errorMessage = __FILEREF__ + "unknown modulation"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", tvModulation: " + tvModulation
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		string dvblastConfigurationPathName =
-			_tvChannelConfigurationDirectory
-			+ "/" + to_string(tvFrequency)
-		;
-		if (tvSymbolRate < 0)
-			dvblastConfigurationPathName += "-";
-		else
-			dvblastConfigurationPathName += (string("-") + to_string(tvSymbolRate));
-		if (tvBandwidthInMhz < 0)
-			dvblastConfigurationPathName += "-";
-		else
-			dvblastConfigurationPathName += (string("-") + to_string(tvBandwidthInMhz));
-		dvblastConfigurationPathName += (string("-") + localModulation);
-
-
-		ifstream configurationFile;
-		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
-			configurationFile.open(dvblastConfigurationPathName + ".txt", ios::in);
-		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
-			configurationFile.open(dvblastConfigurationPathName + ".changed", ios::in);
-
-		if (configurationFile.is_open())
-		{
-			string configuration;
-            while(getline(configurationFile, configuration))
-			{
-				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
-
-				// configuration is like: 239.255.1.1:8008 1 3401 501,601
-				istringstream iss(trimmedConfiguration);
-				vector<string> configurationPieces;
-				copy(
-					istream_iterator<std::string>(iss),
-					istream_iterator<std::string>(),
-					back_inserter(configurationPieces)
-				);
-				if(configurationPieces.size() < 3)
-					continue;
-
-				if (configurationPieces[2] == to_string(tvServiceId))
-				{
-					size_t ipSeparator = (configurationPieces[0]).find(":");
-					if (ipSeparator != string::npos)
-					{
-						multicastIP = (configurationPieces[0]).substr(0, ipSeparator);
-						multicastPort = (configurationPieces[0]).substr(ipSeparator + 1);
-
-						break;
-					}
-				}
-			}
-            configurationFile.close();
-        }
-
-		_logger->info(__FILEREF__ + "Received getTVMulticastFromDvblastConfigurationFile"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", tvType: " + tvType
-			+ ", tvServiceId: " + to_string(tvServiceId)
-			+ ", tvFrequency: " + to_string(tvFrequency)
-			+ ", tvSymbolRate: " + to_string(tvSymbolRate)
-			+ ", tvBandwidthInMhz: " + to_string(tvBandwidthInMhz)
-			+ ", tvModulation: " + tvModulation
-			+ ", multicastIP: " + multicastIP
-			+ ", multicastPort: " + multicastPort
-		);
-	}
-	catch (...)
-	{
-		// make sure do not raise an exception to the calling method to avoid
-		// to interrupt "closure" encoding procedure
-		string errorMessage = __FILEREF__ + "getTVMulticastFromDvblastConfigurationFile failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-		;
-		_logger->error(errorMessage);
-	}
-
-	return make_pair(multicastIP, multicastPort);
-}
-*/
 
 int FFMPEGEncoder::getMaxEncodingsCapability(void)
 {
@@ -9185,726 +4193,4 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	return maxLiveRecordingsCapability;
 	*/
 }
-
-/*
-string FFMPEGEncoder::buildAddContentIngestionWorkflow(
-	int64_t ingestionJobKey,
-	string label,
-	string fileFormat,
-	string ingester,
-
-	// in case of a new content
-	string sourceURL,	// if empty it means binary is ingested later (PUSH)
-	string title,
-	Json::Value userDataRoot,
-	Json::Value ingestedParametersRoot,	// it could be also nullValue
-
-	// in case of a Variant
-	int64_t variantOfMediaItemKey,		// in case of a variant, otherwise -1
-	int64_t variantEncodingProfileKey	// in case of a variant, otherwise -1
-)
-{
-	string workflowMetadata;
-	try
-	{
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = label;
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		Json::Value addContentParametersRoot;
-
-		if (variantOfMediaItemKey != -1)
-		{
-			// it is a Variant
-
-			field = "FileFormat";
-			addContentParametersRoot[field] = fileFormat;
-
-			field = "Ingester";
-			addContentParametersRoot[field] = ingester;
-
-			field = "variantOfMediaItemKey";
-			addContentParametersRoot[field] = variantOfMediaItemKey;
-
-			field = "variantEncodingProfileKey";
-			addContentParametersRoot[field] = variantEncodingProfileKey;
-
-			if (userDataRoot != Json::nullValue)
-			{
-				field = "UserData";
-				addContentParametersRoot[field] = userDataRoot;
-			}
-		}
-		else
-		{
-			// it is a new content
-
-			if (ingestedParametersRoot != Json::nullValue)
-			{
-				addContentParametersRoot = ingestedParametersRoot;
-
-				field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(addContentParametersRoot, field))
-				{
-					Json::Value removed;
-					addContentParametersRoot.removeMember(field, &removed);
-				}
-			}
-
-			field = "FileFormat";
-			addContentParametersRoot[field] = fileFormat;
-
-			field = "Ingester";
-			addContentParametersRoot[field] = ingester;
-
-			if (sourceURL != "")
-			{
-				// string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
-				field = "SourceURL";
-				addContentParametersRoot[field] = sourceURL;
-			}
-
-			if (title != "")
-			{
-				field = "Title";
-				addContentParametersRoot[field] = title;
-			}
-
-			if (userDataRoot != Json::nullValue)
-			{
-				field = "UserData";
-				addContentParametersRoot[field] = userDataRoot;
-			}
-		}
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = label;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		workflowMetadata = JSONUtils::toString(workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "buildAddContentIngestionWorkflow"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-
-		return workflowMetadata;
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "buildAddContentIngestionWorkflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-}
-
-int64_t FFMPEGEncoder::ingestContentByPushingBinary(
-	int64_t ingestionJobKey,
-	string workflowMetadata,
-	string fileFormat,
-	string binaryPathFileName,
-	int64_t binaryFileSizeInBytes,
-	int64_t userKey,
-	string apiKey,
-	string mmsWorkflowIngestionURL,
-	string mmsBinaryIngestionURL
-)
-{
-	_logger->info(__FILEREF__ + "Received ingestContentByPushingBinary"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		+ ", fileFormat: " + fileFormat
-		+ ", binaryPathFileName: " + binaryPathFileName
-		+ ", binaryFileSizeInBytes: " + to_string(binaryFileSizeInBytes)
-		+ ", userKey: " + to_string(userKey)
-		+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-		+ ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
-	);
-
-	int64_t addContentIngestionJobKey = -1;
-	try
-	{
-		string sResponse = MMSCURL::httpPostString(
-			_logger,
-			ingestionJobKey,
-			mmsWorkflowIngestionURL,
-			_mmsAPITimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			workflowMetadata,
-			"application/json",	// contentType
-			3 // maxRetryNumber
-		);
-
-		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (runtime_error)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion workflow failed (exception)"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		throw e;
-	}
-
-	if (addContentIngestionJobKey == -1)
-	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-		;
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	string mmsBinaryURL;
-	// ingest binary
-	try
-	{
-		string localBinaryPathFileName = binaryPathFileName;
-		int64_t localBinaryFileSizeInBytes = binaryFileSizeInBytes;
-		if (fileFormat == "hls")
-		{
-			// binaryPathFileName is a dir like
-			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
-			// terminating with 'content' as built in MMSEngineProcessor.cpp
-
-			{
-				string executeCommand;
-				try
-				{
-					localBinaryPathFileName = binaryPathFileName + ".tar.gz";
-
-					size_t endOfPathIndex = localBinaryPathFileName.find_last_of("/");
-					if (endOfPathIndex == string::npos)
-					{
-						string errorMessage = string("No localVariantPathDirectory found")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-							+ ", localBinaryPathFileName: " + localBinaryPathFileName 
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-          
-						throw runtime_error(errorMessage);
-					}
-					string localVariantPathDirectory =
-						localBinaryPathFileName.substr(0, endOfPathIndex);
-
-					executeCommand =
-						"tar cfz " + localBinaryPathFileName
-						+ " -C " + localVariantPathDirectory
-						+ " " + "content";
-					_logger->info(__FILEREF__ + "Start tar command "
-						+ ", executeCommand: " + executeCommand
-					);
-					chrono::system_clock::time_point startTar = chrono::system_clock::now();
-					int executeCommandStatus = ProcessUtility::execute(executeCommand);
-					chrono::system_clock::time_point endTar = chrono::system_clock::now();
-					_logger->info(__FILEREF__ + "End tar command "
-						+ ", executeCommand: " + executeCommand
-						+ ", @MMS statistics@ - tarDuration (millisecs): @"
-							+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
-					);
-					if (executeCommandStatus != 0)
-					{
-						string errorMessage = string("ProcessUtility::execute failed")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
-							+ ", executeCommand: " + executeCommand 
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-          
-						throw runtime_error(errorMessage);
-					}
-
-					bool inCaseOfLinkHasItToBeRead = false;
-					localBinaryFileSizeInBytes = FileIO::getFileSizeInBytes (localBinaryPathFileName,
-						inCaseOfLinkHasItToBeRead);                                                                          
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("tar command failed")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-						+ ", executeCommand: " + executeCommand 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-         
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-
-		mmsBinaryURL =
-			mmsBinaryIngestionURL
-			+ "/" + to_string(addContentIngestionJobKey)
-		;
-
-		string sResponse = MMSCURL::httpPostFileSplittingInChunks(
-			_logger,
-			ingestionJobKey,
-			mmsBinaryURL,
-			_mmsBinaryTimeoutInSeconds,
-			to_string(userKey),
-			apiKey,
-			localBinaryPathFileName,
-			localBinaryFileSizeInBytes,
-			3 // maxRetryNumber
-		);
-
-		if (fileFormat == "hls")
-		{
-			_logger->info(__FILEREF__ + "remove"
-				+ ", localBinaryPathFileName: " + localBinaryPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(localBinaryPathFileName, exceptionInCaseOfError);
-		}
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		if (fileFormat == "hls")
-		{
-			// it is useless to remove the generated tar.gz file because the parent staging directory
-			// will be removed. Also here we should add a bool above to be sure the tar was successful
-		}
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingestion binary failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", mmsBinaryURL: " + mmsBinaryURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-		);
-
-		if (fileFormat == "hls")
-		{
-			// it is useless to remove the generated tar.gz file because the parent staging directory
-			// will be removed. Also here we should add a bool above to be sure the tar was successful
-		}
-
-		throw e;
-	}
-
-	return addContentIngestionJobKey;
-}
-
-string FFMPEGEncoder::downloadMediaFromMMS(
-	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
-	shared_ptr<FFMpeg> ffmpeg,
-	string sourceFileExtension,
-	string sourcePhysicalDeliveryURL,
-	string destAssetPathName
-)
-{
-	string localDestAssetPathName = destAssetPathName;
-
-
-	bool isSourceStreaming = false;
-	if (sourceFileExtension == ".m3u8")
-		isSourceStreaming = true;
-
-	_logger->info(__FILEREF__ + "downloading source content"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
-		+ ", localDestAssetPathName: " + localDestAssetPathName
-		+ ", isSourceStreaming: " + to_string(isSourceStreaming)
-	);
-
-	if (isSourceStreaming)
-	{
-		// regenerateTimestamps: see docs/TASK_01_Add_Content_JSON_Format.txt
-		bool regenerateTimestamps = false;
-
-		localDestAssetPathName = localDestAssetPathName + ".mp4";
-
-		ffmpeg->streamingToFile(
-			ingestionJobKey,
-			regenerateTimestamps,
-			sourcePhysicalDeliveryURL,
-			localDestAssetPathName);
-	}
-	else
-	{
-		MMSCURL::downloadFile(
-			_logger,
-			ingestionJobKey,
-			sourcePhysicalDeliveryURL,
-			localDestAssetPathName,
-			3 // maxRetryNumber
-		);
-	}
-
-	_logger->info(__FILEREF__ + "downloaded source content"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", sourcePhysicalDeliveryURL: " + sourcePhysicalDeliveryURL
-		+ ", localDestAssetPathName: " + localDestAssetPathName
-		+ ", isSourceStreaming: " + to_string(isSourceStreaming)
-	);
-
-	return localDestAssetPathName;
-}
-
-void FFMPEGEncoder::uploadLocalMediaToMMS(
-	int64_t ingestionJobKey,
-	int64_t encodingJobKey,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingProfileDetailsRoot,
-	Json::Value encodingParametersRoot,
-	string sourceFileExtension,
-	string encodedStagingAssetPathName,
-	string workflowLabel,
-	string ingester,
-	int64_t variantOfMediaItemKey,	// in case Media is a variant of a MediaItem already present
-	int64_t variantEncodingProfileKey	// in case Media is a variant of a MediaItem already present
-)
-{
-	string field;
-
-	int64_t userKey;
-	string apiKey;
-	{
-		field = "internalMMS";
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
-		{
-			Json::Value internalMMSRoot = ingestedParametersRoot[field];
-
-			field = "credentials";
-			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-			{
-				Json::Value credentialsRoot = internalMMSRoot[field];
-
-				field = "userKey";
-				userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-				field = "apiKey";
-				string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-			}
-		}
-	}
-
-	string fileFormat;
-	if (encodingProfileDetailsRoot != Json::nullValue)
-	{
-		field = "FileFormat";
-		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, field, "");
-	}
-	else
-	{
-		if (sourceFileExtension == ".m3u8")
-			fileFormat = "hls";
-		else
-		{
-			if (sourceFileExtension.front() == '.')
-				fileFormat = sourceFileExtension.substr(1);
-			else
-				fileFormat = sourceFileExtension;
-		}
-	}
-
-	field = "mmsWorkflowIngestionURL";
-	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-	{
-		string errorMessage = __FILEREF__ + "Field is not present or it is null"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", Field: " + field;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	string mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-	field = "mmsBinaryIngestionURL";
-	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-	{
-		string errorMessage = __FILEREF__ + "Field is not present or it is null"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", Field: " + field;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	string mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-	int64_t fileSizeInBytes = 0;
-	if (fileFormat != "hls")
-	{
-		bool inCaseOfLinkHasItToBeRead = false;
-		fileSizeInBytes = FileIO::getFileSizeInBytes (encodedStagingAssetPathName,
-			inCaseOfLinkHasItToBeRead);                                                                          
-	}
-
-	Json::Value userDataRoot;
-	{
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-			userDataRoot = ingestedParametersRoot["UserData"];
-
-		Json::Value mmsDataRoot;
-		mmsDataRoot["dataType"] = "externalTranscoder";
-		mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
-
-		userDataRoot["mmsData"] = mmsDataRoot;
-	}
-
-	string workflowMetadata;
-	{
-		string localFileFormat = fileFormat;
-		if (fileFormat == "hls")
-			localFileFormat = "m3u8-tar.gz";
-
-		if (variantOfMediaItemKey != -1 && variantEncodingProfileKey != -1)
-		{
-			workflowMetadata = buildAddContentIngestionWorkflow(
-				ingestionJobKey, workflowLabel, localFileFormat, ingester,
-				"",	// sourceURL
-				"",	// title
-				userDataRoot,
-				Json::nullValue,
-				variantOfMediaItemKey,
-				variantEncodingProfileKey
-			);
-		}
-		else
-		{
-			workflowMetadata = buildAddContentIngestionWorkflow(
-				ingestionJobKey, workflowLabel, localFileFormat, ingester,
-				"",	// sourceURL
-				"",	// title
-				userDataRoot,
-				ingestedParametersRoot
-			);
-		}
-	}
-
-	int64_t addContentIngestionJobKey = ingestContentByPushingBinary(
-		ingestionJobKey,
-		workflowMetadata,
-		fileFormat,
-		encodedStagingAssetPathName,
-		fileSizeInBytes,
-		userKey,
-		apiKey,
-		mmsWorkflowIngestionURL,
-		mmsBinaryIngestionURL
-	);
-
-	{
-		size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-		if (endOfDirectoryIndex != string::npos)
-		{
-			string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
-
-			_logger->info(__FILEREF__ + "removeDirectory"
-				+ ", directoryPathName: " + directoryPathName
-			);
-			Boolean_t bRemoveRecursively = true;
-			FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-		}
-	}
-
-	// wait the addContent to be executed
-	try
-	{
-		string field = "mmsIngestionURL";
-		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				// + ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
-		chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
-		long maxSecondsWaiting = 5 * 60;
-		long addContentFinished = 0;
-
-		while ( addContentFinished == 0
-			&& chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
-		{
-			string mmsIngestionJobURL =
-				mmsIngestionURL
-				+ "/" + to_string(addContentIngestionJobKey)
-				+ "?ingestionJobOutputs=false"
-			;
-
-			Json::Value ingestionRoot = MMSCURL::httpGetJson(
-				_logger,
-				ingestionJobKey,
-				mmsIngestionJobURL,
-				_mmsAPITimeoutInSeconds,
-				to_string(userKey),
-				apiKey,
-				3 // maxRetryNumber
-			);
-
-			string field = "response";
-			if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			Json::Value responseRoot = ingestionRoot[field];
-
-			field = "ingestionJobs";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			Json::Value ingestionJobsRoot = responseRoot[field];
-
-			if (ingestionJobsRoot.size() != 1)
-			{
-				string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			Json::Value ingestionJobRoot = ingestionJobsRoot[0];
-
-			field = "status";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					// + ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", Field: " + field;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
-
-			string prefix = "End_";
-			if (ingestionJobStatus.size() >= prefix.size()
-				&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
-			{
-				_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-					+ ", ingestionJobStatus: " + ingestionJobStatus);
-
-				addContentFinished++;
-			}
-			else
-			{
-				int secondsToSleep = 5;
-
-				_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
-					+ ", ingestionJobStatus: " + ingestionJobStatus
-					+ ", secondsToSleep: " + to_string(secondsToSleep)
-				);
-
-				this_thread::sleep_for(chrono::seconds(secondsToSleep));
-			}
-		}
-
-		_logger->info(__FILEREF__ + "Waiting result..."
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", addContentFinished: " + to_string(addContentFinished)
-			+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
-			+ ", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - startWaiting).count())
-		);
-	}
-	catch(runtime_error e)
-	{
-		string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			// + ", encodingJobKey: " + to_string(encodingJobKey)
-		;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-*/
 

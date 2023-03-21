@@ -23,6 +23,7 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 	public:
 		FFMPEGEncoderTask(
 			shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
 			Json::Value configuration,
 			mutex* encodingCompletedMutex,                                                                        
@@ -60,6 +61,7 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 
 	protected:
 		shared_ptr<FFMPEGEncoderBase::Encoding>	_encoding;
+		int64_t				_ingestionJobKey;
 		int64_t				_encodingJobKey;
 
 		bool				_completedWithError;

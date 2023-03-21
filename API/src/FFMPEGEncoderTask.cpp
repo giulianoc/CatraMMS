@@ -11,6 +11,7 @@
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
 	shared_ptr<Encoding> encoding,                                                                        
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	Json::Value configuration,
 	mutex* encodingCompletedMutex,                                                                        
@@ -21,6 +22,7 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 	try
 	{
 		_encoding = encoding;
+		_ingestionJobKey = ingestionJobKey;
 		_encodingJobKey = encodingJobKey;
 		_encodingCompletedMutex = encodingCompletedMutex;                                                         
 		_encodingCompletedMap = encodingCompletedMap;                                                             
@@ -97,6 +99,7 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
 
 	_logger->info(__FILEREF__ + "addEncodingCompleted"
+			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
 			);
@@ -114,6 +117,7 @@ void FFMPEGEncoderTask::removeEncodingCompletedIfPresent()
 		_encodingCompletedMap->erase(it);
 
 		_logger->info(__FILEREF__ + "removeEncodingCompletedIfPresent"
+			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
 			);

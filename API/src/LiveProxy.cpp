@@ -9,6 +9,7 @@
 
 LiveProxy::LiveProxy(
 	shared_ptr<LiveProxyAndGrid> liveProxyData,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	Json::Value configuration,
 	mutex* encodingCompletedMutex,
@@ -16,7 +17,7 @@ LiveProxy::LiveProxy(
 	shared_ptr<spdlog::logger> logger,
 	mutex* tvChannelsPortsMutex,
 	long* tvChannelPort_CurrentOffset):
-	FFMPEGEncoderTask(liveProxyData, encodingJobKey, configuration, encodingCompletedMutex,
+	FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configuration, encodingCompletedMutex,
 		encodingCompletedMap, logger)
 {
 	_liveProxyData					= liveProxyData;

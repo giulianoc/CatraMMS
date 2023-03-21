@@ -2216,6 +2216,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
             ffmpegEncoderURL =
 				_currentUsedFFMpegEncoderHost
 				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_ingestionJobKey)
 				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
             string body;
@@ -6185,6 +6186,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
+                    + "/" + to_string(_encodingItem->_ingestionJobKey)
                     + "/" + to_string(_encodingItem->_encodingJobKey)
 				;
 
@@ -7865,6 +7867,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				ffmpegEncoderURL =
 					_currentUsedFFMpegEncoderHost
 					+ ffmpegURI
+					+ "/" + to_string(_encodingItem->_ingestionJobKey)
 					+ "/" + to_string(_encodingItem->_encodingJobKey)
 				;
 

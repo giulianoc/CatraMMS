@@ -85,18 +85,6 @@ public:
             unordered_map<string, string>& requestDetails
     );
 
-	// void liveRecorderChunksIngestionThread();
-	// void stopLiveRecorderChunksIngestionThread();
-
-	// void liveRecorderVirtualVODIngestionThread();
-	// void stopLiveRecorderVirtualVODIngestionThread();
-
-	// void monitorThread();
-	// void stopMonitorThread();
-    
-	// void cpuUsageThread();
-	// void stopCPUUsageThread();
-
 private:
 	// string						_encoderCapabilityConfigurationPathName;
 
@@ -142,16 +130,6 @@ private:
 	// 	int configuredMaxLiveRecordingsCapability
 	// );
 
-	// int							_liveRecorderChunksIngestionCheckInSeconds;
-	// bool						_liveRecorderChunksIngestionThreadShutdown;
-
-	// int							_liveRecorderVirtualVODIngestionInSeconds;
-	// string						_liveRecorderVirtualVODRetention;
-	// bool						_liveRecorderVirtualVODIngestionThreadShutdown;
-	// string						_liveRecorderVirtualVODImageLabel;
-
-	// string						_tvChannelConfigurationDirectory;
-
     mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>*	_encodingCompletedMap;
@@ -159,277 +137,93 @@ private:
 
 	mutex*						_tvChannelsPortsMutex;
 	long*						_tvChannelPort_CurrentOffset;
-	// long						_tvChannelPort_Start;
-	// long						_tvChannelPort_MaxNumberOfOffsets;
-
-	// int							_monitorCheckInSeconds;
-	// bool						_monitorThreadShutdown;
-
-    // int									_mmsAPITimeoutInSeconds;
-
-	// int							_mmsBinaryTimeoutInSeconds;
 
     void encodeContentThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-            int64_t encodingJobKey,
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
         string requestBody);
     
     void overlayImageOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-            int64_t encodingJobKey,
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
         string requestBody);
 
     void overlayTextOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
     void generateFramesThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
     void slideShowThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void liveRecorderThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
-	/*
-	pair<string, double> liveRecorder_processStreamSegmenterOutput(
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string streamSourceType, 
-		bool externalEncoder,
-		int segmentDurationInSeconds, string outputFileFormat,
-		Json::Value encodingParametersRoot,
-		Json::Value ingestedParametersRoot,
-		string chunksTranscoderStagingContentsPath,
-		string chunksNFSStagingContentsPath,
-		string segmentListFileName,
-		string recordedFileNamePrefix,
-		string lastRecordedAssetFileName,
-		double lastRecordedAssetDurationInSeconds);
-	pair<string, double> liveRecorder_processHLSSegmenterOutput(
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string streamSourceType, 
-		bool externalEncoder,
-		int segmentDurationInSeconds, string outputFileFormat,
-		Json::Value encodingParametersRoot,
-		Json::Value ingestedParametersRoot,
-		string chunksTranscoderStagingContentsPath,
-		string sharedStagingContentsPath,
-		string segmentListFileName,
-		string recordedFileNamePrefix,
-		string lastRecordedAssetFileName,
-		double lastRecordedAssetDurationInSeconds);
-	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
-			string mediaLiveRecorderFileName, int segmentDurationInSeconds, bool isFirstChunk);
-	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
-			string mediaLiveRecorderFileName);
-	bool liveRecorder_isLastLiveRecorderFile(int64_t ingestionJobKey, int64_t encodingJobKey,
-			time_t currentRecordedFileCreationTime, string chunksTranscoderStagingContentsPath,
-			string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk);
-	void liveRecorder_ingestRecordedMediaInCaseOfInternalTranscoder(
-		int64_t ingestionJobKey,
-		string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
-		string sharedStagingContentsPath,
-		string addContentTitle,
-		string uniqueName,
-		// bool highAvailability,
-		Json::Value userDataRoot,
-		string fileFormat,
-		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot,
-		bool copy);
-	string liveRecorder_buildChunkIngestionWorkflow(
-		int64_t ingestionJobKey,
-		bool externalEncoder,
-		string currentRecordedAssetFileName,
-		string chunksNFSStagingContentsPath,
-		string addContentTitle,
-		string uniqueName,
-		Json::Value userDataRoot,
-		string fileFormat,
-		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot
-	);
-	void liveRecorder_ingestRecordedMediaInCaseOfExternalTranscoder(
-		int64_t ingestionJobKey,
-		string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
-		string addContentTitle,
-		string uniqueName,
-		Json::Value userDataRoot,
-		string fileFormat,
-		Json::Value ingestedParametersRoot,
-		Json::Value encodingParametersRoot);
-	long liveRecorder_buildAndIngestVirtualVOD(
-		int64_t liveRecorderIngestionJobKey,
-		int64_t liveRecorderEncodingJobKey,
-		bool externalEncoder,
-
-		string sourceSegmentsDirectoryPathName,
-		string sourceManifestFileName,
-		string stagingLiveRecorderVirtualVODPathName,
-
-		int64_t deliveryCode,
-		string liveRecorderIngestionJobLabel,
-		string liveRecorderVirtualVODUniqueName,
-		string liveRecorderVirtualVODRetention,
-		int64_t liveRecorderVirtualVODImageMediaItemKey,
-		int64_t liveRecorderUserKey,
-		string liveRecorderApiKey,
-		string mmsWorkflowIngestionURL,
-		string mmsBinaryIngestionURL);
-	string liveRecorder_buildVirtualVODIngestionWorkflow(
-		int64_t liveRecorderIngestionJobKey,
-		int64_t liveRecorderEncodingJobKey,
-		bool externalEncoder,
-
-		int64_t utcStartTimeInMilliSecs,
-		int64_t utcEndTimeInMilliSecs,
-		int64_t deliveryCode,
-		string liveRecorderIngestionJobLabel,
-		string tarGzStagingLiveRecorderVirtualVODPathName,
-		string liveRecorderVirtualVODUniqueName,
-		string liveRecorderVirtualVODRetention,
-		int64_t liveRecorderVirtualVODImageMediaItemKey);
-	long getAddContentIngestionJobKey(
-		int64_t ingestionJobKey,
-		string ingestionResponse);
-	*/
 
 	void liveProxyThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void liveGridThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void videoSpeedThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void introOutroOverlayThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
 	void cutFrameAccurateThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string requestBody);
 
-	/*
-	void addEncodingCompleted(
-        int64_t encodingJobKey, bool completedWithError, string errorMessage,
-		bool killedByUser, bool urlForbidden, bool urlNotFound);
-
-	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);
-	*/
-
 	void encodingCompletedRetention();
 
-	/*
-	void createOrUpdateTVDvbLastConfigurationFile(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		string multicastIP,
-		string multicastPort,
-		string tvType,
-		int64_t tvServiceId,
-		int64_t tvFrequency,
-		int64_t tvSymbolRate,
-		int64_t tvBandwidthInMhz,
-		string tvModulation,
-		int tvVideoPid,
-		int tvAudioItalianPid,
-		bool toBeAdded
-	);
-
-	pair<string, string> getTVMulticastFromDvblastConfigurationFile(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		string tvType,
-		int64_t tvServiceId,
-		int64_t tvFrequency,
-		int64_t tvSymbolRate,
-		int64_t tvBandwidthInMhz,
-		string tvModulation
-	);
-
-	string buildAddContentIngestionWorkflow(
-		int64_t ingestionJobKey,
-		string label,
-		string fileFormat,
-		string ingester,
-
-		// in case of a new content
-		string sourceURL,	// if empty it means binary is ingested later (PUSH)
-		string title,
-		Json::Value userDataRoot,
-		Json::Value ingestedParametersRoot,	// it could be also nullValue
-
-		// in case of a Variant
-		int64_t variantOfMediaItemKey = -1,
-		int64_t variantEncodingProfileKey = -1);
-
-	int64_t ingestContentByPushingBinary(
-		int64_t ingestionJobKey,
-		string workflowMetadata,
-		string fileFormat,
-		string binaryPathFileName,
-		int64_t binaryFileSizeInBytes,
-		int64_t userKey,
-		string apiKey,
-		string mmsWorkflowIngestionURL,
-		string mmsBinaryIngestionURL);
-
-	string downloadMediaFromMMS(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		shared_ptr<FFMpeg> ffmpeg,
-		string sourceFileExtension,
-		string sourcePhysicalDeliveryURL,
-		string destAssetPathName);
-
-	void uploadLocalMediaToMMS(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		Json::Value ingestedParametersRoot,
-		Json::Value encodingProfileDetailsRoot,
-		Json::Value encodingParametersRoot,
-		string sourceFileExtension,
-		string encodedStagingAssetPathName,
-		string workflowLabel,
-		string ingester,
-		// in case of a Variant
-		int64_t variantOfMediaItemKey = -1,
-		int64_t variantEncodingProfileKey = -1);
-	*/
 };
 
 #endif

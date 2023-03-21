@@ -7,6 +7,7 @@ class LiveProxy: public FFMPEGEncoderTask {
 	public:
 		LiveProxy(
 			shared_ptr<LiveProxyAndGrid> liveProxyData,
+			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
 			Json::Value configuration,
 			mutex* encodingCompletedMutex,

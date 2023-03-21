@@ -9,6 +9,7 @@
 
 LiveRecorder::LiveRecorder(
 	shared_ptr<LiveRecording> liveRecording,
+	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	Json::Value configuration,
 	mutex* encodingCompletedMutex,                                                                        
@@ -16,7 +17,7 @@ LiveRecorder::LiveRecorder(
 	shared_ptr<spdlog::logger> logger,
 	mutex* tvChannelsPortsMutex,                                                                          
 	long* tvChannelPort_CurrentOffset):
-	FFMPEGEncoderTask(liveRecording, encodingJobKey, configuration, encodingCompletedMutex,
+	FFMPEGEncoderTask(liveRecording, ingestionJobKey, encodingJobKey, configuration, encodingCompletedMutex,
 		encodingCompletedMap, logger)
 {
 	_liveRecording					= liveRecording;

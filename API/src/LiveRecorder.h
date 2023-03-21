@@ -7,6 +7,7 @@ class LiveRecorder: public FFMPEGEncoderTask {
 	public:
 		LiveRecorder(
 			shared_ptr<LiveRecording> liveRecording,
+			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
 			Json::Value configuration,
 			mutex* encodingCompletedMutex,                                                                        
