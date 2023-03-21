@@ -2467,6 +2467,7 @@ public:
     
 	Json::Value addRequestStatistic(
 		int64_t workspaceKey,
+		string ipAddress,
 		string userId,
 		int64_t physicalPathKey,
 		int64_t confStreamKey,

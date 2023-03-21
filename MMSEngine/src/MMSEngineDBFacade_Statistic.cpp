@@ -4,6 +4,7 @@
 
 Json::Value MMSEngineDBFacade::addRequestStatistic(
 	int64_t workspaceKey,
+	string ipAddress,
 	string userId,
 	int64_t physicalPathKey,
 	int64_t confStreamKey,
@@ -33,14 +34,18 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 		{
 			lastSQLCommand = 
-				"insert into MMS_RequestStatistic(workspaceKey, userId, physicalPathKey, "
+				"insert into MMS_RequestStatistic(workspaceKey, ipAddress, userId, physicalPathKey, "
 				"confStreamKey, title, requestTimestamp) values ("
-				"?, ?, ?, ?, ?, NOW())";
+				"?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (ipAddress == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, ipAddress);
 			preparedStatement->setString(queryParameterIndex++, userId);
 			if (physicalPathKey == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
@@ -57,6 +62,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", ipAddress: " + ipAddress
 				+ ", userId: " + userId
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", confStreamKey: " + to_string(confStreamKey)
@@ -135,6 +141,9 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		{
 			string field = "requestStatisticKey";
 			statisticRoot[field] = requestStatisticKey;
+
+			field = "ipAddress";
+			statisticRoot[field] = ipAddress;
 
 			field = "userId";
 			statisticRoot[field] = userId;
@@ -354,7 +363,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select requestStatisticKey, userId, physicalPathKey, confStreamKey, title, "
+                "select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
 				"DATE_FORMAT(convert_tz(requestTimestamp, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as requestTimestamp "
 				"from MMS_RequestStatistic "
                 + sqlWhere
@@ -399,6 +408,12 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 
                 field = "requestStatisticKey";
 				statisticRoot[field] = resultSet->getInt64("requestStatisticKey");
+
+                field = "ipAddress";
+				if (resultSet->isNull("ipAddress"))
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = static_cast<string>(resultSet->getString("ipAddress"));
 
                 field = "userId";
                 statisticRoot[field] = static_cast<string>(

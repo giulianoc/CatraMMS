@@ -305,6 +305,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey,
+					clientIPAddress,
 					userId,
 					localPhysicalPathKey,
 					-1,	// confStreamKey
@@ -674,6 +675,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey,
+					clientIPAddress,
 					userId,
 					-1,	// localPhysicalPathKey,
 					streamConfKey,

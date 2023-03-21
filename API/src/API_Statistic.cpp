@@ -38,6 +38,7 @@ void API::addRequestStatistic(
     try
     {
         string userId;
+        string ipAddress;
 		int64_t physicalPathKey = -1;
 		int64_t confStreamKey = -1;
         string title;
@@ -56,6 +57,10 @@ void API::addRequestStatistic(
                 throw runtime_error(errorMessage);
             }
             userId = JSONUtils::asString(requestBodyRoot, field, "");            
+
+            field = "ipAddress";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				ipAddress = JSONUtils::asString(requestBodyRoot, field, "");            
 
 			field = "physicalPathKey";
 			physicalPathKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
@@ -108,7 +113,7 @@ void API::addRequestStatistic(
         try
         {
 			Json::Value statisticRoot = _mmsEngineDBFacade->addRequestStatistic(
-				workspace->_workspaceKey, userId, physicalPathKey, confStreamKey, title);
+				workspace->_workspaceKey, ipAddress, userId, physicalPathKey, confStreamKey, title);
 
 			sResponse = JSONUtils::toString(statisticRoot);
 		}

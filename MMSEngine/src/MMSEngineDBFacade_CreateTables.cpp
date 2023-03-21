@@ -468,6 +468,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create table if not exists MMS_RequestStatistic ("
 					"requestStatisticKey		bigint unsigned NOT NULL AUTO_INCREMENT,"
                     "workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"ipAddress					VARCHAR (64) NULL,"
 					"userId						VARCHAR (128) NOT NULL,"
 					"physicalPathKey			BIGINT UNSIGNED NULL,"
 					"confStreamKey				BIGINT UNSIGNED NULL,"
