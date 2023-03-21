@@ -363,51 +363,11 @@ FFMPEGEncoder::FFMPEGEncoder(
 		fcgiAcceptMutex,
 		logger) 
 {
-	// _encoderCapabilityConfigurationPathName = encoderCapabilityConfigurationPathName;
-
-	/*
-    _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
-    );
-
-    _liveRecorderChunksIngestionCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
-    );
-
-    _liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: " + to_string(_liveRecorderVirtualVODIngestionInSeconds)
-    );
-    _liveRecorderVirtualVODRetention = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderVirtualVODRetention", "15m");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->liveRecorderVirtualVODRetention: " + _liveRecorderVirtualVODRetention
-    );
-
-	_tvChannelConfigurationDirectory = JSONUtils::asString(_configuration["ffmpeg"],
-		"tvChannelConfigurationDirectory", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
-	);
-	*/
 
     _encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
     );
-
-	/*
-    _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
-    );
-
-    _mmsBinaryTimeoutInSeconds = JSONUtils::asInt(_configuration["api"]["binary"], "timeoutInSeconds", 120);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
-    );
-	*/
 
 	_cpuUsageThresholdForEncoding =  JSONUtils::asInt(_configuration["ffmpeg"],
 		"cpuUsageThresholdForEncoding", 50);
@@ -438,35 +398,12 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
-	// _maxEncodingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-	// 	"maxEncodingsCapability", 1);
-	// _logger->info(__FILEREF__ + "Configuration item"
-	// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
-	// );
 
 	_liveProxyMutex = liveProxyMutex;
 	_liveProxiesCapability = liveProxiesCapability;
-	// _maxLiveProxiesCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-	// 	"maxLiveProxiesCapability", 10);
-	// _logger->info(__FILEREF__ + "Configuration item"
-	// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
-	// );
 
 	_liveRecordingMutex = liveRecordingMutex;
 	_liveRecordingsCapability = liveRecordingsCapability;
-	// _maxLiveRecordingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-	// 	"maxLiveRecordingsCapability", 10);
-	// logger->info(__FILEREF__ + "Configuration item"
-	// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
-	// );
-
-	// _tvChannelPort_Start = 8000;
-	// _tvChannelPort_MaxNumberOfOffsets = 100;
-
-	// _cpuUsageThreadShutdown = false;
-	// _monitorThreadShutdown = false;
-	// _liveRecorderChunksIngestionThreadShutdown = false;
-	// _liveRecorderVirtualVODIngestionThreadShutdown = false;
 
 	_encodingCompletedMutex = encodingCompletedMutex;
 	_encodingCompletedMap = encodingCompletedMap;
@@ -2300,10 +2237,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		// || method == "countdown"
 	)
     {
-		int64_t ingestionJobKey = -1;
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt != queryParameters.end())
-			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+        if (ingestionJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())

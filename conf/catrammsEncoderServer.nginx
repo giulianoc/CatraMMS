@@ -31,10 +31,11 @@
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&ingestionJobKey=-1&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&ingestionJobKey=$2&encodingJobKey=$3 last;
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&ingestionJobKey=-1&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&ingestionJobKey=$2&encodingJobKey=$3 last;
