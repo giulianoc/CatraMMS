@@ -13,6 +13,7 @@ void GenerateFrames::encodeContent(
     string api = "generateFrames";
 
     _logger->info(__FILEREF__ + "Received " + api
+		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
         + ", requestBody: " + requestBody
     );
@@ -25,7 +26,7 @@ void GenerateFrames::encodeContent(
 			-1, _encodingJobKey, requestBody);
 
         bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-        int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+        // int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
@@ -42,7 +43,7 @@ void GenerateFrames::encodeContent(
 		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", Field: " + field;
 			_logger->error(errorMessage);
@@ -59,7 +60,7 @@ void GenerateFrames::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -105,7 +106,7 @@ void GenerateFrames::encodeContent(
 			}
 
 			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				_encoding->_ffmpeg,
 				sourceFileExtension,
@@ -118,7 +119,7 @@ void GenerateFrames::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -131,7 +132,7 @@ void GenerateFrames::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -141,10 +142,10 @@ void GenerateFrames::encodeContent(
 			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		string imageBaseFileName = to_string(ingestionJobKey);
+		string imageBaseFileName = to_string(_ingestionJobKey);
 
 		_encoding->_ffmpeg->generateFramesToIngest(
-			ingestionJobKey,
+			_ingestionJobKey,
 			_encodingJobKey,
 			imagesDirectory,
 			imageBaseFileName,
@@ -188,7 +189,7 @@ void GenerateFrames::encodeContent(
 						Json::Value mmsDataRoot;
 						mmsDataRoot["dataType"] = "generatedFrame";
 						mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-						mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
+						mmsDataRoot["ingestionJobKey"] = _ingestionJobKey;
 						mmsDataRoot["generatedFrameIndex"] = generatedFrameIndex;
 
 						userDataRoot["mmsData"] = mmsDataRoot;
@@ -214,7 +215,7 @@ void GenerateFrames::encodeContent(
 						}
 
 						_logger->info(__FILEREF__ + "ingest Frame"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
@@ -225,7 +226,7 @@ void GenerateFrames::encodeContent(
 
 						addContentIngestionJobKeys.push_back(
 							generateFrames_ingestFrame(
-								ingestionJobKey, externalEncoder,
+								_ingestionJobKey, externalEncoder,
 								imagesDirectory, entry.path().filename().string(),
 								addContentTitle, userDataRoot, outputFileFormat,
 								ingestedParametersRoot, encodingParametersRoot)
@@ -235,7 +236,7 @@ void GenerateFrames::encodeContent(
 					{
 						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
 							+ ", generatedFrameFileName: " + entry.path().filename().string()
@@ -250,7 +251,7 @@ void GenerateFrames::encodeContent(
 					{
 						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", externalEncoder: " + to_string(externalEncoder)
 							+ ", imagesDirectory: " + imagesDirectory
 							+ ", generatedFrameFileName: " + entry.path().filename().string()
@@ -274,7 +275,7 @@ void GenerateFrames::encodeContent(
 				catch(runtime_error e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", e.what(): " + e.what()
 					;
@@ -288,7 +289,7 @@ void GenerateFrames::encodeContent(
 				catch(exception e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", e.what(): " + e.what()
 					;
@@ -304,7 +305,7 @@ void GenerateFrames::encodeContent(
 			if (fs::exists(imagesDirectory))
 			{
 				_logger->info(__FILEREF__ + "Remove"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", imagesDirectory: " + imagesDirectory);
 				fs::remove_all(imagesDirectory);
 			}
@@ -316,7 +317,7 @@ void GenerateFrames::encodeContent(
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
@@ -368,7 +369,7 @@ void GenerateFrames::encodeContent(
 					vector<string> otherHeaders;
 					Json::Value ingestionRoot = MMSCURL::httpGetJson(
 						_logger,
-						ingestionJobKey,
+						_ingestionJobKey,
 						mmsIngestionJobURL,
 						_mmsAPITimeoutInSeconds,
 						to_string(userKey),
@@ -381,7 +382,7 @@ void GenerateFrames::encodeContent(
 					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -394,7 +395,7 @@ void GenerateFrames::encodeContent(
 					if (!JSONUtils::isMetadataPresent(responseRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -406,7 +407,7 @@ void GenerateFrames::encodeContent(
 					if (ingestionJobsRoot.size() != 1)
 					{
 						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 						;
 						_logger->error(errorMessage);
@@ -420,7 +421,7 @@ void GenerateFrames::encodeContent(
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -434,7 +435,7 @@ void GenerateFrames::encodeContent(
 						&& 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
 					{
 						_logger->info(__FILEREF__ + "addContentIngestionJobKey finished"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
 							+ ", ingestionJobStatus: " + ingestionJobStatus);
 
@@ -446,7 +447,7 @@ void GenerateFrames::encodeContent(
 						int secondsToSleep = 5;
 
 						_logger->info(__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..."
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey)
 							+ ", ingestionJobStatus: " + ingestionJobStatus
 							+ ", secondsToSleep: " + to_string(secondsToSleep)
@@ -457,7 +458,7 @@ void GenerateFrames::encodeContent(
 				}
 
 				_logger->info(__FILEREF__ + "Waiting result..."
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", addContentToBeWaited: " + to_string(addContentToBeWaited)
 					+ ", addContentFinished: " + to_string(addContentFinished)
 					+ ", maxSecondsWaiting: " + to_string(maxSecondsWaiting)
@@ -468,7 +469,7 @@ void GenerateFrames::encodeContent(
 			catch(runtime_error e)
 			{
 				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					// + ", _encodingJobKey: " + to_string(_encodingJobKey)
 				;
 				_logger->error(errorMessage);
@@ -476,7 +477,7 @@ void GenerateFrames::encodeContent(
 		}
 
         _logger->info(__FILEREF__ + "generateFrames finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", _completedWithError: " + to_string(_completedWithError)
         );

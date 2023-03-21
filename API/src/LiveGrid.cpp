@@ -47,7 +47,7 @@ void LiveGrid::encodeContent(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
-		_liveProxyData->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		_liveProxyData->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
         Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];

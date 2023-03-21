@@ -11,6 +11,7 @@ void EncodeContent::encodeContent(
     string api = "encodeContent";
 
     _logger->info(__FILEREF__ + "Received " + api
+		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 		+ ", requestBody: " + requestBody
     );
@@ -18,13 +19,13 @@ void EncodeContent::encodeContent(
 	bool externalEncoder = false;
 	string sourceAssetPathName;
 	string encodedStagingAssetPathName;
-	int64_t ingestionJobKey = 1;
+	// int64_t ingestionJobKey = 1;
     try
     {
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
-		ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		// ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
@@ -59,7 +60,7 @@ void EncodeContent::encodeContent(
 		if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", Field: " + field
 				+ ", sourceToBeEncodedRoot: " + JSONUtils::toString(sourceToBeEncodedRoot)
@@ -76,7 +77,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -93,7 +94,7 @@ void EncodeContent::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -110,7 +111,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -123,7 +124,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -140,7 +141,7 @@ void EncodeContent::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -154,7 +155,7 @@ void EncodeContent::encodeContent(
 			}
 
 			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				_encoding->_ffmpeg,
 				sourceFileExtension,
@@ -167,7 +168,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -180,7 +181,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -191,7 +192,7 @@ void EncodeContent::encodeContent(
 		}
 
         _logger->info(__FILEREF__ + "encoding content..."
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", sourceAssetPathName: " + sourceAssetPathName
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
@@ -209,13 +210,13 @@ void EncodeContent::encodeContent(
 			videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
 			physicalPathKey,
 			_encodingJobKey,
-			ingestionJobKey,
+			_ingestionJobKey,
 			&(_encoding->_childPid)
 		);
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "encoded content"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", sourceAssetPathName: " + sourceAssetPathName
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
@@ -225,7 +226,7 @@ void EncodeContent::encodeContent(
 		{
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
@@ -237,7 +238,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -250,7 +251,7 @@ void EncodeContent::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -264,7 +265,7 @@ void EncodeContent::encodeContent(
 				+ " (encoding from external transcoder)"
 			;
 			uploadLocalMediaToMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				ingestedParametersRoot,
 				encodingProfileDetailsRoot,
@@ -285,7 +286,7 @@ void EncodeContent::encodeContent(
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
@@ -338,7 +339,7 @@ void EncodeContent::encodeContent(
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
@@ -392,7 +393,7 @@ void EncodeContent::encodeContent(
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);

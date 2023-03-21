@@ -11,6 +11,7 @@ void OverlayTextOnVideo::encodeContent(
     string api = "overlayTextOnVideo";
 
     _logger->info(__FILEREF__ + "Received " + api
+		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
         + ", requestBody: " + requestBody
     );
@@ -20,7 +21,7 @@ void OverlayTextOnVideo::encodeContent(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
+		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
@@ -37,7 +38,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -56,7 +57,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -73,7 +74,7 @@ void OverlayTextOnVideo::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -90,7 +91,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -107,7 +108,7 @@ void OverlayTextOnVideo::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -124,7 +125,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -134,7 +135,7 @@ void OverlayTextOnVideo::encodeContent(
 			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				_encoding->_ffmpeg,
 				sourceFileExtension,
@@ -147,7 +148,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -160,7 +161,7 @@ void OverlayTextOnVideo::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -183,12 +184,12 @@ void OverlayTextOnVideo::encodeContent(
 
 			encodedStagingAssetPathName,
 			_encodingJobKey,
-			ingestionJobKey,
+			_ingestionJobKey,
 			&(_encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "Encode content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
@@ -197,7 +198,7 @@ void OverlayTextOnVideo::encodeContent(
 		{
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
@@ -214,7 +215,7 @@ void OverlayTextOnVideo::encodeContent(
 				"encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				ingestedParametersRoot,
 				encodingProfileDetailsRoot,

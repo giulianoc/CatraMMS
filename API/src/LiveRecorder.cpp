@@ -65,7 +65,7 @@ void LiveRecorder::encodeContent(
 
         Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
 
-        _liveRecording->_ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+        _liveRecording->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
         _liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];

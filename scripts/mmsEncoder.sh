@@ -67,7 +67,7 @@ then
 	ps -ef | grep "ffmpegEncoder.fcgi" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
-	sleepIfNeeded
+	#sleepIfNeeded
 
 	#PIDFILE is not created in case of nodaemon
 	kill -9 `cat $PIDFILE`

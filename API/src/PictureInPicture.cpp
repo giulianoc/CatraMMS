@@ -11,6 +11,7 @@ void PictureInPicture::encodeContent(
     string api = "pictureInPicture";
 
     _logger->info(__FILEREF__ + "Received " + api
+		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
         + ", requestBody: " + requestBody
     );
@@ -20,7 +21,7 @@ void PictureInPicture::encodeContent(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
+		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
@@ -33,7 +34,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -49,7 +50,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -70,7 +71,7 @@ void PictureInPicture::encodeContent(
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
@@ -87,7 +88,7 @@ void PictureInPicture::encodeContent(
 							0, endOfDirectoryIndex);
 
 						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", directoryPathName: " + directoryPathName
 						);
@@ -104,7 +105,7 @@ void PictureInPicture::encodeContent(
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
@@ -114,7 +115,7 @@ void PictureInPicture::encodeContent(
 				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
+					_ingestionJobKey,
 					_encodingJobKey,
 					_encoding->_ffmpeg,
 					mainSourceFileExtension,
@@ -127,7 +128,7 @@ void PictureInPicture::encodeContent(
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
@@ -144,7 +145,7 @@ void PictureInPicture::encodeContent(
 							0, endOfDirectoryIndex);
 
 						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", directoryPathName: " + directoryPathName
 						);
@@ -161,7 +162,7 @@ void PictureInPicture::encodeContent(
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", Field: " + field;
 					_logger->error(errorMessage);
@@ -171,7 +172,7 @@ void PictureInPicture::encodeContent(
 				string overlaySourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				overlaySourceAssetPathName = downloadMediaFromMMS(
-					ingestionJobKey,
+					_ingestionJobKey,
 					_encodingJobKey,
 					_encoding->_ffmpeg,
 					overlaySourceFileExtension,
@@ -183,7 +184,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -200,7 +201,7 @@ void PictureInPicture::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -219,7 +220,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -232,7 +233,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -245,7 +246,7 @@ void PictureInPicture::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -288,11 +289,11 @@ void PictureInPicture::encodeContent(
 
 			encodedStagingAssetPathName,
 			_encodingJobKey,
-			ingestionJobKey,
+			_ingestionJobKey,
 			&(_encoding->_childPid));
 
         _logger->info(__FILEREF__ + "PictureInPicture encoding content finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
@@ -301,7 +302,7 @@ void PictureInPicture::encodeContent(
 		{
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", mainSourceAssetPathName: " + mainSourceAssetPathName
 				);
@@ -311,7 +312,7 @@ void PictureInPicture::encodeContent(
 
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", overlaySourceAssetPathName: " + overlaySourceAssetPathName
 				);
@@ -328,7 +329,7 @@ void PictureInPicture::encodeContent(
 				"encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				ingestedParametersRoot,
 				encodingProfileDetailsRoot,

@@ -11,6 +11,7 @@ void SlideShow::encodeContent(
     string api = "slideShow";
 
     _logger->info(__FILEREF__ + "Received " + api
+		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 		// + ", requestBody: " + requestBody already logged
     );
@@ -20,7 +21,7 @@ void SlideShow::encodeContent(
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
-		int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
+		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
@@ -50,7 +51,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -63,7 +64,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -76,7 +77,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -93,7 +94,7 @@ void SlideShow::encodeContent(
 								0, endOfDirectoryIndex);
 
 							_logger->info(__FILEREF__ + "Creating directory"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", directoryPathName: " + directoryPathName
 							);
@@ -108,7 +109,7 @@ void SlideShow::encodeContent(
 
 					imagesPathNames.push_back(
 						downloadMediaFromMMS(
-							ingestionJobKey,
+							_ingestionJobKey,
 							_encodingJobKey,
 							_encoding->_ffmpeg,
 							sourceFileExtension,
@@ -135,7 +136,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -148,7 +149,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -161,7 +162,7 @@ void SlideShow::encodeContent(
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 							+ ", Field: " + field;
 						_logger->error(errorMessage);
@@ -178,7 +179,7 @@ void SlideShow::encodeContent(
 								0, endOfDirectoryIndex);
 
 							_logger->info(__FILEREF__ + "Creating directory"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", directoryPathName: " + directoryPathName
 							);
@@ -193,7 +194,7 @@ void SlideShow::encodeContent(
 
 					audiosPathNames.push_back(
 						downloadMediaFromMMS(
-							ingestionJobKey,
+							_ingestionJobKey,
 							_encodingJobKey,
 							_encoding->_ffmpeg,
 							sourceFileExtension,
@@ -214,7 +215,7 @@ void SlideShow::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -231,7 +232,7 @@ void SlideShow::encodeContent(
 						0, endOfDirectoryIndex);
 
 					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 					);
@@ -250,7 +251,7 @@ void SlideShow::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -262,14 +263,14 @@ void SlideShow::encodeContent(
 
 		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
 
-		_encoding->_ffmpeg->slideShow(ingestionJobKey, _encodingJobKey,
+		_encoding->_ffmpeg->slideShow(_ingestionJobKey, _encodingJobKey,
 			durationOfEachSlideInSeconds, frameRateMode,
 			encodingProfileDetailsRoot,
 			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
 			encodedStagingAssetPathName, &(_encoding->_childPid));
 
         _logger->info(__FILEREF__ + "slideShow finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
         );
 
@@ -278,7 +279,7 @@ void SlideShow::encodeContent(
 			for (string imagePathName: imagesPathNames)
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", imagePathName: " + imagePathName
 				);
@@ -289,7 +290,7 @@ void SlideShow::encodeContent(
 			for (string audioPathName: audiosPathNames)
 			{
 				_logger->info(__FILEREF__ + "Remove file"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", audioPathName: " + audioPathName
 				);
@@ -301,7 +302,7 @@ void SlideShow::encodeContent(
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
 				_logger->error(errorMessage);
@@ -319,7 +320,7 @@ void SlideShow::encodeContent(
 				"encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				ingestionJobKey,
+				_ingestionJobKey,
 				_encodingJobKey,
 				ingestedParametersRoot,
 				encodingProfileDetailsRoot,

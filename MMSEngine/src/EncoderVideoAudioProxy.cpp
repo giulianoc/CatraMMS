@@ -2230,8 +2230,9 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 
                 Json::Value encodingMedatada;
 
-                encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
+				// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+                encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 
@@ -6194,6 +6195,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				{
 					Json::Value liveRecorderMedatada;
 
+					// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (
 						_encodingItem->_ingestionJobKey);
 					liveRecorderMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
@@ -7931,9 +7933,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 					Json::Value liveProxyMetadata;
 
+					// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
+					liveProxyMetadata["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
-					liveProxyMetadata["ingestionJobKey"] =
-						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 					liveProxyMetadata["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;

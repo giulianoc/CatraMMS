@@ -86,7 +86,7 @@ then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
-	sleepIfNeeded
+	#sleepIfNeeded
 
 	touch $processorShutdownPathName
 
