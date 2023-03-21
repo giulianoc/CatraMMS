@@ -2172,6 +2172,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 
 				_logger->info(__FILEREF__ + "Creating liveRecorder thread"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
